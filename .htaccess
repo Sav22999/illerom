@@ -1,0 +1,48 @@
+DirectoryIndex index.php index.html
+
+# Nothing to see in hidden files, data, notes and credentials
+<FilesMatch "^\.|^credentials.*\.php$|\.(sql|log|bak|old|swp|ini|env|md)$|~$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+RedirectMatch 404 ^/(data|include|pages|tools)(/|$)
+RedirectMatch 404 /\.(git|idea)(/|$)
+
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+    Header set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+</IfModule>
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript application/json image/svg+xml application/xml font/ttf application/x-font-ttf
+</IfModule>
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType text/javascript "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType font/ttf "access plus 1 year"
+</IfModule>
+
+# Files and folders of the projects are served as they are; every other address goes to the portal
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # no listings of the assets folders
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^assets(/|$) index.php [L]
+    # a project folder without its final slash: added staying on https (the proxy of the hosting hides it)
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^(.*[^/])$ https://%{HTTP_HOST}/$1/ [L,R=301]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [L]
+</IfModule>
