@@ -23,7 +23,7 @@ const MAX_USER_IMAGE_BYTES = 300000000; // all the images of one account
 const MAX_USER_DOCS = 2000;
 const KEEP_OPS = 600;                 // edits kept for the people who are online; older ones reload the document
 const KEEP_VERSIONS = 40;
-const TRASH_DAYS = 30;
+
 
 // ---------- Configuration ----------
 
@@ -45,6 +45,7 @@ function credentials(): ?array
     $debug = false;
     $google_client_id = '';
     $mail_config = null;
+    $savaccount_client_id = $savaccount_client_secret = '';
     $master_emails = [];
     require $file;
     if (!$localhost_db || !$username_db || !$database_name) return $cfg = null;
@@ -56,6 +57,8 @@ function credentials(): ?array
         'prefix' => (string)($table_prefix ?: 'sd_'),
         'debug' => (bool)$debug,
         'google_client_id' => trim((string)$google_client_id),
+        'savaccount_client_id' => trim((string)$savaccount_client_id),
+        'savaccount_client_secret' => trim((string)$savaccount_client_secret),
         'mail' => $mail_config === false ? false : (is_array($mail_config) ? $mail_config : null),
         'master_emails' => array_values(array_filter(array_map(fn($e) => mb_strtolower(trim((string)$e)), (array)$master_emails))),
     ];
@@ -292,6 +295,7 @@ function public_user(array $u): array
         'prefs' => json_decode((string)($u['prefs'] ?? ''), true) ?: new stdClass(),
         'hasPassword' => ($u['password_hash'] ?? '') !== '',
         'googleLinked' => !empty($u['google_sub']),
+        'savLinked' => !empty($u['sav_sub']),
         'verified' => !empty($u['email_verified_at']),
         'master' => is_master($u),
         'mailReady' => mail_settings() !== null,

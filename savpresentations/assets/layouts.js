@@ -1,6 +1,7 @@
 /** Slide layouts: where the titles, texts and pictures of each kind of slide go, for any format. */
 import { uid } from './core.js';
 import { textToHtml, esc } from './richtext.js';
+import { t } from './i18n.js';
 
 export const LAYOUTS = ['cover', 'section', 'title-body', 'two-cols', 'three-cards', 'statement', 'quote', 'image-left', 'image-right', 'image-full', 'caption', 'number', 'numbers', 'timeline', 'compare', 'gallery', 'list', 'agenda', 'closing', 'blank'];
 const VARIANT = { cover: 'cover', closing: 'cover', section: 'section', statement: 'content', blank: 'content', 'image-full': 'plain' };
@@ -42,6 +43,7 @@ export function makeSlide(id, ctx, fill = {}) {
   const els = {};
   build(id, ctx).forEach(([slot, el], i) => {
     const e = { ...el, z: i + 1 };
+    if (e.ph) e.ph = t(e.ph);
     for (const k of ['x', 'y', 'w', 'h', 'size', 'rad']) if (e[k] !== undefined) e[k] = Math.round(e[k] * 10) / 10;
     if (slot && fill[slot] !== undefined) { if (e.t === 'image') e.src = fill[slot]; else e.html = richLines(fill[slot]); }
     els[uid()] = e;

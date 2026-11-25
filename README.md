@@ -24,6 +24,7 @@ On the server Apache needs `mod_rewrite` (see `.htaccess`).
 | `assets/style.css`, `assets/app.js` | Palette and layout; theme, search and filters |
 | `<slug>/` | The projects (Chess, FoodTrack…): independent of the portal |
 | `api/status/`, `data/services.php` | The public status API and what it checks; `/<lang>/status/` shows it |
+| `identity/` | Google and SavAccount sign-in, and joining them to an account that already exists: shared by the projects with accounts |
 | `cron/` | Daily clean-up and reminders of the projects |
 | `move/`, `assets/move.js` | Arrival of who comes from saveriomorelli.com: copies once what a project had saved in the browser |
 | `assets/sav/` | SavComponents 1.0.0 (Tilt style), a local copy |

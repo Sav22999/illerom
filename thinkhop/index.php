@@ -53,7 +53,7 @@ $v = '1.8.52';
     <link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <link rel="manifest" href="manifest.webmanifest">
-    <link rel="stylesheet" href="../identity/identity.css?v=1">
+    <link rel="stylesheet" href="../identity/identity.css?v=2">
     <link rel="stylesheet" href="style.css?v=<?= $v ?>">
     <script>try {
             var t = JSON.parse(localStorage.getItem('thinkhop.theme'));
@@ -81,7 +81,7 @@ $v = '1.8.52';
 <script src="twemoji.js?v=<?= $v ?>" defer></script>
 <script src="avatars.js?v=<?= $v ?>" defer></script>
 <script src="ui.js?v=<?= $v ?>" defer></script>
-<script src="../identity/identity.js?v=1" defer></script>
+<script src="../identity/identity.js?v=3" defer></script>
 <script src="account.js?v=<?= $v ?>" defer></script>
 <script src="social.js?v=<?= $v ?>" defer></script>
 <script src="mascots.js?v=<?= $v ?>" defer></script>

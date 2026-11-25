@@ -23,7 +23,17 @@
     clearTimeout(timer);
   };
 
+  // wide screens show everything; phones one row for each project, open only where something is wrong
+  const wide = matchMedia('(min-width: 40.01rem)'), touched = new Set();
+  const cards = [...box.querySelectorAll('.stcard')];
+  const fold = () => cards.forEach((c) => { if (!touched.has(c)) c.open = wide.matches || c.id === location.hash.slice(1) || ['down', 'degraded'].includes(c.dataset.status); });
+  cards.forEach((c) => c.querySelector('summary').addEventListener('click', () => touched.add(c)));
+  wide.addEventListener('change', fold);
+  fold();
+
   const summary = (time) => {
+    for (const c of cards) { c.dataset.status = worst([...c.querySelectorAll('li')].map((l) => l.dataset.status)); c.querySelector('summary .stl').textContent = d[c.dataset.status]; }
+    fold();
     const all = [...box.querySelectorAll('.stcard li')].map((l) => l.dataset.status), w = worst(all.filter((s) => s !== 'unknown')), bad = all.filter((s) => s === 'down' || s === 'degraded').length;
     const sum = box.querySelector('.stsum');
     sum.dataset.status = w;

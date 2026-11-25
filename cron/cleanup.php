@@ -8,6 +8,8 @@
  * sessions from older versions. It never touches the users' own data.
  * OpenNewsletter also deletes the subscriptions never confirmed within PENDING_SUBSCRIBER_DAYS (as its terms promise)
  * and the expired email-confirmation links of accounts.
+ * SavDocuments also deletes the documents left in the trash for TRASH_DAYS, the accounts never confirmed within 7 days (as
+ * its privacy notice promises), expired links and who was present in a document.
  *
  * URL:          https://www.illerom.eu/cron/cleanup.php?key=SECRET_KEY
  * Command line: php cleanup.php (no key needed)
@@ -15,9 +17,10 @@
 
 const ROOM_RETENTION_HOURS = 24;
 const GAMES = ['c4' => 'connect-four', 'chess' => 'chess', 'fg' => 'faceguess', 'sb' => 'sea-battle', 'pm' => 'prism-mine']; // table prefix => project
-const APPS = ['foodtrack' => 'ft_', 'giftwise' => 'gw_', 'fucina' => 'fc_', 'thinkhop' => 'th_', 'forkville' => 'fv_', 'mycurriculum' => 'mc_', 'opennewsletter' => 'on_']; // project => default table prefix
-const NO_SESSION_DETAILS = ['thinkhop', 'forkville', 'mycurriculum', 'opennewsletter']; // these apps never stored the IP and browser on their sessions: no such columns
+const APPS = ['foodtrack' => 'ft_', 'giftwise' => 'gw_', 'fucina' => 'fc_', 'thinkhop' => 'th_', 'forkville' => 'fv_', 'mycurriculum' => 'mc_', 'opennewsletter' => 'on_', 'savdocuments' => 'sd_']; // project => default table prefix
+const NO_SESSION_DETAILS = ['thinkhop', 'forkville', 'mycurriculum', 'opennewsletter', 'savdocuments']; // these apps never stored the IP and browser on their sessions: no such columns
 const ATTEMPT_RETENTION_HOURS = 2; // the longest rate limit looks back 60 minutes: older IPs serve no purpose
+const TRASH_DAYS = 30; // SavDocuments: documents in the trash
 const PENDING_SUBSCRIBER_DAYS = 7; // OpenNewsletter: a confirmation link works 7 days, then the address is forgotten
 
 header('Content-Type: application/json');
@@ -71,6 +74,13 @@ function cleanApp($project, $defaultPrefix)
     if ($project === 'opennewsletter') {
         $result['pending_subscribers'] = $db->exec("DELETE FROM `{$prefix}subscribers` WHERE status = 'pending' AND COALESCE(confirm_sent_at, created_at) < UTC_TIMESTAMP() - INTERVAL " . PENDING_SUBSCRIBER_DAYS . " DAY");
         $result['email_links'] = $db->exec("DELETE FROM `{$prefix}email_tokens` WHERE expires_at < UTC_TIMESTAMP()");
+    }
+    if ($project === 'savdocuments') {
+        $result['trash'] = $db->exec("DELETE FROM `{$prefix}documents` WHERE deleted_at < UTC_TIMESTAMP() - INTERVAL " . TRASH_DAYS . " DAY");
+        $result['unconfirmed'] = $db->exec("DELETE FROM `{$prefix}users` WHERE email_verified_at IS NULL AND status = 'active' AND created_at < UTC_TIMESTAMP() - INTERVAL 7 DAY");
+        $result['links'] = $db->exec("DELETE FROM `{$prefix}email_tokens` WHERE expires_at < UTC_TIMESTAMP()") + $db->exec("DELETE FROM `{$prefix}invites` WHERE expires_at < UTC_TIMESTAMP()");
+        if ($db->query("SHOW TABLES LIKE " . $db->quote(addcslashes($prefix, '_%') . 'identity'))->fetchColumn()) $result['sign_in_requests'] = $db->exec("DELETE FROM `{$prefix}identity` WHERE expires_at < UTC_TIMESTAMP()"); // made at the first SavAccount or Google sign-in
+        $db->exec("DELETE FROM `{$prefix}presence` WHERE seen_at < UTC_TIMESTAMP() - INTERVAL 1 HOUR");
     }
     return $result;
 }

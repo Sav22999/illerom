@@ -1,0 +1,23 @@
+{
+  "name": "SavDocuments",
+  "short_name": "SavDocuments",
+  "description": "A free, open word processor: real pages, tables, images, Word files and people writing together.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f1f5f2",
+  "theme_color": "#0f6e56",
+  "lang": "en",
+  "categories": ["productivity", "business", "education"],
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ],
+  "file_handlers": [
+    {"action": "./", "accept": {"application/vnd.savdocuments.document+zip": [".savdoc"], "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"]}}
+  ],
+  "launch_handler": {"client_mode": "navigate-existing"}
+}

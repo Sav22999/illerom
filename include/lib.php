@@ -32,6 +32,7 @@ function icon(string $name): string
         'x' => '<path d="M6 6l12 12M18 6L6 18"/>',
         'arrow' => '<path d="M5 12h14M13 6l6 6-6 6"/>',
         'back' => '<path d="M19 12H5M11 6l-6 6 6 6"/>',
+        'chev' => '<path d="M9 6l6 6-6 6"/>',
         'out' => '<path d="M7 17L17 7M8 7h9v9"/>',
         'code' => '<path d="M8.5 7L3.5 12l5 5M15.5 7l5 5-5 5"/>',
         'phone' => '<rect x="7" y="2.5" width="10" height="19"/><path d="M11 18.5h2"/>',
@@ -43,7 +44,7 @@ function icon(string $name): string
         'flip' => '<path d="M4 8h14M14 4l4 4-4 4M20 16H6M10 12l-4 4 4 4"/>',
         'check' => '<path d="M5 12.500l4.5 4.500L19 7.5"/>',
     ][$name] ?? '';
-    return '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' . $d . '</svg>';
+    return '<svg class="ic ' . ($name === 'chev' ? 'chev' : '') . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' . $d . '</svg>';
 }
 
 /** The three bars of the mark; $on of them filled (the level of a project). */
@@ -80,7 +81,7 @@ function wordmark(): string
     $n = 0;
     foreach ($g as [, $rects]) {
         foreach ($rects as [$x, $y, $rw, $rh]) {
-            $b .= sprintf('<rect class="bar" style="--n:%d" x="%s" y="%s" width="%s" height="%s"/>', $n++, $x, $y, $rw, $rh);
+            $b .= sprintf('<rect class="bar' . ($rw > $rh ? ' flat' : '') . '" style="--n:%d" x="%s" y="%s" width="%s" height="%s"/>', $n++, $x, $y, $rw, $rh);
         }
     }
     return '<svg class="wordmark" viewBox="0 0 ' . $w . ' 100" aria-hidden="true"><g class="wm-bars"><g class="wm-lean" transform="matrix(1 0 .5 1 0 0)">' . $b . '</g></g></svg>';

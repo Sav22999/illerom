@@ -12,6 +12,7 @@ return [
     'big' => [
         ['Notefox', 'https://www.notefox.eu/', 'websites-notes', ['it' => 'Note su qualsiasi sito web', 'en' => 'Notes on any website']],
         ['Sav PDF Viewer', 'https://www.savpdfviewer.com/', 'sav-pdf-viewer-pro', ['it' => 'Lettore PDF per Android', 'en' => 'PDF reader for Android']],
+        ['SavAccount', 'https://www.savaccount.eu/', 'savaccount', ['it' => 'Un solo account per tutti i servizi', 'en' => 'One account for every service']],
         ['SavComponents', 'https://savcomponents.com/', 'savcomponents', ['it' => 'Componenti web pronti all’uso', 'en' => 'Ready-to-use web components']],
     ],
 ];

@@ -16,17 +16,18 @@ foreach ($list as $s) $groups[$s['project']][] = $s;
     </div>
     <div class="stgrid">
 <?php foreach ($groups as $slug => $items): $p = $projects[$slug] ?? null; ?>
-        <article class="stcard" id="<?= $slug ?>" data-project="<?= $slug ?>">
-            <header>
+        <details class="stcard" id="<?= $slug ?>" data-project="<?= $slug ?>" data-status="unknown">
+            <summary>
                 <img src="<?= $p ? asset("projects/$slug.png") : '/favicon.svg' ?>" alt="" width="32" height="32" loading="lazy">
-                <h3><a href="<?= $p ? $base . "projects/$slug/" : $base ?>"><?= e($p['name'] ?? 'Illerom') ?></a></h3>
-            </header>
+                <h3><?= e($p['name'] ?? 'Illerom') ?></h3>
+                <b class="stl"></b><?= icon('chev') ?>
+            </summary>
             <ul>
 <?php foreach ($items as $s): ?>
                 <li data-id="<?= e($s['id']) ?>" data-status="unknown"<?= $s['type'] === 'web' ? ' data-url="' . e($s['url']) . '"' : '' ?>><i class="dot" aria-hidden="true"></i><span class="stn"><?= e($s[$lang]) ?></span><span class="std"></span><b class="stl"></b></li>
 <?php endforeach; ?>
             </ul>
-        </article>
+        </details>
 <?php endforeach; ?>
     </div>
     <div class="stapi">

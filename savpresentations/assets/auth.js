@@ -16,10 +16,10 @@ const topBar = (...right) => h('header.ltop', brand(), h('div.spacer'), langButt
 export function landing(app) {
   document.body.classList.add('landing');
   const demo = h('div.l-stage');
-  const themes = ['aurora', 'editorial', 'bauhaus', 'cotton', 'ocean', 'playful', 'ink'];
+  const themes = ['aurora', 'editorial', 'bauhaus', 'cotton', 'ocean', 'playful'];
   const slides = themes.map((id, i) => {
     const ctx = context({ format: { w: 1280, h: 720 }, theme: { id }, opts: {} });
-    const lay = ['cover', 'cover', 'cover', 'quote', 'section', 'cover', 'number'][i];
+    const lay = ['cover', 'cover', 'cover', 'quote', 'section', 'cover'][i];
     const n = slideNode(makeSlide(lay, ctx, { title: t('l_slide' + (i + 1)), subtitle: 'SavPresentations', quote: t('l_slide' + (i + 1)), author: '', big: '100%', body: t('l_slide' + (i + 1)), label: '' }).d, ctx, { mode: 'thumb' });
     const w = h('div.l-card', { style: `--i:${i}` }, n);
     return w;

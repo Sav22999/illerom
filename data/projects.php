@@ -26,6 +26,16 @@ return [
             'The newsletter of a club is rarely the work of one person: someone writes, someone else checks, and nobody wants a message to reach hundreds of people by mistake. OpenNewsletter gives each group its own roles and an approval step before anything is sent.',
             ['Drag-and-drop editor with ready templates or the group’s own', 'Proposal, approval and sending at the chosen time', 'Subscribers in several languages, a subscription page and a widget for any website', 'Each group sends from its own email address']],
     ],
+    'savdocuments' => [
+        'name' => 'SavDocuments', 'cat' => 'work', 'level' => 2, 'account' => 'optional', 'offline' => true, 'play' => '',
+        'url' => '/savdocuments/', 'source' => 'savdocuments', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 4,
+        'it' => ['Documenti veri, senza ingombri.',
+            'Un editor di documenti in cui prima viene la pagina e gli strumenti compaiono solo quando servono. Si può scrivere subito, anche senza account e senza connessione, oppure in più persone nello stesso momento. Apre e salva i file Word.',
+            ['Pagine da A6 ad A3, verticali o orizzontali, con intestazioni, note e sommario', 'Tabelle, immagini e ricerca di immagini libere', 'Condivisione, commenti, versioni e scrittura in contemporanea', 'File .docx, .savdoc, PDF, pagina web e testo']],
+        'en' => ['Real documents, without the clutter.',
+            'A word processor where the page comes first and the tools appear only when you need them. You can write at once, even without an account or a connection, or together with other people at the same time. It opens and saves Word files.',
+            ['Pages from A6 to A3, portrait or landscape, with headers, notes and a table of contents', 'Tables, images and a search for free images', 'Sharing, comments, versions and writing together', '.docx, .savdoc, PDF, web page and plain text files']],
+    ],
     'presentations' => [
         'name' => 'Presentations', 'cat' => 'work', 'level' => 1, 'account' => '', 'offline' => false, 'play' => '',
         'url' => '', 'source' => '', 'privacy' => '', 'langs' => [], 'shots' => 0,

@@ -17,6 +17,11 @@ $master_emails = [];
 // Sign in with Google (optional): OAuth client ID of type "Web application"
 $google_client_id = "";
 
+// Sign in with SavAccount (optional): a confidential service created on savaccount.eu, "Manage services", with
+//   redirect address  https://www.illerom.eu/savdocuments/api/?r=auth.sav.callback
+$savaccount_client_id = "";
+$savaccount_client_secret = "";
+
 // SMTP for confirmations and invitations; null uses the settings of the site (/.mail-config.php), false switches email off
 $mail_config = null;
 // $mail_config = [

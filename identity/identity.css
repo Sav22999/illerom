@@ -29,6 +29,8 @@
 .idl-m { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 64px; padding: .5rem 0; border-top: 1px solid var(--l); }
 .idl-m > div { display: grid; } .idl-m b { font-weight: 650; }
 .idl-google { display: grid; justify-items: start; margin: .2rem 0 .6rem; }
+.idl-savbtn { display: block; box-sizing: border-box; width: 100%; max-width: 400px; margin: .65rem auto 0; }
+.idl-savbtn > .idl-sav { margin-top: 0; max-width: none; }
 .idl-sav { box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: .65rem; width: 100%; max-width: 400px; min-height: 44px; margin: .65rem auto 0; padding: .4rem 1rem; border: 1px solid #cfcdd6; border-radius: 999px; background: #fff; color: #1c1b22; font: inherit; font-size: .95rem; font-weight: 600; cursor: pointer; box-shadow: none; text-transform: none; letter-spacing: normal; }
 .idl-sav:hover { background: #f5f4f8; }
 .idl-sav.idl-dark { background: #17151d; border-color: #55515f; color: #f2f0f7; } .idl-sav.idl-dark:hover { background: #24212c; }

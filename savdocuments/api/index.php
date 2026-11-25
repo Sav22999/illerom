@@ -2,7 +2,7 @@
 /**
  * SavDocuments — JSON API.  api/index.php?r=<action>
  *
- * Accounts:     auth.config, auth.me, auth.register, auth.login, auth.google, auth.resend, auth.verify, auth.logout,
+ * Accounts:     auth.config, auth.me, auth.register, auth.login, auth.google (and the routes of ../identity/identity.php), auth.resend, auth.verify, auth.logout,
  *               auth.password, auth.forgot, auth.reset, auth.prefs, auth.profile, auth.delete
  * Home:         doc.list, folder.create, folder.rename, folder.delete
  * Documents:    doc.create, doc.get, doc.sync, doc.duplicate, doc.move, doc.star, doc.trash, doc.restore, doc.delete, doc.leave
@@ -184,17 +184,42 @@ function presence(array $d, ?array $u, string $client, string $block): array
         if (random_int(1, 40) === 1) db()->prepare('DELETE FROM ' . t('presence') . ' WHERE seen_at < ?')->execute([gmdate('Y-m-d H:i:s', time() - 600)]);
     }
     if (!$u) return [];
-    $st = db()->prepare('SELECT p.client, p.block, p.user_id, u.name FROM ' . t('presence') . ' p JOIN ' . t('users') . ' u ON u.id = p.user_id WHERE p.doc_id = ? AND p.seen_at > ? AND p.client <> ?');
-    $st->execute([$d['id'], gmdate('Y-m-d H:i:s', time() - 25), $client]);
+    $st = db()->prepare('SELECT p.client, p.block, p.user_id, u.name FROM ' . t('presence') . ' p JOIN ' . t('users') . ' u ON u.id = p.user_id WHERE p.doc_id = ? AND p.seen_at > ? AND p.user_id <> ?');
+    $st->execute([$d['id'], gmdate('Y-m-d H:i:s', time() - 25), $u['id']]);
     return array_map(fn($p) => ['client' => $p['client'], 'name' => $p['name'], 'block' => $p['block'], 'hue' => ((int)$p['user_id'] * 137) % 360], $st->fetchAll());
 }
+
+// ---------- Google and SavAccount: signing in and joining an account that already exists ----------
+
+require dirname(__DIR__, 2) . '/identity/identity.php';
+
+/** The language of the messages of the sign-in: the app sends it with every request. */
+function identity_lang(): string
+{
+    $h = strtolower((string)($_SERVER['HTTP_X_LANG'] ?? ($_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? '')));
+    return strpos($h, 'it') === 0 ? 'it' : 'en';
+}
+
+identity_setup([
+    'name' => 'SavDocuments', 'cookie' => 'savdocuments', 'lang' => fn() => identity_lang(),
+    'fail' => function (string $code, int $http): void {
+        fail($code, $http);
+    },
+    'accepted' => fn(array $b) => !empty($b['acceptTerms']),
+    'create' => fn(array $who, array $b) => new_user($who['name'] ?: explode('@', $who['email'])[0], $who['email'], '', null, ui_lang($b)),
+    'after' => function (int $uid, array $b): void {
+        claim_shares(user_row($uid));
+    },
+    'writer' => fn() => writer(),
+]);
+identity_route($r);
 
 switch ($r) {
 
     // ================================================================ accounts
 
     case 'auth.config':
-        send_json(['ok' => true, 'installed' => true, 'googleClientId' => (string)config_value('google_client_id', ''), 'mailReady' => mail_settings() !== null]);
+        send_json(['ok' => true, 'installed' => true, 'googleClientId' => (string)config_value('google_client_id', ''), 'savAccount' => sav_enabled(), 'mailReady' => mail_settings() !== null]);
 
     case 'auth.me':
         only('GET');
@@ -250,28 +275,8 @@ switch ($r) {
         only('POST');
         if (too_many_attempts('login', 20, 15)) fail('rate_limited', 429);
         $b = body();
-        $g = verify_google_token((string)($b['credential'] ?? ''));
-        $st = db()->prepare('SELECT * FROM ' . t('users') . ' WHERE google_sub = ?');
-        $st->execute([$g['sub']]);
-        $row = $st->fetch();
-        if (!$row) {
-            $st = db()->prepare('SELECT * FROM ' . t('users') . ' WHERE email = ?');
-            $st->execute([$g['email']]);
-            $row = $st->fetch();
-            // Same address already registered: the Google account is linked to it. If nobody confirmed that
-            // address, the password someone else may have chosen is dropped.
-            if ($row) db()->prepare('UPDATE ' . t('users') . ' SET google_sub = ?, password_hash = IF(email_verified_at IS NULL, \'\', password_hash), email_verified_at = COALESCE(email_verified_at, ?) WHERE id = ?')
-                ->execute([$g['sub'], now_utc(), $row['id']]);
-        }
-        if (!$row) {
-            if (empty($b['acceptTerms'])) send_json(['ok' => false, 'error' => 'needs_signup', 'name' => $g['name']], 200);
-            if (too_many_attempts('register', 5, 60)) fail('rate_limited', 429);
-            record_attempt('register');
-            $row = user_row(new_user($g['name'] ?: explode('@', $g['email'])[0], $g['email'], '', $g['sub'], ui_lang($b)));
-            db()->prepare('UPDATE ' . t('users') . ' SET email_verified_at = ? WHERE id = ?')->execute([now_utc(), $row['id']]);
-        }
-        if ($row['status'] !== 'active') fail('disabled', 403);
-        signed_in((int)$row['id']);
+        // Already linked: signs in. An address that has an account: proves it first (../identity/identity.php)
+        ident_sign_in('google', verify_google_token((string)($b['credential'] ?? '')), $b);
 
     case 'auth.resend':
         $u = writer(true);
@@ -835,7 +840,7 @@ switch ($r) {
         require_master();
         $st = db()->query('SELECT r.*, d.pid, d.title, d.status dstatus, o.name owner, o.email, u.name by_name FROM ' . t('reports') . ' r JOIN ' . t('documents') . ' d ON d.id = r.doc_id JOIN ' . t('users') . ' o ON o.id = d.owner_id
             LEFT JOIN ' . t('users') . " u ON u.id = r.user_id ORDER BY r.status = 'closed', r.id DESC LIMIT 200");
-        send_json(['ok' => true, 'reports' => array_map(fn($x) => ['id' => (int)$x['id'], 'doc' => $x['pid'], 'title' => $x['title'], 'owner' => $x['owner'], 'email' => $x['email'], 'by' => $x['by_name'], 'reason' => $x['reason'], 'note' => $x['note'],
+        send_json(['ok' => true, 'reports' => array_map(fn($x) => ['id' => (int)$x['id'], 'doc' => $x['pid'], 'title' => $x['status'] === 'open' ? $x['title'] : $x['pid'], 'owner' => $x['owner'], 'email' => $x['email'], 'by' => $x['by_name'], 'reason' => $x['reason'], 'note' => $x['note'],
             'open' => $x['status'] === 'open', 'suspended' => $x['dstatus'] !== 'active', 'at' => iso($x['created_at'])], $st->fetchAll())]);
 
     case 'master.report':

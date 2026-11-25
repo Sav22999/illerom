@@ -6,6 +6,7 @@
  */
 import { api, uid } from './core.js';
 
+const round8 = (v) => Math.round(v * 1e8) / 1e8;
 const clone = (o) => (o === undefined ? undefined : structuredClone(o));
 
 export class Deck extends EventTarget {
@@ -85,9 +86,14 @@ export class Deck extends EventTarget {
 
   queue(ops) {
     for (const op of ops) {
-      const last = this.pending[this.pending.length - 1];
       // moving or typing makes many small changes of the same thing: only the latest values are sent
-      if (last && op.k === 'el.set' && last.k === 'el.set' && last.s === op.s && last.e === op.e) last.p = { ...last.p, ...clone(op.p) };
+      let same = null;
+      if (op.k === 'el.set') for (let i = this.pending.length - 1; i >= 0 && i > this.pending.length - 60; i--) {
+        const p = this.pending[i];
+        if (p.k === 'el.set' && p.s === op.s && p.e === op.e) { same = p; break; }
+        if (p.k !== 'el.set' && p.s === op.s) break;
+      }
+      if (same) same.p = { ...same.p, ...clone(op.p) };
       else this.pending.push(clone(op));
     }
     this.keep();
@@ -166,11 +172,9 @@ export class Deck extends EventTarget {
       else if (r.ops.length) {
         // in the order of the server, own ones included; then the ones still to be sent, which are newer
         const foreign = r.ops.filter((o) => o.c !== this.client);
-        if (foreign.length) {
-          for (const o of r.ops) this.apply(o.o);
-          for (const op of this.pending) this.apply(op);
-          this.emit('change', { ops: foreign.map((o) => o.o), local: false });
-        }
+        for (const o of r.ops) this.apply(o.o);
+        for (const op of this.pending) this.apply(op);
+        if (foreign.length) this.emit('change', { ops: foreign.map((o) => o.o), local: false });
       }
       if (!r.reload) this.seq = r.seq;
       const names = (p) => p.map((x) => x.c + JSON.stringify(x.st)).join();
@@ -191,12 +195,13 @@ export class Deck extends EventTarget {
   }
 
   /** Where a slide goes so that it lands at the given place. */
-  posAt(i) {
-    const o = this.order();
+  posAt(i, without) {
+    let o = this.order().filter((s) => s.sid !== without);
     if (!o.length) return 1;
-    if (i <= 0) return o[0].pos - 1;
-    if (i >= o.length) return o[o.length - 1].pos + 1;
-    return (o[i - 1].pos + o[i].pos) / 2;
+    if (i <= 0) return round8(o[0].pos - 1);
+    if (i >= o.length) return round8(o[o.length - 1].pos + 1);
+    if (Math.abs(o[i].pos - o[i - 1].pos) < 1e-5) { this.do(o.map((s, n) => ({ k: 'slide.move', s: s.sid, pos: n + 1 }))); o = this.order().filter((s) => s.sid !== without); }
+    return round8((o[i - 1].pos + o[i].pos) / 2);
   }
 }
 

@@ -3,8 +3,9 @@
 `cleanup.php` performs two tasks:
 
 - **Games:** Deletes rooms for Connect Four, Chess, FaceGuess, Sea Battle and Prism Mine that have had no changes and no connected players for 24 hours, along with players, chat messages, and cards. Run once a day, data remains for at most ~48 hours since last activity: this matches the retention stated in privacy policies and store listings.
-- **FoodTrack, Giftwise, Fucina, ThinkHop, Forkville, MyCurriculum and OpenNewsletter:** Cleans up expired sessions and login attempts older than 2 hours (IP addresses are only used for rate limiting over the past 60 minutes) and strips IP/browser data left on sessions from earlier versions. It never alters lists, items, wishes, stats, progress, or other user data.
+- **FoodTrack, Giftwise, Fucina, ThinkHop, Forkville, MyCurriculum, OpenNewsletter and SavDocuments:** Cleans up expired sessions and login attempts older than 2 hours (IP addresses are only used for rate limiting over the past 60 minutes) and strips IP/browser data left on sessions from earlier versions. It never alters lists, items, wishes, stats, progress, or other user data.
 - **OpenNewsletter only:** also deletes subscriptions never confirmed within 7 days (as its terms promise) and expired account-confirmation links.
+- **SavDocuments only:** also deletes documents left in the trash for 30 days, accounts never confirmed within 7 days and expired links.
 
 The same scripts on saveriomorelli.com (`projects/cron/`) forward here what concerns these projects, so jobs scheduled on the old
 addresses keep working. Schedule each job on one address only.

@@ -31,8 +31,8 @@ export const THEMES = {
 
   // ------------------------------------------------------------ classic
   classic: { name: 'Classic', group: 'classic', colors: C('#ffffff', '#1f2a37', '#667085', '#1d4ed8', '#f59e0b', '#eff4ff'), fonts: { head: 'opensans', body: 'opensans' },
-    variants: { cover: { bg: c('@accent'), colors: { fg: '#ffffff', muted: '#c9d8ff', bg: '#1d4ed8', surface: '#2c5be0', accent: '#1d4ed8', accent2: '#fbbf24' } }, section: { bg: c('@accent'), colors: { fg: '#ffffff', muted: '#c9d8ff', bg: '#1d4ed8', surface: '#2c5be0', accent: '#1d4ed8', accent2: '#fbbf24' } } },
-    decor: (v, W, H, s) => v === 'content' ? [sh('rect', 0, 0, W, 10 * s, '@accent')] : [sh('rect', W * .075, H * .5 + 88 * s, 120 * s, 6 * s, '@accent2')] },
+    variants: { cover: { bg: c('@accent'), colors: { fg: '#ffffff', muted: '#c9d8ff', bg: '#1d4ed8', surface: '#2c5be0', accent: '#fbbf24', accent2: '#ffffff', onaccent: '#1f2a37' } }, section: { bg: c('@accent'), colors: { fg: '#ffffff', muted: '#c9d8ff', bg: '#1d4ed8', surface: '#2c5be0', accent: '#fbbf24', accent2: '#ffffff', onaccent: '#1f2a37' } } },
+    decor: (v, W, H, s) => v === 'content' ? [sh('rect', 0, 0, W, 10 * s, '@accent')] : [sh('rect', W * .075, H * .5 + 88 * s, 120 * s, 6 * s, '@accent')] },
   office: { name: 'Boardroom', group: 'classic', colors: C('#fdfdfc', '#14213d', '#69738a', '#14213d', '#d08c2c', '#eef0f4'), fonts: { head: 'sourcesans', body: 'sourcesans' },
     variants: { cover: { bg: c('#14213d'), colors: { fg: '#ffffff', muted: '#aab4c9', bg: '#14213d', accent: '#d08c2c', surface: '#22304f' } }, section: { bg: c('#14213d'), colors: { fg: '#ffffff', muted: '#aab4c9', bg: '#14213d', accent: '#d08c2c', surface: '#22304f' } } },
     decor: (v, W, H, s) => v === 'content' ? [sh('rect', 0, H - 14 * s, W, 14 * s, '@fg'), sh('rect', 0, H - 14 * s, W * .18, 14 * s, '@accent2')] : [sh('rect', 0, 0, 22 * s, H, '@accent2')] },

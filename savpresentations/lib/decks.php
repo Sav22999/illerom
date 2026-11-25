@@ -61,6 +61,12 @@ function require_deck(?array $u, string $uid, string $min = 'viewer'): array
     return [$d, $role];
 }
 
+/** The order of a slide: a slide dropped between two others halves the distance, so it keeps 8 decimals (assets/model.js renumbers when they end). */
+function slide_pos($v): ?float
+{
+    return is_numeric($v) && is_finite((float)$v) && abs((float)$v) < 100000 ? round((float)$v, 8) : null;
+}
+
 function new_uid(): string
 {
     $abc = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
@@ -158,7 +164,7 @@ function apply_ops(array $deck, array $u, string $client, array $ops): int
                 }
                 break;
             case 'slide.add':
-                $pos = clean_num($op['pos'] ?? null, -1e9, 1e9);
+                $pos = slide_pos($op["pos"] ?? null);
                 if ($pos === null) break;
                 $cnt = $db->prepare('SELECT COUNT(*) FROM ' . t('slides') . ' WHERE deck_id = ?');
                 $cnt->execute([$deck['id']]);
@@ -176,7 +182,7 @@ function apply_ops(array $deck, array $u, string $client, array $ops): int
                 $clean = ['k' => $k, 's' => $sid];
                 break;
             case 'slide.move':
-                $pos = clean_num($op['pos'] ?? null, -1e9, 1e9);
+                $pos = slide_pos($op["pos"] ?? null);
                 if ($pos === null) break;
                 $db->prepare('UPDATE ' . t('slides') . ' SET pos = ? WHERE deck_id = ? AND sid = ?')->execute([$pos, $deck['id'], $sid]);
                 $clean = ['k' => $k, 's' => $sid, 'pos' => $pos];

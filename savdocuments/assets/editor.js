@@ -84,7 +84,7 @@ export class Editor {
     this.undoStack = [];
     this.redoStack = [];
     this.dirty.clear();
-    applySettings(this.paper, this.settings);
+    this.dress();
     this.decorate();
     this.observe();
     this.layout();
@@ -104,7 +104,8 @@ export class Editor {
   note(records) {
     for (const r of records) {
       const b = r.target === this.ed ? null : this.topOf(r.target);
-      if (b) this.dirty.add(b); else if (r.target === this.ed) this.dirtyOrder = true;
+      if (b) this.dirty.add(b);
+      else if (r.target === this.ed) { this.dirtyOrder = true; for (const n of r.addedNodes) if (n.nodeType === 1) this.dirty.add(n); }
     }
   }
 
@@ -213,7 +214,7 @@ export class Editor {
         else if (o.t === 'mov' && n) place(n);
       }
       this.model(ops);
-      if (ops.some((o) => o.t === 'settings')) applySettings(this.paper, this.settings);
+      if (ops.some((o) => o.t === 'settings')) this.dress();
       this.decorate();
     });
     if (keep && document.activeElement === this.ed) this.setCaret(keep);
@@ -223,7 +224,7 @@ export class Editor {
   record(ops, inv, merge = true) {
     const last = this.undoStack.at(-1), t = Date.now();
     const caret = this.caret();
-    if (merge && last && t - last.at < 900 && last.ops.length === 1 && ops.length === 1 && last.ops[0].t === 'set' && ops[0].t === 'set' && last.ops[0].id === ops[0].id) {
+    if (merge && !this._fresh && last && t - last.at < 900 && last.ops.length === 1 && ops.length === 1 && last.ops[0].t === 'set' && ops[0].t === 'set' && last.ops[0].id === ops[0].id) {
       last.ops = ops; last.at = t; last.after = caret;
     } else this.undoStack.push({ ops, inv, at: t, before: this._before || caret, after: caret });
     if (this.undoStack.length > 300) this.undoStack.shift();
@@ -237,7 +238,7 @@ export class Editor {
     const inv = op.t === 'settings' ? { t: 'settings', s: this.settings } : { t: 'title', title: this.title };
     this.model([op]);
     this.record([op], [inv], false);
-    if (op.t === 'settings') applySettings(this.paper, this.settings);
+    if (op.t === 'settings') this.dress();
     this.opt.onChange([op]);
     this.quiet(() => this.decorate());
     this.later();
@@ -268,14 +269,18 @@ export class Editor {
     this.quiet(() => {
       this.pager.zoom = this.opt.zoom?.() || 1;
       this.pager.layout(this.settings, this.title);
+      this.placeGrip();
       for (const a of this.ed.querySelectorAll('.toc a')) {
         const t = document.getElementById(a.getAttribute('href').slice(1));
-        const p = t ? String(this.pager.pageAt(this.pager.y(t.getBoundingClientRect()) + (parseFloat(t.style.paddingTop) || 0) + 2)) : '';
+        const p = t ? String(this.pager.pageOfText(t)) : '';
         if (a.dataset.p !== p) a.dataset.p = p;
       }
     });
     this.opt.onLayout?.();
   }
+
+  /** The settings on the paper. */
+  dress(st = this.settings) { applySettings(this.paper, st); this.opt.onDress?.(); }
 
   /** What is drawn but not saved: pictures, table columns, numbers, table of contents, notes. */
   decorate() {
@@ -419,11 +424,17 @@ export class Editor {
       if (node.matches('figure')) {
         const g = el('<span data-ui="grip" contenteditable="false"></span>');
         node.append(g);
+        this.placeGrip();
         g.addEventListener('pointerdown', (e) => this.resizeFigure(e, node, g));
       }
     });
     if (node) { getSelection().removeAllRanges(); this.ed.focus({ preventScroll: true }); getSelection().removeAllRanges(); }
     this.emitSelect();
+  }
+
+  placeGrip() {
+    const g = this.sel?.querySelector?.('[data-ui=grip]'), i = this.sel?.querySelector?.('img');
+    if (g && i) { g.style.left = i.offsetLeft + i.offsetWidth + 'px'; g.style.top = i.offsetTop + i.offsetHeight + 'px'; }
   }
 
   resizeFigure(e, f, g) {
@@ -484,8 +495,12 @@ export class Editor {
     this.scan();
     this._before = this.caret();
     if (!this.sel) this.ed.focus({ preventScroll: true });
+    this._fresh = true;
     const out = fn();
     this.scan();
+    this._fresh = false;
+    const last = this.undoStack.at(-1);
+    if (last) last.at = 0; // what is typed next is another step
     this.emitSelect();
     return out;
   }
@@ -574,7 +589,14 @@ export class Editor {
   flatten(b) {
     if (isList(b)) {
       const out = [];
-      const walk = (list) => { for (const li of list.children) { const p = document.createElement('p'), subs = []; for (const c of [...li.childNodes]) (c.nodeType === 1 && isList(c) ? subs : p.childNodes && [p]).forEach?.((x) => (x === p ? p.append(c) : 0)), c.nodeType === 1 && isList(c) && !subs.includes(c) && subs.push(c); out.push(fill(p)); subs.forEach(walk); } };
+      const walk = (list) => {
+        for (const li of [...list.children]) {
+          const p = document.createElement('p'), subs = [...li.children].filter(isList);
+          for (const c of [...li.childNodes]) if (!subs.includes(c)) p.append(c);
+          out.push(fill(p));
+          subs.forEach(walk);
+        }
+      };
       walk(b);
       out[0].id = b.id;
       b.replaceWith(...out);
@@ -662,7 +684,7 @@ export class Editor {
         return;
       }
       for (const b of this.selected()) {
-        if (!b.matches('p,h1,h2,h3,h4,blockquote,table,.callout')) continue;
+        if (!b.matches('p,h1,h2,h3,h4')) continue;
         const v = Math.max(0, Math.min(216, (parseFloat(b.style.marginLeft) || 0) + dir * 18));
         b.style.marginLeft = v ? v + 'pt' : '';
       }
@@ -1007,8 +1029,7 @@ export class Editor {
       x.deleteContents();
       b.querySelectorAll('li').forEach((l) => { if (!l.textContent && !l.querySelector('img,br')) l.remove(); });
     };
-    const fullTables = (b) => b.matches('table') && b !== a && b !== z;
-    for (const b of all.slice(1, -1)) if (!fullTables(b) || true) b.remove();
+    for (const b of all.slice(1, -1)) b.remove();
     cut(z, null, inZ);
     cut(a, inA, null);
     if (!a.isConnected && !z.isConnected) {
@@ -1045,15 +1066,26 @@ export class Editor {
     getSelection().addRange(r);
   }
 
+  /** An item joins the text of the one above (its deepest last item); its own sub-list follows it. */
+  mergeItems(prev, li) {
+    let into = prev;
+    while (into.lastElementChild && isList(into.lastElementChild)) into = into.lastElementChild.lastElementChild;
+    const subs = [...li.children].filter(isList), p = document.createElement('p');
+    for (const c of [...li.childNodes]) if (!subs.includes(c)) p.append(c);
+    li.remove();
+    this.merge(into, p);
+    into.append(...subs);
+  }
+
   backspace(r) {
     const li = this.item(), cell = this.cell();
     if (li && atStart(li, r)) {
       const prev = li.previousElementSibling;
       if (prev && !cell) { // joins the item above
-        this.merge(Object.assign(prev, {}), li.childNodes.length ? li : li);
+        this.mergeItems(prev, li);
         return true;
       }
-      if (cell && !li.parentNode.parentNode.closest('li')) { if (prev) { this.merge(prev, li); return true; } const l = li.parentNode; cell.prepend(...li.childNodes); li.remove(); if (!l.children.length) l.remove(); this.collapse(cell); return true; }
+      if (cell && !li.parentNode.parentNode.closest('li')) { if (prev) { this.mergeItems(prev, li); return true; } const l = li.parentNode; cell.prepend(...li.childNodes); li.remove(); if (!l.children.length) l.remove(); this.collapse(cell); return true; }
       this.unnest(li);
       return true;
     }
@@ -1135,8 +1167,17 @@ export class Editor {
       if (cell) document.execCommand('insertLineBreak');
       else { const f = node.closest('figure'), top = this.topOf(f); if (top === f) { let n = f.nextElementSibling; if (!n || !isText(n)) { n = el('<p><br></p>'); f.after(n); } this.ed.focus(); this.collapse(n); } }
     } else if (b.matches('pre')) {
-      const t = b.textContent;
-      if (atEnd(b, r) && /\n\n?$/.test(t) && t.trim()) { b.textContent = t.replace(/\n+$/, ''); const p = el('<p><br></p>'); b.after(p); this.collapse(p); } else document.execCommand('insertText', false, atEnd(b, r) && !/\n$/.test(t) ? '\n\n' : '\n'), atEnd(b, this.range()) && getSelection().modify?.('move', 'backward', 'character');
+      b.querySelectorAll('br').forEach((x) => x.replaceWith('\n'));
+      const o = this.offset(b, r.startContainer, r.startOffset), t = b.textContent, rest = t.slice(o);
+      if (/^\n?$/.test(rest) && /\n$/.test(t.slice(0, o)) && t.trim()) { // two empty lines at the end: out of the block
+        b.textContent = t.replace(/\n+$/, '');
+        const p = el('<p><br></p>');
+        b.after(p);
+        this.collapse(p);
+      } else { // the last line break of a block is not drawn: there must be one more
+        b.textContent = t.slice(0, o) + '\n' + (rest || '\n');
+        this.setCaret({ a: { id: b.id, o: o + 1 }, b: { id: b.id, o: o + 1 } });
+      }
     } else if (b.matches('blockquote') && !node.closest('blockquote p')) {
       if (atEnd(b, r) && (!b.textContent || b.lastChild?.localName === 'br' && b.lastChild.previousSibling?.localName === 'br')) { while (b.lastChild?.localName === 'br') b.lastChild.remove(); const p = el('<p><br></p>'); if (b.textContent) b.after(p); else b.replaceWith(p); this.collapse(p); } else document.execCommand('insertLineBreak');
     } else if (b.matches('.callout,.beside')) {

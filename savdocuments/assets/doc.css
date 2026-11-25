@@ -51,6 +51,7 @@
 .doc ul.check > li::before { content: ''; position: absolute; left: -1.75em; top: .28em; width: 1em; height: 1em; box-sizing: border-box; border: 1.5px solid currentColor; border-radius: 3px; cursor: pointer; opacity: .75; }
 .doc ul.check > li[data-c="1"]::before { background: #0f6e56 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.500l4.500 4.500L19 7.500'/%3E%3C/svg%3E") center/80% no-repeat; border-color: #0f6e56; opacity: 1; }
 .doc ul.check > li[data-c="1"] { text-decoration: line-through; text-decoration-color: rgb(0 0 0 / .3); }
+.doc ul.check > li.cont::before { display: none; }
 .doc blockquote { display: flow-root; margin: 0 0 var(--pgap); padding: .1em 0 .1em 1em; border-left: 3px solid color-mix(in srgb, var(--hink) 45%, #fff); font-style: italic; white-space: break-spaces; }
 .doc blockquote p, .doc .callout p, .doc td p, .doc li p { margin: 0; }
 .doc pre { display: flow-root; padding: .8em 1em; background: #f3f4f1; border-radius: 4px; font: .88em/1.5 ui-monospace, Menlo, Consolas, 'Courier New', monospace; white-space: pre-wrap; }
@@ -60,6 +61,9 @@
 .doc .callout[data-k=tip] { background: #e9f5ef; border-color: #0f6e56; }
 .doc .callout[data-k=warn] { background: #fdf1ea; border-color: #d85a30; }
 .doc .tall { display: block; }
+/* what stays together has a fixed width: otherwise browsers squeeze it in the last line of a page instead of moving it */
+.doc blockquote, .doc pre, .doc .callout, .doc .beside, .doc tr, .doc figure, .doc hr { box-sizing: border-box; width: 100%; }
+.doc figure { display: flow-root; }
 .doc hr { border: 0; height: 1px; background: #b9bfba; margin: 1.2em 0; overflow: hidden; }
 .doc a { color: #0f5f8f; text-decoration: underline; text-underline-offset: 2px; }
 .doc sub, .doc sup { line-height: 0; }
@@ -72,7 +76,7 @@
 .doc figcaption { font-size: .85em; opacity: .75; margin-top: .35em; min-height: 1.2em; line-height: 1.35; }
 .doc figure:not(.sel) figcaption:empty, .doc figure:not(.sel) figcaption:has(> br:only-child) { display: none; }
 .doc .beside { display: flow-root; }
-.doc .beside figure { float: left; margin: .25em 1.2em .5em 0; }
+.doc .beside figure { float: left; width: auto; margin: .25em 1.2em .5em 0; }
 .doc .beside[data-k=r] figure { float: right; margin: .25em 0 .5em 1.2em; }
 .doc .beside figure img { width: 100%; }
 .doc .beside > p { margin: 0 0 var(--pgap); }
@@ -105,18 +109,21 @@
 .editing .doc .pb { min-height: 0; overflow: visible; cursor: pointer; }
 .editing .doc .pb::before { content: attr(data-label); position: absolute; left: 0; right: 0; top: 2px; font: 500 11px/1 Inter, sans-serif; color: #7b8a82; text-align: center; border-top: 1px dashed #b9c4bd; padding-top: 4px; pointer-events: none; }
 .editing .doc figure img, .editing .doc hr, .editing .doc .toc { cursor: pointer; }
-.editing .doc .sel { outline: 2px solid #d85a30; outline-offset: 3px; border-radius: 2px; }
+.doc figure { position: relative; }
+.editing .doc figure.sel img { outline: 2px solid #d85a30; outline-offset: 1px; }
+.editing .doc .sel:not(figure) { outline: 2px solid #d85a30; outline-offset: 3px; border-radius: 2px; }
 .editing .doc td.csel, .editing .doc th.csel { background: #fbe6dd !important; }
 .editing .doc.empty-hint > :only-child::before { content: attr(data-hint); color: #9aa59f; position: absolute; pointer-events: none; font-style: normal; }
 .doc.focus > * { opacity: .28; transition: opacity .2s; }
 .doc.focus > .cur { opacity: 1; }
 
 .print-pages { display: none; }
+.psheet { position: relative; width: var(--pw); height: calc(var(--ph) - .5px); overflow: hidden; break-after: page; break-inside: avoid; background: #fff; }
+.psheet:last-child { break-after: auto; }
 @media print {
   html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; height: auto !important; overflow: visible !important; }
   body.printing > *:not(.print-pages) { display: none !important; }
   .print-pages { display: block; color: #1c1c1c; }
-  .psheet { position: relative; width: var(--pw); height: calc(var(--ph) - .5px); overflow: hidden; break-after: page; break-inside: avoid; }
-  .psheet:last-child { break-after: auto; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+.fluid .doc .toc a::after { display: none; }

@@ -263,13 +263,15 @@ function names_of(array $ids): array
 
 // ---------------------------------------------------------------- free images (Openverse and Wikimedia Commons)
 
+const WIKIMEDIA_RE = '#^https://(upload|thumb)\.wikimedia\.org/[A-Za-z0-9%/_.,()!~*\'+:-]+$#';
+
 function http_get(string $url, int $maxBytes, int $timeout = 12): ?string
 {
     if (!function_exists('curl_init')) return null;
     $buf = '';
     $ch = curl_init($url);
     curl_setopt_array($ch, [CURLOPT_TIMEOUT => $timeout, CURLOPT_CONNECTTIMEOUT => 6, CURLOPT_FOLLOWLOCATION => false, CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
-        CURLOPT_USERAGENT => 'SavDocuments/1.0 (+https://www.illerom.eu)',
+        CURLOPT_USERAGENT => 'DocumentEditor/1.0',
         CURLOPT_WRITEFUNCTION => function ($c, $chunk) use (&$buf, $maxBytes) {
             $buf .= $chunk;
             return strlen($buf) > $maxBytes ? 0 : strlen($chunk);
@@ -293,11 +295,11 @@ function search_images(string $q, int $page): array
             'gsroffset' => ($page - 1) * 12, 'prop' => 'imageinfo', 'iiprop' => 'url|extmetadata', 'iiurlwidth' => 1600, 'iiextmetadatafilter' => 'LicenseShortName|Artist']), 2000000);
     foreach (json_decode((string)$raw, true)['query']['pages'] ?? [] as $p) {
         $i = $p['imageinfo'][0] ?? null;
-        $url = (string)($i['thumburl'] ?? '');
-        if (!$i || strpos($url, 'https://upload.wikimedia.org/') !== 0) continue;
+        $url = strtok((string)($i['thumburl'] ?? ''), '?') ?: '';
+        if (!$i || !preg_match(WIKIMEDIA_RE, $url)) continue;
         $lic = trim(strip_tags((string)($i['extmetadata']['LicenseShortName']['value'] ?? '')));
         if (!preg_match('/^(cc0|cc by(-sa)? |public domain)/i', $lic)) continue;
-        $out[] = ['src' => 'wm:' . $url, 'thumb' => $url, 'title' => mb_substr(preg_replace('/^File:|\.\w+$/', '', (string)$p['title']), 0, 120), 'author' => mb_substr(trim(html_entity_decode(strip_tags((string)($i['extmetadata']['Artist']['value'] ?? '')))), 0, 80),
+        $out[] = ['src' => 'wm:' . $url, 'thumb' => preg_replace('#/\d+px-#', '/330px-', $url), 'title' => mb_substr(preg_replace('/^File:|\.\w+$/', '', (string)$p['title']), 0, 120), 'author' => mb_substr(trim(html_entity_decode(strip_tags((string)($i['extmetadata']['Artist']['value'] ?? '')))), 0, 80),
             'license' => $lic, 'page' => (string)($i['descriptionurl'] ?? ''), 'from' => 'Wikimedia Commons'];
     }
     return $out;
@@ -306,7 +308,7 @@ function search_images(string $q, int $page): array
 function fetch_free_image(string $src): string
 {
     if (preg_match('/^ov:([a-f0-9-]{36})$/', $src, $m)) $url = 'https://api.openverse.org/v1/images/' . $m[1] . '/thumb/?full_size=true';
-    elseif (preg_match('#^wm:(https://upload\.wikimedia\.org/[^\s\\\\]+)$#', $src, $m)) $url = $m[1];
+    elseif (strpos($src, 'wm:') === 0 && preg_match(WIKIMEDIA_RE, substr($src, 3))) $url = substr($src, 3);
     else fail('image_invalid', 422);
     $bin = http_get($url, MAX_IMAGE_BYTES + 1, 20);
     if ($bin === null) fail('image_fetch', 502);

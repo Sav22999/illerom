@@ -1,0 +1,45 @@
+# SavDocuments
+
+A word processor where the page comes first: real pages, tables, images, Word files, people writing together. With an account
+the documents are kept on the server; without one they stay in the browser. <https://www.illerom.eu/savdocuments/>
+
+## Stack
+
+- PHP 7.4+ and MySQL 5.7+ / MariaDB 10.3+ (PDO), tables prefixed `sd_`, created by the API at its first answer.
+- No build step and no libraries: ES modules in `assets/`. Controls: SavComponents (Soft style) from `../assets/sav/`.
+- Google and SavAccount sign-in: `../identity/`.
+
+| Path | What |
+| --- | --- |
+| `api/index.php` | JSON API (the actions are listed at its top) |
+| `lib/docs.php` | Who can open a document, how changes are applied, versions, free images |
+| `lib/clean.php`, `assets/clean.js` | **What a document may contain: the same list in two languages, keep them in step** |
+| `assets/editor.js` | The editor: blocks, commands, tables, clipboard, undo |
+| `assets/page.js` | Pages on screen and for printing |
+| `assets/sync.js` | Saving, merging, offline changes |
+| `assets/write.js`, `app.js` | The writing screen; home, accounts, settings, administration |
+| `assets/docx.js`, `files.js`, `zip.js` | Word, .savdoc, HTML, Markdown and text files |
+| `sw.js` | Offline shell: bump `CACHE` when the list of files changes |
+
+## Install
+
+1. Copy `credentials-sample.php` to `credentials.php` (git-ignored) and fill it in.
+2. Google: add `https://www.illerom.eu` to the origins of the OAuth client. SavAccount: see the sample.
+3. `cron/cleanup.php` already cleans this project every day.
+
+## How it works
+
+- **Document** = `{settings, blocks: [{id, h, v}]}`. A block is one top-level element (paragraph, list, table, figure…); `h` is
+  its clean HTML, `v` its version. Browsers send operations on whole blocks (`set`, `ins`, `del`, `mov`, `settings`, `title`).
+  A `set` that starts from an old version is refused: the browser merges the two texts and tries again (`merge3`).
+- **Writing together** is polling: every 2 seconds while someone else is there, 7 alone. `sd_ops` keeps the last 600 changes.
+- **Pages**: one column of text preceded by a chain of floats that leave room for the margins between pages, so paragraphs and
+  tables break without touching their content. What stays together needs a fixed width. For printing each page is cut exactly
+  as on screen (`Pager.printable`). Narrow screens show continuous text.
+- **Roles**: viewer, commenter, editor, owner. Comments with `private = 1` are personal notes. Links can be single-use (7 days).
+- **Master admins** see owners and sizes, never texts; a document can be read only while a report on it is open.
+
+## .savdoc
+
+A ZIP: `mimetype` (`application/vnd.savdocuments.document+zip`), `document.json`
+(`{format: "savdoc", version: 1, title, settings, blocks}`) and the pictures in `media/<id>.<ext>`.

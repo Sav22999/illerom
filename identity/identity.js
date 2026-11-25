@@ -180,11 +180,10 @@ window.Identity = (() => {
       });
       let google = null;
       if (!d.google && d.available.google && cfg.google) { google = el('div', { class: 'idl-google' }); setTimeout(() => cfg.google(google, async (credential) => { try { d = await call('auth.methods.link', { provider: 'google', credential }); say(m, ''); draw(); } catch (x) { say(m, errText(x)); } }), 0); }
-      w.body.replaceChildren(el('p', {}, t('methods_text')), row('password', d.password),
+      w.body.replaceChildren(...[el('p', {}, t('methods_text')), row('password', d.password),
         d.google || d.available.google ? row('google', d.google, d.google ? un('google') : null) : null, google,
         d.savaccount || available(d.available.savaccount) ? row('savaccount', d.savaccount, d.savaccount ? un('savaccount') : button(t('link'), () => start('connect').catch((x) => say(m, errText(x))))) : null,
-        m, el('div', { class: 'idl-row' }, button(t('close'), () => w.close(), 'main')));
-      w.body.querySelectorAll(':scope > *').forEach((n) => { if (n.nodeType === 3) n.remove(); });
+        m, el('div', { class: 'idl-row' }, button(t('close'), () => w.close(), 'main'))].filter(Boolean)); // replaceChildren would write a missing one as "null"
     };
     draw();
   }
@@ -193,10 +192,26 @@ window.Identity = (() => {
   /** Not inside the Android apps published before SavAccount: there its page would open outside the app. */
   const available = (on) => !!on && !(/App\/Android/.test(navigator.userAgent) && !/ SavAccount\b/.test(navigator.userAgent));
   async function start(mode) { location.href = (await call('auth.sav.start', { mode })).url; }
+  /**
+   * The official button (https://www.savaccount.eu/docs). Its script is asked only where the button is shown; until it
+   * arrives, or if it cannot, the plain one inside the element is there and does the same.
+   */
+  const BUTTON = 'https://www.savaccount.eu/button/v1/savaccount.js';
+  let asked = false;
   function savButton(enabled) {
     if (!available(enabled)) return null;
-    const b = el('button', { type: 'button', class: 'idl-sav' + (dark() ? ' idl-dark' : '') }, el('img', { src: base + 'savaccount.svg', alt: '', width: 20, height: 20 }), t('sav_button'));
-    b.addEventListener('click', () => busy(b, () => start('login')).catch((e) => note(errText(e))));
+    const lang = String(cfg.lang()).slice(0, 2);
+    const go = (b) => busy(b, () => start('login')).catch((e) => note(errText(e)));
+    const plain = el('button', { type: 'button', class: 'idl-sav' + (dark() ? ' idl-dark' : '') }, el('img', { src: base + 'savaccount.svg', alt: '', width: 20, height: 20 }), t('sav_button'));
+    plain.addEventListener('click', () => go(plain));
+    const b = el('savaccount-button', { class: 'idl-savbtn', block: true, shape: 'rounded', theme: dark() ? 'dark' : 'light', lang }, plain);
+    b.addEventListener('savaccount-start', (e) => { e.preventDefault(); b.setAttribute('disabled', ''); start('login').catch((x) => note(errText(x))).finally(() => setTimeout(() => b.removeAttribute('disabled'), 1500)); });
+    if (!asked && !customElements.get('savaccount-button')) {
+      asked = true;
+      const s = el('script', { src: BUTTON, referrerpolicy: 'strict-origin' });
+      s.async = true;
+      document.head.append(s);
+    }
     return b;
   }
 

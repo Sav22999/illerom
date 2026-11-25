@@ -21,12 +21,12 @@ header("Content-Security-Policy: frame-ancestors 'self'");
     <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
     <link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-    <link rel="stylesheet" href="../identity/identity.css?v=1">
+    <link rel="stylesheet" href="../identity/identity.css?v=2">
     <link rel="stylesheet" href="assets/app.css?v=20">
 </head>
 <body>
 <div id="app"><noscript>OpenNewsletter needs JavaScript.</noscript></div>
-<script defer src="../identity/identity.js?v=1"></script>
+<script defer src="../identity/identity.js?v=3"></script>
 <script type="module" src="assets/app.js?v=20"></script>
 </body>
 </html>

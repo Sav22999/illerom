@@ -81,7 +81,7 @@ export function cleanNode(n, depth = 0) {
     case 'td': case 'th': num('colspan', 30); num('rowspan', 200); break;
     case 'col': return `<col${at}>`;
     case 'hr': return '<hr>';
-    case 'br': return '<br>';
+    case 'br': return n.closest('pre') ? '\n' : '<br>';
     case 'span': if (!at) return inner; break;
   }
   return `<${tag}${at}>${inner}</${tag}>`;
