@@ -29,27 +29,43 @@ class PrismMineEngine
         'medium' => ['gems' => 4, 'size' => 8, 'colors' => ['R', 'Y', 'B', 'W'], 'extra' => null],
         'hard' => ['gems' => 5, 'size' => 10, 'colors' => ['R', 'Y', 'B', 'W'], 'extra' => ['C', 'K']],
     ];
+    private static ?array $orientations = null;
 
     public static function sizeOf(string $level): int
     {
         return (self::LEVELS[$level] ?? self::LEVELS['medium'])['size'];
     }
 
-    private static ?array $orientations = null;
-
-    private static function normalize(array $cells): array
+    public static function sameSet(array $a, array $b): bool
     {
-        $minR = min(array_column($cells, 0));
-        $minC = min(array_column($cells, 1));
-        $out = array_map(fn($x) => [$x[0] - $minR, $x[1] - $minC, $x[2]], $cells);
-        usort($out, fn($a, $b) => $a[0] <=> $b[0] ?: $a[1] <=> $b[1]);
-        return $out;
+        return count($a) === count($b) && self::gemSetKey($a) === self::gemSetKey($b);
     }
 
-    private static function rotateCells(array $cells): array
+    private static function gemSetKey(array $gems): string
     {
-        $h = max(array_column($cells, 0)) + 1;
-        return self::normalize(array_map(fn($x) => [$x[1], $h - 1 - $x[0], self::ROTATE_TYPE[$x[2]]], $cells));
+        $keys = array_map(fn($g) => $g['shape'] . $g['color'], $gems);
+        sort($keys);
+        return implode(',', $keys);
+    }
+
+    public static function randomLayout(array $set, int $size = self::SIZE): array
+    {
+        $orient = self::orientations();
+        while (true) {
+            $gems = [];
+            foreach ($set as $g => $gem) {
+                for ($tries = 0; $tries < 200; $tries++) {
+                    $try = $gems;
+                    $try[$g] = ['shape' => $gem['shape'], 'color' => $gem['color'], 'r' => random_int(0, $size - 1), 'c' => random_int(0, $size - 1), 'rot' => random_int(0, count($orient[$gem['shape']]) - 1)];
+                    if (self::buildMap($try, $size) !== null) {
+                        $gems = $try;
+                        break;
+                    }
+                }
+                if (count($gems) !== $g + 1) continue 2;
+            }
+            return $gems;
+        }
     }
 
     public static function orientations(): array
@@ -69,18 +85,19 @@ class PrismMineEngine
         return self::$orientations;
     }
 
-    public static function gemCells(array $gem, int $size = self::SIZE): ?array
+    private static function normalize(array $cells): array
     {
-        $list = self::orientations()[$gem['shape']];
-        $n = count($list);
-        $out = [];
-        foreach ($list[(($gem['rot'] % $n) + $n) % $n] as [$dr, $dc, $t]) {
-            $r = $gem['r'] + $dr;
-            $c = $gem['c'] + $dc;
-            if ($r < 0 || $r >= $size || $c < 0 || $c >= $size) return null;
-            $out[] = [$r, $c, $t];
-        }
+        $minR = min(array_column($cells, 0));
+        $minC = min(array_column($cells, 1));
+        $out = array_map(fn($x) => [$x[0] - $minR, $x[1] - $minC, $x[2]], $cells);
+        usort($out, fn($a, $b) => $a[0] <=> $b[0] ?: $a[1] <=> $b[1]);
         return $out;
+    }
+
+    private static function rotateCells(array $cells): array
+    {
+        $h = max(array_column($cells, 0)) + 1;
+        return self::normalize(array_map(fn($x) => [$x[1], $h - 1 - $x[0], self::ROTATE_TYPE[$x[2]]], $cells));
     }
 
     public static function buildMap(array $gems, int $size = self::SIZE): ?array
@@ -97,25 +114,41 @@ class PrismMineEngine
         return $map;
     }
 
-    private static function portStart(int $p, int $size): array
-    {
-        $side = intdiv($p, $size);
-        $k = $p % $size;
-        if ($side === 0) return [0, $k, 2];
-        if ($side === 1) return [$k, $size - 1, 3];
-        if ($side === 2) return [$size - 1, $size - 1 - $k, 0];
-        return [$size - 1 - $k, 0, 1];
-    }
-
-    private static function exitPort(int $r, int $c, int $d, int $size): int
-    {
-        if ($d === 0) return $c;
-        if ($d === 1) return $size + $r;
-        if ($d === 2) return 2 * $size + ($size - 1 - $c);
-        return 3 * $size + ($size - 1 - $r);
-    }
-
     // ['exit' => port or null, 'colors' => sorted letters]
+
+    public static function gemCells(array $gem, int $size = self::SIZE): ?array
+    {
+        $list = self::orientations()[$gem['shape']];
+        $n = count($list);
+        $out = [];
+        foreach ($list[(($gem['rot'] % $n) + $n) % $n] as [$dr, $dc, $t]) {
+            $r = $gem['r'] + $dr;
+            $c = $gem['c'] + $dc;
+            if ($r < 0 || $r >= $size || $c < 0 || $c >= $size) return null;
+            $out[] = [$r, $c, $t];
+        }
+        return $out;
+    }
+
+    public static function isCorrect(array $guess, array $hidden, int $size = self::SIZE): bool
+    {
+        if (count($guess) !== count($hidden) || self::gemSetKey($guess) !== self::gemSetKey($hidden)) return false;
+        $sig = self::signature($guess, $size);
+        return $sig !== null && $sig === self::signature($hidden, $size);
+    }
+
+    public static function signature(array $gems, int $size = self::SIZE): ?string
+    {
+        $map = self::buildMap($gems, $size);
+        if ($map === null) return null;
+        $out = [];
+        for ($p = 0; $p < $size * 4; $p++) {
+            $res = self::trace($map, $gems, $p);
+            $out[] = ($res['exit'] === null ? 'x' : $res['exit']) . ':' . $res['colors'];
+        }
+        return implode('|', $out);
+    }
+
     public static function trace(array $map, array $gems, int $port): array
     {
         $size = count($map); // the size of the mine is the size of the map
@@ -141,56 +174,24 @@ class PrismMineEngine
         return ['exit' => null, 'colors' => ''];
     }
 
-    public static function signature(array $gems, int $size = self::SIZE): ?string
-    {
-        $map = self::buildMap($gems, $size);
-        if ($map === null) return null;
-        $out = [];
-        for ($p = 0; $p < $size * 4; $p++) {
-            $res = self::trace($map, $gems, $p);
-            $out[] = ($res['exit'] === null ? 'x' : $res['exit']) . ':' . $res['colors'];
-        }
-        return implode('|', $out);
-    }
-
-    private static function gemSetKey(array $gems): string
-    {
-        $keys = array_map(fn($g) => $g['shape'] . $g['color'], $gems);
-        sort($keys);
-        return implode(',', $keys);
-    }
-
-    public static function sameSet(array $a, array $b): bool
-    {
-        return count($a) === count($b) && self::gemSetKey($a) === self::gemSetKey($b);
-    }
-
     // The given gems (shape and colour) placed at random, without overlaps
-    public static function randomLayout(array $set, int $size = self::SIZE): array
+
+    private static function portStart(int $p, int $size): array
     {
-        $orient = self::orientations();
-        while (true) {
-            $gems = [];
-            foreach ($set as $g => $gem) {
-                for ($tries = 0; $tries < 200; $tries++) {
-                    $try = $gems;
-                    $try[$g] = ['shape' => $gem['shape'], 'color' => $gem['color'], 'r' => random_int(0, $size - 1), 'c' => random_int(0, $size - 1), 'rot' => random_int(0, count($orient[$gem['shape']]) - 1)];
-                    if (self::buildMap($try, $size) !== null) {
-                        $gems = $try;
-                        break;
-                    }
-                }
-                if (count($gems) !== $g + 1) continue 2;
-            }
-            return $gems;
-        }
+        $side = intdiv($p, $size);
+        $k = $p % $size;
+        if ($side === 0) return [0, $k, 2];
+        if ($side === 1) return [$k, $size - 1, 3];
+        if ($side === 2) return [$size - 1, $size - 1 - $k, 0];
+        return [$size - 1 - $k, 0, 1];
     }
 
-    public static function isCorrect(array $guess, array $hidden, int $size = self::SIZE): bool
+    private static function exitPort(int $r, int $c, int $d, int $size): int
     {
-        if (count($guess) !== count($hidden) || self::gemSetKey($guess) !== self::gemSetKey($hidden)) return false;
-        $sig = self::signature($guess, $size);
-        return $sig !== null && $sig === self::signature($hidden, $size);
+        if ($d === 0) return $c;
+        if ($d === 1) return $size + $r;
+        if ($d === 2) return 2 * $size + ($size - 1 - $c);
+        return 3 * $size + ($size - 1 - $r);
     }
 
     public static function generate(string $level): array

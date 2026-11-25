@@ -117,7 +117,9 @@ if (!function_exists('fig_savc_dialog')) {
     function fig_savc_dialog(string $opening, string $closing, string $anim, string $start, string $end, string $open, string $closers): string
     {
         $row = function (int $y, string $title, string $call, string $first, string $after, string $tail) use ($anim, $start, $end): string {
-            $t = $y - 28; $m = $y + 18; $b = $y + 58;
+            $t = $y - 28;
+            $m = $y + 18;
+            $b = $y + 58;
             return <<<ROW
 <text x="16" y="{$t}" font-weight="700">{$title}</text>
 <rect x="16" y="{$y}" width="112" height="36" rx="10" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>

@@ -8,7 +8,8 @@ if (!function_exists('fig_rx_cells')) {
     {
         $out = '';
         foreach (mb_str_split($text) as $i => $ch) {
-            $x = $x0 + $i * $w; [$f, $st, $dash] = $marks[$i] ?? ['#FFFFFF', '#D9D7E8', false];
+            $x = $x0 + $i * $w;
+            [$f, $st, $dash] = $marks[$i] ?? ['#FFFFFF', '#D9D7E8', false];
             $d = $dash ? ' stroke-dasharray="4 3"' : '';
             $out .= "<rect x=\"$x\" y=\"$y\" width=\"" . ($w - 2) . "\" height=\"34\" rx=\"5\" fill=\"$f\" stroke=\"$st\" stroke-width=\"2\"$d/>";
             $out .= '<text x="' . ($x + ($w - 2) / 2) . '" y="' . ($y + 23) . '" text-anchor="middle">' . htmlspecialchars($ch, ENT_XML1) . '</text>';
@@ -44,7 +45,9 @@ SVG;
 if (!function_exists('fig_rx_groups')) {
     function fig_rx_groups(): string
     {
-        $c1 = ['#FFE8D6', '#E8590C', false]; $c2 = ['#DCEBFF', '#2F8CF0', false]; $c3 = ['#D5F6EA', '#0B7F5C', false];
+        $c1 = ['#FFE8D6', '#E8590C', false];
+        $c2 = ['#DCEBFF', '#2F8CF0', false];
+        $c3 = ['#D5F6EA', '#0B7F5C', false];
         $row = fig_rx_cells('10/11/2026', 140, 70, 36, [0 => $c1, 1 => $c1, 3 => $c2, 4 => $c2, 6 => $c3, 7 => $c3, 8 => $c3, 9 => $c3]);
         $out = fig_rx_cells('2026-11-10', 140, 206, 36, [0 => $c3, 1 => $c3, 2 => $c3, 3 => $c3, 5 => $c2, 6 => $c2, 8 => $c1, 9 => $c1]);
         return <<<SVG
@@ -65,11 +68,13 @@ SVG;
 if (!function_exists('fig_rx_look')) {
     function fig_rx_look(string $text, string $checked, string $taken): string
     {
-        $chars = mb_str_split($text); $e = array_search('€', $chars);
+        $chars = mb_str_split($text);
+        $e = array_search('€', $chars);
         $marks = [$e => ['#ECE6FF', '#7048E8', true], $e + 1 => ['#FFE8D6', '#E8590C', false], $e + 2 => ['#FFE8D6', '#E8590C', false]];
-        $x0 = (int) round((640 - count($chars) * 36) / 2);
+        $x0 = (int)round((640 - count($chars) * 36) / 2);
         $row = fig_rx_cells($text, $x0, 70, 36, $marks);
-        $ex = $x0 + $e * 36 + 17; $mx = $x0 + ($e + 1) * 36 + 35;
+        $ex = $x0 + $e * 36 + 17;
+        $mx = $x0 + ($e + 1) * 36 + 35;
         return <<<SVG
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 200" font-family="ui-monospace, Menlo, monospace" font-size="16" fill="#1E1C52">
 <text x="320" y="44" text-anchor="middle" font-weight="700"><tspan fill="#5A35C9">(?&lt;=€)</tspan><tspan fill="#B84508">\d+</tspan></text>

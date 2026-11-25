@@ -1,5 +1,5 @@
 /** The screen of a presentation: editing for who can, looking (with comments and personal notes) for the others. */
-import { state, api, get, h, icon, btn, iconBtn, item, $, $$, clamp, uid, go, oops, ok, toast, errText, mobile, isMac, userSetting, dialog, confirmBox, promptBox, uploadPicture, copyText } from './core.js';
+import { state, api, get, h, icon, btn, iconBtn, item, isApp, $, $$, clamp, uid, go, oops, ok, toast, errText, mobile, isMac, userSetting, dialog, confirmBox, promptBox, uploadPicture, copyText } from './core.js';
 import { t } from './i18n.js';
 import { brand, logo } from './auth.js';
 import { userMenu } from './home.js';
@@ -8,12 +8,17 @@ import { context, slideContext, styleOf, FORMATS } from './themes.js';
 import { slideNode, thumb, sorted } from './render.js';
 import { makeSlide, relayout } from './layouts.js';
 import { createStage } from './stage.js';
-import { elementsPanel, propsPanel, layoutsPanel, themePanel, mediaPanel, optionsBody } from './panels.js';
+import { elementsPanel, propsPanel, pagePanel, pickIcon, layoutsPanel, themePanel, mediaPanel, optionsBody } from './panels.js';
 import { createMarks } from './marks.js';
 import { startShow, videoNode } from './present.js';
 import { shareDialog, reportDialog, deckUrl } from './share.js';
 import { pickPicture, pickVideo, uploadFiles } from './media.js';
 import { downloadMenu } from './files.js';
+import { addFeatures } from './features.js';
+import { SHAPES } from './shapes.js';
+import { sampleChart, sampleTable, CHARTS, CHART_ICONS } from './parts.js';
+import { gridPanel, GRIDS, gridOf, firstFree, cellRect, arrange, inCell, readAll, growGrid, nextGrid, assign, makeRoom } from './grid.js';
+import { pageRulesDialog, pageName } from './pages.js';
 import { plain, textToHtml, fragment, serialize, okLink } from './richtext.js';
 
 export async function deckScreen(app, deckId, q) {
@@ -27,7 +32,7 @@ export async function deckScreen(app, deckId, q) {
   }
   app.textContent = '';
   const deck = new Deck(data.deck, data.role);
-  const ed = { deck, user: state.user, sel: new Set(), sid: deck.order()[0]?.sid || '', tab: '', editing: null, closeText() {}, root: app, edit: deck.canEdit, relayout: false };
+  const ed = { deck, user: state.user, sel: new Set(), sid: deck.order()[0]?.sid || '', tab: '', editing: null, closeText() {}, root: app, editor: deck.canWrite, get edit() { return deck.canEditPage(this.sid); }, simple: userSetting('simple', false), relayout: false };
   ed.ctx = context(deck.meta);
   document.title = deck.title + ' — SavPresentations';
   if (q.get('slide') && deck.slide(q.get('slide'))) ed.sid = q.get('slide');
@@ -35,19 +40,27 @@ export async function deckScreen(app, deckId, q) {
   // ------------------------------------------------------------------ frame
   const stage = ed.stage = createStage(ed), marks = ed.marks = createMarks(ed);
   ed.drawPins = marks.pins;
-  const title = h('input.dtitle', { value: deck.title, maxlength: 150, readonly: !ed.edit, 'aria-label': t('title'), onchange: () => { const v = title.value.trim(); if (v) deck.do({ k: 'deck.set', p: { title: v } }); else title.value = deck.title; }, onkeydown: (e) => { e.stopPropagation(); if (e.key === 'Enter') title.blur(); } });
-  const status = h('span.status'), people = h('div.people-now'), undoB = iconBtn('undo-2', t('undo'), () => deck.undo()), redoB = iconBtn('redo-2', t('redo'), () => deck.redo());
+  const title = h('sav-input.dtitle', { value: deck.title, maxlength: 150, readonly: !deck.canEdit, size: 'sm', 'aria-label': t('title'), onchange: () => { const v = title.value.trim(); if (v) deck.do({ k: 'deck.set', p: { title: v } }); else title.value = deck.title; }, onkeydown: (e) => { e.stopPropagation(); if (e.key === 'Enter') title.blur(); } });
+  const status = h('span.status', { role: 'status' }), people = h('div.people-now'), undoB = iconBtn('undo-2', t('undo'), () => deck.undo()), redoB = iconBtn('redo-2', t('redo'), () => deck.redo());
   const zoomEl = h('sav-zoom', { value: 100, min: 10, max: 500, step: 10, size: 'sm', appearance: 'plain' });
   let zoomSet = false;
   zoomEl.addEventListener('change', (e) => { if (!zoomSet) stage.setZoom((e.detail?.value ?? zoomEl.value) / 100); });
   ed.onZoom = (v) => { zoomSet = true; zoomEl.value = v; zoomSet = false; };
   const menu = h('sav-dropdown', { placement: 'bottom-end', 'sheet-on-mobile': true, label: deck.title }, h('sav-button', { slot: 'trigger', icon: 'ellipsis-vertical', appearance: 'ghost', variant: 'neutral', square: true, label: t('more') }));
-  const fillMenu = () => { const e = ed.edit; menu.querySelectorAll(':not([slot="trigger"])').forEach((x) => { if (x.parentElement === menu) x.remove(); }); menu.append(...[e && item('options', 'settings', t('deck_options')), (e || deck.meta.opts.download !== false) && item('dl', 'download', t('download')), state.user && (e || deck.meta.opts.copy !== false) && item('copy', 'copy', t('make_copy')), e && item('credits', 'copyright', t('credits_slide')), item('link', 'link', t('copy_link')), item('keys', 'keyboard', t('shortcuts')), deck.role !== 'owner' && item('report', 'flag', t('report'), { variant: 'danger' })].filter(Boolean)); };
+  const fillMenu = () => { const e = deck.canEdit; menu.querySelectorAll(':not([slot="trigger"])').forEach((x) => { if (x.parentElement === menu) x.remove(); }); menu.append(...[e && item('options', 'settings', t('deck_options')), e && !deck.limited && item('vers', 'history', t('versions')), e && h('sav-divider'), item('over', 'layout-grid', t('overview')), item('find', 'search', t('find_replace')), e && item('text', 'file-text', t('add_from_text')), e && item('credits', 'copyright', t('credits_slide')), h('sav-divider'), (e || deck.meta.opts.download !== false) && item('dl', 'download', t('download')), state.user && (e || deck.meta.opts.copy !== false) && item('copy', 'copy', t('make_copy')), item('link', 'link', t('copy_link')), h('sav-divider'), ed.editor && item('mode', ed.simple ? 'move' : 'grid-3x3', ed.simple ? t('to_adv') : t('to_simple')), ed.editor && !mobile() && item('tools', 'settings-2', t('toolbar_edit')), item('keys', 'keyboard', t('shortcuts')), deck.role !== 'owner' && item('report', 'flag', t('report'), { variant: 'danger' })].filter(Boolean)); };
   fillMenu();
+  ed.options = () => dialog(t('deck_options'), optionsBody(ed), [[t('done'), true]], { width: '40rem' });
+  ed.download = () => downloadMenu(ed);
   menu.addEventListener('sav-select', async (e) => {
     try {
       switch (e.detail.value) {
-        case 'options': return void dialog(t('deck_options'), optionsBody(ed), [[t('done'), true]], { width: '38rem' });
+        case 'mode': ed.setMode(!ed.simple); return fillMenu();
+        case 'options': return void ed.options();
+        case 'over': return void ed.overview();
+        case 'find': return void ed.findReplace();
+        case 'text': return void ed.fromText();
+        case 'vers': return void ed.versions();
+        case 'tools': return void toolsDialog();
         case 'dl': return void downloadMenu(ed);
         case 'copy': { const r = await api('deck.duplicate', { d: deck.uid, title: t('copy_of', { title: deck.title }) }); return go('?d=' + r.uid); }
         case 'credits': return ed.creditsSlide();
@@ -57,13 +70,72 @@ export async function deckScreen(app, deckId, q) {
       }
     } catch (x) { oops(x); }
   });
-  const ins = h('div.ins', ...[['type', 'text', () => ed.insert('text:body')], ['image', 'image', () => ed.insert('image')], ['film', 'video', () => ed.insert('video')], ['shapes', 'shapes', () => setTab('elements')], ['layout-template', 'layouts', () => setTab('layouts')], ['palette', 'theme', () => setTab('theme')]].map(([ic, k, fn]) => h('sav-button', { icon: ic, appearance: 'ghost', variant: 'neutral', size: 'sm', onclick: fn, label: t(k) }, h('span.insl', t(k)))));
+  /** Simple mode: pages are grids, elements go into the cells. Advanced: everything moves freely. It is a choice of each person. */
+  ed.setMode = (simple) => {
+    if (ed.simple === simple) return;
+    ed.closeText(); ed.simple = simple; fillMenu();
+    app.classList.toggle('simple', simple);
+    // what was drawn freely becomes cells, without moving
+    if (simple) { const n = readAll(ed); if (n) toast(t('grid_done', { n })); }
+    ed.select([]); stage.draw(); drawRail();
+    setTab(simple ? 'grid' : ed.tab === 'grid' ? 'elements' : ed.tab);
+    if (state.user) api('auth.settings', { settings: { simple } }).then((r) => { state.user = r.user; }).catch(() => {});
+  };
+  // ------------------------------------------------------------------ toolbar: every button adds something to the page
+  const dropTool = (ic, label, items) => { const d = h('sav-dropdown', { label }, h('sav-button', { slot: 'trigger', icon: ic, caret: true, appearance: 'ghost', variant: 'neutral', size: 'sm', label }, h('span.insl', label)), ...items); d.addEventListener('sav-select', (e) => ed.insert(e.detail.value)); return d; };
+  const addTool = (ic, label, what) => h('sav-tooltip', { content: label, placement: 'bottom', delay: 350 }, h('sav-button', { icon: ic, appearance: 'ghost', variant: 'neutral', size: 'sm', onclick: () => (typeof what === 'function' ? what() : ed.insert(what)), label }, h('span.insl', label)));
+  const drawn = { rect: 'square', round: 'rectangle-horizontal', ellipse: 'circle', triangle: 'triangle', diamond: 'diamond', star: 'star', hexagon: 'hexagon', arrow: 'arrow-right', speech: 'message-square', heart: 'heart', cloud: 'cloud', plus: 'plus' };
+  const TOOLS = {
+    text: ['type', 'text', () => addTool('type', t('text'), 'text:body')], title: ['heading-1', 'r_title', () => addTool('heading-1', t('r_title'), 'text:title')], list: ['list', 'r_list', () => addTool('list', t('r_list'), 'text:list')], quote: ['quote', 'r_quote', () => addTool('quote', t('r_quote'), 'text:quote')],
+    image: ['image', 'image', () => addTool('image', t('image'), 'image')], video: ['film', 'video', () => addTool('film', t('video'), 'video')],
+    chart: ['chart-column', 'chart', () => dropTool('chart-column', t('chart'), CHARTS.map((c) => item('chart:' + c, CHART_ICONS[c], t('ct_' + c))))], table: ['table', 'table', () => addTool('table', t('table'), 'table')],
+    shape: ['shapes', 'shape', () => dropTool('shapes', t('shape'), [...Object.entries(drawn).filter(([k]) => SHAPES.includes(k)).map(([k, ic]) => item('shape:' + k, ic, t('sh_' + k))), h('sav-divider'), item('shape:line', 'minus', t('sh_line')), item('shape:line:arrow', 'move-right', t('sh_line_arrow'))])],
+    icon: ['smile', 'icon', () => addTool('smile', t('icon'), async () => { const n = await pickIcon(); if (n) ed.insert('icon:' + n); })], number: ['hash', 'r_big', () => addTool('hash', t('r_big'), 'text:big')],
+  };
+  const TOOLS_DEF = ['text', 'image', 'video', 'chart', 'table', 'shape', 'icon'];
+  const ins = h('div.ins', { role: 'toolbar', 'aria-label': t('insert') });
+  function drawTools() {
+    const on = userSetting('tools', TOOLS_DEF).filter((k) => TOOLS[k]);
+    ins.replaceChildren(h('span.inst', t('insert')), ...on.map((k) => TOOLS[k][2]()), iconBtn('settings-2', t('toolbar_edit'), () => toolsDialog(), { size: 'sm' }));
+  }
+  drawTools();
+  /** Which buttons the toolbar has, and in what order. */
+  async function toolsDialog() {
+    const on = userSetting('tools', TOOLS_DEF).filter((k) => TOOLS[k]), list = h('sav-sortable.toollist', { handle: '.grip', 'aria-label': t('toolbar_edit') });
+    const draw = (order, sel) => list.replaceChildren(...order.map((k) => h('div.toolrow', { 'data-id': k }, icon('grip-vertical', { class: 'grip' }), icon(TOOLS[k][0]), h('span.grow', t(TOOLS[k][1])), h('sav-switch', { size: 'sm', checked: sel.includes(k), 'aria-label': t(TOOLS[k][1]) }))));
+    draw([...on, ...Object.keys(TOOLS).filter((k) => !on.includes(k))], on);
+    const tools = await dialog(t('toolbar_edit'), h('div.stack', h('p.muted', t('toolbar_edit_t')), list), [[t('reset'), () => { draw([...TOOLS_DEF, ...Object.keys(TOOLS).filter((k) => !TOOLS_DEF.includes(k))], TOOLS_DEF); return false; }, { appearance: 'ghost', variant: 'neutral' }], [t('save'), () => $$('.toolrow', list).filter((r) => r.querySelector('sav-switch').checked).map((r) => r.dataset.id)]], { width: '26rem' });
+    if (!tools) return;
+    try { state.user = (await api('auth.settings', { settings: { tools } })).user; drawTools(); } catch (e) { oops(e); }
+  }
   const present = h('sav-button', { icon: 'play', onclick: () => show() , class: 'presentb' }, h('span.insl', t('present')));
-  const shareB = h('sav-button', { icon: 'user-plus', appearance: 'soft', onclick: () => shareDialog(deck.uid, deck.title) }, h('span.insl', t('share')));
-  const top = h('header.etop', h('a.ehome', { href: './', 'data-go': true, title: t('home'), 'aria-label': t('home') }, logo(30)), h('div.etitle', title, status), ed.edit && h('div.hist', undoB, redoB), ins, h('div.spacer'), people, (deck.role === 'owner' || deck.role === 'editor') && shareB, present, menu, !mobile() && (state.user ? userMenu() : btn(t('sign_in'), () => { sessionStorage.setItem('sp-back', location.pathname + location.search); go('?signin=login'); }, { appearance: 'outline', variant: 'neutral' })));
-  const strip = h('div.strip', { role: 'listbox', 'aria-label': t('slides'), tabindex: 0 }), addB = h('sav-button', { icon: 'plus', appearance: 'outline', variant: 'neutral', block: true, size: 'sm', onclick: () => ed.addSlide() }, t('new_slide'));
-  const left = h('aside.eleft', strip, ed.edit && addB), panel = h('aside.epanel'), rail = h('nav.rail', { 'aria-label': t('panels') });
-  const center = h('section.ecenter', stage.scroller, h('div.ebottom', h('span.sn'), h('div.spacer'), iconBtn('maximize', t('fit'), () => stage.setZoom(0), { size: 'sm', place: 'top' }), zoomEl));
+  const presentM = h('sav-dropdown', { placement: 'bottom-end' }, h('sav-button.presentm', { slot: 'trigger', icon: 'chevron-down', label: t('more'), square: true }), item('here', 'play', t('present_here'), { kbd: '⇧F5' }), item('start', 'play', t('present_start'), { kbd: 'F5' }), !isApp && h('sav-divider'), !isApp && item('view', 'presentation', t('present_speaker')));
+  presentM.addEventListener('sav-select', (e) => ({ here: () => show(ed.sid), start: () => show(deck.order()[0]?.sid), view: () => show(ed.sid, { presenter: true }) })[e.detail.value]());
+  const paletteB = iconBtn('command', t('palette_l') + ' · ' + (isMac ? '⌘K' : 'Ctrl+K'), () => ed.palette());
+  const shareB = h('sav-button', { icon: 'user-plus', appearance: 'soft', onclick: () => shareDialog(deck.uid, deck.title, ed) }, h('span.insl', t('share')));
+  const top = h('header.etop', h('a.ehome', { href: './', 'data-go': true, title: t('home'), 'aria-label': t('home') }, logo(30)), h('div.etitle', title, status), ed.editor && h('div.hist', undoB, redoB), ins, h('div.spacer'), people, (deck.role === 'owner' || deck.role === 'editor') && shareB, h('sav-button-group.pgroup', present, presentM), !mobile() && paletteB, menu, !mobile() && (state.user ? userMenu() : btn(t('sign_in'), () => { sessionStorage.setItem('sp-back', location.pathname + location.search); go('?signin=login'); }, { appearance: 'outline', variant: 'neutral' })));
+  const strip = h('sav-sortable.strip', { 'aria-label': t('slides'), direction: mobile() ? 'horizontal' : null, handle: deck.canEdit && !mobile() ? null : '.never' }), addB = h('sav-button', { icon: 'plus', appearance: 'outline', variant: 'neutral', block: true, size: 'sm', onclick: () => ed.addSlide() }, t('new_slide'));
+  const left = h('aside.eleft', strip, deck.canEdit && addB), panel = h('aside.epanel'), rail = h('sav-bottom-nav.rail', { label: t('panels') });
+  // speaker notes of the page, under it
+  const notesT = h('sav-textarea', { rows: 3, resize: 'vertical', size: 'sm', maxlength: 8000, placeholder: t('speaker_notes_ph'), 'aria-label': t('speaker_notes') }), notesBar = h('div.enotes', { hidden: true }, notesT);
+  let notesFor = '', notesOn = userSetting('notesBar', !mobile()) && !mobile();
+  const notesB = h('sav-button', { icon: 'notebook-pen', size: 'sm', appearance: 'ghost', variant: 'neutral', 'aria-expanded': 'false', onclick: () => { notesOn = !notesOn; drawNotes(); if (notesOn) notesT.focus(); if (state.user && !mobile()) api('auth.settings', { settings: { notesBar: notesOn } }).then((r) => { state.user = r.user; }).catch(() => {}); } }, t('speaker_notes'));
+  const saveNotes = () => { clearTimeout(notesT.t); const s = deck.slide(notesFor); if (s && (s.d.notes || '') !== notesT.value && deck.canEditPage(notesFor)) deck.do({ k: 'slide.set', s: notesFor, p: { notes: notesT.value || null } }, 'notes' + notesFor); };
+  notesT.addEventListener('input', () => { clearTimeout(notesT.t); notesT.t = setTimeout(saveNotes, 500); });
+  notesT.addEventListener('change', saveNotes);
+  notesT.addEventListener('keydown', (e) => e.stopPropagation());
+  /** The notes of the page being seen; never over the ones being written. */
+  function drawNotes() {
+    const s = deck.slide(ed.sid);
+    if (notesFor !== ed.sid) saveNotes();
+    if (notesFor !== ed.sid || !notesT.matches(':focus-within')) { notesT.value = s?.d.notes || ''; notesFor = ed.sid; }
+    notesT.toggleAttribute('readonly', !ed.edit);
+    notesBar.hidden = !notesOn;
+    notesB.setAttribute('aria-expanded', String(notesOn)); notesB.variant = notesOn ? 'primary' : 'neutral'; notesB.appearance = notesOn ? 'soft' : 'ghost';
+    notesB.classList.toggle('has', !!s?.d.notes);
+  }
+  ed.saveNotes = saveNotes;
+  const center = h('section.ecenter', h('div.banner'), stage.scroller, ed.editor && notesBar, h('div.ebottom', h('span.sn'), ed.editor && notesB, h('div.spacer'), iconBtn('maximize', t('fit'), () => stage.setZoom(0), { size: 'sm', place: 'top' }), zoomEl));
   app.append(top, h('div.emain', left, center, panel, rail));
 
   // ------------------------------------------------------------------ strip of slides
@@ -72,7 +144,7 @@ export async function deckScreen(app, deckId, q) {
   function drawStrip() {
     const list = deck.order(), w = stripW = mobile() ? 92 : 150;
     strip.replaceChildren(...list.map((s, i) => {
-      const b = h('div.st', { role: 'option', 'data-sid': s.sid, draggable: ed.edit && !mobile(), onclick: () => ed.goto(s.sid) }, h('span.stn', String(i + 1)), h('div.stt'), h('div.stp'));
+      const b = h('div.st', { 'data-sid': s.sid, 'data-id': s.sid, 'aria-label': t('slide') + ' ' + (i + 1), tabindex: 0, onclick: () => ed.goto(s.sid), onfocus: () => { if (strip.matches(':focus-within') && b.matches(':focus-visible')) ed.goto(s.sid); } }, h('span.stn', String(i + 1)), h('div.stb', h('div.stt'), h('div.stl')), h('div.stp'));
       thumbs.set(s.sid, b);
       fillThumb(s.sid, w);
       return b;
@@ -85,34 +157,39 @@ export async function deckScreen(app, deckId, q) {
     if (!s || !b) return;
     b.querySelector('.stt').replaceChildren(thumb(s.d, ed.ctx, w, { index: deck.index(sid), count: deck.slides.size }));
     b.classList.toggle('hid', !!s.d.hide);
+    b.setAttribute('aria-label', pageName(deck, s) + (s.d.hide ? ' · ' + t('hidden') : ''));
+    const mark = (ic, label) => h('sav-icon', { name: ic, label, title: label });
+    b.querySelector('.stl').replaceChildren(...[s.d.name && h('span', { title: s.d.name }, s.d.name), s.d.hide && mark('eye-off', t('hidden')), deck.role === 'owner' && deck.ruled.has(sid) && mark('key-round', t('page_rules')), deck.role !== 'owner' && ed.editor && !deck.canEditPage(sid) && mark('lock', t('page_locked'))].filter(Boolean));
   }
+  ed.drawStrip = () => drawStrip();
   const dirty = new Set();
   let dirtyT;
   const touch = (sid) => { dirty.add(sid); clearTimeout(dirtyT); dirtyT = setTimeout(() => { for (const d of dirty) fillThumb(d); dirty.clear(); }, 180); };
   function markStrip() {
-    for (const [id, b] of thumbs) { b.classList.toggle('on', id === ed.sid); b.setAttribute('aria-selected', id === ed.sid); b.querySelector('.stp').replaceChildren(...deck.people.filter((p) => p.st?.s === id).slice(0, 4).map((p) => h('i', { style: `background:${p.color}`, title: p.name || t('guest') }))); }
-    $('.sn', center).textContent = t('slide_of', { a: deck.index(ed.sid) + 1, b: deck.slides.size });
+    for (const [id, b] of thumbs) { b.classList.toggle('on', id === ed.sid); b.setAttribute('aria-current', id === ed.sid ? 'true' : 'false'); b.querySelector('.stp').replaceChildren(...deck.people.filter((p) => p.st?.s === id).slice(0, 4).map((p) => h('i', { style: `background:${p.color}`, title: p.name || t('guest') }))); }
+    $('.sn', center).textContent = [t('slide_of', { a: deck.index(ed.sid) + 1, b: deck.slides.size }), deck.slide(ed.sid)?.d.name].filter(Boolean).join(' · ');
+    app.classList.toggle('viewer', !ed.edit); app.classList.toggle('lockedpage', ed.editor && !ed.edit);
+    if (ed.editor) drawNotes();
   }
-  let dragSid = null;
-  strip.addEventListener('dragstart', (e) => { const s = e.target.closest?.('.st'); if (!s) return; dragSid = s.dataset.sid; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/sp-slide', dragSid); s.classList.add('drag'); });
-  strip.addEventListener('dragend', () => { dragSid = null; $$('.drag,.before,.after', strip).forEach((x) => x.classList.remove('drag', 'before', 'after')); });
-  const place = (e) => { const s = e.target.closest?.('.st'); if (!s) return null; const r = s.getBoundingClientRect(), hor = mobile(); return { s, after: hor ? e.clientX > r.left + r.width / 2 : e.clientY > r.top + r.height / 2 }; };
-  strip.addEventListener('dragover', (e) => { if (!dragSid) return; e.preventDefault(); const p = place(e); $$('.before,.after', strip).forEach((x) => x.classList.remove('before', 'after')); p?.s.classList.add(p.after ? 'after' : 'before'); });
-  strip.addEventListener('drop', (e) => { if (!dragSid) return; e.preventDefault(); const p = place(e); if (!p || p.s.dataset.sid === dragSid) return; const rest = deck.order().filter((x) => x.sid !== dragSid), i = rest.findIndex((x) => x.sid === p.s.dataset.sid) + (p.after ? 1 : 0); moveTo(dragSid, i); });
+  strip.addEventListener('sav-sort', (e) => { moveTo(e.detail.item.dataset.sid, e.detail.to); });
   function moveTo(sid, i) {
     const pos = deck.posAt(i, sid);
     deck.do({ k: 'slide.move', s: sid, pos });
   }
-  strip.addEventListener('contextmenu', (e) => { const s = e.target.closest('.st'); if (!s || !ed.edit) return; e.preventDefault(); ed.goto(s.dataset.sid); slideMenu(e.clientX, e.clientY); });
-  strip.addEventListener('dblclick', () => setTab('props'));
+  strip.addEventListener('contextmenu', (e) => { const s = e.target.closest('.st'); if (!s || !ed.editor) return; e.preventDefault(); ed.goto(s.dataset.sid); slideMenu(e.clientX, e.clientY); });
+  strip.addEventListener('dblclick', (e) => { const s = e.target.closest('.st'); if (s && deck.canEditPage(s.dataset.sid)) ed.renamePage(s.dataset.sid); });
 
   // ------------------------------------------------------------------ actions
+  ed.renamePage = async (sid = ed.sid) => { const s = deck.slide(sid); if (!s) return; const n = await promptBox(t('rename_page'), t('page_name'), s.d.name || '', t('save'), 60, true); if (n !== null) deck.do({ k: 'slide.set', s: sid, p: { name: n || null } }); };
+  ed.toggleHide = (sid = ed.sid) => deck.do({ k: 'slide.set', s: sid, p: { hide: deck.slide(sid)?.d.hide ? null : 1 } });
   ed.goto = (sid) => {
     if (!deck.slide(sid)) return;
     if (sid === ed.sid) { markStrip(); return; }
     ed.closeText(); ed.sid = sid; ed.sel.clear();
+    if (ed.simple) readAll(ed, sid);
     history.replaceState(null, '', `?d=${deck.uid}&slide=${sid}`);
-    stage.draw(); markStrip(); ed.refreshPanel();
+    const was = panel.dataset.lock !== String(ed.edit); panel.dataset.lock = ed.edit;
+    stage.draw(); markStrip(); if (was) drawPanel(true); else ed.refreshPanel();
     thumbs.get(sid)?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     deck.setState({ s: sid, sel: [], x: null, y: null });
   };
@@ -122,11 +199,42 @@ export async function deckScreen(app, deckId, q) {
     stage.overlayNow();
     if (quiet) return;
     deck.setState({ s: ed.sid, sel: [...ed.sel].slice(0, 12) });
-    if (ids.length && !['comments', 'notes'].includes(ed.tab) && !mobile() && before !== ids.join()) setTab('props');
+    if (ids.length && !['comments', 'notes'].includes(ed.tab) && !mobile() && before !== ids.join()) { const was = ed.tab !== 'props' ? ed.tab : ed.backTab; setTab('props'); ed.backTab = was; } else if (!ids.length && ed.tab === 'props' && ed.backTab && before) { const k = ed.backTab; ed.backTab = ''; setTab(k); }
     else if (before !== ids.join()) ed.refreshPanel();
   };
   const put = (el, sel = true) => {
     const id = uid(), top = Math.max(0, ...Object.values(deck.slide(ed.sid).d.els).map((e) => e.z || 0));
+    // simple mode: into the chosen cell, the one of what is selected, the first free one or the last
+    let g = ed.simple && gridOf(ed);
+    const els = deck.slide(ed.sid).d.els;
+    if (g) {
+      const tidy = ed.toCell === undefined && g.m === 0 && firstFree(g, els) < 0 && !growGrid(g) && nextGrid(els, ed.ctx);
+      if (tidy) { // no room: the page takes the tidy grid for one block more
+        g = { c: tidy.c, g: 24 };
+        const next = assign(g, els, ed.ctx), cell = firstFree(g, next);
+        if (cell >= 0) {
+          ed.toCell = undefined;
+          const z = { ...el, cell, z: top + 1, ...cellRect(g, cell, ed.ctx) };
+          delete z.cr; next[id] = z;
+          deck.do([{ k: 'slide.set', s: ed.sid, p: { grid: g } }, { k: 'el.add', s: ed.sid, e: id, el: z }, ...arrange(ed.sid, g, next, ed.ctx, { ...els, [id]: z })]);
+          if (sel) ed.select([id]);
+          return id;
+        }
+        g = gridOf(ed);
+      }
+      const free = firstFree(g, els), selCell = deck.el(ed.sid, [...ed.sel][0])?.cell, more = ed.toCell === undefined && free < 0 && growGrid(g);
+      if (more) g = more;
+      const cell = ed.toCell ?? (more ? g.c.length - 1 : free >= 0 ? free : selCell ?? g.c.length - 1);
+      ed.toCell = undefined;
+      const z = { ...el, cell, z: top + 1, ...cellRect(g, cell, ed.ctx) };
+      delete z.cr;
+      const next = { ...structuredClone(els), [id]: z };
+      makeRoom(next, cell, id);
+      for (const k of ['x', 'y', 'w', 'h']) z[k] = Math.round(z[k] * 10) / 10;
+      deck.do([...(more ? [{ k: 'slide.set', s: ed.sid, p: { grid: g } }] : []), { k: 'el.add', s: ed.sid, e: id, el: z }, ...arrange(ed.sid, g, next, ed.ctx, { ...els, [id]: z })]);
+      if (sel) ed.select([id]);
+      return id;
+    }
     for (const k of ['x', 'y', 'w', 'h']) el[k] = Math.round(el[k] * 10) / 10;
     deck.do({ k: 'el.add', s: ed.sid, e: id, el: { ...el, z: top + 1 } });
     if (sel) ed.select([id]);
@@ -142,16 +250,20 @@ export async function deckScreen(app, deckId, q) {
     const id = put({ t: 'text', role: role === 'list' ? 'body' : role, ...b, html });
     requestAnimationFrame(() => stage.startEdit(id, 'all'));
   };
-  ed.insertImage = (m, p) => { needSlide(); const k = Math.min(1, ed.ctx.W * .5 / m.w, ed.ctx.H * .6 / m.h), K = Math.max(k, Math.min(ed.ctx.W * .25 / m.w, 1)); return put({ t: 'image', src: m.src, ...centered(m.w * (m.w * k < ed.ctx.W * .2 ? K : k), m.h * (m.w * k < ed.ctx.W * .2 ? K : k), p), alt: m.name || '', credit: m.credit || '', creditUrl: okLink(m.creditUrl) ? m.creditUrl : '' }); };
-  ed.insertVideo = (v, p) => { needSlide(); const w = ed.ctx.W * .55, hh = w * Math.min(1.6, (v.h || 720) / (v.w || 1280)); return put({ t: 'video', kind: v.kind, vid: v.vid, poster: v.poster || '', ...(v.start ? { start: v.start } : {}), ...centered(w, hh, p), credit: v.credit || '', creditUrl: okLink(v.creditUrl) ? v.creditUrl : '', rad: 10 }); };
-  ed.setImage = (id, m) => deck.do({ k: 'el.set', s: ed.sid, e: id, p: { src: m.src, credit: m.credit || '', creditUrl: okLink(m.creditUrl) ? m.creditUrl : '', alt: m.name || '', fx: null, fy: null, zoom: null } });
-  ed.insert = async (what, p) => {
-    if (!ed.edit) return;
+  ed.insertImage = (m, p) => { needSlide(); const k = Math.min(1, ed.ctx.W * .5 / m.w, ed.ctx.H * .6 / m.h), K = Math.max(k, Math.min(ed.ctx.W * .25 / m.w, 1)); return put({ t: 'image', src: m.src, ...centered(m.w * (m.w * k < ed.ctx.W * .2 ? K : k), m.h * (m.w * k < ed.ctx.W * .2 ? K : k), p), alt: m.name || '', credit: m.credit || '', creditUrl: okLink(m.creditUrl) ? m.creditUrl : '', ...(m.cite ? { cite: m.cite } : {}) }); };
+  ed.insertVideo = (v, p) => { needSlide(); const w = ed.ctx.W * .55, hh = w * Math.min(1.6, (v.h || 720) / (v.w || 1280)); return put({ t: 'video', kind: v.kind, vid: v.vid, poster: v.poster || '', ...(v.start ? { start: v.start } : {}), ...centered(w, hh, p), credit: v.credit || '', creditUrl: okLink(v.creditUrl) ? v.creditUrl : '', ...(v.cite ? { cite: v.cite } : {}), rad: 10 }); };
+  ed.setImage = (id, m) => deck.do({ k: 'el.set', s: ed.sid, e: id, p: { src: m.src, credit: m.credit || '', creditUrl: okLink(m.creditUrl) ? m.creditUrl : '', cite: m.cite || null, alt: m.name || '', fx: null, fy: null, zoom: null } });
+  ed.insert = async (what, p, cell) => {
+    if (!ed.edit) return deck.canWrite && toast(t('page_locked'));
     ed.closeText(); needSlide();
+    ed.toCell = cell;
     const [kind, a, b] = what.split(':'), s = ed.ctx.s;
     if (kind === 'text') return ed.insertText(a, p?.x, p?.y);
     if (kind === 'image') { const m = await pickPicture(); if (m) ed.insertImage(m, p); return; }
     if (kind === 'video') { const v = await pickVideo(); if (v) ed.insertVideo(v, p); return; }
+    if (kind === 'chart') return put({ t: 'chart', ct: a || 'bar', chart: sampleChart({ labels: [1, 2, 3, 4].map((n) => t('quarter') + n), a: t('series') + ' A', b: t('series') + ' B' }), ...centered(620 * s, 360 * s, p) });
+    if (kind === 'table') return put({ t: 'table', cells: sampleTable(t('column')), ...centered(640 * s, 240 * s, p) });
+    if (kind === 'icon') return put({ t: 'icon', ic: a, ...centered(110 * s, 110 * s, p) });
     if (kind === 'shape' && a === 'line') return put({ t: 'shape', shape: 'line', ...centered(320 * s, 24 * s, p), stroke: '@fg', sw: 3 * s, ...(b === 'arrow' ? { h2: 'arrow' } : b === 'double' ? { h1: 'arrow', h2: 'arrow' } : {}) });
     if (kind === 'shape') { const wide = /^(arrow|arrow2|chevron|homeplate|speech|rect|round|parallelogram|cloud|wave|half|trapezoid)$/.test(a); put({ t: 'shape', shape: a, ...centered((wide ? 260 : 200) * s, (wide ? 160 : 200) * s, p), fill: '@accent' }); }
   };
@@ -159,16 +271,16 @@ export async function deckScreen(app, deckId, q) {
     const el = deck.el(ed.sid, id);
     if (!el || el.lock) return;
     ed.select([id]);
-    if (el.t === 'text' || (el.t === 'shape' && el.shape !== 'line')) stage.startEdit(id);
+    if (el.t === 'chart' || el.t === 'table') { setTab('props'); requestAnimationFrame(() => panel.querySelector('.dgrid sav-input')?.focus()); } else if (el.t === 'text' || (el.t === 'shape' && el.shape !== 'line')) stage.startEdit(id);
     else if (el.t === 'image') pickPicture().then((m) => m && ed.setImage(id, m));
-    else if (el.t === 'video') { if (el.vid) ed.playVideo(id); else pickVideo().then((v) => v && deck.do({ k: 'el.set', s: ed.sid, e: id, p: { kind: v.kind, vid: v.vid, poster: v.poster || '' } })); }
+    else if (el.t === 'video') { if (el.vid) ed.playVideo(id); else pickVideo().then((v) => v && deck.do({ k: 'el.set', s: ed.sid, e: id, p: { kind: v.kind, vid: v.vid, poster: v.poster || '', credit: v.credit || '', creditUrl: okLink(v.creditUrl) ? v.creditUrl : '', cite: v.cite || null } })); }
   };
   ed.playVideo = (id) => { const el = deck.el(ed.sid, id), v = el?.vid && videoNode(el, true); if (v) dialog(t('video'), h('div.vbox', v), [], { width: '60rem' }); };
   ed.follow = (link) => { if (link.startsWith('#s:')) ed.goto(link.slice(3)); else window.open(link, '_blank', 'noopener,noreferrer'); };
   const selEls = () => [...ed.sel].map((id) => ({ id, el: deck.el(ed.sid, id) })).filter((x) => x.el);
-  ed.deleteSel = () => { const ops = selEls().filter((x) => !x.el.lock).map((x) => ({ k: 'el.del', s: ed.sid, e: x.id })); ed.sel.clear(); deck.do(ops); ed.select([]); ed.refreshPanel(); };
-  const cloneInto = (list, dx, dy) => { const top = Math.max(0, ...Object.values(deck.slide(ed.sid).d.els).map((e) => e.z || 0)), ids = []; deck.do(list.map((el, i) => { const id = uid(); ids.push(id); return { k: 'el.add', s: ed.sid, e: id, el: { ...structuredClone(el), x: el.x + dx, y: el.y + dy, z: top + 1 + i } }; })); ed.select(ids); };
-  ed.duplicateSel = () => { const l = selEls(); if (l.length) cloneInto(l.map((x) => x.el), 20, 20); };
+  ed.deleteSel = () => { const ops = selEls().filter((x) => !x.el.lock).map((x) => ({ k: 'el.del', s: ed.sid, e: x.id })); const g = ed.simple && gridOf(ed), left = structuredClone(deck.slide(ed.sid).d.els); for (const o of ops) delete left[o.e]; ed.sel.clear(); deck.do([...ops, ...(g ? arrange(ed.sid, g, left, ed.ctx) : [])]); ed.select([]); ed.refreshPanel(); };
+  const cloneInto = (list, dx, dy) => { const top = Math.max(0, ...Object.values(deck.slide(ed.sid).d.els).map((e) => e.z || 0)), ids = [], gs = {}; deck.do(list.map((el, i) => { const id = uid(); ids.push(id); return { k: 'el.add', s: ed.sid, e: id, el: { ...structuredClone(el), x: el.x + dx, y: el.y + dy, z: top + 1 + i, ...(el.g ? { g: (gs[el.g] ||= uid()) } : {}) } }; })); ed.select(ids); };
+  ed.duplicateSel = () => { const l = selEls(); if (l.length && ed.simple && gridOf(ed)) { for (const x of l) put(structuredClone(x.el)); return; } if (l.length) cloneInto(l.map((x) => x.el), 20, 20); };
   ed.duplicateHere = () => { const l = selEls(); if (l.length) cloneInto(l.map((x) => x.el), 0, 0); };
   ed.zorder = (how) => {
     const all = sorted(deck.slide(ed.sid).d), sel = all.filter((x) => ed.sel.has(x.id)), rest = all.filter((x) => !ed.sel.has(x.id));
@@ -186,20 +298,29 @@ export async function deckScreen(app, deckId, q) {
       return deck.do(s.map((x) => { const op = { k: 'el.set', s: ed.sid, e: x.id, p: { [p]: Math.round(at * 10) / 10 } }; at += x.el[sz] + gap; return op; }));
     }
     const f = { left: (e) => ({ x: b.x }), center: (e) => ({ x: b.x + (b.w - e.w) / 2 }), right: (e) => ({ x: b.x + b.w - e.w }), top: (e) => ({ y: b.y }), middle: (e) => ({ y: b.y + (b.h - e.h) / 2 }), bottom: (e) => ({ y: b.y + b.h - e.h }) }[how];
-    deck.do(l.map((x) => ({ k: 'el.set', s: ed.sid, e: x.id, p: f(x.el) })));
+    deck.do(l.map((x) => ({ k: 'el.set', s: ed.sid, e: x.id, p: { ...f(x.el), ...(x.el.cell != null ? { cell: null, cr: null } : {}) } })));
   };
   ed.asBackground = (id) => { const el = deck.el(ed.sid, id); if (!el?.src) return; ed.sel.clear(); deck.do([{ k: 'slide.set', s: ed.sid, p: { bg: { t: 'i', src: el.src, dim: 0, credit: el.credit || '', creditUrl: el.creditUrl || '' } } }, { k: 'el.del', s: ed.sid, e: id }]); ed.select([]); };
   // slides
   ed.addSlide = (layout) => {
     const i = deck.index(ed.sid), cur = deck.slide(ed.sid);
+    if (!deck.canEdit) return toast(t('page_locked'));
+    if (ed.simple && !layout) { // a page of the simple mode: a title and a place for the rest
+      const g = GRIDS.find((x) => x.id === 't-one'), sid = uid();
+      const title = { t: 'text', role: 'heading', ph: t('ph_title'), cell: 0, z: 1, ...cellRect(g, 0, ed.ctx) };
+      for (const k of ['x', 'y', 'w', 'h']) title[k] = Math.round(title[k] * 10) / 10;
+      deck.do({ k: 'slide.add', s: sid, pos: deck.posAt(i + 1), d: { layout: '', variant: 'content', grid: { c: g.c, g: 24 }, els: { [uid()]: title } } });
+      ed.goto(sid); setTab('grid');
+      return;
+    }
     const id = layout || (!cur ? 'cover' : cur.d.layout === 'cover' || cur.d.layout === 'section' ? 'title-body' : cur.d.layout || 'title-body');
     const { sid, d } = makeSlide(id === 'closing' ? 'title-body' : id, ed.ctx);
     if (layout === 'closing') Object.assign(d, makeSlide('closing', ed.ctx).d);
     deck.do({ k: 'slide.add', s: sid, pos: deck.posAt(i + 1), d });
     ed.goto(sid);
   };
-  ed.setLayout = (id) => { const s = deck.slide(ed.sid); if (!s) return ed.addSlide(id); const d = relayout(s.d, id, ed.ctx), ops = [{ k: 'slide.set', s: s.sid, p: { layout: id, variant: d.variant } }]; for (const e of Object.keys(s.d.els)) if (!d.els[e]) ops.push({ k: 'el.del', s: s.sid, e }); for (const [e, el] of Object.entries(d.els)) ops.push({ k: 'el.add', s: s.sid, e, el }); ed.sel.clear(); deck.do(ops); ed.select([]); };
-  ed.duplicateSlide = () => { const s = deck.slide(ed.sid); if (!s) return; const d = structuredClone(s.d), els = {}; for (const el of Object.values(d.els)) els[uid()] = el; d.els = els; const sid = uid(); deck.do({ k: 'slide.add', s: sid, pos: deck.posAt(deck.index(ed.sid) + 1), d }); ed.goto(sid); };
+  ed.setLayout = (id) => { const s = deck.slide(ed.sid); if (!s) return ed.addSlide(id); const d = relayout(s.d, id, ed.ctx), ops = [{ k: 'slide.set', s: s.sid, p: { layout: id, variant: d.variant, grid: null } }]; for (const el of Object.values(d.els)) { delete el.cell; delete el.cr; } for (const e of Object.keys(s.d.els)) if (!d.els[e]) ops.push({ k: 'el.del', s: s.sid, e }); for (const [e, el] of Object.entries(d.els)) ops.push({ k: 'el.add', s: s.sid, e, el }); ed.sel.clear(); deck.do(ops); ed.select([]); if (ed.simple) readAll(ed, s.sid); };
+  ed.duplicateSlide = () => { const s = deck.slide(ed.sid); if (!s) return; const d = structuredClone(s.d), els = {}; for (const el of Object.values(d.els)) els[uid()] = el; d.els = els; const sid = uid(); deck.do({ k: 'slide.add', s: sid, pos: deck.posAt(deck.index(ed.sid) + 1), d, from: s.sid }); if (deck.ruled.has(s.sid)) deck.ruled.add(sid); ed.goto(sid); drawStrip(); };
   ed.deleteSlide = () => { const l = deck.order(), i = deck.index(ed.sid); if (l.length < 2) return toast(t('last_slide')); const next = l[i + 1] || l[i - 1], sid = ed.sid; ed.goto(next.sid); deck.do({ k: 'slide.del', s: sid }); };
   ed.setFormat = (id, w, hh, scale) => {
     const o = deck.meta.format, ops = [{ k: 'deck.set', p: { format: { id, w: Math.round(w), h: Math.round(hh) } } }];
@@ -216,6 +337,8 @@ export async function deckScreen(app, deckId, q) {
       }
     }
     deck.do(ops);
+    // pages with a grid fill the new format exactly
+    if (scale) deck.do(deck.order().filter((x) => x.d.grid).flatMap((x) => arrange(x.sid, x.d.grid, x.d.els, ed.ctx)));
   };
   ed.creditsSlide = () => {
     const seen = new Map();
@@ -231,24 +354,25 @@ export async function deckScreen(app, deckId, q) {
 
   // menus at the pointer
   function menuAt(x, y, items) {
-    $('.ctx')?.remove();
-    const m = h('div.ctx', { role: 'menu', style: `left:${x}px;top:${y}px` }, ...items.filter(Boolean).map((i) => (i === '-' ? h('hr') : h('button', { type: 'button', role: 'menuitem', class: i[3] || '', onclick: () => { m.remove(); i[2](); } }, icon(i[0]), h('span', i[1]), i[4] && h('kbd', i[4])))));
-    document.body.append(m);
-    const r = m.getBoundingClientRect();
-    m.style.left = clamp(x, 6, innerWidth - r.width - 6) + 'px'; m.style.top = clamp(y, 6, innerHeight - r.height - 6) + 'px';
-    const off = (e) => { if (!m.contains(e.target)) { m.remove(); removeEventListener('pointerdown', off, true); removeEventListener('keydown', esc, true); } }, esc = (e) => { if (e.key === 'Escape') { m.remove(); removeEventListener('keydown', esc, true); } };
-    addEventListener('pointerdown', off, true); addEventListener('keydown', esc, true);
-    m.querySelector('button')?.focus();
+    $('.ctxm')?.remove();
+    const list = items.filter(Boolean), d = h('sav-dropdown.ctxm', { placement: 'bottom-start', style: `left:${x}px;top:${y}px` }, h('span', { slot: 'trigger' }), ...list.map((i, n) => (i === '-' ? h('sav-divider') : item(String(n), i[0], i[1], { variant: i[3] || null, kbd: i[4] }))));
+    d.addEventListener('sav-select', (e) => { const i = list[+e.detail.value]; setTimeout(() => i[2](), 30); });
+    d.addEventListener('sav-hide', () => setTimeout(() => d.remove(), 200));
+    document.body.append(d);
+    requestAnimationFrame(() => d.show());
   }
   const C = isMac ? '⌘' : 'Ctrl+';
-  ed.contextMenu = (x, y) => { const s = ed.sel.size, one = s === 1 && deck.el(ed.sid, [...ed.sel][0]); menuAt(x, y, s ? [['copy', t('copy'), () => document.execCommand('copy'), '', C + 'C'], ['copy-plus', t('duplicate'), ed.duplicateSel, '', C + 'D'], '-', ['bring-to-front', t('to_front'), () => ed.zorder('front')], ['send-to-back', t('to_back'), () => ed.zorder('back')], one?.t === 'image' && one.src && ['image', t('as_background'), () => ed.asBackground([...ed.sel][0])], ['message-square', t('comment'), () => setTab('comments')], ['sticky-note', t('my_note'), () => setTab('notes')], '-', ['trash', t('delete'), ed.deleteSel, 'danger']] : [['type', t('text'), () => ed.insert('text:body')], ['image', t('image'), () => ed.insert('image')], ['shapes', t('shapes'), () => setTab('elements')], '-', ['palette', t('theme'), () => setTab('theme')], ['settings', t('slide'), () => setTab('props')]]); };
-  const slideMenu = (x, y) => menuAt(x, y, [['plus', t('new_slide'), () => ed.addSlide(), '', 'Ctrl+M'], ['copy-plus', t('duplicate'), ed.duplicateSlide], [deck.slide(ed.sid)?.d.hide ? 'eye' : 'eye-off', deck.slide(ed.sid)?.d.hide ? t('show_slide') : t('hide_slide'), () => deck.do({ k: 'slide.set', s: ed.sid, p: { hide: deck.slide(ed.sid).d.hide ? null : 1 } })], ['arrow-up', t('move_up'), () => moveTo(ed.sid, deck.index(ed.sid) - 1)], ['arrow-down', t('move_down'), () => moveTo(ed.sid, deck.index(ed.sid) + 1)], '-', ['trash', t('delete'), ed.deleteSlide, 'danger']]);
-  if (mobile() && ed.edit) { const b = iconBtn('ellipsis', t('slide'), (e) => { const r = e.currentTarget.getBoundingClientRect(); slideMenu(r.left, r.top - 260); }, { size: 'sm', place: 'top' }); $('.ebottom', center).prepend(b, iconBtn('plus', t('new_slide'), () => ed.addSlide(), { size: 'sm', place: 'top' })); }
+  ed.contextMenu = (x, y) => { const s = ed.sel.size, one = s === 1 && deck.el(ed.sid, [...ed.sel][0]); menuAt(x, y, s ? [['copy', t('copy'), () => document.execCommand('copy'), '', C + 'C'], ['copy-plus', t('duplicate'), ed.duplicateSel, '', C + 'D'], ['paintbrush', t('copy_style'), ed.copyStyle], ed.styleClip && ['paint-roller', t('paste_style'), ed.pasteStyle], s > 1 && ['group', t('group'), ed.group, '', C + 'G'], selEls().some((z) => z.el.g) && ['ungroup', t('ungroup'), ed.ungroup], '-', ['bring-to-front', t('to_front'), () => ed.zorder('front')], ['send-to-back', t('to_back'), () => ed.zorder('back')], one?.t === 'image' && one.src && ['image', t('as_background'), () => ed.asBackground([...ed.sel][0])], ['message-square', t('comment'), () => setTab('comments')], ['sticky-note', t('my_note'), () => setTab('notes')], '-', ['trash', t('delete'), ed.deleteSel, 'danger']] : [['type', t('text'), () => ed.insert('text:body')], ['image', t('image'), () => ed.insert('image')], ['shapes', t('shapes'), () => setTab('elements')], '-', ['palette', t('theme'), () => setTab('theme')], ['panel-top', t('page'), () => setTab('page')]]); };
+  const slideMenu = (x, y) => menuAt(x, y, [deck.canEdit && ['plus', t('new_slide'), () => ed.addSlide(), '', 'Ctrl+M'], deck.canEdit && ['copy-plus', t('duplicate'), ed.duplicateSlide], ed.edit && ['pencil', t('rename_page'), () => ed.renamePage()], ed.edit && [deck.slide(ed.sid)?.d.hide ? 'eye' : 'eye-off', deck.slide(ed.sid)?.d.hide ? t('show_slide') : t('hide_slide'), () => ed.toggleHide()], deck.role === 'owner' && ['key-round', t('page_rules'), () => pageRulesDialog(ed, [ed.sid])], deck.canEdit && ed.edit && ['arrow-up', t('move_up'), () => moveTo(ed.sid, deck.index(ed.sid) - 1)], deck.canEdit && ed.edit && ['arrow-down', t('move_down'), () => moveTo(ed.sid, deck.index(ed.sid) + 1)], deck.canEdit && ed.edit && '-', deck.canEdit && ed.edit && ['trash', t('delete'), ed.deleteSlide, 'danger']]);
+  if (mobile() && ed.editor) { const b = iconBtn('ellipsis', t('slide'), (e) => { const r = e.currentTarget.getBoundingClientRect(); slideMenu(r.left, r.top - 260); }, { size: 'sm', place: 'top' }); $('.ebottom', center).prepend(b, iconBtn('plus', t('new_slide'), () => ed.addSlide(), { size: 'sm', place: 'top' })); }
 
   // ------------------------------------------------------------------ side panel
-  const TABS = [...(ed.edit ? [['elements', 'shapes', 'elements'], ['props', 'sliders-horizontal', 'design'], ['layouts', 'layout-template', 'layouts'], ['theme', 'palette', 'theme'], ['media', 'images', 'media']] : []), ['comments', 'message-square', 'comments'], ['notes', 'sticky-note', 'notes']];
-  function drawRail() { rail.replaceChildren(...TABS.map(([k, ic, l]) => { const n = k === 'comments' || k === 'notes' ? marks.count(k) : 0; return h('button.rb', { type: 'button', class: ed.tab === k ? 'on' : '', 'aria-pressed': String(ed.tab === k), onclick: () => setTab(ed.tab === k ? '' : k) }, icon(ic), h('span', t(l)), n ? h('em', n) : null); })); }
+  const ALLTABS = [...(ed.editor ? [['elements', 'shapes', 'elements'], ['props', 'sliders-horizontal', 'format_tab'], ['page', 'panel-top', 'page'], ['grid', 'grid-3x3', 'grids'], ['layouts', 'layout-template', 'layouts'], ...(deck.canEdit ? [['theme', 'palette', 'theme']] : []), ['media', 'images', 'media']] : []), ['comments', 'message-square', 'comments'], ['notes', 'sticky-note', 'notes']];
+  const tabs = () => ALLTABS.filter(([k]) => k !== (ed.simple ? 'layouts' : 'grid'));
+  function drawRail() { rail.replaceChildren(...tabs().map(([k, ic, l]) => { const n = k === 'comments' || k === 'notes' ? marks.count(k) : 0; return h('sav-bottom-nav-item', { label: t(l), icon: ic, value: k, badge: n || null, current: ed.tab === k }); })); }
+  rail.addEventListener('sav-select', (e) => { e.stopPropagation(); setTab(ed.tab === e.detail.value ? '' : e.detail.value); });
   function setTab(k) {
+    if (k !== 'props') ed.backTab = '';
     ed.tab = k;
     app.classList.toggle('has-panel', !!k);
     drawRail(); drawPanel(true); stage.overlayNow();
@@ -257,15 +381,15 @@ export async function deckScreen(app, deckId, q) {
   function drawPanel(fresh) {
     if (!ed.tab) { panel.replaceChildren(); return; }
     const y = fresh ? 0 : panel.querySelector('.pbody')?.scrollTop || 0;
-    const body = { elements: elementsPanel, props: propsPanel, layouts: layoutsPanel, theme: themePanel, media: mediaPanel, comments: marks.commentsPanel, notes: marks.notesPanel }[ed.tab](ed);
-    panel.replaceChildren(h('div.phead', h('h2', t(TABS.find((x) => x[0] === ed.tab)[2])), iconBtn('x', t('close'), () => setTab(''), { size: 'sm' })), h('div.pbody', body));
+    const body = !ed.edit && !['comments', 'notes'].includes(ed.tab) ? () => h('sav-empty-state', { icon: 'lock', heading: t('page_locked'), text: t('page_locked_t') }) : { grid: gridPanel, elements: elementsPanel, props: propsPanel, page: pagePanel, layouts: layoutsPanel, theme: themePanel, media: mediaPanel, comments: marks.commentsPanel, notes: marks.notesPanel }[ed.tab];
+    panel.replaceChildren(h('div.phead', h('h2', t(ALLTABS.find((x) => x[0] === ed.tab)[2])), iconBtn('x', t('close'), () => setTab(''), { size: 'sm' })), h('div.pbody', body(ed)));
     panel.querySelector('.pbody').scrollTop = y;
   }
   const typing = () => { const a = deepActive(); return a && panel.contains(a.getRootNode().host || a) && /^(INPUT|TEXTAREA)$/.test(a.tagName); };
   const deepActive = () => { let a = document.activeElement; while (a?.shadowRoot?.activeElement) a = a.shadowRoot.activeElement; return a; };
   let panelT;
   /** The properties follow what is selected; never while one is being typed or a list is open. */
-  ed.refreshPanel = () => { clearTimeout(panelT); panelT = setTimeout(() => { if (ed.tab === 'props' && !ed.dragging && !typing() && !panel.querySelector('sav-popover[open], sav-select[open]')) drawPanel(); if (ed.tab === 'comments' || ed.tab === 'notes') drawPanel(); }, 40); };
+  ed.refreshPanel = () => { clearTimeout(panelT); panelT = setTimeout(() => { if ((ed.tab === 'props' || ed.tab === 'page' || ed.tab === 'grid') && !ed.dragging && !typing() && !panel.querySelector('sav-popover[open], sav-select[open], sav-color-picker[open]')) drawPanel(); if (ed.tab === 'comments' || ed.tab === 'notes') drawPanel(); }, 40); };
   ed.refreshMarks = () => { drawRail(); if ((ed.tab === 'comments' || ed.tab === 'notes') && !typing()) drawPanel(); stage.overlayNow(); };
 
   // pointing at something for a comment or a note
@@ -289,13 +413,14 @@ export async function deckScreen(app, deckId, q) {
     let redraw = false, all = false, stripAll = false;
     const els = new Set(), bgs = new Set();
     for (const op of ops) {
+      if (op.k === 'page.rules') continue;
       if (op.k === 'deck.set') {
         if (op.p.title !== undefined) { title.value = deck.title; document.title = deck.title + ' — SavPresentations'; }
         if (op.p.theme || op.p.format || op.p.opts) { ed.ctx = context(deck.meta); all = true; fillMenu(); }
       } else if (op.k === 'slide.add' || op.k === 'slide.del' || op.k === 'slide.move') { stripAll = true; if (op.s === ed.sid) redraw = true; } else {
         touch(op.s);
         if (op.s !== ed.sid) continue;
-        if (op.k === 'slide.set') { if (Object.keys(op.p).some((f) => f !== 'notes')) bgs.add(1); } else els.add(op.e);
+        if (op.k === 'slide.set') { if (Object.keys(op.p).some((f) => f !== 'notes' && f !== 'name' && f !== 'hide')) bgs.add(1); else markStrip(); } else els.add(op.e);
       }
     }
     if (!deck.slide(ed.sid)) { const l = deck.order(); ed.closeText(); ed.sel.clear(); ed.sid = l[0]?.sid || ''; redraw = true; }
@@ -310,12 +435,13 @@ export async function deckScreen(app, deckId, q) {
     buttons();
   });
   const buttons = () => { undoB.firstChild.disabled = !deck.undoStack.length; redoB.firstChild.disabled = !deck.redoStack.length; };
-  const setStatus = () => { const off = deck.failed, s = !ed.edit ? t('view_only') : off ? t('offline_saved') : deck.saved ? t('saved_all') : t('saving'); status.replaceChildren(icon(!ed.edit ? 'eye' : off ? 'cloud-off' : deck.saved ? 'cloud-check' : 'refresh-cw'), h('span', s)); status.classList.toggle('off', !!off); };
+  const setStatus = () => { const off = deck.failed, s = !ed.editor ? t('view_only') : off ? t('offline_saved') : deck.saved ? t('saved_all') : t('saving'); status.replaceChildren(icon(!ed.editor ? 'eye' : off ? 'cloud-off' : deck.saved ? 'cloud-check' : 'refresh-cw'), h('span', s)); status.classList.toggle('off', !!off); };
   deck.addEventListener('status', setStatus);
-  deck.addEventListener('people', () => { drawPeople(); markStrip(); stage.overlayNow(); });
+  deck.addEventListener('people', () => { drawPeople(); markStrip(); stage.overlayNow(); drawBanner(); });
   deck.addEventListener('comments', () => marks.load('comments'));
   deck.addEventListener('role', () => { toast(t('role_changed')); dispatchEvent(new PopStateEvent('popstate')); });
   deck.addEventListener('reload', () => { deck.alive = false; dispatchEvent(new PopStateEvent('popstate')); });
+  deck.addEventListener('denied', () => toast(t('page_denied'), 'warning'));
   deck.addEventListener('refused', (e) => toast(errText({ code: e.detail }), 'danger'));
   deck.addEventListener('lost', (e) => dialog(t('cant_open'), h('p', t('err_' + e.detail) ), [[t('home'), () => go('./')], [t('try_again'), () => location.reload(), { appearance: 'outline' }]], { persistent: true }));
   function drawPeople() {
@@ -327,20 +453,26 @@ export async function deckScreen(app, deckId, q) {
 
   // ------------------------------------------------------------------ keyboard and clipboard
   let clip = null;
-  const busyField = () => { const a = deepActive(); return ed.editing || (a && (/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a.isContentEditable)) || $('sav-dialog[open]') || document.body.classList.contains('showing'); };
+  const busyField = () => { const a = deepActive(); return ed.editing || (a && (/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a.isContentEditable)) || $('sav-dialog[open], sav-command[open]') || document.body.classList.contains('showing'); };
   const onKey = (e) => {
     if (e.defaultPrevented || document.body.classList.contains('showing')) return;
     const m = e.ctrlKey || e.metaKey, k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
     if (k === 'F5') { e.preventDefault(); return show(e.shiftKey ? ed.sid : deck.order()[0]?.sid); }
     if (ed.picking && k === 'Escape') { ed.picking = false; app.classList.remove('picking'); ed.onPicked?.(null); return; }
+    if (ed.editing && k === 'Escape') { const id = ed.editing.id; e.preventDefault(); ed.closeText(); ed.select([id]); return; }
+    if (m && k === 'f' && !busyField()) { e.preventDefault(); return void ed.findReplace(); }
     if (busyField()) return;
     const act = (fn) => { e.preventDefault(); fn(); };
+    if (strip.contains(document.activeElement) && /^(Arrow|[ ]$|Enter|Escape)/.test(k)) return; // the sortable list has its own keys
     if (k === 'PageDown' || (!ed.sel.size && (k === 'ArrowDown' || k === 'ArrowRight'))) return act(() => { const l = deck.order(); ed.goto(l[Math.min(l.length - 1, deck.index(ed.sid) + 1)]?.sid); });
     if (k === 'PageUp' || (!ed.sel.size && (k === 'ArrowUp' || k === 'ArrowLeft'))) return act(() => ed.goto(deck.order()[Math.max(0, deck.index(ed.sid) - 1)]?.sid));
-    if (!ed.edit) return;
+    if (!ed.editor) return;
     if (m && k === 'z') return act(() => (e.shiftKey ? deck.redo() : deck.undo()));
     if (m && k === 'y') return act(() => deck.redo());
     if (m && k === 'd') return act(() => (ed.sel.size ? ed.duplicateSel() : ed.duplicateSlide()));
+    if (m && k === 'g') return act(() => (e.shiftKey ? ed.ungroup() : ed.group()));
+    if (m && e.altKey && k === 'c') return act(() => ed.copyStyle());
+    if (m && e.altKey && k === 'v') return act(() => ed.pasteStyle());
     if (m && k === 'a') return act(() => ed.select(sorted(deck.slide(ed.sid).d).filter((x) => !x.lock).map((x) => x.id)));
     if (e.ctrlKey && k === 'm') return act(() => ed.addSlide());
     if (m && (k === 'b' || k === 'i' || k === 'u') && ed.sel.size) return act(() => { const f = { b: 'bold', i: 'italic', u: 'under' }[k], l = selEls().filter((x) => x.el.t !== 'image' && x.el.t !== 'video'), sc = slideContext(ed.ctx, deck.slide(ed.sid).d), on = l.some((x) => !styleOf(x.el, sc)[f]); deck.do(l.map((x) => ({ k: 'el.set', s: ed.sid, e: x.id, p: { [f]: on ? 1 : 0 } }))); });
@@ -351,7 +483,8 @@ export async function deckScreen(app, deckId, q) {
     if (k === 'Enter' && ed.sel.size === 1) return act(() => ed.enter([...ed.sel][0]));
     if (k === 'Tab' && stage.scroller.contains(document.activeElement)) { const l = sorted(deck.slide(ed.sid).d).filter((x) => !x.lock); if (l.length) return act(() => { const i = l.findIndex((x) => ed.sel.has(x.id)); ed.select([l[(i + (e.shiftKey ? -1 : 1) + l.length) % l.length].id]); }); }
     const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[k];
-    if (d && ed.sel.size) return act(() => { const s = e.shiftKey ? 10 : 1; deck.do(selEls().filter((x) => !x.el.lock).map((x) => ({ k: 'el.set', s: ed.sid, e: x.id, p: { x: x.el.x + d[0] * s, y: x.el.y + d[1] * s } })), 'nudge'); });
+    if (d && ed.sel.size && ed.simple) return;
+    if (d && ed.sel.size) return act(() => { const s = e.shiftKey ? 10 : 1; deck.do(selEls().filter((x) => !x.el.lock).map((x) => ({ k: 'el.set', s: ed.sid, e: x.id, p: { x: x.el.x + d[0] * s, y: x.el.y + d[1] * s, ...(x.el.cell != null ? { cell: null, cr: null } : {}) } })), 'nudge'); });
     if (k === 't') act(() => ed.insert('text:body'));
   };
   const onCopy = (e) => {
@@ -373,7 +506,7 @@ export async function deckScreen(app, deckId, q) {
       try { const p = JSON.parse(raw); if (p.els) cloneInto(p.els, 24, 24); else if (p.slide) { const d = fixSlide(p.slide), els = {}; for (const el of Object.values(d.els)) els[uid()] = el; const sid = uid(); deck.do({ k: 'slide.add', s: sid, pos: deck.posAt(deck.index(ed.sid) + 1), d: { ...d, els } }); ed.goto(sid); } } catch { /* not ours */ }
       return;
     }
-    if (files.length) { e.preventDefault(); return uploadFiles(files, (m) => ed.insertImage(m)); }
+    if (files.length) { e.preventDefault(); return uploadFiles(files, (m) => ed.insertImage(m), (v) => ed.insertVideo(v)); }
     const html = c.getData('text/html'), txt = c.getData('text/plain');
     if (!txt) return;
     e.preventDefault();
@@ -386,19 +519,32 @@ export async function deckScreen(app, deckId, q) {
   addEventListener('keydown', onKey); addEventListener('copy', onCopy); addEventListener('cut', onCopy); addEventListener('paste', onPaste);
   // buttons of the panel do not take the focus away from the text being written
   panel.addEventListener('mousedown', (e) => { if (ed.editing && !e.composedPath().some((x) => /^(INPUT|TEXTAREA)$/.test(x.tagName))) e.preventDefault(); });
-  const onResize = () => { if ((mobile() ? 92 : 150) !== stripW) drawStrip(); };
+  const onResize = () => { if ((mobile() ? 92 : 150) !== stripW) { mobile() ? strip.setAttribute('direction', 'horizontal') : strip.removeAttribute('direction'); drawStrip(); } };
   addEventListener('resize', onResize);
   // swipe between slides on phones (viewers)
-  if (!ed.edit) { let x0 = null; stage.scroller.addEventListener('touchstart', (e) => { x0 = e.touches.length === 1 ? e.touches[0].clientX : null; }, { passive: true }); stage.scroller.addEventListener('touchend', (e) => { if (x0 == null || ed.picking) return; const dx = e.changedTouches[0].clientX - x0, l = deck.order(), i = deck.index(ed.sid); if (Math.abs(dx) > 60) ed.goto(l[clamp(i + (dx < 0 ? 1 : -1), 0, l.length - 1)].sid); }, { passive: true }); }
+  if (!ed.editor) { let x0 = null; stage.scroller.addEventListener('touchstart', (e) => { x0 = e.touches.length === 1 ? e.touches[0].clientX : null; }, { passive: true }); stage.scroller.addEventListener('touchend', (e) => { if (x0 == null || ed.picking) return; const dx = e.changedTouches[0].clientX - x0, l = deck.order(), i = deck.index(ed.sid); if (Math.abs(dx) > 60) ed.goto(l[clamp(i + (dx < 0 ? 1 : -1), 0, l.length - 1)].sid); }, { passive: true }); }
 
   let running = null;
-  function show(from) { if (!deck.slides.size) return; ed.closeText(); const cur = deck.slide(ed.sid); running = startShow(ed, from || (cur && !cur.d.hide ? ed.sid : undefined)); ed.onShowEnd = (sid) => { running = null; ed.goto(sid); stage.draw(); deck.setState({ s: sid }); }; }
-  function shortcuts() { const r = (k, v) => h('div.kr', h('span', t(v)), h('kbd', k)); dialog(t('shortcuts'), h('div.keys', r('F5', 'present'), r(C + 'Z', 'undo'), r(isMac ? '⇧⌘Z' : 'Ctrl+Y', 'redo'), r('T', 'text'), r('Ctrl+M', 'new_slide'), r(C + 'D', 'duplicate'), r('Enter', 'k_write'), r('Esc', 'k_esc'), r('↑ ↓ ← →', 'k_nudge'), r('Shift', 'k_shift'), r('Alt', 'k_alt'), r(C + '[  ]', 'k_order'), r(C + t('k_wheel_n'), 'k_wheel'), r('PgUp / PgDn', 'k_pages'), r(t('k_show_n'), 'k_show')), [], { width: '30rem' }); }
+  function show(from, opt) { if (!deck.slides.size || running) return; ed.closeText(); ed.saveNotes(); const cur = deck.slide(ed.sid); running = startShow(ed, from || (cur && !cur.d.hide ? ed.sid : undefined), opt); ed.onShowEnd = (sid) => { running = null; ed.goto(sid); stage.draw(); deck.setState({ s: sid }); }; }
+  ed.show = show;
+  ed.shortcuts = shortcuts;
+  /** Someone is presenting: whoever has the presentation open can follow their slides. */
+  function drawBanner() {
+    const p = deck.people.find((x) => x.st?.pr), box = $('.banner', center);
+    if (!p || running) return box.replaceChildren();
+    if (box.dataset.c === p.c && box.firstChild) return;
+    box.dataset.c = p.c;
+    box.replaceChildren(h('sav-alert', { variant: 'primary' }, h('div.prow', h('span', t('is_presenting', { name: p.name || t('guest') })), h('div.spacer'), btn(t('follow'), () => show(p.st.s, { follow: p.c }), { size: 'sm', icon: 'play' }))));
+  }
+  function shortcuts() { const r = (k, v) => h('div.kr', h('span', t(v)), h('kbd', k)); dialog(t('shortcuts'), h('div.keys', r('F5', 'present'), r(C + 'Z', 'undo'), r(isMac ? '⇧⌘Z' : 'Ctrl+Y', 'redo'), r('T', 'text'), r('Ctrl+M', 'new_slide'), r(C + 'D', 'duplicate'), r(C + 'K', 'palette_l'), r(C + 'F', 'find_replace'), r(C + 'G', 'group'), r(C + (isMac ? '⌥C' : 'Alt+C'), 'copy_style'), r('Enter', 'k_write'), r('Esc', 'k_esc'), r('↑ ↓ ← →', 'k_nudge'), r('Shift', 'k_shift'), r('Alt', 'k_alt'), r(C + '[  ]', 'k_order'), r(C + t('k_wheel_n'), 'k_wheel'), r('PgUp / PgDn', 'k_pages'), r(t('k_show_n'), 'k_show')), [], { width: '30rem' }); }
+
+  const dropFeatures = addFeatures(ed);
 
   // ------------------------------------------------------------------ go
-  drawStrip(); stage.draw(); drawRail(); buttons(); setStatus();
-  app.classList.toggle('viewer', !ed.edit);
-  if (q.get('comments')) setTab('comments'); else if (q.get('notes')) setTab('notes'); else if (ed.edit && !mobile()) setTab(deck.slides.size ? 'elements' : 'layouts');
+  if (ed.simple && ed.editor) readAll(ed);
+  drawStrip(); stage.draw(); drawRail(); buttons(); setStatus(); drawBanner();
+  app.classList.toggle('viewer', !ed.edit); app.classList.toggle('simple', ed.simple && ed.editor);
+  if (q.get('comments')) setTab('comments'); else if (q.get('notes')) setTab('notes'); else if (ed.editor && !mobile()) setTab(ed.simple ? 'grid' : deck.slides.size ? 'elements' : 'layouts');
   deck.state = { s: ed.sid };
   deck.start();
   marks.load();
@@ -406,5 +552,5 @@ export async function deckScreen(app, deckId, q) {
   if (q.get('present')) show(ed.sid);
   // for automatic checks and the console
   window.__sp = ed;
-  return { leave: () => { ed.closeText(); running?.close(); stage.leave(); deck.stop(); removeEventListener('keydown', onKey); removeEventListener('copy', onCopy); removeEventListener('cut', onCopy); removeEventListener('paste', onPaste); removeEventListener('resize', onResize); app.className = ''; $$('.ctx,.ftb').forEach((x) => x.remove()); delete window.__sp; } };
+  return { leave: () => { ed.closeText(); saveNotes(); running?.close(); dropFeatures(); stage.leave(); deck.stop(); removeEventListener('keydown', onKey); removeEventListener('copy', onCopy); removeEventListener('cut', onCopy); removeEventListener('paste', onPaste); removeEventListener('resize', onResize); app.className = ''; $$('.ctxm,.ftb').forEach((x) => x.remove()); delete window.__sp; } };
 }

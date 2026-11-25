@@ -12,7 +12,7 @@ const TAGS = ['p' => 1, 'h1' => 1, 'h2' => 1, 'h3' => 1, 'h4' => 1, 'ul' => 1, '
 const TOP_TAGS = ['p', 'h1', 'h2', 'h3', 'h4', 'ul', 'ol', 'blockquote', 'pre', 'div', 'hr', 'table', 'figure'];
 const RENAME = ['b' => 'strong', 'i' => 'em', 'strike' => 's', 'del' => 's', 'ins' => 'u', 'h5' => 'h4', 'h6' => 'h4', 'thead' => 'tbody', 'tfoot' => 'tbody'];
 const DROP = ['script', 'style', 'iframe', 'object', 'embed', 'svg', 'math', 'template', 'noscript', 'link', 'meta', 'form', 'input', 'button', 'textarea', 'select', 'video', 'audio', 'head', 'title'];
-const CLASSES = ['title', 'subtitle', 'lead', 'small', 'callout', 'toc', 'pb', 'beside', 'check', 'fn', 'plain', 'striped'];
+const CLASSES = ['title', 'subtitle', 'lead', 'small', 'drop', 'eq', 'callout', 'toc', 'pb', 'beside', 'check', 'fn', 'plain', 'striped', 'bare', 'headcol', 'math', 'thick', 'dash', 'dots', 'dbl', 'short', 'orn'];
 const COLOR_RE = '/^(#[0-9a-f]{3,8}|rgba?\([0-9., %]+\))$/i';
 const STYLE_RE = [
     'text-align' => '/^(left|center|right|justify|start|end)$/',
@@ -23,6 +23,7 @@ const STYLE_RE = [
     'margin-left' => '/^\d{1,3}(\.\d{1,2})?(pt|px|em)$/', 'text-indent' => '/^\d{1,3}(\.\d{1,2})?(pt|px|em)$/',
     'margin-top' => '/^\d{1,3}(\.\d{1,2})?(pt|px)$/', 'margin-bottom' => '/^\d{1,3}(\.\d{1,2})?(pt|px)$/',
     'vertical-align' => '/^(top|middle|bottom)$/', 'width' => '/^\d{1,3}(\.\d{1,3})?%$/',
+    'letter-spacing' => '/^-?\d(\.\d{1,2})?(pt|px|em)$/', 'font-variant' => '/^small-caps$/',
 ];
 
 function clean_style(string $css): string
@@ -45,6 +46,36 @@ function clean_href(string $v): string
     return preg_match('#^(https?://|mailto:|tel:)#i', $v) && strlen($v) <= 2000 ? $v : '';
 }
 
+/** Charts, diagrams, shapes, icons, QR codes, signatures: same fields and limits of assets/objects.js. */
+function clean_object($o): ?array
+{
+    if (!is_array($o)) return null;
+    $str = fn($v, int $n): string => is_string($v) || is_int($v) || is_float($v) ? mb_substr(preg_replace('/[\x00-\x1F]/u', ' ', (string)$v) ?? '', 0, $n) : '';
+    $col = fn($v): string => is_string($v) && preg_match('/^#[0-9a-f]{6}$/i', $v) ? strtolower($v) : '';
+    $num = fn($v, float $a, float $b, float $d) => is_numeric($v) && is_finite((float)$v) ? round(max($a, min($b, (float)$v)), 3) + 0 : $d + 0;
+    $one = fn($v, array $list, $d) => in_array($v, $list, true) ? $v : $d;
+    $list = fn($v, int $n): array => array_slice(is_array($v) ? array_values($v) : [], 0, $n);
+    $r = $num($o['r'] ?? null, 0.02, 3, 0.56);
+    switch ($o['k'] ?? '') {
+        case 'chart':
+            return ['k' => 'chart', 't' => $one($o['t'] ?? '', ['bar', 'stack', 'hbar', 'line', 'area', 'pie', 'donut', 'radar', 'scatter'], 'bar'), 'l' => array_map(fn($x) => $str($x, 60), $list($o['l'] ?? null, 40)),
+                's' => array_map(fn($x) => ['n' => $str($x['n'] ?? '', 60), 'v' => array_map(fn($y) => $num($y, -1e12, 1e12, 0), $list($x['v'] ?? null, 40))], array_filter($list($o['s'] ?? null, 8), 'is_array')),
+                'g' => ($o['g'] ?? 1) === 0 ? 0 : 1, 'v' => ($o['v'] ?? 0) === 1 ? 1 : 0, 'x' => $str($o['x'] ?? '', 120), 'c' => $col($o['c'] ?? ''), 'r' => $r];
+        case 'flow':
+            return ['k' => 'flow', 't' => $one($o['t'] ?? '', ['process', 'cycle', 'pyramid', 'timeline', 'steps', 'list'], 'process'), 'i' => array_map(fn($x) => $str($x, 120), $list($o['i'] ?? null, 10)), 'c' => $col($o['c'] ?? ''), 'r' => $r];
+        case 'shape':
+            return ['k' => 'shape', 's' => is_string($o['s'] ?? null) && preg_match('/^[a-z0-9]{2,16}$/', $o['s']) ? $o['s'] : 'rect', 'f' => ($o['f'] ?? '') === 'none' ? 'none' : $col($o['f'] ?? ''), 'b' => $col($o['b'] ?? ''), 'w' => $num($o['w'] ?? null, 0, 20, 0),
+                'd' => ($o['d'] ?? 0) === 1 ? 1 : 0, 'x' => $str($o['x'] ?? '', 300), 'tc' => $col($o['tc'] ?? ''), 'ts' => $num($o['ts'] ?? null, 6, 90, 14), 'h' => $one($o['h'] ?? '', ['', 'end', 'both'], ''), 'r' => $r];
+        case 'icon':
+            return ['k' => 'icon', 'n' => is_string($o['n'] ?? null) && preg_match('/^[a-z0-9-]{1,40}$/', $o['n']) ? $o['n'] : 'star', 'c' => $col($o['c'] ?? ''), 'w' => $num($o['w'] ?? null, 0.5, 4, 2)];
+        case 'qr':
+            return ['k' => 'qr', 'x' => $str($o['x'] ?? '', 350), 'c' => $col($o['c'] ?? '')];
+        case 'sign':
+            return ['k' => 'sign', 'x' => $str($o['x'] ?? '', 120), 'd' => $str($o['d'] ?? '', 120)];
+    }
+    return null;
+}
+
 function clean_node(DOMNode $n, int $depth = 0): string
 {
     if ($n instanceof DOMText) return htmlspecialchars(preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]/u', '', $n->nodeValue) ?? '', ENT_NOQUOTES, 'UTF-8');
@@ -56,7 +87,9 @@ function clean_node(DOMNode $n, int $depth = 0): string
     foreach ($n->childNodes as $c) $inner .= clean_node($c, $depth + 1);
     if (!isset(TAGS[$tag])) return $inner;
     $at = '';
-    $add = function (string $k, string $v) use (&$at) { $at .= ' ' . $k . '="' . htmlspecialchars($v, ENT_QUOTES, 'UTF-8') . '"'; };
+    $add = function (string $k, string $v) use (&$at) {
+        $at .= ' ' . $k . '="' . htmlspecialchars($v, ENT_QUOTES, 'UTF-8') . '"';
+    };
     $cls = array_values(array_intersect(preg_split('/\s+/', (string)$n->getAttribute('class')) ?: [], CLASSES));
     if ($cls) $add('class', implode(' ', $cls));
     $style = clean_style((string)$n->getAttribute('style'));
@@ -81,10 +114,16 @@ function clean_node(DOMNode $n, int $depth = 0): string
             if (preg_match('/^(l|c|r)$/', (string)$n->getAttribute('data-a'))) $add('data-a', $n->getAttribute('data-a'));
             $w = (int)$n->getAttribute('data-w');
             if ($w >= 5 && $w <= 100) $add('data-w', (string)$w);
+            if ($n->hasAttribute('data-o')) {
+                $o = clean_object(json_decode((string)$n->getAttribute('data-o'), true, 8));
+                if (!$o) return '';
+                $add('data-o', json_out($o));
+            }
             break;
         case 'div':
             if (!$cls) return $depth === 0 ? "<p>$inner</p>" : $inner;
-            if (preg_match('/^(info|tip|warn|note|l|r)$/', (string)$n->getAttribute('data-k'))) $add('data-k', $n->getAttribute('data-k'));
+            if (preg_match('/^(info|tip|warn|note|l|r|f|t)$/', (string)$n->getAttribute('data-k'))) $add('data-k', $n->getAttribute('data-k'));
+            if (in_array('toc', $cls, true) && preg_match('/^[1-3]$/', (string)$n->getAttribute('data-l'))) $add('data-l', $n->getAttribute('data-l'));
             if (in_array('toc', $cls, true) || in_array('pb', $cls, true)) return "<div$at></div>";
             break;
         case 'li':
@@ -108,10 +147,11 @@ function clean_node(DOMNode $n, int $depth = 0): string
         case 'col':
             return "<col$at>";
         case 'hr':
-            return '<hr>';
+            return "<hr$at>";
         case 'br':
             return '<br>';
         case 'span':
+            if (in_array('math', $cls, true)) return '<span class="math" data-m="' . htmlspecialchars(mb_substr((string)$n->getAttribute('data-m'), 0, 800), ENT_QUOTES, 'UTF-8') . '"></span>';
             if ($at === '') return $inner;
             break;
     }
@@ -170,6 +210,9 @@ function clean_settings($s): array
         'font' => $font($s['font'] ?? '', 'Source Sans 3'), 'headFont' => $font($s['headFont'] ?? '', 'Source Sans 3'),
         'fontSize' => $num($s['fontSize'] ?? null, 6, 40, 11), 'line' => $num($s['line'] ?? null, 1, 3, 1.5), 'gap' => $num($s['gap'] ?? null, 0, 40, 8),
         'color' => $color($s['color'] ?? '', '#1c1c1c'), 'headColor' => $color($s['headColor'] ?? '', '#1c1c1c'),
+        'accent' => $color($s['accent'] ?? '', '#0f6e56'), 'bg' => $color($s['bg'] ?? '', '#ffffff'),
+        'border' => in_array($s['border'] ?? '', ['thin', 'thick', 'double', 'dashed'], true) ? $s['border'] : '', 'borderColor' => $color($s['borderColor'] ?? '', '#0f6e56'),
+        'mark' => mb_substr($line($s['mark'] ?? ''), 0, 40), 'startPage' => (int)$num($s['startPage'] ?? null, 0, 9999, 1), 'bandLine' => !empty($s['bandLine']), 'capNum' => !empty($s['capNum']),
         'numbered' => !empty($s['numbered']), 'justify' => !empty($s['justify']),
         'lang' => is_string($s['lang'] ?? null) && preg_match('/^[a-z]{2}(-[A-Z]{2})?$/', $s['lang']) ? $s['lang'] : 'en',
     ];

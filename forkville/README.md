@@ -14,8 +14,8 @@ your restaurant, hire chefs and waiters, grow ingredients, learn and improve dis
 1. Upload the folder, open `install-db.php`, fill in the database and the first administrator. It writes
    `credentials.php` (git-ignored, blocked by `.htaccess`). Delete `install-db.php` afterwards.
    Alternatively import `install/forkville.sql` and copy `credentials-sample.php` to `credentials.php`.
-2. Email: confirmation links use `$mail_config` in `credentials.php`, or the site's `/.mail-config.php`.
-   **The confirmation is always required**: without SMTP nobody can enter with email and password.
+2. Email: confirmation links use `$mail_config` in `credentials.php`, or the site's `/.mail-config.php`. **The
+   confirmation is always required**: without SMTP nobody can enter with email and password.
 3. Google sign-in (optional): set `$google_client_id` (OAuth "Web application" client, add the site origin).
 
 ## Accounts
@@ -77,14 +77,15 @@ while away give half the XP (`OFFLINE_XP`).
 - **Room size**: width (`size`) and depth (`depth`) grow one column or row at a time (`game.expand`), up to
   `max_side(level)`; a new column goes on the left when the door (in the middle) would move, so nothing shifts.
 - **Upper floors** (`floors`, from level 15, up to 4): each starts 6×6 and grows inside the floor below; stairs lead
-  one floor up, lifts reach every floor they fit on. The simulation keeps floors `FLOOR_STRIDE` apart along z
-  (one flat grid, with stair/lift links); the scene stacks them and shows one floor at a time.
+  one floor up, lifts reach every floor they fit on. The simulation keeps floors `FLOOR_STRIDE` apart along z (one flat
+  grid, with stair/lift links); the scene stacks them and shows one floor at a time.
 - **Car park** (`parking`, 3 levels): guests who come by car pay +80% and tip more (server-capped in `apply_report`).
-- **Neighbourhood**: houses multiply and grow taller with the level; cars and passers-by follow the hour (`assets/town.js`).
+- **Neighbourhood**: houses multiply and grow taller with the level; cars and passers-by follow the hour
+  (`assets/town.js`).
 - **Door**: movable along the front wall (`game.door`, the tile inside and the path outside must be free) and 12 styles;
   the `wide_*` ones (`DOOR_WIDE`) are two tiles wide (both tiles and both paths kept free).
-- **Walls**: adaptive (Sims style), always low or always high, chosen from a small panel by the camera buttons
-  (stored on the device).
+- **Walls**: adaptive (Sims style), always low or always high, chosen from a small panel by the camera buttons (stored
+  on the device).
 - **Windows** (category `window`, own layer like rugs): pieces placed along the inner edge of an outer wall, the
   rotation says which wall (`window_tile()`); 1 to 4 tiles wide, plain, round, tall, arched, stained, full-height
   glass walls and panoramic glazing. The scene cuts them into the walls (`windowUnits()` / `windowPanes()` in
@@ -131,14 +132,15 @@ while away give half the XP (`OFFLINE_XP`).
   a broom while someone sweeps); the music has its own feel per kind of restaurant and almost stops when closed or
   paused.
 - **Cooking time**: every dish has its own base time (`DISHES`, from 2 s for a drink to 26 s for ribs), shortened by
-  the stove's speed, the fridges, the kitchen equipment, a better counter, the chef's skill and trait
-  (`cookTime()` in sim.js); the menu shows the base and the time in this kitchen.
+  the stove's speed, the fridges, the kitchen equipment, a better counter, the chef's skill and trait (`cookTime()` in
+  sim.js); the menu shows the base and the time in this kitchen.
 - **Levels**: up to 40 (`xp_for_level` = 60·L·(L−1)·(1 + L/15)); a level never goes down when the curve changes, and a
-  player's XP is lifted to the start of their level on load. Each guest gives `xp_per_customer` = 2 + level ÷ 4 XP
-  (half of it while away).
+  player's XP is lifted to the start of their level on load. Each guest gives `xp_per_customer` = 2 + level ÷ 4 XP (half
+  of it while away).
 - **Wages**: (role base + 7 per skill point [+ 25 per manager rank]) × (1 + 0.09 per restaurant level above 1).
 - **Chefs**: limited by the level (`max_chefs`: 1, then +1 every 4 levels, up to 8) and one stove each.
-- **Seasonal pieces**: on sale only during their event on the real calendar (Easter computed each year), kept once bought.
+- **Seasonal pieces**: on sale only during their event on the real calendar (Easter computed each year), kept once
+  bought.
 - **Cold service**: with a drinks fridge or a gelato freezer the waiter serves cold drinks and ice creams himself
   (`DISH_KINDS`), no chef needed; without them the chef prepares them.
 - **Cashier** (from level 9, needs a cash register): guests pay at the till, bills +10% and a tip of at least 8%

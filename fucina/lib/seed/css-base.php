@@ -120,7 +120,7 @@ if (!function_exists('fig_cssbase_specificity')) {
     {
         $row = function (int $y, string $sel, string $decl, array $n) {
             $s = "<text x=\"34\" y=\"" . ($y + 25) . "\" font-family=\"ui-monospace, Menlo, monospace\" font-weight=\"700\">$sel</text>"
-               . "<text x=\"120\" y=\"" . ($y + 25) . "\" font-family=\"ui-monospace, Menlo, monospace\" fill=\"#55527A\">$decl</text>";
+                . "<text x=\"120\" y=\"" . ($y + 25) . "\" font-family=\"ui-monospace, Menlo, monospace\" fill=\"#55527A\">$decl</text>";
             foreach ([[318, '#ECE6FF', '#7048E8'], [390, '#DCEBFF', '#2F8CF0'], [462, '#FFE8D6', '#E8590C']] as $i => [$x, $f, $k]) {
                 $s .= "<rect x=\"$x\" y=\"" . ($y + 4) . "\" width=\"56\" height=\"30\" rx=\"8\" fill=\"" . ($n[$i] ? $f : '#FFFFFF') . "\" stroke=\"$k\" stroke-width=\"2\"/>"
                     . "<text x=\"" . ($x + 28) . "\" y=\"" . ($y + 25) . "\" text-anchor=\"middle\" font-weight=\"700\" font-size=\"16\">{$n[$i]}</text>";
@@ -128,7 +128,7 @@ if (!function_exists('fig_cssbase_specificity')) {
             return $s;
         };
         $rows = $row(58, 'p', 'color: black', [0, 0, 1]) . $row(106, '.nota', 'color: blue', [0, 1, 0])
-              . $row(154, 'p.nota', 'color: green', [0, 1, 1]) . $row(202, '#box', 'color: red', [1, 0, 0]);
+            . $row(154, 'p.nota', 'color: green', [0, 1, 1]) . $row(202, '#box', 'color: red', [1, 0, 0]);
         return <<<SVG
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
 <g font-weight="700" text-anchor="middle" font-size="14"><text x="346" y="44" fill="#5B37D0">{$t[0]}</text><text x="418" y="44" fill="#1B66BC">{$t[1]}</text><text x="490" y="44" fill="#B84508">{$t[2]}</text></g>
@@ -218,7 +218,7 @@ a:hover { color: green; }   /* il link sotto al mouse */', 'css', L('<p>Un parag
         lesson('display', L('Display: blocchi e righe', 'Display: blocks and inlines'), [
             P('`display` decide come si comporta la scatola. Un elemento `block` occupa tutta la riga, come `<p>` e `<div>`. Un elemento `inline` scorre nel testo, come `<a>` e `<strong>`, e ignora `width` e `height`.', '`display` decides how the box behaves. A `block` element takes the whole line, like `<p>` and `<div>`. An `inline` element flows in the text, like `<a>` and `<strong>`, and ignores `width` and `height`.'),
             Fig(L(fig_cssbase_display(['tutta la riga, in pila', 'scorre nel testo', 'nel testo, con misure', '&lt;a&gt; un link che va', 'a capo&lt;/a&gt;'])
-                    , fig_cssbase_display(['whole line, stacked', 'flows in the text', 'in the text, with sizes', '&lt;a&gt; a link that', 'wraps&lt;/a&gt;'])),
+                , fig_cssbase_display(['whole line, stacked', 'flows in the text', 'in the text, with sizes', '&lt;a&gt; a link that', 'wraps&lt;/a&gt;'])),
                 L('Tre righe a confronto: due blocchi che occupano tutta la larghezza uno sotto l’altro; un link inline che scorre nel testo e va a capo; un bottone inline-block, più alto, seduto nella riga del testo.', 'Three rows compared: two blocks taking the full width one below the other; an inline link flowing in the text and wrapping onto the next line; a taller inline-block button sitting in the line of text.'),
                 L('Solo `block` e `inline-block` accettano `width` e `height`.', 'Only `block` and `inline-block` accept `width` and `height`.')),
             C('a.bottone { display: inline-block; padding: 8px 16px; }

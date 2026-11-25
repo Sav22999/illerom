@@ -7,8 +7,19 @@
  * are lowered automatically so the room is always visible.
  */
 import * as THREE from '../vendor/three.module.min.js';
-import {furnitureModel, floorMaterial, wallMaterial, cropModel, mat, forkMesh, PALETTE, glowMat, setNightGlow, useArrow, liftCabin} from './models.js';
-import {buildNeighbourhood, Traffic, applyHoliday} from './town.js';
+import {
+    cropModel,
+    floorMaterial,
+    forkMesh,
+    furnitureModel,
+    liftCabin,
+    mat,
+    PALETTE,
+    setNightGlow,
+    useArrow,
+    wallMaterial
+} from './models.js';
+import {applyHoliday, buildNeighbourhood, Traffic} from './town.js';
 
 const WALL_H = 2.4;
 /** Height of one storey (walls + floor slab), and the z stride the simulation uses to keep floors apart (see sim.js). */
@@ -92,7 +103,16 @@ export const RAINY = ['drizzle', 'rain', 'hail'];
 export const SNOWY = ['light_snow', 'snow'];
 export const isWet = (w) => RAINY.includes(w) || SNOWY.includes(w);
 /** How much each kind of weather covers the sky (0 clear … 1 storm). */
-const OVERCAST = {sunny: 0, clear: 0.08, cloudy: 0.45, drizzle: 0.55, rain: 0.85, hail: 0.75, light_snow: 0.5, snow: 0.8};
+const OVERCAST = {
+    sunny: 0,
+    clear: 0.08,
+    cloudy: 0.45,
+    drizzle: 0.55,
+    rain: 0.85,
+    hail: 0.75,
+    light_snow: 0.5,
+    snow: 0.8
+};
 
 /**
  * The weather of one game day: it changes from day to day (a good hash of the day number, so consecutive days are
@@ -137,24 +157,44 @@ function paintingTexture(k) {
     g.fillRect(0, 0, 160, 112);
     if (k === 0) {
         g.fillStyle = '#F25F5C';
-        g.beginPath(); g.arc(110, 50, 18, 0, Math.PI * 2); g.fill();
+        g.beginPath();
+        g.arc(110, 50, 18, 0, Math.PI * 2);
+        g.fill();
         g.fillStyle = '#7A8B3A';
-        g.beginPath(); g.ellipse(40, 120, 90, 50, 0, 0, Math.PI * 2); g.fill();
+        g.beginPath();
+        g.ellipse(40, 120, 90, 50, 0, 0, Math.PI * 2);
+        g.fill();
         g.fillStyle = '#5E9A3E';
-        g.beginPath(); g.ellipse(140, 125, 80, 45, 0, 0, Math.PI * 2); g.fill();
+        g.beginPath();
+        g.ellipse(140, 125, 80, 45, 0, 0, Math.PI * 2);
+        g.fill();
     } else if (k === 1) {
-        g.fillStyle = '#E8D3B0'; g.fillRect(0, 80, 160, 32);
+        g.fillStyle = '#E8D3B0';
+        g.fillRect(0, 80, 160, 32);
         [['#D7263D', 55, 70, 16], ['#F4D35E', 85, 74, 13], ['#7A8B3A', 108, 72, 14]].forEach(([col, x, y, r]) => {
-            g.fillStyle = col; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+            g.fillStyle = col;
+            g.beginPath();
+            g.arc(x, y, r, 0, Math.PI * 2);
+            g.fill();
         });
     } else if (k === 2) {
-        g.fillStyle = '#3E7CB4'; g.fillRect(0, 62, 160, 50);
-        g.fillStyle = '#FFFFFF'; g.beginPath(); g.moveTo(70, 60); g.lineTo(90, 20); g.lineTo(92, 60); g.fill();
-        g.fillStyle = '#7B4E2C'; g.fillRect(62, 60, 36, 6);
+        g.fillStyle = '#3E7CB4';
+        g.fillRect(0, 62, 160, 50);
+        g.fillStyle = '#FFFFFF';
+        g.beginPath();
+        g.moveTo(70, 60);
+        g.lineTo(90, 20);
+        g.lineTo(92, 60);
+        g.fill();
+        g.fillStyle = '#7B4E2C';
+        g.fillRect(62, 60, 36, 6);
     } else {
         g.fillStyle = '#D9653B';
-        g.fillRect(74, 50, 12, 50); g.fillRect(56, 44, 48, 10);
-        for (let i = 0; i < 4; i++) { g.fillRect(58 + i * 12, 16, 6, 32); }
+        g.fillRect(74, 50, 12, 50);
+        g.fillRect(56, 44, 48, 10);
+        for (let i = 0; i < 4; i++) {
+            g.fillRect(58 + i * 12, 16, 6, 32);
+        }
     }
     g.strokeStyle = 'rgba(0,0,0,.25)';
     g.lineWidth = 4;
@@ -165,8 +205,19 @@ function paintingTexture(k) {
 }
 
 /** Windows: the opening each kind cuts in a wall unit (wall slabs left: [y0, height]) and how it is glazed. */
-export const WINDOW_KIND = {window_small: 'std', window_wide: 'std', window_large: 'std', window_round: 'round', window_tall: 'tall', window_arched: 'arched',
-    window_stained: 'stained', glass_wall_2: 'full', glass_wall_3: 'full', glass_wall_4: 'full', window_panorama: 'pano'};
+export const WINDOW_KIND = {
+    window_small: 'std',
+    window_wide: 'std',
+    window_large: 'std',
+    window_round: 'round',
+    window_tall: 'tall',
+    window_arched: 'arched',
+    window_stained: 'stained',
+    glass_wall_2: 'full',
+    glass_wall_3: 'full',
+    glass_wall_4: 'full',
+    window_panorama: 'pano'
+};
 const WINDOW_OPENING = {
     std: {parts: [[0, 0.9], [1.9, WALL_H - 1.9]], y0: 0.9, y1: 1.9},
     stained: {parts: [[0, 0.9], [1.9, WALL_H - 1.9]], y0: 0.9, y1: 1.9},
@@ -177,6 +228,7 @@ const WINDOW_OPENING = {
     pano: {parts: [[WALL_H - 0.08, 0.08]], y0: 0.0, y1: WALL_H - 0.08, slim: true},
 };
 const STAINED = ['#D7263D', '#F6C945', '#3E7CB4', '#6BBF59', '#9B5DE5'];
+
 /** The glass, frame and sill of one wall unit of a window (unit space, x along the wall). */
 function windowPanes(win, T, glass, trim) {
     const o = WINDOW_OPENING[win.kind], h = o.y1 - o.y0, out = [];
@@ -199,7 +251,12 @@ function windowPanes(win, T, glass, trim) {
         back.rotation.y = Math.PI;
         return out;
     }
-    const pane = win.kind === 'stained' ? mat(STAINED[(win.key.length + (win.first ? 0 : 2)) % STAINED.length], {opacity: 0.6, roughness: 0.2, emissive: STAINED[win.key.length % STAINED.length], glow: 0.15}) : glass;
+    const pane = win.kind === 'stained' ? mat(STAINED[(win.key.length + (win.first ? 0 : 2)) % STAINED.length], {
+        opacity: 0.6,
+        roughness: 0.2,
+        emissive: STAINED[win.key.length % STAINED.length],
+        glow: 0.15
+    }) : glass;
     add(new THREE.BoxGeometry(1, h, 0.03), pane, 0, o.y0 + h / 2);
     if (o.y0 > 0.05) add(new THREE.BoxGeometry(1, 0.06, T + 0.1), trim, 0, o.y0); // the sill
     // Frames at the ends of the window, mullions between its tiles and across the middle of plain windows
@@ -214,7 +271,11 @@ function windowPanes(win, T, glass, trim) {
         add(new THREE.BoxGeometry(1, 0.035, T * 0.8), frame, 0, o.y0 + h * (win.kind === 'tall' ? 0.62 : 0.5));
     } else add(new THREE.BoxGeometry(1, 0.05, T * 0.8), frame, 0, 0.95); // a handrail line across a glass wall
     if (o.arch) { // a half-moon over the window
-        const top = add(new THREE.CircleGeometry(0.46, 16, 0, Math.PI), mat("#F6D58E", {opacity: 0.75, emissive: "#F6C35E", glow: 0.3}), 0, o.y1 - 0.2);
+        const top = add(new THREE.CircleGeometry(0.46, 16, 0, Math.PI), mat("#F6D58E", {
+            opacity: 0.75,
+            emissive: "#F6C35E",
+            glow: 0.3
+        }), 0, o.y1 - 0.2);
         top.scale.y = 0.4;
     }
     return out;
@@ -222,8 +283,16 @@ function windowPanes(win, T, glass, trim) {
 
 /** A stretch of wall with a window in it (the shop picture of a window piece). */
 export function windowModel(key) {
-    const w = {window_wide: 2, window_large: 3, glass_wall_2: 2, glass_wall_3: 3, glass_wall_4: 4, window_panorama: 4}[key] || 1, T = 0.16;
-    const g = new THREE.Group(), paint = mat('#F3E6D2'), glass = mat('#BFE3F0', {opacity: 0.45, roughness: 0.05}), trim = mat(PALETTE.woodDark);
+    const w = {
+        window_wide: 2,
+        window_large: 3,
+        glass_wall_2: 2,
+        glass_wall_3: 3,
+        glass_wall_4: 4,
+        window_panorama: 4
+    }[key] || 1, T = 0.16;
+    const g = new THREE.Group(), paint = mat('#F3E6D2'), glass = mat('#BFE3F0', {opacity: 0.45, roughness: 0.05}),
+        trim = mat(PALETTE.woodDark);
     const o = WINDOW_OPENING[WINDOW_KIND[key] || 'std'];
     for (let i = 0; i < w; i++) {
         const unit = new THREE.Group();
@@ -233,7 +302,12 @@ export function windowModel(key) {
             m.position.y = y0 + h / 2;
             unit.add(m);
         }
-        unit.add(...windowPanes({kind: WINDOW_KIND[key] || 'std', first: i === 0, last: i === w - 1, key}, T, glass, trim));
+        unit.add(...windowPanes({
+            kind: WINDOW_KIND[key] || 'std',
+            first: i === 0,
+            last: i === w - 1,
+            key
+        }, T, glass, trim));
         g.add(unit);
     }
     return g;
@@ -306,7 +380,10 @@ export function doorModel(style, open = true) {
             break;
         case 'arched': {
             leaf(0.9, -0.45, 1.6, (l, w) => panels(l, w, '#6B4426', '#5A3218'));
-            const arch = new THREE.Mesh(new THREE.CircleGeometry(0.42, 18, 0, Math.PI), m('#F6D58E', {emissive: '#F6C35E', glow: 0.4}));
+            const arch = new THREE.Mesh(new THREE.CircleGeometry(0.42, 18, 0, Math.PI), m('#F6D58E', {
+                emissive: '#F6C35E',
+                glow: 0.4
+            }));
             arch.position.set(0, H + 0.01, 0.06);
             g.add(arch);
             break;
@@ -329,7 +406,10 @@ export function doorModel(style, open = true) {
             });
             b(1.0, 0.08, 0.2, PALETTE.gold, 0, H, 0.02, {metalness: 0.7});
             break;
-        case 'wide_wood': case 'wide_glass': case 'wide_french': case 'wide_grand': {
+        case 'wide_wood':
+        case 'wide_glass':
+        case 'wide_french':
+        case 'wide_grand': {
             // Two leaves, a tile each: the door is two tiles wide (DOOR_WIDE)
             const kind = style.slice(5);
             for (const hinge of [-0.95, 0.95]) leaf(0.95, hinge, 1.55, (l, w) => {
@@ -345,7 +425,10 @@ export function doorModel(style, open = true) {
                 } else if (kind === 'grand') {
                     b(w, H, 0.06, '#3A1F14', 0, 0, 0, {roughness: 0.3}, l);
                     for (const y of [0.15, 0.85, 1.45]) b(w * 0.72, 0.5, 0.02, '#4E2A1A', 0, y, 0.035, {}, l);
-                    for (const y of [0.15, 0.85, 1.45]) b(w * 0.76, 0.025, 0.025, PALETTE.gold, 0, y + 0.5, 0.04, {metalness: 0.8, roughness: 0.25}, l);
+                    for (const y of [0.15, 0.85, 1.45]) b(w * 0.76, 0.025, 0.025, PALETTE.gold, 0, y + 0.5, 0.04, {
+                        metalness: 0.8,
+                        roughness: 0.25
+                    }, l);
                     b(0.04, 0.55, 0.05, PALETTE.gold, hinge < 0 ? w / 2 - 0.08 : -w / 2 + 0.08, 0.75, 0.05, {metalness: 0.8}, l);
                 } else {
                     panels(l, w, '#8A5A35', '#7B4E2C');
@@ -379,7 +462,11 @@ export class World {
         this.clock = new THREE.Clock();
         this.time = 0;
 
-        const r = this.renderer = new THREE.WebGLRenderer({canvas, antialias: true, powerPreference: 'high-performance'});
+        const r = this.renderer = new THREE.WebGLRenderer({
+            canvas,
+            antialias: true,
+            powerPreference: 'high-performance'
+        });
         try {
             this.quality = ['low', 'medium', 'high'].includes(localStorage.getItem('forkville-quality')) ? localStorage.getItem('forkville-quality') : 'high';
         } catch (e) {
@@ -428,7 +515,8 @@ export class World {
         this.wallMode = mode;
         try {
             localStorage.setItem('forkville-walls', mode);
-        } catch (e) { /* storage blocked */ }
+        } catch (e) { /* storage blocked */
+        }
     }
 
     on(name, fn) {
@@ -463,7 +551,10 @@ export class World {
     // ------------------------------------------------------------ outdoors (built once)
 
     buildOutdoors() {
-        const grass = new THREE.Mesh(new THREE.PlaneGeometry(420, 420), new THREE.MeshStandardMaterial({map: groundTexture('summer'), roughness: 1}));
+        const grass = new THREE.Mesh(new THREE.PlaneGeometry(420, 420), new THREE.MeshStandardMaterial({
+            map: groundTexture('summer'),
+            roughness: 1
+        }));
         this.grass = grass;
         grass.rotation.x = -Math.PI / 2;
         grass.position.set(8, -0.06, 8);
@@ -480,7 +571,11 @@ export class World {
     buildSky() {
         const sky = new THREE.Mesh(new THREE.SphereGeometry(120, 24, 12), new THREE.ShaderMaterial({
             side: THREE.BackSide, depthWrite: false, fog: false,
-            uniforms: {top: {value: new THREE.Color('#8CC8EC')}, horizon: {value: new THREE.Color('#F4EBD3')}, ground: {value: new THREE.Color('#F4EBD3')}},
+            uniforms: {
+                top: {value: new THREE.Color('#8CC8EC')},
+                horizon: {value: new THREE.Color('#F4EBD3')},
+                ground: {value: new THREE.Color('#F4EBD3')}
+            },
             vertexShader: 'varying vec3 vP; void main(){ vP = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
             fragmentShader: 'uniform vec3 top; uniform vec3 horizon; uniform vec3 ground; varying vec3 vP; void main(){ float h = vP.y; vec3 c = h > 0.0 ? mix(horizon, top, pow(min(1.0, h * 1.6), 0.7)) : mix(horizon, ground, min(1.0, -h * 4.0)); gl_FragColor = vec4(c, 1.0); }',
         }));
@@ -488,7 +583,14 @@ export class World {
         this.sky = sky;
         this.scene.add(sky);
         this.clouds = new THREE.Group();
-        const white = new THREE.MeshStandardMaterial({color: '#FFFFFF', roughness: 1, flatShading: true, fog: false, emissive: '#FFF4E6', emissiveIntensity: 0.25});
+        const white = new THREE.MeshStandardMaterial({
+            color: '#FFFFFF',
+            roughness: 1,
+            flatShading: true,
+            fog: false,
+            emissive: '#FFF4E6',
+            emissiveIntensity: 0.25
+        });
         for (let i = 0; i < 9; i++) {
             const c = new THREE.Group();
             const n = 3 + (i % 3);
@@ -517,7 +619,8 @@ export class World {
         this.quality = q;
         try {
             localStorage.setItem('forkville-quality', q);
-        } catch (e) { /* storage blocked */ }
+        } catch (e) { /* storage blocked */
+        }
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, QUALITY_DPR[q]));
         this.resize?.();
         if (r) this.buildStreet(r);
@@ -672,7 +775,13 @@ export class World {
             if ((it.f || 0) !== f) continue;
             const side = [0, 2, 1, 3][it.r];
             const tiles = this.footprint(it, this.catalogItems).tiles.map(([x, z]) => side < 2 ? x - rect.x0 : z).sort((a, b) => a - b);
-            tiles.forEach((u, i) => out.set(side + ':' + u, {kind: WINDOW_KIND[it.k], first: i === 0, last: i === tiles.length - 1, key: it.k, side}));
+            tiles.forEach((u, i) => out.set(side + ':' + u, {
+                kind: WINDOW_KIND[it.k],
+                first: i === 0,
+                last: i === tiles.length - 1,
+                key: it.k,
+                side
+            }));
         }
         return out;
     }
@@ -697,7 +806,8 @@ export class World {
         for (const it of layout || []) {
             const def = items[it.k];
             if (!def || def.cat !== 'stairs' || it.k.startsWith('lift') || (it.f || 0) !== f - 1) continue;
-            const [dx, dz] = D4[it.r], tiles = this.footprint(it, items).tiles, own = new Set(tiles.map(([x, z]) => x + ',' + z));
+            const [dx, dz] = D4[it.r], tiles = this.footprint(it, items).tiles,
+                own = new Set(tiles.map(([x, z]) => x + ',' + z));
             for (const [x, z] of tiles) if (!own.has((x - dx) + ',' + (z - dz))) out.add((x - dx) + ',' + (z - dz));
         }
         return out;
@@ -840,7 +950,10 @@ export class World {
                     // A framed painting on the room side (hidden when the wall is lowered)
                     const art = new THREE.Group();
                     const frame = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.52, 0.04), mat(PALETTE.woodDark));
-                    const pic = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.42), new THREE.MeshStandardMaterial({map: paintingTexture((i + side.n[0] * 3 + side.n[1] * 5 + 9) % 4), roughness: 0.7}));
+                    const pic = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.42), new THREE.MeshStandardMaterial({
+                        map: paintingTexture((i + side.n[0] * 3 + side.n[1] * 5 + 9) % 4),
+                        roughness: 0.7
+                    }));
                     pic.position.z = 0.025;
                     art.add(frame, pic);
                     art.position.set(0, 1.55, inward * (T / 2 + 0.03));
@@ -925,7 +1038,10 @@ export class World {
         g.fillText(txt, 256, 68);
         const t = new THREE.CanvasTexture(c);
         t.colorSpace = THREE.SRGBColorSpace;
-        const m = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.6, 0.06), [mat('#3B2418'), mat('#3B2418'), mat('#3B2418'), mat('#3B2418'), new THREE.MeshStandardMaterial({map: t, roughness: 0.6}), mat('#3B2418')]);
+        const m = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.6, 0.06), [mat('#3B2418'), mat('#3B2418'), mat('#3B2418'), mat('#3B2418'), new THREE.MeshStandardMaterial({
+            map: t,
+            roughness: 0.6
+        }), mat('#3B2418')]);
         m.castShadow = true;
         return m;
     }
@@ -997,7 +1113,11 @@ export class World {
         }
         obj.traverse(o => {
             if (o.userData.buildOnly) o.visible = !!this.buildMarks;
-            if (o.isPointLight) Object.assign(o, {intensity: 0.4 + (this.lastGlow || 0) * 4.5, decay: 1.3, distance: Math.max(o.distance, 4.5)});
+            if (o.isPointLight) Object.assign(o, {
+                intensity: 0.4 + (this.lastGlow || 0) * 4.5,
+                decay: 1.3,
+                distance: Math.max(o.distance, 4.5)
+            });
         });
         this.itemGroup.add(obj);
         this.items.set(it.id, obj);
@@ -1023,7 +1143,8 @@ export class World {
         }
         // One floor at a time (Sims style): what stands on other floors is hidden, the garden outside stays
         for (const obj of this.items.values()) {
-            const f = obj.userData.floor || 0, outdoor = ['outdoor', 'ground'].includes(this.catalogItems?.[obj.userData.key]?.cat);
+            const f = obj.userData.floor || 0,
+                outdoor = ['outdoor', 'ground'].includes(this.catalogItems?.[obj.userData.key]?.cat);
             obj.visible = outdoor || f === k || (k > 0 && obj.children.some(c => c.userData.floor === k));
             obj.children.forEach(c => {
                 if (c.userData.floor != null && c.userData.itemId != null && c.userData.floor > f) c.visible = c.userData.floor === k;
@@ -1031,16 +1152,25 @@ export class World {
                 else if (c.userData.floor == null) c.visible = true;
             });
             obj.traverse(o => {
-            if (o.userData.buildOnly) o.visible = !!this.buildMarks;
-            if (o.isPointLight) Object.assign(o, {intensity: 0.4 + (this.lastGlow || 0) * 4.5, decay: 1.3, distance: Math.max(o.distance, 4.5)});
-        }); // arrows and window markers: build mode only
+                if (o.userData.buildOnly) o.visible = !!this.buildMarks;
+                if (o.isPointLight) Object.assign(o, {
+                    intensity: 0.4 + (this.lastGlow || 0) * 4.5,
+                    decay: 1.3,
+                    distance: Math.max(o.distance, 4.5)
+                });
+            }); // arrows and window markers: build mode only
         }
         for (const id of this.lifts?.keys() || []) this.liftAnim(id, {}); // the cabin shows on the floor it is at
         for (const kind of ['agent', 'fx']) (this.layers?.[kind] || []).forEach((l, f) => l && (l.visible = f === k));
         // The floors below are shaded, so the one being looked at stands out
         if (this.shades) this.root.remove(this.shades);
         this.shades = new THREE.Group();
-        const shade = new THREE.MeshBasicMaterial({color: '#1E1410', transparent: true, opacity: 0.45, depthWrite: false});
+        const shade = new THREE.MeshBasicMaterial({
+            color: '#1E1410',
+            transparent: true,
+            opacity: 0.45,
+            depthWrite: false
+        });
         for (let f = 0; f < k; f++) {
             const rc = this.floorRect(f);
             const m = new THREE.Mesh(new THREE.PlaneGeometry(rc.w, rc.d), shade);
@@ -1177,11 +1307,23 @@ export class World {
         const g = new THREE.Group();
         const sunMat = new THREE.MeshBasicMaterial({color: '#FFE9A8', fog: false});
         this.sunDisc = new THREE.Mesh(new THREE.SphereGeometry(5, 20, 12), sunMat);
-        const halo = new THREE.Mesh(new THREE.SphereGeometry(8, 20, 12), new THREE.MeshBasicMaterial({color: '#FFD27A', transparent: true, opacity: 0.25, fog: false, depthWrite: false}));
+        const halo = new THREE.Mesh(new THREE.SphereGeometry(8, 20, 12), new THREE.MeshBasicMaterial({
+            color: '#FFD27A',
+            transparent: true,
+            opacity: 0.25,
+            fog: false,
+            depthWrite: false
+        }));
         this.sunDisc.add(halo);
-        this.moonDisc = new THREE.Mesh(new THREE.SphereGeometry(3.4, 20, 12), new THREE.MeshBasicMaterial({color: '#F4EED8', fog: false}));
+        this.moonDisc = new THREE.Mesh(new THREE.SphereGeometry(3.4, 20, 12), new THREE.MeshBasicMaterial({
+            color: '#F4EED8',
+            fog: false
+        }));
         for (const [x, y, z, r] of [[1, 1, 3, 0.7], [-1.2, -0.6, 3, 0.5], [0.4, -1.4, 3, 0.4]]) {
-            const crater = new THREE.Mesh(new THREE.CircleGeometry(r, 12), new THREE.MeshBasicMaterial({color: '#DCD3B4', fog: false}));
+            const crater = new THREE.Mesh(new THREE.CircleGeometry(r, 12), new THREE.MeshBasicMaterial({
+                color: '#DCD3B4',
+                fog: false
+            }));
             crater.position.set(x, y, z);
             this.moonDisc.add(crater);
         }
@@ -1192,7 +1334,15 @@ export class World {
         }
         const sg = new THREE.BufferGeometry();
         sg.setAttribute('position', new THREE.Float32BufferAttribute(starPos, 3));
-        this.stars = new THREE.Points(sg, new THREE.PointsMaterial({color: '#FFFFFF', size: 1.3, sizeAttenuation: false, transparent: true, opacity: 0, fog: false, depthWrite: false}));
+        this.stars = new THREE.Points(sg, new THREE.PointsMaterial({
+            color: '#FFFFFF',
+            size: 1.3,
+            sizeAttenuation: false,
+            transparent: true,
+            opacity: 0,
+            fog: false,
+            depthWrite: false
+        }));
         g.add(this.sunDisc, this.moonDisc, this.stars);
         this.celestial = g;
         this.scene.add(g);
@@ -1301,7 +1451,12 @@ export class World {
                 f.material = mat(pal[(k + t.i) % pal.length]);
             });
         }
-        for (const b of this.bushes || []) b.material = mat({spring: '#8CC152', summer: PALETTE.leaf, autumn: '#C98A3A', winter: '#E8EEF2'}[season]);
+        for (const b of this.bushes || []) b.material = mat({
+            spring: '#8CC152',
+            summer: PALETTE.leaf,
+            autumn: '#C98A3A',
+            winter: '#E8EEF2'
+        }[season]);
         for (const cap of this.snowCaps || []) cap.visible = season === 'winter';
         for (const f of this.flowers || []) f.visible = season !== 'winter';
         if (this.env) this.setParticles(this.env.weather, season);
@@ -1317,7 +1472,13 @@ export class World {
         let kind = RAINY.includes(weather) && weather !== 'hail' ? 'rain' : weather === 'hail' ? 'hail' : SNOWY.includes(weather) ? 'snow' : season === 'autumn' ? 'leaves' : season === 'spring' && weather !== 'cloudy' ? 'petals' : null;
         if (!kind) return;
         // How hard it falls: drizzle and light snow are a few drops and flakes, a storm or a blizzard many
-        const n = Math.round({rain: weather === 'drizzle' ? 450 : 2200, snow: weather === 'light_snow' ? 500 : 2400, hail: 900, leaves: 140, petals: 160}[kind] * ({low: 0.35, medium: 0.65}[this.quality] ?? 1));
+        const n = Math.round({
+            rain: weather === 'drizzle' ? 450 : 2200,
+            snow: weather === 'light_snow' ? 500 : 2400,
+            hail: 900,
+            leaves: 140,
+            petals: 160
+        }[kind] * ({low: 0.35, medium: 0.65}[this.quality] ?? 1));
         const pos = new Float32Array(n * (kind === 'rain' ? 6 : 3));
         const col = new Float32Array(n * 3);
         const leafCols = ['#E07B39', '#C8452C', '#E9B44C', '#B5562E'].map(c => new THREE.Color(c));
@@ -1332,12 +1493,28 @@ export class World {
         const g = new THREE.BufferGeometry();
         g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
         if (kind === 'rain') {
-            this.particles = new THREE.LineSegments(g, new THREE.LineBasicMaterial({color: '#B7CBDD', transparent: true, opacity: 0.55, fog: false}));
+            this.particles = new THREE.LineSegments(g, new THREE.LineBasicMaterial({
+                color: '#B7CBDD',
+                transparent: true,
+                opacity: 0.55,
+                fog: false
+            }));
         } else {
             g.setAttribute('color', new THREE.BufferAttribute(col, 3));
-            this.particles = new THREE.Points(g, new THREE.PointsMaterial({size: kind === 'snow' ? (weather === 'snow' ? 0.18 : 0.12) : kind === 'hail' ? 0.1 : 0.22, vertexColors: true, transparent: true, opacity: 0.95, depthWrite: false}));
+            this.particles = new THREE.Points(g, new THREE.PointsMaterial({
+                size: kind === 'snow' ? (weather === 'snow' ? 0.18 : 0.12) : kind === 'hail' ? 0.1 : 0.22,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.95,
+                depthWrite: false
+            }));
         }
-        this.particles.userData = {kind, n, heavy: weather === 'rain' || weather === 'snow', seeds: Array.from({length: n}, () => Math.random() * 10)};
+        this.particles.userData = {
+            kind,
+            n,
+            heavy: weather === 'rain' || weather === 'snow',
+            seeds: Array.from({length: n}, () => Math.random() * 10)
+        };
         this.particles.frustumCulled = false;
         this.scene.add(this.particles);
     }
@@ -1362,9 +1539,16 @@ export class World {
             } else a[k + 4] = a[k + 1] - 0.55;
             // Recycle around the camera target
             if (a[k + 1] < 0) {
-                const x = c.x + (Math.random() - 0.5) * 50, z = c.z + (Math.random() - 0.5) * 50, y = 18 + Math.random() * 4;
-                a[k] = x; a[k + 1] = y; a[k + 2] = z;
-                if (kind === 'rain') { a[k + 3] = x + 0.05; a[k + 4] = y - 0.55; a[k + 5] = z; }
+                const x = c.x + (Math.random() - 0.5) * 50, z = c.z + (Math.random() - 0.5) * 50,
+                    y = 18 + Math.random() * 4;
+                a[k] = x;
+                a[k + 1] = y;
+                a[k + 2] = z;
+                if (kind === 'rain') {
+                    a[k + 3] = x + 0.05;
+                    a[k + 4] = y - 0.55;
+                    a[k + 5] = z;
+                }
             }
         }
         p.geometry.attributes.position.needsUpdate = true;
@@ -1499,7 +1683,14 @@ export class World {
                 return;
             }
             pts.set(e.pointerId, {x: e.clientX, y: e.clientY});
-            if (pts.size === 1) drag = {x0: e.clientX, y0: e.clientY, t0: performance.now(), moved: false, pan: e.button === 2 || e.shiftKey, button: e.button};
+            if (pts.size === 1) drag = {
+                x0: e.clientX,
+                y0: e.clientY,
+                t0: performance.now(),
+                moved: false,
+                pan: e.button === 2 || e.shiftKey,
+                button: e.button
+            };
             else if (drag) drag.moved = true;
             if (pts.size === 2) {
                 const [a, b] = [...pts.values()];
@@ -1632,7 +1823,12 @@ export class World {
     /** A golden ring on the floor under the selected person (follows them every frame). */
     select(mesh) {
         if (!this.selRing) {
-            this.selRing = new THREE.Mesh(new THREE.RingGeometry(0.36, 0.46, 32), new THREE.MeshBasicMaterial({color: '#E2B23A', transparent: true, opacity: 0.9, depthWrite: false}));
+            this.selRing = new THREE.Mesh(new THREE.RingGeometry(0.36, 0.46, 32), new THREE.MeshBasicMaterial({
+                color: '#E2B23A',
+                transparent: true,
+                opacity: 0.9,
+                depthWrite: false
+            }));
             this.selRing.rotation.x = -Math.PI / 2;
             this.scene.add(this.selRing);
         }
@@ -1662,7 +1858,10 @@ export class World {
         g.fillText((labels[status] || '').toUpperCase().slice(0, 14), 128, 50);
         const t = new THREE.CanvasTexture(c);
         t.colorSpace = THREE.SRGBColorSpace;
-        const m = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.34), new THREE.MeshBasicMaterial({map: t, transparent: true}));
+        const m = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.34), new THREE.MeshBasicMaterial({
+            map: t,
+            transparent: true
+        }));
         m.position.set(this.doorMid() + (this.doorW || 1) / 2 + 0.65, 1.6, this.D + 0.12); // on the wall beside the doorway
         this.doorSign = m;
         this.root.add(m);
@@ -1711,7 +1910,7 @@ export class World {
             const p = this.project(new THREE.Vector3(+l.dataset.x, +(l.dataset.y || 1.3), +l.dataset.z));
             l.style.transform = `translate(${p.x}px, ${p.y}px)`;
         }
-                if (this.selRing && this.selTarget) {
+        if (this.selRing && this.selTarget) {
             const wp = this.selTarget.getWorldPosition(new THREE.Vector3()); // people on upper floors live in floor layers
             this.selRing.position.set(wp.x, wp.y + 0.04 - this.selTarget.position.y, wp.z);
             this.selRing.scale.setScalar(1 + Math.sin(this.time * 4) * 0.06);

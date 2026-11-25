@@ -7,7 +7,7 @@
  * one entry per date range. The result always needs a human check: the editor says so.
  */
 
-import {SECTION_KINDS, CV_WORDS} from './i18n.js';
+import {CV_WORDS, SECTION_KINDS} from './i18n.js';
 
 /** Words that open a section, per kind (lower case, without accents). */
 const HEADINGS = {
@@ -34,6 +34,7 @@ const SINGLE_RE = new RegExp(`(?:^|\\s|\\()(${DATE})(?:\\)|\\s|$)`, 'i');
 const EMAIL_RE = /[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}/;
 const PHONE_RE = /(?:\(?\+\d{1,3}\)?|00\d{1,3})?[\s.\-]*\d[\d\s().\-/]{6,}\d/;
 const URL_RE = /\b((?:https?:\/\/)?(?:www\.)?(?:linkedin\.com|github\.com|gitlab\.com|behance\.net|dribbble\.com|[a-z0-9\-]+\.(?:com|it|dev|io|net|org|me|eu|fr|de|es))(?:\/[^\s,;)]*)?)/i;
+
 /** A phone number in a line: 8–15 digits, never a date or a date range ("31/08/2024 – 16/04/2026"). */
 function findPhone(text) {
     const m = text.replace(EMAIL_RE, '').replace(new RegExp(RANGE_RE.source, 'gi'), ' ').replace(/\b\d{1,2}[/.]\d{1,2}[/.]\d{2,4}\b/g, ' ').match(PHONE_RE);
@@ -75,7 +76,11 @@ async function readPages(file) {
         const items = tc.items.filter((i) => i.str && i.str.trim()).map((i) => ({
             bold: isBold(i.fontName),
             // letter-spaced text comes as "W O R K": the spaces between single letters are not real
-            str: /^(?:\S ){2,}\S$/.test(i.str) ? i.str.replace(/ /g, '') : i.str, x: i.transform[4], y: vp.height - i.transform[5], w: i.width, size: Math.round(Math.hypot(i.transform[2], i.transform[3]) * 10) / 10 || i.height,
+            str: /^(?:\S ){2,}\S$/.test(i.str) ? i.str.replace(/ /g, '') : i.str,
+            x: i.transform[4],
+            y: vp.height - i.transform[5],
+            w: i.width,
+            size: Math.round(Math.hypot(i.transform[2], i.transform[3]) * 10) / 10 || i.height,
         }));
         pages.push({items, width: vp.width, links});
     }
@@ -107,7 +112,17 @@ function segments(items) {
                 cur.x2 = it.x + it.w;
                 cur.size = Math.max(cur.size, it.size);
             } else {
-                cur = {text: it.str, x: it.x, x2: it.x + it.w, y: r.y, size: it.size, row: r.row, lastLen: it.str.trim().length, bold: it.bold, boldText: ''};
+                cur = {
+                    text: it.str,
+                    x: it.x,
+                    x2: it.x + it.w,
+                    y: r.y,
+                    size: it.size,
+                    row: r.row,
+                    lastLen: it.str.trim().length,
+                    bold: it.bold,
+                    boldText: ''
+                };
                 segs.push(cur);
             }
         }
@@ -135,7 +150,10 @@ function orderSegments(segs, width) {
     // a narrow column made of section titles (Swiss: the title on the left, the content beside it) is not a second
     // column of content: the page is read row by row, each title before its content
     const leftSegs = segs.filter((s) => s.x2 <= best.x + 2);
-    if (leftSegs.filter((s) => headingKind(s)).length >= leftSegs.length * 0.6) return segs.map((s) => ({...s, col: 0}));
+    if (leftSegs.filter((s) => headingKind(s)).length >= leftSegs.length * 0.6) return segs.map((s) => ({
+        ...s,
+        col: 0
+    }));
     // a full-width header above the columns (e.g. the name) stays first
     // full-width lines above the first heading are a header (read first), below it a footer (read last)
     const top = [];
@@ -152,7 +170,10 @@ function orderSegments(segs, width) {
     }
     const left = rest.filter((s) => s.x < best.x).sort((a, b) => a.y - b.y || a.x - b.x).map((s) => ({...s, col: 1}));
     const right = rest.filter((s) => s.x >= best.x).sort((a, b) => a.y - b.y || a.x - b.x).map((s) => ({...s, col: 2}));
-    return [...top.sort((a, b) => a.y - b.y || a.x - b.x).map((s) => ({...s, col: 0})), ...left, ...right, ...bottom.sort((a, b) => a.y - b.y).map((s) => ({...s, col: 0}))];
+    return [...top.sort((a, b) => a.y - b.y || a.x - b.x).map((s) => ({
+        ...s,
+        col: 0
+    })), ...left, ...right, ...bottom.sort((a, b) => a.y - b.y).map((s) => ({...s, col: 0}))];
 }
 
 // ---------------------------------------------------------------- lines → CV
@@ -200,10 +221,20 @@ function findDates(text) {
     let m = text.match(RANGE_RE);
     if (m) {
         const isNow = new RegExp(`^(${PRESENT})$`, 'i').test(m[2].trim());
-        return {start: normDate(m[1]), end: isNow ? '' : normDate(m[2]), current: isNow, rest: cleanRest(text.replace(m[0], ''))};
+        return {
+            start: normDate(m[1]),
+            end: isNow ? '' : normDate(m[2]),
+            current: isNow,
+            rest: cleanRest(text.replace(m[0], ''))
+        };
     }
     m = text.match(SINGLE_RE);
-    if (m && text.replace(m[1], '').replace(/[^A-Za-zÀ-ÿ]/g, '').length < 40) return {start: '', end: normDate(m[1]), current: false, rest: cleanRest(text.replace(m[1], ''))};
+    if (m && text.replace(m[1], '').replace(/[^A-Za-zÀ-ÿ]/g, '').length < 40) return {
+        start: '',
+        end: normDate(m[1]),
+        current: false,
+        rest: cleanRest(text.replace(m[1], ''))
+    };
     return null;
 }
 
@@ -249,7 +280,20 @@ function parseTimeline(lines) {
     const items = [];
     let cur = null;
     const body = bodySize(lines);
-    const fresh = (extra = {}) => ({title: '', org: '', place: '', start: '', end: '', current: false, text: '', url: '', eqf: 0, grade: '', hasDate: false, lines: 0, ...extra});
+    const fresh = (extra = {}) => ({
+        title: '',
+        org: '',
+        place: '',
+        start: '',
+        end: '',
+        current: false,
+        text: '',
+        url: '',
+        eqf: 0,
+        grade: '',
+        hasDate: false,
+        lines: 0, ...extra
+    });
     const push = () => cur && (cur.title || cur.org || cur.text) && items.push(cur);
     // when the PDF has bold text, titles are the bold lines; otherwise the bigger ones
     const hasBold = lines.some((l) => l.bold);
@@ -303,7 +347,14 @@ function parseTimeline(lines) {
                 const title = cur.lastBig;
                 cur.text = cur.text.split('\n').slice(0, -1).join('\n');
                 push();
-                cur = fresh({title: smartCase(title), start: d.start, end: d.end, current: d.current, hasDate: true, lines: 1});
+                cur = fresh({
+                    title: smartCase(title),
+                    start: d.start,
+                    end: d.end,
+                    current: d.current,
+                    hasDate: true,
+                    lines: 1
+                });
                 fillHeader(d.rest, false);
                 continue;
             }
@@ -410,7 +461,11 @@ function parseLangs(lines, lang) {
                 continue;
             }
             nativeMode = !nat[1];
-            for (const name of nat[1].split(/\s*[,;/]\s*|\s+(?:and|e|et|und|y|en|i|och)\s+/i).filter(Boolean)) out.push({name: titleCase(name.trim()), level: native, row: l.row});
+            for (const name of nat[1].split(/\s*[,;/]\s*|\s+(?:and|e|et|und|y|en|i|och)\s+/i).filter(Boolean)) out.push({
+                name: titleCase(name.trim()),
+                level: native,
+                row: l.row
+            });
             continue;
         }
         const other = text.match(OTHER_LABEL_RE);
@@ -460,7 +515,13 @@ function parseList(lines) {
             continue;
         }
         const d = findDates(t);
-        items.push({title: d ? d.rest || t : t, subtitle: '', date: d ? [d.start, d.end].filter(Boolean).join(' – ') : '', url: '', text: ''});
+        items.push({
+            title: d ? d.rest || t : t,
+            subtitle: '',
+            date: d ? [d.start, d.end].filter(Boolean).join(' – ') : '',
+            url: '',
+            text: ''
+        });
     }
     return items;
 }
@@ -472,7 +533,11 @@ function parseList(lines) {
 export async function importPdf(file, lang, debug = false) {
     const pages = await readPages(file);
     let lines = [];
-    pages.forEach((p, pi) => lines.push(...orderSegments(segments(p.items), p.width).map((l) => ({...l, page: pi, row: pi * 10000 + l.row}))));
+    pages.forEach((p, pi) => lines.push(...orderSegments(segments(p.items), p.width).map((l) => ({
+        ...l,
+        page: pi,
+        row: pi * 10000 + l.row
+    }))));
     lines = lines.filter((l) => !/^\d+\s*(\/\s*\d+)?$/.test(l.text) && !/^(page|pagina|seite|página|strona)\s*\d+/i.test(l.text));
     if (!lines.length) throw new Error('scanned');
 
@@ -502,7 +567,8 @@ export async function importPdf(file, lang, debug = false) {
             // redirects (Europass: …/redirect-external?url=http://www.linkedin.com/in/…) point to the real address
             const inner = new URL(url).searchParams.get('url') || new URL(url).searchParams.get('u') || new URL(url).searchParams.get('q');
             if (inner && /^https?:\/\//i.test(inner)) url = inner;
-        } catch (e) { /* not a valid URL */ }
+        } catch (e) { /* not a valid URL */
+        }
         const host = url.replace(/^https?:\/\/(www\.)?/i, '').split('/')[0].toLowerCase();
         const label = host.includes('linkedin') ? 'LinkedIn' : host.includes('github') ? 'GitHub' : host.includes('gitlab') ? 'GitLab' : host.includes('behance') ? 'Behance' : host.includes('dribbble') ? 'Dribbble' : '';
         if (label && !links.some((x) => x.label === label)) links.push({label, url});
@@ -535,7 +601,11 @@ export async function importPdf(file, lang, debug = false) {
         const value = m[2].trim().replace(/[|;,]$/, '');
         if (!value || value.length > 120) continue;
         if (/^(address|indirizzo|residenza|adresse|direcci|morada|adres)/i.test(m[1])) content.location ||= value;
-        else if (!content.fields.some((f) => f.label.toLowerCase() === m[1].toLowerCase())) content.fields.push({label: m[1].charAt(0).toUpperCase() + m[1].slice(1), value, show: true});
+        else if (!content.fields.some((f) => f.label.toLowerCase() === m[1].toLowerCase())) content.fields.push({
+            label: m[1].charAt(0).toUpperCase() + m[1].slice(1),
+            value,
+            show: true
+        });
     }
     const labelled = (t) => /^\p{L}[\p{L} ]{1,30}:(\s|$)/u.test(t); // "Date of birth: …": personal data, not a headline
     const buckets = [];
@@ -595,7 +665,7 @@ export async function importPdf(file, lang, debug = false) {
     let id = 0;
     for (const b of buckets) {
         // contact lines are dropped from sections, but "Link https://…" belongs to the entry above it
-        const ls = b.lines.filter(notFooter).filter((l) => !(b.kind !== 'contacts' && isContact(l.text) && l.text.length < 60 && !LINK_RE.test(l.text.trim()) && !l.bold && !(b.kind === 'projects' || b.kind === 'volunteering' || b.kind === 'other' || b.kind === 'certifications' || b.kind === 'publications') ));
+        const ls = b.lines.filter(notFooter).filter((l) => !(b.kind !== 'contacts' && isContact(l.text) && l.text.length < 60 && !LINK_RE.test(l.text.trim()) && !l.bold && !(b.kind === 'projects' || b.kind === 'volunteering' || b.kind === 'other' || b.kind === 'certifications' || b.kind === 'publications')));
         if (b.kind === 'top' || b.kind === 'contacts' || b.kind === 'references') continue;
         if (b.kind === 'summary') {
             content.summary = joinWrapped(ls.map((l) => (BULLET_RE.test(l.text) ? '- ' + l.text.replace(BULLET_RE, '') : l.text)).join('\n'));
@@ -605,7 +675,15 @@ export async function importPdf(file, lang, debug = false) {
         const kind = b.kind === 'other' ? 'list' : b.kind;
         const type = SECTION_KINDS[kind]?.type || 'list';
         const title = b.title.charAt(0) + b.title.slice(1).toLowerCase();
-        const sec = {id: 'imp' + (++id), type, kind, title: b.kind === 'other' ? title : SECTION_KINDS[kind][lang] || title, show: true, text: '', items: []}; // a custom language keeps the title as written
+        const sec = {
+            id: 'imp' + (++id),
+            type,
+            kind,
+            title: b.kind === 'other' ? title : SECTION_KINDS[kind][lang] || title,
+            show: true,
+            text: '',
+            items: []
+        }; // a custom language keeps the title as written
         if (type === 'timeline') sec.items = parseTimeline(ls);
         else if (type === 'skills') sec.items = splitTags(ls).map((name) => ({name, level: 0}));
         else if (type === 'langs') sec.items = parseLangs(ls, lang);

@@ -27,7 +27,10 @@
 
     function sel(options, value) {
         const s = h('select.ctl');
-        for (const [v, label] of options) s.appendChild(h('option', {value: v, selected: String(v) === String(value)}, label));
+        for (const [v, label] of options) s.appendChild(h('option', {
+            value: v,
+            selected: String(v) === String(value)
+        }, label));
         return s;
     }
 
@@ -100,7 +103,10 @@
         return page(t('Overview'), null,
             h('div.adm-stats', stat(t('Users'), d.users), stat(t('Active this week'), d.activeWeek), stat(t('Levels completed'), d.lessonsDone), stat(t('Games played'), d.gamesPlayed), stat(t('Certificates'), d.certificates), stat(t('Hints bought'), d.hintsBought), stat(t('Lessons'), d.lessons), stat(t('Questions'), d.questions)),
             h('h2', t('Active users, last 30 days')),
-            d.days.length ? h('div.adm-bars', d.days.map(x => h('i', {title: `${x.day}: ${x.users}`, style: {height: Math.round(x.users * 100 / max) + '%'}}))) : h('p.muted', t('No activity yet.')),
+            d.days.length ? h('div.adm-bars', d.days.map(x => h('i', {
+                title: `${x.day}: ${x.users}`,
+                style: {height: Math.round(x.users * 100 / max) + '%'}
+            }))) : h('p.muted', t('No activity yet.')),
             h('h2', t('Courses')),
             table([t('Course'), t('Status'), t('Learners'), t('Certificates')], d.courses.map(c => h('tr', h('td', c.title), h('td', statusChip(c.status)), h('td', String(c.learners)), h('td', String(c.certificates))))));
     }
@@ -131,14 +137,32 @@
         const after = sel([['', t('None: open from the start')], ...courses.filter(x => x.id !== c.id).map(x => [x.id, title(x.title)])], c.after || '');
         const status = sel(statuses(), c.status);
         const cats = (c.categories || []);
-        const boxes = CATEGORIES.map(([v, label]) => [v, h('input', {type: 'checkbox', checked: cats.includes(v)}), label]);
+        const boxes = CATEGORIES.map(([v, label]) => [v, h('input', {
+            type: 'checkbox',
+            checked: cats.includes(v)
+        }), label]);
         const catField = h('div.f', h('span', t('Categories')), h('div.adm-traits', boxes.map(([, box, label]) => h('label.check', box, h('span', t(label))))),
             h('small', t('Used to filter the courses in the app.')));
-        const minutes = inp({type: 'number', min: 0, max: 240, value: c.examMinutes ?? '', placeholder: t('General: {n}', {n: GENERAL_EXAM_MINUTES ?? 15})});
+        const minutes = inp({
+            type: 'number',
+            min: 0,
+            max: 240,
+            value: c.examMinutes ?? '',
+            placeholder: t('General: {n}', {n: GENERAL_EXAM_MINUTES ?? 15})
+        });
         const save = btn(t('Save'), {
             icon: 'save', onclick: () => act(save, () => Api.post('admin.course.save', {
-                existing: !isNew, id: id.value, family: family.value, after: after.value, status: status.value, examMinutes: minutes.value,
-                categories: boxes.filter(([, box]) => box.checked).map(([v]) => v), title: fTitle.value(), short: fShort.value(), desc: fDesc.value(), level: fLevel.value()
+                existing: !isNew,
+                id: id.value,
+                family: family.value,
+                after: after.value,
+                status: status.value,
+                examMinutes: minutes.value,
+                categories: boxes.filter(([, box]) => box.checked).map(([v]) => v),
+                title: fTitle.value(),
+                short: fShort.value(),
+                desc: fDesc.value(),
+                level: fLevel.value()
             }), () => go(isNew ? 'courses' : 'course/' + c.id))
         });
         return h('div.adm-form', h('div.adm-grid', f(t('Id (cannot change later)'), id), f(t('Family'), family, 'html, css, scss, sass, js, php…'), f(t('Unlocked after'), after), f(t('Status'), status),
@@ -201,10 +225,19 @@
             } else if (type === 'fig') {
                 // The drawing is one SVG for every language, or one per language when it has words in it
                 const perLang = b.svg && typeof b.svg === 'object';
-                const svg = perLang ? multi(t('SVG drawing'), b.svg, {rows: 6}) : area({rows: 6, value: b.svg || '', class: 'mono'});
+                const svg = perLang ? multi(t('SVG drawing'), b.svg, {rows: 6}) : area({
+                    rows: 6,
+                    value: b.svg || '',
+                    class: 'mono'
+                });
                 const alt = multi(t('Description for screen readers'), b.alt, {rows: 2});
                 const caption = multi(t('Caption'), b.caption);
-                item.read = () => ({t: 'fig', svg: perLang ? svg.value() : svg.value, alt: alt.value(), caption: caption.value()});
+                item.read = () => ({
+                    t: 'fig',
+                    svg: perLang ? svg.value() : svg.value,
+                    alt: alt.value(),
+                    caption: caption.value()
+                });
                 body = [perLang ? svg : f(t('SVG drawing'), svg), alt, caption];
             } else {
                 const text = multi(type === 'tip' ? t('Tip') : t('Paragraph'), b.text, {rows: 3});
@@ -222,13 +255,26 @@
                 items.splice(i - 1, 0, item);
                 list.insertBefore(item.el, items[i].el);
             });
-            item.el = h('div.block', h('div.block-bar', h('b', {code: t('Code'), tip: t('Tip'), p: t('Paragraph'), fig: t('Figure')}[type]), up, remove), body);
+            item.el = h('div.block', h('div.block-bar', h('b', {
+                code: t('Code'),
+                tip: t('Tip'),
+                p: t('Paragraph'),
+                fig: t('Figure')
+            }[type]), up, remove), body);
             items.push(item);
             list.appendChild(item.el);
         }
 
         (blocks || []).forEach(add);
-        const el = h('div', list, h('div.adm-actions', btn(t('Paragraph'), {kind: 'tonal', icon: 'add', onclick: () => add({t: 'p'})}), btn(t('Code'), {kind: 'tonal', icon: 'add', onclick: () => add({t: 'code'})}), btn(t('Tip'), {kind: 'tonal', icon: 'add', onclick: () => add({t: 'tip'})}), btn(t('Figure'), {kind: 'tonal', icon: 'add', onclick: () => add({t: 'fig'})})));
+        const el = h('div', list, h('div.adm-actions', btn(t('Paragraph'), {
+            kind: 'tonal',
+            icon: 'add',
+            onclick: () => add({t: 'p'})
+        }), btn(t('Code'), {kind: 'tonal', icon: 'add', onclick: () => add({t: 'code'})}), btn(t('Tip'), {
+            kind: 'tonal',
+            icon: 'add',
+            onclick: () => add({t: 'tip'})
+        }), btn(t('Figure'), {kind: 'tonal', icon: 'add', onclick: () => add({t: 'fig'})})));
         el.value = () => items.map(i => i.read());
         return el;
     }
@@ -262,11 +308,22 @@
         const checks = h('div.blocks');
         const addCheck = c => checks.appendChild(checkRow(c, el => el.remove()));
         ((task && task.checks) || []).forEach(addCheck);
-        const body = h('div', f(t('Language'), lang), prompt, f(t('Starting code'), start), f(t('Fixed page (CSS exercises)'), html), f(t('Paid hint: solution shown'), hint), h('h3', t('Checks')), checks, btn(t('Add a check'), {kind: 'tonal', icon: 'add', onclick: () => addCheck()}));
+        const body = h('div', f(t('Language'), lang), prompt, f(t('Starting code'), start), f(t('Fixed page (CSS exercises)'), html), f(t('Paid hint: solution shown'), hint), h('h3', t('Checks')), checks, btn(t('Add a check'), {
+            kind: 'tonal',
+            icon: 'add',
+            onclick: () => addCheck()
+        }));
         body.hidden = !task;
         on.addEventListener('change', () => body.hidden = !on.checked);
         const el = h('div', h('label.check', on, h('span', t('This level has a coding exercise'))), body);
-        el.value = () => on.checked ? {lang: lang.value, prompt: prompt.value(), start: start.value, html: html.value, hint: hint.value, checks: [...checks.children].map(x => x.read())} : null;
+        el.value = () => on.checked ? {
+            lang: lang.value,
+            prompt: prompt.value(),
+            start: start.value,
+            html: html.value,
+            hint: hint.value,
+            checks: [...checks.children].map(x => x.read())
+        } : null;
         return el;
     }
 
@@ -280,7 +337,14 @@
         const task = taskEditor(l.task);
         const save = btn(t('Save'), {
             icon: 'save', onclick: () => act(save, () => Api.post('admin.lesson.save', {
-                id: l.id || 0, course: courseId, slug: slug.value, difficulty: difficulty.value, status: status.value, title: fTitle.value(), body: body.value(), task: task.value()
+                id: l.id || 0,
+                course: courseId,
+                slug: slug.value,
+                difficulty: difficulty.value,
+                status: status.value,
+                title: fTitle.value(),
+                body: body.value(),
+                task: task.value()
             }), () => go('course/' + courseId))
         });
         return h('div.adm-form', h('div.adm-grid', f(t('Slug'), slug, t('Progress refers to it: avoid changing it.')), f(t('Difficulty'), difficulty), f(t('Status'), status)), fTitle, h('h2', t('Theory')), body, h('h2', t('Exercise')), task, h('div.adm-actions', save));
@@ -297,7 +361,16 @@
         const save = btn(t('Save'), {
             icon: 'save', onclick: async () => {
                 try {
-                    await busy(save, () => Api.post('admin.question.save', {id: q.id || 0, lessonId, q: fq.value(), options: options.map(o => o.value()), answer: answer.value, difficulty: difficulty.value, why: why.value(), hint: hint.value()}));
+                    await busy(save, () => Api.post('admin.question.save', {
+                        id: q.id || 0,
+                        lessonId,
+                        q: fq.value(),
+                        options: options.map(o => o.value()),
+                        answer: answer.value,
+                        difficulty: difficulty.value,
+                        why: why.value(),
+                        hint: hint.value()
+                    }));
                     s.close();
                     done();
                 } catch (e) {
@@ -305,7 +378,13 @@
                 }
             }
         });
-        const s = UI.sheet({title: q.id ? t('Edit question') : t('New question'), cls: 'wide', persistent: true, body: [fq, options, h('div.adm-grid', f(t('Correct answer'), answer), f(t('Difficulty'), difficulty)), why, hint], actions: [btn(t('Cancel'), {kind: 'text', onclick: () => s.close()}), save]});
+        const s = UI.sheet({
+            title: q.id ? t('Edit question') : t('New question'),
+            cls: 'wide',
+            persistent: true,
+            body: [fq, options, h('div.adm-grid', f(t('Correct answer'), answer), f(t('Difficulty'), difficulty)), why, hint],
+            actions: [btn(t('Cancel'), {kind: 'text', onclick: () => s.close()}), save]
+        });
     }
 
     const DRILL_KINDS = () => [['blanks', t('Tiles')], ['order', t('Sort it')], ['bug', t('Bug hunt')], ['match', t('Pairs')], ['flash', t('Lightning')], ['tune', t('Tune it')]];
@@ -316,7 +395,20 @@
         bug: {lines: ['<h1>Ciao</h2>', '<p>Testo</p>'], bug: 0, fix: '<h1>Ciao</h1>'},
         match: {pairs: [['<p>', both('Paragrafo', 'Paragraph')], ['<ul>', both('Lista', 'List')], ['<a>', both('Link', 'Link')]]},
         flash: {cards: [[both('Vero', 'True'), true], [both('Falso', 'False'), false], [both('Vero', 'True'), true], [both('Falso', 'False'), false]]},
-        tune: {layout: 'flex', items: 3, props: [{prop: 'justify-content', choices: ['flex-start', 'center'], target: 'center'}, {prop: 'gap', unit: 'px', min: 0, max: 24, step: 4, target: 12}], base: {}, itemBase: {}},
+        tune: {
+            layout: 'flex',
+            items: 3,
+            props: [{prop: 'justify-content', choices: ['flex-start', 'center'], target: 'center'}, {
+                prop: 'gap',
+                unit: 'px',
+                min: 0,
+                max: 24,
+                step: 4,
+                target: 12
+            }],
+            base: {},
+            itemBase: {}
+        },
     };
 
     /** The content of a drill is edited as JSON: a text that changes with the language is {"it": "…", "en": "…"}. */
@@ -340,7 +432,14 @@
                     return toast(t('The content is not valid JSON.'), 'error');
                 }
                 try {
-                    await busy(save, () => Api.post('admin.drill.save', {id: id || 0, lessonId, kind: kind.value, prompt: fPrompt.value(), why: fWhy.value(), data: parsed}));
+                    await busy(save, () => Api.post('admin.drill.save', {
+                        id: id || 0,
+                        lessonId,
+                        kind: kind.value,
+                        prompt: fPrompt.value(),
+                        why: fWhy.value(),
+                        data: parsed
+                    }));
                     s.close();
                     done();
                 } catch (e) {
@@ -348,7 +447,13 @@
                 }
             }
         });
-        const s = UI.sheet({title: id ? t('Edit drill') : t('New drill'), cls: 'wide', persistent: true, body: [f(t('Kind'), kind), fPrompt, f(t('Content'), data, t('Changing the kind replaces it with an example.')), fWhy], actions: [btn(t('Cancel'), {kind: 'text', onclick: () => s.close()}), save]});
+        const s = UI.sheet({
+            title: id ? t('Edit drill') : t('New drill'),
+            cls: 'wide',
+            persistent: true,
+            body: [f(t('Kind'), kind), fPrompt, f(t('Content'), data, t('Changing the kind replaces it with an example.')), fWhy],
+            actions: [btn(t('Cancel'), {kind: 'text', onclick: () => s.close()}), save]
+        });
     }
 
     async function viewLesson(courseId, slugOrId) {
@@ -363,7 +468,10 @@
             }
         });
         return page(title(l.title), del, lessonForm(courseId, l),
-            h('div.adm-head', h('h2', t('Quiz')), btn(t('New question'), {icon: 'add', onclick: () => questionDialog(l.id, null, render)})),
+            h('div.adm-head', h('h2', t('Quiz')), btn(t('New question'), {
+                icon: 'add',
+                onclick: () => questionDialog(l.id, null, render)
+            })),
             table([t('Question'), t('Correct answer'), t('Difficulty'), ''], l.questions.map(q => h('tr',
                 h('td', title(q.q)), h('td', title(q.options[q.answer])), h('td', difficulties().find(x => x[0] === q.difficulty)[1]),
                 h('td.nowrap', iconBtn('edit', t('Edit'), () => questionDialog(l.id, q, render)), iconBtn('delete', t('Delete'), async () => {
@@ -371,7 +479,10 @@
                     await Api.post('admin.question.delete', {id: q.id}).catch(e => toast(e.message, 'error'));
                     render();
                 }))))),
-            h('div.adm-head', h('h2', t('Drills')), btn(t('New drill'), {icon: 'add', onclick: () => drillDialog(l.id, null, render)})),
+            h('div.adm-head', h('h2', t('Drills')), btn(t('New drill'), {
+                icon: 'add',
+                onclick: () => drillDialog(l.id, null, render)
+            })),
             table([t('Instructions'), t('Kind'), ''], l.drills.map(d => h('tr',
                 h('td', title(d.prompt)), h('td', Object.fromEntries(DRILL_KINDS())[d.kind] || d.kind),
                 h('td.nowrap', iconBtn('edit', t('Edit'), () => drillDialog(l.id, d, render)), iconBtn('delete', t('Delete'), async () => {
@@ -425,7 +536,13 @@
         const save = btn(t('Save'), {
             icon: 'save', onclick: async () => {
                 try {
-                    await busy(save, () => Api.post('admin.item.save', {id: item.id || 0, game, level: level.value, status: status.value, data: read()}));
+                    await busy(save, () => Api.post('admin.item.save', {
+                        id: item.id || 0,
+                        game,
+                        level: level.value,
+                        status: status.value,
+                        data: read()
+                    }));
                     s.close();
                     done();
                 } catch (e) {
@@ -433,7 +550,13 @@
                 }
             }
         });
-        const s = UI.sheet({title: item.id ? t('Edit item') : t('New item'), cls: 'wide', persistent: true, body: [h('div.adm-grid', f(t('Level'), level), f(t('Status'), status)), body], actions: [btn(t('Cancel'), {kind: 'text', onclick: () => s.close()}), save]});
+        const s = UI.sheet({
+            title: item.id ? t('Edit item') : t('New item'),
+            cls: 'wide',
+            persistent: true,
+            body: [h('div.adm-grid', f(t('Level'), level), f(t('Status'), status)), body],
+            actions: [btn(t('Cancel'), {kind: 'text', onclick: () => s.close()}), save]
+        });
     }
 
     async function viewGame(id) {
@@ -445,10 +568,22 @@
         const fDesc = multi(t('Description'), g.desc, {rows: 2});
         const levels = inp({type: 'number', min: 1, max: 30, value: g.levels});
         const enabled = h('input', {type: 'checkbox', checked: g.enabled});
-        const save = btn(t('Save'), {icon: 'save', onclick: () => act(save, () => Api.post('admin.game.save', {id, title: fTitle.value(), desc: fDesc.value(), levels: levels.value, enabled: enabled.checked}), render)});
+        const save = btn(t('Save'), {
+            icon: 'save',
+            onclick: () => act(save, () => Api.post('admin.game.save', {
+                id,
+                title: fTitle.value(),
+                desc: fDesc.value(),
+                levels: levels.value,
+                enabled: enabled.checked
+            }), render)
+        });
         const summary = i => id === 'selectors' ? i.data.selector : id === 'linehop' ? `${title(i.data.title)} (${i.data.lines.length})` : `<${i.data.name}> ${i.data.traits.join(', ')}`;
         return page(title(g.title), null, h('div.adm-form', h('div.adm-grid', f(t('Levels'), levels), h('label.check', enabled, h('span', t('Game active')))), fTitle, fDesc, h('div.adm-actions', save)),
-            ITEM_GAMES.includes(id) ? [h('div.adm-head', h('h2', t('Content')), btn(t('New item'), {icon: 'add', onclick: () => itemDialog(id, null, render)})),
+            ITEM_GAMES.includes(id) ? [h('div.adm-head', h('h2', t('Content')), btn(t('New item'), {
+                icon: 'add',
+                onclick: () => itemDialog(id, null, render)
+            })),
                 id === 'whotag' ? h('p.muted', t('The cards of this game are shared by all the levels: keep them on level 1.')) : null,
                 table([t('Level'), t('Content'), t('Status'), ''], d.items.map(i => h('tr', h('td', String(i.level)), h('td', h('code', summary(i))), h('td', statusChip(i.status)),
                     h('td.nowrap', iconBtn('edit', t('Edit'), () => itemDialog(id, i, render)), iconBtn('delete', t('Delete'), async () => {
@@ -496,7 +631,13 @@
         const save = btn(t('Save'), {
             icon: 'save', onclick: async () => {
                 try {
-                    await busy(save, () => Api.post('admin.user.save', {id: u.id, role: role.value, status: status.value, xp: xp.value, points: points.value}));
+                    await busy(save, () => Api.post('admin.user.save', {
+                        id: u.id,
+                        role: role.value,
+                        status: status.value,
+                        xp: xp.value,
+                        points: points.value
+                    }));
                     s.close();
                     done();
                 } catch (e) {
@@ -517,32 +658,52 @@
             }
         });
         const s = UI.sheet({
-            title: u.name, body: [f(t('Role'), role), f(t('Status'), status), f(t('Grade XP'), amount(xp, 50), t('XP set the grade: the learner may move up or down.')), f(t('Sparks'), amount(points, 10), t('Every change shows in the activity of the user.')),
+            title: u.name,
+            body: [f(t('Role'), role), f(t('Status'), status), f(t('Grade XP'), amount(xp, 50), t('XP set the grade: the learner may move up or down.')), f(t('Sparks'), amount(points, 10), t('Every change shows in the activity of the user.')),
                 btn(t('Activity'), {kind: 'tonal', icon: 'history', onclick: () => userActivity(u)})],
-            actions: [self ? null : del, btn(t('Cancel'), {kind: 'text', onclick: () => s.close()}), save].filter(Boolean)
+            actions: [self ? null : del, btn(t('Cancel'), {
+                kind: 'text',
+                onclick: () => s.close()
+            }), save].filter(Boolean)
         });
     }
 
     /** What a user did, newest first, with date and time. Read only. */
     async function userActivity(u) {
         const list = h('div.loader');
-        const s = UI.sheet({title: t('Activity') + ' · ' + (u.username ? '@' + u.username : u.name), body: [list], actions: [btn(t('Close'), {kind: 'text', onclick: () => s.close()})]});
+        const s = UI.sheet({
+            title: t('Activity') + ' · ' + (u.username ? '@' + u.username : u.name),
+            body: [list],
+            actions: [btn(t('Close'), {kind: 'text', onclick: () => s.close()})]
+        });
         let d;
         try {
             d = await Api.get('admin.user.activity&id=' + u.id);
         } catch (e) {
             return list.replaceWith(h('p.muted', e.message));
         }
-        const when = iso => new Date(iso).toLocaleString(I18N.locale, {day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'});
+        const when = iso => new Date(iso).toLocaleString(I18N.locale, {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
         const stars = n => '★'.repeat(n || 0) + '☆'.repeat(Math.max(0, 3 - (n || 0)));
         const what = e => {
             switch (e.kind) {
                 case 'lesson':
-                    return [e.m ? 'fire' : 'book', e.m ? t('Level skipped by the exam: {c} / {l}', {c: e.a, l: e.b}) : t('Level completed: {c} / {l} {s}', {c: e.a, l: e.b, s: stars(e.n)})];
+                    return [e.m ? 'fire' : 'book', e.m ? t('Level skipped by the exam: {c} / {l}', {
+                        c: e.a,
+                        l: e.b
+                    }) : t('Level completed: {c} / {l} {s}', {c: e.a, l: e.b, s: stars(e.n)})];
                 case 'drill':
                     return ['bolt', t('Exercise done in {c} / {l} {s}', {c: e.a, l: e.b, s: stars(e.n)})];
                 case 'game':
-                    return ['game', e.m ? t('Game won: {g} {s}', {g: e.a, s: stars(e.n)}) : t('Game lost: {g}', {g: e.a})];
+                    return ['game', e.m ? t('Game won: {g} {s}', {
+                        g: e.a,
+                        s: stars(e.n)
+                    }) : t('Game lost: {g}', {g: e.a})];
                 case 'daily':
                     return ['calendar', t('Daily challenge: {a} of {b} right', {a: e.n, b: e.m})];
                 case 'exam':
@@ -556,9 +717,16 @@
                 case 'prize':
                     return ['trophy', t('Leaderboard prize: place {p}, +{n} Sparks (end of day)', {p: e.m, n: e.n})];
                 case 'avatar':
-                    return ['image', t('Profile picture bought: {i} for {n} Sparks', {i: Avatars.item(e.a) ? Avatars.name(Avatars.item(e.a)) : e.a, n: e.n})];
+                    return ['image', t('Profile picture bought: {i} for {n} Sparks', {
+                        i: Avatars.item(e.a) ? Avatars.name(Avatars.item(e.a)) : e.a,
+                        n: e.n
+                    })];
                 case 'points':
-                    return ['edit', t('Changed from the portal · {f}: {a} → {b}', {f: e.a === 'xp' ? t('Grade XP') : t('Sparks'), a: e.n, b: e.m})];
+                    return ['edit', t('Changed from the portal · {f}: {a} → {b}', {
+                        f: e.a === 'xp' ? t('Grade XP') : t('Sparks'),
+                        a: e.n,
+                        b: e.m
+                    })];
                 default:
                     return ['info', e.kind];
             }
@@ -567,14 +735,23 @@
             const [ic, text] = what(e);
             return h('li.adm-event', icon(ic), h('time', {datetime: e.at}, when(e.at)), h('span', text));
         });
-        const days = d.days.length ? h('details.adm-days', h('summary', t('XP by day')), table([t('Day'), 'XP'], d.days.map(x => h('tr', h('td', new Date(x.day + 'T12:00:00').toLocaleDateString(I18N.locale, {weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'})), h('td', String(x.xp)))))) : null;
+        const days = d.days.length ? h('details.adm-days', h('summary', t('XP by day')), table([t('Day'), 'XP'], d.days.map(x => h('tr', h('td', new Date(x.day + 'T12:00:00').toLocaleDateString(I18N.locale, {
+            weekday: 'short',
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+        })), h('td', String(x.xp)))))) : null;
         list.replaceWith(h('div', rows.length ? h('ul.adm-events', rows) : h('p.muted', t('No activity yet.')), days));
     }
 
     async function viewCertificates() {
         const d = await Api.get('admin.certificates');
         return page(t('Certificates'), null, d.certificates.length ? table([t('Name'), 'Email', t('Course'), t('Score'), t('Date'), ''], d.certificates.map(c => h('tr',
-            h('td', h('a', {href: `certificate.php?c=${c.code}&lang=${I18N.lang}`, target: '_blank', rel: 'noopener'}, c.name)), h('td', c.email), h('td', c.course + ' · ' + String(c.lang || '').toUpperCase()), h('td', c.score + '%'), h('td', UI.fmtDate(c.issued_at.slice(0, 10))),
+            h('td', h('a', {
+                href: `certificate.php?c=${c.code}&lang=${I18N.lang}`,
+                target: '_blank',
+                rel: 'noopener'
+            }, c.name)), h('td', c.email), h('td', c.course + ' · ' + String(c.lang || '').toUpperCase()), h('td', c.score + '%'), h('td', UI.fmtDate(c.issued_at.slice(0, 10))),
             h('td.nowrap', iconBtn('edit', t('Name on the certificate'), () => renameCertificate(c)), iconBtn('delete', t('Revoke'), async () => {
                 if (!await confirm(t('Revoke this certificate?'), t('Its link stops working.'), t('Revoke'), true)) return;
                 await Api.post('admin.certificate.delete', {code: c.code}).catch(e => toast(e.message, 'error'));
@@ -596,7 +773,11 @@
                 }
             }
         });
-        const s = UI.sheet({title: t('Name on the certificate'), body: [f(t('Full name'), name)], actions: [btn(t('Cancel'), {kind: 'text', onclick: () => s.close()}), save]});
+        const s = UI.sheet({
+            title: t('Name on the certificate'),
+            body: [f(t('Full name'), name)],
+            actions: [btn(t('Cancel'), {kind: 'text', onclick: () => s.close()}), save]
+        });
     }
 
     // ---------------------------------------------------------------- profile pictures
@@ -611,7 +792,11 @@
                 const price = inp({type: 'number', min: 0, max: 100000, value: x.price, 'aria-label': t('Price')});
                 price.classList.add('adm-price');
                 const on = h('input', {type: 'checkbox', checked: !!+x.enabled, 'aria-label': t('On sale')});
-                const save = iconBtn('save', t('Save'), () => act(save, () => Api.post('admin.avatar.save', {id: x.id, price: price.value, enabled: on.checked})));
+                const save = iconBtn('save', t('Save'), () => act(save, () => Api.post('admin.avatar.save', {
+                    id: x.id,
+                    price: price.value,
+                    enabled: on.checked
+                })));
                 return h('tr', h('td', Avatars.render(previewCode(kind, x.id), kind === 'accessory' ? '' : 'A', 'sm')), h('td', art ? Avatars.name(art) : x.id),
                     h('td', price), h('td', h('label.check', on, h('span', t('On sale')))), h('td', String(x.sold)), h('td.nowrap', save));
             });
@@ -632,8 +817,15 @@
     async function viewSettings() {
         const d = await Api.get('admin.settings');
         const controls = {};
-        const groups = SETTINGS.map(([name, list]) => [h('h2', t(name)), h('div.adm-grid', list.map(([k, label]) => f(t(label), controls[k] = inp({type: 'number', min: 0, value: d.settings[k]}), t('Default: {n}', {n: d.defaults[k]}))))]);
-        const save = btn(t('Save'), {icon: 'save', onclick: () => act(save, () => Api.post('admin.settings.save', {settings: Object.fromEntries(Object.entries(controls).map(([k, c]) => [k, c.value]))}))});
+        const groups = SETTINGS.map(([name, list]) => [h('h2', t(name)), h('div.adm-grid', list.map(([k, label]) => f(t(label), controls[k] = inp({
+            type: 'number',
+            min: 0,
+            value: d.settings[k]
+        }), t('Default: {n}', {n: d.defaults[k]}))))]);
+        const save = btn(t('Save'), {
+            icon: 'save',
+            onclick: () => act(save, () => Api.post('admin.settings.save', {settings: Object.fromEntries(Object.entries(controls).map(([k, c]) => [k, c.value]))}))
+        });
         return page(t('Settings'), null, h('div.adm-form', groups, h('div.adm-actions', save)));
     }
 
@@ -651,10 +843,16 @@
         const lang2 = sel(I18N.langs, I18N.lang);
         lang2.setAttribute('aria-label', t('Language'));
         lang2.addEventListener('change', () => I18N.set(lang2.value));
-        const top = h('header.adm-top', h('a.sn-brand', {href: 'index.html'}, h('img', {src: 'assets/icons/icon-192.png?v=2', alt: ''}), h('strong', 'Fucina'), h('span.muted.small', 'Admin')),
+        const top = h('header.adm-top', h('a.sn-brand', {href: 'index.html'}, h('img', {
+                src: 'assets/icons/icon-192.png?v=2',
+                alt: ''
+            }), h('strong', 'Fucina'), h('span.muted.small', 'Admin')),
             h('div.grow'), lang2, iconBtn('back', t('Back to the app'), () => location.href = 'index.html'));
         const nav = h('nav.adm-side', {'aria-label': t('Sections')},
-            h('a.sn-brand', {href: 'index.html'}, h('img', {src: 'assets/icons/icon-192.png?v=2', alt: ''}), h('strong', 'Fucina')), h('span.muted.small', t('Admin portal')),
+            h('a.sn-brand', {href: 'index.html'}, h('img', {
+                src: 'assets/icons/icon-192.png?v=2',
+                alt: ''
+            }), h('strong', 'Fucina')), h('span.muted.small', t('Admin portal')),
             TABS.map(([id, label, ic]) => h('a.sn-link' + (active === id ? '.active' : ''), {href: '#/' + id}, icon(ic), h('span', t(label)))),
             h('div.grow'), lang, h('a.sn-link.back', {href: 'index.html'}, icon('back'), h('span', t('Back to the app'))));
         root.replaceChildren(h('div.adm', top, nav, h('main.adm-main', content)));
@@ -664,8 +862,27 @@
 
     async function render() {
         const [name, a, b] = (location.hash.replace(/^#\/?/, '') || 'overview').split('/').map(decodeURIComponent);
-        const views = {overview: viewOverview, courses: viewCourses, 'course-new': viewCourseNew, course: viewCourse, lesson: viewLesson, 'lesson-new': viewLessonNew, games: viewGames, game: viewGame, users: viewUsers, certificates: viewCertificates, avatars: viewAvatars, settings: viewSettings};
-        const active = {'course-new': 'courses', course: 'courses', lesson: 'courses', 'lesson-new': 'courses', game: 'games'}[name] || name;
+        const views = {
+            overview: viewOverview,
+            courses: viewCourses,
+            'course-new': viewCourseNew,
+            course: viewCourse,
+            lesson: viewLesson,
+            'lesson-new': viewLessonNew,
+            games: viewGames,
+            game: viewGame,
+            users: viewUsers,
+            certificates: viewCertificates,
+            avatars: viewAvatars,
+            settings: viewSettings
+        };
+        const active = {
+            'course-new': 'courses',
+            course: 'courses',
+            lesson: 'courses',
+            'lesson-new': 'courses',
+            game: 'games'
+        }[name] || name;
         let content;
         try {
             content = await (views[name] || viewOverview)(a, b);

@@ -6,7 +6,7 @@
  * editor preview, the public page and the PDF always show the same things.
  */
 
-import {CV_WORDS, SECTION_KINDS, LANG_NAMES} from './i18n.js';
+import {CV_WORDS, LANG_NAMES, SECTION_KINDS} from './i18n.js';
 
 export const TEMPLATES = ['classic', 'modern', 'minimal', 'elegant', 'banner', 'timeline', 'compact', 'studio', 'monogram', 'contrast', 'swiss'];
 /**
@@ -14,18 +14,138 @@ export const TEMPLATES = ['classic', 'modern', 'minimal', 'elegant', 'banner', '
  * "sans" and "serif" are the first two, kept with their old ids so existing CVs do not change.
  */
 export const FONTS = {
-    sans: {name: 'Roboto', kind: 'sans', css: '"CV Sans"', files: {normal: 'Roboto-Regular.ttf', bold: 'Roboto-Medium.ttf', italics: 'Roboto-Italic.ttf', bolditalics: 'Roboto-MediumItalic.ttf'}},
-    inter: {name: 'Inter', kind: 'sans', css: '"CV Inter"', files: {normal: 'inter/regular.ttf', bold: 'inter/bold.ttf', italics: 'inter/italic.ttf', bolditalics: 'inter/bolditalic.ttf'}},
-    opensans: {name: 'Open Sans', kind: 'sans', css: '"CV Open Sans"', files: {normal: 'opensans/regular.ttf', bold: 'opensans/bold.ttf', italics: 'opensans/italic.ttf', bolditalics: 'opensans/bolditalic.ttf'}},
-    sourcesans: {name: 'Source Sans 3', kind: 'sans', css: '"CV Source Sans 3"', files: {normal: 'sourcesans/regular.ttf', bold: 'sourcesans/bold.ttf', italics: 'sourcesans/italic.ttf', bolditalics: 'sourcesans/bolditalic.ttf'}},
-    montserrat: {name: 'Montserrat', kind: 'sans', css: '"CV Montserrat"', files: {normal: 'montserrat/regular.ttf', bold: 'montserrat/bold.ttf', italics: 'montserrat/italic.ttf', bolditalics: 'montserrat/bolditalic.ttf'}},
-    poppins: {name: 'Poppins', kind: 'sans', css: '"CV Poppins"', files: {normal: 'poppins/regular.ttf', bold: 'poppins/bold.ttf', italics: 'poppins/italic.ttf', bolditalics: 'poppins/bolditalic.ttf'}},
-    serif: {name: 'PT Serif', kind: 'serif', css: '"CV Serif"', files: {normal: 'PT_Serif-Web-Regular.ttf', bold: 'PT_Serif-Web-Bold.ttf', italics: 'PT_Serif-Web-Italic.ttf', bolditalics: 'PT_Serif-Web-BoldItalic.ttf'}},
-    lora: {name: 'Lora', kind: 'serif', css: '"CV Lora"', files: {normal: 'lora/regular.ttf', bold: 'lora/bold.ttf', italics: 'lora/italic.ttf', bolditalics: 'lora/bolditalic.ttf'}},
-    merriweather: {name: 'Merriweather', kind: 'serif', css: '"CV Merriweather"', files: {normal: 'merriweather/regular.ttf', bold: 'merriweather/bold.ttf', italics: 'merriweather/italic.ttf', bolditalics: 'merriweather/bolditalic.ttf'}},
-    garamond: {name: 'EB Garamond', kind: 'serif', css: '"CV EB Garamond"', files: {normal: 'garamond/regular.ttf', bold: 'garamond/bold.ttf', italics: 'garamond/italic.ttf', bolditalics: 'garamond/bolditalic.ttf'}},
-    baskerville: {name: 'Libre Baskerville', kind: 'serif', css: '"CV Libre Baskerville"', files: {normal: 'baskerville/regular.ttf', bold: 'baskerville/bold.ttf', italics: 'baskerville/italic.ttf', bolditalics: 'baskerville/bolditalic.ttf'}},
-    playfair: {name: 'Playfair Display', kind: 'serif', css: '"CV Playfair Display"', files: {normal: 'playfair/regular.ttf', bold: 'playfair/bold.ttf', italics: 'playfair/italic.ttf', bolditalics: 'playfair/bolditalic.ttf'}},
+    sans: {
+        name: 'Roboto',
+        kind: 'sans',
+        css: '"CV Sans"',
+        files: {
+            normal: 'Roboto-Regular.ttf',
+            bold: 'Roboto-Medium.ttf',
+            italics: 'Roboto-Italic.ttf',
+            bolditalics: 'Roboto-MediumItalic.ttf'
+        }
+    },
+    inter: {
+        name: 'Inter',
+        kind: 'sans',
+        css: '"CV Inter"',
+        files: {
+            normal: 'inter/regular.ttf',
+            bold: 'inter/bold.ttf',
+            italics: 'inter/italic.ttf',
+            bolditalics: 'inter/bolditalic.ttf'
+        }
+    },
+    opensans: {
+        name: 'Open Sans',
+        kind: 'sans',
+        css: '"CV Open Sans"',
+        files: {
+            normal: 'opensans/regular.ttf',
+            bold: 'opensans/bold.ttf',
+            italics: 'opensans/italic.ttf',
+            bolditalics: 'opensans/bolditalic.ttf'
+        }
+    },
+    sourcesans: {
+        name: 'Source Sans 3',
+        kind: 'sans',
+        css: '"CV Source Sans 3"',
+        files: {
+            normal: 'sourcesans/regular.ttf',
+            bold: 'sourcesans/bold.ttf',
+            italics: 'sourcesans/italic.ttf',
+            bolditalics: 'sourcesans/bolditalic.ttf'
+        }
+    },
+    montserrat: {
+        name: 'Montserrat',
+        kind: 'sans',
+        css: '"CV Montserrat"',
+        files: {
+            normal: 'montserrat/regular.ttf',
+            bold: 'montserrat/bold.ttf',
+            italics: 'montserrat/italic.ttf',
+            bolditalics: 'montserrat/bolditalic.ttf'
+        }
+    },
+    poppins: {
+        name: 'Poppins',
+        kind: 'sans',
+        css: '"CV Poppins"',
+        files: {
+            normal: 'poppins/regular.ttf',
+            bold: 'poppins/bold.ttf',
+            italics: 'poppins/italic.ttf',
+            bolditalics: 'poppins/bolditalic.ttf'
+        }
+    },
+    serif: {
+        name: 'PT Serif',
+        kind: 'serif',
+        css: '"CV Serif"',
+        files: {
+            normal: 'PT_Serif-Web-Regular.ttf',
+            bold: 'PT_Serif-Web-Bold.ttf',
+            italics: 'PT_Serif-Web-Italic.ttf',
+            bolditalics: 'PT_Serif-Web-BoldItalic.ttf'
+        }
+    },
+    lora: {
+        name: 'Lora',
+        kind: 'serif',
+        css: '"CV Lora"',
+        files: {
+            normal: 'lora/regular.ttf',
+            bold: 'lora/bold.ttf',
+            italics: 'lora/italic.ttf',
+            bolditalics: 'lora/bolditalic.ttf'
+        }
+    },
+    merriweather: {
+        name: 'Merriweather',
+        kind: 'serif',
+        css: '"CV Merriweather"',
+        files: {
+            normal: 'merriweather/regular.ttf',
+            bold: 'merriweather/bold.ttf',
+            italics: 'merriweather/italic.ttf',
+            bolditalics: 'merriweather/bolditalic.ttf'
+        }
+    },
+    garamond: {
+        name: 'EB Garamond',
+        kind: 'serif',
+        css: '"CV EB Garamond"',
+        files: {
+            normal: 'garamond/regular.ttf',
+            bold: 'garamond/bold.ttf',
+            italics: 'garamond/italic.ttf',
+            bolditalics: 'garamond/bolditalic.ttf'
+        }
+    },
+    baskerville: {
+        name: 'Libre Baskerville',
+        kind: 'serif',
+        css: '"CV Libre Baskerville"',
+        files: {
+            normal: 'baskerville/regular.ttf',
+            bold: 'baskerville/bold.ttf',
+            italics: 'baskerville/italic.ttf',
+            bolditalics: 'baskerville/bolditalic.ttf'
+        }
+    },
+    playfair: {
+        name: 'Playfair Display',
+        kind: 'serif',
+        css: '"CV Playfair Display"',
+        files: {
+            normal: 'playfair/regular.ttf',
+            bold: 'playfair/bold.ttf',
+            italics: 'playfair/italic.ttf',
+            bolditalics: 'playfair/bolditalic.ttf'
+        }
+    },
 };
 
 export const ACCENTS = ['#3D52D5', '#1F7A6D', '#B4443C', '#7A4FC4', '#C2770E', '#2B6CB0', '#22313F', '#B83B7D'];
@@ -66,7 +186,13 @@ export function emptyLang() {
 }
 
 export function esc(s) {
-    return String(s ?? '').replace(/[&<>"']/g, (c) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[c]);
+    return String(s ?? '').replace(/[&<>"']/g, (c) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    })[c]);
 }
 
 // ---------------------------------------------------------------- dates
@@ -86,7 +212,11 @@ export function fmtDate(s, lang) {
     if (!d) return String(s || '').trim();
     if (!d.m || d.m < 1 || d.m > 12) return String(d.y);
     try {
-        return new Intl.DateTimeFormat(lang, {month: 'short', year: 'numeric', timeZone: 'UTC'}).format(new Date(Date.UTC(d.y, d.m - 1, 1)));
+        return new Intl.DateTimeFormat(lang, {
+            month: 'short',
+            year: 'numeric',
+            timeZone: 'UTC'
+        }).format(new Date(Date.UTC(d.y, d.m - 1, 1)));
     } catch (e) {
         return String(d.m).padStart(2, '0') + '/' + d.y;
     }
@@ -116,7 +246,12 @@ function fmtBirth(iso, lang) {
     const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if (!m) return '';
     try {
-        return new Intl.DateTimeFormat(lang, {day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC'}).format(new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])));
+        return new Intl.DateTimeFormat(lang, {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            timeZone: 'UTC'
+        }).format(new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])));
     } catch (e) {
         return `${m[3]}/${m[2]}/${m[1]}`;
     }
@@ -168,11 +303,20 @@ export function buildModel(cv, lang, photoUrl = null) {
     const words = cvWords(cv, lang);
     const contacts = [];
     if (show.email && p.email) contacts.push({kind: 'email', text: p.email, href: 'mailto:' + p.email});
-    if (show.phone && p.phone) contacts.push({kind: 'phone', text: p.phone, href: 'tel:' + p.phone.replace(/[^\d+]/g, '')});
+    if (show.phone && p.phone) contacts.push({
+        kind: 'phone',
+        text: p.phone,
+        href: 'tel:' + p.phone.replace(/[^\d+]/g, '')
+    });
     if (show.location && c.location) contacts.push({kind: 'location', text: c.location});
     if (show.website && p.website) contacts.push({kind: 'website', text: prettyUrl(p.website), href: p.website});
     // the address is written out too: a PDF reader may block links, the text stays readable
-    if (show.links) for (const l of p.links || []) if (l.url) contacts.push({kind: 'link', text: prettyUrl(l.url), label: l.label || '', href: l.url});
+    if (show.links) for (const l of p.links || []) if (l.url) contacts.push({
+        kind: 'link',
+        text: prettyUrl(l.url),
+        label: l.label || '',
+        href: l.url
+    });
     if (show.birth && p.birthDate) contacts.push({kind: 'birth', text: fmtBirth(p.birthDate, lang), label: words.born});
     const sections = (c.sections || []).filter((x) => x.show !== false && sectionHasContent(x)).map((x) => ({
         ...x,
@@ -183,7 +327,10 @@ export function buildModel(cv, lang, photoUrl = null) {
             // optional details: EQF level and grade (education), link (projects)
             meta: [i.eqf ? `${words.eqf} ${i.eqf}` : '', i.grade ? `${words.grade}: ${i.grade}` : ''].filter(Boolean),
             urlText: i.url ? prettyUrl(i.url) : '',
-        } : x.type === 'langs' && (i.dots === null || i.dots === undefined) && words.native && i.level === words.native ? {...i, dots: 5} : x.type === 'list' && i.url ? {...i, urlText: prettyUrl(i.url)} : i)), // "native" in a custom language
+        } : x.type === 'langs' && (i.dots === null || i.dots === undefined) && words.native && i.level === words.native ? {
+            ...i,
+            dots: 5
+        } : x.type === 'list' && i.url ? {...i, urlText: prettyUrl(i.url)} : i)), // "native" in a custom language
     }));
     return {
         lang,

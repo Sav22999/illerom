@@ -5,11 +5,43 @@
  * edits one CV language at a time; the preview on the right is the same HTML the public page shows, on an A4 sheet.
  */
 
-import {t, getLang, setLang, UI_LANGS, CV_LANGS, LANG_NAMES, flagSrc, SECTION_KINDS, CONSENT, LANG_LEVELS, CV_WORDS} from './i18n.js';
-import {buildModel, renderCV, TEMPLATES, ACCENTS, FONTS, emptyLang, langDots, langLabel, cvWords, fixContactSeparators} from './cv.js';
+import {
+    CONSENT,
+    CV_LANGS,
+    CV_WORDS,
+    flagSrc,
+    getLang,
+    LANG_LEVELS,
+    SECTION_KINDS,
+    setLang,
+    t,
+    UI_LANGS
+} from './i18n.js';
+import {
+    ACCENTS,
+    buildModel,
+    cvWords,
+    emptyLang,
+    fixContactSeparators,
+    FONTS,
+    langDots,
+    langLabel,
+    renderCV,
+    TEMPLATES
+} from './cv.js';
 import {downloadPdf, pdfFileName} from './pdf.js';
 
-const S = {config: {}, user: null, csrf: '', cv: null, lang: '', tab: 'content', preview: wantsPreview(), saveState: 'saved', collapsed: new Set()};
+const S = {
+    config: {},
+    user: null,
+    csrf: '',
+    cv: null,
+    lang: '',
+    tab: 'content',
+    preview: wantsPreview(),
+    saveState: 'saved',
+    collapsed: new Set()
+};
 const app = document.getElementById('app');
 const BASE = new URL('./', location.href).href.replace(/[?#].*$/, '');
 
@@ -46,19 +78,36 @@ function put(parent, ...kids) {
 }
 
 const ICON = {
-    plus: '<path d="M12 5v14M5 12h14"/>', trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>', up: '<path d="m6 15 6-6 6 6"/>', down: '<path d="m6 9 6 6 6-6"/>',
-    eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>', eyeOff: '<path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a9.6 9.6 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
-    download: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>', upload: '<path d="M12 20V9M7 14l5-5 5 5M5 4h14"/>', file: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',
-    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>', link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
-    copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>', ext: '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
+    up: '<path d="m6 15 6-6 6 6"/>',
+    down: '<path d="m6 9 6 6 6-6"/>',
+    eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+    eyeOff: '<path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a9.6 9.6 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
+    download: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
+    upload: '<path d="M12 20V9M7 14l5-5 5 5M5 4h14"/>',
+    file: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',
+    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',
+    link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+    copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>',
+    ext: '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
     globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/>',
-    layout: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M9 9h12"/>', mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
-    logout: '<path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 17l-5-5 5-5M5 12h11"/>', chev: '<path d="m6 9 6 6 6-6"/>', check: '<path d="m5 12 5 5 9-10"/>',
-    lang: '<path d="M4 5h9M8.5 3v2M6 5c1 4 4 7 7 8M11 5c-1 4-4 7-7 8M13 21l4-9 4 9M14.5 18h5"/>', shared: '<path d="M4 8h14l-3.5-3.5M20 16H6l3.5 3.5"/>', x: '<path d="M6 6l12 12M18 6 6 18"/>',
-    undo: '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>', redo: '<path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/>',
+    layout: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M9 9h12"/>',
+    mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
+    logout: '<path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 17l-5-5 5-5M5 12h11"/>',
+    chev: '<path d="m6 9 6 6 6-6"/>',
+    check: '<path d="m5 12 5 5 9-10"/>',
+    lang: '<path d="M4 5h9M8.5 3v2M6 5c1 4 4 7 7 8M11 5c-1 4-4 7-7 8M13 21l4-9 4 9M14.5 18h5"/>',
+    shared: '<path d="M4 8h14l-3.5-3.5M20 16H6l3.5 3.5"/>',
+    x: '<path d="M6 6l12 12M18 6 6 18"/>',
+    undo: '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
+    redo: '<path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/>',
     shareArrow: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>',
-    fold: '<path d="m7 20 5-5 5 5M7 4l5 5 5-5"/>', unfold: '<path d="m7 15 5 5 5-5M7 9l5-5 5 5"/>',
-    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', grip: '<circle cx="9" cy="6" r="1.4"/><circle cx="15" cy="6" r="1.4"/><circle cx="9" cy="12" r="1.4"/><circle cx="15" cy="12" r="1.4"/><circle cx="9" cy="18" r="1.4"/><circle cx="15" cy="18" r="1.4"/>', drag: '<path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"/>',
+    fold: '<path d="m7 20 5-5 5 5M7 4l5 5 5-5"/>',
+    unfold: '<path d="m7 15 5 5 5-5M7 9l5-5 5 5"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    grip: '<circle cx="9" cy="6" r="1.4"/><circle cx="15" cy="6" r="1.4"/><circle cx="9" cy="12" r="1.4"/><circle cx="15" cy="12" r="1.4"/><circle cx="9" cy="18" r="1.4"/><circle cx="15" cy="18" r="1.4"/>',
+    drag: '<path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"/>',
 };
 
 function svg(name, cls = 'ico') {
@@ -77,17 +126,25 @@ function iconBtn(name, title, onclick, extra = '') {
 /** The flag of a built-in language; a globe for a language added by the user. */
 function flag(l) {
     const src = flagSrc(l);
-    return src ? h('img.flag', {src, alt: '', width: 20, height: 15, loading: 'lazy'}) : h('span.flag.flag-globe', svg('globe'));
+    return src ? h('img.flag', {
+        src,
+        alt: '',
+        width: 20,
+        height: 15,
+        loading: 'lazy'
+    }) : h('span.flag.flag-globe', svg('globe'));
 }
 
 /** A row of language buttons with flags (a <select> cannot show images). */
 function langPicker(langs, selected, onPick, label = (l) => [flag(l), langLabel(S.cv, l)]) {
     const box = h('div.lang-pick', {role: 'radiogroup'});
-    const draw = () => put(box, langs.map((l) => h('button.chip' + (l === selected ? '.on' : ''), {type: 'button', role: 'radio', 'aria-checked': l === selected ? 'true' : 'false', onclick: () => {
-        selected = l;
-        draw();
-        onPick(l);
-    }}, label(l))));
+    const draw = () => put(box, langs.map((l) => h('button.chip' + (l === selected ? '.on' : ''), {
+        type: 'button', role: 'radio', 'aria-checked': l === selected ? 'true' : 'false', onclick: () => {
+            selected = l;
+            draw();
+            onPick(l);
+        }
+    }, label(l))));
     draw();
     return box;
 }
@@ -109,7 +166,8 @@ function setPreview(on) {
     S.preview = on;
     try {
         if (!matchMedia('(max-width: 960px)').matches) localStorage.setItem('mc_preview', on ? '1' : '0');
-    } catch (e) { /* storage blocked */ }
+    } catch (e) { /* storage blocked */
+    }
     R.editor.dataset.preview = on ? 'on' : 'off';
     put(R.viewBtn, ...previewBtnContent());
     R.viewBtn.setAttribute('aria-label', on ? t('preview_hide') : t('preview_show'));
@@ -170,10 +228,12 @@ function errText(e) {
 function toast(text, {bad = false, action = null, ms = 4500} = {}) {
     let box = document.querySelector('.toasts');
     if (!box) document.body.append(box = h('div.toasts', {'aria-live': 'polite'}));
-    const el = h('div.toast' + (bad ? '.bad' : ''), h('span', text), action && h('button', {type: 'button', onclick: () => {
-        action.run();
-        el.remove();
-    }}, action.label));
+    const el = h('div.toast' + (bad ? '.bad' : ''), h('span', text), action && h('button', {
+        type: 'button', onclick: () => {
+            action.run();
+            el.remove();
+        }
+    }, action.label));
     box.append(el);
     setTimeout(() => el.remove(), action ? Math.max(ms, 9000) : ms);
 }
@@ -187,7 +247,11 @@ function modal(title, body, actions = []) {
     const onKey = (e) => e.key === 'Escape' && close();
     document.addEventListener('keydown', onKey);
     back.addEventListener('mousedown', (e) => e.target === back && close());
-    const box = h('div.modal', h('h2', title), body, actions.length ? h('div.modal-actions', actions.map((a) => h('button.btn' + (a.primary ? '.btn-primary' : '') + (a.danger ? '.btn-danger' : ''), {type: a.submit ? 'submit' : 'button', form: a.form, onclick: a.submit ? undefined : () => (a.run ? a.run(close) : close())}, a.label))) : null);
+    const box = h('div.modal', h('h2', title), body, actions.length ? h('div.modal-actions', actions.map((a) => h('button.btn' + (a.primary ? '.btn-primary' : '') + (a.danger ? '.btn-danger' : ''), {
+        type: a.submit ? 'submit' : 'button',
+        form: a.form,
+        onclick: a.submit ? undefined : () => (a.run ? a.run(close) : close())
+    }, a.label))) : null);
     back.append(box);
     document.body.append(back);
     setTimeout(() => box.querySelector('input:not([type=checkbox]), select, textarea, button.btn-primary')?.focus(), 30);
@@ -195,10 +259,12 @@ function modal(title, body, actions = []) {
 }
 
 function confirmBox(text, label, run, danger = true) {
-    modal(t('confirm'), h('p', text), [{label: t('cancel')}, {label, primary: !danger, danger, run: (close) => {
-        close();
-        run();
-    }}]);
+    modal(t('confirm'), h('p', text), [{label: t('cancel')}, {
+        label, primary: !danger, danger, run: (close) => {
+            close();
+            run();
+        }
+    }]);
 }
 
 // ---------------------------------------------------------------- start
@@ -244,13 +310,22 @@ async function shareLink(url, title) {
     if (native?.share) return native.share(title, url);
     try {
         await navigator.share({title, url});
-    } catch (e) { /* closed by the user */ }
+    } catch (e) { /* closed by the user */
+    }
 }
 
 // Google and SavAccount: joining an account that already exists, new accounts, ways of signing in (../identity/)
 if (window.Identity) Identity.setup({
-    name: 'MyCurriculum', lang: getLang, accent: 'var(--primary)', onAccent: 'var(--on-primary)', google: (slot, cb) => S.config.googleClientId && mountGoogle(slot, cb),
-    username: {it: 'L’indirizzo del tuo CV pubblico: lettere, numeri e trattini (3–30). Potrai cambiarlo dopo.', en: 'The address of your public CV: letters, digits and dashes (3–30). You can change it later.'}, body: () => ({lang: getLang(), cvLang: getLang()}),
+    name: 'MyCurriculum',
+    lang: getLang,
+    accent: 'var(--primary)',
+    onAccent: 'var(--on-primary)',
+    google: (slot, cb) => S.config.googleClientId && mountGoogle(slot, cb),
+    username: {
+        it: 'L’indirizzo del tuo CV pubblico: lettere, numeri e trattini (3–30). Potrai cambiarlo dopo.',
+        en: 'The address of your public CV: letters, digits and dashes (3–30). You can change it later.'
+    },
+    body: () => ({lang: getLang(), cvLang: getLang()}),
 });
 
 async function boot() {
@@ -280,19 +355,31 @@ function route() {
 }
 
 function langSwitch(onChange) {
-    return h('div.ui-lang', {role: 'group', 'aria-label': 'Language'}, UI_LANGS.map((l) => h('button' + (l === getLang() ? '.on' : ''), {type: 'button', 'aria-pressed': l === getLang() ? 'true' : 'false', onclick: () => {
-        setLang(l);
-        onChange();
-    }}, l.toUpperCase())));
+    return h('div.ui-lang', {
+        role: 'group',
+        'aria-label': 'Language'
+    }, UI_LANGS.map((l) => h('button' + (l === getLang() ? '.on' : ''), {
+        type: 'button', 'aria-pressed': l === getLang() ? 'true' : 'false', onclick: () => {
+            setLang(l);
+            onChange();
+        }
+    }, l.toUpperCase())));
 }
 
 function brand() {
-    return h('a.brand', {href: './'}, h('img', {src: 'icons/favicon.svg', alt: ''}), h('span', h('b', 'My'), 'Curriculum'));
+    return h('a.brand', {href: './'}, h('img', {
+        src: 'icons/favicon.svg',
+        alt: ''
+    }), h('span', h('b', 'My'), 'Curriculum'));
 }
 
 function credit() {
     return h('footer.site-foot', h('a', {href: 'privacy.html'}, t('privacy')), ' · ',
-        h('a.credit', {href: 'https://www.saveriomorelli.com/', target: '_blank', rel: 'noopener'}, h('span', t('made_by')), h('span.credit-name', 'Saverio Morelli')));
+        h('a.credit', {
+            href: 'https://www.saveriomorelli.com/',
+            target: '_blank',
+            rel: 'noopener'
+        }, h('span', t('made_by')), h('span.credit-name', 'Saverio Morelli')));
 }
 
 // ---------------------------------------------------------------- landing and accounts
@@ -316,24 +403,43 @@ function authCard(mode) {
     const card = h('div.auth-card');
     let form;
     if (mode === 'signin') {
-        form = h('form', {onsubmit: async (e) => {
-            e.preventDefault();
-            const f = new FormData(form);
-            busy(form, true);
-            try {
-                const d = await api('auth.login', {email: f.get('email'), password: f.get('password')});
-                signedIn(d);
-            } catch (err) {
-                msg.textContent = errText(err);
-                busy(form, false);
-            }
-        }},
-        h('label.field', h('span', t('email')), h('input', {type: 'email', name: 'email', required: true, autocomplete: 'email'})),
-        h('label.field', h('span', t('password')), h('input', {type: 'password', name: 'password', required: true, autocomplete: 'current-password'})),
-        msg, h('button.btn.btn-primary.btn-block', {type: 'submit'}, t('signin')));
+        form = h('form', {
+                onsubmit: async (e) => {
+                    e.preventDefault();
+                    const f = new FormData(form);
+                    busy(form, true);
+                    try {
+                        const d = await api('auth.login', {email: f.get('email'), password: f.get('password')});
+                        signedIn(d);
+                    } catch (err) {
+                        msg.textContent = errText(err);
+                        busy(form, false);
+                    }
+                }
+            },
+            h('label.field', h('span', t('email')), h('input', {
+                type: 'email',
+                name: 'email',
+                required: true,
+                autocomplete: 'email'
+            })),
+            h('label.field', h('span', t('password')), h('input', {
+                type: 'password',
+                name: 'password',
+                required: true,
+                autocomplete: 'current-password'
+            })),
+            msg, h('button.btn.btn-primary.btn-block', {type: 'submit'}, t('signin')));
     } else {
         const nameIn = h('input', {name: 'name', required: true, autocomplete: 'name', maxlength: 80});
-        const userIn = h('input', {name: 'username', required: true, pattern: '[a-z0-9][a-z0-9\\-]{1,28}[a-z0-9]', maxlength: 30, autocapitalize: 'off', spellcheck: 'false'});
+        const userIn = h('input', {
+            name: 'username',
+            required: true,
+            pattern: '[a-z0-9][a-z0-9\\-]{1,28}[a-z0-9]',
+            maxlength: 30,
+            autocapitalize: 'off',
+            spellcheck: 'false'
+        });
         let touched = false;
         userIn.addEventListener('input', () => {
             touched = true;
@@ -342,31 +448,59 @@ function authCard(mode) {
         nameIn.addEventListener('input', () => {
             if (!touched) userIn.value = slugify(nameIn.value);
         });
-        form = h('form', {onsubmit: async (e) => {
-            e.preventDefault();
-            const f = new FormData(form);
-            busy(form, true);
-            try {
-                await api('auth.register', {name: f.get('name'), email: f.get('email'), password: f.get('password'), username: f.get('username'), acceptPrivacy: !!f.get('privacy'), lang: getLang(), cvLang: getLang()});
-                checkEmailScreen(String(f.get('email')));
-            } catch (err) {
-                msg.textContent = errText(err);
-                busy(form, false);
-            }
-        }},
-        h('label.field', h('span', t('name')), nameIn),
-        h('label.field', h('span', t('email')), h('input', {type: 'email', name: 'email', required: true, autocomplete: 'email'})),
-        h('label.field', h('span', t('password')), h('input', {type: 'password', name: 'password', required: true, minlength: 8, autocomplete: 'new-password'})),
-        h('label.field', h('span', t('username')), h('div.username-field', h('span', '?user='), userIn), h('small', t('username_hint'))),
-        h('label.check', h('input', {type: 'checkbox', name: 'privacy', required: true}), h('span', {html: t('accept_privacy')})),
-        msg, h('button.btn.btn-primary.btn-block', {type: 'submit'}, t('signup')));
+        form = h('form', {
+                onsubmit: async (e) => {
+                    e.preventDefault();
+                    const f = new FormData(form);
+                    busy(form, true);
+                    try {
+                        await api('auth.register', {
+                            name: f.get('name'),
+                            email: f.get('email'),
+                            password: f.get('password'),
+                            username: f.get('username'),
+                            acceptPrivacy: !!f.get('privacy'),
+                            lang: getLang(),
+                            cvLang: getLang()
+                        });
+                        checkEmailScreen(String(f.get('email')));
+                    } catch (err) {
+                        msg.textContent = errText(err);
+                        busy(form, false);
+                    }
+                }
+            },
+            h('label.field', h('span', t('name')), nameIn),
+            h('label.field', h('span', t('email')), h('input', {
+                type: 'email',
+                name: 'email',
+                required: true,
+                autocomplete: 'email'
+            })),
+            h('label.field', h('span', t('password')), h('input', {
+                type: 'password',
+                name: 'password',
+                required: true,
+                minlength: 8,
+                autocomplete: 'new-password'
+            })),
+            h('label.field', h('span', t('username')), h('div.username-field', h('span', '?user='), userIn), h('small', t('username_hint'))),
+            h('label.check', h('input', {
+                type: 'checkbox',
+                name: 'privacy',
+                required: true
+            }), h('span', {html: t('accept_privacy')})),
+            msg, h('button.btn.btn-primary.btn-block', {type: 'submit'}, t('signup')));
     }
     put(card,
         h('h2', mode === 'signin' ? t('signin') : t('signup')),
         h('p.note', t('tagline')),
         S.config.googleClientId ? google : null, sav, S.config.googleClientId || sav ? h('div.or', t('or')) : h('div', {style: 'height:14px'}),
         form,
-        h('p.auth-switch', mode === 'signin' ? t('no_account') : t('have_account'), ' ', h('button', {type: 'button', onclick: () => landing(mode === 'signin' ? 'signup' : 'signin')}, mode === 'signin' ? t('signup') : t('signin'))));
+        h('p.auth-switch', mode === 'signin' ? t('no_account') : t('have_account'), ' ', h('button', {
+            type: 'button',
+            onclick: () => landing(mode === 'signin' ? 'signup' : 'signin')
+        }, mode === 'signin' ? t('signup') : t('signin'))));
     if (S.config.googleClientId) mountGoogle(google);
     return card;
 }
@@ -449,19 +583,28 @@ function googleHold(slot, label, dark, width) {
 function mountGoogle(slot, done = googleSignIn) {
     if (native?.googleSignIn) {
         // Android app: the system account picker gives the same ID token the website gets
-        put(slot, h('button.btn.btn-block.google-native', {type: 'button', onclick: async () => {
-            try {
-                done(await nativeCall('google', () => native.googleSignIn(S.config.googleClientId)));
-            } catch (e) {
-                if (e.message !== 'cancelled') toast(t('err_google_token'), {bad: true});
+        put(slot, h('button.btn.btn-block.google-native', {
+            type: 'button', onclick: async () => {
+                try {
+                    done(await nativeCall('google', () => native.googleSignIn(S.config.googleClientId)));
+                } catch (e) {
+                    if (e.message !== 'cancelled') toast(t('err_google_token'), {bad: true});
+                }
             }
-        }}, h('span', {html: G_LOGO}), t('google_continue')));
+        }, h('span', {html: G_LOGO}), t('google_continue')));
         return;
     }
     const hold = googleHold(slot, t('google_continue'), false, 300);
     loadGis().then((g) => {
         g.accounts.id.initialize({client_id: S.config.googleClientId, callback: (r) => done(r.credential)});
-        hold.swap((host) => g.accounts.id.renderButton(host, {theme: 'outline', size: 'large', shape: 'pill', text: 'continue_with', width: 300, locale: getLang()}));
+        hold.swap((host) => g.accounts.id.renderButton(host, {
+            theme: 'outline',
+            size: 'large',
+            shape: 'pill',
+            text: 'continue_with',
+            width: 300,
+            locale: getLang()
+        }));
     }, () => put(slot, h('p.note', t('err_google_token'))));
 }
 
@@ -480,21 +623,38 @@ function googleFinish(credential, suggest) {
     const msg = h('p.msg');
     const userIn = h('input', {name: 'username', required: true, value: suggest, maxlength: 30, autocapitalize: 'off'});
     userIn.addEventListener('input', () => (userIn.value = userIn.value.toLowerCase().replace(/[^a-z0-9-]/g, '')));
-    const form = h('form.stack', {id: 'gform', onsubmit: async (e) => {
-        e.preventDefault();
-        const f = new FormData(form);
-        try {
-            const d = await api('auth.google', {credential, username: f.get('username'), acceptPrivacy: !!f.get('privacy'), lang: getLang(), cvLang: getLang()});
-            close();
-            signedIn(d);
-        } catch (err) {
-            msg.textContent = errText(err);
-        }
-    }},
-    h('p.note', t('google_finish_body')),
-    h('label.field', h('span', t('username')), h('div.username-field', h('span', '?user='), userIn)),
-    h('label.check', h('input', {type: 'checkbox', name: 'privacy', required: true}), h('span', {html: t('accept_privacy')})), msg);
-    const close = modal(t('google_finish'), form, [{label: t('cancel')}, {label: t('continue'), primary: true, submit: true, form: 'gform'}]);
+    const form = h('form.stack', {
+            id: 'gform', onsubmit: async (e) => {
+                e.preventDefault();
+                const f = new FormData(form);
+                try {
+                    const d = await api('auth.google', {
+                        credential,
+                        username: f.get('username'),
+                        acceptPrivacy: !!f.get('privacy'),
+                        lang: getLang(),
+                        cvLang: getLang()
+                    });
+                    close();
+                    signedIn(d);
+                } catch (err) {
+                    msg.textContent = errText(err);
+                }
+            }
+        },
+        h('p.note', t('google_finish_body')),
+        h('label.field', h('span', t('username')), h('div.username-field', h('span', '?user='), userIn)),
+        h('label.check', h('input', {
+            type: 'checkbox',
+            name: 'privacy',
+            required: true
+        }), h('span', {html: t('accept_privacy')})), msg);
+    const close = modal(t('google_finish'), form, [{label: t('cancel')}, {
+        label: t('continue'),
+        primary: true,
+        submit: true,
+        form: 'gform'
+    }]);
 }
 
 function signedIn(d) {
@@ -519,30 +679,34 @@ function verifyScreen() {
         h('p', {html: t('verify_body', {email: S.user.email.replace(/[<>&"]/g, '')})}),
         !S.config.mailReady && h('p.note.bad', t('verify_nomail')),
         h('p.row', {style: 'justify-content:center'},
-            h('button.btn.btn-primary', {type: 'button', onclick: async () => {
-                try {
-                    await api('auth.resend', {lang: getLang()});
-                    msg.className = 'msg ok';
-                    msg.textContent = t('verify_sent');
-                } catch (e) {
-                    msg.className = 'msg';
-                    msg.textContent = errText(e);
+            h('button.btn.btn-primary', {
+                type: 'button', onclick: async () => {
+                    try {
+                        await api('auth.resend', {lang: getLang()});
+                        msg.className = 'msg ok';
+                        msg.textContent = t('verify_sent');
+                    } catch (e) {
+                        msg.className = 'msg';
+                        msg.textContent = errText(e);
+                    }
                 }
-            }}, t('verify_resend')),
+            }, t('verify_resend')),
             h('button.btn', {type: 'button', onclick: logout}, t('logout'))), msg);
 }
 
 function verifyLinkScreen(token) {
     const msg = h('p.msg');
-    const btn = h('button.btn.btn-primary', {type: 'button', onclick: async () => {
-        btn.disabled = true;
-        try {
-            signedIn(await api('auth.verify', {token}));
-        } catch (e) {
-            msg.textContent = errText(e);
-            btn.disabled = false;
+    const btn = h('button.btn.btn-primary', {
+        type: 'button', onclick: async () => {
+            btn.disabled = true;
+            try {
+                signedIn(await api('auth.verify', {token}));
+            } catch (e) {
+                msg.textContent = errText(e);
+                btn.disabled = false;
+            }
         }
-    }}, t('verify_link_btn'));
+    }, t('verify_link_btn'));
     centerCard('check', t('verify_link_title'), h('p', t('verify_link_body')), h('p', btn), msg);
 }
 
@@ -550,7 +714,8 @@ async function logout() {
     await flushSave();
     try {
         await api('auth.logout', {});
-    } catch (e) { /* signed out anyway */ }
+    } catch (e) { /* signed out anyway */
+    }
     S.user = null;
     S.cv = null;
     S.csrf = '';
@@ -596,8 +761,16 @@ function upgradeProjects(cv) {
                 const parts = String(i.date || '').split(/\s+[–—-]\s+|\s*[–—]\s*/).map((x) => x.trim()).filter(Boolean);
                 const current = parts.length > 1 && PRESENT.test(parts[1]);
                 return {
-                    title: i.title || '', org: i.subtitle || '', place: '', text: i.text || '', url: i.url || '', eqf: 0, grade: '',
-                    start: parts.length > 1 ? parts[0] : '', end: parts.length > 1 ? (current ? '' : parts[1]) : parts[0] || '', current,
+                    title: i.title || '',
+                    org: i.subtitle || '',
+                    place: '',
+                    text: i.text || '',
+                    url: i.url || '',
+                    eqf: 0,
+                    grade: '',
+                    start: parts.length > 1 ? parts[0] : '',
+                    end: parts.length > 1 ? (current ? '' : parts[1]) : parts[0] || '',
+                    current,
                 };
             });
             changed = true;
@@ -620,7 +793,13 @@ function drawEditor() {
     for (const ev of ['wheel', 'touchstart', 'keydown', 'pointerdown']) R.panel.addEventListener(ev, (e) => {
         if (R.outlineLock && !e.target.closest?.('.outline')) R.outlineLock = null;
     }, {passive: true});
-    R.viewBtn = h('button.btn.btn-sm', {type: 'button', 'aria-pressed': S.preview ? 'true' : 'false', 'aria-label': S.preview ? t('preview_hide') : t('preview_show'), title: S.preview ? t('preview_hide') : t('preview_show'), onclick: () => setPreview(!S.preview)}, previewBtnContent());
+    R.viewBtn = h('button.btn.btn-sm', {
+        type: 'button',
+        'aria-pressed': S.preview ? 'true' : 'false',
+        'aria-label': S.preview ? t('preview_hide') : t('preview_show'),
+        title: S.preview ? t('preview_hide') : t('preview_show'),
+        onclick: () => setPreview(!S.preview)
+    }, previewBtnContent());
     R.undoBtn = h('button.btn.btn-sm.btn-icon', {type: 'button', 'aria-label': t('undo'), onclick: undo}, svg('undo'));
     R.redoBtn = h('button.btn.btn-sm.btn-icon', {type: 'button', 'aria-label': t('redo'), onclick: redo}, svg('redo'));
     put(app, h('header.topbar', brand(), h('span.spacer'), R.save, h('div.history-tools', R.undoBtn, R.redoBtn, historyMenu()), R.viewBtn, langSwitch(drawEditor), accountMenu()), R.langbar, R.editor);
@@ -633,22 +812,26 @@ function drawEditor() {
 
 function accountMenu() {
     const wrap = h('div.menu-wrap');
-    const btn = h('button.btn.btn-sm', {type: 'button', 'aria-haspopup': 'true', 'aria-expanded': 'false', onclick: (e) => {
-        e.stopPropagation();
-        const open = wrap.querySelector('.menu');
-        if (open) return closeMenu();
-        btn.setAttribute('aria-expanded', 'true');
-        wrap.append(h('div.menu', {role: 'menu'},
-            h('div.menu-info', S.user.email),
-            h('button', {type: 'button', role: 'menuitem', onclick: () => {
-                closeMenu();
-                S.tab = 'share';
-                drawPanel();
-                if (S.preview && matchMedia('(max-width: 960px)').matches) setPreview(false);
-            }}, svg('user'), t('account')),
-            h('button', {type: 'button', role: 'menuitem', onclick: logout}, svg('logout'), t('logout'))));
-        setTimeout(() => document.addEventListener('click', closeMenu, {once: true}));
-    }}, svg('user'), h('span.hide-sm', S.user.name.split(' ')[0]));
+    const btn = h('button.btn.btn-sm', {
+        type: 'button', 'aria-haspopup': 'true', 'aria-expanded': 'false', onclick: (e) => {
+            e.stopPropagation();
+            const open = wrap.querySelector('.menu');
+            if (open) return closeMenu();
+            btn.setAttribute('aria-expanded', 'true');
+            wrap.append(h('div.menu', {role: 'menu'},
+                h('div.menu-info', S.user.email),
+                h('button', {
+                    type: 'button', role: 'menuitem', onclick: () => {
+                        closeMenu();
+                        S.tab = 'share';
+                        drawPanel();
+                        if (S.preview && matchMedia('(max-width: 960px)').matches) setPreview(false);
+                    }
+                }, svg('user'), t('account')),
+                h('button', {type: 'button', role: 'menuitem', onclick: logout}, svg('logout'), t('logout'))));
+            setTimeout(() => document.addEventListener('click', closeMenu, {once: true}));
+        }
+    }, svg('user'), h('span.hide-sm', S.user.name.split(' ')[0]));
     const closeMenu = () => {
         wrap.querySelector('.menu')?.remove();
         btn.setAttribute('aria-expanded', 'false');
@@ -663,16 +846,37 @@ function drawLangbar() {
         h('span.langbar-label.hide-sm', t('cv_lang')),
         // each language: a button that opens it and, when the CV has more than one, a small × that removes it
         h('div.lang-chips', langs.map((l) => h('span.chip-group' + (l === S.lang ? '.on' : ''),
-            h('button.chip', {type: 'button', 'aria-pressed': l === S.lang ? 'true' : 'false', onclick: () => {
-                S.lang = l;
-                drawLangbar();
-                drawPanel();
-                drawPreview();
-            }}, flag(l), langLabel(S.cv, l)),
-            langs.length > 1 && h('button.chip-x', {type: 'button', title: t('remove_lang') + ' (' + langLabel(S.cv, l) + ')', 'aria-label': t('remove_lang') + ' (' + langLabel(S.cv, l) + ')', onclick: () => removeLanguage(l)}, svg('x')))),
-        langs.length < CV_LANGS.length && h('button.chip.chip-add', {type: 'button', onclick: addLanguage, title: t('add_lang'), 'aria-label': t('add_lang')}, svg('plus'), h('span.hide-sm', t('add_lang')))),
-        h('button.btn.btn-sm', {type: 'button', onclick: importDialog, title: t('import_pdf'), 'aria-label': t('import_pdf')}, svg('upload'), h('span.hide-sm', t('import_pdf'))),
-        h('button.btn.btn-sm.btn-primary', {type: 'button', onclick: () => makePdf(S.lang), 'aria-label': t('pdf')}, svg('download'), h('span.hide-sm', t('pdf')), h('span.show-sm', 'PDF')));
+                h('button.chip', {
+                    type: 'button', 'aria-pressed': l === S.lang ? 'true' : 'false', onclick: () => {
+                        S.lang = l;
+                        drawLangbar();
+                        drawPanel();
+                        drawPreview();
+                    }
+                }, flag(l), langLabel(S.cv, l)),
+                langs.length > 1 && h('button.chip-x', {
+                    type: 'button',
+                    title: t('remove_lang') + ' (' + langLabel(S.cv, l) + ')',
+                    'aria-label': t('remove_lang') + ' (' + langLabel(S.cv, l) + ')',
+                    onclick: () => removeLanguage(l)
+                }, svg('x')))),
+            langs.length < CV_LANGS.length && h('button.chip.chip-add', {
+                type: 'button',
+                onclick: addLanguage,
+                title: t('add_lang'),
+                'aria-label': t('add_lang')
+            }, svg('plus'), h('span.hide-sm', t('add_lang')))),
+        h('button.btn.btn-sm', {
+            type: 'button',
+            onclick: importDialog,
+            title: t('import_pdf'),
+            'aria-label': t('import_pdf')
+        }, svg('upload'), h('span.hide-sm', t('import_pdf'))),
+        h('button.btn.btn-sm.btn-primary', {
+            type: 'button',
+            onclick: () => makePdf(S.lang),
+            'aria-label': t('pdf')
+        }, svg('download'), h('span.hide-sm', t('pdf')), h('span.show-sm', 'PDF')));
 }
 
 function addLanguage() {
@@ -681,7 +885,13 @@ function addLanguage() {
     let picked = free[0] || OTHER;
     // a language that is not in the list: its name, its ISO code (it formats the dates) and, later, its CV words
     const nameIn = h('input', {maxlength: 40, placeholder: 'Hrvatski', autocomplete: 'off'});
-    const codeIn = h('input', {maxlength: 10, placeholder: 'hr', autocapitalize: 'off', spellcheck: 'false', autocomplete: 'off'});
+    const codeIn = h('input', {
+        maxlength: 10,
+        placeholder: 'hr',
+        autocapitalize: 'off',
+        spellcheck: 'false',
+        autocomplete: 'off'
+    });
     codeIn.addEventListener('input', () => (codeIn.value = codeIn.value.toLowerCase().replace(/[^a-z-]/g, '')));
     const msg = h('p.msg');
     const custom = h('div.stack.custom-lang', {hidden: picked !== OTHER},
@@ -692,27 +902,32 @@ function addLanguage() {
         custom.hidden = l !== OTHER;
         if (l === OTHER) nameIn.focus();
     }, (l) => (l === OTHER ? [h('span.flag.flag-globe', svg('globe')), t('custom_lang')] : [flag(l), langLabel(S.cv, l)]));
-    const from = h('select', S.cv.settings.langs.map((l) => h('option', {value: l, selected: l === S.lang}, langLabel(S.cv, l))), h('option', {value: ''}, t('add_lang_empty')));
+    const from = h('select', S.cv.settings.langs.map((l) => h('option', {
+        value: l,
+        selected: l === S.lang
+    }, langLabel(S.cv, l))), h('option', {value: ''}, t('add_lang_empty')));
     modal(t('add_lang'), h('div.stack', h('div.field', h('span', t('cv_lang')), sel), custom, h('label.field', h('span', t('add_lang_from')), from), h('p.note', t('lang_copy_hint')), msg), [
         {label: t('cancel')},
-        {label: t('add_lang'), primary: true, run: (close) => {
-            let l = picked;
-            if (l === OTHER) {
-                l = codeIn.value.trim();
-                const name = nameIn.value.trim();
-                if (!name) return (msg.textContent = t('custom_lang_need_name'));
-                if (!/^[a-z]{2,3}(-[a-z0-9]{2,8})?$/.test(l)) return (msg.textContent = t('custom_lang_bad_code'));
-                if (S.cv.settings.langs.includes(l) || CV_LANGS.includes(l)) return (msg.textContent = t('custom_lang_exists'));
-                if (Array.isArray(S.cv.settings.customLangs) || !S.cv.settings.customLangs) S.cv.settings.customLangs = {};
-                S.cv.settings.customLangs[l] = {name, words: {}};
+        {
+            label: t('add_lang'), primary: true, run: (close) => {
+                let l = picked;
+                if (l === OTHER) {
+                    l = codeIn.value.trim();
+                    const name = nameIn.value.trim();
+                    if (!name) return (msg.textContent = t('custom_lang_need_name'));
+                    if (!/^[a-z]{2,3}(-[a-z0-9]{2,8})?$/.test(l)) return (msg.textContent = t('custom_lang_bad_code'));
+                    if (S.cv.settings.langs.includes(l) || CV_LANGS.includes(l)) return (msg.textContent = t('custom_lang_exists'));
+                    if (Array.isArray(S.cv.settings.customLangs) || !S.cv.settings.customLangs) S.cv.settings.customLangs = {};
+                    S.cv.settings.customLangs[l] = {name, words: {}};
+                }
+                S.cv.content[l] = from.value ? translateCopy(S.cv.content[from.value], from.value, l) : freshLang(l);
+                S.cv.settings.langs.push(l);
+                S.lang = l;
+                close();
+                changed(true, t('h_add_lang', {l: langLabel(S.cv, l)}));
+                drawLangbar();
             }
-            S.cv.content[l] = from.value ? translateCopy(S.cv.content[from.value], from.value, l) : freshLang(l);
-            S.cv.settings.langs.push(l);
-            S.lang = l;
-            close();
-            changed(true, t('h_add_lang', {l: langLabel(S.cv, l)}));
-            drawLangbar();
-        }},
+        },
     ]);
 }
 
@@ -734,7 +949,15 @@ function translateCopy(src, from, to) {
 
 function freshLang(l) {
     const c = emptyLang();
-    c.sections = ['experience', 'education', 'skills', 'languages'].map((k) => ({id: uid(), type: SECTION_KINDS[k].type, kind: k, title: SECTION_KINDS[k][l] || SECTION_KINDS[k].en, show: true, text: '', items: []}));
+    c.sections = ['experience', 'education', 'skills', 'languages'].map((k) => ({
+        id: uid(),
+        type: SECTION_KINDS[k].type,
+        kind: k,
+        title: SECTION_KINDS[k][l] || SECTION_KINDS[k].en,
+        show: true,
+        text: '',
+        items: []
+    }));
     return c;
 }
 
@@ -826,7 +1049,13 @@ function drawHistoryButtons() {
 
 function historyMenu() {
     const wrap = h('div.menu-wrap');
-    const btn = h('button.btn.btn-sm.btn-icon', {type: 'button', title: t('history'), 'aria-label': t('history'), 'aria-haspopup': 'true', 'aria-expanded': 'false'}, svg('clock'));
+    const btn = h('button.btn.btn-sm.btn-icon', {
+        type: 'button',
+        title: t('history'),
+        'aria-label': t('history'),
+        'aria-haspopup': 'true',
+        'aria-expanded': 'false'
+    }, svg('clock'));
     const close = () => {
         wrap.querySelector('.menu')?.remove();
         btn.setAttribute('aria-expanded', 'false');
@@ -837,7 +1066,10 @@ function historyMenu() {
         if (wrap.querySelector('.menu')) return close();
         btn.setAttribute('aria-expanded', 'true');
         R.historyList = h('ol.history-list');
-        wrap.append(h('div.menu.history-menu', {role: 'dialog', 'aria-label': t('history')}, h('div.menu-info', h('b', t('history')), h('br'), /Mac|iPhone|iPad/.test(navigator.platform) ? t('history_hint').replace(/Ctrl\+/g, '⌘').replace(/(Maiusc|Shift)\+/g, '⇧') : t('history_hint')), R.historyList));
+        wrap.append(h('div.menu.history-menu', {
+            role: 'dialog',
+            'aria-label': t('history')
+        }, h('div.menu-info', h('b', t('history')), h('br'), /Mac|iPhone|iPad/.test(navigator.platform) ? t('history_hint').replace(/Ctrl\+/g, '⌘').replace(/(Maiusc|Shift)\+/g, '⇧') : t('history_hint')), R.historyList));
         drawHistoryList();
         setTimeout(() => document.addEventListener('mousedown', outside));
     });
@@ -951,11 +1183,18 @@ function sortable(list, key, onMove) {
         const slot = h('div.drop-slot', {style: `height:${rect.height}px`});
         row.after(slot);
         row.classList.add('dragging');
-        Object.assign(row.style, {position: 'fixed', left: rect.left + 'px', top: rect.top + 'px', width: rect.width + 'px', zIndex: 60});
+        Object.assign(row.style, {
+            position: 'fixed',
+            left: rect.left + 'px',
+            top: rect.top + 'px',
+            width: rect.width + 'px',
+            zIndex: 60
+        });
         document.body.classList.add('is-dragging');
         try {
             handle.setPointerCapture(e.pointerId); // keeps the moves coming even when the pointer leaves the handle
-        } catch (err) { /* synthetic events have no capturable pointer */ }
+        } catch (err) { /* synthetic events have no capturable pointer */
+        }
         const panelScrolls = R.panel.scrollHeight > R.panel.clientHeight && getComputedStyle(R.panel).overflowY !== 'visible';
         const scroller = panelScrolls ? R.panel : document.scrollingElement;
         let y = e.clientY;
@@ -1060,10 +1299,14 @@ async function save() {
             // the CV was saved by another window or device: never overwrite it, offer to reload
             S.conflict = true;
             clearTimeout(saveTimer);
-            return toast(errText(e), {bad: true, ms: 60000, action: {label: t('reload'), run: () => {
-                dirty = false;
-                location.reload();
-            }}});
+            return toast(errText(e), {
+                bad: true, ms: 60000, action: {
+                    label: t('reload'), run: () => {
+                        dirty = false;
+                        location.reload();
+                    }
+                }
+            });
         }
         if (e.message === 'csrf' || e.message === 'unauthenticated') return toast(errText(e), {bad: true});
         if (e.message !== 'network' && e.message !== 'server') toast(errText(e), {bad: true});
@@ -1083,7 +1326,13 @@ async function flushSave() {
 window.addEventListener('beforeunload', (e) => {
     if (!dirty || !S.cv) return;
     // last try: keepalive survives the closing page
-    fetch('api/?r=cv.save', {method: 'POST', keepalive: true, credentials: 'same-origin', headers: {'Content-Type': 'application/json', 'X-CSRF-Token': S.csrf}, body: JSON.stringify({settings: S.cv.settings, profile: S.cv.profile, content: S.cv.content, base: S.cv.rev})});
+    fetch('api/?r=cv.save', {
+        method: 'POST',
+        keepalive: true,
+        credentials: 'same-origin',
+        headers: {'Content-Type': 'application/json', 'X-CSRF-Token': S.csrf},
+        body: JSON.stringify({settings: S.cv.settings, profile: S.cv.profile, content: S.cv.content, base: S.cv.rev})
+    });
     e.preventDefault();
 });
 
@@ -1106,7 +1355,19 @@ function model(lang = S.lang, cv = S.cv) {
 }
 
 /** Top and bottom margin of the PDF pages of each template, in preview pixels (see pageMargins in pdf.js). */
-const PAGE_PAD = {classic: 48, modern: 40, minimal: 56, elegant: 52, banner: 48, timeline: 48, compact: 36, studio: 48, monogram: 48, contrast: 48, swiss: 52};
+const PAGE_PAD = {
+    classic: 48,
+    modern: 40,
+    minimal: 56,
+    elegant: 52,
+    banner: 48,
+    timeline: 48,
+    compact: 36,
+    studio: 48,
+    monogram: 48,
+    contrast: 48,
+    swiss: 52
+};
 const PAGE_H = 1123; // an A4 page at 96 dpi, the width of the preview being 794
 
 /**
@@ -1173,17 +1434,18 @@ window.addEventListener('resize', () => R.preview && drawPreview());
 function drawPanel() {
     if (!R.panel) return;
     const scroll = R.panel.scrollTop;
-    const tabs = h('div.tabs', {role: 'tablist'}, [['content', t('tab_content')], ['design', t('tab_design')], ['share', t('tab_share')]].map(([k, label]) => h('button.tab' + (S.tab === k ? '.on' : ''), {type: 'button', role: 'tab', 'aria-selected': S.tab === k ? 'true' : 'false', onclick: () => {
-        S.tab = k;
-        drawPanel();
-        R.panel.scrollTop = 0;
-    }}, label)));
+    const tabs = h('div.tabs', {role: 'tablist'}, [['content', t('tab_content')], ['design', t('tab_design')], ['share', t('tab_share')]].map(([k, label]) => h('button.tab' + (S.tab === k ? '.on' : ''), {
+        type: 'button', role: 'tab', 'aria-selected': S.tab === k ? 'true' : 'false', onclick: () => {
+            S.tab = k;
+            drawPanel();
+            R.panel.scrollTop = 0;
+        }
+    }, label)));
     const body = h('div.panel-body');
     if (S.tab === 'content') {
         contentTab(body);
         body.prepend(outline());
-    }
-    else if (S.tab === 'design') designTab(body);
+    } else if (S.tab === 'design') designTab(body);
     else shareTab(body);
     put(R.panel, tabs, body);
     if (S.tab === 'design') drawThumbs(); // after the panel is on the page
@@ -1193,7 +1455,15 @@ function drawPanel() {
 /** A text field bound to obj[key]. */
 function textField(label, obj, key, opts = {}) {
     const tag = opts.area ? 'textarea' : 'input';
-    const el = h(tag, {type: opts.area ? undefined : opts.type || 'text', value: obj[key] ?? '', placeholder: opts.placeholder, maxlength: opts.max, rows: opts.rows, list: opts.list, autocomplete: 'off'});
+    const el = h(tag, {
+        type: opts.area ? undefined : opts.type || 'text',
+        value: obj[key] ?? '',
+        placeholder: opts.placeholder,
+        maxlength: opts.max,
+        rows: opts.rows,
+        list: opts.list,
+        autocomplete: 'off'
+    });
     el.addEventListener('input', () => {
         obj[key] = el.value;
         // typing in one field is one step of the history (see record)
@@ -1206,7 +1476,11 @@ function textField(label, obj, key, opts = {}) {
 }
 
 function showSwitch(obj, key, what = '') {
-    const input = h('input', {type: 'checkbox', checked: obj[key] !== false, 'aria-label': t('show_on_cv') + (what ? ' — ' + what : '')});
+    const input = h('input', {
+        type: 'checkbox',
+        checked: obj[key] !== false,
+        'aria-label': t('show_on_cv') + (what ? ' — ' + what : '')
+    });
     const onChange = typeof what === 'function' ? what : null;
     input.addEventListener('change', () => {
         obj[key] = input.checked;
@@ -1223,23 +1497,41 @@ function contentTab(body) {
 
     // Personal details
     const photoBox = h('div.photo-box', S.cv.photo ? h('img', {src: S.cv.photo, alt: ''}) : svg('user'));
-    const fileIn = h('input', {type: 'file', accept: 'image/jpeg,image/png,image/webp', hidden: true, onchange: () => fileIn.files[0] && uploadPhoto(fileIn.files[0])});
+    const fileIn = h('input', {
+        type: 'file',
+        accept: 'image/jpeg,image/png,image/webp',
+        hidden: true,
+        onchange: () => fileIn.files[0] && uploadPhoto(fileIn.files[0])
+    });
     const photoRow = h('div.photo-row', photoBox, h('div.photo-actions',
-        h('div.row', h('button.btn.btn-sm', {type: 'button', onclick: () => fileIn.click()}, svg('upload'), S.cv.photo ? t('photo_change') : t('photo_upload')),
-            S.cv.photo && h('button.btn.btn-sm.btn-ghost.btn-danger', {type: 'button', onclick: removePhoto}, t('photo_remove'))),
+        h('div.row', h('button.btn.btn-sm', {
+                type: 'button',
+                onclick: () => fileIn.click()
+            }, svg('upload'), S.cv.photo ? t('photo_change') : t('photo_upload')),
+            S.cv.photo && h('button.btn.btn-sm.btn-ghost.btn-danger', {
+                type: 'button',
+                onclick: removePhoto
+            }, t('photo_remove'))),
         showSwitch(show, 'photo')), fileIn);
 
     const links = sortable(h('div.stack.sort-list', (p.links || []).map((l, i) => h('div.kv-row', {'data-sort': ''},
         dragHandle(),
         h('div.kv-inputs',
-            h('input', {value: l.label, placeholder: t('link_label') + ' (LinkedIn…)', 'aria-label': t('link_label'), oninput: (e) => {
-                l.label = e.target.value;
-                changed(false, t('h_edit', {f: t('links')}), 'link' + objKey(l));
-            }}),
-            h('input', {type: 'url', value: l.url, placeholder: 'https://', 'aria-label': t('link_url'), oninput: (e) => {
-                l.url = e.target.value;
-                changed(false, t('h_edit', {f: t('links')}), 'link' + objKey(l));
-            }})),
+            h('input', {
+                value: l.label,
+                placeholder: t('link_label') + ' (LinkedIn…)',
+                'aria-label': t('link_label'),
+                oninput: (e) => {
+                    l.label = e.target.value;
+                    changed(false, t('h_edit', {f: t('links')}), 'link' + objKey(l));
+                }
+            }),
+            h('input', {
+                type: 'url', value: l.url, placeholder: 'https://', 'aria-label': t('link_url'), oninput: (e) => {
+                    l.url = e.target.value;
+                    changed(false, t('h_edit', {f: t('links')}), 'link' + objKey(l));
+                }
+            })),
         h('span'),
         iconBtn('trash', t('delete'), () => {
             p.links.splice(i, 1);
@@ -1248,26 +1540,34 @@ function contentTab(body) {
         moveTo(p.links, from, to);
         changed(true, t('h_move_item', {s: t('links')}));
     });
-    const linksBox = h('div.stack', links, h('div.row', h('button.btn.btn-sm', {type: 'button', onclick: () => {
-        (p.links ||= []).push({label: '', url: ''});
-        changed(true, t('h_add_link'));
-    }}, svg('plus'), t('add_link')), h('span.grow'), showSwitch(show, 'links', t('links'))));
+    const linksBox = h('div.stack', links, h('div.row', h('button.btn.btn-sm', {
+        type: 'button', onclick: () => {
+            (p.links ||= []).push({label: '', url: ''});
+            changed(true, t('h_add_link'));
+        }
+    }, svg('plus'), t('add_link')), h('span.grow'), showSwitch(show, 'links', t('links'))));
 
     const fields = sortable(h('div.stack.sort-list', c.fields.map((f, i) => h('div.kv-row', {'data-sort': ''},
         dragHandle(),
         h('div.kv-inputs',
-            h('input', {value: f.label, placeholder: t('field_label'), 'aria-label': t('field_label'), oninput: (e) => {
-                f.label = e.target.value;
-                changed(false, t('h_edit', {f: f.label || t('custom_fields')}), 'field' + objKey(f));
-            }}),
-            h('input', {value: f.value, placeholder: t('field_value'), 'aria-label': t('field_value'), oninput: (e) => {
-                f.value = e.target.value;
-                changed(false, t('h_edit', {f: f.label || t('custom_fields')}), 'field' + objKey(f));
-            }})),
-        h('label.switch', {title: t('show_on_cv')}, h('input', {type: 'checkbox', checked: f.show !== false, 'aria-label': t('show_on_cv'), onchange: (e) => {
-            f.show = e.target.checked;
-            changed(false, t('h_show', {f: f.label || t('custom_fields')}));
-        }})),
+            h('input', {
+                value: f.label, placeholder: t('field_label'), 'aria-label': t('field_label'), oninput: (e) => {
+                    f.label = e.target.value;
+                    changed(false, t('h_edit', {f: f.label || t('custom_fields')}), 'field' + objKey(f));
+                }
+            }),
+            h('input', {
+                value: f.value, placeholder: t('field_value'), 'aria-label': t('field_value'), oninput: (e) => {
+                    f.value = e.target.value;
+                    changed(false, t('h_edit', {f: f.label || t('custom_fields')}), 'field' + objKey(f));
+                }
+            })),
+        h('label.switch', {title: t('show_on_cv')}, h('input', {
+            type: 'checkbox', checked: f.show !== false, 'aria-label': t('show_on_cv'), onchange: (e) => {
+                f.show = e.target.checked;
+                changed(false, t('h_show', {f: f.label || t('custom_fields')}));
+            }
+        })),
         iconBtn('trash', t('delete'), () => {
             c.fields.splice(i, 1);
             changed(true, t('h_del_field'));
@@ -1275,10 +1575,12 @@ function contentTab(body) {
         moveTo(c.fields, from, to);
         changed(true, t('h_move_item', {s: t('custom_fields')}));
     });
-    const fieldsBox = h('div.stack', fields, h('div', h('button.btn.btn-sm', {type: 'button', onclick: () => {
-        c.fields.push({label: '', value: '', show: true});
-        changed(true, t('h_add_field'));
-    }}, svg('plus'), t('add_field'))));
+    const fieldsBox = h('div.stack', fields, h('div', h('button.btn.btn-sm', {
+        type: 'button', onclick: () => {
+            c.fields.push({label: '', value: '', show: true});
+            changed(true, t('h_add_field'));
+        }
+    }, svg('plus'), t('add_field'))));
 
     const shared = h('span.badge', {title: t('shared_all_langs')}, svg('shared'), t('shared_all_langs'));
     body.append(h('section.card', {'data-anchor': 'profile'},
@@ -1291,13 +1593,24 @@ function contentTab(body) {
             textField(t('location'), c, 'location', {max: 120, extra: showSwitch(show, 'location', t('location'))}),
             textField(t('email'), p, 'email', {type: 'email', max: 190, extra: showSwitch(show, 'email', t('email'))}),
             textField(t('phone'), p, 'phone', {type: 'tel', max: 40, extra: showSwitch(show, 'phone', t('phone'))}),
-            textField(t('website'), p, 'website', {type: 'url', max: 300, placeholder: 'https://', extra: showSwitch(show, 'website', t('website'))}),
+            textField(t('website'), p, 'website', {
+                type: 'url',
+                max: 300,
+                placeholder: 'https://',
+                extra: showSwitch(show, 'website', t('website'))
+            }),
             textField(t('birth'), p, 'birthDate', {type: 'date', extra: showSwitch(show, 'birth', t('birth'))})),
         h('div.field', {style: 'margin-top:14px'}, h('span', t('links')), linksBox),
         h('div.field', {style: 'margin-top:14px'}, h('span', t('custom_fields')), h('small', t('custom_fields_hint')), fieldsBox),
         h('p.note', {style: 'margin-top:12px'}, shared, ' ', t('first_name') + ', ' + t('last_name').toLowerCase() + ', ' + t('email').toLowerCase() + ', ' + t('phone').toLowerCase() + '…')));
 
-    body.append(h('section.card', {'data-anchor': 'summary'}, h('div.card-head', h('h3', t('summary'))), textField(t('summary'), c, 'summary', {area: true, rows: 4, max: 4000, hint: t('summary_hint'), noLabel: true})));
+    body.append(h('section.card', {'data-anchor': 'summary'}, h('div.card-head', h('h3', t('summary'))), textField(t('summary'), c, 'summary', {
+        area: true,
+        rows: 4,
+        max: 4000,
+        hint: t('summary_hint'),
+        noLabel: true
+    })));
 
     body.append(sortable(h('div.sections.sort-list.fold-on-drag', c.sections.map((s, idx) => sectionCard(c, s, idx))), 'sections', (from, to) => {
         const s = c.sections[from];
@@ -1306,25 +1619,49 @@ function contentTab(body) {
     }));
 
     body.append(h('section.card', {'data-anchor': 'add'}, h('div.card-head', h('h3', t('add_section'))),
-        h('div.add-sec', Object.keys(SECTION_KINDS).map((k) => h('button.btn.btn-sm', {type: 'button', onclick: () => {
-            const sec = {id: uid(), type: SECTION_KINDS[k].type, kind: k, title: SECTION_KINDS[k][S.lang] || SECTION_KINDS[k].en, show: true, text: '', items: []};
-            if (sec.type !== 'text') sec.items.push(newItem(sec.type));
-            c.sections.push(sec);
-            changed(true, t('h_add_section', {s: secName(sec)}));
-            requestAnimationFrame(() => R.panel.querySelector(`[data-sec="${sec.id}"]`)?.scrollIntoView({behavior: 'smooth', block: 'center'}));
-        }}, svg('plus'), t('k_' + k))))));
+        h('div.add-sec', Object.keys(SECTION_KINDS).map((k) => h('button.btn.btn-sm', {
+            type: 'button', onclick: () => {
+                const sec = {
+                    id: uid(),
+                    type: SECTION_KINDS[k].type,
+                    kind: k,
+                    title: SECTION_KINDS[k][S.lang] || SECTION_KINDS[k].en,
+                    show: true,
+                    text: '',
+                    items: []
+                };
+                if (sec.type !== 'text') sec.items.push(newItem(sec.type));
+                c.sections.push(sec);
+                changed(true, t('h_add_section', {s: secName(sec)}));
+                requestAnimationFrame(() => R.panel.querySelector(`[data-sec="${sec.id}"]`)?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                }));
+            }
+        }, svg('plus'), t('k_' + k))))));
 
-    const footer = textField(t('footer'), c, 'footer', {area: true, rows: 3, max: 1000, hint: t('footer_hint'), noLabel: true});
+    const footer = textField(t('footer'), c, 'footer', {
+        area: true,
+        rows: 3,
+        max: 1000,
+        hint: t('footer_hint'),
+        noLabel: true
+    });
     body.append(h('section.card', {'data-anchor': 'footer'}, h('div.card-head', h('h3', t('footer')),
-        h('button.btn.btn-sm', {type: 'button', onclick: () => {
-            c.footer = CONSENT[S.lang] || CONSENT.en;
-            changed(true, t('h_footer'));
-        }}, t('footer_consent'))), footer));
+        h('button.btn.btn-sm', {
+            type: 'button', onclick: () => {
+                c.footer = CONSENT[S.lang] || CONSENT.en;
+                changed(true, t('h_footer'));
+            }
+        }, t('footer_consent'))), footer));
 
     const customLang = S.cv.settings.customLangs?.[S.lang];
     if (customLang) body.append(customWordsCard(customLang));
 
-    if (S.cv.settings.langs.length > 1) body.append(h('div', h('button.btn.btn-sm.btn-ghost.btn-danger', {type: 'button', onclick: () => removeLanguage(S.lang)}, svg('trash'), t('remove_lang') + ' (' + langLabel(S.cv, S.lang) + ')')));
+    if (S.cv.settings.langs.length > 1) body.append(h('div', h('button.btn.btn-sm.btn-ghost.btn-danger', {
+        type: 'button',
+        onclick: () => removeLanguage(S.lang)
+    }, svg('trash'), t('remove_lang') + ' (' + langLabel(S.cv, S.lang) + ')')));
 }
 
 /**
@@ -1334,8 +1671,16 @@ function contentTab(body) {
 function customWordsCard(lang) {
     lang.words = Array.isArray(lang.words) || !lang.words ? {} : lang.words; // PHP sends [] when empty
     const en = CV_WORDS.en;
-    const word = (key, label) => textField(label, lang.words, key, {max: 60, placeholder: en[key], histLabel: t('custom_words')});
-    const nameField = textField(t('custom_lang_name'), lang, 'name', {max: 40, histLabel: t('custom_lang_name'), onInput: () => drawLangbar()});
+    const word = (key, label) => textField(label, lang.words, key, {
+        max: 60,
+        placeholder: en[key],
+        histLabel: t('custom_words')
+    });
+    const nameField = textField(t('custom_lang_name'), lang, 'name', {
+        max: 40,
+        histLabel: t('custom_lang_name'),
+        onInput: () => drawLangbar()
+    });
     return h('section.card', {'data-anchor': 'words'}, h('div.card-head', h('h3', t('custom_words')), h('span.badge', S.lang)),
         h('p.note', {style: 'margin-bottom:12px'}, t('custom_words_hint')),
         h('div.grid2', nameField, word('present', t('w_present')), word('born', t('birth')), word('profile', t('summary')), word('contacts', t('w_contacts')),
@@ -1361,7 +1706,11 @@ function outline() {
         el.classList.add('flash');
         setTimeout(() => el.classList.remove('flash'), 900);
     };
-    const link = (anchor, label, extra = null, cls = '') => h('button.outline-link' + cls, {type: 'button', 'data-to': anchor, onclick: go(anchor)}, h('span', label), extra);
+    const link = (anchor, label, extra = null, cls = '') => h('button.outline-link' + cls, {
+        type: 'button',
+        'data-to': anchor,
+        onclick: go(anchor)
+    }, h('span', label), extra);
     const allFolded = c.sections.length && c.sections.every((s) => S.collapsed.has('sec:' + s.id));
     nav.append(...[
         h('p.outline-title', t('outline')),
@@ -1371,18 +1720,20 @@ function outline() {
         link('add', '+ ' + t('add_section'), null, '.muted'),
         link('footer', t('footer')),
         S.cv.settings.customLangs?.[S.lang] ? link('words', t('custom_words')) : null,
-        c.sections.length ? h('button.btn.btn-sm.btn-ghost.outline-fold', {type: 'button', onclick: () => {
-            // the page changes height: keep the selected section in view and selected
-            const keep = R.outlineLock || R.panel.querySelector('.outline-link.on')?.dataset.to;
-            for (const s of c.sections) allFolded ? S.collapsed.delete('sec:' + s.id) : S.collapsed.add('sec:' + s.id);
-            drawPanel();
-            const el = keep && R.panel.querySelector(`[data-anchor="${keep}"]`);
-            if (el) {
-                R.outlineLock = keep;
-                el.scrollIntoView({block: 'start'});
-                markOutline(keep);
+        c.sections.length ? h('button.btn.btn-sm.btn-ghost.outline-fold', {
+            type: 'button', onclick: () => {
+                // the page changes height: keep the selected section in view and selected
+                const keep = R.outlineLock || R.panel.querySelector('.outline-link.on')?.dataset.to;
+                for (const s of c.sections) allFolded ? S.collapsed.delete('sec:' + s.id) : S.collapsed.add('sec:' + s.id);
+                drawPanel();
+                const el = keep && R.panel.querySelector(`[data-anchor="${keep}"]`);
+                if (el) {
+                    R.outlineLock = keep;
+                    el.scrollIntoView({block: 'start'});
+                    markOutline(keep);
+                }
             }
-        }}, svg(allFolded ? 'unfold' : 'fold'), allFolded ? t('expand_all') : t('collapse_all')) : null,
+        }, svg(allFolded ? 'unfold' : 'fold'), allFolded ? t('expand_all') : t('collapse_all')) : null,
     ].filter(Boolean)); // DOM append would write null as text
     setTimeout(updateOutline); // once the panel is on the page
     return nav;
@@ -1415,7 +1766,18 @@ function secName(s) {
 }
 
 function newItem(type) {
-    if (type === 'timeline') return {title: '', org: '', place: '', start: '', end: '', current: false, text: '', url: '', eqf: 0, grade: ''};
+    if (type === 'timeline') return {
+        title: '',
+        org: '',
+        place: '',
+        start: '',
+        end: '',
+        current: false,
+        text: '',
+        url: '',
+        eqf: 0,
+        grade: ''
+    };
     if (type === 'skills') return {name: '', level: 0};
     if (type === 'langs') return {name: '', level: ''};
     return {title: '', subtitle: '', date: '', url: '', text: ''};
@@ -1425,15 +1787,25 @@ function newItem(type) {
 function sectionCard(c, s, idx) {
     const name = secName(s);
     const colKey = 'sec:' + s.id;
-    const titleIn = h('input.sec-title', {value: s.title, placeholder: t('section_title'), 'aria-label': t('section_title'), maxlength: 80, oninput: (e) => {
-        s.title = e.target.value;
-        changed(false, t('h_edit', {f: t('section_title')}), 'title' + objKey(s));
-    }});
+    const titleIn = h('input.sec-title', {
+        value: s.title,
+        placeholder: t('section_title'),
+        'aria-label': t('section_title'),
+        maxlength: 80,
+        oninput: (e) => {
+            s.title = e.target.value;
+            changed(false, t('h_edit', {f: t('section_title')}), 'title' + objKey(s));
+        }
+    });
     const eye = iconBtn(s.show !== false ? 'eye' : 'eyeOff', s.show !== false ? t('show_on_cv') : t('section_hidden'), () => {
         s.show = s.show === false;
         changed(true, t('h_toggle_section', {s: name}));
     });
-    const card = h('section.card.sec-card' + (s.show === false ? '.is-hidden' : '') + (S.collapsed.has(colKey) ? '.collapsed' : ''), {'data-sec': s.id, 'data-sort': '', 'data-anchor': 'sec-' + s.id});
+    const card = h('section.card.sec-card' + (s.show === false ? '.is-hidden' : '') + (S.collapsed.has(colKey) ? '.collapsed' : ''), {
+        'data-sec': s.id,
+        'data-sort': '',
+        'data-anchor': 'sec-' + s.id
+    });
     const fold = iconBtn(S.collapsed.has(colKey) ? 'unfold' : 'fold', t('fold'), () => {
         S.collapsed.has(colKey) ? S.collapsed.delete(colKey) : S.collapsed.add(colKey);
         card.classList.toggle('collapsed');
@@ -1460,21 +1832,34 @@ function sectionCard(c, s, idx) {
         items = h('div.items.sort-list', s.items.map((it, i) => {
             const dots = s.type === 'langs' ? langDotsPicker(it, name) : null;
             return h('div.tag-row' + (s.type === 'langs' ? '.lang-row' : ''), {'data-sort': ''},
-            dragHandle(),
-            h('input', {value: it.name, placeholder: s.type === 'skills' ? t('t_skill') : t('t_lang'), 'aria-label': s.type === 'skills' ? t('t_skill') : t('t_lang'), maxlength: 80, oninput: (e) => {
-                it.name = e.target.value;
-                changed(false, t('h_edit', {f: name}), 'tag' + objKey(it));
-            }}),
-            s.type === 'skills' ? levelPicker(it, name) : h('input', {value: it.level, placeholder: t('t_level'), 'aria-label': t('t_level'), list: 'lv-' + s.id, maxlength: 60, oninput: (e) => {
-                it.level = e.target.value;
-                dots.redraw(); // automatic dots follow the written level
-                changed(false, t('h_edit', {f: name}), 'tag' + objKey(it));
-            }}),
-            dots,
-            iconBtn('trash', t('delete'), () => {
-                s.items.splice(i, 1);
-                changed(true, t('h_del_item', {s: name}));
-            }));
+                dragHandle(),
+                h('input', {
+                    value: it.name,
+                    placeholder: s.type === 'skills' ? t('t_skill') : t('t_lang'),
+                    'aria-label': s.type === 'skills' ? t('t_skill') : t('t_lang'),
+                    maxlength: 80,
+                    oninput: (e) => {
+                        it.name = e.target.value;
+                        changed(false, t('h_edit', {f: name}), 'tag' + objKey(it));
+                    }
+                }),
+                s.type === 'skills' ? levelPicker(it, name) : h('input', {
+                    value: it.level,
+                    placeholder: t('t_level'),
+                    'aria-label': t('t_level'),
+                    list: 'lv-' + s.id,
+                    maxlength: 60,
+                    oninput: (e) => {
+                        it.level = e.target.value;
+                        dots.redraw(); // automatic dots follow the written level
+                        changed(false, t('h_edit', {f: name}), 'tag' + objKey(it));
+                    }
+                }),
+                dots,
+                iconBtn('trash', t('delete'), () => {
+                    s.items.splice(i, 1);
+                    changed(true, t('h_del_item', {s: name}));
+                }));
         }));
     } else {
         items = h('div.items.sort-list', s.items.map((it, i) => itemCard(s, it, i)));
@@ -1483,24 +1868,32 @@ function sectionCard(c, s, idx) {
         moveTo(s.items, from, to);
         changed(true, t('h_move_item', {s: name}));
     });
-    body.append(items, h('div', {style: 'margin-top:10px'}, h('button.btn.btn-sm', {type: 'button', onclick: () => {
-        s.items.push(newItem(s.type));
-        changed(true, t('h_add_item', {s: name}));
-        requestAnimationFrame(() => {
-            const rows = R.panel.querySelectorAll(`[data-sec="${s.id}"] .items > [data-sort]`);
-            rows[rows.length - 1]?.querySelector('input')?.focus();
-        });
-    }}, svg('plus'), t('add_item'))));
+    body.append(items, h('div', {style: 'margin-top:10px'}, h('button.btn.btn-sm', {
+        type: 'button', onclick: () => {
+            s.items.push(newItem(s.type));
+            changed(true, t('h_add_item', {s: name}));
+            requestAnimationFrame(() => {
+                const rows = R.panel.querySelectorAll(`[data-sec="${s.id}"] .items > [data-sort]`);
+                rows[rows.length - 1]?.querySelector('input')?.focus();
+            });
+        }
+    }, svg('plus'), t('add_item'))));
     return card;
 }
 
 function levelPicker(it, name) {
     const box = h('div.level', {role: 'radiogroup', 'aria-label': t('t_level')});
-    const draw = () => put(box, [1, 2, 3, 4, 5].map((n) => h('button' + (n <= it.level ? '.on' : ''), {type: 'button', 'aria-label': n + '/5', 'aria-checked': n === it.level ? 'true' : 'false', role: 'radio', onclick: () => {
-        it.level = it.level === n ? 0 : n;
-        draw();
-        changed(false, t('h_edit', {f: name}));
-    }})));
+    const draw = () => put(box, [1, 2, 3, 4, 5].map((n) => h('button' + (n <= it.level ? '.on' : ''), {
+        type: 'button',
+        'aria-label': n + '/5',
+        'aria-checked': n === it.level ? 'true' : 'false',
+        role: 'radio',
+        onclick: () => {
+            it.level = it.level === n ? 0 : n;
+            draw();
+            changed(false, t('h_edit', {f: name}));
+        }
+    })));
     draw();
     return box;
 }
@@ -1516,11 +1909,17 @@ function langDotsPicker(it, name) {
         const auto = it.dots === null || it.dots === undefined;
         box.classList.toggle('auto', auto);
         box.title = auto ? t('dots_auto') : '';
-        put(box, [1, 2, 3, 4, 5].map((k) => h('button' + (k <= n ? '.on' : ''), {type: 'button', 'aria-label': k + '/5', 'aria-checked': k === n ? 'true' : 'false', role: 'radio', onclick: () => {
-            it.dots = n === k && !auto ? 0 : k;
-            box.redraw();
-            changed(false, t('h_edit', {f: name}));
-        }})));
+        put(box, [1, 2, 3, 4, 5].map((k) => h('button' + (k <= n ? '.on' : ''), {
+            type: 'button',
+            'aria-label': k + '/5',
+            'aria-checked': k === n ? 'true' : 'false',
+            role: 'radio',
+            onclick: () => {
+                it.dots = n === k && !auto ? 0 : k;
+                box.redraw();
+                changed(false, t('h_edit', {f: name}));
+            }
+        })));
     };
     box.redraw();
     return box;
@@ -1549,25 +1948,44 @@ function itemCard(s, it, i) {
     if (s.type === 'timeline') {
         const endField = f(t('t_end'), 'end', {max: 20, placeholder: t('date_hint')});
         endField.querySelector('input').disabled = !!it.current;
-        const cur = h('label.check', {style: 'font-size:13px'}, h('input', {type: 'checkbox', checked: !!it.current, onchange: (e) => {
-            it.current = e.target.checked;
-            endField.querySelector('input').disabled = it.current;
-            changed(false, t('h_edit', {f: name}));
-        }}), h('span', t('t_current')));
+        const cur = h('label.check', {style: 'font-size:13px'}, h('input', {
+            type: 'checkbox', checked: !!it.current, onchange: (e) => {
+                it.current = e.target.checked;
+                endField.querySelector('input').disabled = it.current;
+                changed(false, t('h_edit', {f: name}));
+            }
+        }), h('span', t('t_current')));
         const isEdu = s.kind === 'education';
         const isProject = s.kind === 'projects' || s.kind === 'volunteering' || s.kind === 'list';
         add(card,
             f(isProject ? t('t_title') : t('t_role'), 'title', {max: 120, onInput: relabel}),
-            h('div.grid2', f(isProject ? t('t_subtitle') : t('t_org'), 'org', {max: 120, onInput: relabel}), f(t('t_place'), 'place', {max: 80})),
+            h('div.grid2', f(isProject ? t('t_subtitle') : t('t_org'), 'org', {
+                max: 120,
+                onInput: relabel
+            }), f(t('t_place'), 'place', {max: 80})),
             h('div.grid2', f(t('t_start'), 'start', {max: 20, placeholder: t('date_hint')}), endField),
             cur,
-            isEdu && h('div.grid2', eqfSelect(it, name), f(t('t_grade'), 'grade', {max: 40, placeholder: t('t_grade_hint')})),
+            isEdu && h('div.grid2', eqfSelect(it, name), f(t('t_grade'), 'grade', {
+                max: 40,
+                placeholder: t('t_grade_hint')
+            })),
             f(t('t_text'), 'text', {area: true, rows: 3, max: 3000, hint: t('t_text_hint')}),
-            !isEdu && s.kind !== 'experience' && f(t('t_link'), 'url', {type: 'url', max: 300, placeholder: 'https://'}));
+            !isEdu && s.kind !== 'experience' && f(t('t_link'), 'url', {
+                type: 'url',
+                max: 300,
+                placeholder: 'https://'
+            }));
     } else {
         add(card,
-            h('div.grid2', f(t('t_title'), 'title', {max: 160, onInput: relabel}), f(t('t_subtitle'), 'subtitle', {max: 160})),
-            h('div.grid2', f(t('t_date'), 'date', {max: 40}), f(t('t_url'), 'url', {type: 'url', max: 300, placeholder: 'https://'})),
+            h('div.grid2', f(t('t_title'), 'title', {
+                max: 160,
+                onInput: relabel
+            }), f(t('t_subtitle'), 'subtitle', {max: 160})),
+            h('div.grid2', f(t('t_date'), 'date', {max: 40}), f(t('t_url'), 'url', {
+                type: 'url',
+                max: 300,
+                placeholder: 'https://'
+            })),
             f(t('t_text'), 'text', {area: true, rows: 2, max: 2000}));
     }
     return card;
@@ -1575,10 +1993,15 @@ function itemCard(s, it, i) {
 
 /** EQF level 1–8 (European Qualifications Framework), optional. */
 function eqfSelect(it, name) {
-    const sel = h('select', {'aria-label': t('t_eqf'), onchange: (e) => {
-        it.eqf = +e.target.value;
-        changed(false, t('h_edit', {f: t('t_eqf')}));
-    }}, h('option', {value: 0}, '— ' + t('t_eqf_none')), [1, 2, 3, 4, 5, 6, 7, 8].map((n) => h('option', {value: n, selected: (it.eqf || 0) === n}, 'EQF ' + n)));
+    const sel = h('select', {
+        'aria-label': t('t_eqf'), onchange: (e) => {
+            it.eqf = +e.target.value;
+            changed(false, t('h_edit', {f: t('t_eqf')}));
+        }
+    }, h('option', {value: 0}, '— ' + t('t_eqf_none')), [1, 2, 3, 4, 5, 6, 7, 8].map((n) => h('option', {
+        value: n,
+        selected: (it.eqf || 0) === n
+    }, 'EQF ' + n)));
     return h('div.field', h('span', t('t_eqf')), sel);
 }
 
@@ -1633,25 +2056,37 @@ function designTab(body) {
         h('div.tpl-grid', TEMPLATES.map((tp) => {
             const thumb = h('div.tpl-thumb');
             R.thumbs[tp] = thumb;
-            return h('button.tpl' + (st.template === tp ? '.on' : ''), {type: 'button', 'aria-pressed': st.template === tp ? 'true' : 'false', onclick: () => {
-                st.template = tp;
-                changed(true, t('h_template', {x: t('tpl_' + tp)}));
-            }}, thumb, t('tpl_' + tp));
+            return h('button.tpl' + (st.template === tp ? '.on' : ''), {
+                type: 'button', 'aria-pressed': st.template === tp ? 'true' : 'false', onclick: () => {
+                    st.template = tp;
+                    changed(true, t('h_template', {x: t('tpl_' + tp)}));
+                }
+            }, thumb, t('tpl_' + tp));
         }))));
-    const custom = h('input', {type: 'color', value: st.accent, 'aria-label': t('design_color'), oninput: (e) => {
-        st.accent = e.target.value.toUpperCase();
-        changed(false, t('h_color'), 'accent');
-        body.querySelectorAll('.swatch').forEach((s) => s.classList.toggle('on', s.dataset.c === st.accent));
-    }});
+    const custom = h('input', {
+        type: 'color', value: st.accent, 'aria-label': t('design_color'), oninput: (e) => {
+            st.accent = e.target.value.toUpperCase();
+            changed(false, t('h_color'), 'accent');
+            body.querySelectorAll('.swatch').forEach((s) => s.classList.toggle('on', s.dataset.c === st.accent));
+        }
+    });
     body.append(h('section.card', h('div.card-head', h('h3', t('design_color'))),
-        h('div.swatches', ACCENTS.map((c) => h('button.swatch' + (c === st.accent ? '.on' : ''), {type: 'button', 'data-c': c, style: `background:${c}`, 'aria-label': c, onclick: () => {
-            st.accent = c;
-            changed(true, t('h_color'));
-        }})), h('label.swatch.swatch-custom' + (ACCENTS.includes(st.accent) ? '' : '.on'), {title: t('design_color')}, custom))));
+        h('div.swatches', ACCENTS.map((c) => h('button.swatch' + (c === st.accent ? '.on' : ''), {
+            type: 'button', 'data-c': c, style: `background:${c}`, 'aria-label': c, onclick: () => {
+                st.accent = c;
+                changed(true, t('h_color'));
+            }
+        })), h('label.swatch.swatch-custom' + (ACCENTS.includes(st.accent) ? '' : '.on'), {title: t('design_color')}, custom))));
     // typefaces in two groups; each name is written in its own typeface (the browser loads only the regular weight here)
-    const fontGroup = (kind, title) => h('div.font-group', h('h4', title), h('div.font-grid', {role: 'radiogroup', 'aria-label': title},
+    const fontGroup = (kind, title) => h('div.font-group', h('h4', title), h('div.font-grid', {
+            role: 'radiogroup',
+            'aria-label': title
+        },
         Object.entries(FONTS).filter(([, f]) => f.kind === kind).map(([id, f]) => h('button.font-opt' + (st.font === id ? '.on' : ''), {
-            type: 'button', role: 'radio', 'aria-checked': st.font === id ? 'true' : 'false', style: `font-family:${f.css}, ${kind === 'serif' ? 'Georgia, serif' : 'sans-serif'}`,
+            type: 'button',
+            role: 'radio',
+            'aria-checked': st.font === id ? 'true' : 'false',
+            style: `font-family:${f.css}, ${kind === 'serif' ? 'Georgia, serif' : 'sans-serif'}`,
             onclick: () => {
                 st.font = id;
                 changed(true, t('h_font') + ': ' + f.name);
@@ -1664,10 +2099,12 @@ function designTab(body) {
 /** PDF options: "Page X of Y" in the footer (on by default). */
 function pdfOptionsCard() {
     const st = S.cv.settings;
-    const input = h('input', {type: 'checkbox', checked: st.pageNumbers !== false, onchange: (e) => {
-        st.pageNumbers = e.target.checked;
-        changed(false, t('h_page_numbers'));
-    }});
+    const input = h('input', {
+        type: 'checkbox', checked: st.pageNumbers !== false, onchange: (e) => {
+            st.pageNumbers = e.target.checked;
+            changed(false, t('h_page_numbers'));
+        }
+    });
     return h('section.card', h('div.card-head', h('h3', t('design_pdf'))),
         h('label.check', input, h('span', t('page_numbers'))), h('p.note', {style: 'margin-top:6px'}, t('page_numbers_hint')));
 }
@@ -1716,21 +2153,32 @@ function shareTab(body) {
                 }
             }),
             canShare() && iconBtn('shareArrow', t('share_share'), () => shareLink(url, [S.cv.profile.firstName, S.cv.profile.lastName].filter(Boolean).join(' ') + ' — CV')),
-            h('a.btn.btn-ghost.btn-icon', {href: url, target: '_blank', rel: 'noopener', title: t('share_open'), 'aria-label': t('share_open')}, svg('ext'))),
+            h('a.btn.btn-ghost.btn-icon', {
+                href: url,
+                target: '_blank',
+                rel: 'noopener',
+                title: t('share_open'),
+                'aria-label': t('share_open')
+            }, svg('ext'))),
         h('div.stack',
             usernameEditor(),
             h('div.field', h('span', t('share_default_lang')), langPicker(st.langs, st.defaultLang, (l) => {
                 st.defaultLang = l;
                 changed(false, t('h_settings'));
             })),
-            h('label.check', h('input', {type: 'checkbox', checked: st.allowPdf, onchange: (e) => {
-                st.allowPdf = e.target.checked;
-                changed(false, t('h_settings'));
-            }}), h('span', t('share_allow_pdf'))),
+            h('label.check', h('input', {
+                type: 'checkbox', checked: st.allowPdf, onchange: (e) => {
+                    st.allowPdf = e.target.checked;
+                    changed(false, t('h_settings'));
+                }
+            }), h('span', t('share_allow_pdf'))),
             h('p.note', t('share_views', {n: S.cv.views || 0}) + ' · ' + t('share_note')))));
 
     body.append(h('section.card', h('div.card-head', h('h3', t('pdf'))),
-        h('div.pdf-list', st.langs.map((l) => h('button.btn', {type: 'button', onclick: () => makePdf(l)}, svg('download'), flag(l), langLabel(S.cv, l))))));
+        h('div.pdf-list', st.langs.map((l) => h('button.btn', {
+            type: 'button',
+            onclick: () => makePdf(l)
+        }, svg('download'), flag(l), langLabel(S.cv, l))))));
 
     body.append(accountCard());
 }
@@ -1741,19 +2189,21 @@ function usernameEditor() {
     const msg = h('p.msg');
     return h('div.field', h('span', t('share_address')),
         h('div.row', h('div.username-field.grow', h('span', '?user='), input),
-            h('button.btn', {type: 'button', onclick: async () => {
-                if (input.value === S.user.username) return;
-                try {
-                    const d = await api('auth.username', {username: input.value});
-                    S.user = d.user;
-                    S.cv.username = d.user.username;
-                    if (S.cv.photo) S.cv.photo = S.cv.photo.replace(/user=[^&]+/, 'user=' + encodeURIComponent(d.user.username));
-                    drawPanel();
-                    toast(t('saved'));
-                } catch (e) {
-                    msg.textContent = errText(e);
+            h('button.btn', {
+                type: 'button', onclick: async () => {
+                    if (input.value === S.user.username) return;
+                    try {
+                        const d = await api('auth.username', {username: input.value});
+                        S.user = d.user;
+                        S.cv.username = d.user.username;
+                        if (S.cv.photo) S.cv.photo = S.cv.photo.replace(/user=[^&]+/, 'user=' + encodeURIComponent(d.user.username));
+                        drawPanel();
+                        toast(t('saved'));
+                    } catch (e) {
+                        msg.textContent = errText(e);
+                    }
                 }
-            }}, t('save'))), msg);
+            }, t('save'))), msg);
 }
 
 function accountCard() {
@@ -1763,26 +2213,37 @@ function accountCard() {
     const nw = h('input', {type: 'password', autocomplete: 'new-password', minlength: 8});
     return h('section.card', h('div.card-head', h('h3', t('account'))),
         h('div.stack',
-            h('label.field', h('span', t('acc_email')), h('input', {value: u.email, readonly: true}), h('small', t('acc_email_note'))),
-            window.Identity ? h('div', h('button.btn.btn-sm', {type: 'button', onclick: Identity.methods}, Identity.text('methods'))) : u.googleLinked && h('p.note.with-ico', svg('check'), t('acc_google')),
+            h('label.field', h('span', t('acc_email')), h('input', {
+                value: u.email,
+                readonly: true
+            }), h('small', t('acc_email_note'))),
+            window.Identity ? h('div', h('button.btn.btn-sm', {
+                type: 'button',
+                onclick: Identity.methods
+            }, Identity.text('methods'))) : u.googleLinked && h('p.note.with-ico', svg('check'), t('acc_google')),
             h('div.field', h('span', u.hasPassword ? t('acc_password') : t('acc_set_password')),
                 u.hasPassword && h('label.field', h('small', t('acc_current')), cur),
                 h('label.field', h('small', t('acc_new')), nw),
-                h('div', h('button.btn.btn-sm', {type: 'button', onclick: async () => {
-                    try {
-                        const d = await api('auth.password', {current: cur.value, password: nw.value});
-                        S.user = d.user;
-                        cur.value = nw.value = '';
-                        msg.className = 'msg ok';
-                        msg.textContent = t('saved');
-                    } catch (e) {
-                        msg.className = 'msg';
-                        msg.textContent = errText(e);
+                h('div', h('button.btn.btn-sm', {
+                    type: 'button', onclick: async () => {
+                        try {
+                            const d = await api('auth.password', {current: cur.value, password: nw.value});
+                            S.user = d.user;
+                            cur.value = nw.value = '';
+                            msg.className = 'msg ok';
+                            msg.textContent = t('saved');
+                        } catch (e) {
+                            msg.className = 'msg';
+                            msg.textContent = errText(e);
+                        }
                     }
-                }}, t('save'))), msg),
+                }, t('save'))), msg),
             h('div.row', {style: 'flex-wrap:wrap'},
                 h('button.btn.btn-sm', {type: 'button', onclick: logout}, svg('logout'), t('logout')),
-                h('button.btn.btn-sm.btn-ghost.btn-danger', {type: 'button', onclick: deleteAccount}, svg('trash'), t('acc_delete')))));
+                h('button.btn.btn-sm.btn-ghost.btn-danger', {
+                    type: 'button',
+                    onclick: deleteAccount
+                }, svg('trash'), t('acc_delete')))));
 }
 
 function deleteAccount() {
@@ -1790,18 +2251,20 @@ function deleteAccount() {
     const msg = h('p.msg');
     modal(t('acc_delete'), h('div.stack', h('p', t('acc_delete_body')), S.user.hasPassword && h('label.field', h('span', t('password')), pw), msg), [
         {label: t('cancel')},
-        {label: t('acc_delete'), danger: true, run: async (close) => {
-            try {
-                await api('auth.delete', {password: pw.value});
-                close();
-                dirty = false;
-                S.user = null;
-                S.cv = null;
-                landing();
-            } catch (e) {
-                msg.textContent = errText(e);
+        {
+            label: t('acc_delete'), danger: true, run: async (close) => {
+                try {
+                    await api('auth.delete', {password: pw.value});
+                    close();
+                    dirty = false;
+                    S.user = null;
+                    S.cv = null;
+                    landing();
+                } catch (e) {
+                    msg.textContent = errText(e);
+                }
             }
-        }},
+        },
     ]);
 }
 
@@ -1822,7 +2285,10 @@ function importDialog() {
     const lang = S.lang;
     const msg = h('p.msg');
     const fileIn = h('input', {type: 'file', accept: 'application/pdf,.pdf', hidden: true});
-    const btn = h('button.btn.btn-primary', {type: 'button', onclick: () => fileIn.click()}, svg('file'), t('import_choose'));
+    const btn = h('button.btn.btn-primary', {
+        type: 'button',
+        onclick: () => fileIn.click()
+    }, svg('file'), t('import_choose'));
     let close;
     fileIn.addEventListener('change', async () => {
         const file = fileIn.files[0];
@@ -1836,11 +2302,15 @@ function importDialog() {
             applyImport(res, lang);
             close();
             changed(true, t('h_import'));
-            toast(t('import_done', {n: res.stats.sections}), {ms: 12000, action: {label: t('import_undo'), run: () => {
-                S.cv.profile = before.profile;
-                S.cv.content[lang] = before.content;
-                changed(true, t('import_undo') + ': ' + t('h_import'));
-            }}});
+            toast(t('import_done', {n: res.stats.sections}), {
+                ms: 12000, action: {
+                    label: t('import_undo'), run: () => {
+                        S.cv.profile = before.profile;
+                        S.cv.content[lang] = before.content;
+                        changed(true, t('import_undo') + ': ' + t('h_import'));
+                    }
+                }
+            });
         } catch (e) {
             console.error(e);
             msg.textContent = e.message === 'scanned' ? t('import_scanned') : t('import_failed');

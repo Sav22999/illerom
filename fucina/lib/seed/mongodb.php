@@ -55,12 +55,14 @@ if (!function_exists('fig_mongo_pipeline')) {
         // ordini: 8 orders, paid (filled) or not (dashed)
         $orders = [['a', 1], ['b', 1], ['c', 0], ['a', 1], ['d', 1], ['c', 1], ['b', 0], ['a', 0]];
         foreach ($orders as $i => [$c, $paid]) {
-            $x = 26 + ($i % 2) * 40; $y = 80 + intdiv($i, 2) * 34;
+            $x = 26 + ($i % 2) * 40;
+            $y = 80 + intdiv($i, 2) * 34;
             $g .= '<rect x="' . $x . '" y="' . $y . '" width="34" height="26" rx="6" fill="' . ($paid ? '#D5F6EA' : '#FFFFFF') . '" stroke="' . ($paid ? '#0B7F5C' : '#8A87B0') . '" stroke-width="2"' . ($paid ? '' : ' stroke-dasharray="4 3"') . '/><text x="' . ($x + 17) . '" y="' . ($y + 18) . '" text-anchor="middle" font-family="ui-monospace, monospace">' . $c . '</text>';
         }
         $paidOnly = array_values(array_filter($orders, fn($o) => $o[1]));
         foreach ($paidOnly as $i => [$c]) {
-            $x = 154 + ($i % 2) * 40; $y = 80 + intdiv($i, 2) * 34;
+            $x = 154 + ($i % 2) * 40;
+            $y = 80 + intdiv($i, 2) * 34;
             $g .= '<rect x="' . $x . '" y="' . $y . '" width="34" height="26" rx="6" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="' . ($x + 17) . '" y="' . ($y + 18) . '" text-anchor="middle" font-family="ui-monospace, monospace">' . $c . '</text>';
         }
         $chip = fn(int $cx, int $y, string $t, bool $dim = false) => '<rect x="' . ($cx - 48) . '" y="' . $y . '" width="96" height="26" rx="8" fill="' . ($dim ? '#FFFFFF' : '#ECE6FF') . '" stroke="' . ($dim ? '#C9C7DE' : '#7048E8') . '" stroke-width="2"/><text x="' . $cx . '" y="' . ($y + 18) . '" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13"' . ($dim ? ' fill="#8A87B0"' : '') . '>' . $t . '</text>';

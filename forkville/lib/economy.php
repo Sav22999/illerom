@@ -79,7 +79,7 @@ function candidates_for(array &$r, bool $fresh = false): array
             $skills = random_skills($best, 2, min(10, 5 + intdiv($r['level'], 3)));
             if (random_int(0, 2) === 0) $skills[ROLES[random_int(0, count(ROLES) - 1)]] = random_int(3, 8);
             $list[] = ['name' => STAFF_NAMES[random_int(0, count(STAFF_NAMES) - 1)], 'color' => STAFF_COLORS[random_int(0, count(STAFF_COLORS) - 1)],
-                'trait' => STAFF_TRAITS[random_int(0, count(STAFF_TRAITS) - 1)], 'skills' => $skills, 'cost' => hire_cost($skills)] + random_look();
+                    'trait' => STAFF_TRAITS[random_int(0, count(STAFF_TRAITS) - 1)], 'skills' => $skills, 'cost' => hire_cost($skills)] + random_look();
         }
         $c = ['day' => today_utc(), 'list' => $list];
         $r['candidates'] = json_encode($c);

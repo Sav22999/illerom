@@ -10,7 +10,8 @@ web page (`?user=NAME`). An existing CV can be imported from a PDF.
   `vendor/pdf.min.mjs` + `vendor/pdf.worker.min.mjs` (pdf.js 4.4.168, reads PDFs to import).
 - Typefaces in `fonts/` (the same TTF files in the web page and in the PDF; list in `FONTS`, `assets/cv.js`): Roboto and
   PT Serif (ids `sans` and `serif`), plus Inter, Open Sans, Source Sans 3, Montserrat, Poppins, Lora, Merriweather,
-  EB Garamond, Libre Baskerville and Playfair Display in `fonts/<id>/` (static instances from @expo-google-fonts, SIL OFL,
+  EB Garamond, Libre Baskerville and Playfair Display in `fonts/<id>/` (static instances from @expo-google-fonts, SIL
+  OFL,
   subset to the Latin alphabet without hinting). The PDF loads only the typeface the CV uses.
 - Stack Sans Notch is only for the "Saverio Morelli" credit.
 
@@ -25,17 +26,20 @@ web page (`?user=NAME`). An existing CV can be imported from a PDF.
 ## Accounts
 
 - Email and password: the address must be confirmed (`?verify=` link) before the editor opens.
-- Google: confirmed by Google, no email check; a new account picks the address of its public CV and accepts the privacy notice.
+- Google: confirmed by Google, no email check; a new account picks the address of its public CV and accepts the privacy
+  notice.
 - The account email is unique and can never be changed. The public address (`username`) can.
 
 ## The CV
 
 - One CV per account, one JSON row (`mc_cvs`): `settings` (template, colour, font, languages, public, which contacts
   show), `profile` (shared by all languages: name, contacts, links, birth date) and `content` (a full copy of the texts
-  per language: headline, location, summary, custom fields, sections, footer). See the comment at the top of `lib/cv.php`.
+  per language: headline, location, summary, custom fields, sections, footer). See the comment at the top of
+  `lib/cv.php`.
 - Projects and volunteering saved by older versions as lists with one date are converted to timelines when the CV
   opens (`upgradeProjects` in app.js).
-- Section types: `timeline` (experience, education, projects, volunteering), `skills` (with 0–5 level), `langs`, `list`, `text`.
+- Section types: `timeline` (experience, education, projects, volunteering), `skills` (with 0–5 level), `langs`, `list`,
+  `text`.
   Timeline entries may also have a link (projects), an EQF level 1–8 and a grade (education).
 - Adding a language copies another one; section titles and the consent footer that were never edited are translated.
 - Besides the ten built-in languages, the user can add any other one (`settings.customLangs`: name, ISO 639 code that
@@ -78,12 +82,15 @@ web page (`?user=NAME`). An existing CV can be imported from a PDF.
   preview. The page is `noindex`. Visits are counted without storing anything about the visitor.
 - `assets/cv.js` builds one model per language; `renderCV()` draws it in HTML (`assets/cv.css`), `assets/pdf.js` draws
   the same model with pdfmake (real, selectable text). Keep the two in step when changing a template.
-- Templates: classic, modern (coloured sidebar), minimal, elegant, banner (coloured band, entries as "TITLE – ORGANIZATION –
-  dates"), timeline (vertical line with dots), compact (dense, two columns), studio (tinted column on the right), monogram
-  (initials in a circle, headings with a bar), contrast (dark header, dates on the right), swiss (title column on the
+- Templates: classic, modern (coloured sidebar), minimal, elegant, banner (coloured band, entries as "TITLE –
+  ORGANIZATION –
+  dates"), timeline (vertical line with dots), compact (dense, two columns), studio (tinted column on the right),
+  monogram (initials in a circle, headings with a bar), contrast (dark header, dates on the right), swiss (title column
+  on the
   left, fine rules). Any accent colour, twelve typefaces.
 - Contact separators ("|", "·") never start a line: in the PDF the lines are laid out by measuring the text
-  (`contactLines` in pdf.js), on the web the marks sit in the gap and are hidden at line starts (`fixContactSeparators`).
+  (`contactLines` in pdf.js), on the web the marks sit in the gap and are hidden at line starts
+  (`fixContactSeparators`).
 
 ## PDF import
 
@@ -91,13 +98,15 @@ web page (`?user=NAME`). An existing CV can be imported from a PDF.
 both columns have headings) → contacts, name (largest text on page 1), headings (known words in ten languages or short
 capitals that look like the known headings), one timeline entry per date range or per bold title, bold text from the
 font names. It understands Europass CVs: "TITLE – ORGANIZATION – dates – PLACE" headers, dd/mm/yyyy dates, "EQF level",
-the language block (mother tongue, CEFR grid), "Label: value" personal data and links hidden behind redirects. The editor
+the language block (mother tongue, CEFR grid), "Label: value" personal data and links hidden behind redirects. The
+editor
 replaces the sections of the current language, fills only empty personal fields and offers Undo. Tested against PDFs
 made by all eleven templates (two different CVs) and a real Europass CV.
 
 ## Tools
 
-- `python3 tools/make_icons.py` — PNG icons, `og-image.png` and `/images/projects/mycurriculum.png` from `icons/favicon.svg`.
+- `python3 tools/make_icons.py` — PNG icons, `og-image.png` and `/images/projects/mycurriculum.png` from
+  `icons/favicon.svg`.
 - `php tools/build-sql.php` — regenerates `install/mycurriculum.sql` from `lib/schema.php`.
 - `java tools/Screens.java <app url> <session cookie> store/screens <public user>` — store and manifest screenshots from
   the running app (Chrome headless over the DevTools protocol; use a demo account on a test database).

@@ -10,15 +10,18 @@ if (!function_exists('fig_ws_flow')) {
         $pal = ['me' => ['#DCEBFF', '#2F8CF0'], 'bad' => ['#FFE3EE', '#F03E82'], 'site' => ['#D5F6EA', '#0B7F5C'], 'in' => ['#ECE6FF', '#7048E8'], 'grey' => ['#F1F0F8', '#8A87B0']];
         $out = '';
         foreach ($boxes as [$x, $y, $w, $title, $sub, $k]) {
-            [$f, $s] = $pal[$k]; $cx = $x + $w / 2;
+            [$f, $s] = $pal[$k];
+            $cx = $x + $w / 2;
             $out .= "<rect x=\"$x\" y=\"$y\" width=\"$w\" height=\"64\" rx=\"12\" fill=\"$f\" stroke=\"$s\" stroke-width=\"2\"/><text x=\"$cx\" y=\"" . ($y + 28) . "\" text-anchor=\"middle\" font-weight=\"700\">$title</text><text x=\"$cx\" y=\"" . ($y + 48) . "\" text-anchor=\"middle\" font-size=\"13\">$sub</text>";
         }
         foreach ($arrows as [$d, $n, $nx, $ny, $bad]) {
-            $c = $bad ? '#F03E82' : '#1E1C52'; $m = $bad ? 'p' : 'a';
+            $c = $bad ? '#F03E82' : '#1E1C52';
+            $m = $bad ? 'p' : 'a';
             $out .= "<path d=\"$d\" fill=\"none\" stroke=\"$c\" stroke-width=\"2\"" . ($bad ? ' stroke-dasharray="7 4"' : '') . " marker-end=\"url(#$m)\"/>"
-                  . "<circle cx=\"$nx\" cy=\"$ny\" r=\"11\" fill=\"" . ($bad ? '#F03E82' : '#1E1C52') . "\"/><text x=\"$nx\" y=\"" . ($ny + 5) . "\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"700\" fill=\"#FFFFFF\">$n</text>";
+                . "<circle cx=\"$nx\" cy=\"$ny\" r=\"11\" fill=\"" . ($bad ? '#F03E82' : '#1E1C52') . "\"/><text x=\"$nx\" y=\"" . ($ny + 5) . "\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"700\" fill=\"#FFFFFF\">$n</text>";
         }
-        $top = 0; foreach ($boxes as $b) $top = max($top, $b[1] + 64);
+        $top = 0;
+        foreach ($boxes as $b) $top = max($top, $b[1] + 64);
         $y = $top + 34;
         foreach ($steps as $i => [$txt, $bad]) {
             $out .= "<circle cx=\"30\" cy=\"" . ($y - 5) . "\" r=\"10\" fill=\"" . ($bad ? '#F03E82' : '#1E1C52') . "\"/><text x=\"30\" y=\"$y\" text-anchor=\"middle\" font-size=\"12\" font-weight=\"700\" fill=\"#FFFFFF\">" . ($i + 1) . "</text><text x=\"50\" y=\"$y\" font-size=\"14\">$txt</text>";

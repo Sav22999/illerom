@@ -14,62 +14,191 @@
     const REQUIRED = ['it', 'en'];
 
     const IT = {
-        'Overview': 'Panoramica', 'Games': 'Giochi', 'Questions': 'Domande', 'Players': 'Giocatori', 'Back to the game': 'Torna al gioco',
-        'Sign in with an administrator account.': 'Accedi con un account amministratore.', 'Sign in': 'Accedi',
+        'Overview': 'Panoramica',
+        'Games': 'Giochi',
+        'Questions': 'Domande',
+        'Players': 'Giocatori',
+        'Back to the game': 'Torna al gioco',
+        'Sign in with an administrator account.': 'Accedi con un account amministratore.',
+        'Sign in': 'Accedi',
         'This account is not an administrator.': 'Questo account non è amministratore.',
         'Accounts are not installed yet: open install-db.php.': 'Gli account non sono ancora installati: apri install-db.php.',
-        'Games played': 'Partite giocate', 'Last 7 days': 'Ultimi 7 giorni', 'Right answers': 'Risposte giuste', 'Your questions': 'Domande tue',
-        'Right answers by type': 'Risposte giuste per tipo', 'Levels: passed out of played': 'Livelli: superati su giocati', 'No data yet.': 'Ancora nessun dato.',
-        'Types of question': 'Tipi di domanda', 'Switch off a type and it no longer appears in any game.': 'Un tipo spento non compare più in nessuna partita.',
+        'Games played': 'Partite giocate',
+        'Last 7 days': 'Ultimi 7 giorni',
+        'Right answers': 'Risposte giuste',
+        'Your questions': 'Domande tue',
+        'Right answers by type': 'Risposte giuste per tipo',
+        'Levels: passed out of played': 'Livelli: superati su giocati',
+        'No data yet.': 'Ancora nessun dato.',
+        'Types of question': 'Tipi di domanda',
+        'Switch off a type and it no longer appears in any game.': 'Un tipo spento non compare più in nessuna partita.',
         'Adjust probability (0.0 – 1.0) compared to other exercises of the same difficulty. Switch off a type to exclude it completely.': 'Regola la probabilità di comparsa (0.0 – 1.0) comparata agli altri esercizi della stessa difficoltà. Spegni un tipo per escluderlo del tutto.',
         'Probability (0.0 – 1.0)': 'Probabilità (0.0 – 1.0)',
         'Probability (0.0 – 1.0) compared to other exercises of the same difficulty': 'Probabilità (0.0 – 1.0) comparata agli altri esercizi della stessa difficoltà',
         'Probability': 'Probabilità',
-        '{n} kinds of exercise': '{n} tipi di esercizio', 'Settings': 'Impostazioni', 'Questions per level': 'Domande per livello',
-        'Hint cost (easy)': 'Costo suggerimento (facile)', 'Hint cost (medium)': 'Costo suggerimento (media)', 'Hint cost (hard)': 'Costo suggerimento (difficile)', 'Hint cost (expert)': 'Costo suggerimento (esperto)',
+        '{n} kinds of exercise': '{n} tipi di esercizio',
+        'Settings': 'Impostazioni',
+        'Questions per level': 'Domande per livello',
+        'Hint cost (easy)': 'Costo suggerimento (facile)',
+        'Hint cost (medium)': 'Costo suggerimento (media)',
+        'Hint cost (hard)': 'Costo suggerimento (difficile)',
+        'Hint cost (expert)': 'Costo suggerimento (esperto)',
         'Hint cost': 'Costo suggerimento',
-        'Save': 'Salva', 'Saved': 'Salvato', 'Cancel': 'Annulla', 'Delete': 'Elimina', 'Edit': 'Modifica',
-        'Recent games': 'Partite recenti', 'Player': 'Giocatore', 'Game': 'Partita', 'Result': 'Risultato', 'Points': 'Punti', 'Spent': 'Spesi', 'Date': 'Data',
-        'Delete this game?': 'Eliminare questa partita?', 'Its points and stars are removed from the player. This cannot be undone.': 'Punti e stelle vengono tolti al giocatore. Non si può annullare.',
-        'New question': 'Nuova domanda', 'Edit question': 'Modifica domanda', 'Written by you': 'Scritte da te', 'Built in': 'Incluse nel gioco',
+        'Save': 'Salva',
+        'Saved': 'Salvato',
+        'Cancel': 'Annulla',
+        'Delete': 'Elimina',
+        'Edit': 'Modifica',
+        'Recent games': 'Partite recenti',
+        'Player': 'Giocatore',
+        'Game': 'Partita',
+        'Result': 'Risultato',
+        'Points': 'Punti',
+        'Spent': 'Spesi',
+        'Date': 'Data',
+        'Delete this game?': 'Eliminare questa partita?',
+        'Its points and stars are removed from the player. This cannot be undone.': 'Punti e stelle vengono tolti al giocatore. Non si può annullare.',
+        'New question': 'Nuova domanda',
+        'Edit question': 'Modifica domanda',
+        'Written by you': 'Scritte da te',
+        'Built in': 'Incluse nel gioco',
         'No questions yet: the game uses the built-in ones.': 'Ancora nessuna domanda: il gioco usa quelle incluse.',
-        'Difficulty': 'Difficoltà', 'Active': 'Attiva', 'Off': 'Spenta', 'Question': 'Domanda', 'Explanation': 'Spiegazione', 'Right answer': 'Risposta giusta', 'Wrong answer {n}': 'Risposta sbagliata {n}',
-        'required': 'obbligatoria', 'optional': 'facoltativa', 'They appear among the riddles, when the level reaches their difficulty.': 'Compaiono tra gli indovinelli, quando il livello arriva alla loro difficoltà.',
+        'Difficulty': 'Difficoltà',
+        'Active': 'Attiva',
+        'Off': 'Spenta',
+        'Question': 'Domanda',
+        'Explanation': 'Spiegazione',
+        'Right answer': 'Risposta giusta',
+        'Wrong answer {n}': 'Risposta sbagliata {n}',
+        'required': 'obbligatoria',
+        'optional': 'facoltativa',
+        'They appear among the riddles, when the level reaches their difficulty.': 'Compaiono tra gli indovinelli, quando il livello arriva alla loro difficoltà.',
         'From 0.00 (super easy) to 9.99 (super hard): players only see the tier.': 'Da 0.00 (facilissima) a 9.99 (difficilissima): i giocatori vedono solo la fascia.',
-        'All the exercises': 'Tutti gli esercizi', 'Search': 'Cerca', 'All types': 'Tutti i tipi', 'Type': 'Tipo', 'Exercise': 'Esercizio', 'Tier': 'Fascia', 'Username': 'Username',
-        'Tables are missing: open install-db.php to create them and the first administrator.': 'Mancano le tabelle: apri install-db.php per crearle insieme al primo amministratore.', 'Open the installation': 'Apri l’installazione', 'There is no administrator yet: create the first one.': 'Non c’è ancora un amministratore: crea il primo.',
-        'Delete this question?': 'Eliminare questa domanda?', 'This cannot be undone.': 'Non si può annullare.',
-        'Search by name or email': 'Cerca per nome o email', 'Level': 'Livello', 'Status': 'Stato', 'Administrator': 'Amministratore', 'Disabled': 'Disattivato', 'You': 'Tu',
-        'Make administrator': 'Rendi amministratore', 'Remove administrator': 'Togli amministratore', 'Disable': 'Disattiva', 'Enable': 'Riattiva',
-        'Delete this player?': 'Eliminare questo giocatore?', 'The account and all its games are permanently deleted. This cannot be undone.': 'L’account e tutte le sue partite vengono eliminati per sempre. Non si può annullare.',
+        'All the exercises': 'Tutti gli esercizi',
+        'Search': 'Cerca',
+        'All types': 'Tutti i tipi',
+        'Type': 'Tipo',
+        'Exercise': 'Esercizio',
+        'Tier': 'Fascia',
+        'Username': 'Username',
+        'Tables are missing: open install-db.php to create them and the first administrator.': 'Mancano le tabelle: apri install-db.php per crearle insieme al primo amministratore.',
+        'Open the installation': 'Apri l’installazione',
+        'There is no administrator yet: create the first one.': 'Non c’è ancora un amministratore: crea il primo.',
+        'Delete this question?': 'Eliminare questa domanda?',
+        'This cannot be undone.': 'Non si può annullare.',
+        'Search by name or email': 'Cerca per nome o email',
+        'Level': 'Livello',
+        'Status': 'Stato',
+        'Administrator': 'Amministratore',
+        'Disabled': 'Disattivato',
+        'You': 'Tu',
+        'Make administrator': 'Rendi amministratore',
+        'Remove administrator': 'Togli amministratore',
+        'Disable': 'Disattiva',
+        'Enable': 'Riattiva',
+        'Delete this player?': 'Eliminare questo giocatore?',
+        'The account and all its games are permanently deleted. This cannot be undone.': 'L’account e tutte le sue partite vengono eliminati per sempre. Non si può annullare.',
         'Every language needs the question, the explanation and four answers: {lang} is incomplete.': 'Ogni lingua richiede domanda, spiegazione e quattro risposte: {lang} è incompleta.',
         'The four answers must be different: check {lang}.': 'Le quattro risposte devono essere diverse: controlla {lang}.',
-        'At least one type of question must stay on.': 'Almeno un tipo di domanda deve restare acceso.', 'You cannot change your own account here.': 'Non puoi modificare il tuo account da qui.',
+        'At least one type of question must stay on.': 'Almeno un tipo di domanda deve restare acceso.',
+        'You cannot change your own account here.': 'Non puoi modificare il tuo account da qui.',
         'You do not have access to this.': 'Non hai accesso a questa funzione.',
-        'Levels': 'Livelli', 'Survival': 'Sopravvivenza', 'Daily': 'Sfida del giorno',
-        'Details': 'Dettagli', 'Activity': 'Attività', 'Read only: what this player did.': 'Sola lettura: ciò che ha fatto questo giocatore.',
-        'Wallet': 'Punti disponibili', 'Earned': 'Guadagnati', 'Changed by admins': 'Modificati dagli admin', 'Levels passed': 'Livelli superati', 'Highest level': 'Livello più alto',
-        'Daily challenges': 'Sfide del giorno', 'Play time': 'Tempo di gioco', 'Best daily': 'Migliore sfida', 'Best survival': 'Migliore sopravvivenza',
-        'Following': 'Segue', 'Followers': 'Lo seguono', 'Notification devices': 'Dispositivi con notifiche',
-        'Signed up': 'Iscritto', 'Last sign-in': 'Ultimo accesso', 'First game': 'Prima partita', 'Last game': 'Ultima partita',
-        'Email confirmed': 'Email confermata', 'Email not confirmed': 'Email da confermare', 'Google': 'Google', 'Password': 'Password', 'In the ranking': 'In classifica', 'Hidden from the ranking': 'Nascosto dalla classifica',
-        'Change points': 'Modifica punti', 'New balance': 'Nuovo saldo', 'Note (optional)': 'Nota (facoltativa)', 'The games stay as they were played: only the balance changes.': 'Le partite restano come sono state giocate: cambia solo il saldo.',
-        'Points saved': 'Punti salvati', 'Last 100 games': 'Ultime 100 partite', 'Admin changes': 'Modifiche degli admin', 'No changes.': 'Nessuna modifica.', 'Mode': 'Modalità', 'Time': 'Tempo', 'Admin': 'Admin', 'Change': 'Modifica', 'Note': 'Nota',
-        'You cannot change your own points.': 'Non puoi modificare i tuoi punti.', 'Never': 'Mai',
-        'Profile pictures': 'Immagini profilo', 'Characters': 'Personaggi', 'Accessories': 'Accessori', 'Frames': 'Cornici', 'Backgrounds': 'Sfondi',
-        'Name': 'Nome', 'Price (points)': 'Prezzo (punti)', 'On sale': 'In vendita', 'Sold': 'Venduti',
+        'Levels': 'Livelli',
+        'Survival': 'Sopravvivenza',
+        'Daily': 'Sfida del giorno',
+        'Details': 'Dettagli',
+        'Activity': 'Attività',
+        'Read only: what this player did.': 'Sola lettura: ciò che ha fatto questo giocatore.',
+        'Wallet': 'Punti disponibili',
+        'Earned': 'Guadagnati',
+        'Changed by admins': 'Modificati dagli admin',
+        'Levels passed': 'Livelli superati',
+        'Highest level': 'Livello più alto',
+        'Daily challenges': 'Sfide del giorno',
+        'Play time': 'Tempo di gioco',
+        'Best daily': 'Migliore sfida',
+        'Best survival': 'Migliore sopravvivenza',
+        'Following': 'Segue',
+        'Followers': 'Lo seguono',
+        'Notification devices': 'Dispositivi con notifiche',
+        'Signed up': 'Iscritto',
+        'Last sign-in': 'Ultimo accesso',
+        'First game': 'Prima partita',
+        'Last game': 'Ultima partita',
+        'Email confirmed': 'Email confermata',
+        'Email not confirmed': 'Email da confermare',
+        'Google': 'Google',
+        'Password': 'Password',
+        'In the ranking': 'In classifica',
+        'Hidden from the ranking': 'Nascosto dalla classifica',
+        'Change points': 'Modifica punti',
+        'New balance': 'Nuovo saldo',
+        'Note (optional)': 'Nota (facoltativa)',
+        'The games stay as they were played: only the balance changes.': 'Le partite restano come sono state giocate: cambia solo il saldo.',
+        'Points saved': 'Punti salvati',
+        'Last 100 games': 'Ultime 100 partite',
+        'Admin changes': 'Modifiche degli admin',
+        'No changes.': 'Nessuna modifica.',
+        'Mode': 'Modalità',
+        'Time': 'Tempo',
+        'Admin': 'Admin',
+        'Change': 'Modifica',
+        'Note': 'Nota',
+        'You cannot change your own points.': 'Non puoi modificare i tuoi punti.',
+        'Never': 'Mai',
+        'Profile pictures': 'Immagini profilo',
+        'Characters': 'Personaggi',
+        'Accessories': 'Accessori',
+        'Frames': 'Cornici',
+        'Backgrounds': 'Sfondi',
+        'Name': 'Nome',
+        'Price (points)': 'Prezzo (punti)',
+        'On sale': 'In vendita',
+        'Sold': 'Venduti',
         'Players buy these with their points from their profile. At 0 an item is free for everyone. An item taken off sale stays with whoever already bought it.': 'I giocatori li comprano con i punti dal profilo. A 0 un elemento è gratis per tutti. Un elemento tolto dalla vendita resta a chi lo aveva già comprato.',
         'Spent on profile': 'Spesi nel profilo',
-        'Reports': 'Segnalazioni', 'Open': 'Aperte', 'Closed': 'Chiuse', 'All': 'Tutte', 'No reports.': 'Nessuna segnalazione.', '{n} open': '{n} aperte',
-        'Wrong right answer': 'Risposta giusta sbagliata', 'Unclear text': 'Testo poco chiaro', 'Display problem': 'Problema grafico', 'Translation mistake': 'Errore di traduzione', 'Other': 'Altro',
-        'Fixed (+{n} points to the player)': 'Risolta (+{n} punti al giocatore)', 'Not a mistake': 'Non è un errore', 'Already reported': 'Già segnalata', 'Cannot reproduce': 'Non riproducibile', 'Will stay as it is': 'Resterà così',
-        'Closed: fixed': 'Chiusa: risolta', 'Closed: not a mistake': 'Chiusa: non è un errore', 'Closed: already reported': 'Chiusa: già segnalata', 'Closed: cannot reproduce': 'Chiusa: non riproducibile', 'Closed: will stay as it is': 'Chiusa: resterà così',
-        'How to close it': 'Come chiuderla', 'Internal note (optional)': 'Nota interna (facoltativa)', 'Close report': 'Chiudi segnalazione', 'Report closed': 'Segnalazione chiusa',
-        'Closed by {name}': 'Chiusa da {name}', 'Reopen': 'Riapri', 'Reopen this report?': 'Riaprire questa segnalazione?', 'If it was rewarded, the {n} points are taken back.': 'Se era stata premiata, i {n} punti vengono tolti al giocatore.',
-        'Reported by': 'Segnalata da', 'Report #{n}': 'Segnalazione n. {n}', 'Try it again': 'Riprova esercizio', 'This question can no longer be drawn.': 'Questa domanda non si può più disegnare.',
+        'Reports': 'Segnalazioni',
+        'Open': 'Aperte',
+        'Closed': 'Chiuse',
+        'All': 'Tutte',
+        'No reports.': 'Nessuna segnalazione.',
+        '{n} open': '{n} aperte',
+        'Wrong right answer': 'Risposta giusta sbagliata',
+        'Unclear text': 'Testo poco chiaro',
+        'Display problem': 'Problema grafico',
+        'Translation mistake': 'Errore di traduzione',
+        'Other': 'Altro',
+        'Fixed (+{n} points to the player)': 'Risolta (+{n} punti al giocatore)',
+        'Not a mistake': 'Non è un errore',
+        'Already reported': 'Già segnalata',
+        'Cannot reproduce': 'Non riproducibile',
+        'Will stay as it is': 'Resterà così',
+        'Closed: fixed': 'Chiusa: risolta',
+        'Closed: not a mistake': 'Chiusa: non è un errore',
+        'Closed: already reported': 'Chiusa: già segnalata',
+        'Closed: cannot reproduce': 'Chiusa: non riproducibile',
+        'Closed: will stay as it is': 'Chiusa: resterà così',
+        'How to close it': 'Come chiuderla',
+        'Internal note (optional)': 'Nota interna (facoltativa)',
+        'Close report': 'Chiudi segnalazione',
+        'Report closed': 'Segnalazione chiusa',
+        'Closed by {name}': 'Chiusa da {name}',
+        'Reopen': 'Riapri',
+        'Reopen this report?': 'Riaprire questa segnalazione?',
+        'If it was rewarded, the {n} points are taken back.': 'Se era stata premiata, i {n} punti vengono tolti al giocatore.',
+        'Reported by': 'Segnalata da',
+        'Report #{n}': 'Segnalazione n. {n}',
+        'Try it again': 'Riprova esercizio',
+        'This question can no longer be drawn.': 'Questa domanda non si può più disegnare.',
         'Players report questions they think are wrong. Close a report as fixed and the player gets {n} points; any other closing gives nothing.': 'I giocatori segnalano le domande che ritengono sbagliate. Se chiudi una segnalazione come risolta il giocatore riceve {n} punti; con le altre chiusure non riceve nulla.',
-        'Try': 'Prova', 'Tutorial': 'Tutorial', 'Try exercise': 'Prova esercizio', 'New example': 'Nuovo esempio',
-        'All variants': 'Tutte le varianti', 'Test hint': 'Prova suggerimento', 'Show answer': 'Mostra soluzione', 'Try another': 'Altro esercizio',
+        'Try': 'Prova',
+        'Tutorial': 'Tutorial',
+        'Try exercise': 'Prova esercizio',
+        'New example': 'Nuovo esempio',
+        'All variants': 'Tutte le varianti',
+        'Test hint': 'Prova suggerimento',
+        'Show answer': 'Mostra soluzione',
+        'Try another': 'Altro esercizio',
     };
     const t = (s, v) => {
         let out = I.getLang() === 'it' ? (IT[s] || s) : s;
@@ -80,7 +209,10 @@
     };
     const gt = I.t; // the translations of the game
     const tierName = k => gt(k);
-    const when = s => s ? new Date(s.replace(' ', 'T') + 'Z').toLocaleString(I.getLang(), {dateStyle: 'short', timeStyle: 'short'}) : '–';
+    const when = s => s ? new Date(s.replace(' ', 'T') + 'Z').toLocaleString(I.getLang(), {
+        dateStyle: 'short',
+        timeStyle: 'short'
+    }) : '–';
     const num = n => Number(n).toLocaleString(I.getLang());
 
     const TABS = [['overview', 'Overview', 'chart'], ['games', 'Games', 'grid'], ['questions', 'Questions', 'book'], ['players', 'Players', 'user'], ['avatars', 'Profile pictures', 'image'], ['reports', 'Reports', 'flag']];
@@ -130,6 +262,7 @@
         }));
         return h('div.table-wrap', h('table', h('thead', h('tr', heads.map(x => h('th', x)))), body));
     }
+
     const card = (title, ...kids) => h('section.panel', title ? h('h2', title) : null, kids);
 
     // ---------- overview ----------
@@ -203,15 +336,21 @@
         const patLabel = p => RIDDLES[p.id] ? (RIDDLES[p.id].t[lang] || RIDDLES[p.id].t.en)[0].slice(0, 48) : p.id;
         const variantSelect = !opts.custom && catPatterns.length > 1
             ? h('select.ctl', {
-                'aria-label': t('Exercise'),
-                onchange: e => {
-                    selectedPid = e.target.value;
-                    generate();
-                    draw();
+                    'aria-label': t('Exercise'),
+                    onchange: e => {
+                        selectedPid = e.target.value;
+                        generate();
+                        draw();
+                    },
                 },
-            },
-            h('option', {value: '', selected: !selectedPid || undefined}, `${t('All variants')} (${catPatterns.length})`),
-            catPatterns.map(p => h('option', {value: p.id, selected: p.id === selectedPid || undefined}, `${patLabel(p)} · ${tierName(E.tierOf(p.d))} (${p.d.toFixed(2)})`)))
+                h('option', {
+                    value: '',
+                    selected: !selectedPid || undefined
+                }, `${t('All variants')} (${catPatterns.length})`),
+                catPatterns.map(p => h('option', {
+                    value: p.id,
+                    selected: p.id === selectedPid || undefined
+                }, `${patLabel(p)} · ${tierName(E.tierOf(p.d))} (${p.d.toFixed(2)})`)))
             : null;
 
         function draw() {
@@ -279,7 +418,10 @@
                 h('h3', `${t('Try exercise')} · ${gt('cat_' + cat)}`),
                 h('div.try-head-actions',
                     h('button.help-btn', {
-                        type: 'button', title: t('Tutorial'), 'aria-label': t('Tutorial'), onclick: () => openTutorial(cat),
+                        type: 'button',
+                        title: t('Tutorial'),
+                        'aria-label': t('Tutorial'),
+                        onclick: () => openTutorial(cat),
                     }, '?'),
                     h('button.btn.btn-soft.small', {
                         type: 'button', onclick: () => {
@@ -306,8 +448,19 @@
             toast(t('Saved'), 'ok');
         });
         const length = h('input.ctl', {type: 'number', min: 3, max: 10, value: s.levelLength});
-        const costs = E.TIERS.map(k => [k, h('input.ctl', {type: 'number', min: 0, max: 5000, step: 10, value: s.hintCost[k]})]);
-        const label = {easy: 'Hint cost (easy)', medium: 'Hint cost (medium)', hard: 'Hint cost (hard)', expert: 'Hint cost (expert)'};
+        const costs = E.TIERS.map(k => [k, h('input.ctl', {
+            type: 'number',
+            min: 0,
+            max: 5000,
+            step: 10,
+            value: s.hintCost[k]
+        })]);
+        const label = {
+            easy: 'Hint cost (easy)',
+            medium: 'Hint cost (medium)',
+            hard: 'Hint cost (hard)',
+            expert: 'Hint cost (expert)'
+        };
         const modeName = x => x.mode === 'level' ? gt('level_n', {n: x.stage}) : t(x.mode === 'daily' ? 'Daily' : 'Survival');
         view.replaceChildren(
             h('div.admin-cols',
@@ -357,7 +510,10 @@
                                     h('small', t('{n} kinds of exercise', {n: E.allPatterns().filter(p => p.cat === k).length}))),
                                 h('div.type-actions',
                                     h('button.help-btn', {
-                                        type: 'button', title: t('Tutorial'), 'aria-label': t('Tutorial'), onclick: () => openTutorial(k),
+                                        type: 'button',
+                                        title: t('Tutorial'),
+                                        'aria-label': t('Tutorial'),
+                                        onclick: () => openTutorial(k),
                                     }, '?'),
                                     h('button.btn.btn-soft.small', {
                                         type: 'button', title: t('Try exercise'), onclick: () => tryExercise({cat: k}),
@@ -413,7 +569,11 @@
         const forms = {};
         const panels = LANGS.map(l => {
             const d = q.data[l] || ['', '', ['', '', '', '']];
-            const f = forms[l] = {q: h('textarea.ctl', {rows: 3, maxlength: 400}, d[0]), why: h('textarea.ctl', {rows: 2, maxlength: 400}, d[1]), options: d[2].map(v => h('input.ctl', {type: 'text', maxlength: 80, value: v}))};
+            const f = forms[l] = {
+                q: h('textarea.ctl', {rows: 3, maxlength: 400}, d[0]),
+                why: h('textarea.ctl', {rows: 2, maxlength: 400}, d[1]),
+                options: d[2].map(v => h('input.ctl', {type: 'text', maxlength: 80, value: v}))
+            };
             return h('fieldset.lang-set', h('legend', `${I.LANGS[l]} (${t(REQUIRED.includes(l) ? 'required' : 'optional')})`),
                 h('label.field', h('span', t('Question')), f.q),
                 f.options.map((el, i) => h('label.field', h('span', i ? t('Wrong answer {n}', {n: i}) : t('Right answer')), el)),
@@ -426,7 +586,11 @@
                         e.preventDefault();
                         const texts = {};
                         LANGS.forEach(l => {
-                            texts[l] = {q: forms[l].q.value, why: forms[l].why.value, options: forms[l].options.map(o => o.value)};
+                            texts[l] = {
+                                q: forms[l].q.value,
+                                why: forms[l].why.value,
+                                options: forms[l].options.map(o => o.value)
+                            };
                         });
                         save.disabled = true;
                         await call('admin.question.save', {id: q.id, difficulty: +difficulty.value, active, texts}, () => {
@@ -440,7 +604,10 @@
                     h('div.type-row', h('strong', t('Active')), toggle(active, t('Active'), on => {
                         active = on;
                     }))),
-                panels, h('div.actions', h('button.btn.btn-ghost', {type: 'button', onclick: () => m.close()}, t('Cancel')), save))]);
+                panels, h('div.actions', h('button.btn.btn-ghost', {
+                    type: 'button',
+                    onclick: () => m.close()
+                }, t('Cancel')), save))]);
         m.box.classList.add('wide');
     }
 
@@ -453,8 +620,17 @@
         const custom = d.questions.map(q => h('tr',
             h('td', (q.data[lang] || q.data.en)[0]), h('td', `${(+q.difficulty).toFixed(2)} · ${tierName(q.tier)}`), h('td', Object.keys(q.data).join(' ').toUpperCase()), h('td', t(q.active ? 'Active' : 'Off')),
             h('td.row-actions',
-                h('button.btn.btn-soft.small', {type: 'button', title: t('Try exercise'), onclick: () => tryExercise({custom: q})}, icon('play'), h('span', t('Try'))),
-                h('button.icon-btn', {type: 'button', title: t('Edit'), 'aria-label': t('Edit'), onclick: () => editQuestion(q, refresh)}, icon('pen')),
+                h('button.btn.btn-soft.small', {
+                    type: 'button',
+                    title: t('Try exercise'),
+                    onclick: () => tryExercise({custom: q})
+                }, icon('play'), h('span', t('Try'))),
+                h('button.icon-btn', {
+                    type: 'button',
+                    title: t('Edit'),
+                    'aria-label': t('Edit'),
+                    onclick: () => editQuestion(q, refresh)
+                }, icon('pen')),
                 h('button.icon-btn', {
                     type: 'button', title: t('Delete'), 'aria-label': t('Delete'), onclick: async () => {
                         if (await confirmBox(t('Delete this question?'), t('This cannot be undone.'), t('Delete'), t('Cancel'), true)) call('admin.question.delete', {id: q.id}, refresh);
@@ -475,7 +651,13 @@
                 const tierCell = h('td', tierName(E.tierOf(p.d)));
                 return h('tr', h('td', label(p)), h('td', gt('cat_' + p.cat)),
                     h('td', h('input.ctl.tiny', {
-                        type: 'number', min: 0, max: E.MAX_D, step: .01, value: p.d.toFixed(2), 'aria-label': t('Difficulty'), onchange: e => {
+                        type: 'number',
+                        min: 0,
+                        max: E.MAX_D,
+                        step: .01,
+                        value: p.d.toFixed(2),
+                        'aria-label': t('Difficulty'),
+                        onchange: e => {
                             const v = Math.min(E.MAX_D, Math.max(0, +e.target.value || 0));
                             p.d = v;
                             s.difficulty = Object.assign({}, s.difficulty, {[p.id]: v});
@@ -488,15 +670,27 @@
                         saveAll();
                     })),
                     h('td.row-actions',
-                        h('button.help-btn', {type: 'button', title: t('Tutorial'), 'aria-label': t('Tutorial'), onclick: () => openTutorial(p.cat)}, '?'),
-                        h('button.btn.btn-soft.small', {type: 'button', title: t('Try exercise'), onclick: () => tryExercise({pid: p.id, cat: p.cat})}, icon('play'), h('span', t('Try')))));
+                        h('button.help-btn', {
+                            type: 'button',
+                            title: t('Tutorial'),
+                            'aria-label': t('Tutorial'),
+                            onclick: () => openTutorial(p.cat)
+                        }, '?'),
+                        h('button.btn.btn-soft.small', {
+                            type: 'button',
+                            title: t('Try exercise'),
+                            onclick: () => tryExercise({pid: p.id, cat: p.cat})
+                        }, icon('play'), h('span', t('Try')))));
             })));
         };
         search.addEventListener('input', draw);
         type.addEventListener('change', draw);
         draw();
         view.replaceChildren(
-            card(null, h('div.card-head', h('h2', t('Written by you')), h('button.btn.btn-primary', {type: 'button', onclick: () => editQuestion(blank(), refresh)}, t('New question'))),
+            card(null, h('div.card-head', h('h2', t('Written by you')), h('button.btn.btn-primary', {
+                    type: 'button',
+                    onclick: () => editQuestion(blank(), refresh)
+                }, t('New question'))),
                 custom.length ? table([t('Question'), t('Difficulty'), 'Lang', t('Status'), ''], custom) : h('p.muted', t('No questions yet: the game uses the built-in ones.'))),
             card(null, h('div.card-head', h('h2', `${t('All the exercises')} (${all.length})`), h('div.filters', search, type)), wrap));
     }
@@ -506,7 +700,11 @@
         const d = await call('admin.players');
         if (!d) return;
         const refresh = () => playersTab(view);
-        const search = h('input.ctl', {type: 'search', placeholder: t('Search by name or email'), 'aria-label': t('Search by name or email')});
+        const search = h('input.ctl', {
+            type: 'search',
+            placeholder: t('Search by name or email'),
+            'aria-label': t('Search by name or email')
+        });
         const wrap = h('div');
         const draw = () => {
             const q = search.value.trim().toLowerCase();
@@ -517,9 +715,26 @@
                 return h('tr',
                     h('td', h('div.player-cell', av, h('div', h('strong', p.username ? '@' + p.username : p.name), h('small.block', `${p.name} · ${p.email}`)))), h('td', String(p.stage)), h('td', num(p.games)), h('td', num(p.points)), h('td', when(p.last_login_at || p.created_at)),
                     h('td', self ? t('You') : (off ? t('Disabled') : (+p.verified ? (admin ? t('Administrator') : t('Active')) : t('Email not confirmed')))),
-                    h('td.row-actions', h('button.btn.btn-soft.small', {type: 'button', onclick: () => showPlayer(p.id, +d.me, refresh)}, t('Details')), self ? null : [
-                        h('button.btn.btn-ghost.small', {type: 'button', onclick: () => call('admin.player.update', {id: p.id, admin: !admin, status: p.status}, refresh)}, t(admin ? 'Remove administrator' : 'Make administrator')),
-                        h('button.btn.btn-ghost.small', {type: 'button', onclick: () => call('admin.player.update', {id: p.id, admin, status: off ? 'active' : 'disabled'}, refresh)}, t(off ? 'Enable' : 'Disable')),
+                    h('td.row-actions', h('button.btn.btn-soft.small', {
+                        type: 'button',
+                        onclick: () => showPlayer(p.id, +d.me, refresh)
+                    }, t('Details')), self ? null : [
+                        h('button.btn.btn-ghost.small', {
+                            type: 'button',
+                            onclick: () => call('admin.player.update', {
+                                id: p.id,
+                                admin: !admin,
+                                status: p.status
+                            }, refresh)
+                        }, t(admin ? 'Remove administrator' : 'Make administrator')),
+                        h('button.btn.btn-ghost.small', {
+                            type: 'button',
+                            onclick: () => call('admin.player.update', {
+                                id: p.id,
+                                admin,
+                                status: off ? 'active' : 'disabled'
+                            }, refresh)
+                        }, t(off ? 'Enable' : 'Disable')),
                         h('button.icon-btn', {
                             type: 'button', title: t('Delete'), 'aria-label': t('Delete'), onclick: async () => {
                                 if (await confirmBox(t('Delete this player?'), t('The account and all its games are permanently deleted. This cannot be undone.'), t('Delete'), t('Cancel'), true)) call('admin.player.delete', {id: p.id}, refresh);
@@ -551,13 +766,25 @@
         const share = s.total > 0 ? Math.round(s.correct / s.total * 100) + '%' : '–';
         const modeName = x => x.mode === 'level' ? gt('level_n', {n: x.stage}) : t(x.mode === 'daily' ? 'Daily' : 'Survival');
         const self = p.id === me;
-        const balance = h('input.ctl', {type: 'number', min: 0, max: 10000000, step: 1, value: p.balance, disabled: self || undefined});
-        const note = h('input.ctl', {type: 'text', maxlength: 200, placeholder: t('Note (optional)'), disabled: self || undefined});
+        const balance = h('input.ctl', {
+            type: 'number',
+            min: 0,
+            max: 10000000,
+            step: 1,
+            value: p.balance,
+            disabled: self || undefined
+        });
+        const note = h('input.ctl', {
+            type: 'text',
+            maxlength: 200,
+            placeholder: t('Note (optional)'),
+            disabled: self || undefined
+        });
         const save = h('button.btn.btn-primary', {type: 'submit', disabled: self || undefined}, t('Save'));
         const av = window.ThinkHopAvatars ? window.ThinkHopAvatars.render(p.avatar, p.name, 'avatar lg') : null;
         body.replaceChildren(
             h('div.player-head', h('div.player-head-row', av, h('div', h('strong', p.username ? '@' + p.username : p.name), h('span.muted.block', `${p.name} · ${p.email}`))),
-                h('div.tags', badge(!!p.verified, 'Email confirmed', 'Email not confirmed'), p.google ? h('span.tag', 'Google') : null, p.password ? h('span.tag', t('Password')) : null,
+                h('div.tags', badge(!!p.verified, 'Email confirmed', 'Email not confirmed'), p.google ? h('span.tag', 'Google') : null, p.savaccount ? h('span.tag', 'SavAccount') : null, p.password ? h('span.tag', t('Password')) : null,
                     badge(p.ranking, 'In the ranking', 'Hidden from the ranking'), p.admin ? h('span.tag.on', t('Administrator')) : null, p.status === 'disabled' ? h('span.tag.off', t('Disabled')) : null)),
             h('div.stat-grid.wide',
                 tile(t('Wallet'), num(p.balance)), tile(t('Earned'), num(s.earned)), tile(t('Spent'), num(s.spent)), tile(t('Spent on profile'), num(p.avatarSpent || 0)), tile(t('Changed by admins'), (p.adjust > 0 ? '+' : '') + num(p.adjust)),
@@ -604,8 +831,19 @@
                 const art = Av.item(x.id);
                 const label = art ? Av.name(art) : x.id;
                 let enabled = +x.enabled === 1;
-                const price = h('input.ctl.adm-price', {type: 'number', min: 0, max: 1000000, step: 50, value: +x.price, 'aria-label': t('Price (points)')});
-                const save = () => call('admin.avatar.save', {id: x.id, price: +price.value, enabled}, () => toast(t('Saved'), 'ok'));
+                const price = h('input.ctl.adm-price', {
+                    type: 'number',
+                    min: 0,
+                    max: 1000000,
+                    step: 50,
+                    value: +x.price,
+                    'aria-label': t('Price (points)')
+                });
+                const save = () => call('admin.avatar.save', {
+                    id: x.id,
+                    price: +price.value,
+                    enabled
+                }, () => toast(t('Saved'), 'ok'));
                 return h('tr',
                     h('td', Av.render(previewCode(kind, x.id), kind === 'accessory' ? '' : 'A', 'md')),
                     h('td', h('strong', label), h('small.block', x.id)),
@@ -615,7 +853,10 @@
                         save();
                     })),
                     h('td', num(x.sold || 0)),
-                    h('td.row-actions', h('button.btn.btn-soft.small', {type: 'button', onclick: save}, icon('save'), h('span', t('Save')))));
+                    h('td.row-actions', h('button.btn.btn-soft.small', {
+                        type: 'button',
+                        onclick: save
+                    }, icon('save'), h('span', t('Save')))));
             })));
         view.replaceChildren(
             card(t('Profile pictures'), h('p.muted', t('Players buy these with their points from their profile. At 0 an item is free for everyone. An item taken off sale stays with whoever already bought it.'))),
@@ -626,17 +867,45 @@
     }
 
     // ---------- shell ----------
-    const VIEWS = {overview, games: gamesTab, questions: questionsTab, players: playersTab, avatars: avatarsTab, reports: reportsTab};
+    const VIEWS = {
+        overview,
+        games: gamesTab,
+        questions: questionsTab,
+        players: playersTab,
+        avatars: avatarsTab,
+        reports: reportsTab
+    };
 
     function gate(text, action) {
-        root.replaceChildren(h('div.gate', h('img.logo', {src: 'icons/favicon.svg', alt: ''}), h('h1', 'ThinkHop Admin'), h('p.muted', text), action,
+        root.replaceChildren(h('div.gate', h('img.logo', {
+                src: 'icons/favicon.svg',
+                alt: ''
+            }), h('h1', 'ThinkHop Admin'), h('p.muted', text), action,
             h('a.btn.btn-ghost', {href: './'}, t('Back to the game'))));
     }
 
     // ---------- reports from players ----------
-    const REPORT_REASON = {wrong_answer: 'Wrong right answer', unclear: 'Unclear text', graphics: 'Display problem', translation: 'Translation mistake', other: 'Other'};
-    const REPORT_CLOSE = {resolved: 'Fixed (+{n} points to the player)', not_error: 'Not a mistake', duplicate: 'Already reported', cannot_reproduce: 'Cannot reproduce', wont_fix: 'Will stay as it is'};
-    const REPORT_DONE = {resolved: 'Closed: fixed', not_error: 'Closed: not a mistake', duplicate: 'Closed: already reported', cannot_reproduce: 'Closed: cannot reproduce', wont_fix: 'Closed: will stay as it is'};
+    const REPORT_REASON = {
+        wrong_answer: 'Wrong right answer',
+        unclear: 'Unclear text',
+        graphics: 'Display problem',
+        translation: 'Translation mistake',
+        other: 'Other'
+    };
+    const REPORT_CLOSE = {
+        resolved: 'Fixed (+{n} points to the player)',
+        not_error: 'Not a mistake',
+        duplicate: 'Already reported',
+        cannot_reproduce: 'Cannot reproduce',
+        wont_fix: 'Will stay as it is'
+    };
+    const REPORT_DONE = {
+        resolved: 'Closed: fixed',
+        not_error: 'Closed: not a mistake',
+        duplicate: 'Closed: already reported',
+        cannot_reproduce: 'Closed: cannot reproduce',
+        wont_fix: 'Closed: will stay as it is'
+    };
     let reportFilter = 'open';
 
     async function reportsTab(view) {
@@ -670,14 +939,21 @@
             const actions = [];
             if (open) {
                 const sel = h('select.ctl', {'aria-label': t('How to close it')}, Object.entries(REPORT_CLOSE).map(([k, label]) => h('option', {value: k}, t(label, {n: d.reward}))));
-                const note = h('input.ctl', {type: 'text', maxlength: 500, placeholder: t('Internal note (optional)'), 'aria-label': t('Internal note (optional)')});
+                const note = h('input.ctl', {
+                    type: 'text',
+                    maxlength: 500,
+                    placeholder: t('Internal note (optional)'),
+                    'aria-label': t('Internal note (optional)')
+                });
                 const btn = h('button.btn.btn-primary', {
                     type: 'button', onclick: () => {
                         btn.disabled = true;
                         call('admin.report.close', {id: r.id, status: sel.value, note: note.value}, () => {
                             toast(t('Report closed'), 'ok');
                             reportsTab(view);
-                        }).then(x => { if (!x) btn.disabled = false; });
+                        }).then(x => {
+                            if (!x) btn.disabled = false;
+                        });
                     },
                 }, icon('tick'), h('span', t('Close report')));
                 actions.push(h('div.report-close', sel, note, btn));
@@ -698,7 +974,10 @@
                     h('div',
                         h('strong', gt('cat_' + r.cat)), h('span.tag', r.pid), h('span.tag', r.lang.toUpperCase()),
                         h('small.block.muted', t('Reported by') + ' ' + who + ' · ' + r.user.email + ' · ' + when(r.created))),
-                    h('button.btn.btn-ghost.small', {type: 'button', onclick: () => tryExercise({cat: r.cat, pid: r.pid})}, icon('play'), h('span', t('Try it again')))),
+                    h('button.btn.btn-ghost.small', {
+                        type: 'button',
+                        onclick: () => tryExercise({cat: r.cat, pid: r.pid})
+                    }, icon('play'), h('span', t('Try it again')))),
                 h('div.report-reason-line', h('span.report-status', t(REPORT_REASON[r.reason] || r.reason)), r.description ? h('blockquote.report-desc-text', r.description) : null),
                 preview,
                 actions);
@@ -716,23 +995,43 @@
         if (A.installNeeded()) return gate(t('Tables are missing: open install-db.php to create them and the first administrator.'), h('a.btn.btn-primary', {href: 'install-db.php'}, t('Open the installation')));
         if (!A.enabled()) return gate(t('Accounts are not installed yet: open install-db.php.'), h('a.btn.btn-primary', {href: 'install-db.php'}, t('Open the installation')));
         if (A.needsAdmin()) return gate(t('There is no administrator yet: create the first one.'), h('a.btn.btn-primary', {href: 'install-db.php'}, t('Open the installation')));
-        if (!u) return gate(t('Sign in with an administrator account.'), h('button.btn.btn-primary', {type: 'button', onclick: A.open}, t('Sign in')));
-        if (!u.isAdmin) return gate(t('This account is not an administrator.'), h('button.btn.btn-soft', {type: 'button', onclick: A.open}, u.name));
+        if (!u) return gate(t('Sign in with an administrator account.'), h('button.btn.btn-primary', {
+            type: 'button',
+            onclick: A.open
+        }, t('Sign in')));
+        if (!u.isAdmin) return gate(t('This account is not an administrator.'), h('button.btn.btn-soft', {
+            type: 'button',
+            onclick: A.open
+        }, u.name));
         const tab = tabName();
         const view = h('main.admin-view');
         root.replaceChildren(h('div.admin',
-            h('header.admin-bar', h('a.brand', {href: './'}, h('img', {src: 'icons/favicon.svg', alt: ''}), h('strong', 'ThinkHop Admin')),
-                h('nav', TABS.map(([k, label, ic]) => h('a' + (k === tab ? '.sel' : ''), {href: '#/' + k, 'aria-current': k === tab ? 'page' : null}, icon(ic), h('span', t(label))))),
+            h('header.admin-bar', h('a.brand', {href: './'}, h('img', {
+                    src: 'icons/favicon.svg',
+                    alt: ''
+                }), h('strong', 'ThinkHop Admin')),
+                h('nav', TABS.map(([k, label, ic]) => h('a' + (k === tab ? '.sel' : ''), {
+                    href: '#/' + k,
+                    'aria-current': k === tab ? 'page' : null
+                }, icon(ic), h('span', t(label))))),
                 h('div.seg.lang-switch', ['it', 'en'].map(l => h('button' + (I.getLang() === l ? '.sel' : ''), {
                     type: 'button', onclick: () => {
                         I.setLang(l);
                         render();
                     }
                 }, l.toUpperCase()))),
-                h('button.icon-btn', {type: 'button', title: u.name, 'aria-label': gt('account'), onclick: A.open}, window.ThinkHopAvatars ? window.ThinkHopAvatars.render(u.avatar, u.name, 'avatar sm') : icon('user'))),
+                h('button.icon-btn', {
+                    type: 'button',
+                    title: u.name,
+                    'aria-label': gt('account'),
+                    onclick: A.open
+                }, window.ThinkHopAvatars ? window.ThinkHopAvatars.render(u.avatar, u.name, 'avatar sm') : icon('user'))),
             view));
         document.title = `${t(TABS.find(x => x[0] === tab)[1])} · ThinkHop Admin`;
-        const shape = {overview: [skeleton('tiles', 5), h('div.admin-cols', h('section.panel', skeleton('rows', 6)), h('section.panel', skeleton('rows', 6)))], players: [h('section.panel', skeleton('table', 8))]}[tab]
+        const shape = {
+                overview: [skeleton('tiles', 5), h('div.admin-cols', h('section.panel', skeleton('rows', 6)), h('section.panel', skeleton('rows', 6)))],
+                players: [h('section.panel', skeleton('table', 8))]
+            }[tab]
             || [h('section.panel', skeleton('table', 8))];
         view.replaceChildren(...shape);
         // If the call fails the error is already in a toast: the shapes must not stay forever

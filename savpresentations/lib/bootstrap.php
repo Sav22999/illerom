@@ -11,14 +11,17 @@ declare(strict_types=1);
 
 const APP_NAME = 'SavPresentations';
 const AUTH_COOKIE = 'savpresentations_auth';
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 4; // 2: versions, 3: page_rules, 4: videos (media.poster)
 const LANGS = ['en', 'it'];
 // What a person can do on a presentation, from the weakest: each role can do everything the ones before it can
 const ROLES = ['viewer', 'commenter', 'editor', 'owner'];
 const BLOCK_REASONS = ['spam', 'phishing', 'abuse', 'illegal', 'copyright', 'other'];
 const MAX_SLIDE_BYTES = 400000;
 const MAX_SLIDES = 400;
-const MAX_IMAGE_BYTES = 8000000;
+const MAX_UPLOAD_BYTES = 15 * 1048576; // what can be sent, per picture
+const MAX_VIDEO_BYTES = 150 * 1048576; // a video is sent in pieces, kept as it is
+const VIDEO_PIECE = 4 * 1048576;
+const MAX_IMAGE_BYTES = 8000000; // what is kept of it, after it has been made smaller
 
 // ---------- Configuration ----------
 
@@ -39,10 +42,11 @@ function credentials(): ?array
     $table_prefix = 'sp_';
     $debug = false;
     $google_client_id = '';
+    $savaccount_client_id = $savaccount_client_secret = '';
     $mail_config = null;
     $master_emails = [];
     $pexels_key = $pixabay_key = '';
-    $quota_mb = 300;
+    $quota_mb = 500;
     $storage_dir = '';
     $http_user_agent = '';
     require $file;
@@ -55,6 +59,8 @@ function credentials(): ?array
         'prefix' => (string)($table_prefix ?: 'sp_'),
         'debug' => (bool)$debug,
         'google_client_id' => trim((string)$google_client_id),
+        'savaccount_client_id' => trim((string)$savaccount_client_id),
+        'savaccount_client_secret' => trim((string)$savaccount_client_secret),
         'mail' => $mail_config === false ? false : (is_array($mail_config) ? $mail_config : null),
         'master_emails' => array_values(array_filter(array_map(fn($e) => mb_strtolower(trim((string)$e)), (array)$master_emails))),
         'pexels_key' => trim((string)$pexels_key),
@@ -147,7 +153,8 @@ function app_url(): string
         $saved = '';
         try {
             $saved = (string)db()->query('SELECT v FROM ' . t('meta') . " WHERE k = 'app_url'")->fetchColumn();
-        } catch (Throwable $e) { /* not installed yet */ }
+        } catch (Throwable $e) { /* not installed yet */
+        }
         return $url = $saved ?: 'https://www.illerom.eu/savpresentations/';
     }
     $host = preg_replace('/[^a-z0-9.:-]/i', '', (string)$_SERVER['HTTP_HOST']);
@@ -165,7 +172,8 @@ function remember_app_url(): void
         if ((string)$st->fetchColumn() !== $url) {
             db()->prepare('INSERT INTO ' . t('meta') . " (k, v) VALUES ('app_url', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)")->execute([$url]);
         }
-    } catch (Throwable $e) { /* not important */ }
+    } catch (Throwable $e) { /* not important */
+    }
 }
 
 // ---------- JSON helpers ----------
@@ -297,6 +305,7 @@ function public_user(array $u): array
         'settings' => json_decode((string)$u['settings'], true) ?: new stdClass(),
         'hasPassword' => ($u['password_hash'] ?? '') !== '',
         'googleLinked' => !empty($u['google_sub']),
+        'savLinked' => !empty($u['sav_sub']),
         'verified' => !empty($u['email_verified_at']),
         'master' => is_master($u),
         'mailReady' => mail_settings() !== null,
@@ -306,7 +315,7 @@ function public_user(array $u): array
 /** The colour of a person in avatars, cursors and selections. */
 function user_color(int $id): string
 {
-    $c = ['#0E8F80', '#D9480F', '#7048E8', '#C2255C', '#1971C2', '#5C940D', '#9C36B5', '#B7791F', '#2B6CB0', '#A61E4D'];
+    $c = ['#7048E8', '#D9480F', '#0E8F80', '#C2255C', '#1971C2', '#5C940D', '#9C36B5', '#B7791F', '#2B6CB0', '#A61E4D'];
     return $c[$id % count($c)];
 }
 

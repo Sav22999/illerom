@@ -13,7 +13,10 @@
  * links          single-use links: the first signed-in person who opens one gets its role
  * comments       comments on a slide or on one of its elements (visible to who can open the presentation)
  * notes          personal notes: only their author ever sees them
- * media          pictures (files in the storage folder), served by their random id
+ * page_rules     what someone can do on a single page, when it differs from the presentation; who: '*' (whoever has no
+ *                rule of their own), 'u:<id>' or 'e:<email>' (invited, no account yet); role none = the page does not exist
+ * versions       copies of a presentation over time (automatic, at most one every half hour, or saved by hand)
+ * media          pictures and videos (files in the storage folder), served by their random id
  * reports        abuse reported by the people who saw a presentation
  * audit          what the master admins did
  */
@@ -196,6 +199,27 @@ function schema_statements(string $p): array
             " . $fk('not_deck', 'deck_id', 'decks') . ",
             " . $fk('not_user', 'user_id', 'users') . "
         ) $e",
+        "CREATE TABLE IF NOT EXISTS `{$p}page_rules` (
+            `deck_id` INT UNSIGNED NOT NULL,
+            `sid` VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+            `who` VARCHAR(192) NOT NULL,
+            `role` ENUM('none','viewer','commenter','editor') NOT NULL,
+            PRIMARY KEY (`deck_id`, `who`, `sid`),
+            " . $fk('pgr_deck', 'deck_id', 'decks') . "
+        ) $e",
+        "CREATE TABLE IF NOT EXISTS `{$p}versions` (
+            `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `deck_id` INT UNSIGNED NOT NULL,
+            `user_id` INT UNSIGNED NULL,
+            `label` VARCHAR(80) NOT NULL DEFAULT '',
+            `title` VARCHAR(150) NOT NULL,
+            `meta` MEDIUMTEXT NOT NULL,
+            `slides` MEDIUMTEXT NOT NULL,
+            `created_at` DATETIME NOT NULL,
+            KEY `ix_deck` (`deck_id`, `id`),
+            " . $fk('ver_deck', 'deck_id', 'decks') . ",
+            " . $fk('ver_user', 'user_id', 'users', 'SET NULL') . "
+        ) $e",
         "CREATE TABLE IF NOT EXISTS `{$p}media` (
             `id` CHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL PRIMARY KEY,
             `user_id` INT UNSIGNED NOT NULL,
@@ -205,6 +229,7 @@ function schema_statements(string $p): array
             `bytes` INT UNSIGNED NOT NULL,
             `name` VARCHAR(120) NOT NULL DEFAULT '',
             `credit` VARCHAR(300) NOT NULL DEFAULT '',
+            `poster` CHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL DEFAULT '',
             `created_at` DATETIME NOT NULL,
             KEY `ix_user` (`user_id`, `created_at`),
             " . $fk('med_user', 'user_id', 'users') . "
@@ -242,6 +267,8 @@ function schema_statements(string $p): array
 function install_schema(PDO $pdo, string $prefix): void
 {
     foreach (schema_statements($prefix) as $sql) $pdo->exec($sql);
+    // columns added after the first version
+    if (!$pdo->query("SHOW COLUMNS FROM `{$prefix}media` LIKE 'poster'")->fetch()) $pdo->exec("ALTER TABLE `{$prefix}media` ADD `poster` CHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL DEFAULT '' AFTER `credit`");
     $pdo->prepare("INSERT INTO `{$prefix}meta` (k, v) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)")
         ->execute([(string)SCHEMA_VERSION]);
 }

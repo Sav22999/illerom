@@ -1,7 +1,10 @@
 <?php
 /** Small helpers: no database, no sessions, no cookies. */
 
-function e(?string $s): string { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
+function e(?string $s): string
+{
+    return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
+}
 
 /** An asset with its version, so browsers can keep it for a long time. */
 function asset(string $path): string
@@ -22,7 +25,10 @@ function source_url(array $p, array $site): string
     return preg_match('#^https://#', $p['source']) ? $p['source'] : $site['source'] . $p['source'];
 }
 
-function is_external(string $url): bool { return (bool)preg_match('#^https?://#', $url); }
+function is_external(string $url): bool
+{
+    return (bool)preg_match('#^https?://#', $url);
+}
 
 /** Line icons drawn in the page: nothing to download. */
 function icon(string $name): string

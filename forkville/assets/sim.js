@@ -12,7 +12,7 @@
  * and the server caps them by time and seats. The same simulation runs, without reporting, when visiting.
  */
 import * as THREE from '../vendor/three.module.min.js';
-import {personModel, animatePerson, dishModel, mat} from './models.js';
+import {animatePerson, dishModel, mat, personModel} from './models.js';
 import {icon} from './icons.js';
 import {sfx} from './audio.js';
 import {FH, FLOOR_STRIDE as S} from './scene.js';
@@ -93,7 +93,13 @@ const STAIN_TEX = (() => {
     return new THREE.CanvasTexture(c);
 })();
 const stain = (color, r, x = 0, z = 0, opacity = 0.6) => {
-    const m = new THREE.Mesh(new THREE.CircleGeometry(r, 20), new THREE.MeshBasicMaterial({color, map: STAIN_TEX, transparent: true, opacity, depthWrite: false}));
+    const m = new THREE.Mesh(new THREE.CircleGeometry(r, 20), new THREE.MeshBasicMaterial({
+        color,
+        map: STAIN_TEX,
+        transparent: true,
+        opacity,
+        depthWrite: false
+    }));
     m.rotation.x = -Math.PI / 2;
     m.position.set(x, 0.032, z);
     m.renderOrder = 1;
@@ -102,7 +108,12 @@ const stain = (color, r, x = 0, z = 0, opacity = 0.6) => {
 /** Shoe prints (wet or snowy) walking in from the door. */
 const prints = (g, color, opacity) => {
     for (let i = 0; i < 4; i++) {
-        const p = new THREE.Mesh(new THREE.CircleGeometry(0.05, 10), new THREE.MeshBasicMaterial({color, transparent: true, opacity, depthWrite: false}));
+        const p = new THREE.Mesh(new THREE.CircleGeometry(0.05, 10), new THREE.MeshBasicMaterial({
+            color,
+            transparent: true,
+            opacity,
+            depthWrite: false
+        }));
         p.rotation.x = -Math.PI / 2;
         p.scale.set(0.7, 1.4, 1);
         p.position.set((i % 2 ? 0.09 : -0.09), 0.033, 0.4 - i * 0.22);
@@ -165,7 +176,10 @@ export function litterMesh(kind) {
         add(new THREE.CylinderGeometry(0.047, 0.047, 0.02, 12), '#D9653B', -0.11, 0.045, 0).rotation.z = Math.PI / 2;
         const straw = add(new THREE.CylinderGeometry(0.006, 0.006, 0.16, 5), '#3E7CB4', 0.05, 0.036, 0.09);
         straw.rotation.set(Math.PI / 2, 0, 0.7);
-        for (let i = 0; i < 3; i++) add(new THREE.BoxGeometry(0.025, 0.025, 0.025), '#E8F6FF', 0.08 + i * 0.05, 0.045, -0.05 + i * 0.03, {opacity: 0.7, roughness: 0.05});
+        for (let i = 0; i < 3; i++) add(new THREE.BoxGeometry(0.025, 0.025, 0.025), '#E8F6FF', 0.08 + i * 0.05, 0.045, -0.05 + i * 0.03, {
+            opacity: 0.7,
+            roughness: 0.05
+        });
     } else if (kind === 'puddle') {
         // An uneven puddle of rainwater with a ripple, and wet shoe prints from the door
         g.add(stain('#6FB4E0', 0.42, 0, 0, 0.95), stain('#BFE3F5', 0.2, -0.08, -0.06, 0.6));
@@ -202,8 +216,25 @@ const PLANT_RX = /plant|cactus|bonsai|palm|sunflower|fern|orchid|lavender|terrar
 export const isPlant = (k) => PLANT_RX.test(k) && !/flower_cart|rug_|wall_flowers/.test(k);
 
 /** Height of the top of tables (where dishes go) and of seats (how high a guest sits), when not the usual. */
-const TABLE_H = {table_marble: 0.72, table_bar: 1.03, table_marble_round: 0.74, table_gold: 0.74, table_rustic_long: 0.76};
-const SEAT_Y = {stool_bar: 0.12, stool_wood: 0.12, stool_cushion: 0.12, chair_velvet: -0.12, chair_armchair: -0.12, chair_leather: -0.12, chair_throne: -0.1, chair_egg: -0.1, chair_booth: 0.03, chair_wicker: -0.02};
+const TABLE_H = {
+    table_marble: 0.72,
+    table_bar: 1.03,
+    table_marble_round: 0.74,
+    table_gold: 0.74,
+    table_rustic_long: 0.76
+};
+const SEAT_Y = {
+    stool_bar: 0.12,
+    stool_wood: 0.12,
+    stool_cushion: 0.12,
+    chair_velvet: -0.12,
+    chair_armchair: -0.12,
+    chair_leather: -0.12,
+    chair_throne: -0.1,
+    chair_egg: -0.1,
+    chair_booth: 0.03,
+    chair_wicker: -0.02
+};
 
 export class Sim {
     constructor(world, catalog, opts = {}) {
@@ -218,6 +249,32 @@ export class Sim {
         this.clock = 9 * 60; // game minutes since the restaurant opened (year 0, 1 March); the app sets it from the server
         this.effects = {music: 0, fun: 0, cozy: 0};
         world.on('frame', (dt, t) => this.running && this.update(dt, t));
+    }
+
+    get hour() {
+        return (this.clock / 60) % 24;
+    }
+
+    /** The game day number (the calendar's), and the hour. */
+    get day() {
+        return Math.floor((this.clock || 0) / 1440);
+    }
+
+    get cleanliness() {
+        const dirty = this.seats.filter(s => s.dirty).length;
+        return Math.max(0, 100 - dirty * 12 - this.litter.length * 9);
+    }
+
+    /** Guests in the restaurant right now: from the door bell until they walk out of the door (the line outside does not count). */
+    get guestsInside() {
+        return this.agents.filter(a => a.role === 'customer' && a.inside).length;
+    }
+
+    // ------------------------------------------------------------ the room as a grid
+
+    /** People waiting outside: on benches if there are free places, otherwise standing in a line on the sidewalk. */
+    get queue() {
+        return this.agents.filter(a => a.role === 'customer' && a.state === 'queue');
     }
 
     /** r: the restaurant ({size, layout, staff, menu: [{dish, level}], popularity}). */
@@ -269,12 +326,6 @@ export class Sim {
         return b;
     }
 
-    get hour() {
-        return (this.clock / 60) % 24;
-    }
-
-    // ------------------------------------------------------------ the room as a grid
-
     analyse() {
         const items = this.catalog.items, tags = this.catalog.tags || {}, W = this.W;
         this.blocked = new Uint8Array(W * ((this.rects.length - 1) * S + this.D + 1));
@@ -307,14 +358,39 @@ export class Sim {
             const {tiles} = this.world.footprint(it, items);
             const [dx, dz] = DIRS[it.r];
             for (const [x, z] of tiles) if (free(x + dx, z + dz)) return {x: x + dx, z: z + dz};
-            for (const [x, z] of tiles) for (const [ax, az] of DIRS) if (free(x + ax, z + az)) return {x: x + ax, z: z + az};
+            for (const [x, z] of tiles) for (const [ax, az] of DIRS) if (free(x + ax, z + az)) return {
+                x: x + ax,
+                z: z + az
+            };
             return null;
         };
         this.seats = [];
         this.stoves = [];
         this.counters = [];
         this.tills = []; // cash registers: where the cashier stands (front) and where the guest pays (pay)
-        this.spots = {sink: [], rest: [], coffee: [], music: [], fun: [], cozy: [], light: [], janitor: [], host: [], toilet: [], washbasin: [], dryer: [], drinks: [], icecream: [], fridge: 0, register: 0, trash: 0, snack: 0, attract: 0, truck: [], queue: []};
+        this.spots = {
+            sink: [],
+            rest: [],
+            coffee: [],
+            music: [],
+            fun: [],
+            cozy: [],
+            light: [],
+            janitor: [],
+            host: [],
+            toilet: [],
+            washbasin: [],
+            dryer: [],
+            drinks: [],
+            icecream: [],
+            fridge: 0,
+            register: 0,
+            trash: 0,
+            snack: 0,
+            attract: 0,
+            truck: [],
+            queue: []
+        };
         this.kind = (this.catalog.kinds || {})[this.r.kind || 'generic'] || {price: 1, customers: 1, eat: 1};
         this.kindKey = this.r.kind || 'generic';
         this.benchSeats = [];
@@ -351,7 +427,10 @@ export class Sim {
                     for (let i = 0; i < stops.length; i++) for (let j = i + 1; j < stops.length; j++) link(stops[i], stops[j]);
                 } else { // stairs: up at the front, out on the floor above just past the top end
                     const [dx, dz] = DIRS[it.r], own = new Set(tiles.map(([x, z]) => x + ',' + z));
-                    const out = tiles.map(([x, z]) => ({x: x - dx, z: z - dz + S})).find(p => !own.has(p.x + ',' + (p.z - S)) && free(p.x, p.z));
+                    const out = tiles.map(([x, z]) => ({
+                        x: x - dx,
+                        z: z - dz + S
+                    })).find(p => !own.has(p.x + ',' + (p.z - S)) && free(p.x, p.z));
                     if (out) link(entry, out);
                 }
                 continue;
@@ -363,13 +442,21 @@ export class Sim {
             if (tag === 'queue') { // outdoor bench: two places to wait
                 const {w, d} = this.world.footprint(it, items);
                 const c = {x: it.x + w / 2, z: it.z + d / 2}, [fx, fz] = DIRS[it.r];
-                for (const o of [-0.45, 0.45]) this.benchSeats.push({x: c.x + fz * o, z: c.z + fx * o, r: it.r, busy: null});
+                for (const o of [-0.45, 0.45]) this.benchSeats.push({
+                    x: c.x + fz * o,
+                    z: c.z + fx * o,
+                    r: it.r,
+                    busy: null
+                });
                 continue;
             }
             if (tag === 'register') {
                 const f = front(it);
                 const own = new Set(this.world.footprint(it, items).tiles.map(([x, z]) => x + ',' + z));
-                const pay = f && this.world.footprint(it, items).tiles.flatMap(([x, z]) => DIRS.map(([a, b]) => ({x: x + a, z: z + b})))
+                const pay = f && this.world.footprint(it, items).tiles.flatMap(([x, z]) => DIRS.map(([a, b]) => ({
+                    x: x + a,
+                    z: z + b
+                })))
                     .find(p => !own.has(p.x + ',' + p.z) && free(p.x, p.z) && !(p.x === f.x && p.z === f.z));
                 this.tills.push({id: it.id, ...center(it), front: f, pay: pay || null, cashier: null});
             }
@@ -377,7 +464,13 @@ export class Sim {
                 if (typeof this.spots[tag] === 'number') this.spots[tag]++;
                 else {
                     const f = front(it);
-                    this.spots[tag].push({id: it.id, key: it.k, ...center(it), front: f, busy: null, tier: tierOf(it.k)});
+                    this.spots[tag].push({
+                        id: it.id,
+                        key: it.k, ...center(it),
+                        front: f,
+                        busy: null,
+                        tier: tierOf(it.k)
+                    });
                 }
             }
             if (def.cat === 'chair') {
@@ -385,7 +478,10 @@ export class Sim {
                 const table = at.get((it.x + dx) + ',' + (it.z + dz));
                 if (!table || items[table.k].cat !== 'table') continue;
                 const service = DIRS.map(([a, b]) => ({x: it.x + a, z: it.z + b})).filter(p => free(p.x, p.z));
-                const tableNb = this.world.footprint(table, items).tiles.flatMap(([tx, tz]) => DIRS.map(([a, b]) => ({x: tx + a, z: tz + b}))).filter(p => free(p.x, p.z));
+                const tableNb = this.world.footprint(table, items).tiles.flatMap(([tx, tz]) => DIRS.map(([a, b]) => ({
+                    x: tx + a,
+                    z: tz + b
+                }))).filter(p => free(p.x, p.z));
                 const all = [...service, ...tableNb];
                 if (!all.length) continue;
                 const tableH = TABLE_H[table.k] ?? 0.77;
@@ -398,7 +494,14 @@ export class Sim {
                 });
             } else if (def.cat === 'stove') {
                 const f = front(it);
-                if (f) this.stoves.push({id: it.id, front: f, r: it.r, speed: def.speed || 1, tier: tierOf(it.k), chef: null});
+                if (f) this.stoves.push({
+                    id: it.id,
+                    front: f,
+                    r: it.r,
+                    speed: def.speed || 1,
+                    tier: tierOf(it.k),
+                    chef: null
+                });
             } else if (def.cat === 'counter' || it.k === 'dish_lift') {
                 // Counters, and dish lifts: a lift is a counter that also sends a dish to the lift on another floor
                 const f = front(it);
@@ -406,7 +509,17 @@ export class Sim {
                 const cx = it.x + 0.5, cz = it.z + 0.5, [dx, dz] = DIRS[it.r];
                 const side = [dz, dx], lift = it.k === 'dish_lift';
                 // A lift's shaft: the same tile on every floor (dish lifts in the same place on several floors are joined)
-                this.counters.push({id: it.id, front: f, lift, floor: floorOf(it.z), shaft: lift ? it.x + ',' + (it.z - floorOf(it.z) * S) : null, slots: [-0.22, 0.22].map(o => ({pos: new THREE.Vector3(cx + side[0] * o + dx * 0.1, lift ? 1.03 : 0.98, cz + side[1] * o + dz * 0.1), dish: null}))});
+                this.counters.push({
+                    id: it.id,
+                    front: f,
+                    lift,
+                    floor: floorOf(it.z),
+                    shaft: lift ? it.x + ',' + (it.z - floorOf(it.z) * S) : null,
+                    slots: [-0.22, 0.22].map(o => ({
+                        pos: new THREE.Vector3(cx + side[0] * o + dx * 0.1, lift ? 1.03 : 0.98, cz + side[1] * o + dz * 0.1),
+                        dish: null
+                    }))
+                });
             }
         }
         // Plants: the cleaner waters them every day (a thirsty plant droops and is only half as pretty)
@@ -416,8 +529,16 @@ export class Sim {
             if (!isPlant(it.k)) continue;
             const outdoor = items[it.k].cat === 'outdoor';
             const prev = old.get(it.id);
-            this.plants.push({id: it.id, k: it.k, ...center(it), outdoor, front: outdoor ? null : front(it), lastWater: prev?.lastWater ?? null, thirsty: prev?.thirsty || false, claimed: null,
-                decor: this.decor.find(d => d.id === it.id)});
+            this.plants.push({
+                id: it.id,
+                k: it.k, ...center(it),
+                outdoor,
+                front: outdoor ? null : front(it),
+                lastWater: prev?.lastWater ?? null,
+                thirsty: prev?.thirsty || false,
+                claimed: null,
+                decor: this.decor.find(d => d.id === it.id)
+            });
         }
         this.computeBeauty();
         // Seats that cannot be reached from the door are useless
@@ -426,7 +547,11 @@ export class Sim {
         // The tables that have at least one usable seat, numbered for the player (1, 2, 3…)
         const byTable = new Map();
         for (const seat of this.seats) {
-            if (!byTable.has(seat.tableId)) byTable.set(seat.tableId, {id: seat.tableId, tiles: seat.tableTiles, seats: []});
+            if (!byTable.has(seat.tableId)) byTable.set(seat.tableId, {
+                id: seat.tableId,
+                tiles: seat.tableTiles,
+                seats: []
+            });
             byTable.get(seat.tableId).seats.push(seat);
         }
         this.tables = [...byTable.values()].sort((a, b) => a.id - b.id);
@@ -449,11 +574,6 @@ export class Sim {
         }, 0));
     }
 
-    /** The game day number (the calendar's), and the hour. */
-    get day() {
-        return Math.floor((this.clock || 0) / 1440);
-    }
-
     /** A plant gets water: it perks up. */
     water(p, by = null) {
         p.lastWater = this.day;
@@ -467,6 +587,8 @@ export class Sim {
         this.floater(new THREE.Vector3(p.x, 1.2, p.z), mood('water'), 'floater-fx');
         if (by) by.energy -= 1;
     }
+
+    // ------------------------------------------------------------ agents
 
     /** Evening and still not watered today: the plant droops. */
     checkPlants() {
@@ -515,7 +637,10 @@ export class Sim {
         if (p.z < 0) route.push([W + 0.5, -0.5], [p.x + 0.8, -0.5]);
         const spot = [p.x + 0.8, p.z];
         const back = [...route].reverse();
-        const ok = this.walkTo(a, [{x: this.door, z: n - 1}], () => this.walkPoints(a, [[dx, n + 0.4], ...route, spot], () => pour(() => this.walkPoints(a, [...back, [dx, n + 0.4], [dx, n - 0.5]], () => {
+        const ok = this.walkTo(a, [{
+            x: this.door,
+            z: n - 1
+        }], () => this.walkPoints(a, [[dx, n + 0.4], ...route, spot], () => pour(() => this.walkPoints(a, [...back, [dx, n + 0.4], [dx, n - 0.5]], () => {
             a.tile = {x: this.door, z: n - 1};
             this.goHome(a);
         }))));
@@ -548,7 +673,10 @@ export class Sim {
             const k = key(x, z);
             if (goalSet.has(k)) {
                 const out = [];
-                for (let c = k; c !== key(start.x, start.z); c = came.get(c)) out.unshift({x: c % n, z: Math.floor(c / n)});
+                for (let c = k; c !== key(start.x, start.z); c = came.get(c)) out.unshift({
+                    x: c % n,
+                    z: Math.floor(c / n)
+                });
                 return out;
             }
             for (const [dx, dz] of DIRS) {
@@ -574,12 +702,21 @@ export class Sim {
         return null;
     }
 
-    // ------------------------------------------------------------ agents
-
     addAgent(role, color, seed, look) {
         const mesh = personModel(role, color, seed, look);
         this.world.agentGroup.add(mesh);
-        const a = {id: this.nextId++, role, mesh, pos: new THREE.Vector3(), way: [], state: 'idle', anim: 'idle', timer: 0, task: null, activity: 'idle'};
+        const a = {
+            id: this.nextId++,
+            role,
+            mesh,
+            pos: new THREE.Vector3(),
+            way: [],
+            state: 'idle',
+            anim: 'idle',
+            timer: 0,
+            task: null,
+            activity: 'idle'
+        };
         mesh.traverse(o => (o.userData.agentId = a.id));
         this.agents.push(a);
         return a;
@@ -587,7 +724,14 @@ export class Sim {
 
     addStaff(s) {
         const uniform = s.outfit && s.outfit !== 'default' ? this.catalog.uniforms?.[s.outfit] : null;
-        const a = this.addAgent(s.role, s.color, s.id * 7.3, {hair: s.hair, hairColor: s.hairColor, uniform, glasses: s.glasses, facial: s.facial, headwear: s.headwear});
+        const a = this.addAgent(s.role, s.color, s.id * 7.3, {
+            hair: s.hair,
+            hairColor: s.hairColor,
+            uniform,
+            glasses: s.glasses,
+            facial: s.facial,
+            headwear: s.headwear
+        });
         a.staff = s;
         a.trait = s.trait || null;
         a.energy = 70 + Math.random() * 30;
@@ -943,8 +1087,26 @@ export class Sim {
         if (!A || !B || A.id !== B.id || !this.world.liftFloor) return false;
         const from0 = this.world.liftFloor(A.id);
         // Seconds of each phase: the cabin may first have to come from another floor
-        const T = {call: Math.abs(from0 - fa) * 1.1, open: 0.55, walk: 0.7, close: 0.5, ride: 0.6 + Math.abs(fw - fa) * 1.1, open2: 0.55, out: 0.7};
-        a.ride = {A, w, fa, fw, t: 0, T, from0, start: {x: a.pos.x, z: a.pos.z}, inPos: {x: A.cx, z: A.cz + (fa - A.f0) * S}};
+        const T = {
+            call: Math.abs(from0 - fa) * 1.1,
+            open: 0.55,
+            walk: 0.7,
+            close: 0.5,
+            ride: 0.6 + Math.abs(fw - fa) * 1.1,
+            open2: 0.55,
+            out: 0.7
+        };
+        a.ride = {
+            A,
+            w,
+            fa,
+            fw,
+            t: 0,
+            T,
+            from0,
+            start: {x: a.pos.x, z: a.pos.z},
+            inPos: {x: A.cx, z: A.cz + (fa - A.f0) * S}
+        };
         return true;
     }
 
@@ -1013,6 +1175,8 @@ export class Sim {
         }
     }
 
+    // ------------------------------------------------------------ cleanliness
+
     face(a, x, z) {
         a.yaw = Math.atan2(x - a.pos.x, z - a.pos.z);
     }
@@ -1035,13 +1199,6 @@ export class Sim {
         if (activity) a.activity = activity;
     }
 
-    // ------------------------------------------------------------ cleanliness
-
-    get cleanliness() {
-        const dirty = this.seats.filter(s => s.dirty).length;
-        return Math.max(0, 100 - dirty * 12 - this.litter.length * 9);
-    }
-
     makeDirty(seat) {
         seat.dirty = true;
         const g = new THREE.Group();
@@ -1058,11 +1215,17 @@ export class Sim {
         sauce.rotation.x = -Math.PI / 2;
         sauce.scale.set(1.4, 0.8, 1);
         for (let i = 0; i < 4; i++) part(new THREE.IcosahedronGeometry(0.015, 0), '#B08B5A', -0.05 + i * 0.03, 0.035, 0.05 - (i % 2) * 0.03, {flat: true});
-        const fork = part(new THREE.BoxGeometry(0.012, 0.006, 0.2), '#C9CED4', 0.02, 0.032, 0, {metalness: 0.6, roughness: 0.3});
+        const fork = part(new THREE.BoxGeometry(0.012, 0.006, 0.2), '#C9CED4', 0.02, 0.032, 0, {
+            metalness: 0.6,
+            roughness: 0.3
+        });
         fork.rotation.y = 0.6;
         const napkin = part(new THREE.DodecahedronGeometry(0.04, 0), seat.id % 2 ? '#F25F5C' : '#FFFFFF', -0.17, 0.03, 0.06, {flat: true});
         napkin.scale.set(1.2, 0.6, 1);
-        part(new THREE.CylinderGeometry(0.03, 0.025, 0.09, 12, 1, true), '#FFFFFF', 0.15, 0.045, -0.1, {opacity: 0.35, roughness: 0.05});
+        part(new THREE.CylinderGeometry(0.03, 0.025, 0.09, 12, 1, true), '#FFFFFF', 0.15, 0.045, -0.1, {
+            opacity: 0.35,
+            roughness: 0.05
+        });
         g.position.copy(seat.dishPos);
         g.traverse(o => (o.userData.litterAt = 'seat:' + seat.id)); // the player can tap it to clear the table
         this.fxAdd(g);
@@ -1093,14 +1256,23 @@ export class Sim {
         this.litter.push({x: t.x, z: t.z, mesh, kind, claimed: null});
     }
 
+    // ------------------------------------------------------------ customers
+
     /** Rain and snow come in with the customers: puddles or snow by the door. */
     weatherDirt() {
-        const rainy = ['drizzle', 'rain', 'hail'].includes(this.weather), snowy = ['light_snow', 'snow'].includes(this.weather);
+        const rainy = ['drizzle', 'rain', 'hail'].includes(this.weather),
+            snowy = ['light_snow', 'snow'].includes(this.weather);
         const leaves = !rainy && !snowy && this.season === 'autumn' && Math.random() < 0.3;
         if (!rainy && !snowy && !leaves) return;
         if ((this.weather === 'drizzle' || this.weather === 'light_snow') && Math.random() < 0.5) return; // light weather: less mess
         if (Math.random() > 0.45) return;
-        const n = this.size, spots = [{x: this.door, z: n - 1}, {x: this.door - 1, z: n - 1}, {x: this.door + 1, z: n - 1}, {x: this.door, z: n - 2}].filter(p => p.x >= 0 && p.x < this.W && (this.free(p.x, p.z) || (p.x === this.door && p.z === n - 1)));
+        const n = this.size, spots = [{x: this.door, z: n - 1}, {x: this.door - 1, z: n - 1}, {
+            x: this.door + 1,
+            z: n - 1
+        }, {
+            x: this.door,
+            z: n - 2
+        }].filter(p => p.x >= 0 && p.x < this.W && (this.free(p.x, p.z) || (p.x === this.door && p.z === n - 1)));
         const p = spots[Math.floor(Math.random() * spots.length)];
         if (p) this.dropLitter(p, leaves ? 'leaves' : rainy ? 'puddle' : 'snow');
     }
@@ -1108,18 +1280,6 @@ export class Sim {
     removeLitter(l) {
         l.mesh.parent?.remove(l.mesh);
         this.litter = this.litter.filter(x => x !== l);
-    }
-
-    // ------------------------------------------------------------ customers
-
-    /** Guests in the restaurant right now: from the door bell until they walk out of the door (the line outside does not count). */
-    get guestsInside() {
-        return this.agents.filter(a => a.role === 'customer' && a.inside).length;
-    }
-
-    /** People waiting outside: on benches if there are free places, otherwise standing in a line on the sidewalk. */
-    get queue() {
-        return this.agents.filter(a => a.role === 'customer' && a.state === 'queue');
     }
 
     /** From the sidewalk in front to a point of the garden: straight for the terrace and the side yard, around the house for the back. */
@@ -1447,7 +1607,10 @@ export class Sim {
             if (!ready(slot)) continue;
             let second = null;
             if (this.skill(w) >= 7) for (const c2 of this.counters) for (const s2 of c2.slots)
-                if (!second && s2 !== slot && ready(s2) && s2.dish.customer !== slot.dish.customer && floorOf(c2.front.z) === floorOf(c.front.z)) second = {c: c2, slot: s2};
+                if (!second && s2 !== slot && ready(s2) && s2.dish.customer !== slot.dish.customer && floorOf(c2.front.z) === floorOf(c.front.z)) second = {
+                    c: c2,
+                    slot: s2
+                };
             slot.dish.claimed = w;
             if (second) second.slot.dish.claimed = w;
             w.task = 'serve';
@@ -1676,7 +1839,10 @@ export class Sim {
         // Water, drinks and snow: the mop (and its bucket); paper, peels, crumbs, leaves: the broom and the dustpan
         const wet = l.kind === 'puddle' || l.kind === 'snow' || l.kind === 'spill';
         a.tool = wet ? 'mop' : 'broom';
-        const ok = this.walkTo(a, [{x: l.x, z: l.z}], () => this.busy(a, (wet ? 2.6 : 1.6) * this.skillTime(a), wet ? 'mop' : 'sweep', () => {
+        const ok = this.walkTo(a, [{
+            x: l.x,
+            z: l.z
+        }], () => this.busy(a, (wet ? 2.6 : 1.6) * this.skillTime(a), wet ? 'mop' : 'sweep', () => {
             this.removeLitter(l);
             a.energy -= 2;
             a.supplies = (a.supplies ?? 4) - 1;
@@ -1735,7 +1901,14 @@ export class Sim {
      * role or look happens on the spot.
      */
     refresh(r) {
-        this.r = {...this.r, staff: r.staff, menu: r.menu, popularity: r.popularity, status: r.status ?? this.r.status, kind: r.kind ?? this.r.kind};
+        this.r = {
+            ...this.r,
+            staff: r.staff,
+            menu: r.menu,
+            popularity: r.popularity,
+            status: r.status ?? this.r.status,
+            kind: r.kind ?? this.r.kind
+        };
         this.kind = (this.catalog.kinds || {})[this.r.kind || 'generic'] || this.kind;
         this.kindKey = this.r.kind || 'generic';
         const want = new Map(r.staff.map(st => [st.id, st]));
@@ -1820,7 +1993,10 @@ export class Sim {
         a.cookingOrder = null;
         this.clearBubble(a);
         const cust = a.servingCust;
-        if (a.dish && cust?.state === 'waitFood' && this.agents.includes(cust)) this.orders.unshift({customer: cust, dish: cust.order.dish}); // the dish they carried: cooked again
+        if (a.dish && cust?.state === 'waitFood' && this.agents.includes(cust)) this.orders.unshift({
+            customer: cust,
+            dish: cust.order.dish
+        }); // the dish they carried: cooked again
         a.servingCust = null;
     }
 
@@ -1955,9 +2131,16 @@ export class Sim {
     actionsFor(a) {
         if (a.role === 'customer') {
             if (a.state === 'leaving' || a.state === 'walk') return [];
-            return [{id: 'greet', icon: 'greet', done: a.greeted}, {id: 'joke', icon: 'laugh', done: a.joked}, {id: 'dessert', icon: 'candy', done: a.treated}];
+            return [{id: 'greet', icon: 'greet', done: a.greeted}, {
+                id: 'joke',
+                icon: 'laugh',
+                done: a.joked
+            }, {id: 'dessert', icon: 'candy', done: a.treated}];
         }
-        return [{id: 'cheer', icon: 'strong', done: a.cheeredAt && this.t - a.cheeredAt < 60}, {id: 'break', icon: 'coffee'}, {id: 'praise', icon: 'star', done: a.praisedAt && this.t - a.praisedAt < 60}];
+        return [{id: 'cheer', icon: 'strong', done: a.cheeredAt && this.t - a.cheeredAt < 60}, {
+            id: 'break',
+            icon: 'coffee'
+        }, {id: 'praise', icon: 'star', done: a.praisedAt && this.t - a.praisedAt < 60}];
     }
 
     /** Runs an interaction; returns a message key for the toast (or null). */
@@ -2013,7 +2196,10 @@ export class Sim {
         const tag = (this.catalog.tags || {})[it.k];
         const out = [];
         const seat = this.seats.find(s => s.dirty && this.isTableOf(s, it));
-        if (seat || (this.catalog.items[it.k].cat === 'table' && this.seats.some(s => s.dirty && this.isTableOf(s, it)))) out.push({id: 'clean', icon: 'clean'});
+        if (seat || (this.catalog.items[it.k].cat === 'table' && this.seats.some(s => s.dirty && this.isTableOf(s, it)))) out.push({
+            id: 'clean',
+            icon: 'clean'
+        });
         if (tag === 'toilet' && this.spots.toilet.find(x => x.id === id)?.dirty) out.push({id: 'clean', icon: 'clean'});
         if (tag === 'music') out.push({id: 'music', icon: 'music', done: this.effects.music > 0});
         if (tag === 'fun') out.push({id: 'fun', icon: 'tv', done: this.effects.fun > 0});
@@ -2143,7 +2329,14 @@ export class Sim {
         const status = this.r.status || 'open';
         if (dt > 0) {
             // Kind of restaurant, menu signs outside, the hour and the weather change how many people come
-            this.spawnIn -= dt * hourFactor(this.hour, this.kindKey) * ({drizzle: 0.9, rain: 0.65, hail: 0.6, light_snow: 0.85, snow: 0.6, sunny: 1.1}[this.weather] || 1) * (this.kind.customers || 1) * (1 + 0.08 * Math.min(2, this.spots.attract));
+            this.spawnIn -= dt * hourFactor(this.hour, this.kindKey) * ({
+                drizzle: 0.9,
+                rain: 0.65,
+                hail: 0.6,
+                light_snow: 0.85,
+                snow: 0.6,
+                sunny: 1.1
+            }[this.weather] || 1) * (this.kind.customers || 1) * (1 + 0.08 * Math.min(2, this.spots.attract));
             if (this.spawnIn <= 0) {
                 this.spawnIn = arrivalSeconds(this.r.popularity) * (0.7 + Math.random() * 0.6);
                 // Open: a guest. Closed, not taking guests, or not ready: the same person just walks on by along the sidewalk
@@ -2183,7 +2376,10 @@ export class Sim {
             if (this.trafficDirt >= 1) {
                 this.trafficDirt = 0;
                 const who = inside[Math.floor(Math.random() * inside.length)];
-                if (who) this.dropLitter(who.seat ? {x: who.seat.x, z: who.seat.z} : who.tile, ['crumbs', 'paper', 'spill', 'crumbs'][Math.floor(Math.random() * 4)]);
+                if (who) this.dropLitter(who.seat ? {
+                    x: who.seat.x,
+                    z: who.seat.z
+                } : who.tile, ['crumbs', 'paper', 'spill', 'crumbs'][Math.floor(Math.random() * 4)]);
             }
         }
         for (const a of [...this.agents]) {
@@ -2210,7 +2406,9 @@ export class Sim {
                     a.nsBubble = false;
                     this.clearBubble(a);
                 }
-                if (a.away) { /* at home */ } else if (a.staff && this.noStation(a) && !a.closing) { /* nothing they can do */ } else if (a.role === 'waiter') this.thinkWaiter(a);
+                if (a.away) { /* at home */
+                } else if (a.staff && this.noStation(a) && !a.closing) { /* nothing they can do */
+                } else if (a.role === 'waiter') this.thinkWaiter(a);
                 else if (a.role === 'chef') this.thinkChef(a);
                 else if (a.role === 'cleaner') this.thinkCleaner(a);
                 else if (a.role === 'manager') this.thinkManager(a);
@@ -2221,7 +2419,13 @@ export class Sim {
             let anim = a.state === 'walk' ? (a.ride && a.rideStill ? 'idle' : a.anim === 'carry' ? 'carry' : 'walk') : a.anim === 'walk' ? 'idle' : a.anim;
             if (a.anim2 && this.t < a.anim2.until && a.state !== 'walk') anim = a.anim2.name;
             a.clock = (a.clock || a.id * 3.1) + realDt * this.speed;
-            animatePerson(a.mesh, anim, a.clock, {seated: a.anim === 'sit' || a.anim === 'eat', mood: a.mood, energy: a.energy, reading: a.state === 'wantOrder', tool: a.state === 'walk' ? a.tool : null});
+            animatePerson(a.mesh, anim, a.clock, {
+                seated: a.anim === 'sit' || a.anim === 'eat',
+                mood: a.mood,
+                energy: a.energy,
+                reading: a.state === 'wantOrder',
+                tool: a.state === 'walk' ? a.tool : null
+            });
         }
         if (dt > 0) this.personalSpace(dt);
         for (const l of this.litter) { // rain drips from coats into the puddles
@@ -2251,7 +2455,13 @@ export class Sim {
             if (c.mood <= 0) {
                 if (!this.opts.visit) {
                     this.batch.ratings.push(1);
-                    this.batch.reviews.push({stars: 1, dish: c.order.dish, name: c.name, good: [], bad: ['slow', ...(this.cleanliness < 60 ? ['dirty'] : [])]});
+                    this.batch.reviews.push({
+                        stars: 1,
+                        dish: c.order.dish,
+                        name: c.name,
+                        good: [],
+                        bad: ['slow', ...(this.cleanliness < 60 ? ['dirty'] : [])]
+                    });
                 }
                 if (c.seat) this.dropLitter({x: c.seat.x, z: c.seat.z});
                 this.leave(c, true);

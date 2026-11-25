@@ -3,6 +3,8 @@ import { zip } from './zip.js';
 import { sorted, decorOf } from './render.js';
 import { slideContext, styleOf, gradient, FONTS } from './themes.js';
 import { shapePath, toSvgPath } from './shapes.js';
+import { expandSlide } from './parts.js';
+import { videoSrc } from './render.js';
 import { paragraphs, isEmpty, okLink } from './richtext.js';
 
 const x = (s) => String(s ?? '').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -57,7 +59,7 @@ export async function exportOdp(deck, ctx, media) {
     }
     if (el.t === 'text' && !el.rad) return wrapLink(el, `<draw:frame draw:style-name="${graphic(el, sc, `${fillA(el.fill, sc, o)} ${strokeA(el, sc, el.stroke ? el.sw || 0 : 0, el.stroke || '@fg')}`)}" ${at(el)} ${size(el)}><draw:text-box>${textXml(el, sc)}</draw:text-box></draw:frame>`);
     if (el.t === 'text' || el.t === 'shape') {
-      const K = 100, d = shapePath(el.t === 'text' ? 'rect' : el.shape || 'rect', el.w * K, el.h * K, (el.rad || 0) * K).map(([c, ...v]) => c + ' ' + v.map(Math.round).join(' ')).join(' ') + ' N';
+      const K = 100, d = (el.cmds ? el.cmds.map(([c, ...v]) => [c, ...v.map((n) => n * K)]) : shapePath(el.t === 'text' ? 'rect' : el.shape || 'rect', el.w * K, el.h * K, (el.rad || 0) * K)).map(([c, ...v]) => c + ' ' + v.map(Math.round).join(' ')).join(' ') + (el.open ? ' F N' : ' N');
       return wrapLink(el, `<draw:custom-shape draw:style-name="${graphic(el, sc, `${fillA(el.fill, sc, o)} ${strokeA(el, sc, el.sw || 0, el.stroke || '@fg')}`)}" ${at(el)} ${size(el)}>${textXml(el, sc)}<draw:enhanced-geometry svg:viewBox="0 0 ${Math.round(el.w * K)} ${Math.round(el.h * K)}" draw:text-areas="0 0 ${Math.round(el.w * K)} ${Math.round(el.h * K)}" draw:type="non-primitive" draw:enhanced-path="${d}"${el.flip ? ' draw:mirror-horizontal="true"' : ''}/></draw:custom-shape>`);
     }
     const src = el.t === 'video' ? el.poster : el.src, m = media.get(src);
@@ -73,7 +75,7 @@ export async function exportOdp(deck, ctx, media) {
     g.drawImage(m.img, (el.w - m.w * f) * fx, (el.h - m.h * f) * fy, m.w * f, m.h * f);
     const jpg = !el.mask && !el.rad && el.fit !== 'contain' && /jpe?g$/.test(m.name), blob = await new Promise((r) => c.toBlob(r, jpg ? 'image/jpeg' : 'image/png', .88)), name = `img${pics.length + 1}.${jpg ? 'jpeg' : 'png'}`;
     pics.push([name, blob]);
-    const vurl = el.t === 'video' && (el.kind === 'youtube' ? 'https://youtu.be/' + el.vid : el.kind === 'vimeo' ? 'https://vimeo.com/' + el.vid : el.vid);
+    const vurl = el.t === 'video' && videoSrc(el);
     return wrapLink(vurl && !el.link ? { ...el, link: vurl } : el, `<draw:frame draw:style-name="${style('graphic', `<style:graphic-properties draw:stroke="none" draw:fill="none" ${o < 1 ? `draw:image-opacity="${Math.round(o * 100)}%"` : ''} ${shadowA(el.shadow)}/>`)}" ${at(el)} ${size(el)}><draw:image xlink:href="Pictures/${name}" xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad"><text:p/></draw:image>${el.alt ? `<svg:desc>${x(el.alt)}</svg:desc>` : ''}</draw:frame>`);
   }
   const pics = [];
@@ -86,8 +88,8 @@ export async function exportOdp(deck, ctx, media) {
     if (b.t === 'i') { pre = await one({ t: 'image', src: b.src, x: 0, y: 0, w: ctx.W, h: ctx.H, fx: b.fx, fy: b.fy }, sc); if (b.dim) pre += await one({ t: 'shape', shape: 'rect', x: 0, y: 0, w: ctx.W, h: ctx.H, fill: '@bg', o: b.dim }, sc); }
     const dp = style('drawing-page', `<style:drawing-page-properties ${fill} presentation:background-visible="true" presentation:background-objects-visible="true"${s.d.hide ? ' presentation:visibility="hidden"' : ''}/>`);
     let els = '';
-    for (const el of [...under, ...sorted(s.d), ...over]) els += await one(el, sc);
-    body += `<draw:page draw:name="page${i + 1}" draw:style-name="${dp}" draw:master-page-name="Default">${pre}${els}${s.d.notes ? `<presentation:notes><draw:frame presentation:class="notes" svg:x="2cm" svg:y="14cm" svg:width="17cm" svg:height="12cm"><draw:text-box>${s.d.notes.split('\n').map((l) => `<text:p>${x(l)}</text:p>`).join('')}</draw:text-box></draw:frame></presentation:notes>` : ''}</draw:page>`;
+    for (const el of [...under, ...sorted(expandSlide(s.d, sc)), ...over]) els += await one(el, sc);
+    body += `<draw:page draw:name="${x(s.d.name ? `${i + 1}. ${s.d.name}` : `page${i + 1}`)}" draw:style-name="${dp}" draw:master-page-name="Default">${pre}${els}${s.d.notes ? `<presentation:notes><draw:frame presentation:class="notes" svg:x="2cm" svg:y="14cm" svg:width="17cm" svg:height="12cm"><draw:text-box>${s.d.notes.split('\n').map((l) => `<text:p>${x(l)}</text:p>`).join('')}</draw:text-box></draw:frame></presentation:notes>` : ''}</draw:page>`;
   }
   void used;
   const head = '<?xml version="1.0" encoding="UTF-8"?>\n';

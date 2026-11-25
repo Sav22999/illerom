@@ -2,18 +2,24 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="robots" content="noindex">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <meta content="noindex" name="robots">
     <title>Offline · MyCurriculum</title>
-    <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="assets/app.css">
+    <link href="icons/favicon.svg" rel="icon" type="image/svg+xml">
+    <link href="assets/app.css" rel="stylesheet">
 </head>
 <body>
 <div class="center-card">
-    <div class="big-ico"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 8.8a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M12 20h.01M3 3l18 18"/></svg></div>
-    <h1 style="font-size:26px;margin:0 0 10px" id="t">No connection</h1>
+    <div class="big-ico">
+        <svg aria-hidden="true" class="ico" viewBox="0 0 24 24">
+            <path d="M2 8.8a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M12 20h.01M3 3l18 18"/>
+        </svg>
+    </div>
+    <h1 id="t" style="font-size:26px;margin:0 0 10px">No connection</h1>
     <p id="b">MyCurriculum needs the internet to load and save your CV. Check your connection and try again.</p>
-    <p><button class="btn btn-primary" type="button" id="r" onclick="location.reload()">Try again</button></p>
+    <p>
+        <button class="btn btn-primary" id="r" onclick="location.reload()" type="button">Try again</button>
+    </p>
 </div>
 <script>
     // the offline page has no app around it: it translates itself

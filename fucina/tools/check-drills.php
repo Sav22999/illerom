@@ -6,8 +6,16 @@
  */
 declare(strict_types=1);
 require __DIR__ . '/../lib/i18n.php';
-function js($v) { return json_decode((string)$v, true); }
-function is_lang_map($v): bool { return is_array($v) && $v !== [] && !array_diff(array_keys($v), LANGS) && array_keys($v) !== range(0, count($v) - 1); }
+function js($v)
+{
+    return json_decode((string)$v, true);
+}
+
+function is_lang_map($v): bool
+{
+    return is_array($v) && $v !== [] && !array_diff(array_keys($v), LANGS) && array_keys($v) !== range(0, count($v) - 1);
+}
+
 require __DIR__ . '/../lib/drills.php';
 require __DIR__ . '/../lib/seed.php';
 $errors = 0;
@@ -43,7 +51,10 @@ $drilled = seed_drills();
 $total = 0;
 $questions = 0;
 foreach ($courses as $id) {
-    if (!is_file(__DIR__ . '/../lib/seed/' . $id . '.php')) { $say("$id: no course file"); continue; }
+    if (!is_file(__DIR__ . '/../lib/seed/' . $id . '.php')) {
+        $say("$id: no course file");
+        continue;
+    }
     $c = seed_course($id);
     // Course files not registered yet carry their drills in their lessons
     foreach ($c['lessons'] as $l) if (!isset($drilled["$id/{$l['id']}"]) && !empty($l['drills'])) $drilled["$id/{$l['id']}"] = $l['drills'];
@@ -105,7 +116,10 @@ $inScope = fn(string $key) => !$only || in_array(explode('/', $key)[0], $only, t
 foreach ($fixes['options'] as $key => $replace) {
     if (!$inScope($key)) continue;
     $q = $known[$key] ?? null;
-    if (!is_array($q)) { $say("fixes: $key is not a question"); continue; }
+    if (!is_array($q)) {
+        $say("fixes: $key is not a question");
+        continue;
+    }
     foreach ($replace as $i => $option) {
         if (!isset($q['options'][$i])) $say("fixes: $key has no option $i");
         if ($i === $q['a']) $say("fixes: $key replaces the right answer");

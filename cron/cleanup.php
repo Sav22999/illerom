@@ -10,6 +10,8 @@
  * and the expired email-confirmation links of accounts.
  * SavDocuments also deletes the documents left in the trash for TRASH_DAYS, the accounts never confirmed within 7 days (as
  * its privacy notice promises), expired links and who was present in a document.
+ * SavPresentations also deletes what its privacy notice promises: the trash after TRASH_DAYS, the accounts never confirmed,
+ * the log of the live changes after 2 days, reports and admin log after 2 years, expired links.
  *
  * URL:          https://www.illerom.eu/cron/cleanup.php?key=SECRET_KEY
  * Command line: php cleanup.php (no key needed)
@@ -17,10 +19,10 @@
 
 const ROOM_RETENTION_HOURS = 24;
 const GAMES = ['c4' => 'connect-four', 'chess' => 'chess', 'fg' => 'faceguess', 'sb' => 'sea-battle', 'pm' => 'prism-mine']; // table prefix => project
-const APPS = ['foodtrack' => 'ft_', 'giftwise' => 'gw_', 'fucina' => 'fc_', 'thinkhop' => 'th_', 'forkville' => 'fv_', 'mycurriculum' => 'mc_', 'opennewsletter' => 'on_', 'savdocuments' => 'sd_']; // project => default table prefix
-const NO_SESSION_DETAILS = ['thinkhop', 'forkville', 'mycurriculum', 'opennewsletter', 'savdocuments']; // these apps never stored the IP and browser on their sessions: no such columns
+const APPS = ['foodtrack' => 'ft_', 'giftwise' => 'gw_', 'fucina' => 'fc_', 'thinkhop' => 'th_', 'forkville' => 'fv_', 'mycurriculum' => 'mc_', 'opennewsletter' => 'on_', 'savdocuments' => 'sd_', 'savpresentations' => 'sp_']; // project => default table prefix
+const NO_SESSION_DETAILS = ['thinkhop', 'forkville', 'mycurriculum', 'opennewsletter', 'savdocuments', 'savpresentations']; // these apps never stored the IP and browser on their sessions: no such columns
 const ATTEMPT_RETENTION_HOURS = 2; // the longest rate limit looks back 60 minutes: older IPs serve no purpose
-const TRASH_DAYS = 30; // SavDocuments: documents in the trash
+const TRASH_DAYS = 30; // SavDocuments and SavPresentations: what is in the trash
 const PENDING_SUBSCRIBER_DAYS = 7; // OpenNewsletter: a confirmation link works 7 days, then the address is forgotten
 
 header('Content-Type: application/json');
@@ -81,6 +83,17 @@ function cleanApp($project, $defaultPrefix)
         $result['links'] = $db->exec("DELETE FROM `{$prefix}email_tokens` WHERE expires_at < UTC_TIMESTAMP()") + $db->exec("DELETE FROM `{$prefix}invites` WHERE expires_at < UTC_TIMESTAMP()");
         if ($db->query("SHOW TABLES LIKE " . $db->quote(addcslashes($prefix, '_%') . 'identity'))->fetchColumn()) $result['sign_in_requests'] = $db->exec("DELETE FROM `{$prefix}identity` WHERE expires_at < UTC_TIMESTAMP()"); // made at the first SavAccount or Google sign-in
         $db->exec("DELETE FROM `{$prefix}presence` WHERE seen_at < UTC_TIMESTAMP() - INTERVAL 1 HOUR");
+    }
+    if ($project === 'savpresentations') {
+        // as its privacy notice promises: trash 30 days, accounts never confirmed 7, live changes 2, reports and log 2 years
+        $result['trash'] = $db->exec("DELETE FROM `{$prefix}decks` WHERE status = 'trashed' AND trashed_at < UTC_TIMESTAMP() - INTERVAL " . TRASH_DAYS . " DAY");
+        $result['unconfirmed'] = $db->exec("DELETE FROM `{$prefix}users` WHERE email_verified_at IS NULL AND status = 'active' AND created_at < UTC_TIMESTAMP() - INTERVAL 7 DAY");
+        $result['links'] = $db->exec("DELETE FROM `{$prefix}email_tokens` WHERE expires_at < UTC_TIMESTAMP()") + $db->exec("DELETE FROM `{$prefix}links` WHERE expires_at < UTC_TIMESTAMP() - INTERVAL 30 DAY");
+        $result['changes'] = $db->exec("DELETE FROM `{$prefix}ops` WHERE created_at < UTC_TIMESTAMP() - INTERVAL 2 DAY");
+        $result['old_reports'] = $db->exec("DELETE FROM `{$prefix}reports` WHERE created_at < UTC_TIMESTAMP() - INTERVAL 2 YEAR") + $db->exec("DELETE FROM `{$prefix}audit` WHERE created_at < UTC_TIMESTAMP() - INTERVAL 2 YEAR");
+        $db->exec("DELETE FROM `{$prefix}presence` WHERE seen_at < UTC_TIMESTAMP() - INTERVAL 1 HOUR");
+        $db->exec("DELETE FROM `{$prefix}cache` WHERE expires_at < UTC_TIMESTAMP()");
+        if ($db->query("SHOW TABLES LIKE " . $db->quote(addcslashes($prefix, '_%') . 'identity'))->fetchColumn()) $result['sign_in_requests'] = $db->exec("DELETE FROM `{$prefix}identity` WHERE expires_at < UTC_TIMESTAMP()"); // made at the first SavAccount or Google sign-in
     }
     return $result;
 }

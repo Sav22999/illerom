@@ -16,7 +16,8 @@ header("Content-Security-Policy: frame-ancestors 'self'");
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>OpenNewsletter</title>
-    <meta name="description" content="Write, approve and send newsletters as a team: drag-and-drop editor, approval workflow, subscribers in every language, a subscription page and a widget for your site.">
+    <meta name="description"
+          content="Write, approve and send newsletters as a team: drag-and-drop editor, approval workflow, subscribers in every language, a subscription page and a widget for your site.">
     <meta name="theme-color" content="#5B3DF5">
     <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
     <link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
@@ -25,7 +26,9 @@ header("Content-Security-Policy: frame-ancestors 'self'");
     <link rel="stylesheet" href="assets/app.css?v=20">
 </head>
 <body>
-<div id="app"><noscript>OpenNewsletter needs JavaScript.</noscript></div>
+<div id="app">
+    <noscript>OpenNewsletter needs JavaScript.</noscript>
+</div>
 <script defer src="../identity/identity.js?v=3"></script>
 <script type="module" src="assets/app.js?v=20"></script>
 </body>

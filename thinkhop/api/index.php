@@ -769,7 +769,7 @@ switch ($r) {
         $avSpent = avatar_spent($id);
         send_json(['ok' => true, 'player' => [
             'id' => $id, 'name' => $row['name'], 'username' => $row['username'], 'avatar' => $row['avatar'] ?? null, 'email' => $row['email'], 'status' => $row['status'],
-            'admin' => (int)$row['role'] >= ROLE_ADMIN, 'google' => !empty($row['google_sub']), 'password' => $row['password_hash'] !== '',
+            'admin' => (int)$row['role'] >= ROLE_ADMIN, 'google' => !empty($row['google_sub']), 'savaccount' => !empty($row['sav_sub']), 'password' => $row['password_hash'] !== '',
             'verified' => $row['email_verified_at'], 'ranking' => (int)$row['show_in_ranking'] === 1,
             'createdAt' => $row['created_at'], 'lastLogin' => $row['last_login_at'],
             'devices' => $count('SELECT COUNT(*) AS n FROM ' . t('push_subscriptions') . ' WHERE user_id = ?'),

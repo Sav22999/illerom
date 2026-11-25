@@ -16,7 +16,7 @@ const TRANSITIONS = ['', 'none', 'fade', 'slide', 'push', 'zoom'];
 
 // field => [kind, …limits]
 const ELEMENT_FIELDS = [
-    't' => ['enum', ['text', 'image', 'video', 'shape']],
+    't' => ['enum', ['text', 'image', 'video', 'shape', 'chart', 'table', 'icon']], 'g' => ['key'], 'cell' => ['num', 0, 23], 'cr' => ['rect'],
     'x' => ['num', -20000, 20000], 'y' => ['num', -20000, 20000], 'w' => ['num', 1, 20000], 'h' => ['num', 1, 20000],
     'r' => ['num', -360, 360], 'z' => ['num', -1000000, 1000000], 'o' => ['num', 0, 1],
     'lock' => ['bool'], 'name' => ['text', 60], 'link' => ['url'], 'anim' => ['enum', ANIMS], 'ph' => ['text', 80],
@@ -29,13 +29,15 @@ const ELEMENT_FIELDS = [
     'rad' => ['num', 0, 2000], 'shadow' => ['num', 0, 3],
     'shape' => ['enum', SHAPES], 'h1' => ['enum', ['', 'arrow', 'dot']], 'h2' => ['enum', ['', 'arrow', 'dot']],
     'src' => ['media'], 'fit' => ['enum', ['cover', 'contain']], 'fx' => ['num', 0, 1], 'fy' => ['num', 0, 1], 'zoom' => ['num', 1, 8],
-    'flip' => ['bool'], 'mask' => ['enum', SHAPES], 'alt' => ['text', 300], 'credit' => ['text', 300], 'creditUrl' => ['url'],
+    'flip' => ['bool'], 'mask' => ['enum', SHAPES], 'alt' => ['text', 300], 'credit' => ['text', 300], 'creditUrl' => ['url'], 'cite' => ['enum', ['', 'in', 'below']],
+    'ct' => ['enum', ['bar', 'stack', 'hbar', 'line', 'area', 'pie', 'donut', 'radar', 'scatter']], 'chart' => ['chart'], 'legend' => ['bool'], 'vals' => ['bool'],
+    'cells' => ['cells'], 'hd' => ['bool'], 'zebra' => ['bool'], 'ic' => ['text', 30],
     'kind' => ['enum', ['youtube', 'vimeo', 'file']], 'vid' => ['video'], 'poster' => ['media'], 'auto' => ['bool'], 'loop' => ['bool'], 'mute' => ['bool'], 'start' => ['num', 0, 86400],
 ];
 const SLIDE_FIELDS = [
-    'layout' => ['enum', ['', 'cover', 'section', 'title-body', 'two-cols', 'three-cards', 'statement', 'quote', 'image-left', 'image-right', 'image-full', 'number', 'numbers', 'timeline', 'compare', 'gallery', 'list', 'agenda', 'closing', 'blank', 'caption']],
+    'layout' => ['enum', ['', 'cover', 'section', 'title-body', 'two-cols', 'three-cards', 'statement', 'quote', 'image-left', 'image-right', 'image-full', 'number', 'numbers', 'timeline', 'compare', 'gallery', 'list', 'agenda', 'closing', 'blank', 'caption', 'chart', 'table', 'steps', 'swot', 'team', 'icons', 'big-image', 'checklist', 'certificate', 'menu', 'quiz', 'contacts', 'pricing']],
     'variant' => ['enum', ['content', 'cover', 'section', 'plain']],
-    'bg' => ['bg'], 'notes' => ['text', 8000], 'tr' => ['enum', TRANSITIONS], 'hide' => ['bool'],
+    'bg' => ['bg'], 'name' => ['text', 60], 'grid' => ['grid'], 'notes' => ['text', 8000], 'tr' => ['enum', TRANSITIONS], 'hide' => ['bool'],
 ];
 
 function clean_num($v, float $min, float $max): ?float
@@ -85,11 +87,11 @@ function clean_media($v): string
     return is_string($v) && preg_match('~^m:[a-f0-9]{32}$~', $v) ? $v : '';
 }
 
-/** YouTube/Vimeo ids or the https address of a video file. */
+/** YouTube/Vimeo ids, an uploaded video or the https address of a video file. */
 function clean_video($v): string
 {
     $v = trim(clean_text($v, 1000));
-    if (preg_match('~^[A-Za-z0-9_-]{6,20}$~', $v)) return $v;
+    if (preg_match('~^[A-Za-z0-9_-]{6,20}$~', $v) || preg_match('~^m:[a-f0-9]{32}$~', $v)) return $v;
     return preg_match('~^https://[^\s<>"\x27]+$~i', $v) ? $v : '';
 }
 
@@ -112,6 +114,49 @@ function clean_bg($v): ?array
     return null;
 }
 
+/** The data of a chart: labels and series of numbers. */
+function clean_chart($v): ?array
+{
+    if (!is_array($v)) return null;
+    $labels = array_map(fn($x) => clean_text($x, 60), array_slice(array_values((array)($v['labels'] ?? [])), 0, 40));
+    $series = [];
+    foreach (array_slice(array_values((array)($v['series'] ?? [])), 0, 8) as $s) {
+        if (!is_array($s)) continue;
+        $series[] = ['name' => clean_text($s['name'] ?? '', 60), 'values' => array_map(fn($x) => clean_num($x, -1e12, 1e12) ?? 0, array_slice(array_values((array)($s['values'] ?? [])), 0, 40))];
+    }
+    return ['labels' => $labels, 'series' => $series];
+}
+
+/** The grid of a page of the simple mode: cells [x, y, w, h] on a 12 x 12 board, and the gap between them. m = 0: the board is the whole page. */
+function clean_grid($v): ?array
+{
+    if (!is_array($v) || !is_array($v['c'] ?? null)) return null;
+    $cells = [];
+    foreach (array_slice(array_values($v['c']), 0, 24) as $c) {
+        if (!is_array($c) || count($c) !== 4) continue;
+        [$x, $y, $w, $h] = array_map(fn($n) => clean_num($n, 0, 12) ?? 0, array_values($c));
+        if ($w >= .1 && $h >= .1 && $x + $w <= 12.01 && $y + $h <= 12.01) $cells[] = [$x, $y, $w, $h];
+    }
+    return $cells ? ['c' => $cells, 'g' => clean_num($v['g'] ?? 24, 0, 80) ?? 24] + (isset($v['m']) ? ['m' => 0] : []) : null;
+}
+
+/** The place of an element inside its cell, in fractions of it. */
+function clean_rect($v): ?array
+{
+    if (!is_array($v) || count($v) !== 4) return null;
+    $v = array_map(fn($n) => clean_num($n, -2, 3), array_values($v));
+    return in_array(null, $v, true) || $v[2] <= 0 || $v[3] <= 0 ? null : $v;
+}
+
+/** The cells of a table: at most 30 rows of 12 plain texts. */
+function clean_cells($v): ?array
+{
+    if (!is_array($v)) return null;
+    $out = [];
+    foreach (array_slice(array_values($v), 0, 30) as $r) $out[] = array_map(fn($x) => clean_text($x, 300), array_slice(array_values((array)$r), 0, 12));
+    return $out;
+}
+
 /** Keeps only the known fields, each with its own check. A field set to null is removed from the element. */
 function clean_fields($src, array $fields): array
 {
@@ -125,18 +170,56 @@ function clean_fields($src, array $fields): array
             continue;
         }
         switch ($f[0]) {
-            case 'num': $v = clean_num($v, $f[1], $f[2]); break;
-            case 'bool': $v = $v ? 1 : 0; break;
-            case 'enum': $v = in_array($v, $f[1], true) ? $v : null; break;
-            case 'text': $v = clean_text($v, $f[1]); break;
-            case 'color': $v = clean_color($v); break;
-            case 'fill': $v = clean_fill($v); break;
-            case 'url': $v = clean_link($v); break;
-            case 'media': $v = clean_media($v); break;
-            case 'video': $v = clean_video($v); break;
-            case 'rich': $v = clean_rich($v); break;
-            case 'bg': $v = clean_bg($v); break;
-            default: $v = null;
+            case 'num':
+                $v = clean_num($v, $f[1], $f[2]);
+                break;
+            case 'bool':
+                $v = $v ? 1 : 0;
+                break;
+            case 'enum':
+                $v = in_array($v, $f[1], true) ? $v : null;
+                break;
+            case 'text':
+                $v = clean_text($v, $f[1]);
+                break;
+            case 'color':
+                $v = clean_color($v);
+                break;
+            case 'fill':
+                $v = clean_fill($v);
+                break;
+            case 'url':
+                $v = clean_link($v);
+                break;
+            case 'media':
+                $v = clean_media($v);
+                break;
+            case 'video':
+                $v = clean_video($v);
+                break;
+            case 'rich':
+                $v = clean_rich($v);
+                break;
+            case 'bg':
+                $v = clean_bg($v);
+                break;
+            case 'key':
+                $v = valid_key($v) ? $v : null;
+                break;
+            case 'chart':
+                $v = clean_chart($v);
+                break;
+            case 'rect':
+                $v = clean_rect($v);
+                break;
+            case 'grid':
+                $v = clean_grid($v);
+                break;
+            case 'cells':
+                $v = clean_cells($v);
+                break;
+            default:
+                $v = null;
         }
         $out[$k] = $v;
     }

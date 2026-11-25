@@ -99,7 +99,11 @@
     pattern('abc-vowels', 'letters', .2, r => {
         const v = 'AEIOU', i = r.int(0, 1);
         const seq = r.next() < .5 ? [...v] : [...v].reverse();
-        return withOptions(r, {view: 'list', items: seq.slice(i, 4), why: [{k: 'why_lt_vowels'}]}, seq[4], others(r, ['B', 'Y', 'E', 'A', 'I', 'O', 'U', 'Z'], seq[4]));
+        return withOptions(r, {
+            view: 'list',
+            items: seq.slice(i, 4),
+            why: [{k: 'why_lt_vowels'}]
+        }, seq[4], others(r, ['B', 'Y', 'E', 'A', 'I', 'O', 'U', 'Z'], seq[4]));
     });
     pattern('abc-ends', 'letters', .46, r => {
         const s = r.int(0, 6);
@@ -109,12 +113,20 @@
     pattern('abc-pairs', 'letters', .42, r => {
         const s = r.int(0, 8), pair = i => ABC[s + i * 3] + ABC[s + i * 3 + 1];
         const right = pair(3);
-        return withOptions(r, {view: 'list', items: [pair(0), pair(1), pair(2)], why: [{k: 'why_lt_pairs'}]}, right, [ABC[s + 8] + ABC[s + 9], ABC[s + 10] + ABC[s + 11], ABC[s + 9] + ABC[s + 11]]);
+        return withOptions(r, {
+            view: 'list',
+            items: [pair(0), pair(1), pair(2)],
+            why: [{k: 'why_lt_pairs'}]
+        }, right, [ABC[s + 8] + ABC[s + 9], ABC[s + 10] + ABC[s + 11], ABC[s + 9] + ABC[s + 11]]);
     });
     pattern('abc-mirror', 'letters', .62, r => {
         const s = r.int(0, 8), pair = i => ABC[s + i] + ABC[25 - s - i];
         const right = pair(3);
-        return withOptions(r, {view: 'list', items: [pair(0), pair(1), pair(2)], why: [{k: 'why_lt_ends'}]}, right, [ABC[s + 3] + ABC[25 - s - 2], ABC[s + 4] + ABC[25 - s - 3], ABC[s + 2] + ABC[25 - s - 3]]);
+        return withOptions(r, {
+            view: 'list',
+            items: [pair(0), pair(1), pair(2)],
+            why: [{k: 'why_lt_ends'}]
+        }, right, [ABC[s + 3] + ABC[25 - s - 2], ABC[s + 4] + ABC[25 - s - 3], ABC[s + 2] + ABC[25 - s - 3]]);
     });
     pattern('abc-consonants', 'letters', 1.02, r => {
         const s = r.int(0, 10), step = r.pick([1, 2]);
@@ -158,7 +170,12 @@
     ];
     INTRUDERS.forEach(([key, d, members, outsiders]) => pattern('pic-' + key, 'intruder', d, r => {
         const odd = r.pick(outsiders);
-        const q = {view: 'riddle', pk: 'q_intruder', pv: {set: key, odd}, why: [{k: 'why_in', v: {x: odd, y: {k: 'in_' + key}}}]};
+        const q = {
+            view: 'riddle',
+            pk: 'q_intruder',
+            pv: {set: key, odd},
+            why: [{k: 'why_in', v: {x: odd, y: {k: 'in_' + key}}}]
+        };
         return withOptions(r, q, odd, r.shuffle(members).slice(0, 3));
     }));
 
@@ -217,7 +234,13 @@
             const at = row * n + col;
             return at === ask ? '?' : (g[at] < 0 ? '' : symbols[g[at]]);
         }));
-        const q = {view: 'grid', grid, boxes: br ? [br, bc] : null, pk: br ? 'q_grid' : 'q_grid3', why: [{k: 'why_grid', v: {x: right}}]};
+        const q = {
+            view: 'grid',
+            grid,
+            boxes: br ? [br, bc] : null,
+            pk: br ? 'q_grid' : 'q_grid3',
+            why: [{k: 'why_grid', v: {x: right}}]
+        };
         return withOptions(r, q, right, others(r, symbols, right));
     }
 
@@ -241,7 +264,13 @@
         const start = r.int(0, 3);
         const steps = Array.from({length: count}, () => r.pick(TURNS.slice(0, kinds)));
         const end = steps.reduce((s, x) => s + x[1], start) % 4;
-        const q = {view: 'lines', lines: ['🐢 ' + FOUR[start], steps.map(x => x[0]).join('  ·  ')], ask: '🐢 = ?', pk: 'q_compass', why: [{lit: FOUR[start] + ' → ' + FOUR[end]}, {k: 'why_turns'}]};
+        const q = {
+            view: 'lines',
+            lines: ['🐢 ' + FOUR[start], steps.map(x => x[0]).join('  ·  ')],
+            ask: '🐢 = ?',
+            pk: 'q_compass',
+            why: [{lit: FOUR[start] + ' → ' + FOUR[end]}, {k: 'why_turns'}]
+        };
         return withOptions(r, q, FOUR[end], FOUR.filter(x => x !== FOUR[end]));
     }
 
@@ -279,7 +308,13 @@
         Object.values(MOVES).forEach(([dy, dx]) => {
             if (y + dy >= 0 && y + dy < n && x + dx >= 0 && x + dx < n) near.push(label(y + dy, x + dx));
         });
-        const q = {view: 'grid', grid, lines: [path.join(' ')], pk: bump ? 'q_walk_bump' : 'q_walk', why: [{k: bump ? 'why_walk_bump' : 'why_walk', v: {x: right}}]};
+        const q = {
+            view: 'grid',
+            grid,
+            lines: [path.join(' ')],
+            pk: bump ? 'q_walk_bump' : 'q_walk',
+            why: [{k: bump ? 'why_walk_bump' : 'why_walk', v: {x: right}}]
+        };
         const wrong = others(r, near, right);
         const all = grid.flat().filter(c => c !== '🐢' && c !== right);
         return withOptions(r, q, right, [...wrong, ...others(r, all.filter(c => !wrong.includes(c)), right)].slice(0, 3));
@@ -321,7 +356,14 @@
             const row = lampRow(x.map(Boolean));
             if (row !== right) wrong.add(row);
         }
-        const q = {cat: 'lamps', view: 'lamps', lines: [lampRow(start), ...list.map(buttonLine)], ask: order.map(i => ABC[i]).join(' ') + ' = ?', pk: 'q_lamps', why: [{lit: right}, {k: 'why_lamps'}]};
+        const q = {
+            cat: 'lamps',
+            view: 'lamps',
+            lines: [lampRow(start), ...list.map(buttonLine)],
+            ask: order.map(i => ABC[i]).join(' ') + ' = ?',
+            pk: 'q_lamps',
+            why: [{lit: right}, {k: 'why_lamps'}]
+        };
         return withOptions(r, q, right, [...wrong]);
     }
 
@@ -337,7 +379,14 @@
             const good = pairs.filter(([a, b]) => lampRow(press(press(start, list[a]), list[b])) === lampRow(end));
             if (good.length !== 1) continue;
             const text = ([a, b]) => ABC[a] + ' + ' + ABC[b];
-            const q = {cat: 'lamps', view: 'lamps', lines: [lampRow(start) + ' → ' + lampRow(end), ...list.map(buttonLine)], ask: '? + ? ', pk: 'q_lamps_back', why: [{lit: text(good[0])}, {k: 'why_lamps'}]};
+            const q = {
+                cat: 'lamps',
+                view: 'lamps',
+                lines: [lampRow(start) + ' → ' + lampRow(end), ...list.map(buttonLine)],
+                ask: '? + ? ',
+                pk: 'q_lamps_back',
+                why: [{lit: text(good[0])}, {k: 'why_lamps'}]
+            };
             return withOptions(r, q, text(good[0]), r.shuffle(pairs.filter(p => p !== good[0])).slice(0, 3).map(text));
         }
     }
@@ -385,7 +434,13 @@
             const right = f(c);
             const wrong = others(r, Object.values(CODES).map(g => g(c)), right);
             if (wrong.length < 3) continue;
-            const q = {view: 'lines', lines: [`${a} → ${f(a)}`, `${b} → ${f(b)}`], ask: `${c} → ?`, pk: 'q_code', why: [{k: 'why_code_' + rule}]};
+            const q = {
+                view: 'lines',
+                lines: [`${a} → ${f(a)}`, `${b} → ${f(b)}`],
+                ask: `${c} → ?`,
+                pk: 'q_code',
+                why: [{k: 'why_code_' + rule}]
+            };
             return withOptions(r, q, right, wrong);
         }
     });
@@ -496,7 +551,13 @@
                 k: 'li_' + c.kind,
                 v: {a: people[c.s], b: c.kind === 'count' ? c.x : people[c.x], c: c.y === undefined ? '' : people[c.y]},
             });
-            const q = {view: 'facts', pk: 'q_liars', facts: claims.map(line), ask: {k: 'li_ask'}, why: [{lit: right}, {k: 'why_li'}]};
+            const q = {
+                view: 'facts',
+                pk: 'q_liars',
+                facts: claims.map(line),
+                ask: {k: 'li_ask'},
+                why: [{lit: right}, {k: 'why_li'}]
+            };
             return withOptions(r, q, right, [...wrong]);
         }
     }
@@ -529,7 +590,13 @@
             if (places.length !== 1) continue;
             const right = chests[places[0]];
             const fact = l => ({k: 'bx_line', v: {c: chests[l.own], s: {k: 'bx_' + l.kind, v: {x: chests[l.x]}}}});
-            const q = {view: 'facts', pk: key, facts: labels.map(fact), ask: {k: 'bx_ask'}, why: [{k: 'why_boxes', v: {x: right}}]};
+            const q = {
+                view: 'facts',
+                pk: key,
+                facts: labels.map(fact),
+                ask: {k: 'bx_ask'},
+                why: [{k: 'why_boxes', v: {x: right}}]
+            };
             return withOptions(r, q, right, chests.filter(c => c !== right));
         }
     }
@@ -563,11 +630,27 @@
             clues.push({k: 'wo_not', v: {a: people[a], p: pets[k]}, test: c => c.pet[a] !== k});
             if (houses && k !== a) {
                 clues.push({k: 'wo_left', v: {a: people[a], b: people[k]}, test: c => at(c, a) < at(c, k)});
-                clues.push({k: 'wo_next', v: {a: people[a], b: people[k]}, test: c => Math.abs(at(c, a) - at(c, k)) === 1});
-                clues.push({k: 'wo_pet_left', v: {p: pets[a], q: pets[k]}, test: c => at(c, owner(c, a)) < at(c, owner(c, k))});
-                clues.push({k: 'wo_pet_next', v: {a: people[a], p: pets[k]}, test: c => c.pet[a] !== k && Math.abs(at(c, a) - at(c, owner(c, k))) === 1});
+                clues.push({
+                    k: 'wo_next',
+                    v: {a: people[a], b: people[k]},
+                    test: c => Math.abs(at(c, a) - at(c, k)) === 1
+                });
+                clues.push({
+                    k: 'wo_pet_left',
+                    v: {p: pets[a], q: pets[k]},
+                    test: c => at(c, owner(c, a)) < at(c, owner(c, k))
+                });
+                clues.push({
+                    k: 'wo_pet_next',
+                    v: {a: people[a], p: pets[k]},
+                    test: c => c.pet[a] !== k && Math.abs(at(c, a) - at(c, owner(c, k))) === 1
+                });
             }
-            if (houses && k < n) clues.push({k: 'wo_house_not', v: {a: people[a], n: k + 1}, test: c => at(c, a) !== k});
+            if (houses && k < n) clues.push({
+                k: 'wo_house_not',
+                v: {a: people[a], n: k + 1},
+                test: c => at(c, a) !== k
+            });
         }));
         const validClues = r.shuffle(clues.filter(c => c.test(truth)));
         let left = cases, facts = [];
@@ -679,7 +762,12 @@
     // ---------- traps: the quick answer is the wrong one ----------
     const trap = (id, d, make) => pattern('trap-' + id, 'trap', d, r => {
         const {v, right, near} = make(r);
-        return numberOptions(r, {view: 'riddle', pk: 'tr_' + id, pv: v, why: [{k: 'tr_' + id + '_w', v: Object.assign({x: right}, v)}]}, right, near);
+        return numberOptions(r, {
+            view: 'riddle',
+            pk: 'tr_' + id,
+            pv: v,
+            why: [{k: 'tr_' + id + '_w', v: Object.assign({x: right}, v)}]
+        }, right, near);
     });
 
     trap('overtake', .3, r => {
@@ -720,11 +808,19 @@
     });
     trap('venn', .8, r => {
         const both = r.int(3, 9), a = both + r.int(3, 9), b = both + r.int(3, 9), none = r.int(2, 9);
-        return {v: {n: a + b - both + none, a, b, both}, right: none, near: [none + both, a + b - both, Math.abs(a + b - both - none)]};
+        return {
+            v: {n: a + b - both + none, a, b, both},
+            right: none,
+            near: [none + both, a + b - both, Math.abs(a + b - both - none)]
+        };
     });
     trap('snail', .84, r => {
         const a = r.int(3, 6), b = r.int(1, a - 1), h = a + (a - b) * r.int(3, 8);
-        return {v: {h, a, b}, right: (h - a) / (a - b) + 1, near: [(h / (a - b)) | 0, ((h - a) / (a - b)), ((h - a) / (a - b)) + 2]};
+        return {
+            v: {h, a, b},
+            right: (h - a) / (a - b) + 1,
+            near: [(h / (a - b)) | 0, ((h - a) / (a - b)), ((h - a) / (a - b)) + 2]
+        };
     });
     trap('clock', .9, r => {
         const n = r.pick([3, 4, 5, 6, 7]), s = (n - 1) * r.int(1, 3);
@@ -745,7 +841,11 @@
     });
     trap('socks-all', 1.09, r => {
         const a = r.int(4, 12), b = r.int(4, 12), c = r.int(4, 12);
-        return {v: {a, b, c}, right: a + b + c - Math.min(a, b, c) + 1, near: [4, 3, a + b + c, a + b + c - Math.max(a, b, c) + 1]};
+        return {
+            v: {a, b, c},
+            right: a + b + c - Math.min(a, b, c) + 1,
+            near: [4, 3, a + b + c, a + b + c - Math.max(a, b, c) + 1]
+        };
     });
     trap('fence', .92, r => {
         const n = r.int(6, 14), m = r.pick([2, 3, 4, 5]);
@@ -1178,7 +1278,10 @@
             const roster = people.map((p, i) => ({lit: `${p}:  ${profiles[i].join(' · ')}`}));
             const q = {
                 view: 'facts', pk: 'q_suspects_traits',
-                facts: [...roster.map(x => ({k: 'bx_line', v: {c: x.lit.split(':')[0], s: x.lit.split(':  ')[1]}})), ...chosen.map(({k, v}) => ({k, v}))],
+                facts: [...roster.map(x => ({
+                    k: 'bx_line',
+                    v: {c: x.lit.split(':')[0], s: x.lit.split(':  ')[1]}
+                })), ...chosen.map(({k, v}) => ({k, v}))],
                 ask: {k: 'su_ask'},
                 why: [{k: 'why_suspects', v: {x: `${right} (${profiles[culprit].join(' · ')})`}}],
             };
@@ -1392,12 +1495,24 @@
                 clues.push({k: 'st_left_of', v: {a: people[a], b: people[b]}, test: c => at(c, a) < at(c, b)});
                 clues.push({k: 'st_right', v: {a: people[a], b: people[b]}, test: c => at(c, a) === at(c, b) + 1});
                 if (a < b) {
-                    clues.push({k: 'st_next', v: {a: people[a], b: people[b]}, test: c => Math.abs(at(c, a) - at(c, b)) === 1});
-                    clues.push({k: 'st_not_next', v: {a: people[a], b: people[b]}, test: c => Math.abs(at(c, a) - at(c, b)) > 1});
+                    clues.push({
+                        k: 'st_next',
+                        v: {a: people[a], b: people[b]},
+                        test: c => Math.abs(at(c, a) - at(c, b)) === 1
+                    });
+                    clues.push({
+                        k: 'st_not_next',
+                        v: {a: people[a], b: people[b]},
+                        test: c => Math.abs(at(c, a) - at(c, b)) > 1
+                    });
                 }
                 ids.forEach(d => {
                     if (b < d && a !== d) {
-                        clues.push({k: 'st_between', v: {a: people[a], b: people[b], c: people[d]}, test: c => Math.abs(at(c, a) - at(c, b)) === 1 && Math.abs(at(c, a) - at(c, d)) === 1});
+                        clues.push({
+                            k: 'st_between',
+                            v: {a: people[a], b: people[b], c: people[d]},
+                            test: c => Math.abs(at(c, a) - at(c, b)) === 1 && Math.abs(at(c, a) - at(c, d)) === 1
+                        });
                     }
                 });
             });
@@ -1517,6 +1632,7 @@
     function makeGridDiag(r) {
         const n = 4, br = 2, bc = 2;
         const symbols = gridSymbols(r, 4);
+
         function fitsDiag(g, at, v) {
             const row = Math.floor(at / n), col = at % n;
             for (let c = 0; c < n; c++) if (g[row * n + c] === v) return false;
@@ -1531,6 +1647,7 @@
             }
             return true;
         }
+
         function solveDiag(g, limit) {
             const at = g.indexOf(-1);
             if (at < 0) return 1;
@@ -1543,6 +1660,7 @@
             }
             return found;
         }
+
         function fillDiag(g) {
             const at = g.indexOf(-1);
             if (at < 0) return true;
@@ -1554,6 +1672,7 @@
             }
             return false;
         }
+
         const g = Array(16).fill(-1);
         fillDiag(g);
         const solved = g.slice();
@@ -1592,8 +1711,14 @@
         while (changed) {
             changed = false;
             links.forEach(([a, b]) => {
-                if (dirs[a] !== null && dirs[b] === null) { dirs[b] = !dirs[a]; changed = true; }
-                if (dirs[b] !== null && dirs[a] === null) { dirs[a] = !dirs[b]; changed = true; }
+                if (dirs[a] !== null && dirs[b] === null) {
+                    dirs[b] = !dirs[a];
+                    changed = true;
+                }
+                if (dirs[b] !== null && dirs[a] === null) {
+                    dirs[a] = !dirs[b];
+                    changed = true;
+                }
             });
         }
         return dirs;
@@ -1617,8 +1742,14 @@
         for (let changed = true; changed;) {
             changed = false;
             links.forEach(([a, b]) => {
-                if (dist[a] >= 0 && dist[b] < 0) { dist[b] = dist[a] + 1; changed = true; }
-                if (dist[b] >= 0 && dist[a] < 0) { dist[a] = dist[b] + 1; changed = true; }
+                if (dist[a] >= 0 && dist[b] < 0) {
+                    dist[b] = dist[a] + 1;
+                    changed = true;
+                }
+                if (dist[b] >= 0 && dist[a] < 0) {
+                    dist[a] = dist[b] + 1;
+                    changed = true;
+                }
             });
         }
         const most = Math.max(...dist);
@@ -1626,7 +1757,14 @@
         const startName = GEAR_NAMES[startIdx], target = GEAR_NAMES[targetIdx];
         const isCw = dirs[targetIdx];
         const startDirSym = startCw ? '↻' : '↺';
-        const gearsData = {count: n, links, startDir: startCw ? 'cw' : 'ccw', startIdx, targetIdx, dirs: dirs.map(d => d ? 'cw' : 'ccw')};
+        const gearsData = {
+            count: n,
+            links,
+            startDir: startCw ? 'cw' : 'ccw',
+            startIdx,
+            targetIdx,
+            dirs: dirs.map(d => d ? 'cw' : 'ccw')
+        };
         const q = {
             view: 'gears', gearsData,
             lines: [`${startName} (${startDirSym}) ➔ ${target}`],
@@ -1651,8 +1789,15 @@
             const teeth = idler ? [na, nb, nc] : [na, nc];
             const last = GEAR_NAMES[n - 1];
             const gearsData = {
-                count: n, links: idler ? [[0, 1], [1, 2]] : [[0, 1]], teeth,
-                startDir: 'cw', startIdx: 0, targetIdx: n - 1, dirs: idler ? ['cw', 'ccw', 'cw'] : ['cw', 'ccw'], speed: true, turns: ta,
+                count: n,
+                links: idler ? [[0, 1], [1, 2]] : [[0, 1]],
+                teeth,
+                startDir: 'cw',
+                startIdx: 0,
+                targetIdx: n - 1,
+                dirs: idler ? ['cw', 'ccw', 'cw'] : ['cw', 'ccw'],
+                speed: true,
+                turns: ta,
             };
             const q = idler ? {
                 view: 'gears', gearsData,
@@ -1713,9 +1858,13 @@
             if (x < 0 || y < 0 || x >= n || y >= n) return {path, reflections, out: true};
             path.push([x, y]);
             const cell = grid[y][x];
-            if (cell === '/') { [dx, dy] = [-dy, -dx]; reflections++; }
-            else if (cell === BACKSLASH) { [dx, dy] = [dy, dx]; reflections++; }
-            else if (cell) return {path, reflections, hit: cell};
+            if (cell === '/') {
+                [dx, dy] = [-dy, -dx];
+                reflections++;
+            } else if (cell === BACKSLASH) {
+                [dx, dy] = [dy, dx];
+                reflections++;
+            } else if (cell) return {path, reflections, hit: cell};
         }
         return {path, reflections};
     }
@@ -1728,7 +1877,9 @@
             const free = [];
             for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) if (!grid[y][x]) free.push([x, y]);
             const spots = r.shuffle(free);
-            spots.slice(0, mirrorCount).forEach(([x, y]) => { grid[y][x] = r.next() < .5 ? '/' : BACKSLASH; });
+            spots.slice(0, mirrorCount).forEach(([x, y]) => {
+                grid[y][x] = r.next() < .5 ? '/' : BACKSLASH;
+            });
             if (withObstacles) {
                 const [ox, oy] = spots[mirrorCount];
                 grid[oy][ox] = '🧱';
@@ -1746,15 +1897,39 @@
                 if ((x === 0 || y === 0 || x === size - 1 || y === size - 1) && !grid[y][x] && !onPath.has(x + ',' + y)) border.push([x, y]);
             }
             if (border.length < 3) continue;
-            r.shuffle(border).slice(0, 3).forEach(([x, y], i) => { grid[y][x] = gems[i + 1]; });
+            r.shuffle(border).slice(0, 3).forEach(([x, y], i) => {
+                grid[y][x] = gems[i + 1];
+            });
             const check = traceLaser(grid, 0, startY);
             if (check.hit !== gems[0] || check.reflections < minRefl) continue; // the beam must not reach the target early
-            const lasersData = {size, grid, startX: 0, startY, path: check.path, target: gems[0], reflections: check.reflections};
-            const q = {view: 'lasers', lasersData, grid, pk: 'q_lasers_hit', why: [{k: 'why_lasers_hit', v: {x: gems[0]}}]};
+            const lasersData = {
+                size,
+                grid,
+                startX: 0,
+                startY,
+                path: check.path,
+                target: gems[0],
+                reflections: check.reflections
+            };
+            const q = {
+                view: 'lasers',
+                lasersData,
+                grid,
+                pk: 'q_lasers_hit',
+                why: [{k: 'why_lasers_hit', v: {x: gems[0]}}]
+            };
             return withOptions(r, q, gems[0], gems.slice(1));
         }
         const grid = [['🔦', '', BACKSLASH], ['⭐', '', ''], ['🔮', '🪙', '💎']];
-        const lasersData = {size: 3, grid, startX: 0, startY: 0, path: [[0, 0], [1, 0], [2, 0], [2, 1], [2, 2]], target: '💎', reflections: 1};
+        const lasersData = {
+            size: 3,
+            grid,
+            startX: 0,
+            startY: 0,
+            path: [[0, 0], [1, 0], [2, 0], [2, 1], [2, 2]],
+            target: '💎',
+            reflections: 1
+        };
         const q = {view: 'lasers', lasersData, grid, pk: 'q_lasers_hit', why: [{k: 'why_lasers_hit', v: {x: '💎'}}]};
         return withOptions(r, q, '💎', ['⭐', '🔮', '🪙']);
     }
@@ -2014,22 +2189,36 @@
         const weight = (val, hidden) => ({type: 'weight', val: hidden ? '?' : val, isTarget: !!hidden, realVal: val});
         if (tier === 1) {
             let dL, dR;
-            do { dL = r.int(1, 4); dR = r.int(1, 4); } while (dL === dR && r.next() < .8);
+            do {
+                dL = r.int(1, 4);
+                dR = r.int(1, 4);
+            } while (dL === dR && r.next() < .8);
             const g = dL % dR === 0 ? dR : (dR % dL === 0 ? dL : 1);
             const m = r.int(1, 4);
             const wL = m * dR / g, wR = m * dL / g;
             const hideRight = r.next() < .5;
             rightAnswer = hideRight ? wR : wL;
             const span = (dL + dR) * 32;
-            beams = [{id: 'b0', x: Math.round(155 - span / 2 + dL * 32), y: 35, dL, dR, left: weight(wL, !hideRight), right: weight(wR, hideRight)}];
+            beams = [{
+                id: 'b0',
+                x: Math.round(155 - span / 2 + dL * 32),
+                y: 35,
+                dL,
+                dR,
+                left: weight(wL, !hideRight),
+                right: weight(wR, hideRight)
+            }];
         } else {
             let sL, sR, dL, dR, wSL, wSR, wL;
-            for (;;) {
-                sL = r.int(1, 3); sR = r.int(1, 3);
+            for (; ;) {
+                sL = r.int(1, 3);
+                sR = r.int(1, 3);
                 const k = r.int(1, 4);
                 const g = sL % sR === 0 ? sR : (sR % sL === 0 ? sL : 1);
-                wSL = k * sR / g; wSR = k * sL / g;
-                dL = r.int(1, 3); dR = r.int(1, 2);
+                wSL = k * sR / g;
+                wSR = k * sL / g;
+                dL = r.int(1, 3);
+                dR = r.int(1, 2);
                 // the lower beam starts to the right of the upper left weight, so nothing seems to hang from the wrong beam
                 if ((wSL + wSR) * dR % dL === 0 && (sL !== sR || tier === 3) && dR - sL > -dL) break;
             }
@@ -2039,13 +2228,34 @@
             const relMin = Math.min(-dL, dR - sL), relMax = dR + sR;
             const b0x = Math.round(155 - (relMin + relMax) * 32 / 2);
             beams = [
-                {id: 'b0', x: b0x, y: 32, dL, dR, left: weight(wL, hide === 'mainLeft'), right: {type: 'beam', subBeamIdx: 1, totalWeight: wSL + wSR}},
-                {id: 'b1', x: b0x + dR * 32, y: 92, dL: sL, dR: sR, left: weight(wSL, hide === 'subLeft'), right: weight(wSR, hide === 'subRight')},
+                {
+                    id: 'b0',
+                    x: b0x,
+                    y: 32,
+                    dL,
+                    dR,
+                    left: weight(wL, hide === 'mainLeft'),
+                    right: {type: 'beam', subBeamIdx: 1, totalWeight: wSL + wSR}
+                },
+                {
+                    id: 'b1',
+                    x: b0x + dR * 32,
+                    y: 92,
+                    dL: sL,
+                    dR: sR,
+                    left: weight(wSL, hide === 'subLeft'),
+                    right: weight(wSR, hide === 'subRight')
+                },
             ];
         }
         const right = String(rightAnswer);
         const near = [rightAnswer - 2, rightAnswer - 1, rightAnswer + 1, rightAnswer + 2, rightAnswer + 3, rightAnswer * 2].filter(n => n > 0 && n !== rightAnswer).map(String);
-        const q = {view: 'mobiles', mobilesData: {tier, beams, rightAnswer}, pk: 'q_mobile_balance', why: [{k: 'why_mobile', v: {x: right}}]};
+        const q = {
+            view: 'mobiles',
+            mobilesData: {tier, beams, rightAnswer},
+            pk: 'q_mobile_balance',
+            why: [{k: 'why_mobile', v: {x: right}}]
+        };
         return withOptions(r, q, right, others(r, near, right));
     }
 
@@ -2055,21 +2265,42 @@
 
     // ---------- origami paper folding and hole punch ----------
     function computeOrigamiBounds(folds, size = 4) {
-        let b = { xMin: 0, xMax: size - 1, yMin: 0, yMax: size - 1 };
+        let b = {xMin: 0, xMax: size - 1, yMin: 0, yMax: size - 1};
         const steps = [];
         for (const f of folds) {
-            const bBefore = { xMin: b.xMin, xMax: b.xMax, yMin: b.yMin, yMax: b.yMax, cols: b.xMax - b.xMin + 1, rows: b.yMax - b.yMin + 1 };
+            const bBefore = {
+                xMin: b.xMin,
+                xMax: b.xMax,
+                yMin: b.yMin,
+                yMax: b.yMax,
+                cols: b.xMax - b.xMin + 1,
+                rows: b.yMax - b.yMin + 1
+            };
             const sx = b.xMin + b.xMax;
             const sy = b.yMin + b.yMax;
             if (f === 'L_TO_R') b.xMin = Math.floor((b.xMin + b.xMax) / 2) + 1;
             else if (f === 'R_TO_L') b.xMax = Math.floor((b.xMin + b.xMax) / 2);
             else if (f === 'T_TO_B') b.yMin = Math.floor((b.yMin + b.yMax) / 2) + 1;
             else if (f === 'B_TO_T') b.yMax = Math.floor((b.yMin + b.yMax) / 2);
-            const bAfter = { xMin: b.xMin, xMax: b.xMax, yMin: b.yMin, yMax: b.yMax, cols: b.xMax - b.xMin + 1, rows: b.yMax - b.yMin + 1 };
-            steps.push({ fold: f, bBefore, bAfter, sx, sy });
+            const bAfter = {
+                xMin: b.xMin,
+                xMax: b.xMax,
+                yMin: b.yMin,
+                yMax: b.yMax,
+                cols: b.xMax - b.xMin + 1,
+                rows: b.yMax - b.yMin + 1
+            };
+            steps.push({fold: f, bBefore, bAfter, sx, sy});
         }
-        const finalBounds = { xMin: b.xMin, xMax: b.xMax, yMin: b.yMin, yMax: b.yMax, cols: b.xMax - b.xMin + 1, rows: b.yMax - b.yMin + 1 };
-        return { steps, finalBounds };
+        const finalBounds = {
+            xMin: b.xMin,
+            xMax: b.xMax,
+            yMin: b.yMin,
+            yMax: b.yMax,
+            cols: b.xMax - b.xMin + 1,
+            rows: b.yMax - b.yMin + 1
+        };
+        return {steps, finalBounds};
     }
 
     function unfoldOrigamiHoles(punch, steps) {
@@ -2080,11 +2311,17 @@
             const seen = new Set();
             for (const p of holes) {
                 const k1 = p[0] + ',' + p[1];
-                if (!seen.has(k1)) { seen.add(k1); next.push(p); }
+                if (!seen.has(k1)) {
+                    seen.add(k1);
+                    next.push(p);
+                }
                 const rx = (info.fold === 'L_TO_R' || info.fold === 'R_TO_L') ? (info.sx - p[0]) : p[0];
                 const ry = (info.fold === 'T_TO_B' || info.fold === 'B_TO_T') ? (info.sy - p[1]) : p[1];
                 const k2 = rx + ',' + ry;
-                if (!seen.has(k2)) { seen.add(k2); next.push([rx, ry]); }
+                if (!seen.has(k2)) {
+                    seen.add(k2);
+                    next.push([rx, ry]);
+                }
             }
             holes = next;
         }
@@ -2113,7 +2350,7 @@
             else numFolds = 4;
         }
 
-        let curB = { xMin: 0, xMax: size - 1, yMin: 0, yMax: size - 1 };
+        let curB = {xMin: 0, xMax: size - 1, yMin: 0, yMax: size - 1};
         for (let s = 0; s < numFolds; s++) {
             const w = curB.xMax - curB.xMin + 1;
             const h = curB.yMax - curB.yMin + 1;
@@ -2129,7 +2366,7 @@
             else if (f === 'B_TO_T') curB.yMax = Math.floor((curB.yMin + curB.yMax) / 2);
         }
 
-        const { steps, finalBounds } = computeOrigamiBounds(folds, size);
+        const {steps, finalBounds} = computeOrigamiBounds(folds, size);
 
         const validX = [];
         for (let x = finalBounds.xMin; x <= finalBounds.xMax; x++) validX.push(x);
@@ -2154,7 +2391,9 @@
         const rightHoles = unfoldOrigamiHoles(punch, steps);
         const serialize = pts => {
             const grid = Array.from({length: size}, () => Array(size).fill(0));
-            pts.forEach(([x, y]) => { if (x >= 0 && x < size && y >= 0 && y < size) grid[y][x] = 1; });
+            pts.forEach(([x, y]) => {
+                if (x >= 0 && x < size && y >= 0 && y < size) grid[y][x] = 1;
+            });
             return grid.flat().join('');
         };
 

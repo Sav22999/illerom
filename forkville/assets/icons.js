@@ -7,9 +7,29 @@
  */
 
 const C = {
-    ink: '#3B2418', red: '#E0453A', dred: '#B5302A', green: '#5E9A3E', dgreen: '#3F7A2E', leaf: '#7CB342', yellow: '#F6C945', orange: '#F08A24',
-    brown: '#9C6B3F', dbrown: '#6B4426', cream: '#FFF6E9', white: '#FFFFFF', grey: '#C9CED4', blue: '#3E7CB4', lblue: '#8CC8EC', pink: '#F7A1C4',
-    purple: '#8E5BA8', gold: '#E2B23A', skin: '#F6D0A8', bread: '#E6B26B', choc: '#5A3218', beige: '#F1E3B5', plate: '#F4F1EA',
+    ink: '#3B2418',
+    red: '#E0453A',
+    dred: '#B5302A',
+    green: '#5E9A3E',
+    dgreen: '#3F7A2E',
+    leaf: '#7CB342',
+    yellow: '#F6C945',
+    orange: '#F08A24',
+    brown: '#9C6B3F',
+    dbrown: '#6B4426',
+    cream: '#FFF6E9',
+    white: '#FFFFFF',
+    grey: '#C9CED4',
+    blue: '#3E7CB4',
+    lblue: '#8CC8EC',
+    pink: '#F7A1C4',
+    purple: '#8E5BA8',
+    gold: '#E2B23A',
+    skin: '#F6D0A8',
+    bread: '#E6B26B',
+    choc: '#5A3218',
+    beige: '#F1E3B5',
+    plate: '#F4F1EA',
 };
 
 let uid = 0;

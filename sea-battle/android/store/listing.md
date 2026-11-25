@@ -41,8 +41,8 @@ PRIVACY-FIRST
 • English, Italian, Spanish, French and German; light and dark theme
 ```
 
-**Category**: Game → Board (alternative: Strategy) · **Tags** (up to 5): Battleship-style, Naval battle, Board game, 2 player, Multiplayer
-**Website**: https://www.illerom.eu/sea-battle/
+**Category**: Game → Board (alternative: Strategy) · **Tags** (up to 5): Battleship-style, Naval battle, Board game, 2
+player, Multiplayer **Website**: https://www.illerom.eu/sea-battle/
 **Privacy policy**: https://www.illerom.eu/sea-battle/privacy.html
 
 Do not use the trademark "Battleship" in the name, the description or the tags.
@@ -56,11 +56,14 @@ Do not use the trademark "Battleship" in the name, the description or the tags.
 
 ### Data safety (Play Console → App content → Data safety)
 
-- Data collected: the nickname the player types and the in-game chat messages, for online games only. Declare **Personal info → Name** and **Messages → Other in-app messages**, purpose **App functionality**, not shared with third parties. Nothing else is collected: no email, phone, location or device identifiers.
+- Data collected: the nickname the player types and the in-game chat messages, for online games only. Declare **Personal
+  info → Name** and **Messages → Other in-app messages**, purpose **App functionality**, not shared with third parties.
+  Nothing else is collected: no email, phone, location or device identifiers.
 - Games on one device or against the computer send nothing to the server.
 - Temporary data: rooms, nicknames, fleets and chat are deleted automatically within 48 hours of the last activity.
 - Data encrypted in transit (HTTPS). No ad networks, tracking SDKs or profiling.
-- Content rating questionnaire: no violence beyond abstract ships on a grid, user-to-user chat **yes** (text only, between two players of a game).
+- Content rating questionnaire: no violence beyond abstract ships on a grid, user-to-user chat **yes** (text only,
+  between two players of a game).
 
 ---
 

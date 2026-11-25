@@ -10,7 +10,9 @@
  *   url        where the app lives: /<slug>/ here, or a full address elsewhere; '' = it cannot be opened yet
  *   source     folder in the repository of $site['source'], or a full address; '' = not published yet
  *   privacy    address of its privacy notice, relative to the app ('' = none)
- *   shots      how many screenshots in assets/projects/<slug>/ (1.jpg, 2.jpg…)
+ *   shots      how many screenshots of a phone in assets/projects/<slug>/ (1.jpg, 2.jpg…)
+ *   tablet     optional: how many from a tablet (t1.jpg, t2.jpg…, 1180 × 820)
+ *   desk       optional: how many from a computer (d1.jpg, d2.jpg…, 1440 × 900)
  */
 $five = ['en', 'it', 'fr', 'de', 'es'];
 $two = ['en', 'it'];
@@ -18,7 +20,7 @@ $two = ['en', 'it'];
 return [
     'opennewsletter' => [
         'name' => 'OpenNewsletter', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '',
-        'url' => '/opennewsletter/', 'source' => 'opennewsletter', 'privacy' => 'terms.php', 'langs' => $two, 'shots' => 0,
+        'url' => '/opennewsletter/', 'source' => 'opennewsletter', 'privacy' => 'terms.php', 'langs' => $two, 'shots' => 4, 'tablet' => 4, 'desk' => 4,
         'it' => ['Newsletter scritte, approvate e spedite in gruppo.',
             'Chi gestisce la newsletter di un’associazione raramente è una persona sola: qualcuno scrive, qualcun altro controlla, e nessuno vuole mandare per sbaglio un messaggio a centinaia di persone. OpenNewsletter dà a ogni gruppo i suoi ruoli e un passaggio di approvazione prima dell’invio.',
             ['Editor a trascinamento con modelli pronti o del gruppo', 'Proposta, approvazione e invio all’ora scelta', 'Iscritti in più lingue, pagina di iscrizione e widget per qualsiasi sito', 'Ogni gruppo spedisce dal proprio indirizzo email']],
@@ -31,18 +33,20 @@ return [
         'url' => '/savdocuments/', 'source' => 'savdocuments', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 4,
         'it' => ['Documenti veri, senza ingombri.',
             'Un editor di documenti in cui prima viene la pagina e gli strumenti compaiono solo quando servono. Si può scrivere subito, anche senza account e senza connessione, oppure in più persone nello stesso momento. Apre e salva i file Word.',
-            ['Pagine da A6 ad A3, verticali o orizzontali, con intestazioni, note e sommario', 'Tabelle, immagini e ricerca di immagini libere', 'Condivisione, commenti, versioni e scrittura in contemporanea', 'File .docx, .savdoc, PDF, pagina web e testo']],
+            ['Pagine da A6 ad A3 con margini trascinabili, bordi, filigrana, intestazioni, note e sommario', 'Tabelle, immagini, grafici, schemi, forme, formule e codici QR', '43 modelli pronti, condivisione, commenti, versioni e scrittura in contemporanea', 'File .docx, .savdoc, PDF, EPUB, Markdown, pagina web e testo']],
         'en' => ['Real documents, without the clutter.',
             'A word processor where the page comes first and the tools appear only when you need them. You can write at once, even without an account or a connection, or together with other people at the same time. It opens and saves Word files.',
-            ['Pages from A6 to A3, portrait or landscape, with headers, notes and a table of contents', 'Tables, images and a search for free images', 'Sharing, comments, versions and writing together', '.docx, .savdoc, PDF, web page and plain text files']],
+            ['Pages from A6 to A3 with draggable margins, borders, watermark, headers, notes and a table of contents', 'Tables, images, charts, diagrams, shapes, formulas and QR codes', '43 ready templates, sharing, comments, versions and writing together', '.docx, .savdoc, PDF, EPUB, Markdown, web page and plain text files']],
     ],
-    'presentations' => [
-        'name' => 'Presentations', 'cat' => 'work', 'level' => 1, 'account' => '', 'offline' => false, 'play' => '',
-        'url' => '', 'source' => '', 'privacy' => '', 'langs' => [], 'shots' => 0,
-        'it' => ['Un’alternativa aperta per fare presentazioni.',
-            'È in preparazione. Quando si potrà provare, comparirà qui insieme al suo codice.', []],
-        'en' => ['An open alternative for making presentations.',
-            'It is in preparation. As soon as it can be tried, it will appear here together with its code.', []],
+    'savpresentations' => [
+        'name' => 'SavPresentations', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '',
+        'url' => '/savpresentations/', 'source' => 'savpresentations', 'privacy' => 'privacy.php', 'langs' => $two, 'shots' => 4, 'tablet' => 4, 'desk' => 4,
+        'it' => ['Presentazioni, senza il peso.',
+            'Un’alternativa aperta a Google Slides e PowerPoint Online: si apre subito, ha temi già belli e si lavora in più persone sulla stessa slide. Le presentazioni restano private, con link o con chi scegli tu, e si scaricano in PDF, PowerPoint e OpenDocument.',
+            ['Temi e modelli, dai più puliti ai più colorati, in 16:9, A4, A3 e altri formati', 'Modifiche in contemporanea, commenti e note personali', 'Grafici, tabelle, icone e ricerca di immagini e video liberi', 'Permessi per ogni persona e link usa e getta']],
+        'en' => ['Presentations, without the weight.',
+            'An open alternative to Google Slides and PowerPoint Online: it opens at once, its themes already look good, and several people can work on the same slide. Presentations stay private, by link or with the people you choose, and download as PDF, PowerPoint and OpenDocument.',
+            ['Themes and templates, from plain to bold, in 16:9, A4, A3 and other formats', 'Live editing together, comments and personal notes', 'Charts, tables, icons and a search for free pictures and videos', 'Permissions for each person and single-use links']],
     ],
     'chess' => [
         'name' => 'Chess', 'cat' => 'games', 'level' => 3, 'account' => 'none', 'offline' => true, 'play' => 'com.saverio.chess',
@@ -86,7 +90,7 @@ return [
     ],
     'mycurriculum' => [
         'name' => 'MyCurriculum', 'cat' => 'work', 'level' => 3, 'account' => 'required', 'offline' => false, 'play' => 'com.saverio.mycurriculum',
-        'url' => '/mycurriculum/', 'source' => 'mycurriculum', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 4,
+        'url' => '/mycurriculum/', 'source' => 'mycurriculum', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 4, 'tablet' => 3, 'desk' => 3,
         'it' => ['Un solo CV, in tutte le lingue che ti servono.',
             'Scrivi il curriculum una volta e tieni una versione per ogni lingua. Ognuna si scarica in PDF con testo selezionabile, oppure si pubblica come pagina web che mostra solo quello che hai deciso tu.',
             ['Quattro modelli', 'Importa il CV che hai già dal suo PDF', 'Decidi campo per campo cosa è pubblico']],
@@ -116,7 +120,7 @@ return [
     ],
     'fucina' => [
         'name' => 'Fucina', 'cat' => 'learn', 'level' => 3, 'account' => 'required', 'offline' => false, 'play' => 'com.saverio.fucina',
-        'url' => '/fucina/', 'source' => 'fucina', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 4,
+        'url' => '/fucina/', 'source' => 'fucina', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 4, 'tablet' => 4, 'desk' => 4,
         'it' => ['Imparare a programmare un livello alla volta.',
             'Da HTML, CSS e JavaScript a Python, Java, SQL, Kotlin, Swift e Rust: livelli sempre più difficili, esercizi veloci e piccoli giochi. Le Scintille che guadagni sbloccano i certificati.',
             ['Corsi su web, linguaggi e database', 'Sfida del giorno con classifica', 'Il codice che scrivi resta nel browser']],

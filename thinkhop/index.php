@@ -64,8 +64,10 @@ $v = '1.8.52';
 <body>
 <div id="app">
     <div class="home skeleton-page" aria-busy="true">
-        <div class="sk-hero"><span class="sk sk-logo"></span><span class="sk-hero-text"><span class="sk sk-title"></span><span class="sk" style="width:70%"></span></span></div>
-        <div class="sk-card"><span class="sk" style="width:30%"></span><span class="sk sk-bar"></span><span class="sk sk-button"></span><span class="sk sk-button"></span></div>
+        <div class="sk-hero"><span class="sk sk-logo"></span><span class="sk-hero-text"><span
+                        class="sk sk-title"></span><span class="sk" style="width:70%"></span></span></div>
+        <div class="sk-card"><span class="sk" style="width:30%"></span><span class="sk sk-bar"></span><span
+                    class="sk sk-button"></span><span class="sk sk-button"></span></div>
         <div class="sk-pair"><span class="sk-card sk-short"></span><span class="sk-card sk-short"></span></div>
     </div>
     <noscript><p style="padding:24px">ThinkHop needs JavaScript.</p></noscript>

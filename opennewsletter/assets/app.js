@@ -10,9 +10,33 @@
  * The newsletter editor is assets/editor.js; texts are in assets/i18n.js.
  */
 
-import {t, getLang, setLang, UI_LANGS} from './i18n.js?v=20';
-import {S, h, put, svg, iconBtn, logo, api, errText, toast, failToast, modal, confirmDialog, field, input, select, copyBox, fmtDate, partsIn, relTime, atLeast, rank, ROLES, LANG_NAMES} from './ui.js?v=20';
-import {editorView, slotDialog, previewDialog} from './editor.js?v=20';
+import {getLang, setLang, t, UI_LANGS} from './i18n.js?v=20';
+import {
+    api,
+    atLeast,
+    confirmDialog,
+    copyBox,
+    errText,
+    failToast,
+    field,
+    fmtDate,
+    h,
+    iconBtn,
+    input,
+    LANG_NAMES,
+    logo,
+    modal,
+    partsIn,
+    put,
+    rank,
+    relTime,
+    ROLES,
+    S,
+    select,
+    svg,
+    toast
+} from './ui.js?v=20';
+import {editorView, previewDialog, slotDialog} from './editor.js?v=20';
 
 const app = document.getElementById('app');
 const STATUS_ORDER = ['pending', 'scheduled', 'sending', 'draft', 'rejected', 'expired', 'sent', 'failed', 'cancelled'];
@@ -22,7 +46,13 @@ let cache = {group: null};
 
 // Google and SavAccount: joining an account that already exists, new accounts, ways of signing in (../identity/)
 if (window.Identity) Identity.setup({
-    name: 'OpenNewsletter', lang: getLang, accent: '#5B3DF5', accept: 'acceptTerms', acceptUrl: () => 'terms.php?lang=' + getLang(), google: (slot, cb) => googleButton(slot, cb), body: () => ({lang: getLang()}),
+    name: 'OpenNewsletter',
+    lang: getLang,
+    accent: '#5B3DF5',
+    accept: 'acceptTerms',
+    acceptUrl: () => 'terms.php?lang=' + getLang(),
+    google: (slot, cb) => googleButton(slot, cb),
+    body: () => ({lang: getLang()}),
 });
 
 async function boot() {
@@ -82,21 +112,31 @@ function go(hash) {
 // ---------------------------------------------------------------- frame
 
 function langSwitch() {
-    return h('div.lang-switch', {role: 'group', 'aria-label': t('language')}, UI_LANGS.map((l) => h('button' + (l === getLang() ? '.on' : ''), {type: 'button', lang: l, 'aria-pressed': String(l === getLang()), onclick: async () => {
-        if (l === getLang()) return;
-        setLang(l);
-        if (S.user) {
-            try {
-                setUser((await api('auth.profile', {lang: l})).user);
-            } catch (e) { /* only the app language */ }
+    return h('div.lang-switch', {
+        role: 'group',
+        'aria-label': t('language')
+    }, UI_LANGS.map((l) => h('button' + (l === getLang() ? '.on' : ''), {
+        type: 'button', lang: l, 'aria-pressed': String(l === getLang()), onclick: async () => {
+            if (l === getLang()) return;
+            setLang(l);
+            if (S.user) {
+                try {
+                    setUser((await api('auth.profile', {lang: l})).user);
+                } catch (e) { /* only the app language */
+                }
+            }
+            route();
         }
-        route();
-    }}, l.toUpperCase())));
+    }, l.toUpperCase())));
 }
 
 function credit() {
     return h('footer.app-foot', h('a', {href: 'terms.php?lang=' + getLang(), target: '_blank'}, t('terms')),
-        h('a.credit', {href: 'https://www.saveriomorelli.com/', target: '_blank', rel: 'noopener'}, h('span', t('made_by')), h('span.credit-name', 'Saverio Morelli')));
+        h('a.credit', {
+            href: 'https://www.saveriomorelli.com/',
+            target: '_blank',
+            rel: 'noopener'
+        }, h('span', t('made_by')), h('span.credit-name', 'Saverio Morelli')));
 }
 
 function brand() {
@@ -109,11 +149,15 @@ function userMenu() {
         h('a.menu-item', {href: '#/account'}, svg('user'), t('account')),
         S.user.master ? h('a.menu-item', {href: '#/master'}, svg('shield'), t('master')) : null,
         h('button.menu-item', {type: 'button', onclick: logout}, svg('logout'), t('logout')));
-    const btn = h('button.avatar', {type: 'button', 'aria-label': t('account'), onclick: (ev) => {
-        ev.stopPropagation();
-        menu.hidden = !menu.hidden;
-    }}, initials(S.user.name));
-    document.addEventListener('click', (ev) => { if (!menu.contains(ev.target)) menu.hidden = true; });
+    const btn = h('button.avatar', {
+        type: 'button', 'aria-label': t('account'), onclick: (ev) => {
+            ev.stopPropagation();
+            menu.hidden = !menu.hidden;
+        }
+    }, initials(S.user.name));
+    document.addEventListener('click', (ev) => {
+        if (!menu.contains(ev.target)) menu.hidden = true;
+    });
     return h('div.user-menu', btn, menu);
 }
 
@@ -133,7 +177,8 @@ function loading() {
 async function logout() {
     try {
         await api('auth.logout', {});
-    } catch (e) { /* signed out anyway */ }
+    } catch (e) { /* signed out anyway */
+    }
     S.user = null;
     S.csrf = '';
     go('#/');
@@ -158,50 +203,89 @@ function loadGoogle() {
 function googleButton(box, onCredential) {
     if (!S.config.googleClientId) return;
     loadGoogle().then(() => {
-        google.accounts.id.initialize({client_id: S.config.googleClientId, callback: (r) => onCredential(r.credential), ux_mode: 'popup'});
-        google.accounts.id.renderButton(box, {theme: 'outline', size: 'large', shape: 'pill', text: 'continue_with', width: 300, locale: getLang()});
-    }).catch(() => {});
+        google.accounts.id.initialize({
+            client_id: S.config.googleClientId,
+            callback: (r) => onCredential(r.credential),
+            ux_mode: 'popup'
+        });
+        google.accounts.id.renderButton(box, {
+            theme: 'outline',
+            size: 'large',
+            shape: 'pill',
+            text: 'continue_with',
+            width: 300,
+            locale: getLang()
+        });
+    }).catch(() => {
+    });
 }
 
 function authScreen(mode = 'login') {
     const card = h('div.auth-card');
     const draw = () => {
         const err = h('p.form-error', {role: 'alert', hidden: true});
-        const showErr = (e) => { err.textContent = errText(e); err.hidden = false; };
+        const showErr = (e) => {
+            err.textContent = errText(e);
+            err.hidden = false;
+        };
         const email = input({type: 'email', autocomplete: 'email', required: true, maxlength: 190});
-        const pw = input({type: 'password', autocomplete: mode === 'login' ? 'current-password' : 'new-password', required: true, minlength: 8});
+        const pw = input({
+            type: 'password',
+            autocomplete: mode === 'login' ? 'current-password' : 'new-password',
+            required: true,
+            minlength: 8
+        });
         const name = input({autocomplete: 'name', maxlength: 80, required: true});
         const terms = h('input', {type: 'checkbox'});
         const submit = h('button.btn.btn-primary.btn-lg.btn-block', {type: 'submit'}, t(mode === 'login' ? 'sign_in' : 'create_account'));
-        const form = h('form.stack', {onsubmit: async (ev) => {
-            ev.preventDefault();
-            err.hidden = true;
-            submit.disabled = true;
-            try {
-                if (mode === 'login') {
-                    const r = await api('auth.login', {email: email.value, password: pw.value});
-                    setUser(r.user, r.csrf);
-                    route();
-                } else {
-                    if (!terms.checked) throw {code: 'terms_required'};
-                    await api('auth.register', {name: name.value, email: email.value, password: pw.value, acceptTerms: true, lang: getLang()});
-                    put(card, h('div.center', h('div.big-ico', svg('mail', 'ico ico-xl')), h('h2', t('check_inbox')), h('p', t('check_inbox_text', {email: email.value})),
-                        h('button.btn.btn-soft', {type: 'button', onclick: () => { mode = 'login'; draw(); }}, t('back_to_login'))));
+        const form = h('form.stack', {
+                onsubmit: async (ev) => {
+                    ev.preventDefault();
+                    err.hidden = true;
+                    submit.disabled = true;
+                    try {
+                        if (mode === 'login') {
+                            const r = await api('auth.login', {email: email.value, password: pw.value});
+                            setUser(r.user, r.csrf);
+                            route();
+                        } else {
+                            if (!terms.checked) throw {code: 'terms_required'};
+                            await api('auth.register', {
+                                name: name.value,
+                                email: email.value,
+                                password: pw.value,
+                                acceptTerms: true,
+                                lang: getLang()
+                            });
+                            put(card, h('div.center', h('div.big-ico', svg('mail', 'ico ico-xl')), h('h2', t('check_inbox')), h('p', t('check_inbox_text', {email: email.value})),
+                                h('button.btn.btn-soft', {
+                                    type: 'button', onclick: () => {
+                                        mode = 'login';
+                                        draw();
+                                    }
+                                }, t('back_to_login'))));
+                        }
+                    } catch (e) {
+                        showErr(e);
+                    } finally {
+                        submit.disabled = false;
+                    }
                 }
-            } catch (e) {
-                showErr(e);
-            } finally {
-                submit.disabled = false;
-            }
-        }},
+            },
             mode === 'register' ? field(t('your_name'), name) : null,
             field(t('email'), email, mode === 'register' ? t('email_fixed') : null),
             field(t('password'), pw, mode === 'register' ? t('password_hint') : null),
-            mode === 'register' ? h('label.check', terms, h('span', t('accept_terms_pre'), ' ', h('a', {href: 'terms.php?lang=' + getLang(), target: '_blank'}, t('terms_link')))) : null,
+            mode === 'register' ? h('label.check', terms, h('span', t('accept_terms_pre'), ' ', h('a', {
+                href: 'terms.php?lang=' + getLang(),
+                target: '_blank'
+            }, t('terms_link')))) : null,
             err, submit);
         const g = h('div.google-box');
         const sav = window.Identity ? Identity.button(S.config.savAccount) : null;
-        const gTerms = h('p.muted.small.center', t('google_terms'), ' ', h('a', {href: 'terms.php?lang=' + getLang(), target: '_blank'}, t('terms_link')));
+        const gTerms = h('p.muted.small.center', t('google_terms'), ' ', h('a', {
+            href: 'terms.php?lang=' + getLang(),
+            target: '_blank'
+        }, t('terms_link')));
         googleButton(g, async (credential) => {
             try {
                 let r = await api('auth.google', {credential, lang: getLang()});
@@ -218,8 +302,18 @@ function authScreen(mode = 'login') {
             }
         });
         put(card,
-            h('div.seg.seg-block', h('button' + (mode === 'login' ? '.on' : ''), {type: 'button', onclick: () => { mode = 'login'; draw(); }}, t('sign_in')),
-                h('button' + (mode === 'register' ? '.on' : ''), {type: 'button', onclick: () => { mode = 'register'; draw(); }}, t('create_account'))),
+            h('div.seg.seg-block', h('button' + (mode === 'login' ? '.on' : ''), {
+                    type: 'button', onclick: () => {
+                        mode = 'login';
+                        draw();
+                    }
+                }, t('sign_in')),
+                h('button' + (mode === 'register' ? '.on' : ''), {
+                    type: 'button', onclick: () => {
+                        mode = 'register';
+                        draw();
+                    }
+                }, t('create_account'))),
             form, S.config.googleClientId || sav ? h('div.or', h('span', t('or'))) : null, S.config.googleClientId ? g : null, sav, S.config.googleClientId || sav ? gTerms : null,
             !S.config.mailReady && mode === 'register' ? h('p.muted.small', t('mail_not_ready')) : null);
     };
@@ -240,37 +334,44 @@ function authScreen(mode = 'login') {
 }
 
 function verifyScreen(token) {
-    const btn = h('button.btn.btn-primary.btn-lg', {type: 'button', onclick: async () => {
-        btn.disabled = true;
-        try {
-            const r = await api('auth.verify', {token});
-            setUser(r.user, r.csrf);
-            toast(t('verified_ok'));
-            go('#/');
-        } catch (e) {
-            put(box, h('div.big-ico', svg('x', 'ico ico-xl')), h('h1', t('link_expired')), h('p', errText(e)), h('a.btn.btn-soft', {href: './'}, t('back_to_login')));
+    const btn = h('button.btn.btn-primary.btn-lg', {
+        type: 'button', onclick: async () => {
+            btn.disabled = true;
+            try {
+                const r = await api('auth.verify', {token});
+                setUser(r.user, r.csrf);
+                toast(t('verified_ok'));
+                go('#/');
+            } catch (e) {
+                put(box, h('div.big-ico', svg('x', 'ico ico-xl')), h('h1', t('link_expired')), h('p', errText(e)), h('a.btn.btn-soft', {href: './'}, t('back_to_login')));
+            }
         }
-    }}, svg('check'), t('confirm_email'));
+    }, svg('check'), t('confirm_email'));
     const box = h('div.center-card', h('div.big-ico', svg('mail', 'ico ico-xl')), h('h1', t('confirm_email_title')), h('p', t('confirm_email_text')), btn);
     put(app, h('div.landing', h('header.landing-top', brand(), langSwitch()), box, credit()));
 }
 
 function pendingScreen() {
-    const resend = h('button.btn.btn-primary', {type: 'button', onclick: async () => {
-        resend.disabled = true;
-        try {
-            await api('auth.resend', {lang: getLang()});
-            toast(t('link_sent'));
-        } catch (e) {
-            failToast(e);
-        } finally {
-            resend.disabled = false;
+    const resend = h('button.btn.btn-primary', {
+        type: 'button', onclick: async () => {
+            resend.disabled = true;
+            try {
+                await api('auth.resend', {lang: getLang()});
+                toast(t('link_sent'));
+            } catch (e) {
+                failToast(e);
+            } finally {
+                resend.disabled = false;
+            }
         }
-    }}, svg('send'), t('resend_link'));
+    }, svg('send'), t('resend_link'));
     put(app, h('div.landing', h('header.landing-top', brand(), langSwitch()),
         h('div.center-card', h('div.big-ico', svg('mail', 'ico ico-xl')), h('h1', t('check_inbox')), h('p', t('pending_text', {email: S.user.email})),
             !S.user.mailReady ? h('p.muted.small', t('mail_not_ready')) : null,
-            h('div.row-btns', resend, h('button.btn.btn-soft', {type: 'button', onclick: logout}, t('logout')))), credit()));
+            h('div.row-btns', resend, h('button.btn.btn-soft', {
+                type: 'button',
+                onclick: logout
+            }, t('logout')))), credit()));
 }
 
 // ---------------------------------------------------------------- dashboard
@@ -294,19 +395,24 @@ async function dashboard() {
     shell(
         h('div.page-head', h('div', h('h1', t('hello', {name: S.user.name.split(' ')[0]})), h('p.muted', t(groups.length ? 'dash_lead' : 'dash_empty'))),
             h('button.btn.btn-primary', {type: 'button', onclick: createGroup}, svg('plus'), t('new_group'))),
-        h('div.group-grid', cards, h('button.group-card.group-new', {type: 'button', onclick: createGroup}, svg('plus', 'ico ico-lg'), h('strong', t('new_group')), h('span.muted', t('new_group_text')))),
+        h('div.group-grid', cards, h('button.group-card.group-new', {
+            type: 'button',
+            onclick: createGroup
+        }, svg('plus', 'ico ico-lg'), h('strong', t('new_group')), h('span.muted', t('new_group_text')))),
         !groups.length ? h('p.muted.small.center', t('invite_note')) : null);
 }
 
 function langChips(selected, onChange) {
     const box = h('div.chips');
-    const draw = () => put(box, S.config.langs.map((l) => h('button.chip-toggle' + (selected.includes(l) ? '.on' : ''), {type: 'button', onclick: () => {
-        if (selected.includes(l)) {
-            if (selected.length > 1) selected.splice(selected.indexOf(l), 1);
-        } else selected.push(l);
-        draw();
-        onChange && onChange(selected);
-    }}, LANG_NAMES[l] || l)));
+    const draw = () => put(box, S.config.langs.map((l) => h('button.chip-toggle' + (selected.includes(l) ? '.on' : ''), {
+        type: 'button', onclick: () => {
+            if (selected.includes(l)) {
+                if (selected.length > 1) selected.splice(selected.indexOf(l), 1);
+            } else selected.push(l);
+            draw();
+            onChange && onChange(selected);
+        }
+    }, LANG_NAMES[l] || l)));
     draw();
     return box;
 }
@@ -334,25 +440,36 @@ function createGroup() {
             if (!name.value.trim()) return;
             try {
                 slug.value = (await api('group.slug', null, 'name=' + encodeURIComponent(name.value))).slug;
-            } catch (e) { /* typed by hand */ }
+            } catch (e) { /* typed by hand */
+            }
         }, 300);
     });
-    slug.addEventListener('input', () => { touched = true; });
+    slug.addEventListener('input', () => {
+        touched = true;
+    });
     modal(t('new_group'), [
         field(t('group_name'), name), field(t('group_slug'), slug, t('group_slug_hint')), field(t('group_desc'), desc),
         field(t('sub_langs'), langChips(langs), t('sub_langs_hint')), field(t('timezone'), tz, t('timezone_hint')),
     ], [
         {label: t('cancel')},
-        {label: t('create'), primary: true, icon: 'plus', onclick: async () => {
-            try {
-                const r = await api('group.create', {name: name.value, slug: slug.value, description: desc.value, langs, timezone: tz.value});
-                go('#/g/' + r.group.id + '/settings');
-                toast(t('group_created'));
-            } catch (e) {
-                failToast(e);
-                return false;
+        {
+            label: t('create'), primary: true, icon: 'plus', onclick: async () => {
+                try {
+                    const r = await api('group.create', {
+                        name: name.value,
+                        slug: slug.value,
+                        description: desc.value,
+                        langs,
+                        timezone: tz.value
+                    });
+                    go('#/g/' + r.group.id + '/settings');
+                    toast(t('group_created'));
+                } catch (e) {
+                    failToast(e);
+                    return false;
+                }
             }
-        }},
+        },
     ]);
 }
 
@@ -389,7 +506,14 @@ async function groupPage(id, tab) {
             !g.sendingReady && g.status === 'active' ? h('p.banner', svg('mail'), atLeast(g.role, 'admin') ? h('span', t('setup_sending_long'), ' ', h('a', {href: '#/g/' + g.id + '/settings'}, t('open_settings'))) : t('sending_not_ready')) : null,
             h('nav.tabs', tabs.map(([k, icon]) => h('a.tab' + (k === tab ? '.on' : ''), {href: '#/g/' + g.id + '/' + k}, svg(icon), h('span', t('tab_' + k)))))),
         body);
-    const views = {newsletters: tabNewsletters, subscribers: tabSubscribers, templates: tabTemplates, members: tabMembers, share: tabShare, settings: tabSettings};
+    const views = {
+        newsletters: tabNewsletters,
+        subscribers: tabSubscribers,
+        templates: tabTemplates,
+        members: tabMembers,
+        share: tabShare,
+        settings: tabSettings
+    };
     try {
         await views[tab](g, body);
     } catch (e) {
@@ -427,7 +551,11 @@ function nlActions(g, n, refresh) {
     if (mod && ((n.status === 'scheduled' && pub) || (n.status === 'pending' && (mine || pub)))) {
         out.push(['calendar', t(n.status === 'scheduled' ? 'reschedule' : 'change_time'), async () => {
             const when = n.scheduledAt || n.proposedAt;
-            const pick = await slotDialog(g, {title: t('reschedule_title'), action: t('save'), initial: when ? partsIn(when, g.timezone) : null});
+            const pick = await slotDialog(g, {
+                title: t('reschedule_title'),
+                action: t('save'),
+                initial: when ? partsIn(when, g.timezone) : null
+            });
             if (pick) run('nl.reschedule', {date: pick.date, time: pick.time}, t('rescheduled_ok'));
         }]);
     }
@@ -438,8 +566,15 @@ function nlActions(g, n, refresh) {
 function nlRow(g, n, refresh) {
     const when = n.status === 'sent' ? n.sentAt : n.scheduledAt || n.proposedAt;
     const open = () => go('#/g/' + g.id + '/n/' + n.id);
-    const acts = nlActions(g, n, refresh).map(([icon, label, fn, danger]) => iconBtn(icon, label, (ev) => { ev.stopPropagation(); fn(); }, danger ? '.danger-ico' : ''));
-    return h('div.nl-row', {role: 'link', tabindex: '0', onclick: open, onkeydown: (ev) => { if (ev.key === 'Enter' && ev.target === ev.currentTarget) open(); }},
+    const acts = nlActions(g, n, refresh).map(([icon, label, fn, danger]) => iconBtn(icon, label, (ev) => {
+        ev.stopPropagation();
+        fn();
+    }, danger ? '.danger-ico' : ''));
+    return h('div.nl-row', {
+            role: 'link', tabindex: '0', onclick: open, onkeydown: (ev) => {
+                if (ev.key === 'Enter' && ev.target === ev.currentTarget) open();
+            }
+        },
         h('div.nl-main', h('strong', n.subject || t('untitled')), h('span.muted.small', [n.author ? t('by', {name: n.author}) : null, n.lang ? ' · ' + (LANG_NAMES[n.lang] || n.lang) : ' · ' + t('all_langs')])),
         h('div.nl-when', when ? [h('span', fmtDate(when, g.timezone)), ['pending', 'scheduled'].includes(n.status) ? h('span.muted.small', relTime(when)) : null] : h('span.muted.small', t('updated', {when: fmtDate(n.updatedAt, g.timezone)}))),
         n.status === 'sent' || n.status === 'sending' ? h('div.nl-num', h('strong', String(n.sent)), h('span.muted.small', ' / ' + n.total)) : h('div.nl-num'),
@@ -460,7 +595,10 @@ async function tabNewsletters(g, body) {
         h('div.stat-row',
             stat(t('stat_active'), c.active, 'users'), stat(t('stat_pending'), c.pending, 'clock'),
             stat(t('stat_scheduled'), (by.scheduled || []).length + (by.sending || []).length, 'calendar'), stat(t('stat_sent'), (by.sent || []).length, 'send')),
-        h('div.section-head', h('h2', t('tab_newsletters')), atLeast(g.role, 'moderator') && g.status === 'active' ? h('button.btn.btn-primary', {type: 'button', onclick: () => newNewsletter(g)}, svg('plus'), t('new_newsletter')) : null),
+        h('div.section-head', h('h2', t('tab_newsletters')), atLeast(g.role, 'moderator') && g.status === 'active' ? h('button.btn.btn-primary', {
+            type: 'button',
+            onclick: () => newNewsletter(g)
+        }, svg('plus'), t('new_newsletter')) : null),
         !list.length ? h('div.empty', svg('mail', 'ico ico-xl'), h('h3', t('no_newsletters')), h('p.muted', t(atLeast(g.role, 'moderator') ? 'no_newsletters_text' : 'no_newsletters_user'))) : null,
         sections.filter(([st]) => by[st]).map(([st, title]) => h('section.nl-section' + (st === 'pending' && atLeast(g.role, 'publisher') ? '.hl' : ''),
             h('h3', t(title), h('span.count', String(by[st].length))), h('div.nl-list', by[st].map((n) => nlRow(g, n, () => groupPage(g.id, 'newsletters')))))));
@@ -479,16 +617,22 @@ function sortedBuiltin(builtin, favs) {
 /** The star that marks a built-in template as a favourite of the signed-in user. */
 function favStar(id, favs, onChange) {
     const on = favs.includes(id);
-    return h('button.fav-star' + (on ? '.on' : ''), {type: 'button', 'aria-pressed': on ? 'true' : 'false', title: t(on ? 'fav_remove' : 'fav_add'), 'aria-label': t(on ? 'fav_remove' : 'fav_add'), onclick: async (ev) => {
-        ev.stopPropagation();
-        try {
-            const r = await api('tpl.fav', {id, on: !on});
-            favs.splice(0, favs.length, ...r.favorites);
-            onChange();
-        } catch (e) {
-            failToast(e);
+    return h('button.fav-star' + (on ? '.on' : ''), {
+        type: 'button',
+        'aria-pressed': on ? 'true' : 'false',
+        title: t(on ? 'fav_remove' : 'fav_add'),
+        'aria-label': t(on ? 'fav_remove' : 'fav_add'),
+        onclick: async (ev) => {
+            ev.stopPropagation();
+            try {
+                const r = await api('tpl.fav', {id, on: !on});
+                favs.splice(0, favs.length, ...r.favorites);
+                onChange();
+            } catch (e) {
+                failToast(e);
+            }
         }
-    }}, svg('star'));
+    }, svg('star'));
 }
 
 async function newNewsletter(g) {
@@ -505,8 +649,15 @@ async function newNewsletter(g) {
             c.setAttribute('aria-checked', c.dataset.id === id ? 'true' : 'false');
         });
     };
-    const card = (id, name, desc, doc, star) => h('div.tpl-card' + (id === chosen ? '.on' : ''), {role: 'radio', tabindex: '0', 'aria-checked': id === chosen ? 'true' : 'false', 'data-id': id,
-        onclick: () => pick(id), onkeydown: (ev) => { if ((ev.key === 'Enter' || ev.key === ' ') && ev.target === ev.currentTarget) { ev.preventDefault(); pick(id); } }},
+    const card = (id, name, desc, doc, star) => h('div.tpl-card' + (id === chosen ? '.on' : ''), {
+            role: 'radio', tabindex: '0', 'aria-checked': id === chosen ? 'true' : 'false', 'data-id': id,
+            onclick: () => pick(id), onkeydown: (ev) => {
+                if ((ev.key === 'Enter' || ev.key === ' ') && ev.target === ev.currentTarget) {
+                    ev.preventDefault();
+                    pick(id);
+                }
+            }
+        },
         tplThumb(doc), h('div.tpl-card-title', h('strong', name), star), desc ? h('span.muted.small', desc) : null);
     const draw = () => put(box,
         h('h4', svg('users', 'ico ico-sm'), t('own_templates')),
@@ -517,15 +668,22 @@ async function newNewsletter(g) {
     draw();
     modal(t('new_newsletter'), [field(t('subject'), subject), lang ? field(t('audience'), lang, t('audience_hint')) : null, box], [
         {label: t('cancel')},
-        {label: t('start_writing'), primary: true, icon: 'chev', onclick: async () => {
-            try {
-                const n = (await api('nl.create', {group: g.id, template: chosen, subject: subject.value, lang: lang ? lang.value : null})).newsletter;
-                go('#/g/' + g.id + '/n/' + n.id);
-            } catch (e) {
-                failToast(e);
-                return false;
+        {
+            label: t('start_writing'), primary: true, icon: 'chev', onclick: async () => {
+                try {
+                    const n = (await api('nl.create', {
+                        group: g.id,
+                        template: chosen,
+                        subject: subject.value,
+                        lang: lang ? lang.value : null
+                    })).newsletter;
+                    go('#/g/' + g.id + '/n/' + n.id);
+                } catch (e) {
+                    failToast(e);
+                    return false;
+                }
             }
-        }},
+        },
     ], {wide: true});
 }
 
@@ -533,7 +691,12 @@ async function newNewsletter(g) {
 function tplThumb(doc) {
     const th = doc.theme || {};
     const rows = (doc.blocks || []).slice(0, 7).map((b) => h('i.tb-' + (b.type === 'social' ? 'netlinks' : b.type), {style: {background: ['button'].includes(b.type) ? th.accent : null}}));
-    return h('div.tpl-thumb', {style: {background: th.bg}}, h('div', {style: {background: th.card, '--a': th.accent}}, rows));
+    return h('div.tpl-thumb', {style: {background: th.bg}}, h('div', {
+        style: {
+            background: th.card,
+            '--a': th.accent
+        }
+    }, rows));
 }
 
 // ---------------------------------------------------------------- newsletter page (not editable: preview and review)
@@ -550,11 +713,23 @@ async function newsletterPage(gid, nid) {
     document.title = (n.subject || t('untitled')) + ' · OpenNewsletter';
     if (r.canEdit && g.status === 'active') {
         put(app, h('div.editor-root'));
-        editorView(app.firstChild, {group: g, nl: n, role: g.role, onBack: () => go('#/g/' + g.id), onChange: () => newsletterPage(gid, nid)});
+        editorView(app.firstChild, {
+            group: g,
+            nl: n,
+            role: g.role,
+            onBack: () => go('#/g/' + g.id),
+            onChange: () => newsletterPage(gid, nid)
+        });
         return;
     }
-    const frame = h('iframe.preview-frame.inline', {title: n.subject, sandbox: 'allow-same-origin allow-popups allow-popups-to-escape-sandbox', referrerpolicy: 'no-referrer'});
-    api('nl.preview', null, 'id=' + n.id).then((p) => { frame.srcdoc = p.html; }).catch(failToast);
+    const frame = h('iframe.preview-frame.inline', {
+        title: n.subject,
+        sandbox: 'allow-same-origin allow-popups allow-popups-to-escape-sandbox',
+        referrerpolicy: 'no-referrer'
+    });
+    api('nl.preview', null, 'id=' + n.id).then((p) => {
+        frame.srcdoc = p.html;
+    }).catch(failToast);
     const mine = n.authorId === S.user.id;
     const pub = atLeast(g.role, 'publisher');
     const act = async (route, extra = {}, msg = '') => {
@@ -568,46 +743,79 @@ async function newsletterPage(gid, nid) {
     };
     const buttons = [];
     if (n.status === 'pending' && pub) {
-        buttons.push(h('button.btn.btn-primary', {type: 'button', onclick: async () => {
-            const ok = await confirmDialog(t('approve_title'), t('approve_text', {when: fmtDate(n.proposedAt, g.timezone)}), t('approve'));
-            if (ok) act('nl.approve', {}, t('approved_ok'));
-        }}, svg('check'), t('approve')));
-        buttons.push(h('button.btn.btn-soft', {type: 'button', onclick: async () => {
-            const pick = await slotDialog(g, {title: t('approve_other_title'), action: t('approve'), initial: null});
-            if (pick) act('nl.approve', {date: pick.date, time: pick.time}, t('approved_ok'));
-        }}, svg('calendar'), t('approve_other')));
-        buttons.push(h('button.btn.btn-danger-soft', {type: 'button', onclick: () => {
-            const note = h('textarea.input', {rows: 3, maxlength: 500, placeholder: t('reject_note_ph')});
-            modal(t('reject_title'), [h('p', t('reject_text')), field(t('reject_note'), note)], [{label: t('cancel')}, {label: t('reject'), danger: true, onclick: () => act('nl.reject', {note: note.value}, t('rejected_ok'))}]);
-        }}, svg('x'), t('reject')));
+        buttons.push(h('button.btn.btn-primary', {
+            type: 'button', onclick: async () => {
+                const ok = await confirmDialog(t('approve_title'), t('approve_text', {when: fmtDate(n.proposedAt, g.timezone)}), t('approve'));
+                if (ok) act('nl.approve', {}, t('approved_ok'));
+            }
+        }, svg('check'), t('approve')));
+        buttons.push(h('button.btn.btn-soft', {
+            type: 'button', onclick: async () => {
+                const pick = await slotDialog(g, {
+                    title: t('approve_other_title'),
+                    action: t('approve'),
+                    initial: null
+                });
+                if (pick) act('nl.approve', {date: pick.date, time: pick.time}, t('approved_ok'));
+            }
+        }, svg('calendar'), t('approve_other')));
+        buttons.push(h('button.btn.btn-danger-soft', {
+            type: 'button', onclick: () => {
+                const note = h('textarea.input', {rows: 3, maxlength: 500, placeholder: t('reject_note_ph')});
+                modal(t('reject_title'), [h('p', t('reject_text')), field(t('reject_note'), note)], [{label: t('cancel')}, {
+                    label: t('reject'),
+                    danger: true,
+                    onclick: () => act('nl.reject', {note: note.value}, t('rejected_ok'))
+                }]);
+            }
+        }, svg('x'), t('reject')));
     }
-    if (n.status === 'pending' && (mine || pub) && atLeast(g.role, 'moderator')) buttons.push(h('button.btn.btn-soft', {type: 'button', onclick: () => act('nl.withdraw', {}, t('withdrawn_ok'))}, svg('undo'), t('withdraw')));
+    if (n.status === 'pending' && (mine || pub) && atLeast(g.role, 'moderator')) buttons.push(h('button.btn.btn-soft', {
+        type: 'button',
+        onclick: () => act('nl.withdraw', {}, t('withdrawn_ok'))
+    }, svg('undo'), t('withdraw')));
     const reschedule = async () => {
-        const pick = await slotDialog(g, {title: t('reschedule_title'), action: t('save'), initial: partsIn(n.scheduledAt || n.proposedAt, g.timezone)});
+        const pick = await slotDialog(g, {
+            title: t('reschedule_title'),
+            action: t('save'),
+            initial: partsIn(n.scheduledAt || n.proposedAt, g.timezone)
+        });
         if (pick) act('nl.reschedule', {date: pick.date, time: pick.time}, t('rescheduled_ok'));
     };
-    if (n.status === 'pending' && (mine || pub) && atLeast(g.role, 'moderator')) buttons.push(h('button.btn.btn-soft', {type: 'button', onclick: reschedule}, svg('calendar'), t('change_time')));
+    if (n.status === 'pending' && (mine || pub) && atLeast(g.role, 'moderator')) buttons.push(h('button.btn.btn-soft', {
+        type: 'button',
+        onclick: reschedule
+    }, svg('calendar'), t('change_time')));
     if (n.status === 'scheduled' && pub) {
         buttons.push(h('button.btn.btn-soft', {type: 'button', onclick: reschedule}, svg('calendar'), t('reschedule')));
-        buttons.push(h('button.btn.btn-soft', {type: 'button', onclick: () => act('nl.withdraw', {}, t('withdrawn_ok'))}, svg('undo'), t('unschedule')));
-        buttons.push(h('button.btn.btn-danger-soft', {type: 'button', onclick: async () => {
-            if (await confirmDialog(t('cancel_nl_title'), t('cancel_nl_text'), t('cancel_nl'), true)) act('nl.cancel', {}, t('cancelled_ok'));
-        }}, svg('ban'), t('cancel_nl')));
+        buttons.push(h('button.btn.btn-soft', {
+            type: 'button',
+            onclick: () => act('nl.withdraw', {}, t('withdrawn_ok'))
+        }, svg('undo'), t('unschedule')));
+        buttons.push(h('button.btn.btn-danger-soft', {
+            type: 'button', onclick: async () => {
+                if (await confirmDialog(t('cancel_nl_title'), t('cancel_nl_text'), t('cancel_nl'), true)) act('nl.cancel', {}, t('cancelled_ok'));
+            }
+        }, svg('ban'), t('cancel_nl')));
     }
-    if (atLeast(g.role, 'moderator') && g.status === 'active' && !['sent', 'sending'].includes(n.status)) buttons.push(h('button.btn.btn-ghost', {type: 'button', onclick: async () => {
-        try {
-            const d = (await api('nl.duplicate', {id: n.id})).newsletter;
-            go('#/g/' + g.id + '/n/' + d.id);
-        } catch (e) {
-            failToast(e);
+    if (atLeast(g.role, 'moderator') && g.status === 'active' && !['sent', 'sending'].includes(n.status)) buttons.push(h('button.btn.btn-ghost', {
+        type: 'button', onclick: async () => {
+            try {
+                const d = (await api('nl.duplicate', {id: n.id})).newsletter;
+                go('#/g/' + g.id + '/n/' + d.id);
+            } catch (e) {
+                failToast(e);
+            }
         }
-    }}, svg('dup'), t('duplicate')));
-    if (n.status === 'cancelled' && (mine || pub)) buttons.push(h('button.btn.btn-ghost', {type: 'button', onclick: async () => {
-        if (await confirmDialog(t('delete_nl_title'), t('delete_nl_text'), t('delete'), true)) {
-            await api('nl.delete', {id: n.id}).catch(failToast);
-            go('#/g/' + g.id);
+    }, svg('dup'), t('duplicate')));
+    if (n.status === 'cancelled' && (mine || pub)) buttons.push(h('button.btn.btn-ghost', {
+        type: 'button', onclick: async () => {
+            if (await confirmDialog(t('delete_nl_title'), t('delete_nl_text'), t('delete'), true)) {
+                await api('nl.delete', {id: n.id}).catch(failToast);
+                go('#/g/' + g.id);
+            }
         }
-    }}, svg('trash'), t('delete')));
+    }, svg('trash'), t('delete')));
     const facts = [
         [t('status'), statusChip(n.status)],
         [t('author'), n.author || '—'],
@@ -617,7 +825,11 @@ async function newsletterPage(gid, nid) {
         n.reviewer ? [t('reviewed_by'), n.reviewer + (n.reviewedAt ? ' · ' + fmtDate(n.reviewedAt, g.timezone) : '')] : null,
         n.reviewNote ? [t('review_note'), h('em', n.reviewNote)] : null,
         n.sentAt ? [t('sent_on'), fmtDate(n.sentAt, g.timezone)] : null,
-        ['sending', 'sent', 'failed'].includes(n.status) ? [t('delivered'), t('delivered_n', {sent: n.sent, total: n.total, failed: n.failed})] : null,
+        ['sending', 'sent', 'failed'].includes(n.status) ? [t('delivered'), t('delivered_n', {
+            sent: n.sent,
+            total: n.total,
+            failed: n.failed
+        })] : null,
     ].filter(Boolean);
     shell(
         h('a.crumb', {href: '#/g/' + g.id}, svg('back', 'ico ico-sm'), g.name),
@@ -641,11 +853,33 @@ async function tabSubscribers(g, body) {
     const table = h('div.table-wrap');
     const pager = h('div.pager');
     const counts = g.subscribers;
-    const statusSel = select([['active', t('st_sub_active')], ['pending', t('st_sub_pending')], ['unsubscribed', t('st_sub_unsubscribed')], ['', t('all')]], 'active', {onchange: (ev) => { state.status = ev.target.value; state.page = 0; load(); }});
-    const langSel = g.langs.length > 1 ? select([['', t('all_langs')], ...g.langs.map((l) => [l, LANG_NAMES[l] || l])], '', {onchange: (ev) => { state.lang = ev.target.value; state.page = 0; load(); }}) : null;
+    const statusSel = select([['active', t('st_sub_active')], ['pending', t('st_sub_pending')], ['unsubscribed', t('st_sub_unsubscribed')], ['', t('all')]], 'active', {
+        onchange: (ev) => {
+            state.status = ev.target.value;
+            state.page = 0;
+            load();
+        }
+    });
+    const langSel = g.langs.length > 1 ? select([['', t('all_langs')], ...g.langs.map((l) => [l, LANG_NAMES[l] || l])], '', {
+        onchange: (ev) => {
+            state.lang = ev.target.value;
+            state.page = 0;
+            load();
+        }
+    }) : null;
     let timer;
-    const search = input({type: 'search', placeholder: t('search_email'), oninput: (ev) => { clearTimeout(timer); timer = setTimeout(() => { state.q = ev.target.value; state.page = 0; load(); }, 300); }});
+    const search = input({
+        type: 'search', placeholder: t('search_email'), oninput: (ev) => {
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+                state.q = ev.target.value;
+                state.page = 0;
+                load();
+            }, 300);
+        }
+    });
     const admin = atLeast(g.role, 'admin');
+
     async function load() {
         put(table, loading());
         try {
@@ -666,17 +900,34 @@ async function tabSubscribers(g, body) {
                     })) : null)))));
             const pages = Math.ceil(r.total / r.pageSize);
             put(pager, h('span.muted.small', t('n_results', {n: r.total})), pages > 1 ? [
-                h('button.btn.btn-soft.btn-sm', {type: 'button', disabled: state.page === 0, onclick: () => { state.page--; load(); }}, svg('back')),
+                h('button.btn.btn-soft.btn-sm', {
+                    type: 'button', disabled: state.page === 0, onclick: () => {
+                        state.page--;
+                        load();
+                    }
+                }, svg('back')),
                 h('span.small', `${state.page + 1} / ${pages}`),
-                h('button.btn.btn-soft.btn-sm', {type: 'button', disabled: state.page >= pages - 1, onclick: () => { state.page++; load(); }}, svg('chev'))] : null);
+                h('button.btn.btn-soft.btn-sm', {
+                    type: 'button', disabled: state.page >= pages - 1, onclick: () => {
+                        state.page++;
+                        load();
+                    }
+                }, svg('chev'))] : null);
         } catch (e) {
             put(table, h('p.form-error', errText(e)));
         }
     }
+
     put(body,
         h('div.stat-row', stat(t('stat_active'), counts.active, 'users'), stat(t('stat_pending'), counts.pending, 'clock'), stat(t('stat_unsub'), counts.unsubscribed, 'ban')),
         Object.keys(counts.byLang).length > 1 ? h('div.lang-bars', Object.entries(counts.byLang).sort((a, b) => b[1] - a[1]).map(([l, n]) => h('div.lang-bar', h('span', LANG_NAMES[l] || l), h('div', h('i', {style: {width: Math.max(3, Math.round(100 * n / counts.active)) + '%'}})), h('strong', String(n))))) : null,
-        h('div.section-head', h('h2', t('tab_subscribers')), admin ? h('div.row-btns', g.status === 'active' ? h('button.btn.btn-soft', {type: 'button', onclick: () => importDialog(g)}, svg('upload'), t('import_csv')) : null, h('a.btn.btn-soft', {href: 'api/?r=sub.export&group=' + g.id, download: ''}, svg('download'), t('export_csv'))) : null),
+        h('div.section-head', h('h2', t('tab_subscribers')), admin ? h('div.row-btns', g.status === 'active' ? h('button.btn.btn-soft', {
+            type: 'button',
+            onclick: () => importDialog(g)
+        }, svg('upload'), t('import_csv')) : null, h('a.btn.btn-soft', {
+            href: 'api/?r=sub.export&group=' + g.id,
+            download: ''
+        }, svg('download'), t('export_csv'))) : null),
         h('div.filters', statusSel, langSel, search),
         table, pager,
         h('p.muted.small', t('subscribers_note')));
@@ -693,15 +944,26 @@ function parseCsv(text) {
     for (let i = 0; i < text.length; i++) {
         const c = text[i];
         if (quoted) {
-            if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; } else if (c === '"') quoted = false; else cell += c;
+            if (c === '"' && text[i + 1] === '"') {
+                cell += '"';
+                i++;
+            } else if (c === '"') quoted = false; else cell += c;
         } else if (c === '"') quoted = true;
-        else if (c === delim) { row.push(cell); cell = ''; }
-        else if (c === '\n' || c === '\r') {
+        else if (c === delim) {
+            row.push(cell);
+            cell = '';
+        } else if (c === '\n' || c === '\r') {
             if (c === '\r' && text[i + 1] === '\n') i++;
-            row.push(cell); rows.push(row); row = []; cell = '';
+            row.push(cell);
+            rows.push(row);
+            row = [];
+            cell = '';
         } else cell += c;
     }
-    if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
+    if (cell !== '' || row.length) {
+        row.push(cell);
+        rows.push(row);
+    }
     return rows.map((r) => r.map((x) => x.trim())).filter((r) => r.some((x) => x !== ''));
 }
 
@@ -712,14 +974,20 @@ function csvSubscribers(rows) {
     const ei = head.findIndex((x) => /^e-?mail/.test(x) || x === 'indirizzo email');
     const li = head.findIndex((x) => ['lang', 'language', 'lingua', 'locale'].includes(x));
     const data = ei >= 0 ? rows.slice(1) : rows;
-    return data.map((r) => ({email: ei >= 0 ? r[ei] || '' : r.find((x) => x.includes('@')) || '', lang: li >= 0 ? r[li] || '' : ''})).filter((x) => x.email !== '');
+    return data.map((r) => ({
+        email: ei >= 0 ? r[ei] || '' : r.find((x) => x.includes('@')) || '',
+        lang: li >= 0 ? r[li] || '' : ''
+    })).filter((x) => x.email !== '');
 }
 
 /** Import subscribers from a CSV file: they skip the confirmation email, so the admin declares they agreed. */
 function importDialog(g) {
     let rows = [];
     const file = h('input', {type: 'file', accept: '.csv,text/csv,text/plain', hidden: true});
-    const pickBtn = h('button.btn.btn-soft', {type: 'button', onclick: () => file.click()}, svg('upload'), t('import_choose'));
+    const pickBtn = h('button.btn.btn-soft', {
+        type: 'button',
+        onclick: () => file.click()
+    }, svg('upload'), t('import_choose'));
     const info = h('p.muted.small', t('import_format'));
     const consent = h('input', {type: 'checkbox'});
     const lang = g.langs.length > 1 ? select(g.langs.map((l) => [l, LANG_NAMES[l] || l]), g.langs[0]) : null;
@@ -740,31 +1008,44 @@ function importDialog(g) {
         result,
     ], [
         {label: t('close'), onclick: () => groupPage(g.id, 'subscribers')},
-        {label: t('import_go'), primary: true, icon: 'upload', onclick: async () => {
-            result.hidden = false;
-            if (!rows.length) {
-                result.className = 'test-result err';
-                put(result, svg('x'), h('span', t('err_import_empty')));
+        {
+            label: t('import_go'), primary: true, icon: 'upload', onclick: async () => {
+                result.hidden = false;
+                if (!rows.length) {
+                    result.className = 'test-result err';
+                    put(result, svg('x'), h('span', t('err_import_empty')));
+                    return false;
+                }
+                if (!consent.checked) {
+                    result.className = 'test-result err';
+                    put(result, svg('x'), h('span', t('err_consent_required')));
+                    return false;
+                }
+                try {
+                    const r = await api('sub.import', {
+                        group: g.id,
+                        rows,
+                        consent: true,
+                        lang: lang ? lang.value : null
+                    });
+                    const x = r.report;
+                    result.className = 'test-result ok';
+                    put(result, svg('check'), h('span', h('strong', t('import_done', {n: x.added + x.confirmed})),
+                        h('br'), t('import_details', {
+                            added: x.added,
+                            confirmed: x.confirmed,
+                            already: x.already,
+                            unsub: x.unsubscribed,
+                            invalid: x.invalid
+                        })));
+                    rows = [];
+                } catch (e) {
+                    result.className = 'test-result err';
+                    put(result, svg('x'), h('span', errText(e)));
+                }
                 return false;
             }
-            if (!consent.checked) {
-                result.className = 'test-result err';
-                put(result, svg('x'), h('span', t('err_consent_required')));
-                return false;
-            }
-            try {
-                const r = await api('sub.import', {group: g.id, rows, consent: true, lang: lang ? lang.value : null});
-                const x = r.report;
-                result.className = 'test-result ok';
-                put(result, svg('check'), h('span', h('strong', t('import_done', {n: x.added + x.confirmed})),
-                    h('br'), t('import_details', {added: x.added, confirmed: x.confirmed, already: x.already, unsub: x.unsubscribed, invalid: x.invalid})));
-                rows = [];
-            } catch (e) {
-                result.className = 'test-result err';
-                put(result, svg('x'), h('span', errText(e)));
-            }
-            return false;
-        }},
+        },
     ]);
 }
 
@@ -801,22 +1082,39 @@ async function tabTemplates(g, body) {
     };
     const pickBase = () => {
         let chosen = r.builtin[0].id;
-        const all = [...r.builtin.map((b) => ({id: b.id, name: b.name, desc: b.description, doc: b.doc})), ...r.own.map((o) => ({id: String(o.id), name: o.name, desc: o.author ? t('by', {name: o.author}) : '', doc: o.doc}))];
+        const all = [...r.builtin.map((b) => ({
+            id: b.id,
+            name: b.name,
+            desc: b.description,
+            doc: b.doc
+        })), ...r.own.map((o) => ({
+            id: String(o.id),
+            name: o.name,
+            desc: o.author ? t('by', {name: o.author}) : '',
+            doc: o.doc
+        }))];
         const name = input({maxlength: 80, placeholder: t('template_name'), autofocus: true});
-        const grid = h('div.tpl-grid', all.map((x) => h('button.tpl-card' + (x.id === chosen ? '.on' : ''), {type: 'button', 'data-id': x.id, onclick: () => {
-            chosen = x.id;
-            grid.querySelectorAll('.tpl-card').forEach((c) => c.classList.toggle('on', c.dataset.id === x.id));
-        }}, tplThumb(x.doc), h('strong', x.name), x.desc ? h('span.muted.small', x.desc) : null)));
+        const grid = h('div.tpl-grid', all.map((x) => h('button.tpl-card' + (x.id === chosen ? '.on' : ''), {
+            type: 'button', 'data-id': x.id, onclick: () => {
+                chosen = x.id;
+                grid.querySelectorAll('.tpl-card').forEach((c) => c.classList.toggle('on', c.dataset.id === x.id));
+            }
+        }, tplThumb(x.doc), h('strong', x.name), x.desc ? h('span.muted.small', x.desc) : null)));
         modal(t('new_template'), [field(t('template_name'), name), h('h4', t('start_from')), grid], [
             {label: t('cancel')},
-            {label: t('create'), primary: true, icon: 'plus', onclick: () => {
-                const base = all.find((x) => x.id === chosen);
-                newTemplate(name.value.trim() || base.name, base.doc);
-            }},
+            {
+                label: t('create'), primary: true, icon: 'plus', onclick: () => {
+                    const base = all.find((x) => x.id === chosen);
+                    newTemplate(name.value.trim() || base.name, base.doc);
+                }
+            },
         ], {wide: true});
     };
     put(body,
-        h('div.section-head', h('h2', t('tab_templates')), writer ? h('button.btn.btn-primary', {type: 'button', onclick: pickBase}, svg('plus'), t('new_template')) : null),
+        h('div.section-head', h('h2', t('tab_templates')), writer ? h('button.btn.btn-primary', {
+            type: 'button',
+            onclick: pickBase
+        }, svg('plus'), t('new_template')) : null),
         h('p.muted', t('templates_text')),
         h('h3.sub-title', t('own_templates')),
         r.own.length ? h('div.tpl-grid', r.own.map((o) => h('div.tpl-card.static', tplThumb(o.doc), h('strong', o.name),
@@ -829,16 +1127,23 @@ async function tabTemplates(g, body) {
                     await api('tpl.delete', {group: g.id, id: o.id}).catch(failToast);
                     groupPage(g.id, 'templates');
                 }) : null) : null))) : h('div.empty.small', svg('layout', 'ico ico-lg'), h('p.muted', t('no_templates')),
-            writer ? h('button.btn.btn-soft', {type: 'button', onclick: pickBase}, svg('plus'), t('new_template')) : null),
+            writer ? h('button.btn.btn-soft', {
+                type: 'button',
+                onclick: pickBase
+            }, svg('plus'), t('new_template')) : null),
         h('h3.sub-title', t('builtin_templates')),
         builtinGrid);
     drawBuiltin();
     return;
+
     function drawBuiltin() {
         put(builtinGrid, sortedBuiltin(r.builtin, favs).map((b) => h('div.tpl-card.static', tplThumb(b.doc), h('div.tpl-card-title', h('strong', b.name), favStar(b.id, favs, drawBuiltin)), h('span.muted.small', b.description),
             writer ? h('div.row-btns',
                 h('button.btn.btn-soft.btn-sm', {type: 'button', onclick: () => useTpl(b.id)}, svg('plus'), t('use')),
-                h('button.btn.btn-ghost.btn-sm', {type: 'button', onclick: () => newTemplate(b.name, b.doc)}, svg('palette'), t('customize'))) : null)));
+                h('button.btn.btn-ghost.btn-sm', {
+                    type: 'button',
+                    onclick: () => newTemplate(b.name, b.doc)
+                }, svg('palette'), t('customize'))) : null)));
     }
 }
 
@@ -855,7 +1160,12 @@ async function templatePage(gid, tid) {
     if (!tpl || !atLeast(g.role, 'moderator') || g.status !== 'active') return shell(h('p.form-error', t('err_not_found')), h('a.btn.btn-soft', {href: '#/g/' + gid + '/templates'}, svg('back'), t('back')));
     document.title = tpl.name + ' · OpenNewsletter';
     put(app, h('div.editor-root'));
-    editorView(app.firstChild, {group: g, tpl: {id: tpl.id, name: tpl.name, doc: tpl.doc}, role: g.role, onBack: () => go('#/g/' + gid + '/templates')});
+    editorView(app.firstChild, {
+        group: g,
+        tpl: {id: tpl.id, name: tpl.name, doc: tpl.doc},
+        role: g.role,
+        onBack: () => go('#/g/' + gid + '/templates')
+    });
 }
 
 // ---------------------------------------------------------------- members
@@ -868,21 +1178,23 @@ async function tabMembers(g, body) {
     const rows = r.members.map((m) => {
         const self = m.id === S.user.id;
         const editable = admin && !self && m.role !== 'owner' && (owner || rank(m.role) < rank('admin'));
-        const roleCell = editable ? select([...assignable.map((x) => [x, t('role_' + x)]), ...(owner ? [['owner', t('make_owner')]] : [])], m.role, {onchange: async (ev) => {
-            const v = ev.target.value;
-            if (v === 'owner' && !(await confirmDialog(t('transfer_title'), t('transfer_text', {name: m.name}), t('transfer'), true))) {
-                ev.target.value = m.role;
-                return;
+        const roleCell = editable ? select([...assignable.map((x) => [x, t('role_' + x)]), ...(owner ? [['owner', t('make_owner')]] : [])], m.role, {
+            onchange: async (ev) => {
+                const v = ev.target.value;
+                if (v === 'owner' && !(await confirmDialog(t('transfer_title'), t('transfer_text', {name: m.name}), t('transfer'), true))) {
+                    ev.target.value = m.role;
+                    return;
+                }
+                try {
+                    await api('member.role', {group: g.id, user: m.id, role: v});
+                    toast(t('saved'));
+                    if (v === 'owner') groupPage(g.id, 'members');
+                } catch (e) {
+                    failToast(e);
+                    ev.target.value = m.role;
+                }
             }
-            try {
-                await api('member.role', {group: g.id, user: m.id, role: v});
-                toast(t('saved'));
-                if (v === 'owner') groupPage(g.id, 'members');
-            } catch (e) {
-                failToast(e);
-                ev.target.value = m.role;
-            }
-        }}) : h('span.chip.role-' + m.role, t('role_' + m.role));
+        }) : h('span.chip.role-' + m.role, t('role_' + m.role));
         return h('tr', h('td', h('div.who', h('span.avatar.sm', initials(m.name)), h('div', h('strong', m.name + (self ? ' (' + t('you') + ')' : '')), h('div.muted.small', m.email)))),
             h('td', roleCell), h('td.muted.small', fmtDate(m.since, g.timezone, false)),
             h('td', editable ? iconBtn('trash', t('remove'), async () => {
@@ -895,38 +1207,48 @@ async function tabMembers(g, body) {
     const role = select(assignable.map((x) => [x, t('role_' + x)]), 'moderator');
     put(body,
         h('div.section-head', h('h2', t('tab_members'))),
-        admin && g.status === 'active' ? h('form.add-member', {onsubmit: async (ev) => {
-            ev.preventDefault();
-            try {
-                const res = await api('member.add', {group: g.id, email: email.value, role: role.value});
-                toast(t(res.joined ? 'member_added' : 'invite_sent'));
-                groupPage(g.id, 'members');
-            } catch (e) {
-                failToast(e);
+        admin && g.status === 'active' ? h('form.add-member', {
+            onsubmit: async (ev) => {
+                ev.preventDefault();
+                try {
+                    const res = await api('member.add', {group: g.id, email: email.value, role: role.value});
+                    toast(t(res.joined ? 'member_added' : 'invite_sent'));
+                    groupPage(g.id, 'members');
+                } catch (e) {
+                    failToast(e);
+                }
             }
-        }}, field(t('add_member'), email), field(t('role'), role), h('button.btn.btn-primary', {type: 'submit'}, svg('plus'), t('add'))) : null,
+        }, field(t('add_member'), email), field(t('role'), role), h('button.btn.btn-primary', {type: 'submit'}, svg('plus'), t('add'))) : null,
         h('div.table-wrap', h('table.table', h('tbody', rows))),
         r.invites.length ? [h('h3.sub-title', t('invites')), h('p.muted.small', t('invites_text')), h('div.table-wrap', h('table.table', h('tbody', r.invites.map((i) => h('tr',
             h('td', h('strong', i.email)), h('td', h('span.chip.role-' + i.role, t('role_' + i.role))), h('td.muted.small', fmtDate(i.since, g.timezone, false)),
-            h('td', iconBtn('x', t('cancel_invite'), async () => { await api('invite.cancel', {group: g.id, id: i.id}).catch(failToast); groupPage(g.id, 'members'); })))))))] : null,
+            h('td', iconBtn('x', t('cancel_invite'), async () => {
+                await api('invite.cancel', {group: g.id, id: i.id}).catch(failToast);
+                groupPage(g.id, 'members');
+            })))))))] : null,
         h('h3.sub-title', t('roles_title')),
         h('div.roles-grid', ROLES.map((x) => h('div.role-card' + (x === g.role ? '.on' : ''), h('span.chip.role-' + x, t('role_' + x)), h('p.small', t('role_' + x + '_text'))))),
-        g.role !== 'owner' ? h('p', h('button.btn.btn-ghost', {type: 'button', onclick: async () => {
-            if (!(await confirmDialog(t('leave_title'), t('leave_text', {group: g.name}), t('leave'), true))) return;
-            try {
-                await api('group.leave', {group: g.id});
-                go('#/');
-            } catch (e) {
-                failToast(e);
+        g.role !== 'owner' ? h('p', h('button.btn.btn-ghost', {
+            type: 'button', onclick: async () => {
+                if (!(await confirmDialog(t('leave_title'), t('leave_text', {group: g.name}), t('leave'), true))) return;
+                try {
+                    await api('group.leave', {group: g.id});
+                    go('#/');
+                } catch (e) {
+                    failToast(e);
+                }
             }
-        }}, svg('logout'), t('leave'))) : null);
+        }, svg('logout'), t('leave'))) : null);
 }
 
 // ---------------------------------------------------------------- share (links and widget)
 
 function tabShare(g, body) {
     const embed = `<div data-opennewsletter="${g.slug}"></div>\n<script src="${g.links.widget}" async></script>`;
-    const frame = h('iframe.widget-preview', {src: 'subscribe.php?embed=1&g=' + encodeURIComponent(g.slug), title: t('widget_preview')});
+    const frame = h('iframe.widget-preview', {
+        src: 'subscribe.php?embed=1&g=' + encodeURIComponent(g.slug),
+        title: t('widget_preview')
+    });
     window.addEventListener('message', function onMsg(ev) {
         if (!document.body.contains(frame)) return window.removeEventListener('message', onMsg);
         if (ev.source === frame.contentWindow && ev.data && ev.data.opennewsletter === 'height') frame.style.height = ev.data.height + 'px';
@@ -949,20 +1271,25 @@ function tabSettings(g, body) {
     const admin = atLeast(g.role, 'admin');
     const sec = (icon, title, text, ...kids) => h('section.card.settings-sec', h('h3', svg(icon), title), text ? h('p.muted.small', text) : null, kids);
     const saveBtn = (fn, label = t('save')) => {
-        const b = h('button.btn.btn-primary', {type: 'button', onclick: async () => {
-            b.disabled = true;
-            try {
-                await fn();
-                toast(t('saved'));
-            } catch (e) {
-                failToast(e);
-            } finally {
-                b.disabled = false;
+        const b = h('button.btn.btn-primary', {
+            type: 'button', onclick: async () => {
+                b.disabled = true;
+                try {
+                    await fn();
+                    toast(t('saved'));
+                } catch (e) {
+                    failToast(e);
+                } finally {
+                    b.disabled = false;
+                }
             }
-        }}, svg('save'), label);
+        }, svg('save'), label);
         return b;
     };
-    const refresh = (r) => { cache.group = r.group; Object.assign(g, r.group); };
+    const refresh = (r) => {
+        cache.group = r.group;
+        Object.assign(g, r.group);
+    };
 
     // general
     const name = input({value: g.name, maxlength: 80});
@@ -972,15 +1299,37 @@ function tabSettings(g, body) {
     const tz = select(timezones().map((z) => [z, z]), g.timezone);
     const general = sec('settings', t('general'), null, field(t('group_name'), name), field(t('group_slug'), slug, t('group_slug_change')), field(t('group_desc'), desc),
         field(t('sub_langs'), langChips(langs), t('sub_langs_hint')), field(t('timezone'), tz, t('timezone_hint')),
-        h('div.row-btns', saveBtn(async () => { refresh(await api('group.update', {group: g.id, name: name.value, slug: slug.value, description: desc.value, langs, timezone: tz.value})); groupPage(g.id, 'settings'); })));
+        h('div.row-btns', saveBtn(async () => {
+            refresh(await api('group.update', {
+                group: g.id,
+                name: name.value,
+                slug: slug.value,
+                description: desc.value,
+                langs,
+                timezone: tz.value
+            }));
+            groupPage(g.id, 'settings');
+        })));
 
     // sending (SMTP): the password never comes back from the server
     const s = g.smtp || {};
     const host = input({value: s.host || '', placeholder: 'smtp.example.com'});
-    const enc = select([['ssl', 'SSL/TLS (465)'], ['tls', 'STARTTLS (587)'], ['none', t('enc_none')]], s.encryption || 'ssl', {onchange: () => { if (!port.value || ['465', '587', '25'].includes(port.value)) port.value = {ssl: 465, tls: 587, none: 25}[enc.value]; }});
+    const enc = select([['ssl', 'SSL/TLS (465)'], ['tls', 'STARTTLS (587)'], ['none', t('enc_none')]], s.encryption || 'ssl', {
+        onchange: () => {
+            if (!port.value || ['465', '587', '25'].includes(port.value)) port.value = {
+                ssl: 465,
+                tls: 587,
+                none: 25
+            }[enc.value];
+        }
+    });
     const port = input({type: 'number', value: s.port || 465, min: 1, max: 65535});
     const user = input({value: s.user || '', autocomplete: 'off'});
-    const pass = input({type: 'password', autocomplete: 'new-password', placeholder: s.hasPassword ? t('password_kept') : ''});
+    const pass = input({
+        type: 'password',
+        autocomplete: 'new-password',
+        placeholder: s.hasPassword ? t('password_kept') : ''
+    });
     const from = input({type: 'email', value: g.fromEmail, placeholder: 'news@example.com'});
     const fromName = input({value: g.fromName || g.name, maxlength: 80});
     const reply = input({type: 'email', value: g.replyTo || '', placeholder: t('optional')});
@@ -992,13 +1341,32 @@ function tabSettings(g, body) {
         h('div.row2', field(t('smtp_user'), user), field(t('smtp_password'), pass, t('smtp_password_hint'))),
         field(t('rate_per_hour'), rate, t('rate_hint')),
         h('div.row-btns',
-            saveBtn(async () => { refresh(await api('group.smtp', {group: g.id, host: host.value, encryption: enc.value, port: Number(port.value), user: user.value, password: pass.value, fromEmail: from.value, fromName: fromName.value, replyTo: reply.value, ratePerHour: Number(rate.value)})); groupPage(g.id, 'settings'); }),
-            g.sendingReady ? h('button.btn.btn-soft', {type: 'button', onclick: () => smtpTestDialog(g, refresh)}, svg('send'), t('smtp_test')) : null,
-            g.sendingReady ? h('button.btn.btn-ghost', {type: 'button', onclick: async () => {
-                if (!(await confirmDialog(t('smtp_clear_title'), t('smtp_clear_text'), t('smtp_clear'), true))) return;
-                refresh(await api('group.smtpClear', {group: g.id}));
+            saveBtn(async () => {
+                refresh(await api('group.smtp', {
+                    group: g.id,
+                    host: host.value,
+                    encryption: enc.value,
+                    port: Number(port.value),
+                    user: user.value,
+                    password: pass.value,
+                    fromEmail: from.value,
+                    fromName: fromName.value,
+                    replyTo: reply.value,
+                    ratePerHour: Number(rate.value)
+                }));
                 groupPage(g.id, 'settings');
-            }}, svg('trash'), t('smtp_clear')) : null),
+            }),
+            g.sendingReady ? h('button.btn.btn-soft', {
+                type: 'button',
+                onclick: () => smtpTestDialog(g, refresh)
+            }, svg('send'), t('smtp_test')) : null,
+            g.sendingReady ? h('button.btn.btn-ghost', {
+                type: 'button', onclick: async () => {
+                    if (!(await confirmDialog(t('smtp_clear_title'), t('smtp_clear_text'), t('smtp_clear'), true))) return;
+                    refresh(await api('group.smtpClear', {group: g.id}));
+                    groupPage(g.id, 'settings');
+                }
+            }, svg('trash'), t('smtp_clear')) : null),
         h('p.muted.small', svg('shield', 'ico ico-sm'), ' ', t('smtp_privacy')));
 
     // subscription page and widget
@@ -1019,50 +1387,104 @@ function tabSettings(g, body) {
     });
     const bind = (k, el, prop = 'value') => {
         const ev = prop === 'checked' || el.tagName === 'SELECT' ? 'change' : 'input';
-        el.addEventListener(ev, () => { p[k] = prop === 'checked' ? el.checked : el.value; reloadPv(); });
+        el.addEventListener(ev, () => {
+            p[k] = prop === 'checked' ? el.checked : el.value;
+            reloadPv();
+        });
         return el;
     };
     const logoBox = h('div.logo-box');
-    const drawLogo = () => put(logoBox, p.logo ? h('img', {src: p.logo.startsWith('img:') ? 'api/?r=img&id=' + p.logo.slice(4) : p.logo, alt: ''}) : h('span.muted.small', t('no_logo')),
-        logoUpload(g, (src) => { p.logo = src; drawLogo(); reloadPv(); }), p.logo ? h('button.btn.btn-ghost.btn-sm', {type: 'button', onclick: () => { p.logo = ''; drawLogo(); reloadPv(); }}, svg('trash')) : null);
+    const drawLogo = () => put(logoBox, p.logo ? h('img', {
+            src: p.logo.startsWith('img:') ? 'api/?r=img&id=' + p.logo.slice(4) : p.logo,
+            alt: ''
+        }) : h('span.muted.small', t('no_logo')),
+        logoUpload(g, (src) => {
+            p.logo = src;
+            drawLogo();
+            reloadPv();
+        }), p.logo ? h('button.btn.btn-ghost.btn-sm', {
+            type: 'button', onclick: () => {
+                p.logo = '';
+                drawLogo();
+                reloadPv();
+            }
+        }, svg('trash')) : null);
     drawLogo();
     const accent = bind('accent', h('input.color', {type: 'color', value: p.accent}));
     const pageSec = sec('palette', t('page_custom'), t('page_custom_text'),
         h('div.split',
             h('div.stack',
-                field(t('page_title'), bind('title', input({value: p.title, maxlength: 120, placeholder: t('sub_title_default', {group: g.name})}))),
-                field(t('page_intro'), bind('intro', h('textarea.input', {rows: 3, maxlength: 600, placeholder: g.description || t('sub_intro_default')}, p.intro))),
-                h('div.row2', field(t('page_button'), bind('button', input({value: p.button, maxlength: 40, placeholder: t('subscribe')}))), field(t('accent'), h('div.color-row', accent))),
-                field(t('page_success'), bind('success', input({value: p.success, maxlength: 400, placeholder: t('page_success_ph')}))),
-                field(t('page_style'), stylePicker(p.style, (v) => { p.style = v; reloadPv(); })),
+                field(t('page_title'), bind('title', input({
+                    value: p.title,
+                    maxlength: 120,
+                    placeholder: t('sub_title_default', {group: g.name})
+                }))),
+                field(t('page_intro'), bind('intro', h('textarea.input', {
+                    rows: 3,
+                    maxlength: 600,
+                    placeholder: g.description || t('sub_intro_default')
+                }, p.intro))),
+                h('div.row2', field(t('page_button'), bind('button', input({
+                    value: p.button,
+                    maxlength: 40,
+                    placeholder: t('subscribe')
+                }))), field(t('accent'), h('div.color-row', accent))),
+                field(t('page_success'), bind('success', input({
+                    value: p.success,
+                    maxlength: 400,
+                    placeholder: t('page_success_ph')
+                }))),
+                field(t('page_style'), stylePicker(p.style, (v) => {
+                    p.style = v;
+                    reloadPv();
+                })),
                 field(t('logo'), logoBox),
-                field(t('page_font'), fontPicker(p.font || 'inter', (v) => { p.font = v; reloadPv(); })),
+                field(t('page_font'), fontPicker(p.font || 'inter', (v) => {
+                    p.font = v;
+                    reloadPv();
+                })),
                 h('div.row2', field(t('page_theme'), bind('theme', select([['light', t('theme_light')], ['dark', t('theme_dark')], ['auto', t('theme_auto')]], p.theme))),
                     field(t('page_shape'), bind('shape', select([['round', t('shape_round')], ['soft', t('shape_soft')], ['square', t('shape_square')]], p.shape)))),
-                h('label.check', bind('showLang', h('input', {type: 'checkbox', checked: p.showLang}), 'checked'), h('span', t('show_lang'))),
-                h('label.check', bind('showCount', h('input', {type: 'checkbox', checked: p.showCount}), 'checked'), h('span', t('show_count'))),
-                h('div.row-btns', saveBtn(async () => { refresh(await api('group.page', {group: g.id, page: p})); reloadPv(); }))),
+                h('label.check', bind('showLang', h('input', {
+                    type: 'checkbox',
+                    checked: p.showLang
+                }), 'checked'), h('span', t('show_lang'))),
+                h('label.check', bind('showCount', h('input', {
+                    type: 'checkbox',
+                    checked: p.showCount
+                }), 'checked'), h('span', t('show_count'))),
+                h('div.row-btns', saveBtn(async () => {
+                    refresh(await api('group.page', {group: g.id, page: p}));
+                    reloadPv();
+                }))),
             h('div.preview-col', h('span.muted.small', t('page_preview')), h('div.widget-stage', pv))));
     reloadPv();
 
     // terms
     const terms = h('textarea.input', {rows: 8, maxlength: 20000, placeholder: t('terms_ph')}, g.terms);
-    const termsSec = sec('shield', t('group_terms'), t('group_terms_text'), terms, h('div.row-btns', saveBtn(async () => refresh(await api('group.terms', {group: g.id, terms: terms.value})))));
+    const termsSec = sec('shield', t('group_terms'), t('group_terms_text'), terms, h('div.row-btns', saveBtn(async () => refresh(await api('group.terms', {
+        group: g.id,
+        terms: terms.value
+    })))));
 
     // danger zone
-    const danger = g.role === 'owner' ? sec('trash', t('danger'), t('danger_text'), h('button.btn.btn-danger', {type: 'button', onclick: () => {
-        const c = input({placeholder: g.name});
-        modal(t('delete_group'), [h('p', t('delete_group_text', {name: g.name})), field(t('type_name'), c)], [{label: t('cancel')}, {label: t('delete_group'), danger: true, onclick: async () => {
-            try {
-                await api('group.delete', {group: g.id, confirm: c.value});
-                go('#/');
-                toast(t('group_deleted'));
-            } catch (e) {
-                failToast(e);
-                return false;
-            }
-        }}]);
-    }}, svg('trash'), t('delete_group'))) : null;
+    const danger = g.role === 'owner' ? sec('trash', t('danger'), t('danger_text'), h('button.btn.btn-danger', {
+        type: 'button', onclick: () => {
+            const c = input({placeholder: g.name});
+            modal(t('delete_group'), [h('p', t('delete_group_text', {name: g.name})), field(t('type_name'), c)], [{label: t('cancel')}, {
+                label: t('delete_group'), danger: true, onclick: async () => {
+                    try {
+                        await api('group.delete', {group: g.id, confirm: c.value});
+                        go('#/');
+                        toast(t('group_deleted'));
+                    } catch (e) {
+                        failToast(e);
+                        return false;
+                    }
+                }
+            }]);
+        }
+    }, svg('trash'), t('delete_group'))) : null;
 
     put(body, h('div.section-head', h('h2', t('tab_settings'))), admin ? [sending, general, pageSec, termsSec, danger] : null);
 }
@@ -1083,20 +1505,35 @@ const PAGE_FONTS = [
 /** Typeface cards: each one is written in its own font, so it is seen before choosing. */
 function fontPicker(value, onPick) {
     const box = h('div.font-pick', {role: 'radiogroup'});
-    PAGE_FONTS.forEach(([k, name, family]) => box.append(h('button.font-opt' + (k === value ? '.on' : ''), {type: 'button', role: 'radio', 'aria-checked': k === value ? 'true' : 'false', 'data-v': k, title: name, onclick: () => {
-        box.querySelectorAll('.font-opt').forEach((b) => { b.classList.toggle('on', b.dataset.v === k); b.setAttribute('aria-checked', b.dataset.v === k ? 'true' : 'false'); });
-        onPick(k);
-    }}, h('span.font-sample', {style: {fontFamily: family}}, 'Aa'), h('span.font-name', {style: {fontFamily: family}}, name))));
+    PAGE_FONTS.forEach(([k, name, family]) => box.append(h('button.font-opt' + (k === value ? '.on' : ''), {
+        type: 'button',
+        role: 'radio',
+        'aria-checked': k === value ? 'true' : 'false',
+        'data-v': k,
+        title: name,
+        onclick: () => {
+            box.querySelectorAll('.font-opt').forEach((b) => {
+                b.classList.toggle('on', b.dataset.v === k);
+                b.setAttribute('aria-checked', b.dataset.v === k ? 'true' : 'false');
+            });
+            onPick(k);
+        }
+    }, h('span.font-sample', {style: {fontFamily: family}}, 'Aa'), h('span.font-name', {style: {fontFamily: family}}, name))));
     return box;
 }
 
 /** The five looks of the subscription page and widget, as small drawings. */
 function stylePicker(value, onPick) {
     const box = h('div.style-pick', {role: 'radiogroup'});
-    ['card', 'minimal', 'outline', 'bold', 'compact'].forEach((st) => box.append(h('button.style-opt' + (st === value ? '.on' : ''), {type: 'button', role: 'radio', 'aria-checked': st === value ? 'true' : 'false', 'data-v': st, onclick: () => {
-        box.querySelectorAll('.style-opt').forEach((b) => { b.classList.toggle('on', b.dataset.v === st); b.setAttribute('aria-checked', b.dataset.v === st ? 'true' : 'false'); });
-        onPick(st);
-    }}, h('span.style-art.art-' + st, h('i'), h('i'), h('b')), h('span', t('style_' + st)))));
+    ['card', 'minimal', 'outline', 'bold', 'compact'].forEach((st) => box.append(h('button.style-opt' + (st === value ? '.on' : ''), {
+        type: 'button', role: 'radio', 'aria-checked': st === value ? 'true' : 'false', 'data-v': st, onclick: () => {
+            box.querySelectorAll('.style-opt').forEach((b) => {
+                b.classList.toggle('on', b.dataset.v === st);
+                b.setAttribute('aria-checked', b.dataset.v === st ? 'true' : 'false');
+            });
+            onPick(st);
+        }
+    }, h('span.style-art.art-' + st, h('i'), h('i'), h('b')), h('span', t('style_' + st)))));
     return box;
 }
 
@@ -1106,27 +1543,32 @@ function smtpTestDialog(g, refresh) {
     const result = h('div.test-result', {hidden: true});
     modal(t('smtp_test_title'), [h('p.muted', t('smtp_test_text', {from: g.fromEmail})), field(t('smtp_test_to'), to), result], [
         {label: t('close')},
-        {label: t('smtp_test_send'), primary: true, icon: 'send', onclick: async () => {
-            result.hidden = false;
-            put(result, h('span.spin'), t('smtp_test_sending'));
-            result.className = 'test-result';
-            try {
-                const r = await api('group.smtpTest', {group: g.id, to: to.value.trim()});
-                refresh(r);
-                result.className = 'test-result ok';
-                put(result, svg('check'), h('span', t('smtp_test_ok', {email: r.to}), h('br'), h('span.small', t('smtp_test_ok_hint'))));
-            } catch (e) {
-                result.className = 'test-result err';
-                put(result, svg('x'), h('span', h('strong', t('smtp_test_failed')), h('br'), errText(e), e.detail ? h('code.small', ' ' + e.detail) : null));
+        {
+            label: t('smtp_test_send'), primary: true, icon: 'send', onclick: async () => {
+                result.hidden = false;
+                put(result, h('span.spin'), t('smtp_test_sending'));
+                result.className = 'test-result';
+                try {
+                    const r = await api('group.smtpTest', {group: g.id, to: to.value.trim()});
+                    refresh(r);
+                    result.className = 'test-result ok';
+                    put(result, svg('check'), h('span', t('smtp_test_ok', {email: r.to}), h('br'), h('span.small', t('smtp_test_ok_hint'))));
+                } catch (e) {
+                    result.className = 'test-result err';
+                    put(result, svg('x'), h('span', h('strong', t('smtp_test_failed')), h('br'), errText(e), e.detail ? h('code.small', ' ' + e.detail) : null));
+                }
+                return false; // stays open: the result is shown here
             }
-            return false; // stays open: the result is shown here
-        }},
+        },
     ]);
 }
 
 function logoUpload(g, onDone) {
     const file = h('input', {type: 'file', accept: 'image/png,image/jpeg,image/webp,image/gif', hidden: true});
-    const btn = h('button.btn.btn-soft.btn-sm', {type: 'button', onclick: () => file.click()}, svg('upload'), t('upload'));
+    const btn = h('button.btn.btn-soft.btn-sm', {
+        type: 'button',
+        onclick: () => file.click()
+    }, svg('upload'), t('upload'));
     file.addEventListener('change', async () => {
         const f = file.files[0];
         if (!f) return;
@@ -1170,41 +1612,52 @@ function accountPage() {
                 field(t('email'), input({value: u.email, disabled: true}), t('email_fixed')),
                 field(t('your_name'), name),
                 field(t('app_lang'), langSwitch()),
-                h('div.row-btns', h('button.btn.btn-primary', {type: 'button', onclick: async () => {
-                    try {
-                        setUser((await api('auth.profile', {name: name.value, lang: getLang()})).user);
-                        toast(t('saved'));
-                    } catch (e) {
-                        failToast(e);
+                h('div.row-btns', h('button.btn.btn-primary', {
+                    type: 'button', onclick: async () => {
+                        try {
+                            setUser((await api('auth.profile', {name: name.value, lang: getLang()})).user);
+                            toast(t('saved'));
+                        } catch (e) {
+                            failToast(e);
+                        }
                     }
-                }}, svg('save'), t('save'))),
-                window.Identity ? h('div.row-btns', h('button.btn.btn-soft', {type: 'button', onclick: Identity.methods}, svg('shield'), Identity.text('methods'))) : h('p.muted.small', u.googleLinked ? t('google_linked') : '')),
+                }, svg('save'), t('save'))),
+                window.Identity ? h('div.row-btns', h('button.btn.btn-soft', {
+                    type: 'button',
+                    onclick: Identity.methods
+                }, svg('shield'), Identity.text('methods'))) : h('p.muted.small', u.googleLinked ? t('google_linked') : '')),
             h('section.card', h('h3', svg('shield'), t(u.hasPassword ? 'change_password' : 'set_password')),
                 u.hasPassword ? field(t('current_password'), cur) : h('p.muted.small', t('set_password_text')),
                 field(t('new_password'), pw, t('password_hint')),
-                h('div.row-btns', h('button.btn.btn-primary', {type: 'button', onclick: async () => {
-                    try {
-                        setUser((await api('auth.password', {current: cur.value, password: pw.value})).user);
-                        cur.value = pw.value = '';
-                        toast(t('saved'));
-                    } catch (e) {
-                        failToast(e);
-                    }
-                }}, svg('save'), t('save')))),
-            h('section.card.danger-card', h('h3', svg('trash'), t('delete_account')), h('p.muted.small', t('delete_account_text')),
-                h('button.btn.btn-danger', {type: 'button', onclick: () => {
-                    const p = input({type: 'password'});
-                    modal(t('delete_account'), [h('p', t('delete_account_confirm')), u.hasPassword ? field(t('password'), p) : null], [{label: t('cancel')}, {label: t('delete_account'), danger: true, onclick: async () => {
+                h('div.row-btns', h('button.btn.btn-primary', {
+                    type: 'button', onclick: async () => {
                         try {
-                            await api('auth.delete', {password: p.value});
-                            S.user = null;
-                            go('#/');
+                            setUser((await api('auth.password', {current: cur.value, password: pw.value})).user);
+                            cur.value = pw.value = '';
+                            toast(t('saved'));
                         } catch (e) {
                             failToast(e);
-                            return false;
                         }
-                    }}]);
-                }}, svg('trash'), t('delete_account')))));
+                    }
+                }, svg('save'), t('save')))),
+            h('section.card.danger-card', h('h3', svg('trash'), t('delete_account')), h('p.muted.small', t('delete_account_text')),
+                h('button.btn.btn-danger', {
+                    type: 'button', onclick: () => {
+                        const p = input({type: 'password'});
+                        modal(t('delete_account'), [h('p', t('delete_account_confirm')), u.hasPassword ? field(t('password'), p) : null], [{label: t('cancel')}, {
+                            label: t('delete_account'), danger: true, onclick: async () => {
+                                try {
+                                    await api('auth.delete', {password: p.value});
+                                    S.user = null;
+                                    go('#/');
+                                } catch (e) {
+                                    failToast(e);
+                                    return false;
+                                }
+                            }
+                        }]);
+                    }
+                }, svg('trash'), t('delete_account')))));
 }
 
 // ---------------------------------------------------------------- master admin
@@ -1223,10 +1676,10 @@ async function masterPage() {
         const rows = r.groups.filter((g) => !q.value || (g.name + ' ' + g.slug + ' ' + (g.ownerEmail || '')).toLowerCase().includes(q.value.toLowerCase()));
         if (!rows.length) return put(tbody, emptyRow(8, q.value ? t('no_results') : t('no_groups')));
         put(tbody, rows.map((g) => h('tr', {class: 'click', onclick: () => go('#/master/g/' + g.id)},
-        h('td', h('strong', g.name), h('div.muted.small', g.slug)), h('td', g.owner || '—', h('div.muted.small', g.ownerEmail || '')),
-        h('td', g.fromEmail ? h('span.mono.small', g.fromEmail) : h('span.muted.small', t('not_configured'))),
-        h('td.num', String(g.members)), h('td.num', String(g.subscribers)), h('td.num', String(g.sent)), h('td.num', String(g.upcoming)),
-        h('td', h('span.status.st-' + (g.status === 'active' ? 'sent' : 'cancelled'), t('gst_' + g.status))))));
+            h('td', h('strong', g.name), h('div.muted.small', g.slug)), h('td', g.owner || '—', h('div.muted.small', g.ownerEmail || '')),
+            h('td', g.fromEmail ? h('span.mono.small', g.fromEmail) : h('span.muted.small', t('not_configured'))),
+            h('td.num', String(g.members)), h('td.num', String(g.subscribers)), h('td.num', String(g.sent)), h('td.num', String(g.upcoming)),
+            h('td', h('span.status.st-' + (g.status === 'active' ? 'sent' : 'cancelled'), t('gst_' + g.status))))));
     };
     q.addEventListener('input', draw);
     draw();
@@ -1246,15 +1699,20 @@ async function masterGroup(id) {
         return shell(h('p.form-error', errText(e)));
     }
     const g = r.group;
-    const toggle = h('button.btn' + (g.status === 'active' ? '.btn-danger-soft' : '.btn-primary'), {type: 'button', onclick: async () => {
-        const to = g.status === 'active' ? 'disabled' : 'active';
-        if (to === 'disabled' && !(await confirmDialog(t('suspend_title'), t('suspend_text', {name: g.name}), t('suspend'), true))) return;
-        await api('master.status', {group: g.id, status: to}).catch(failToast);
-        masterGroup(id);
-    }}, svg(g.status === 'active' ? 'ban' : 'check'), t(g.status === 'active' ? 'suspend' : 'reactivate'));
+    const toggle = h('button.btn' + (g.status === 'active' ? '.btn-danger-soft' : '.btn-primary'), {
+        type: 'button', onclick: async () => {
+            const to = g.status === 'active' ? 'disabled' : 'active';
+            if (to === 'disabled' && !(await confirmDialog(t('suspend_title'), t('suspend_text', {name: g.name}), t('suspend'), true))) return;
+            await api('master.status', {group: g.id, status: to}).catch(failToast);
+            masterGroup(id);
+        }
+    }, svg(g.status === 'active' ? 'ban' : 'check'), t(g.status === 'active' ? 'suspend' : 'reactivate'));
     const facts = [[t('group_slug'), g.slug], [t('status'), t('gst_' + g.status)], [t('from_email'), g.fromEmail ? h('span.mono', g.fromEmail) : t('not_configured')],
         [t('from_name'), g.fromName || '—'], [t('sub_langs'), g.langs.map((l) => LANG_NAMES[l] || l).join(', ')], [t('timezone'), g.timezone],
-        [t('created'), fmtDate(g.createdAt, g.timezone, false)], [t('subscribe_link'), h('a', {href: g.links.subscribe, target: '_blank'}, g.links.subscribe)]];
+        [t('created'), fmtDate(g.createdAt, g.timezone, false)], [t('subscribe_link'), h('a', {
+            href: g.links.subscribe,
+            target: '_blank'
+        }, g.links.subscribe)]];
     shell(
         h('a.crumb', {href: '#/master'}, svg('back', 'ico ico-sm'), t('master')),
         h('div.page-head', h('div', h('h1', g.name), h('p.muted', g.description)), toggle),
@@ -1265,18 +1723,20 @@ async function masterGroup(id) {
             h('section.card', h('h3', svg('user'), t('tab_members')), r.members.length ? h('div.table-wrap', h('table.table', h('tbody', r.members.map((m) => h('tr', h('td', h('strong', m.name), h('div.muted.small', m.email)), h('td', h('span.chip.role-' + m.role, t('role_' + m.role)))))))) : h('p.muted.small', t('no_members'))),
             h('section.card', h('h3', svg('ban'), t('unsub_reasons')), r.reasons.length ? h('ul.reasons', r.reasons.map((x) => h('li', h('span', reasonText(x.unsub_reason)), h('strong', String(x.n))))) : h('p.muted.small', t('no_reasons')))),
         h('h2', t('tab_newsletters')),
-        r.newsletters.length ? h('div.nl-list', r.newsletters.map((n) => h('button.nl-row', {type: 'button', onclick: async () => {
-            try {
-                previewDialog((await api('master.preview', null, 'id=' + n.id)).html, n.subject);
-            } catch (e) {
-                failToast(e);
-            }
-        }}, h('div.nl-main', h('strong', n.subject || t('untitled')), h('span.muted.small', n.author ? t('by', {name: n.author}) : '')),
+        r.newsletters.length ? h('div.nl-list', r.newsletters.map((n) => h('button.nl-row', {
+                type: 'button', onclick: async () => {
+                    try {
+                        previewDialog((await api('master.preview', null, 'id=' + n.id)).html, n.subject);
+                    } catch (e) {
+                        failToast(e);
+                    }
+                }
+            }, h('div.nl-main', h('strong', n.subject || t('untitled')), h('span.muted.small', n.author ? t('by', {name: n.author}) : '')),
             h('div.nl-when', h('span', fmtDate(n.sentAt || n.scheduledAt || n.proposedAt || n.updatedAt, g.timezone))), h('div.nl-num', n.total ? h('strong', n.sent + '/' + n.total) : null), statusChip(n.status)))) : h('div.empty.small', svg('mail', 'ico ico-lg'), h('p.muted', t('no_newsletters'))),
         h('h2', t('tab_subscribers')),
         r.subscribers.length ? h('div.table-wrap', h('table.table', h('thead', h('tr', [t('email'), t('lang'), t('browser'), t('source'), t('since'), t('status')].map((c) => h('th', c)))),
-            h('tbody', r.subscribers.map((s) => h('tr', h('td', s.email, s.reason && s.status === 'unsubscribed' ? h('div.muted.small', reasonText(s.reason)) : null), h('td', LANG_NAMES[s.lang] || s.lang), h('td', s.browser || '—'),
-                h('td', t('src_' + s.source)), h('td', fmtDate(s.createdAt, g.timezone, false)), h('td', h('span.status.st-sub-' + s.status, t('st_sub_' + s.status))))))))
+                h('tbody', r.subscribers.map((s) => h('tr', h('td', s.email, s.reason && s.status === 'unsubscribed' ? h('div.muted.small', reasonText(s.reason)) : null), h('td', LANG_NAMES[s.lang] || s.lang), h('td', s.browser || '—'),
+                    h('td', t('src_' + s.source)), h('td', fmtDate(s.createdAt, g.timezone, false)), h('td', h('span.status.st-sub-' + s.status, t('st_sub_' + s.status))))))))
             : h('div.empty.small', svg('users', 'ico ico-lg'), h('p.muted', t('no_subscribers'))));
 }
 

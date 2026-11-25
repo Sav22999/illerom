@@ -3232,7 +3232,10 @@
             space_create: ['add', t('Created space “{name}”', {name})],
             space_rename: ['edit', t('Renamed space “{from}” to “{to}”', d)],
             space_edit: ['edit', t('Edited space “{name}”', {name})],
-            space_delete: ['delete', d.n ? t('Deleted space “{name}” with {what}', {name, what}) : t('Deleted space “{name}”', {name})],
+            space_delete: ['delete', d.n ? t('Deleted space “{name}” with {what}', {
+                name,
+                what
+            }) : t('Deleted space “{name}”', {name})],
             list_create: ['add', t('Created list “{name}”', {name})],
             list_rename: ['edit', t('Renamed list “{from}” to “{to}”', d)],
             list_edit: ['edit', t('Edited list “{name}”', {name})],
@@ -3502,7 +3505,12 @@
         }
 
         paint();
-        sheet({title: t('Notifications'), body: [box], actions: [btn(t('Close'), {kind: 'text', onclick: () => UI.closeTop()})], autofocus: false});
+        sheet({
+            title: t('Notifications'),
+            body: [box],
+            actions: [btn(t('Close'), {kind: 'text', onclick: () => UI.closeTop()})],
+            autofocus: false
+        });
     }
 
     function viewProfile() {
@@ -3977,7 +3985,10 @@
                 render();
             }
         });
-        root.replaceChildren(h('div.auth', langPill('.on-auth'), h('div.auth-top', h('div.logo', h('img', {src: 'assets/icons/icon-color.png', alt: ''})), h('h1', 'FoodTrack'), h('p', t('Confirm your email'))),
+        root.replaceChildren(h('div.auth', langPill('.on-auth'), h('div.auth-top', h('div.logo', h('img', {
+                src: 'assets/icons/icon-color.png',
+                alt: ''
+            })), h('h1', 'FoodTrack'), h('p', t('Confirm your email'))),
             h('div.auth-body.center', h('p', t('We sent a link to {email}. Open it to start using your account: until then the account stays locked.', {email: S.user.email})),
                 status, h('div.verify-actions', check, resend, out))));
     }
@@ -3997,7 +4008,12 @@
                     }
                 }
             });
-            const s = sheet({title: t('Confirm your email'), body: [h('p.sheet-text', t('Tap the button to confirm the address of your FoodTrack account.'))], actions: [ok], onclose: resolve});
+            const s = sheet({
+                title: t('Confirm your email'),
+                body: [h('p.sheet-text', t('Tap the button to confirm the address of your FoodTrack account.'))],
+                actions: [ok],
+                onclose: resolve
+            });
         });
     }
 
@@ -4221,7 +4237,10 @@
     async function saveActivityCursor(after) {
         store.set('activity.after', after);
         try {
-            await (await caches.open('ft-state')).put('activity', new Response(JSON.stringify({after, lang: I18N.lang})));
+            await (await caches.open('ft-state')).put('activity', new Response(JSON.stringify({
+                after,
+                lang: I18N.lang
+            })));
         } catch (e) { /* no cache storage */
         }
     }
@@ -4277,7 +4296,10 @@
                 if (!sub) {
                     const {publicKey} = await Api.get('push.key', {silentAuth: true});
                     if (!publicKey) return;
-                    sub = await reg.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: base64Bytes(publicKey)});
+                    sub = await reg.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: base64Bytes(publicKey)
+                    });
                 }
                 await Api.post('push.subscribe', {endpoint: sub.endpoint}, {silentAuth: true});
             } else if (sub) {
@@ -4317,8 +4339,13 @@
 
     // Google and SavAccount: joining an account that already exists, new accounts, ways of signing in (../identity/)
     if (window.Identity) Identity.setup({
-        name: 'FoodTrack', lang: () => I18N.lang, accent: 'var(--primary)', onAccent: 'var(--on-primary)', google: (slot, cb) => S.config.googleClientId && googleButton(slot, cb, 'continue_with'),
-        invite: () => (location.hash.match(/^#\/(?:join|unisciti)\/([A-Za-z0-9]+)/) || [])[1] || '', inviteField: true,
+        name: 'FoodTrack',
+        lang: () => I18N.lang,
+        accent: 'var(--primary)',
+        onAccent: 'var(--on-primary)',
+        google: (slot, cb) => S.config.googleClientId && googleButton(slot, cb, 'continue_with'),
+        invite: () => (location.hash.match(/^#\/(?:join|unisciti)\/([A-Za-z0-9]+)/) || [])[1] || '',
+        inviteField: true,
     });
 
     async function start() {

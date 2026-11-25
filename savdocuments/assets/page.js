@@ -4,260 +4,339 @@
  * The browser moves lines, rows and pictures below them, so a paragraph breaks across pages line by line without
  * touching its content.
  */
-import { MM, pageMM, fields, fontStack } from './settings.js';
-import { esc } from './clean.js';
+import {fields, fontStack, MM, pageMM} from './settings.js';
+import {esc} from './clean.js';
 
 export const GAP = 22;
-const el = (cls, html = '') => { const d = document.createElement('div'); d.className = cls; d.innerHTML = html; return d; };
+const el = (cls, html = '') => {
+    const d = document.createElement('div');
+    d.className = cls;
+    d.innerHTML = html;
+    return d;
+};
 
 /** Puts the settings on the paper as CSS variables. */
 export function applySettings(paper, s) {
-  const [w, h] = pageMM(s);
-  const set = (k, v) => paper.style.setProperty(k, v);
-  set('--pw', w * MM + 'px'); set('--ph', h * MM + 'px');
-  set('--mt', s.mt * MM + 'px'); set('--mr', s.mr * MM + 'px'); set('--mb', s.mb * MM + 'px'); set('--ml', s.ml * MM + 'px');
-  set('--hc', Math.max(60, (h - s.mt - s.mb) * MM) + 'px');
-  set('--font', fontStack(s.font)); set('--hfont', fontStack(s.headFont));
-  set('--fs', s.fontSize + 'pt'); set('--lh', s.line); set('--pgap', s.gap + 'pt'); set('--ink', s.color); set('--hink', s.headColor);
-  paper.classList.toggle('justify', !!s.justify);
-  paper.lang = s.lang;
+    const [w, h] = pageMM(s);
+    const set = (k, v) => paper.style.setProperty(k, v);
+    set('--pw', w * MM + 'px');
+    set('--ph', h * MM + 'px');
+    set('--mt', s.mt * MM + 'px');
+    set('--mr', s.mr * MM + 'px');
+    set('--mb', s.mb * MM + 'px');
+    set('--ml', s.ml * MM + 'px');
+    set('--hc', Math.max(60, (h - s.mt - s.mb) * MM) + 'px');
+    set('--font', fontStack(s.font));
+    set('--hfont', fontStack(s.headFont));
+    set('--fs', s.fontSize + 'pt');
+    set('--lh', s.line);
+    set('--pgap', s.gap + 'pt');
+    set('--ink', s.color);
+    set('--hink', s.headColor);
+    set('--accent', s.accent || '#0f6e56');
+    set('--page', s.bg || '#ffffff');
+    set('--bcolor', s.borderColor || '#0f6e56');
+    paper.classList.toggle('justify', !!s.justify);
+    paper.lang = s.lang;
 }
 
 export function geometry(s, gap = GAP) {
-  const [w, h] = pageMM(s);
-  const ph = h * MM, hc = Math.max(60, (h - s.mt - s.mb) * MM);
-  return { pw: w * MM, ph, hc, gap, pitch: ph + gap, mt: s.mt * MM, between: ph + gap - hc };
+    const [w, h] = pageMM(s);
+    const ph = h * MM, hc = Math.max(60, (h - s.mt - s.mb) * MM);
+    return {pw: w * MM, ph, hc, gap, pitch: ph + gap, mt: s.mt * MM, between: ph + gap - hc};
 }
 
+/** The number written on a page: the first one can be chosen. */
+export const pageNo = (s, n) => n - 1 + (s.startPage ?? 1);
+
+/** Watermark, border, header and footer of a sheet. */
+export const sheetHtml = (s, page, pages, title) => `${s.mark ? `<div class="wmark"><span style="--n:${[...s.mark].length}">${esc(s.mark)}</span></div>` : ''}${s.border ? `<div class="pborder ${s.border}"></div>` : ''}<div class="band top${s.bandLine ? ' ln' : ''}">${bandHtml(s, 'header', page, pages, title)}</div><div class="band bottom${s.bandLine ? ' ln' : ''}">${bandHtml(s, 'footer', page, pages, title)}</div>`;
+
 export function bandHtml(s, kind, page, pages, title) {
-  const z = s[kind];
-  if (!(z.l || z.c || z.r) || (page === 1 && !s.firstPage)) return '';
-  const ctx = { page, pages, title, date: new Date().toLocaleDateString(s.lang) };
-  return ['l', 'c', 'r'].map((k) => `<span>${esc(fields(z[k], ctx))}</span>`).join('');
+    const z = s[kind];
+    if (!(z.l || z.c || z.r) || (page === 1 && !s.firstPage)) return '';
+    const ctx = {page: pageNo(s, page), pages: pageNo(s, pages), title, date: new Date().toLocaleDateString(s.lang)};
+    return ['l', 'c', 'r'].map((k) => `<span>${esc(fields(z[k], ctx))}</span>`).join('');
 }
 
 function floats(box, n, g) {
-  while (box.children.length > n * 2) box.lastChild.remove();
-  while (box.children.length < n * 2) box.append(el('fl-page'), el('fl-gap'));
-  box.style.setProperty('--between', g.between + 'px');
+    while (box.children.length > n * 2) box.lastChild.remove();
+    while (box.children.length < n * 2) box.append(el('fl-page'), el('fl-gap'));
+    box.style.setProperty('--between', g.between + 'px');
 }
 
 export class Pager {
-  constructor(paper) {
-    this.paper = paper;
-    paper.innerHTML = '';
-    this.sheets = el('sheets');
-    this.flow = el('flow');
-    this.gaps = el('gaps');
-    this.gaps.setAttribute('aria-hidden', 'true');
-    this.ed = el('ed doc');
-    this.notes = el('notes doc');
-    this.flow.append(this.gaps, this.ed, this.notes);
-    paper.append(this.sheets, this.flow);
-    this.pages = 1;
-    this.zoom = 1;
-  }
+    constructor(paper) {
+        this.paper = paper;
+        paper.innerHTML = '';
+        this.sheets = el('sheets');
+        this.flow = el('flow');
+        this.gaps = el('gaps');
+        this.gaps.setAttribute('aria-hidden', 'true');
+        this.ed = el('ed doc');
+        this.notes = el('notes doc');
+        this.flow.append(this.gaps, this.ed, this.notes);
+        paper.append(this.sheets, this.flow);
+        this.pages = 1;
+        this.zoom = 1;
+    }
 
-  /** Vertical position inside the flow, in unscaled px. */
-  y(rect, edge = 'top') { return (rect[edge] - this.top) / this.zoom; }
+    /** Vertical position inside the flow, in unscaled px. */
+    y(rect, edge = 'top') {
+        return (rect[edge] - this.top) / this.zoom;
+    }
 
-  layout(s, title) {
-    const g = (this.g = geometry(s));
-    const { ed, gaps, notes } = this;
-    const blocks = [...ed.children];
-    // blocks taller than a page lose the "keep together" rule, or they would never find a place
-    for (const b of blocks) {
-      if (!b.matches('blockquote,pre,.callout,.beside')) continue;
-      const tall = b.offsetHeight > g.hc;
-      if (tall !== b.classList.contains('tall')) b.classList.toggle('tall', tall);
-    }
-    for (const b of ed.querySelectorAll('[data-push]')) { b.removeAttribute('data-push'); b.style.removeProperty('padding-top'); }
-    if (this.fluid) { // one sheet as long as the text
-      floats(gaps, 0, g);
-      for (const b of blocks) if (b.classList.contains('pb')) b.style.height = '1.6em';
-      this.pages = 1;
-      this.flow.style.height = 'auto';
-      this.drawSheets({ ...s, header: {}, footer: {} }, title);
-      this.sheets.firstChild.style.height = '100%';
-      return;
-    }
-    let n = Math.max(1, this.pages);
-    const measure = () => {
-      this.top = this.flow.getBoundingClientRect().top;
-      const r = (notes.childElementCount ? notes : ed).getBoundingClientRect();
-      return this.y(r, 'bottom');
-    };
-    const settle = () => {
-      const max = Math.ceil((ed.scrollHeight + notes.scrollHeight) / g.hc) * 2 + blocks.length + 4;
-      for (let i = 0; i < 40; i++) {
-        floats(gaps, n - 1, g);
-        const need = Math.max(1, Math.floor((measure() - 1) / g.pitch) + 1);
-        const want = Math.min(max, need);
-        if (want === n) break;
-        n = want > n ? want + (i < 3 ? Math.ceil((want - n) / 8) : 0) : want;
-      }
-    };
-    settle();
-    const pageOf = (y) => Math.floor(y / g.pitch);
-    const room = (y) => g.mt + g.hc - (y - pageOf(y) * g.pitch); // space left on the page under y
-    let moved = false;
-    for (const b of blocks) {
-      if (!b.classList.contains('pb')) continue;
-      const left = room(this.y(b.getBoundingClientRect())), h = left > 0 ? Math.max(0, left) : 0;
-      if (Math.abs((parseFloat(b.style.height) || 0) - h) > 0.5) { b.style.height = h + 'px'; moved = true; settle(); }
-    }
-    // a heading never stays alone at the bottom of a page
-    for (let i = 0; i < blocks.length - 1; i++) {
-      const b = blocks[i];
-      if (!/^h[1-4]$/.test(b.localName)) continue;
-      const r = b.getBoundingClientRect(), next = blocks[i + 1];
-      if (next.classList.contains('pb')) continue;
-      const line = firstLine(next);
-      if (!line) continue;
-      const top = this.y(r), p = pageOf(top);
-      if (pageOf(this.y(line)) > p && top - p * g.pitch > g.mt + 4) {
-        b.dataset.push = '';
-        b.style.setProperty('padding-top', Math.max(0, room(top)) + 'px');
-        moved = true;
+    layout(s, title) {
+        const g = (this.g = geometry(s));
+        const {ed, gaps, notes} = this;
+        const blocks = [...ed.children];
+        // blocks taller than a page lose the "keep together" rule, or they would never find a place
+        for (const b of blocks) {
+            if (!b.matches('blockquote,pre,.callout,.beside')) continue;
+            const tall = b.offsetHeight > g.hc;
+            if (tall !== b.classList.contains('tall')) b.classList.toggle('tall', tall);
+        }
+        for (const b of ed.querySelectorAll('[data-push]')) {
+            b.removeAttribute('data-push');
+            b.style.removeProperty('padding-top');
+        }
+        if (this.fluid) { // one sheet as long as the text
+            floats(gaps, 0, g);
+            for (const b of blocks) if (b.classList.contains('pb')) b.style.height = '1.6em';
+            this.pages = 1;
+            this.flow.style.height = 'auto';
+            this.drawSheets({...s, header: {}, footer: {}, mark: '', border: ''}, title);
+            this.sheets.firstChild.style.height = '100%';
+            return;
+        }
+        let n = Math.max(1, this.pages);
+        const measure = () => {
+            this.top = this.flow.getBoundingClientRect().top;
+            const r = (notes.childElementCount ? notes : ed).getBoundingClientRect();
+            return this.y(r, 'bottom');
+        };
+        const settle = () => {
+            const max = Math.ceil((ed.scrollHeight + notes.scrollHeight) / g.hc) * 2 + blocks.length + 4;
+            for (let i = 0; i < 40; i++) {
+                floats(gaps, n - 1, g);
+                const need = Math.max(1, Math.floor((measure() - 1) / g.pitch) + 1);
+                const want = Math.min(max, need);
+                if (want === n) break;
+                n = want > n ? want + (i < 3 ? Math.ceil((want - n) / 8) : 0) : want;
+            }
+        };
         settle();
-      }
+        const pageOf = (y) => Math.floor(y / g.pitch);
+        const room = (y) => g.mt + g.hc - (y - pageOf(y) * g.pitch); // space left on the page under y
+        let moved = false;
+        for (const b of blocks) {
+            if (!b.classList.contains('pb')) continue;
+            const left = room(this.y(b.getBoundingClientRect())), h = left > 0 ? Math.max(0, left) : 0;
+            if (Math.abs((parseFloat(b.style.height) || 0) - h) > 0.5) {
+                b.style.height = h + 'px';
+                moved = true;
+                settle();
+            }
+        }
+        // a heading never stays alone at the bottom of a page
+        for (let i = 0; i < blocks.length - 1; i++) {
+            const b = blocks[i];
+            if (!/^h[1-4]$/.test(b.localName)) continue;
+            const r = b.getBoundingClientRect(), next = blocks[i + 1];
+            if (next.classList.contains('pb')) continue;
+            const line = firstLine(next);
+            if (!line) continue;
+            const top = this.y(r), p = pageOf(top);
+            if (pageOf(this.y(line)) > p && top - p * g.pitch > g.mt + 4) {
+                b.dataset.push = '';
+                b.style.setProperty('padding-top', Math.max(0, room(top)) + 'px');
+                moved = true;
+                settle();
+            }
+        }
+        if (moved) settle();
+        this.pages = n;
+        this.flow.style.height = n * g.pitch - g.gap + 'px';
+        this.drawSheets(s, title);
     }
-    if (moved) settle();
-    this.pages = n;
-    this.flow.style.height = n * g.pitch - g.gap + 'px';
-    this.drawSheets(s, title);
-  }
 
-  drawSheets(s, title) {
-    const { sheets, pages, g } = this;
-    while (sheets.children.length > pages) sheets.lastChild.remove();
-    while (sheets.children.length < pages) sheets.append(el('sheet', '<div class="band top"></div><div class="band bottom"></div>'));
-    [...sheets.children].forEach((sh, i) => {
-      sh.style.top = i * g.pitch + 'px';
-      sh.style.height = '';
-      const t = bandHtml(s, 'header', i + 1, pages, title), b = bandHtml(s, 'footer', i + 1, pages, title);
-      if (sh.firstChild.innerHTML !== t) sh.firstChild.innerHTML = t;
-      if (sh.lastChild.innerHTML !== b) sh.lastChild.innerHTML = b;
-    });
-  }
-
-  pageAt(y) { return this.g ? Math.min(this.pages, Math.max(1, Math.floor(y / this.g.pitch) + 1)) : 1; }
-
-  /** The page where the text of a block begins. */
-  pageOfText(b) { this.top = this.flow.getBoundingClientRect().top; const r = firstLine(b); return this.pageAt(this.y(r) + r.height / this.zoom / 2); }
-
-  /**
-   * What gets printed: every page with exactly the content it has on screen. Paragraphs, lists and tables across two pages
-   * are cut where they break, because printers measure the text a little differently from the screen.
-   */
-  printable(s, title) {
-    const { g, ed, notes, pages } = this;
-    this.top = this.flow.getBoundingClientRect().top;
-    const pageOf = (y) => Math.max(0, Math.min(pages - 1, Math.floor(y / g.pitch)));
-    const mid = (r) => this.y(r) + r.height / this.zoom / 2;
-    const out = el('print-pages');
-    applySettings(out, s);
-    const bodies = [];
-    for (let i = 0; i < pages; i++) {
-      const page = el('psheet', `<div class="band top">${bandHtml(s, 'header', i + 1, pages, title)}</div><div class="band bottom">${bandHtml(s, 'footer', i + 1, pages, title)}</div>`);
-      const flow = el('flow'), body = el('ed doc');
-      flow.append(body);
-      page.append(flow);
-      out.append(page);
-      bodies.push(body);
+    drawSheets(s, title) {
+        const {sheets, pages, g} = this;
+        while (sheets.children.length > pages) sheets.lastChild.remove();
+        while (sheets.children.length < pages) sheets.append(el('sheet'));
+        [...sheets.children].forEach((sh, i) => {
+            sh.style.top = i * g.pitch + 'px';
+            sh.style.height = '';
+            const t = sheetHtml(s, i + 1, pages, title);
+            if (sh._h !== t) sh.innerHTML = sh._h = t;
+        });
     }
-    const put = (i, node, offset, fresh) => {
-      if (!bodies[i].children.length && fresh) { const sp = el('spacer'); sp.style.height = Math.max(0, offset) + 'px'; bodies[i].append(sp); node.style.marginTop = '0'; }
-      bodies[i].append(node);
-    };
-    const tidy = (c) => { c.removeAttribute('contenteditable'); if (c.hasAttribute('data-push')) c.style.paddingTop = ''; c.querySelectorAll('[data-ui]').forEach((n) => n.remove()); return c; };
-    const all = [...ed.children, ...(notes.childElementCount ? [notes] : [])];
-    for (const b of all) {
-      if (b.classList.contains('pb')) continue;
-      const units = cuts(b, (r) => pageOf(mid(r)));
-      const r = b.getBoundingClientRect(), first = firstLine(b) || r;
-      const p0 = units.length ? units[0].page : pageOf(mid(first));
-      const rel = b.hasAttribute('data-push') ? 0 : this.y(r) - p0 * g.pitch - g.mt;
-      if (units.length < 2) { put(p0, tidy(b.cloneNode(true)), rel, true); continue; }
-      units.forEach((u, k) => {
-        const c = b.cloneNode(false), x = document.createRange();
-        x.setStart(...u.start);
-        if (units[k + 1]) x.setEnd(...units[k + 1].start); else x.setEnd(b, b.childNodes.length);
-        c.append(x.cloneContents());
-        tidy(c);
-        if (b.matches('table') && b.querySelector('colgroup') && k) c.prepend(b.querySelector('colgroup').cloneNode(true));
-        if (units[k + 1] && b.matches('p,blockquote') && getComputedStyle(b).textAlign === 'justify') c.style.textAlignLast = 'justify';
-        if (k) { c.style.marginTop = '0'; c.style.textIndent = '0'; continueLists(b, c, u); }
-        if (units[k + 1]) c.style.marginBottom = '0';
-        put(u.page, c, 0, false);
-      });
+
+    pageAt(y) {
+        return this.g ? Math.min(this.pages, Math.max(1, Math.floor(y / this.g.pitch) + 1)) : 1;
     }
-    return out;
-  }
+
+    /** The page where the text of a block begins. */
+    pageOfText(b) {
+        this.top = this.flow.getBoundingClientRect().top;
+        const r = firstLine(b);
+        return this.pageAt(this.y(r) + r.height / this.zoom / 2);
+    }
+
+    /**
+     * What gets printed: every page with exactly the content it has on screen. Paragraphs, lists and tables across two pages
+     * are cut where they break, because printers measure the text a little differently from the screen.
+     */
+    printable(s, title) {
+        const {g, ed, notes, pages} = this;
+        this.top = this.flow.getBoundingClientRect().top;
+        const pageOf = (y) => Math.max(0, Math.min(pages - 1, Math.floor(y / g.pitch)));
+        const mid = (r) => this.y(r) + r.height / this.zoom / 2;
+        const out = el('print-pages');
+        applySettings(out, s);
+        const bodies = [];
+        for (let i = 0; i < pages; i++) {
+            const page = el('psheet', sheetHtml(s, i + 1, pages, title));
+            const flow = el('flow'), body = el('ed doc');
+            flow.append(body);
+            page.append(flow);
+            out.append(page);
+            bodies.push(body);
+        }
+        const put = (i, node, offset, fresh) => {
+            if (!bodies[i].children.length && fresh) {
+                const sp = el('spacer');
+                sp.style.height = Math.max(0, offset) + 'px';
+                bodies[i].append(sp);
+                node.style.marginTop = '0';
+            }
+            bodies[i].append(node);
+        };
+        const tidy = (c) => {
+            c.removeAttribute('contenteditable');
+            if (c.hasAttribute('data-push')) c.style.paddingTop = '';
+            c.querySelectorAll('[data-ui=grip]').forEach((n) => n.remove());
+            return c;
+        };
+        const all = [...ed.children, ...(notes.childElementCount ? [notes] : [])];
+        for (const b of all) {
+            if (b.classList.contains('pb')) continue;
+            const units = cuts(b, (r) => pageOf(mid(r)));
+            const r = b.getBoundingClientRect(), first = firstLine(b) || r;
+            const p0 = units.length ? units[0].page : pageOf(mid(first));
+            const rel = b.hasAttribute('data-push') ? 0 : this.y(r) - p0 * g.pitch - g.mt;
+            if (units.length < 2) {
+                put(p0, tidy(b.cloneNode(true)), rel, true);
+                continue;
+            }
+            units.forEach((u, k) => {
+                const c = b.cloneNode(false), x = document.createRange();
+                x.setStart(...u.start);
+                if (units[k + 1]) x.setEnd(...units[k + 1].start); else x.setEnd(b, b.childNodes.length);
+                c.append(x.cloneContents());
+                tidy(c);
+                if (b.matches('table') && b.querySelector('colgroup') && k) c.prepend(b.querySelector('colgroup').cloneNode(true));
+                if (units[k + 1] && b.matches('p,blockquote') && getComputedStyle(b).textAlign === 'justify') c.style.textAlignLast = 'justify';
+                if (k) {
+                    c.style.marginTop = '0';
+                    c.style.textIndent = '0';
+                    continueLists(b, c, u);
+                }
+                if (units[k + 1]) c.style.marginBottom = '0';
+                put(u.page, c, 0, false);
+            });
+        }
+        return out;
+    }
 }
 
 /** Where a block breaks: [{page, start: [node, offset]}], one for each page it is on. */
 function cuts(b, pageOfRect) {
-  const out = [];
-  const add = (page, node, off) => { if (!out.length) out.push({ page, start: [b, 0] }); else if (page > out.at(-1).page) out.push({ page, start: [node, off] }); };
-  if (b.matches('table:not(.rs)')) {
-    for (const tr of b.querySelectorAll('tr')) add(pageOfRect(tr.getBoundingClientRect()), tr.parentNode, [...tr.parentNode.childNodes].indexOf(tr));
+    const out = [];
+    const add = (page, node, off) => {
+        if (!out.length) out.push({page, start: [b, 0]}); else if (page > out.at(-1).page) out.push({
+            page,
+            start: [node, off]
+        });
+    };
+    if (b.matches('table:not(.rs)')) {
+        for (const tr of b.querySelectorAll('tr')) add(pageOfRect(tr.getBoundingClientRect()), tr.parentNode, [...tr.parentNode.childNodes].indexOf(tr));
+        return out;
+    }
+    if (b.matches('.toc')) {
+        [...b.children].forEach((a, i) => add(pageOfRect(a.getBoundingClientRect()), b, i));
+        return out;
+    }
+    if (!b.matches('p,h1,h2,h3,h4,ul,ol,.notes,.tall')) return out;
+    const w = document.createTreeWalker(b, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT), r = document.createRange();
+    for (let n = w.nextNode(); n; n = w.nextNode()) {
+        if (n.nodeType === 1) {
+            if (!n.matches('br,img,li') || (n.matches('li') && n.textContent)) continue;
+            const rect = n.getBoundingClientRect();
+            if (rect.height) add(pageOfRect(rect), n.parentNode, [...n.parentNode.childNodes].indexOf(n));
+            continue;
+        }
+        if (!n.length) continue;
+        r.selectNodeContents(n);
+        const rects = [...r.getClientRects()].filter((x) => x.width > 0.5);
+        if (!rects.length) continue;
+        const at = (i) => {
+            r.setStart(n, i);
+            r.setEnd(n, i + 1);
+            const q = [...r.getClientRects()].filter((x) => x.height);
+            return q.length ? pageOfRect(q[0]) : null;
+        };
+        const p0 = pageOfRect(rects[0]), p1 = pageOfRect(rects.at(-1));
+        add(p0, n, 0);
+        for (let p = p0 + 1; p <= p1; p++) { // the first character on the page p
+            let lo = 0, hi = n.length - 1;
+            while (lo < hi) {
+                const m = (lo + hi) >> 1;
+                let q = at(m), k = m;
+                while (q === null && k > lo) q = at(--k);
+                if ((q ?? p0) < p) lo = m + 1; else hi = m;
+            }
+            add(p, n, lo);
+        }
+    }
+    // a whole item, not only its text, goes to the next page when it begins there
+    for (const u of out.slice(1)) {
+        let [n, o] = u.start;
+        while (n !== b && o === 0) {
+            o = [...n.parentNode.childNodes].indexOf(n);
+            n = n.parentNode;
+            if (n.matches('ul,ol')) break;
+        }
+        u.start = [n, o];
+    }
     return out;
-  }
-  if (b.matches('.toc')) { [...b.children].forEach((a, i) => add(pageOfRect(a.getBoundingClientRect()), b, i)); return out; }
-  if (!b.matches('p,h1,h2,h3,h4,ul,ol,.notes,.tall')) return out;
-  const w = document.createTreeWalker(b, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT), r = document.createRange();
-  for (let n = w.nextNode(); n; n = w.nextNode()) {
-    if (n.nodeType === 1) {
-      if (!n.matches('br,img,li') || (n.matches('li') && n.textContent)) continue;
-      const rect = n.getBoundingClientRect();
-      if (rect.height) add(pageOfRect(rect), n.parentNode, [...n.parentNode.childNodes].indexOf(n));
-      continue;
-    }
-    if (!n.length) continue;
-    r.selectNodeContents(n);
-    const rects = [...r.getClientRects()].filter((x) => x.width > 0.5);
-    if (!rects.length) continue;
-    const at = (i) => { r.setStart(n, i); r.setEnd(n, i + 1); const q = [...r.getClientRects()].filter((x) => x.height); return q.length ? pageOfRect(q[0]) : null; };
-    const p0 = pageOfRect(rects[0]), p1 = pageOfRect(rects.at(-1));
-    add(p0, n, 0);
-    for (let p = p0 + 1; p <= p1; p++) { // the first character on the page p
-      let lo = 0, hi = n.length - 1;
-      while (lo < hi) { const m = (lo + hi) >> 1; let q = at(m), k = m; while (q === null && k > lo) q = at(--k); if ((q ?? p0) < p) lo = m + 1; else hi = m; }
-      add(p, n, lo);
-    }
-  }
-  // a whole item, not only its text, goes to the next page when it begins there
-  for (const u of out.slice(1)) {
-    let [n, o] = u.start;
-    while (n !== b && o === 0) { o = [...n.parentNode.childNodes].indexOf(n); n = n.parentNode; if (n.matches('ul,ol')) break; }
-    u.start = [n, o];
-  }
-  return out;
 }
 
 /** The second part of a list keeps its numbers, and an item cut in two has no second bullet. */
 function continueLists(b, c, u) {
-  let [n, o] = u.start;
-  const path = [];
-  let item = n.nodeType === 1 && n.matches('ul,ol') ? n.childNodes[o] : null;
-  if (item) path.push([item, false]);
-  for (let x = n; x && x !== b; x = x.parentNode) if (x.nodeType === 1 && x.localName === 'li') path.push([x, true]);
-  path.reverse();
-  let copy = c.matches('ul,ol') ? c : c.querySelector('ul,ol');
-  for (const [li, cut] of path) {
-    const k = copy?.querySelector(':scope > li');
-    if (!k) return;
-    const list = li.parentNode;
-    if (list.localName === 'ol') k.value = (list.start || 1) + [...list.children].indexOf(li);
-    if (cut) { k.style.listStyle = 'none'; k.classList.add('cont'); }
-    copy = k.querySelector(':scope > ul, :scope > ol');
-  }
+    let [n, o] = u.start;
+    const path = [];
+    let item = n.nodeType === 1 && n.matches('ul,ol') ? n.childNodes[o] : null;
+    if (item) path.push([item, false]);
+    for (let x = n; x && x !== b; x = x.parentNode) if (x.nodeType === 1 && x.localName === 'li') path.push([x, true]);
+    path.reverse();
+    let copy = c.matches('ul,ol') ? c : c.querySelector('ul,ol');
+    for (const [li, cut] of path) {
+        const k = copy?.querySelector(':scope > li');
+        if (!k) return;
+        const list = li.parentNode;
+        if (list.localName === 'ol') k.value = (list.start || 1) + [...list.children].indexOf(li);
+        if (cut) {
+            k.style.listStyle = 'none';
+            k.classList.add('cont');
+        }
+        copy = k.querySelector(':scope > ul, :scope > ol');
+    }
 }
 
 function firstLine(b) {
-  const r = document.createRange();
-  r.selectNodeContents(b);
-  const rects = r.getClientRects();
-  return rects.length ? rects[0] : b.getBoundingClientRect();
+    const r = document.createRange();
+    r.selectNodeContents(b);
+    const rects = r.getClientRects();
+    return rects.length ? rects[0] : b.getBoundingClientRect();
 }

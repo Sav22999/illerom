@@ -139,19 +139,32 @@ function mutate(array $u, callable $fn): void
 function ledger_detail(string $route, $extra, array $b): string
 {
     switch ($route) {
-        case 'game.layout': return (string)(($extra['spent'] ?? 0) . '|' . ($extra['refund'] ?? 0));
-        case 'game.hire': return (string)($extra['hired']['name'] ?? '') . '|' . (string)($b['role'] ?? '');
-        case 'game.market': return (string)($b['ing'] ?? '') . '|' . (int)($b['qty'] ?? 1);
-        case 'game.plant': return (string)($b['crop'] ?? '');
-        case 'game.expand': return (string)($extra['size'] ?? '');
-        case 'game.parking': return (string)($extra['parking'] ?? '');
-        case 'game.garage': return (string)($extra['garage'] ?? '');
-        case 'game.storage_sell': return (string)($b['k'] ?? '') . '|' . ($extra['refund'] ?? 0);
-        case 'game.floor': return (string)($extra['floor'] ?? '');
-        case 'game.door': return (string)($extra['style'] ?? '');
-        case 'game.promote': return (string)($extra['rank'] ?? '');
-        case 'game.kind': return (string)($extra['kind'] ?? '');
-        default: return '';
+        case 'game.layout':
+            return (string)(($extra['spent'] ?? 0) . '|' . ($extra['refund'] ?? 0));
+        case 'game.hire':
+            return (string)($extra['hired']['name'] ?? '') . '|' . (string)($b['role'] ?? '');
+        case 'game.market':
+            return (string)($b['ing'] ?? '') . '|' . (int)($b['qty'] ?? 1);
+        case 'game.plant':
+            return (string)($b['crop'] ?? '');
+        case 'game.expand':
+            return (string)($extra['size'] ?? '');
+        case 'game.parking':
+            return (string)($extra['parking'] ?? '');
+        case 'game.garage':
+            return (string)($extra['garage'] ?? '');
+        case 'game.storage_sell':
+            return (string)($b['k'] ?? '') . '|' . ($extra['refund'] ?? 0);
+        case 'game.floor':
+            return (string)($extra['floor'] ?? '');
+        case 'game.door':
+            return (string)($extra['style'] ?? '');
+        case 'game.promote':
+            return (string)($extra['rank'] ?? '');
+        case 'game.kind':
+            return (string)($extra['kind'] ?? '');
+        default:
+            return '';
     }
 }
 

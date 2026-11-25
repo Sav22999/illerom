@@ -9,9 +9,14 @@ if (!function_exists('fig_deepseek_moe')) {
             ? ['Token', 'gatto', 'corre', 'Router', 'sceglie', 'Esperti', 'per ogni token', 'lavorano solo', '2 esperti su 8']
             : ['Token', 'cat', 'runs', 'Router', 'chooses', 'Experts', 'for each token', 'only 2 of the 8', 'experts do the work'];
         $rows = '';
-        foreach (range(1, 8) as $i) { $y = 22 + ($i - 1) * 30; $rows .= '<rect x="330" y="' . $y . '" width="96" height="24" rx="8"/>'; }
+        foreach (range(1, 8) as $i) {
+            $y = 22 + ($i - 1) * 30;
+            $rows .= '<rect x="330" y="' . $y . '" width="96" height="24" rx="8"/>';
+        }
         $names = '';
-        foreach (range(1, 8) as $i) { $names .= '<text x="378" y="' . (39 + ($i - 1) * 30) . '">E' . $i . '</text>'; }
+        foreach (range(1, 8) as $i) {
+            $names .= '<text x="378" y="' . (39 + ($i - 1) * 30) . '">E' . $i . '</text>';
+        }
         return <<<SVG
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 280" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
 <style>.ga{animation:fa 8s infinite}.gb{animation:fb 8s infinite}@keyframes fa{0%,44%{opacity:1}50%,94%{opacity:0}100%{opacity:1}}@keyframes fb{0%,44%{opacity:0}50%,94%{opacity:1}100%{opacity:0}}@media (prefers-reduced-motion:reduce){.ga,.gb{animation:none}}</style>

@@ -6,6 +6,7 @@ import { context, slideContext, styleOf } from './themes.js';
 import { openText } from './textedit.js';
 import { uploadFiles } from './media.js';
 import { okLink } from './richtext.js';
+import { drawCells, cellAt, inCell, gridOf, cellRect, arrange, makeRoom } from './grid.js';
 
 const DIRS = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
 const rad = (d) => d * Math.PI / 180;
@@ -77,7 +78,8 @@ export function createStage(ed) {
   function drawOverlay() {
     overlay.textContent = '';
     if (!cur()) return;
-    const els = [...ed.sel].map((id) => [id, deck.el(ed.sid, id)]).filter((x) => x[1]);
+    const els = [...ed.sel].map((id) => [id, deck.el(ed.sid, id)]).filter((x) => x[1]), simple = ed.simple && ed.edit;
+    if (simple && !ed.editing) drawCells(ed, overlay, k);
     for (const p of deck.people) if (p.st?.s === ed.sid) {
       for (const id of p.st.sel || []) {
         const el = deck.el(ed.sid, id);
@@ -91,7 +93,7 @@ export function createStage(ed) {
     if (ed.edit && !ed.editing) for (const [id, el] of els) {
       const b = box(el, 'sel');
       b.dataset.id = id;
-      if (els.length === 1 && !el.lock) {
+      if (els.length === 1 && !el.lock && !simple) {
         if (el.t === 'shape' && el.shape === 'line') b.append(h('i.hd.end', { 'data-h': 'p1' }), h('i.hd.end.b', { 'data-h': 'p2' }));
         else {
           for (const d of DIRS) if ((el.w * k > 40 || d.length === 2) && (el.h * k > 40 || d.length === 2)) b.append(h('i.hd.' + d, { 'data-h': d }));
@@ -143,7 +145,7 @@ export function createStage(ed) {
   scroller.addEventListener('pointerdown', (e) => {
     pointers.set(e.pointerId, e);
     if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch = { d: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY), k }; return; }
-    if (e.button || e.target.closest('.pin, .ftb, .pop')) return;
+    if (e.button || e.target.closest('.pin, .ftb, .pop, .gadd')) return;
     if (ed.picking) return ed.pickAt(e, pos(e), hit(e));
     const id = hit(e);
     if (ed.editing) { if (id === ed.editing.id && !e.target.closest('.sel')) return; ed.closeText(); }
@@ -152,11 +154,12 @@ export function createStage(ed) {
     if (handle) return drag(e, resizer(handle, e));
     if (id) {
       const el = deck.el(ed.sid, id);
-      if (e.shiftKey) { ed.sel.has(id) ? ed.sel.delete(id) : ed.sel.add(id); ed.select([...ed.sel]); return; }
+      const mates = e.altKey && e.shiftKey ? [id] : ed.groupOf(id);
+      if (e.shiftKey) { const has = ed.sel.has(id); for (const m of mates) has ? ed.sel.delete(m) : ed.sel.add(m); ed.select([...ed.sel]); return; }
       const was = ed.sel.has(id);
-      if (!was) ed.select([id]);
+      if (!was) ed.select(mates);
       if (el.lock) return;
-      return drag(e, mover(e, id, was));
+      return drag(e, ed.simple ? celler(e, id, was) : mover(e, id, was));
     }
     if (e.target.closest('.sl') || e.target === overlay || e.target === scroller || e.target === holder) drag(e, marquee(e));
   });
@@ -166,7 +169,7 @@ export function createStage(ed) {
     if (deck.people.length && e.pointerType === 'mouse') { const p = pos(e); if (p.x > -50 && p.y > -50 && p.x < ed.ctx.W + 50 && p.y < ed.ctx.H + 50) { clearTimeout(st.curT); st.curT = setTimeout(() => deck.setState({ x: Math.round(p.x), y: Math.round(p.y) }), 120); } }
   });
   for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) scroller.addEventListener(ev, (e) => { pointers.delete(e.pointerId); if (pointers.size < 2) pinch = null; });
-  scroller.addEventListener('dblclick', (e) => { if (!ed.edit || ed.picking) return; const id = hit(e); if (id) ed.enter(id); else if (e.target.closest('.sl, .overlay')) { const p = pos(e); ed.insertText('body', p.x, p.y, true); } });
+  scroller.addEventListener('dblclick', (e) => { if (!ed.edit || ed.picking) return; const id = hit(e); if (id) ed.enter(id); else if (e.target.closest('.sl, .overlay')) { const p = pos(e); if (ed.simple) { const g = gridOf(ed), c = g ? cellAt(g, p, ed.ctx) : -1; if (c >= 0 && !inCell(deck.slide(ed.sid).d.els, c).length) ed.insert('text:body', null, c); } else ed.insertText('body', p.x, p.y, true); } });
   scroller.addEventListener('wheel', (e) => { if (!e.ctrlKey && !e.metaKey) return; e.preventDefault(); st.setZoom(k * Math.exp(-e.deltaY * .004)); }, { passive: false });
   scroller.addEventListener('contextmenu', (e) => { if (!ed.edit || ed.editing) return; const id = hit(e); if (id && !ed.sel.has(id)) ed.select([id]); e.preventDefault(); ed.contextMenu(e.clientX, e.clientY); });
   scroller.addEventListener('click', (e) => {
@@ -213,21 +216,58 @@ export function createStage(ed) {
         if (ev.shiftKey) { if (Math.abs(dx) > Math.abs(dy)) dy = 0; else dx = 0; }
         guides = [];
         if (userSetting('snap', true) && !ev.ctrlKey && !ev.metaKey) { const b = bounds(Object.values(start)), s = snapBox({ ...b, x: b.x + dx, y: b.y + dy }, lines); dx += s.dx; dy += s.dy; if (userSetting('guides', true)) guides = s.g; }
-        deck.do(ids.map((i) => ({ k: 'el.set', s: ed.sid, e: i, p: { x: r1(start[i].x + dx), y: r1(start[i].y + dy) } })), copied ? '' : key);
+        deck.do(ids.map((i) => ({ k: 'el.set', s: ed.sid, e: i, p: { x: r1(start[i].x + dx), y: r1(start[i].y + dy), ...(start[i].cell != null ? { cell: null, cr: null } : {}) } })), copied ? '' : key);
       },
       end(moved) {
         if (moved) return;
         // a press on something already selected: open it for writing (touch) or keep only it (several selected)
-        if (was && ed.sel.size > 1) ed.select([id]);
+        if (was && ed.sel.size > 1) ed.select(ed.groupOf(id).length === ed.sel.size ? [id] : ed.groupOf(id));
         else if (was && e.pointerType === 'touch') ed.enter(id);
       },
     };
   }
   const r1 = (v) => Math.round(v * 10) / 10;
 
+  /**
+   * Simple mode: a block (what is in a cell) goes to another cell; with something already there, they change places. Alt: only
+   * this element, together with what is there. On a page whose grid was read, dropped on an empty place it takes its cell there.
+   */
+  function celler(e, id, was) {
+    const g = gridOf(ed), el = { ...deck.el(ed.sid, id) }, own = el.cell != null && g ? cellRect(g, el.cell, ed.ctx) : el;
+    let ghost, to = -1, by = [0, 0];
+    return {
+      start() { if (!g) return; ghost = h('div.gghost', { style: `width:${own.w * k}px;height:${own.h * k}px` }); overlay.append(ghost); },
+      move(dx, dy, ev) {
+        if (!g) return;
+        to = cellAt(g, pos(ev), ed.ctx); by = [dx, dy];
+        ghost.style.left = (own.x + dx) * k + 'px'; ghost.style.top = (own.y + dy) * k + 'px';
+        $$('.gcell', overlay).forEach((c) => c.classList.toggle('over', +c.dataset.cell === to));
+      },
+      end(moved, ev) {
+        ghost?.remove();
+        if (!moved) { if (was && e.pointerType === 'touch') ed.enter(id); return; }
+        if (!g) return toast(t('grid_first'));
+        const els = structuredClone(deck.slide(ed.sid).d.els);
+        if (to < 0 && g.m === 0 && el.cell != null) {
+          const c = g.c.map((x) => [...x]), m = c[el.cell], snap = (v, max) => Math.max(0, Math.min(max, Math.round(v * 4) / 4));
+          m[0] = snap(m[0] + by[0] / ed.ctx.W * 12, 12 - m[2]); m[1] = snap(m[1] + by[1] / ed.ctx.H * 12, 12 - m[3]);
+          const ng = { ...g, c };
+          return deck.do([{ k: 'slide.set', s: ed.sid, p: { grid: ng } }, ...arrange(ed.sid, ng, els, ed.ctx, deck.slide(ed.sid).d.els)]);
+        }
+        if (to < 0 || to === el.cell) return;
+        if (ev.altKey || el.cell == null) { els[id].cell = to; delete els[id].cr; makeRoom(els, to, id); } else {
+          const mine = inCell(els, el.cell), there = inCell(els, to);
+          for (const [x] of mine) els[x].cell = to;
+          for (const [x] of there) els[x].cell = el.cell;
+        }
+        deck.do(arrange(ed.sid, g, els, ed.ctx, deck.slide(ed.sid).d.els));
+      },
+    };
+  }
+
   function resizer(hd, e) {
     const id = [...ed.sel][0], o = { ...deck.el(ed.sid, id) }, key = 'size' + uid(), a = rad(o.r || 0), cos = Math.cos(a), sin = Math.sin(a), c = { x: o.x + o.w / 2, y: o.y + o.h / 2 };
-    const set = (p) => deck.do({ k: 'el.set', s: ed.sid, e: id, p }, key);
+    const set = (p) => deck.do({ k: 'el.set', s: ed.sid, e: id, p: o.cell != null ? { ...p, cell: null, cr: null } : p }, key);
     if (hd === 'rot') return { move(dx, dy, ev) { const p = pos(ev); let d = Math.round(Math.atan2(p.y - c.y, p.x - c.x) * 180 / Math.PI + 90); d = ((d + 180) % 360 + 360) % 360 - 180; if (ev.shiftKey) d = Math.round(d / 15) * 15; else for (const q of [-180, -90, 0, 90, 180]) if (Math.abs(d - q) < 4) d = q; set({ r: d === -180 ? 180 : d }); } };
     if (hd === 'p1' || hd === 'p2') {
       const end = (s) => ({ x: c.x + s * o.w / 2 * cos, y: c.y + s * o.w / 2 * sin }), fix = end(hd === 'p1' ? 1 : -1);
@@ -284,8 +324,8 @@ export function createStage(ed) {
     scroller.classList.remove('drop');
     if (!ed.edit) return;
     const p = pos(e), what = e.dataTransfer.getData('text/sp-insert');
-    if (what) { e.preventDefault(); return ed.insert(what, p); }
-    if (e.dataTransfer.files.length) { e.preventDefault(); const over = document.elementFromPoint(e.clientX, e.clientY)?.closest('.el-image'); await uploadFiles(e.dataTransfer.files, (m) => { if (over && deck.el(ed.sid, over.dataset.id) && !deck.el(ed.sid, over.dataset.id).src) ed.setImage(over.dataset.id, m); else ed.insertImage(m, p); }); }
+    if (what) { e.preventDefault(); const g = ed.simple && gridOf(ed), c = g ? cellAt(g, p, ed.ctx) : -1; return ed.insert(what, p, c >= 0 ? c : undefined); }
+    if (e.dataTransfer.files.length) { e.preventDefault(); const over = document.elementFromPoint(e.clientX, e.clientY)?.closest('.el-image'); await uploadFiles(e.dataTransfer.files, (m) => { if (over && deck.el(ed.sid, over.dataset.id) && !deck.el(ed.sid, over.dataset.id).src) ed.setImage(over.dataset.id, m); else ed.insertImage(m, p); }, (v) => ed.insertVideo(v, p)); }
   });
 
   st.leave = () => ro.disconnect();

@@ -93,11 +93,30 @@ function dFlash(array $prompt, array $cards, array $why): array
 }
 
 /** The same instructions for every drill of a kind. */
-function pFill(): array { return L('Completa il codice con le tessere giuste.', 'Complete the code with the right tiles.'); }
-function pSort(): array { return L('Rimetti le righe nell’ordine giusto.', 'Put the lines back in the right order.'); }
-function pBug(): array { return L('Tocca la riga con l’errore.', 'Tap the line with the mistake.'); }
-function pMatch(): array { return L('Abbina ogni elemento al suo significato.', 'Match each item with its meaning.'); }
-function pFlash(): array { return L('Vero o falso? Rispondi prima che scada il tempo!', 'True or false? Answer before time runs out!'); }
+function pFill(): array
+{
+    return L('Completa il codice con le tessere giuste.', 'Complete the code with the right tiles.');
+}
+
+function pSort(): array
+{
+    return L('Rimetti le righe nell’ordine giusto.', 'Put the lines back in the right order.');
+}
+
+function pBug(): array
+{
+    return L('Tocca la riga con l’errore.', 'Tap the line with the mistake.');
+}
+
+function pMatch(): array
+{
+    return L('Abbina ogni elemento al suo significato.', 'Match each item with its meaning.');
+}
+
+function pFlash(): array
+{
+    return L('Vero o falso? Rispondi prima che scada il tempo!', 'True or false? Answer before time runs out!');
+}
 
 /**
  * Hands-on exercise, checked in the browser against the page the learner has written.

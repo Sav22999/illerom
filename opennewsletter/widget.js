@@ -47,6 +47,7 @@
     function scan() {
         document.querySelectorAll('[data-opennewsletter]').forEach(mount);
     }
+
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', scan);
     else scan();
 })();

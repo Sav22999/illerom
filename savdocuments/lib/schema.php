@@ -86,6 +86,7 @@ function schema_statements(string $p): array
             `folder_id` INT UNSIGNED NULL,
             `title` VARCHAR(160) NOT NULL,
             `doc` MEDIUMTEXT NOT NULL,
+            `preview` TEXT NULL,
             `rev` INT UNSIGNED NOT NULL DEFAULT 1,
             `words` INT UNSIGNED NOT NULL DEFAULT 0,
             `visibility` ENUM('private','link') NOT NULL DEFAULT 'private',
@@ -208,5 +209,6 @@ function schema_statements(string $p): array
 function install_schema(PDO $pdo, string $prefix): void
 {
     foreach (schema_statements($prefix) as $sql) $pdo->exec($sql);
+    if (!$pdo->query("SHOW COLUMNS FROM `{$prefix}documents` LIKE 'preview'")->fetch()) $pdo->exec("ALTER TABLE `{$prefix}documents` ADD COLUMN `preview` TEXT NULL AFTER `doc`");
     $pdo->prepare("INSERT INTO `{$prefix}meta` (k, v) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)")->execute([(string)SCHEMA_VERSION]);
 }

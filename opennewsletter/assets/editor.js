@@ -12,7 +12,27 @@
  */
 
 import {t} from './i18n.js?v=20';
-import {h, put, svg, iconBtn, api, toast, failToast, modal, confirmDialog, field, input, select, uid, clone, atLeast, partsIn, fmtDate, LANG_NAMES, S, ApiError} from './ui.js?v=20';
+import {
+    api,
+    ApiError,
+    atLeast,
+    clone,
+    confirmDialog,
+    failToast,
+    field,
+    fmtDate,
+    h,
+    iconBtn,
+    input,
+    LANG_NAMES,
+    modal,
+    partsIn,
+    put,
+    select,
+    svg,
+    toast,
+    uid
+} from './ui.js?v=20';
 
 const BLOCKS = ['heading', 'text', 'image', 'button', 'columns', 'media', 'card', 'quote', 'divider', 'spacer', 'social'];
 // blocks that can go inside a column (INNER_TYPES in lib/render.php)
@@ -22,19 +42,65 @@ const SOCIALS = ['website', 'facebook', 'instagram', 'x', 'linkedin', 'youtube',
 // the networks with a fixed name ('custom' links have their own label, and a block may have several)
 const NETWORKS = SOCIALS.filter((k) => k !== 'custom');
 // what each address looks like (shown in the empty fields)
-const SOCIAL_PH = {website: 'www.example.com', facebook: 'facebook.com/…', instagram: 'instagram.com/…', x: 'x.com/…', linkedin: 'linkedin.com/in/…',
-    youtube: 'youtube.com/@…', tiktok: 'tiktok.com/@…', mastodon: 'mastodon.social/@…', telegram: 't.me/…', whatsapp: 'wa.me/…'};
-const SOCIAL_NAMES = {website: 'Web', facebook: 'Facebook', instagram: 'Instagram', x: 'X', linkedin: 'LinkedIn', youtube: 'YouTube', tiktok: 'TikTok', mastodon: 'Mastodon', telegram: 'Telegram', whatsapp: 'WhatsApp'};
+const SOCIAL_PH = {
+    website: 'www.example.com',
+    facebook: 'facebook.com/…',
+    instagram: 'instagram.com/…',
+    x: 'x.com/…',
+    linkedin: 'linkedin.com/in/…',
+    youtube: 'youtube.com/@…',
+    tiktok: 'tiktok.com/@…',
+    mastodon: 'mastodon.social/@…',
+    telegram: 't.me/…',
+    whatsapp: 'wa.me/…'
+};
+const SOCIAL_NAMES = {
+    website: 'Web',
+    facebook: 'Facebook',
+    instagram: 'Instagram',
+    x: 'X',
+    linkedin: 'LinkedIn',
+    youtube: 'YouTube',
+    tiktok: 'TikTok',
+    mastodon: 'Mastodon',
+    telegram: 'Telegram',
+    whatsapp: 'WhatsApp'
+};
 // Typefaces every mail client has: same keys and stacks as FONTS in lib/render.php
 const FONT_CSS = {
-    sans: 'Helvetica, Arial, sans-serif', system: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-    verdana: 'Verdana, Geneva, sans-serif', tahoma: 'Tahoma, Verdana, sans-serif', rounded: '"Trebuchet MS", "Segoe UI", sans-serif',
-    serif: 'Georgia, "Times New Roman", serif', times: '"Times New Roman", Times, serif', palatino: '"Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif',
-    garamond: 'Garamond, Baskerville, "Baskerville Old Face", Georgia, serif', mono: '"Courier New", Courier, monospace',
+    sans: 'Helvetica, Arial, sans-serif',
+    system: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+    verdana: 'Verdana, Geneva, sans-serif',
+    tahoma: 'Tahoma, Verdana, sans-serif',
+    rounded: '"Trebuchet MS", "Segoe UI", sans-serif',
+    serif: 'Georgia, "Times New Roman", serif',
+    times: '"Times New Roman", Times, serif',
+    palatino: '"Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif',
+    garamond: 'Garamond, Baskerville, "Baskerville Old Face", Georgia, serif',
+    mono: '"Courier New", Courier, monospace',
 };
-const FONT_NAMES = {sans: 'Helvetica / Arial', system: 'System UI', verdana: 'Verdana', tahoma: 'Tahoma', rounded: 'Trebuchet', serif: 'Georgia', times: 'Times New Roman', palatino: 'Palatino', garamond: 'Garamond', mono: 'Courier'};
+const FONT_NAMES = {
+    sans: 'Helvetica / Arial',
+    system: 'System UI',
+    verdana: 'Verdana',
+    tahoma: 'Tahoma',
+    rounded: 'Trebuchet',
+    serif: 'Georgia',
+    times: 'Times New Roman',
+    palatino: 'Palatino',
+    garamond: 'Garamond',
+    mono: 'Courier'
+};
 // Default text size and line height per block (BLOCK_TEXT / HEADING_SIZES in lib/render.php)
-const BLOCK_TEXT = {heading: [0, 1.22], text: [16, 1.6], quote: [19, 1.5], button: [16, 1.2], card: [15, 1.55], media: [15, 1.55], social: [13, 1.2]};
+const BLOCK_TEXT = {
+    heading: [0, 1.22],
+    text: [16, 1.6],
+    quote: [19, 1.5],
+    button: [16, 1.2],
+    card: [15, 1.55],
+    media: [15, 1.55],
+    social: [13, 1.2]
+};
 const HEADING_SIZES = {1: 30, 2: 23, 3: 18};
 
 /** Space and style of a block when the author has not changed them (default_style() in lib/render.php).
@@ -51,22 +117,62 @@ function styleOf(b, inner = false) {
     for (const [k, v] of Object.entries(defaultStyle(b.type, inner))) if (!(k in b.style)) b.style[k] = v;
     return b.style;
 }
+
 const PRESET_COLORS = ['#5B3DF5', '#0E8A6A', '#E2553B', '#D97706', '#2563EB', '#DB2777', '#111827', '#8A5A2B'];
 
 function newBlock(type) {
     const b = {id: uid(), type};
     switch (type) {
-        case 'heading': return {...b, text: t('ph_heading'), level: 2, align: 'left'};
-        case 'text': return {...b, html: '<p>' + t('ph_text') + '</p>', align: 'left'};
-        case 'image': return {...b, src: '', alt: '', href: '', width: 100, align: 'center', rounded: true};
-        case 'button': return {...b, label: t('ph_button'), href: 'https://', align: 'center', color: '', full: false};
-        case 'card': return {...b, src: '', title: t('ph_card_title'), html: '<p>' + t('ph_card_text') + '</p>', label: t('ph_card_link'), href: 'https://'};
-        case 'quote': return {...b, text: t('ph_quote'), cite: ''};
-        case 'media': return {...b, src: '', alt: '', title: t('ph_card_title'), html: '<p>' + t('ph_card_text') + '</p>', label: t('ph_card_link'), href: 'https://', side: 'left', imgWidth: 40, valign: 'middle', rounded: true, gap: 20};
-        case 'divider': return {...b, color: '', thickness: 1};
-        case 'columns': return {...b, count: 2, layout: '50-50', gap: 24, valign: 'top', stack: true, cols: [{blocks: []}, {blocks: []}]};
-        case 'spacer': return {...b, size: 24};
-        case 'social': return {...b, links: [], align: 'center'};
+        case 'heading':
+            return {...b, text: t('ph_heading'), level: 2, align: 'left'};
+        case 'text':
+            return {...b, html: '<p>' + t('ph_text') + '</p>', align: 'left'};
+        case 'image':
+            return {...b, src: '', alt: '', href: '', width: 100, align: 'center', rounded: true};
+        case 'button':
+            return {...b, label: t('ph_button'), href: 'https://', align: 'center', color: '', full: false};
+        case 'card':
+            return {
+                ...b,
+                src: '',
+                title: t('ph_card_title'),
+                html: '<p>' + t('ph_card_text') + '</p>',
+                label: t('ph_card_link'),
+                href: 'https://'
+            };
+        case 'quote':
+            return {...b, text: t('ph_quote'), cite: ''};
+        case 'media':
+            return {
+                ...b,
+                src: '',
+                alt: '',
+                title: t('ph_card_title'),
+                html: '<p>' + t('ph_card_text') + '</p>',
+                label: t('ph_card_link'),
+                href: 'https://',
+                side: 'left',
+                imgWidth: 40,
+                valign: 'middle',
+                rounded: true,
+                gap: 20
+            };
+        case 'divider':
+            return {...b, color: '', thickness: 1};
+        case 'columns':
+            return {
+                ...b,
+                count: 2,
+                layout: '50-50',
+                gap: 24,
+                valign: 'top',
+                stack: true,
+                cols: [{blocks: []}, {blocks: []}]
+            };
+        case 'spacer':
+            return {...b, size: 24};
+        case 'social':
+            return {...b, links: [], align: 'center'};
     }
     return b;
 }
@@ -158,25 +264,47 @@ export function slotDialog(group, {title, action, initial, allowDirect = false, 
             allowDirect ? h('label.check', direct, h('span', h('strong', t('direct_schedule')), h('br'), h('span.muted.small', t('direct_schedule_hint')))) : null,
         ], [
             {label: t('cancel')},
-            {label: action, primary: true, icon: 'send', onclick: () => {
-                if (!date.value) return false;
-                done = true;
-                resolve({date: date.value, time: time.value, direct: !!(direct && direct.checked)});
-            }},
-        ], {onclose: () => { if (!done) resolve(null); }});
+            {
+                label: action, primary: true, icon: 'send', onclick: () => {
+                    if (!date.value) return false;
+                    done = true;
+                    resolve({date: date.value, time: time.value, direct: !!(direct && direct.checked)});
+                }
+            },
+        ], {
+            onclose: () => {
+                if (!done) resolve(null);
+            }
+        });
     });
 }
 
 export function previewDialog(html, title) {
-    const frame = h('iframe.preview-frame', {title, sandbox: 'allow-same-origin allow-popups allow-popups-to-escape-sandbox', referrerpolicy: 'no-referrer'});
+    const frame = h('iframe.preview-frame', {
+        title,
+        sandbox: 'allow-same-origin allow-popups allow-popups-to-escape-sandbox',
+        referrerpolicy: 'no-referrer'
+    });
     frame.srcdoc = html;
     const wrap = h('div.preview-wrap', frame);
     const sizes = h('div.seg',
-        h('button.on', {type: 'button', onclick: (ev) => { wrap.classList.remove('phone'); mark(ev); }}, svg('desktop'), t('desktop')),
-        h('button', {type: 'button', onclick: (ev) => { wrap.classList.add('phone'); mark(ev); }}, svg('phone'), t('phone')));
+        h('button.on', {
+            type: 'button', onclick: (ev) => {
+                wrap.classList.remove('phone');
+                mark(ev);
+            }
+        }, svg('desktop'), t('desktop')),
+        h('button', {
+            type: 'button', onclick: (ev) => {
+                wrap.classList.add('phone');
+                mark(ev);
+            }
+        }, svg('phone'), t('phone')));
+
     function mark(ev) {
         sizes.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b === ev.currentTarget));
     }
+
     modal(title, [sizes, wrap], [], {full: true});
 }
 
@@ -212,7 +340,9 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
         const cur = JSON.stringify({doc: E.doc, subject: E.subject, preheader: E.preheader, lang: E.lang});
         if (cur === E.lastSnap) return;
         clearTimeout(E.snapTimer);
-        E.snapTimer = setTimeout(() => { E.pendingSnap = false; }, 1500);
+        E.snapTimer = setTimeout(() => {
+            E.pendingSnap = false;
+        }, 1500);
         if (!E.pendingSnap && E.lastSnap) {
             E.undo.push(E.lastSnap);
             if (E.undo.length > 100) E.undo.shift();
@@ -264,10 +394,22 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
         setState('saving');
         try {
             if (isTpl) {
-                const r = await api('tpl.save', {group: group.id, id: E.tplId, name: E.subject.trim() || t('untitled_tpl'), doc: E.doc});
+                const r = await api('tpl.save', {
+                    group: group.id,
+                    id: E.tplId,
+                    name: E.subject.trim() || t('untitled_tpl'),
+                    doc: E.doc
+                });
                 E.tplId = r.id;
             } else {
-                const r = await api('nl.save', {id: E.id, base: E.rev, subject: E.subject, preheader: E.preheader, lang: E.lang || null, doc: E.doc});
+                const r = await api('nl.save', {
+                    id: E.id,
+                    base: E.rev,
+                    subject: E.subject,
+                    preheader: E.preheader,
+                    lang: E.lang || null,
+                    doc: E.doc
+                });
                 E.rev = r.rev;
             }
             setState(E.dirty ? 'dirty' : 'saved');
@@ -277,7 +419,11 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
             if (e.code === 'nl_conflict' || e.code === 'nl_locked') {
                 E.stopped = true;
                 setState('error');
-                modal(t('conflict_title'), [h('p', t(e.code === 'nl_locked' ? 'locked_text' : 'conflict_text'))], [{label: t('reload'), primary: true, onclick: () => location.reload()}], {sticky: true});
+                modal(t('conflict_title'), [h('p', t(e.code === 'nl_locked' ? 'locked_text' : 'conflict_text'))], [{
+                    label: t('reload'),
+                    primary: true,
+                    onclick: () => location.reload()
+                }], {sticky: true});
             } else {
                 setState('error');
                 failToast(e);
@@ -318,7 +464,11 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
         }
         return null;
     }
-    const find = (id) => { const r = locate(id); return r ? r.list[r.i] : null; };
+
+    const find = (id) => {
+        const r = locate(id);
+        return r ? r.list[r.i] : null;
+    };
     const isInner = (id) => !!(locate(id) || {}).owner;
 
     /** The list (and position) a new block goes to: right after the selected block, in the same column if it is in one. */
@@ -394,7 +544,10 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
     function duplicate(id) {
         const r = locate(id);
         const copy = clone(r.list[r.i]);
-        const renew = (x) => { x.id = uid(); if (x.type === 'columns') x.cols.forEach((c) => c.blocks.forEach(renew)); };
+        const renew = (x) => {
+            x.id = uid();
+            if (x.type === 'columns') x.cols.forEach((c) => c.blocks.forEach(renew));
+        };
         renew(copy);
         r.list.splice(r.i + 1, 0, copy);
         E.selected = copy.id;
@@ -417,8 +570,23 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
 
     // ---------------------------------------------------------------- layout
 
-    const back = h('button.btn.btn-ghost', {type: 'button', onclick: async () => { await save(); onBack(); }}, svg('back'), h('span.hide-sm', t('back')));
-    R.subject = h('input.ed-subject', {value: E.subject, placeholder: t(isTpl ? 'template_name' : 'subject_ph'), maxlength: isTpl ? 80 : 200, 'aria-label': t(isTpl ? 'template_name' : 'subject'), oninput: () => { E.subject = R.subject.value; changed(); drawInspectorHead(); }});
+    const back = h('button.btn.btn-ghost', {
+        type: 'button', onclick: async () => {
+            await save();
+            onBack();
+        }
+    }, svg('back'), h('span.hide-sm', t('back')));
+    R.subject = h('input.ed-subject', {
+        value: E.subject,
+        placeholder: t(isTpl ? 'template_name' : 'subject_ph'),
+        maxlength: isTpl ? 80 : 200,
+        'aria-label': t(isTpl ? 'template_name' : 'subject'),
+        oninput: () => {
+            E.subject = R.subject.value;
+            changed();
+            drawInspectorHead();
+        }
+    });
     R.state = h('span.save-state');
     R.undoBtn = iconBtn('undo', t('undo'), undo);
     R.redoBtn = iconBtn('undo', t('redo'), redo, '.flip');
@@ -438,23 +606,44 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
     }, '.danger-ico');
     const actions = isTpl ? h('div.ed-actions', R.undoBtn, R.redoBtn,
         h('button.btn.btn-soft', {type: 'button', onclick: preview}, svg('eye'), h('span.hide-sm', t('preview'))),
-        h('button.btn.btn-primary', {type: 'button', onclick: async () => { if (await save() !== false || !E.dirty) onBack(); }}, svg('check'), h('span', t('done')))) : h('div.ed-actions',
+        h('button.btn.btn-primary', {
+            type: 'button', onclick: async () => {
+                if (await save() !== false || !E.dirty) onBack();
+            }
+        }, svg('check'), h('span', t('done')))) : h('div.ed-actions',
         discard, R.undoBtn, R.redoBtn,
         h('button.btn.btn-soft', {type: 'button', onclick: preview}, svg('eye'), h('span.hide-sm', t('preview'))),
         h('button.btn.btn-soft.hide-md', {type: 'button', onclick: sendTest}, svg('mail'), t('send_test')),
         h('button.btn.btn-soft.hide-md', {type: 'button', onclick: saveTemplate}, svg('layout'), t('save_template')),
-        h('button.btn.btn-primary', {type: 'button', onclick: submit}, svg(canSchedule ? 'calendar' : 'send'), h('span', t(canSchedule ? 'schedule' : 'propose'))));
-    const more = isTpl ? null : h('div.ed-more.show-md', h('button.btn.btn-soft', {type: 'button', onclick: sendTest}, svg('mail'), t('send_test')), h('button.btn.btn-soft', {type: 'button', onclick: saveTemplate}, svg('layout'), t('save_template')));
+        h('button.btn.btn-primary', {
+            type: 'button',
+            onclick: submit
+        }, svg(canSchedule ? 'calendar' : 'send'), h('span', t(canSchedule ? 'schedule' : 'propose'))));
+    const more = isTpl ? null : h('div.ed-more.show-md', h('button.btn.btn-soft', {
+        type: 'button',
+        onclick: sendTest
+    }, svg('mail'), t('send_test')), h('button.btn.btn-soft', {
+        type: 'button',
+        onclick: saveTemplate
+    }, svg('layout'), t('save_template')));
 
     R.palette = h('aside.ed-palette', h('h3', t('blocks')), h('p.muted.small.hide-sm', t('blocks_hint')), h('div.palette-grid', BLOCKS.map((type) => {
-        const item = h('button.palette-item', {type: 'button', draggable: 'true', title: t('add_block'), onclick: () => insert(type)}, svg(type), h('span', t('block_' + type)));
+        const item = h('button.palette-item', {
+            type: 'button',
+            draggable: 'true',
+            title: t('add_block'),
+            onclick: () => insert(type)
+        }, svg(type), h('span', t('block_' + type)));
         item.addEventListener('dragstart', (ev) => {
             ev.dataTransfer.setData('text/x-on-new', type);
             E.drag = {type};
             ev.dataTransfer.effectAllowed = 'copy';
             R.stage.classList.add('dragging');
         });
-        item.addEventListener('dragend', () => { R.stage.classList.remove('dragging'); hideDrop(); });
+        item.addEventListener('dragend', () => {
+            R.stage.classList.remove('dragging');
+            hideDrop();
+        });
         return item;
     })));
 
@@ -497,7 +686,9 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
         const z = dropZone(ev);
         showDrop(z.el, dropIndex(z.el, ev.clientY));
     });
-    R.stage.addEventListener('dragleave', (ev) => { if (!R.stage.contains(ev.relatedTarget)) hideDrop(); });
+    R.stage.addEventListener('dragleave', (ev) => {
+        if (!R.stage.contains(ev.relatedTarget)) hideDrop();
+    });
     R.stage.addEventListener('drop', (ev) => {
         ev.preventDefault();
         const z = dropZone(ev);
@@ -563,7 +754,12 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
         const els = blocks().map(blockEl);
         const empty = !els.length ? h('div.ed-empty', svg('plus', 'ico ico-lg'), h('p', t('canvas_empty'))) : null;
         const foot = h('div.ed-footer', h('p', t('footer_preview_why', {group: group.name})), h('p', h('u', t('footer_preview_unsub'))),
-            h('p.ed-footer-made', t('footer_preview_made'), ' ', h('img', {src: 'icons/favicon.svg', width: 14, height: 14, alt: ''}), ' ', h('strong', 'OpenNewsletter')));
+            h('p.ed-footer-made', t('footer_preview_made'), ' ', h('img', {
+                src: 'icons/favicon.svg',
+                width: 14,
+                height: 14,
+                alt: ''
+            }), ' ', h('strong', 'OpenNewsletter')));
         put(R.mail, els, empty);
         R.canvas.querySelector('.ed-footer')?.remove();
         R.canvas.append(foot);
@@ -583,7 +779,9 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
         el.addEventListener('focus', () => selectBlock(b.id));
         if (!rich) {
             el.addEventListener('paste', plainPaste);
-            if (tag !== 'div') el.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' && !ev.shiftKey) ev.preventDefault(); });
+            if (tag !== 'div') el.addEventListener('keydown', (ev) => {
+                if (ev.key === 'Enter' && !ev.shiftKey) ev.preventDefault();
+            });
         } else {
             el.addEventListener('paste', (ev) => {
                 // pasted HTML keeps only bold, italics and links (the server cleans it anyway)
@@ -595,7 +793,9 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
                 tmp.querySelectorAll('script,style,meta,link,title').forEach((n) => n.remove());
                 tmp.querySelectorAll('*').forEach((n) => {
                     if (!['B', 'STRONG', 'I', 'EM', 'U', 'A', 'BR', 'P', 'UL', 'OL', 'LI'].includes(n.tagName)) n.replaceWith(...n.childNodes);
-                    else [...n.attributes].forEach((a) => { if (!(n.tagName === 'A' && a.name === 'href')) n.removeAttribute(a.name); });
+                    else [...n.attributes].forEach((a) => {
+                        if (!(n.tagName === 'A' && a.name === 'href')) n.removeAttribute(a.name);
+                    });
                 });
                 document.execCommand('insertHTML', false, tmp.innerHTML);
             });
@@ -607,13 +807,35 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
         const tools = h('div.blk-tools',
             h('span.blk-grip', {title: t('drag'), 'aria-label': t('drag')}, svg('grip')),
             h('span.blk-name', t('block_' + b.type)),
-            iconBtn('up', t('move_up'), (ev) => { ev.stopPropagation(); const r = locate(b.id); if (r.i > 0) move(b.id, r.i - 1); }),
-            iconBtn('down', t('move_down'), (ev) => { ev.stopPropagation(); const r = locate(b.id); if (r.i < r.list.length - 1) move(b.id, r.i + 2); }),
-            iconBtn('dup', t('duplicate'), (ev) => { ev.stopPropagation(); duplicate(b.id); }),
-            iconBtn('trash', t('delete'), (ev) => { ev.stopPropagation(); remove(b.id); }));
-        const el = h('div.ed-block.blk-' + cssType(b.type) + (E.selected === b.id ? '.sel' : ''), {'data-id': b.id, onclick: (ev) => { ev.stopPropagation(); selectBlock(b.id); }}, tools, blockBody(b));
+            iconBtn('up', t('move_up'), (ev) => {
+                ev.stopPropagation();
+                const r = locate(b.id);
+                if (r.i > 0) move(b.id, r.i - 1);
+            }),
+            iconBtn('down', t('move_down'), (ev) => {
+                ev.stopPropagation();
+                const r = locate(b.id);
+                if (r.i < r.list.length - 1) move(b.id, r.i + 2);
+            }),
+            iconBtn('dup', t('duplicate'), (ev) => {
+                ev.stopPropagation();
+                duplicate(b.id);
+            }),
+            iconBtn('trash', t('delete'), (ev) => {
+                ev.stopPropagation();
+                remove(b.id);
+            }));
+        const el = h('div.ed-block.blk-' + cssType(b.type) + (E.selected === b.id ? '.sel' : ''), {
+            'data-id': b.id,
+            onclick: (ev) => {
+                ev.stopPropagation();
+                selectBlock(b.id);
+            }
+        }, tools, blockBody(b));
         const grip = tools.querySelector('.blk-grip');
-        grip.addEventListener('pointerdown', () => { el.draggable = true; });
+        grip.addEventListener('pointerdown', () => {
+            el.draggable = true;
+        });
         el.addEventListener('dragstart', (ev) => {
             if (!el.draggable) return;
             ev.stopPropagation();
@@ -629,7 +851,9 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
             R.stage.classList.remove('dragging');
             hideDrop();
         });
-        grip.addEventListener('pointerup', () => { el.draggable = false; });
+        grip.addEventListener('pointerup', () => {
+            el.draggable = false;
+        });
         return el;
     }
 
@@ -660,10 +884,19 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
                 return pad({textAlign: b.align}, editable('div.rich', b, 'html', {rich: true, ph: t('ph_text')}));
             case 'image':
                 if (!b.src) return pad({}, h('div.img-empty', svg('image', 'ico ico-lg'), h('span', t('image_empty')), uploadButton(b)));
-                return pad({textAlign: b.align, lineHeight: '0'}, h('img', {src: imgUrl(b.src), alt: b.alt, style: {width: b.width + '%', borderRadius: b.rounded ? 'max(6px, var(--t-radius))' : '0'}}));
+                return pad({textAlign: b.align, lineHeight: '0'}, h('img', {
+                    src: imgUrl(b.src),
+                    alt: b.alt,
+                    style: {width: b.width + '%', borderRadius: b.rounded ? 'max(6px, var(--t-radius))' : '0'}
+                }));
             case 'button': {
                 const bg = b.color || 'var(--t-accent)';
-                return pad({textAlign: b.align}, h('span.mail-btn' + (b.full ? '.full' : ''), {style: {background: bg, color: onColor(b.color || E.doc.theme.accent)}}, editable('span', b, 'label', {ph: t('ph_button')})));
+                return pad({textAlign: b.align}, h('span.mail-btn' + (b.full ? '.full' : ''), {
+                    style: {
+                        background: bg,
+                        color: onColor(b.color || E.doc.theme.accent)
+                    }
+                }, editable('span', b, 'label', {ph: t('ph_button')})));
             }
             case 'divider':
                 return pad({}, h('hr.mail-hr', {style: {height: (b.thickness || 1) + 'px', ...(b.color ? {background: b.color} : {})}}));
@@ -673,22 +906,48 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
                 return pad({}, h('blockquote.mail-quote', editable('div', b, 'text', {ph: t('ph_quote')}), b.cite ? h('cite', '— ' + b.cite) : null));
             case 'card':
                 return pad({}, h('div.mail-card',
-                    b.src ? h('img', {src: imgUrl(b.src), alt: ''}) : h('div.img-empty.small', svg('image'), uploadButton(b)),
-                    h('div.mail-card-body', editable('h3', b, 'title', {ph: t('ph_card_title')}), editable('div.rich', b, 'html', {rich: true, ph: t('ph_card_text')}),
+                    b.src ? h('img', {
+                        src: imgUrl(b.src),
+                        alt: ''
+                    }) : h('div.img-empty.small', svg('image'), uploadButton(b)),
+                    h('div.mail-card-body', editable('h3', b, 'title', {ph: t('ph_card_title')}), editable('div.rich', b, 'html', {
+                            rich: true,
+                            ph: t('ph_card_text')
+                        }),
                         h('span.mail-card-link', editable('span', b, 'label', {ph: t('ph_card_link')}), ' →'))));
             case 'media': {
-                const img = b.src ? h('img', {src: imgUrl(b.src), alt: b.alt, style: {borderRadius: b.rounded ? 'max(6px, var(--t-radius))' : '0'}}) : h('div.img-empty.small', svg('image'), uploadButton(b));
+                const img = b.src ? h('img', {
+                    src: imgUrl(b.src),
+                    alt: b.alt,
+                    style: {borderRadius: b.rounded ? 'max(6px, var(--t-radius))' : '0'}
+                }) : h('div.img-empty.small', svg('image'), uploadButton(b));
                 const align = {top: 'flex-start', middle: 'center', bottom: 'flex-end'}[b.valign] || 'center';
-                return pad({}, h('div.mail-media', {style: {alignItems: align, gap: b.gap + 'px', flexDirection: b.side === 'right' ? 'row-reverse' : 'row'}},
+                return pad({}, h('div.mail-media', {
+                        style: {
+                            alignItems: align,
+                            gap: b.gap + 'px',
+                            flexDirection: b.side === 'right' ? 'row-reverse' : 'row'
+                        }
+                    },
                     h('div.media-img', {style: {flex: `0 0 calc((100% - ${b.gap}px) * ${b.imgWidth / 100})`}}, img),
-                    h('div.media-body', editable('h3', b, 'title', {ph: t('ph_card_title')}), editable('div.rich', b, 'html', {rich: true, ph: t('ph_card_text')}),
+                    h('div.media-body', editable('h3', b, 'title', {ph: t('ph_card_title')}), editable('div.rich', b, 'html', {
+                            rich: true,
+                            ph: t('ph_card_text')
+                        }),
                         h('span.mail-card-link', editable('span', b, 'label', {ph: t('ph_card_link')}), ' →'))));
             }
             case 'columns': {
                 const widths = b.layout.split('-').map(Number);
                 const align = {top: 'flex-start', middle: 'center', bottom: 'flex-end'}[b.valign] || 'flex-start';
-                return pad({}, h('div.ed-cols', {style: {gap: b.gap + 'px', alignItems: align}}, b.cols.map((c, k) => h('div.ed-col' + (E.targetCol && E.targetCol.id === b.id && E.targetCol.k === k ? '.target' : ''), {
-                    'data-owner': b.id, 'data-col': String(k), style: {flex: `0 0 calc((100% - ${b.gap * (b.count - 1)}px) * ${widths[k] / 100})`},
+                return pad({}, h('div.ed-cols', {
+                    style: {
+                        gap: b.gap + 'px',
+                        alignItems: align
+                    }
+                }, b.cols.map((c, k) => h('div.ed-col' + (E.targetCol && E.targetCol.id === b.id && E.targetCol.k === k ? '.target' : ''), {
+                    'data-owner': b.id,
+                    'data-col': String(k),
+                    style: {flex: `0 0 calc((100% - ${b.gap * (b.count - 1)}px) * ${widths[k] / 100})`},
                     onclick: (ev) => {
                         if (ev.target.closest('.ed-block') !== ev.currentTarget.closest('.ed-block')) return; // a block inside the column
                         E.targetCol = {id: b.id, k};
@@ -701,17 +960,25 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
                 // links without a complete address are shown faded: they are left out of the email.
                 // An empty block shows the networks greyed out, so it is clear what to click.
                 if (!b.links.length) return pad({textAlign: b.align}, h('div.net-empty', SOCIALS.slice(0, 5).map((k) => h('span.mail-pill.ghost', SOCIAL_NAMES[k])), isTpl ? null : h('div.net-empty-text', svg('plus', 'ico ico-sm'), t('social_empty'))));
-                return pad({textAlign: b.align}, b.links.map((l) => h('span.mail-pill' + (isTpl || socialUrl(l.url) ? '' : '.bad'), {title: isTpl ? null : socialUrl(l.url) ? l.url : t('social_incomplete'), onclick: () => requestAnimationFrame(() => {
-                    const f = l.kind === 'custom' ? R.inspector.querySelectorAll('.net-custom')[b.links.filter((x) => x.kind === 'custom').indexOf(l)]?.querySelector('input') : R.inspector.querySelector(`.net-row[data-kind="${l.kind}"] input`);
-                    if (f) f.focus();
-                })}, l.kind === 'custom' ? (l.label || t('custom_link')) : SOCIAL_NAMES[l.kind])));
+                return pad({textAlign: b.align}, b.links.map((l) => h('span.mail-pill' + (isTpl || socialUrl(l.url) ? '' : '.bad'), {
+                    title: isTpl ? null : socialUrl(l.url) ? l.url : t('social_incomplete'),
+                    onclick: () => requestAnimationFrame(() => {
+                        const f = l.kind === 'custom' ? R.inspector.querySelectorAll('.net-custom')[b.links.filter((x) => x.kind === 'custom').indexOf(l)]?.querySelector('input') : R.inspector.querySelector(`.net-row[data-kind="${l.kind}"] input`);
+                        if (f) f.focus();
+                    })
+                }, l.kind === 'custom' ? (l.label || t('custom_link')) : SOCIAL_NAMES[l.kind])));
         }
         return h('div');
     }
 
     function uploadButton(b, label = t('upload')) {
         const file = h('input', {type: 'file', accept: 'image/png,image/jpeg,image/gif,image/webp', hidden: true});
-        const btn = h('button.btn.btn-soft.btn-sm', {type: 'button', onclick: (ev) => { ev.stopPropagation(); file.click(); }}, svg('upload'), label);
+        const btn = h('button.btn.btn-soft.btn-sm', {
+            type: 'button', onclick: (ev) => {
+                ev.stopPropagation();
+                file.click();
+            }
+        }, svg('upload'), label);
         file.addEventListener('change', async () => {
             const f = file.files[0];
             if (!f) return;
@@ -751,7 +1018,11 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
             changed();
             if (redraw) redrawBlock(b);
         };
-        const textIn = (key, ph = '', redraw = true) => input({value: b[key] || '', placeholder: ph, oninput: (ev) => set(key, ev.target.value, redraw)});
+        const textIn = (key, ph = '', redraw = true) => input({
+            value: b[key] || '',
+            placeholder: ph,
+            oninput: (ev) => set(key, ev.target.value, redraw)
+        });
         const alignSeg = () => seg([['left', 'alignL'], ['center', 'alignC'], ['right', 'alignR']], b.align, (v) => set('align', v));
         const items = [];
         switch (b.type) {
@@ -762,10 +1033,20 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
                 items.push(prop(t('format'), richToolbar()), prop(t('align'), alignSeg()), h('p.muted.small', t('text_hint')));
                 break;
             case 'image':
-                items.push(h('div.prop-img', b.src ? h('img', {src: imgUrl(b.src), alt: ''}) : null, uploadButton(b, b.src ? t('replace') : t('upload'))),
-                    prop(t('image_url'), input({value: b.src.startsWith('img:') ? '' : b.src, placeholder: 'https://…', onchange: (ev) => set('src', ev.target.value.trim())})),
+                items.push(h('div.prop-img', b.src ? h('img', {
+                        src: imgUrl(b.src),
+                        alt: ''
+                    }) : null, uploadButton(b, b.src ? t('replace') : t('upload'))),
+                    prop(t('image_url'), input({
+                        value: b.src.startsWith('img:') ? '' : b.src,
+                        placeholder: 'https://…',
+                        onchange: (ev) => set('src', ev.target.value.trim())
+                    })),
                     prop(t('alt_text'), textIn('alt', t('alt_hint'), false)), prop(t('link'), textIn('href', 'https://…', false)),
-                    prop(t('width') + ' · ' + b.width + '%', range(20, 100, 5, b.width, (v, el) => { set('width', v); el.closest('.field').querySelector('.field-label').textContent = t('width') + ' · ' + v + '%'; })),
+                    prop(t('width') + ' · ' + b.width + '%', range(20, 100, 5, b.width, (v, el) => {
+                        set('width', v);
+                        el.closest('.field').querySelector('.field-label').textContent = t('width') + ' · ' + v + '%';
+                    })),
                     prop(t('align'), alignSeg()), check(t('rounded'), b.rounded, (v) => set('rounded', v)));
                 break;
             case 'button':
@@ -773,13 +1054,29 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
                     prop(t('color'), colorPick(b.color || E.doc.theme.accent, (v) => set('color', v), true, () => set('color', ''))));
                 break;
             case 'card':
-                items.push(h('div.prop-img', b.src ? h('img', {src: imgUrl(b.src), alt: ''}) : null, uploadButton(b, b.src ? t('replace') : t('upload')),
-                    b.src ? h('button.btn.btn-ghost.btn-sm', {type: 'button', onclick: () => { set('src', ''); drawInspector(); }}, svg('trash'), t('remove_image')) : null),
+                items.push(h('div.prop-img', b.src ? h('img', {
+                            src: imgUrl(b.src),
+                            alt: ''
+                        }) : null, uploadButton(b, b.src ? t('replace') : t('upload')),
+                        b.src ? h('button.btn.btn-ghost.btn-sm', {
+                            type: 'button', onclick: () => {
+                                set('src', '');
+                                drawInspector();
+                            }
+                        }, svg('trash'), t('remove_image')) : null),
                     prop(t('link'), textIn('href', 'https://…', false)), prop(t('format'), richToolbar()));
                 break;
             case 'media':
-                items.push(h('div.prop-img', b.src ? h('img', {src: imgUrl(b.src), alt: ''}) : null, uploadButton(b, b.src ? t('replace') : t('upload')),
-                    b.src ? h('button.btn.btn-ghost.btn-sm', {type: 'button', onclick: () => { set('src', ''); drawInspector(); }}, svg('trash'), t('remove_image')) : null),
+                items.push(h('div.prop-img', b.src ? h('img', {
+                            src: imgUrl(b.src),
+                            alt: ''
+                        }) : null, uploadButton(b, b.src ? t('replace') : t('upload')),
+                        b.src ? h('button.btn.btn-ghost.btn-sm', {
+                            type: 'button', onclick: () => {
+                                set('src', '');
+                                drawInspector();
+                            }
+                        }, svg('trash'), t('remove_image')) : null),
                     prop(t('alt_text'), textIn('alt', t('alt_hint'), false)),
                     prop(t('image_side'), seg([['left', 'alignL', t('side_left')], ['right', 'alignR', t('side_right')]], b.side, (v) => set('side', v))),
                     prop(t('valign'), seg([['top', null, t('valign_top')], ['middle', null, t('valign_middle')], ['bottom', null, t('valign_bottom')]], b.valign, (v) => set('valign', v))),
@@ -792,7 +1089,10 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
                 const setCount = (n) => {
                     if (n === b.count) return;
                     if (n > b.count) while (b.cols.length < n) b.cols.push({blocks: []});
-                    else { const extra = b.cols.splice(n).flatMap((c) => c.blocks); b.cols[n - 1].blocks.push(...extra); }
+                    else {
+                        const extra = b.cols.splice(n).flatMap((c) => c.blocks);
+                        b.cols[n - 1].blocks.push(...extra);
+                    }
                     b.count = n;
                     b.layout = COLUMN_LAYOUTS[n][0];
                     changed();
@@ -801,10 +1101,12 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
                 };
                 items.push(h('p.muted.small', t('columns_hint')),
                     prop(t('col_count'), seg([[2, null, '2'], [3, null, '3']], b.count, setCount)),
-                    prop(t('col_widths'), h('div.layout-pick', COLUMN_LAYOUTS[b.count].map((l) => h('button.layout-opt' + (l === b.layout ? '.on' : ''), {type: 'button', title: l.split('-').join(' / ') + ' %', onclick: (ev) => {
-                        set('layout', l);
-                        ev.currentTarget.parentNode.querySelectorAll('.layout-opt').forEach((x) => x.classList.toggle('on', x === ev.currentTarget));
-                    }}, l.split('-').map((w) => h('i', {style: {flex: w}})))))),
+                    prop(t('col_widths'), h('div.layout-pick', COLUMN_LAYOUTS[b.count].map((l) => h('button.layout-opt' + (l === b.layout ? '.on' : ''), {
+                        type: 'button', title: l.split('-').join(' / ') + ' %', onclick: (ev) => {
+                            set('layout', l);
+                            ev.currentTarget.parentNode.querySelectorAll('.layout-opt').forEach((x) => x.classList.toggle('on', x === ev.currentTarget));
+                        }
+                    }, l.split('-').map((w) => h('i', {style: {flex: w}})))))),
                     prop(t('valign'), seg([['top', null, t('valign_top')], ['middle', null, t('valign_middle')], ['bottom', null, t('valign_bottom')]], b.valign, (v) => set('valign', v))),
                     labelled(t('gap'), 'px', 0, 48, 2, b.gap, (v) => set('gap', v)),
                     check(t('col_stack'), b.stack, (v) => set('stack', v)));
@@ -827,8 +1129,14 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
                 const list = h('div.net-list');
                 // documents saved by older versions may have no list, or entries without a network: normalise them
                 if (!Array.isArray(b.links)) b.links = b.links && typeof b.links === 'object' ? Object.values(b.links) : [];
-                b.links = b.links.filter((l) => l && SOCIALS.includes(l.kind)).map((l) => ({kind: l.kind, url: typeof l.url === 'string' ? l.url : '', ...(l.kind === 'custom' ? {label: typeof l.label === 'string' ? l.label : ''} : {})}));
-                const after = () => { changed(); redrawBlock(b); };
+                b.links = b.links.filter((l) => l && SOCIALS.includes(l.kind)).map((l) => ({
+                    kind: l.kind,
+                    url: typeof l.url === 'string' ? l.url : '', ...(l.kind === 'custom' ? {label: typeof l.label === 'string' ? l.label : ''} : {})
+                }));
+                const after = () => {
+                    changed();
+                    redrawBlock(b);
+                };
                 const moveLink = (from, to) => {
                     if (to < 0 || to >= b.links.length || from === to) return;
                     const [x] = b.links.splice(from, 1);
@@ -837,29 +1145,52 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
                     draw();
                 };
                 let dragFrom = null;
-                const urlInput = (l) => input({type: 'url', value: l.url, placeholder: l.kind === 'custom' ? 'https://…' : SOCIAL_PH[l.kind],
+                const urlInput = (l) => input({
+                    type: 'url', value: l.url, placeholder: l.kind === 'custom' ? 'https://…' : SOCIAL_PH[l.kind],
                     'aria-label': (l.kind === 'custom' ? l.label || t('custom_link') : SOCIAL_NAMES[l.kind]) + ' — ' + t('social_address'),
                     class: 'input' + (l.url && !socialUrl(l.url) ? ' bad' : ''), oninput: (ev) => {
                         l.url = ev.target.value;
                         ev.target.classList.toggle('bad', !!l.url.trim() && !socialUrl(l.url));
                         after();
-                    }});
+                    }
+                });
                 const activeRow = (l, i) => {
                     const grip = h('span.net-grip', {title: t('drag'), 'aria-hidden': 'true'}, svg('grip'));
                     const name = l.kind === 'custom'
-                        ? input({value: l.label, maxlength: 40, placeholder: t('custom_label_ph'), 'aria-label': t('custom_label'), class: 'input net-label', oninput: (ev) => { l.label = ev.target.value; after(); }})
+                        ? input({
+                            value: l.label,
+                            maxlength: 40,
+                            placeholder: t('custom_label_ph'),
+                            'aria-label': t('custom_label'),
+                            class: 'input net-label',
+                            oninput: (ev) => {
+                                l.label = ev.target.value;
+                                after();
+                            }
+                        })
                         : h('span.net-name', SOCIAL_NAMES[l.kind]);
-                    const row = h('div.net-row.on.net-active' + (l.kind === 'custom' ? '.net-custom' : ''), {'data-i': String(i), 'data-kind': l.kind},
+                    const row = h('div.net-row.on.net-active' + (l.kind === 'custom' ? '.net-custom' : ''), {
+                            'data-i': String(i),
+                            'data-kind': l.kind
+                        },
                         grip, name,
                         iconBtn('up', t('move_up'), () => moveLink(i, i - 1), '.net-arrow'),
                         iconBtn('down', t('move_down'), () => moveLink(i, i + 1), '.net-arrow'),
-                        iconBtn('x', t('remove'), () => { b.links.splice(i, 1); after(); draw(); }),
+                        iconBtn('x', t('remove'), () => {
+                            b.links.splice(i, 1);
+                            after();
+                            draw();
+                        }),
                         isTpl ? null : urlInput(l));
                     row.querySelectorAll('.net-arrow')[0].disabled = i === 0;
                     row.querySelectorAll('.net-arrow')[1].disabled = i === b.links.length - 1;
                     // drag and drop: only from the grip, so the fields can still be selected with the mouse
-                    grip.addEventListener('pointerdown', () => { row.draggable = true; });
-                    grip.addEventListener('pointerup', () => { row.draggable = false; });
+                    grip.addEventListener('pointerdown', () => {
+                        row.draggable = true;
+                    });
+                    grip.addEventListener('pointerup', () => {
+                        row.draggable = false;
+                    });
                     row.addEventListener('dragstart', (ev) => {
                         if (!row.draggable) return;
                         dragFrom = i;
@@ -895,28 +1226,46 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
                 const freeRow = (k) => {
                     if (isTpl) {
                         const box = h('input', {type: 'checkbox'});
-                        box.addEventListener('change', () => { if (box.checked) { b.links.push({kind: k, url: ''}); after(); draw(); } });
+                        box.addEventListener('change', () => {
+                            if (box.checked) {
+                                b.links.push({kind: k, url: ''});
+                                after();
+                                draw();
+                            }
+                        });
                         return h('label.net-row.net-toggle', box, h('span.net-name', SOCIAL_NAMES[k]));
                     }
                     // writing an address adds the network; it joins the list above when the field is left
                     let link = null;
                     return h('div.net-row', {'data-kind': k}, h('span.net-name', SOCIAL_NAMES[k]),
-                        input({type: 'url', placeholder: SOCIAL_PH[k], 'aria-label': SOCIAL_NAMES[k] + ' — ' + t('social_address'), oninput: (ev) => {
-                            const v = ev.target.value;
-                            if (v.trim() && !link) { link = {kind: k, url: v}; b.links.push(link); }
-                            else if (!v.trim() && link) { b.links = b.links.filter((x) => x !== link); link = null; }
-                            else if (link) link.url = v;
-                            ev.target.classList.toggle('bad', !!v.trim() && !socialUrl(v));
-                            after();
-                        }, onchange: () => draw()}));
+                        input({
+                            type: 'url',
+                            placeholder: SOCIAL_PH[k],
+                            'aria-label': SOCIAL_NAMES[k] + ' — ' + t('social_address'),
+                            oninput: (ev) => {
+                                const v = ev.target.value;
+                                if (v.trim() && !link) {
+                                    link = {kind: k, url: v};
+                                    b.links.push(link);
+                                } else if (!v.trim() && link) {
+                                    b.links = b.links.filter((x) => x !== link);
+                                    link = null;
+                                } else if (link) link.url = v;
+                                ev.target.classList.toggle('bad', !!v.trim() && !socialUrl(v));
+                                after();
+                            },
+                            onchange: () => draw()
+                        }));
                 };
-                const addCustom = h('button.btn.btn-soft.btn-sm', {type: 'button', onclick: () => {
-                    b.links.push({kind: 'custom', label: '', url: ''});
-                    after();
-                    draw();
-                    const labels = list.querySelectorAll('.net-custom .net-label');
-                    if (labels.length) labels[labels.length - 1].focus();
-                }}, svg('plus'), t('custom_add'));
+                const addCustom = h('button.btn.btn-soft.btn-sm', {
+                    type: 'button', onclick: () => {
+                        b.links.push({kind: 'custom', label: '', url: ''});
+                        after();
+                        draw();
+                        const labels = list.querySelectorAll('.net-custom .net-label');
+                        if (labels.length) labels[labels.length - 1].focus();
+                    }
+                }, svg('plus'), t('custom_add'));
                 const draw = () => {
                     const free = NETWORKS.filter((k) => !b.links.some((x) => x.kind === k));
                     put(list,
@@ -931,15 +1280,27 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
             }
         }
         put(R.inspector,
-            h('div.insp-head', h('button.btn.btn-ghost.btn-sm', {type: 'button', onclick: () => selectBlock(null)}, svg('back'), t('newsletter_settings')), h('h3', svg(b.type), t('block_' + b.type))),
+            h('div.insp-head', h('button.btn.btn-ghost.btn-sm', {
+                type: 'button',
+                onclick: () => selectBlock(null)
+            }, svg('back'), t('newsletter_settings')), h('h3', svg(b.type), t('block_' + b.type))),
             h('div.insp-body', items, styleSection(b)),
-            h('div.insp-foot', h('button.btn.btn-soft.btn-sm', {type: 'button', onclick: () => duplicate(b.id)}, svg('dup'), t('duplicate')), h('button.btn.btn-danger-soft.btn-sm', {type: 'button', onclick: () => remove(b.id)}, svg('trash'), t('delete'))));
+            h('div.insp-foot', h('button.btn.btn-soft.btn-sm', {
+                type: 'button',
+                onclick: () => duplicate(b.id)
+            }, svg('dup'), t('duplicate')), h('button.btn.btn-danger-soft.btn-sm', {
+                type: 'button',
+                onclick: () => remove(b.id)
+            }, svg('trash'), t('delete'))));
     }
 
     /** A slider whose label shows its value. */
     function labelled(label, unit, min, max, step, value, on, auto = '') {
         const text = (v) => label + ' · ' + (auto && !v ? auto : v + (unit ? ' ' + unit : ''));
-        const f = field(text(value), range(min, max, step, value, (v, el) => { on(v); el.closest('.field').querySelector('.field-label').textContent = text(v); }));
+        const f = field(text(value), range(min, max, step, value, (v, el) => {
+            on(v);
+            el.closest('.field').querySelector('.field-label').textContent = text(v);
+        }));
         return f;
     }
 
@@ -948,11 +1309,19 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
         const s = styleOf(b, isInner(b.id));
         if (!s) return null;
         const th = E.doc.theme;
-        const setS = (k, v) => { s[k] = v; changed(); redrawBlock(b); };
+        const setS = (k, v) => {
+            s[k] = v;
+            changed();
+            redrawBlock(b);
+        };
         const isText = !!BLOCK_TEXT[b.type];
         const [dSize] = BLOCK_TEXT[b.type] || [0];
         const autoSize = (b.type === 'heading' ? HEADING_SIZES[b.level] : dSize) + ' px · ' + t('auto');
-        const box = h('details.style-box', {open: E.styleOpen ? true : null, ontoggle: (ev) => { E.styleOpen = ev.target.open; }},
+        const box = h('details.style-box', {
+                open: E.styleOpen ? true : null, ontoggle: (ev) => {
+                    E.styleOpen = ev.target.open;
+                }
+            },
             h('summary', svg('settings', 'ico ico-sm'), t('block_style')),
             h('h4', t('spacing')),
             labelled(t('space_top'), 'px', 0, 96, 2, s.pt, (v) => setS('pt', v)),
@@ -967,7 +1336,14 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
                 field(t('text_color'), colorPick(s.color || th.text, (v) => setS('color', v), true, () => setS('color', ''))),
             ] : null,
             field(t('block_bg'), colorPick(s.bg || th.card, (v) => setS('bg', v), true, () => setS('bg', ''))),
-            h('button.btn.btn-ghost.btn-sm', {type: 'button', onclick: () => { b.style = defaultStyle(b.type, isInner(b.id)); changed(); redrawBlock(b); drawInspector(); }}, svg('undo'), t('reset_style')));
+            h('button.btn.btn-ghost.btn-sm', {
+                type: 'button', onclick: () => {
+                    b.style = defaultStyle(b.type, isInner(b.id));
+                    changed();
+                    redrawBlock(b);
+                    drawInspector();
+                }
+            }, svg('undo'), t('reset_style')));
         return box;
     }
 
@@ -979,36 +1355,63 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
             applyTheme();
             if (k === 'accent' || k === 'text') drawCanvas();
             const foot = R.canvas.querySelector('.ed-footer');
-            if (foot) { foot.style.maxWidth = th.width + 'px'; foot.style.color = th.text; }
+            if (foot) {
+                foot.style.maxWidth = th.width + 'px';
+                foot.style.color = th.text;
+            }
         };
         const langs = group.langs;
         return [
             h('div.insp-head', h('h3', svg('settings'), t(isTpl ? 'template_settings' : 'newsletter_settings'))),
             h('div.insp-body',
                 isTpl ? h('p.muted.small', t('template_mode_hint')) : h('div.inbox-preview'),
-                isTpl ? null : field(t('preheader'), input({value: E.preheader, maxlength: 200, placeholder: t('preheader_ph'), oninput: (ev) => { E.preheader = ev.target.value; changed(); drawInspectorHead(); }}), t('preheader_hint')),
-                !isTpl && langs.length > 1 ? field(t('audience'), select([['', t('all_langs')], ...langs.map((l) => [l, LANG_NAMES[l] || l])], E.lang, {onchange: (ev) => { E.lang = ev.target.value; changed(); }}), t('audience_hint')) : null,
+                isTpl ? null : field(t('preheader'), input({
+                    value: E.preheader,
+                    maxlength: 200,
+                    placeholder: t('preheader_ph'),
+                    oninput: (ev) => {
+                        E.preheader = ev.target.value;
+                        changed();
+                        drawInspectorHead();
+                    }
+                }), t('preheader_hint')),
+                !isTpl && langs.length > 1 ? field(t('audience'), select([['', t('all_langs')], ...langs.map((l) => [l, LANG_NAMES[l] || l])], E.lang, {
+                    onchange: (ev) => {
+                        E.lang = ev.target.value;
+                        changed();
+                    }
+                }), t('audience_hint')) : null,
                 h('h4', svg('palette', 'ico ico-sm'), t('look')),
-                h('div.swatches', PRESET_COLORS.map((c) => h('button.swatch' + (c === th.accent ? '.on' : ''), {type: 'button', style: {background: c}, title: c, 'aria-label': c, onclick: (ev) => {
-                    setTheme('accent', c);
-                    ev.currentTarget.parentNode.querySelectorAll('.swatch').forEach((s) => s.classList.toggle('on', s === ev.currentTarget));
-                    R.inspector.querySelector('[data-k=accent]').value = c;
-                }}))),
+                h('div.swatches', PRESET_COLORS.map((c) => h('button.swatch' + (c === th.accent ? '.on' : ''), {
+                    type: 'button', style: {background: c}, title: c, 'aria-label': c, onclick: (ev) => {
+                        setTheme('accent', c);
+                        ev.currentTarget.parentNode.querySelectorAll('.swatch').forEach((s) => s.classList.toggle('on', s === ev.currentTarget));
+                        R.inspector.querySelector('[data-k=accent]').value = c;
+                    }
+                }))),
                 h('div.row2', field(t('accent'), colorPick(th.accent, (v) => setTheme('accent', v), false, null, 'accent')), field(t('text_color'), colorPick(th.text, (v) => setTheme('text', v)))),
                 h('div.row2', field(t('background'), colorPick(th.bg, (v) => setTheme('bg', v))), field(t('page_color'), colorPick(th.card, (v) => setTheme('card', v)))),
                 field(t('font'), select(Object.entries(FONT_NAMES), th.font, {onchange: (ev) => setTheme('font', ev.target.value)}), t('font_hint')),
-                field(t('corners') + ' · ' + th.radius + ' px', range(0, 28, 2, th.radius, (v, el) => { setTheme('radius', v); el.closest('.field').querySelector('.field-label').textContent = t('corners') + ' · ' + v + ' px'; })),
-                field(t('page_width') + ' · ' + th.width + ' px', range(480, 720, 20, th.width, (v, el) => { setTheme('width', v); el.closest('.field').querySelector('.field-label').textContent = t('page_width') + ' · ' + v + ' px'; })),
+                field(t('corners') + ' · ' + th.radius + ' px', range(0, 28, 2, th.radius, (v, el) => {
+                    setTheme('radius', v);
+                    el.closest('.field').querySelector('.field-label').textContent = t('corners') + ' · ' + v + ' px';
+                })),
+                field(t('page_width') + ' · ' + th.width + ' px', range(480, 720, 20, th.width, (v, el) => {
+                    setTheme('width', v);
+                    el.closest('.field').querySelector('.field-label').textContent = t('page_width') + ' · ' + v + ' px';
+                })),
                 h('p.muted.small', t('footer_note'))),
         ];
     }
 
     function seg(opts, value, onPick) {
         const box = h('div.seg');
-        opts.forEach(([v, icon, label]) => box.append(h('button' + (v === value ? '.on' : ''), {type: 'button', title: label || t('align_' + v), 'aria-label': label || t('align_' + v), onclick: (ev) => {
-            box.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === ev.currentTarget));
-            onPick(v);
-        }}, icon ? svg(icon) : label)));
+        opts.forEach(([v, icon, label]) => box.append(h('button' + (v === value ? '.on' : ''), {
+            type: 'button', title: label || t('align_' + v), 'aria-label': label || t('align_' + v), onclick: (ev) => {
+                box.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === ev.currentTarget));
+                onPick(v);
+            }
+        }, icon ? svg(icon) : label)));
         return box;
     }
 
@@ -1027,7 +1430,10 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
     function colorPick(value, on, allowReset = false, onReset = null, key = '') {
         const c = h('input.color', {type: 'color', value: value || '#000000', 'data-k': key || null});
         c.addEventListener('input', () => on(c.value.toUpperCase()));
-        return h('div.color-row', c, h('code', {}, value), allowReset ? iconBtn('undo', t('reset'), () => { onReset(); drawInspector(); }) : null);
+        return h('div.color-row', c, h('code', {}, value), allowReset ? iconBtn('undo', t('reset'), () => {
+            onReset();
+            drawInspector();
+        }) : null);
     }
 
     /** Formatting of the rich text being edited (execCommand works on the selection inside the page). */
@@ -1039,7 +1445,13 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
             if (ce) ce.dispatchEvent(new Event('input'));
         };
         const keep = (ev) => ev.preventDefault(); // keeps the selection in the page while clicking
-        const btn = (icon, title, fn) => h('button.btn.btn-ghost.btn-icon', {type: 'button', title, 'aria-label': title, onmousedown: keep, onclick: fn}, svg(icon));
+        const btn = (icon, title, fn) => h('button.btn.btn-ghost.btn-icon', {
+            type: 'button',
+            title,
+            'aria-label': title,
+            onmousedown: keep,
+            onclick: fn
+        }, svg(icon));
         return h('div.rich-tools',
             btn('bold', t('bold'), cmd('bold')), btn('italic', t('italic'), cmd('italic')), btn('underline', t('underline'), cmd('underline')),
             btn('link', t('link'), (ev) => {
@@ -1054,7 +1466,16 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
 
     async function preview() {
         try {
-            const r = isTpl ? await api('tpl.preview', {group: group.id, doc: E.doc}) : await api('nl.preview', {id: E.id, doc: E.doc, subject: E.subject, preheader: E.preheader, lang: E.lang || null});
+            const r = isTpl ? await api('tpl.preview', {
+                group: group.id,
+                doc: E.doc
+            }) : await api('nl.preview', {
+                id: E.id,
+                doc: E.doc,
+                subject: E.subject,
+                preheader: E.preheader,
+                lang: E.lang || null
+            });
             previewDialog(r.html, E.subject || t('preview'));
         } catch (e) {
             failToast(e);
@@ -1062,10 +1483,19 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
     }
 
     async function sendTest() {
-        if (!group.sendingReady) return modal(t('send_test'), [h('p', t('smtp_needed'))], [{label: t('ok'), primary: true}]);
+        if (!group.sendingReady) return modal(t('send_test'), [h('p', t('smtp_needed'))], [{
+            label: t('ok'),
+            primary: true
+        }]);
         try {
             await save();
-            const r = await api('nl.test', {id: E.id, doc: E.doc, subject: E.subject, preheader: E.preheader, lang: E.lang || null});
+            const r = await api('nl.test', {
+                id: E.id,
+                doc: E.doc,
+                subject: E.subject,
+                preheader: E.preheader,
+                lang: E.lang || null
+            });
             toast(t('test_sent', {email: r.to}));
         } catch (e) {
             failToast(e);
@@ -1076,20 +1506,28 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
         let own = [];
         try {
             own = (await api('tpl.list', null, 'group=' + group.id)).own;
-        } catch (e) { /* new template only */ }
+        } catch (e) { /* new template only */
+        }
         const name = input({value: E.subject, maxlength: 80, placeholder: t('template_name')});
         const target = own.length ? select([['', t('template_new')], ...own.map((o) => [String(o.id), t('template_replace', {name: o.name})])], '') : null;
         modal(t('save_template'), [h('p.muted', t('template_hint')), field(t('template_name'), name), target ? field(t('template_target'), target) : null], [
             {label: t('cancel')},
-            {label: t('save'), primary: true, icon: 'save', onclick: async () => {
-                try {
-                    await api('tpl.save', {group: group.id, id: target && target.value ? Number(target.value) : 0, name: name.value.trim() || (target && own.find((o) => String(o.id) === target.value)?.name) || '', doc: E.doc});
-                    toast(t('template_saved'));
-                } catch (e) {
-                    failToast(e);
-                    return false;
+            {
+                label: t('save'), primary: true, icon: 'save', onclick: async () => {
+                    try {
+                        await api('tpl.save', {
+                            group: group.id,
+                            id: target && target.value ? Number(target.value) : 0,
+                            name: name.value.trim() || (target && own.find((o) => String(o.id) === target.value)?.name) || '',
+                            doc: E.doc
+                        });
+                        toast(t('template_saved'));
+                    } catch (e) {
+                        failToast(e);
+                        return false;
+                    }
                 }
-            }},
+            },
         ]);
     }
 
@@ -1102,7 +1540,9 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
         const publisher = atLeast(role, 'publisher');
         const count = E.lang ? (group.subscribers.byLang[E.lang] || 0) : group.subscribers.active;
         const pick = await slotDialog(group, {
-            title: t(publisher ? 'schedule_title' : 'propose_title'), action: t(publisher ? 'schedule' : 'propose'), allowDirect: publisher,
+            title: t(publisher ? 'schedule_title' : 'propose_title'),
+            action: t(publisher ? 'schedule' : 'propose'),
+            allowDirect: publisher,
             note: t('recipients_now', {n: count}) + (publisher ? '' : ' ' + t('propose_note')),
         });
         if (!pick) return;

@@ -20,7 +20,9 @@ if (!function_exists('fig_genmedia_diffusion')) {
         $seed = 7;
         for ($i = 0; $i < 36; $i++) {
             $seed = ($seed * 1103515245 + 12345) % 2147483648;
-            $nx = ($seed >> 4) % 6 * 4; $ny = ($seed >> 9) % 6 * 4; $g = ['#1E1C52', '#8A87B0', '#FFFFFF', '#F1F0F8', '#7048E8', '#E8590C'][($seed >> 14) % 6];
+            $nx = ($seed >> 4) % 6 * 4;
+            $ny = ($seed >> 9) % 6 * 4;
+            $g = ['#1E1C52', '#8A87B0', '#FFFFFF', '#F1F0F8', '#7048E8', '#E8590C'][($seed >> 14) % 6];
             $noise .= '<rect x="' . $nx . '" y="' . $ny . '" width="4" height="4" fill="' . $g . '"/>';
         }
         $frames = '';

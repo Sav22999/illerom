@@ -40,6 +40,7 @@ const IDENT_TRIES = 5;
  * after     fn(int uid, array body)                    after every sign-in (optional)
  * created   fn(array user, string provider)            after a new account (optional)
  * writer    fn(): array                                the signed-in user of a POST, CSRF checked
+ * pages     [name => file]                             other pages SavAccount can come back to, like ['admin' => 'admin.html'] (optional)
  */
 function identity_setup(array $cfg): void
 {
@@ -297,16 +298,17 @@ function ident_b64u(string $s): string
     return rtrim(strtr(base64_encode($s), '+/', '-_'), '=');
 }
 
-function sav_start(string $mode, ?int $uid): string
+/** $page: where to come back to, one of the names of 'pages' (the app itself when it is empty). */
+function sav_start(string $mode, ?int $uid, string $page = ''): string
 {
     $state = ident_b64u(random_bytes(32));
     $nonce = ident_b64u(random_bytes(24));
     $verifier = ident_b64u(random_bytes(48));
-    ident_new_row('sav', ['kind' => 'flow', 'mode' => $mode, 'state_hash' => hash('sha256', $state), 'nonce' => $nonce, 'verifier' => $verifier, 'user_id' => $uid]);
+    ident_new_row('sav', ['kind' => 'flow', 'mode' => $mode, 'state_hash' => hash('sha256', $state), 'nonce' => $nonce, 'verifier' => $verifier, 'user_id' => $uid, 'name' => $page]);
     return sav_issuer() . '/authorize?' . http_build_query([
-        'response_type' => 'code', 'client_id' => config_value('savaccount_client_id', ''), 'redirect_uri' => sav_redirect_uri(), 'scope' => 'openid profile email',
-        'state' => $state, 'nonce' => $nonce, 'code_challenge' => ident_b64u(hash('sha256', $verifier, true)), 'code_challenge_method' => 'S256', 'ui_locales' => (ident('lang'))(),
-    ], '', '&', PHP_QUERY_RFC3986);
+            'response_type' => 'code', 'client_id' => config_value('savaccount_client_id', ''), 'redirect_uri' => sav_redirect_uri(), 'scope' => 'openid profile email',
+            'state' => $state, 'nonce' => $nonce, 'code_challenge' => ident_b64u(hash('sha256', $verifier, true)), 'code_challenge_method' => 'S256', 'ui_locales' => (ident('lang'))(),
+        ], '', '&', PHP_QUERY_RFC3986);
 }
 
 /** Exchanges the code for the identity; null when SavAccount does not confirm it. */
@@ -342,13 +344,23 @@ function sav_identity(array $flow, string $code): ?array
     return ['sub' => $c['sub'], 'email' => mb_strtolower((string)$c['email']), 'name' => trim((string)(($c['nickname'] ?? '') !== '' ? $c['nickname'] : ($c['name'] ?? '')))];
 }
 
-/** Back to the app: ?sav=in|link|signup|connected|cancelled|… */
-function sav_back(string $result): void
+/** The page of the project with this name (for example the administration); the app itself for any other. */
+function ident_page(string $name): string
 {
+    $pages = ident('pages') ?? [];
+    return $name !== '' ? (string)($pages[$name] ?? '') : '';
+}
+
+/** Back to the app: ?sav=in|link|signup|connected|cancelled|… */
+function sav_back(string $result, string $page = ''): void
+{
+    static $to = '';
+    if ($page !== '') $to = ident_page($page);
+    if ($result === '') return;
     ident_set_cookie('sav', '', time() - 3600);
     header('Cache-Control: no-store');
     header('Referrer-Policy: no-referrer');
-    header('Location: ' . app_base_path() . '?sav=' . $result, true, 302);
+    header('Location: ' . app_base_path() . $to . '?sav=' . $result, true, 302);
     exit;
 }
 
@@ -358,6 +370,7 @@ function sav_callback(): void
     $flow = ident_row('sav');
     $state = $_GET['state'] ?? '';
     if (!$flow || !is_string($state) || !hash_equals((string)$flow['state_hash'], hash('sha256', $state))) sav_back('expired');
+    sav_back('', (string)$flow['name']);
     ident_q('DELETE FROM ' . t('identity') . ' WHERE id = ?', [$flow['id']]); // once only
     if (isset($_GET['error'])) sav_back($_GET['error'] === 'access_denied' ? 'cancelled' : 'failed');
     if (isset($_GET['iss']) && $_GET['iss'] !== sav_issuer()) sav_back('failed');
@@ -419,12 +432,13 @@ function identity_route(string $r): void
             $mode = (string)(body()['mode'] ?? 'login');
             if (!in_array($mode, ['login', 'connect', 'confirm'], true)) ident_fail('bad_request', 422);
             $uid = null;
+            $page = is_string(body()['page'] ?? null) ? body()['page'] : '';
             if ($mode === 'connect') $uid = (int)(ident('writer'))()['id'];
             if ($mode === 'confirm') {
                 $row = ident_row('ident');
                 if (!$row || $row['kind'] !== 'link') ident_fail('link_expired', 410);
             }
-            send_json(['ok' => true, 'url' => sav_start($mode, $uid)]);
+            send_json(['ok' => true, 'url' => sav_start($mode, $uid, ident_page($page) !== '' ? $page : '')]);
 
         case 'auth.sav':
             $row = ident_row('ident');

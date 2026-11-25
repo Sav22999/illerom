@@ -1,6 +1,6 @@
 # Giftwise (web app)
 Options -Indexes
-DirectoryIndex index.html
+DirectoryIndex index.html index.php
 
 # Block credentials, samples, SQL, docs and hidden files anywhere in this folder
 <FilesMatch "(^\.|^credentials.*\.php$|\.(md|sql|log|bak|jks|keystore|properties|gradle|kts)$)">

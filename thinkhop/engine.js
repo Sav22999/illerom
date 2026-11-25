@@ -29,7 +29,12 @@
 
     const DIFFICULTY_MODES = {
         beginner: {key: 'beginner', name: 'Principiante', targets: [.6, 1.1, 1.6, 2.1, 2.6], tiers: ['novice', 'easy']},
-        intermediate: {key: 'intermediate', name: 'Intermedio', targets: [3.3, 3.9, 4.5, 5.1, 5.7], tiers: ['medium', 'hard']},
+        intermediate: {
+            key: 'intermediate',
+            name: 'Intermedio',
+            targets: [3.3, 3.9, 4.5, 5.1, 5.7],
+            tiers: ['medium', 'hard']
+        },
         hero: {key: 'hero', name: 'Eroe', targets: [6.3, 6.9, 7.5, 8.1, 8.7], tiers: ['expert', 'master']},
         impossible: {key: 'impossible', name: 'Impossibile', targets: [9.1, 9.3, 9.5, 9.7, 9.95], tiers: ['legend']},
     };
@@ -37,7 +42,16 @@
     // What the admin panel can change (see api/index.php): the defaults work without any server
     const settings = {
         levelLength: 5,
-        hintCost: {novice: 40, easy: 60, medium: 90, hard: 130, expert: 170, master: 220, legend: 280, /* legacy compatibility */ easy_legacy: 50},
+        hintCost: {
+            novice: 40,
+            easy: 60,
+            medium: 90,
+            hard: 130,
+            expert: 170,
+            master: 220,
+            legend: 280, /* legacy compatibility */
+            easy_legacy: 50
+        },
         disabledCats: [], disabledRiddles: [], difficulty: {}, catWeights: {}
     };
     let customQuestions = [];
@@ -272,7 +286,10 @@
             },
             r => {
                 const d = r.int(1, 4);
-                return {t: iterate(r.int(1, 9), 7, (x, i) => x + d * Math.pow(2, i - 1)), why: {k: 'seq_doublestep', v: {a: d, b: d * 2, c: d * 4}}};
+                return {
+                    t: iterate(r.int(1, 9), 7, (x, i) => x + d * Math.pow(2, i - 1)),
+                    why: {k: 'seq_doublestep', v: {a: d, b: d * 2, c: d * 4}}
+                };
             },
             r => {
                 const s = r.int(1, 6);
@@ -280,12 +297,20 @@
             },
             r => {
                 const s = r.int(1, 6), flip = r.int(0, 1);
-                return {t: [0, 1, 2, 3, 4, 5, 6].map(i => Math.pow(i + s, (i + flip) % 2 ? 3 : 2)), why: {k: 'seq_sqcube'}};
+                return {
+                    t: [0, 1, 2, 3, 4, 5, 6].map(i => Math.pow(i + s, (i + flip) % 2 ? 3 : 2)),
+                    why: {k: 'seq_sqcube'}
+                };
             },
         ],
     };
 
-    const SEQUENCE_D = {easy: [.05, .08, .1, .14], medium: [.42, .38, .5, .55, .6], hard: [.8, .85, .92, .78, 1, .88], expert: [1.2, 1.3, 1.42, 1.25, 1.35, 1.55]};
+    const SEQUENCE_D = {
+        easy: [.05, .08, .1, .14],
+        medium: [.42, .38, .5, .55, .6],
+        hard: [.8, .85, .92, .78, 1, .88],
+        expert: [1.2, 1.3, 1.42, 1.25, 1.35, 1.55]
+    };
 
     function makeSequence(r, level, make) {
         const s = make(r);
@@ -402,8 +427,18 @@
             () => ({p: 'square', test: isSquare, range: [4, 144]}),
         ],
         hard: [
-            () => ({p: 'prime', test: isPrime, range: [11, 97], decoys: [21, 27, 33, 39, 49, 51, 57, 63, 69, 77, 81, 87, 91, 93]}),
-            () => ({p: 'cube', test: n => Number.isInteger(Math.round(Math.cbrt(n))) && Math.pow(Math.round(Math.cbrt(n)), 3) === n, range: [8, 343], decoys: [16, 25, 36, 49, 81, 100, 121, 144, 200, 256]}),
+            () => ({
+                p: 'prime',
+                test: isPrime,
+                range: [11, 97],
+                decoys: [21, 27, 33, 39, 49, 51, 57, 63, 69, 77, 81, 87, 91, 93]
+            }),
+            () => ({
+                p: 'cube',
+                test: n => Number.isInteger(Math.round(Math.cbrt(n))) && Math.pow(Math.round(Math.cbrt(n)), 3) === n,
+                range: [8, 343],
+                decoys: [16, 25, 36, 49, 81, 100, 121, 144, 200, 256]
+            }),
             r => {
                 const s = r.int(6, 12);
                 return {p: 'digits', v: {s}, test: n => digitSum(n) === s, range: [12, 99]};
@@ -413,12 +448,32 @@
                 const m = r.pick([11, 13]);
                 return {p: 'multiple', v: {m}, test: n => n % m === 0, range: [m * 2, m * 12]};
             },
-            () => ({p: 'power', test: n => (n & (n - 1)) === 0, range: [4, 1024], decoys: [6, 12, 24, 48, 96, 100, 200, 500, 1000]}),
+            () => ({
+                p: 'power',
+                test: n => (n & (n - 1)) === 0,
+                range: [4, 1024],
+                decoys: [6, 12, 24, 48, 96, 100, 200, 500, 1000]
+            }),
         ],
         expert: [
-            () => ({p: 'triangular', test: isTriangular, range: [10, 210], decoys: [12, 16, 20, 25, 30, 40, 50, 60, 70, 80, 100, 110, 130, 150, 200]}),
-            () => ({p: 'fibonacci', test: n => FIBONACCI.includes(n), range: [13, 610], decoys: [14, 22, 33, 35, 54, 56, 88, 90, 143, 145, 234, 376, 600]}),
-            () => ({p: 'prime', test: isPrime, range: [101, 199], decoys: [111, 117, 119, 121, 123, 129, 133, 141, 143, 147, 153, 159, 161, 171, 177, 187, 189]}),
+            () => ({
+                p: 'triangular',
+                test: isTriangular,
+                range: [10, 210],
+                decoys: [12, 16, 20, 25, 30, 40, 50, 60, 70, 80, 100, 110, 130, 150, 200]
+            }),
+            () => ({
+                p: 'fibonacci',
+                test: n => FIBONACCI.includes(n),
+                range: [13, 610],
+                decoys: [14, 22, 33, 35, 54, 56, 88, 90, 143, 145, 234, 376, 600]
+            }),
+            () => ({
+                p: 'prime',
+                test: isPrime,
+                range: [101, 199],
+                decoys: [111, 117, 119, 121, 123, 129, 133, 141, 143, 147, 153, 159, 161, 171, 177, 187, 189]
+            }),
             r => {
                 const m = r.pick([17, 19, 23]);
                 return {p: 'multiple', v: {m}, test: n => n % m === 0, range: [m * 3, m * 15]};
@@ -426,7 +481,12 @@
         ],
     };
 
-    const ODD_D = {easy: [.1, .1, .16, .12], medium: [.45, .5], hard: [.85, .95, .9, .8, 1, .9], expert: [1.3, 1.4, 1.3, 1.45]};
+    const ODD_D = {
+        easy: [.1, .1, .16, .12],
+        medium: [.45, .5],
+        hard: [.85, .95, .9, .8, 1, .9],
+        expert: [1.3, 1.4, 1.3, 1.45]
+    };
 
     function makeOddOne(r, level, make) {
         const prop = make(r);
@@ -434,7 +494,16 @@
         const members = r.shuffle(between(lo, hi, prop.test)).slice(0, 3);
         const outsiders = prop.decoys || between(lo, hi, n => !prop.test(n));
         const odd = r.pick(outsiders.filter(n => !prop.test(n)));
-        const q = {cat: 'oddone', level, view: 'odd', why: [{k: 'why_odd', v: {x: odd, prop: {k: 'prop_' + prop.p, v: prop.v || {}}}, prop: {k: 'prop_' + prop.p, v: prop.v || {}}}]};
+        const q = {
+            cat: 'oddone',
+            level,
+            view: 'odd',
+            why: [{
+                k: 'why_odd',
+                v: {x: odd, prop: {k: 'prop_' + prop.p, v: prop.v || {}}},
+                prop: {k: 'prop_' + prop.p, v: prop.v || {}}
+            }]
+        };
         return withOptions(r, q, String(odd), members.map(String));
     }
 
@@ -476,7 +545,14 @@
         });
         const [ask, at] = r.pick([['ord_q_first', 0], ['ord_q_last', 4], ['ord_q_second', 1], ['ord_q_penultimate', 3]]);
         const right = people[at];
-        const q = {cat: 'order', level: 'expert', view: 'facts', facts: r.shuffle(facts), ask: {k: ask}, why: [{lit: people.join(' → ')}]};
+        const q = {
+            cat: 'order',
+            level: 'expert',
+            view: 'facts',
+            facts: r.shuffle(facts),
+            ask: {k: ask},
+            why: [{lit: people.join(' → ')}]
+        };
         return withOptions(r, q, right, r.shuffle(people.filter(p => p !== right)).slice(0, 3));
     }
 
@@ -488,12 +564,22 @@
         const facts = [];
         for (let i = 0; i + 1 < n; i++) {
             const after = level !== 'easy' && r.next() < .5;
-            facts.push(after ? {k: 'ord_after', v: {a: people[i + 1], b: people[i]}} : {k: 'ord_before', v: {a: people[i], b: people[i + 1]}});
+            facts.push(after ? {k: 'ord_after', v: {a: people[i + 1], b: people[i]}} : {
+                k: 'ord_before',
+                v: {a: people[i], b: people[i + 1]}
+            });
         }
         const asks = level === 'hard' ? [['ord_q_second', 1], ['ord_q_penultimate', n - 2]] : [['ord_q_first', 0], ['ord_q_last', n - 1]];
         const [ask, at] = r.pick(asks);
         const right = people[at];
-        const q = {cat: 'order', level, view: 'facts', facts: r.shuffle(facts), ask: {k: ask}, why: [{lit: people.join(' → ')}]};
+        const q = {
+            cat: 'order',
+            level,
+            view: 'facts',
+            facts: r.shuffle(facts),
+            ask: {k: ask},
+            why: [{lit: people.join(' → ')}]
+        };
         return withOptions(r, q, right, r.shuffle(people.filter(p => p !== right)).slice(0, 3));
     }
 
@@ -534,7 +620,12 @@
         return all;
     }, [(a, b) => a + b, (a, b) => a * b].map(f => ({f})));
 
-    const WEIRD_D = {easy: [.3, .36, .4], medium: [.62, .66, .72, .7], hard: [1.05, 1.1, 1, 1, 1.05, 1.15], expert: [1.5, 1.45, 1.6, 1.55, 1.6, 1.7]};
+    const WEIRD_D = {
+        easy: [.3, .36, .4],
+        medium: [.62, .66, .72, .7],
+        hard: [1.05, 1.1, 1, 1, 1.05, 1.15],
+        expert: [1.5, 1.45, 1.6, 1.55, 1.6, 1.7]
+    };
 
     function makeWeird(r, level, make) {
         for (; ;) {
@@ -598,7 +689,12 @@
         ],
     };
 
-    const FORM_D = {easy: [.26, .3, .46], medium: [.58, .62, .66, .72], hard: [1.02, 1.1, 1, .95, 1, 1.15], expert: [1.4, 1.45, 1.6, 1.7, 1.55, 1.75, 1.8]};
+    const FORM_D = {
+        easy: [.26, .3, .46],
+        medium: [.58, .62, .66, .72],
+        hard: [1.02, 1.1, 1, .95, 1, 1.15],
+        expert: [1.4, 1.45, 1.6, 1.7, 1.55, 1.75, 1.8]
+    };
 
     function makeNonsense(r, level, form) {
         const [statements, ask, answer] = form;
@@ -668,8 +764,17 @@
             return Math.round((b * .30 + .03 + .24 * seen[lvl] / count[lvl]) * 100) / 100;
         };
         const riddles = list.map(x => ({riddle: x, d: x.d === undefined ? spread(x) : x.d}));
-        return [...riddles, ...customQuestions.map(x => ({riddle: x, d: x.d === undefined ? tierBase(x.level) * .30 + .15 : +x.d}))]
-            .map(({riddle, d}) => ({id: riddle.id, cat: 'riddle', d, fixed: true, make: r => riddleQuestion(r, riddle)}));
+        return [...riddles, ...customQuestions.map(x => ({
+            riddle: x,
+            d: x.d === undefined ? tierBase(x.level) * .30 + .15 : +x.d
+        }))]
+            .map(({riddle, d}) => ({
+                id: riddle.id,
+                cat: 'riddle',
+                d,
+                fixed: true,
+                make: r => riddleQuestion(r, riddle)
+            }));
     }
 
     let catalogue = null;
@@ -920,8 +1025,18 @@
 
     /** The summary kept for the statistics, on the device and on the account. */
     const summary = game => ({
-        uid: game.uid, mode: game.mode, stage: game.stage, diffKey: game.diffKey || null, stars: stars(game), score: game.score, spent: game.spent, correct: game.correct,
-        total: game.index + 1, seconds: Math.round(game.seconds), cats: game.cats, day: game.day,
+        uid: game.uid,
+        mode: game.mode,
+        stage: game.stage,
+        diffKey: game.diffKey || null,
+        stars: stars(game),
+        score: game.score,
+        spent: game.spent,
+        correct: game.correct,
+        total: game.index + 1,
+        seconds: Math.round(game.seconds),
+        cats: game.cats,
+        day: game.day,
     });
 
     function addDays(text, n) {
@@ -931,7 +1046,19 @@
 
     /** Statistics from the list of finished games. */
     function stats(games, today) {
-        const out = {games: games.length, points: 0, balance: START_POINTS, correct: 0, total: 0, seconds: 0, best: {}, cats: {}, stages: {}, unlocked: 1, streak: 0};
+        const out = {
+            games: games.length,
+            points: 0,
+            balance: START_POINTS,
+            correct: 0,
+            total: 0,
+            seconds: 0,
+            best: {},
+            cats: {},
+            stages: {},
+            unlocked: 1,
+            streak: 0
+        };
         const days = new Set();
         games.forEach(g => {
             out.points += g.score;
@@ -968,7 +1095,42 @@
     const worldTier = w => tierOf(stageTargets(Math.max(1, Math.min(STAGES, (w - 1) * WORLD + 5)))[2]);
 
     root.ThinkHopEngine = {
-        TIERS, CATS, MATH, MAX_D, STAGES, WORLD, LIVES, START_POINTS, WORDS, NAMES, settings, DIFFICULTY_MODES,
-        configure, rng, evaluate, tierOf, worldTier, pattern, allPatterns, make, withOptions, numberOptions, orderings, stageTargets, newGame, answer, next, hint, hintCost, isOver, stars, summary, stats, points, dayText, addDays, difficultyQuestions,
+        TIERS,
+        CATS,
+        MATH,
+        MAX_D,
+        STAGES,
+        WORLD,
+        LIVES,
+        START_POINTS,
+        WORDS,
+        NAMES,
+        settings,
+        DIFFICULTY_MODES,
+        configure,
+        rng,
+        evaluate,
+        tierOf,
+        worldTier,
+        pattern,
+        allPatterns,
+        make,
+        withOptions,
+        numberOptions,
+        orderings,
+        stageTargets,
+        newGame,
+        answer,
+        next,
+        hint,
+        hintCost,
+        isOver,
+        stars,
+        summary,
+        stats,
+        points,
+        dayText,
+        addDays,
+        difficultyQuestions,
     };
 })(typeof window !== 'undefined' ? window : globalThis);

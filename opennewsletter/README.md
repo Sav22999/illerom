@@ -10,7 +10,8 @@ projects/about/opennewsletter/, sitemap.xml, llms.txt) and on the status page (p
 
 - PHP 7.4+ and MySQL 5.7+ / MariaDB 10.3+ (PDO), tables prefixed `on_`. Account code from MyCurriculum/Forkville.
 - No build step: ES modules in `assets/` (`app.js` the app, `editor.js` the editor, `ui.js` helpers, `i18n.js` EN/IT).
-  **After changing them, bump the version everywhere**: `?v=N` of `app.js`/`app.css` in `index.php` and the same `?v=N` in
+  **After changing them, bump the version everywhere**: `?v=N` of `app.js`/`app.css` in `index.php` and the same `?v=N`
+  in
   every `import … from './x.js?v=N'` (all modules must use the same tag, or the browser loads two copies of `ui.js`).
 - Fonts in `fonts/` (Inter, Poppins; Stack Sans Notch only for the "Saverio Morelli" credit).
 - No libraries: the SMTP client is in `lib/mail.php` (same as the other apps, plus extra headers).
@@ -20,19 +21,24 @@ projects/about/opennewsletter/, sitemap.xml, llms.txt) and on the status page (p
 1. Upload the folder, open `install-db.php`: database, master admin emails, optional Google client ID. It writes
    `credentials.php` (git-ignored, blocked by `.htaccess`) with a new random `$secret_key`. Delete `install-db.php`
    afterwards. Alternatively import `install/opennewsletter.sql` and copy `credentials-sample.php` to `credentials.php`.
-2. **Never change `$secret_key`** once groups exist: it encrypts their SMTP passwords (AES-256-GCM, `seal()`/`unseal()`).
-3. Platform email (account confirmation, invitations, approval requests): `$mail_config`, or the site's `/.mail-config.php`.
+2. **Never change `$secret_key`** once groups exist: it encrypts their SMTP passwords (AES-256-GCM, `seal()`/
+   `unseal()`).
+3. Platform email (account confirmation, invitations, approval requests): `$mail_config`, or the site's
+   `/.mail-config.php`.
 4. Schedule the cron scripts every 30 minutes (see `cron/README.md`):
    `opennewsletter-schedule.php` (sending, expiry) and `opennewsletter-reminders.php` (reminders to publishers).
    `cron/cleanup.php` also cleans this app daily (sessions, attempts, unconfirmed subscriptions after 7 days).
 
 ## Accounts and roles
 
-- Email + password (the address must be confirmed via `?verify=`) or Google (no check). The email is unique and never changes.
-- Roles in a group, each including the ones before: `user` (sees newsletters and numbers), `moderator` (writes newsletters
+- Email + password (the address must be confirmed via `?verify=`) or Google (no check). The email is unique and never
+  changes.
+- Roles in a group, each including the ones before: `user` (sees newsletters and numbers), `moderator` (writes
+  newsletters
   and templates, proposes a slot, sends tests to itself), `publisher` (approves/rejects/reschedules/cancels, sees
   subscribers, may schedule directly without approval), `admin` (outgoing address, subscription page, terms, languages,
-  members up to publisher, erases/exports subscribers), `owner` (who created it: names admins, hands the group over, deletes it).
+  members up to publisher, erases/exports subscribers), `owner` (who created it: names admins, hands the group over,
+  deletes it).
 - Members are added by email: an existing confirmed account joins at once, anyone else gets an invitation applied when
   they confirm an account with that address (`on_invites`, `accept_invites()`).
 - **Master admins** (`$master_emails` in `credentials.php`) see every group (members, newsletters, subscribers, reasons
@@ -43,11 +49,13 @@ projects/about/opennewsletter/, sitemap.xml, llms.txt) and on the status page (p
 - Document = JSON `{theme, blocks}`; block types: heading, text (rich: b/i/u/s/a/ul/ol), image, button, card, quote,
   divider, spacer, social. `lib/render.php` cleans it field by field (`clean_doc`) and renders the table-based email
   HTML + plain text (`render_email`). The editor's "Preview" and "Send me a test" use the server renderer.
-- Every email ends with the footer: why you receive it, unsubscribe link, "Newsletter created with [logo] OpenNewsletter"
+- Every email ends with the footer: why you receive it, unsubscribe link, "Newsletter created with [logo]
+  OpenNewsletter"
   (in the subscriber's language), plus `List-Unsubscribe` / `List-Unsubscribe-Post` headers (one click in Gmail etc.).
 - Workflow: `draft → pending (proposed slot) → scheduled → sending → sent`; `pending → rejected` (note to the author);
   `pending → expired` when the slot passes unapproved; `pending/scheduled → draft` (withdraw) or `cancelled`.
-  Content is editable only in draft/rejected/expired. Saves carry the revision (`rev`): a stale editor gets `nl_conflict`.
+  Content is editable only in draft/rejected/expired. Saves carry the revision (`rev`): a stale editor gets
+  `nl_conflict`.
 - Slots are every 30 minutes in the group's timezone, stored in UTC (`parse_slot`), at most ~13 months ahead.
 - Audience: all subscribers, or only those of one language. Recipients are fixed when sending starts (`on_deliveries`).
 - Sending is throttled so providers do not block the account: each group has an hourly limit (`groups.rate_per_hour`,
@@ -56,12 +64,13 @@ projects/about/opennewsletter/, sitemap.xml, llms.txt) and on the status page (p
 - Actions: drafts (and rejected, expired, cancelled) can be deleted, from the list or the editor; scheduled ones can be
   rescheduled, put back to draft or cancelled; proposals can change time; sent ones have no actions.
 - Built-in templates in `lib/templates.php`; groups save their own (`on_templates`, "Save as template" in the editor).
-- Images are resized in the browser and stored in `on_images`, served publicly by `api/?r=img&id=…` (they appear in emails).
+- Images are resized in the browser and stored in `on_images`, served publicly by `api/?r=img&id=…` (they appear in
+  emails).
 
 ## Subscribers
 
-- `subscribe.php?g=SLUG[&lang=xx]`: email, language (if the group has several), OpenNewsletter terms + group terms
-  (own checkbox, revision stored per subscriber), honeypot. Records the browser's language and the browser's **name**
+- `subscribe.php?g=SLUG[&lang=xx]`: email, language (if the group has several), OpenNewsletter terms + group terms (own
+  checkbox, revision stored per subscriber), honeypot. Records the browser's language and the browser's **name**
   only (`browser_name()`), never the whole User-Agent. Double opt-in: the link (`&confirm=`) asks for a button press,
   so mail scanners do nothing; it works 7 days.
 - `unsubscribe.php?t=TOKEN` from any newsletter (optional reason + note), or `unsubscribe.php?g=SLUG` typing the email

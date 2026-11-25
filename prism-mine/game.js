@@ -118,7 +118,12 @@ function playSound(kind, colors = '') {
         if (kind === 'beam') {
             tone(880, 1320, 0.12, 0.08, 0, 'triangle');
             // One chime per colour picked up
-            colors.split('').forEach((c, i) => tone({R: 523, Y: 659, B: 784, W: 1047}[c], {R: 523, Y: 659, B: 784, W: 1047}[c], 0.35, 0.09, 0.12 + i * 0.09));
+            colors.split('').forEach((c, i) => tone({R: 523, Y: 659, B: 784, W: 1047}[c], {
+                R: 523,
+                Y: 659,
+                B: 784,
+                W: 1047
+            }[c], 0.35, 0.09, 0.12 + i * 0.09));
         } else if (kind === 'absorbed') {
             tone(220, 60, 0.4, 0.25, 0, 'triangle');
         } else if (kind === 'place') {
@@ -339,9 +344,25 @@ function renderBoard() {
     const over = s.status === 'finished';
 
     board.setAttribute('viewBox', `0 0 ${VIEW()} ${VIEW()}`);
-    board.appendChild(svg('rect', {x: 9.5, y: 9.5, width: N * 10 + 1, height: N * 10 + 1, rx: 2.5, class: 'mine-floor'}));
+    board.appendChild(svg('rect', {
+        x: 9.5,
+        y: 9.5,
+        width: N * 10 + 1,
+        height: N * 10 + 1,
+        rx: 2.5,
+        class: 'mine-floor'
+    }));
     for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
-        board.appendChild(svg('rect', {x: cellX(c) + 0.3, y: cellY(r) + 0.3, width: 9.4, height: 9.4, rx: 1.2, class: 'cell', 'data-r': r, 'data-c': c}));
+        board.appendChild(svg('rect', {
+            x: cellX(c) + 0.3,
+            y: cellY(r) + 0.3,
+            width: 9.4,
+            height: 9.4,
+            rx: 1.2,
+            class: 'cell',
+            'data-r': r,
+            'data-c': c
+        }));
     }
 
     // Own mine (duel), the real mine once the game is over, or the sketch (also used to place the own gems)
@@ -384,7 +405,12 @@ function renderBoard() {
     for (let p = 0; p < N * 4; p++) {
         const [x, y] = portCenter(p);
         const info = used.get(p);
-        const g = svg('g', {class: 'port' + (info ? ' used' : canProbe ? ' free' : ''), 'data-p': p, tabindex: 0, role: 'button'});
+        const g = svg('g', {
+            class: 'port' + (info ? ' used' : canProbe ? ' free' : ''),
+            'data-p': p,
+            tabindex: 0,
+            role: 'button'
+        });
         let label = t('port_label', {n: p + 1});
         const tile = svg('rect', {x: x - 4.2, y: y - 4.2, width: 8.4, height: 8.4, rx: 2, class: 'port-tile'});
         g.appendChild(tile);
@@ -601,7 +627,15 @@ function renderActions() {
 // selected = gem of the tray waiting to be placed; active = gem on the board with its toolbar;
 // drag = a gem moving under the mouse or finger (from the tray or from the board).
 function newDraft(count) {
-    return {placed: new Array(count).fill(null), selected: null, active: null, rot: 0, hover: null, locked: new Set(), drag: null};
+    return {
+        placed: new Array(count).fill(null),
+        selected: null,
+        active: null,
+        rot: 0,
+        hover: null,
+        locked: new Set(),
+        drag: null
+    };
 }
 
 function gemBox(shape, rot) {
@@ -657,12 +691,28 @@ function cellAt(e, lift = false) {
     const loc = pt.matrixTransform(board.getScreenCTM().inverse());
     const y = loc.y - (lift ? 9 : 0);
     const r = Math.floor((y - 10) / 10), c = Math.floor((loc.x - 10) / 10);
-    return {r, c, inside: loc.x >= 0 && loc.x <= VIEW() && loc.y >= 0 && loc.y <= VIEW(), onGrid: r >= 0 && r < N && c >= 0 && c < N};
+    return {
+        r,
+        c,
+        inside: loc.x >= 0 && loc.x <= VIEW() && loc.y >= 0 && loc.y <= VIEW(),
+        onGrid: r >= 0 && r < N && c >= 0 && c < N
+    };
 }
 
 function startDrag(e, i, offR, offC, from) {
     const d = session.draft;
-    d.drag = {i, offR, offC, rot: from ? from.rot : d.rot, from, x: e.clientX, y: e.clientY, moved: false, cell: null, touch: e.pointerType !== 'mouse'};
+    d.drag = {
+        i,
+        offR,
+        offC,
+        rot: from ? from.rot : d.rot,
+        from,
+        x: e.clientX,
+        y: e.clientY,
+        moved: false,
+        cell: null,
+        touch: e.pointerType !== 'mouse'
+    };
 }
 
 function onBoardPointerDown(e) {
@@ -1000,8 +1050,21 @@ function revealGem() {
 function baseSession(mode, extra) {
     sessionSeq++;
     return Object.assign({
-        mode, seq: sessionSeq, status: 'playing', mySlot: 1, names: {1: playerName, 2: ''}, wins: {1: 0, 2: 0},
-        probes: [], guesses: [], history: [], wrong: 0, hints: 0, turn: 1, turnLeftMs: 0, timeControl: 0, lastProbe: null,
+        mode,
+        seq: sessionSeq,
+        status: 'playing',
+        mySlot: 1,
+        names: {1: playerName, 2: ''},
+        wins: {1: 0, 2: 0},
+        probes: [],
+        guesses: [],
+        history: [],
+        wrong: 0,
+        hints: 0,
+        turn: 1,
+        turnLeftMs: 0,
+        timeControl: 0,
+        lastProbe: null,
     }, extra);
 }
 
@@ -1015,7 +1078,13 @@ function startSolo(level, daily = false) {
     N = daily ? P.SIZE : P.sizeOf(level); // the daily mine is always 8 x 8
     const hidden = daily ? P.generate('medium', P.seededRandom('prism-mine-' + date)) : P.generate(level);
     const gems = sortedGems(hidden);
-    session = baseSession(daily ? 'daily' : 'solo', {level: daily ? 'medium' : level, date, hidden, gems, draft: newDraft(gems.length)});
+    session = baseSession(daily ? 'daily' : 'solo', {
+        level: daily ? 'medium' : level,
+        date,
+        hidden,
+        gems,
+        draft: newDraft(gems.length)
+    });
     if (daily) session.counted = !dailyRecord();
     enterGameScreen();
 }
@@ -1024,14 +1093,30 @@ function startSolo(level, daily = false) {
 function saveLocalGame() {
     const s = session;
     if (!s || s.mode !== 'daily' || s.status !== 'playing') return;
-    storageSet('pm_daily_progress', JSON.stringify({date: s.date, mine: P.encode(s.hidden), probes: s.probes, guesses: s.guesses, history: s.history, wrong: s.wrong, hints: s.hints, placed: s.draft.placed, locked: [...s.draft.locked]}));
+    storageSet('pm_daily_progress', JSON.stringify({
+        date: s.date,
+        mine: P.encode(s.hidden),
+        probes: s.probes,
+        guesses: s.guesses,
+        history: s.history,
+        wrong: s.wrong,
+        hints: s.hints,
+        placed: s.draft.placed,
+        locked: [...s.draft.locked]
+    }));
 }
 
 function resumeDaily() {
     try {
         const saved = JSON.parse(storageGet('pm_daily_progress') || 'null');
         if (!saved || saved.date !== session.date || (saved.mine && saved.mine !== P.encode(session.hidden))) return;
-        Object.assign(session, {probes: saved.probes, guesses: saved.guesses, history: saved.history, wrong: saved.wrong, hints: saved.hints});
+        Object.assign(session, {
+            probes: saved.probes,
+            guesses: saved.guesses,
+            history: saved.history,
+            wrong: saved.wrong,
+            hints: saved.hints
+        });
         session.draft.placed = saved.placed;
         session.draft.locked = new Set(saved.locked);
     } catch (e) {
@@ -1049,7 +1134,10 @@ function dailyRecord() {
 
 function renderDailyStatus() {
     const rec = dailyRecord();
-    $('daily-status').textContent = rec ? (rec.solved ? t('daily_done', {score: rec.score, beams: rec.beams}) : t('daily_failed')) : t('daily_new');
+    $('daily-status').textContent = rec ? (rec.solved ? t('daily_done', {
+        score: rec.score,
+        beams: rec.beams
+    }) : t('daily_failed')) : t('daily_new');
     $('btn-start-daily').textContent = rec ? t('daily_again') : t('daily_btn');
 }
 
@@ -1057,7 +1145,10 @@ function renderLevelNote() {
     const level = document.querySelector('input[name="solo-level"]:checked').value;
     const best = storageGet('pm_best_' + level);
     const cfg = P.LEVELS[level];
-    $('level-note').textContent = t('level_note_' + level, {n: cfg.gems, size: cfg.size}) + (best ? ' ' + t('best_score', {score: best}) : '');
+    $('level-note').textContent = t('level_note_' + level, {
+        n: cfg.gems,
+        size: cfg.size
+    }) + (best ? ' ' + t('best_score', {score: best}) : '');
 }
 
 function enterGameScreen() {
@@ -1098,7 +1189,14 @@ function startExample() {
     N = P.SIZE; // the example mine is 8 x 8
     const hidden = EXAMPLE.mine.map(g => ({...g}));
     const gems = sortedGems(hidden);
-    session = baseSession('example', {level: 'easy', hidden, gems, draft: newDraft(gems.length), exampleStep: 0, examplePort: null});
+    session = baseSession('example', {
+        level: 'easy',
+        hidden,
+        gems,
+        draft: newDraft(gems.length),
+        exampleStep: 0,
+        examplePort: null
+    });
     showModal('howto-overlay', false);
     enterGameScreen();
     showExampleStep(0);
@@ -1186,8 +1284,22 @@ async function findRandomGame() {
 
 function setupOnlineSession(code, token, slot, isPublic) {
     session = baseSession('online', {
-        status: 'waiting', code, token, mySlot: slot, isPublic, names: {1: '', 2: ''}, lastMessageId: 0, players: [],
-        gems: [], draft: newDraft(0), round: 0, rematchSent: false, hidden: null, myMine: null, view: 'target', placeLeftMs: 0,
+        status: 'waiting',
+        code,
+        token,
+        mySlot: slot,
+        isPublic,
+        names: {1: '', 2: ''},
+        lastMessageId: 0,
+        players: [],
+        gems: [],
+        draft: newDraft(0),
+        round: 0,
+        rematchSent: false,
+        hidden: null,
+        myMine: null,
+        view: 'target',
+        placeLeftMs: 0,
     });
     session.names[slot] = playerName;
     sessionSet('pm_session', JSON.stringify({code, token, slot, isPublic}));
@@ -1284,7 +1396,12 @@ function handlePollUpdate(data) {
     // New actions since the last poll: a reload brings many at once, shown quietly
     const fresh = data.actions.slice(s.history.length);
     fresh.forEach((a, k) => {
-        if (a.t === 'p') addProbe({s: a.s, p: a.p, exit: a.exit, colors: a.colors}, fresh.length > 2 || k < fresh.length - 1);
+        if (a.t === 'p') addProbe({
+            s: a.s,
+            p: a.p,
+            exit: a.exit,
+            colors: a.colors
+        }, fresh.length > 2 || k < fresh.length - 1);
         else if (a.t === 'x') {
             // The time of the turn ran out: the turn passed
             s.history.push({t: 'x', s: a.s});
@@ -1441,14 +1558,26 @@ function endGame(won, reason, winnerSlot = 1) {
 
     if (online) {
         $('gameover-title').textContent = draw ? t('draw_title') : won ? t('you_won') : t('you_lost');
-        $('gameover-text').textContent = draw ? t('reason_draw') : t('reason_' + reason, {name: nameOf(other(winnerSlot)), winner: nameOf(winnerSlot)});
+        $('gameover-text').textContent = draw ? t('reason_draw') : t('reason_' + reason, {
+            name: nameOf(other(winnerSlot)),
+            winner: nameOf(winnerSlot)
+        });
         $('gameover-score').textContent = '';
-        $('score-line').textContent = t('score_tracker', {p1: nameOf(1), s1: s.wins[1] || 0, p2: nameOf(2), s2: s.wins[2] || 0});
+        $('score-line').textContent = t('score_tracker', {
+            p1: nameOf(1),
+            s1: s.wins[1] || 0,
+            p2: nameOf(2),
+            s2: s.wins[2] || 0
+        });
         $('btn-rematch').textContent = t('rematch');
     } else {
         const score = scoreOf(s);
         $('gameover-title').textContent = won ? t('solved_title') : t('gave_up_title');
-        $('gameover-text').textContent = won ? t('solved_text', {beams: s.probes.length, wrong: s.wrong, hints: s.hints}) : t('gave_up_text');
+        $('gameover-text').textContent = won ? t('solved_text', {
+            beams: s.probes.length,
+            wrong: s.wrong,
+            hints: s.hints
+        }) : t('gave_up_text');
         $('gameover-score').textContent = won ? t('score_final', {score}) : '';
         $('score-line').textContent = '';
         $('btn-rematch').textContent = s.mode === 'daily' ? t('back_home') : t('play_again');
@@ -1461,7 +1590,12 @@ function endGame(won, reason, winnerSlot = 1) {
             } else $('score-line').textContent = t('best_score', {score: best});
         }
         if (s.mode === 'daily') {
-            if (s.counted) storageSet('pm_daily', JSON.stringify({date: s.date, solved: won, score, beams: s.probes.length}));
+            if (s.counted) storageSet('pm_daily', JSON.stringify({
+                date: s.date,
+                solved: won,
+                score,
+                beams: s.probes.length
+            }));
             if (won) $('btn-share-result').classList.remove('hidden');
             if (!s.counted) $('score-line').textContent = t('daily_not_counted');
         }
@@ -1494,8 +1628,20 @@ async function triggerRematch() {
 
 function shareResult() {
     const s = session;
-    const squares = s.probes.map(pr => pr.exit === null ? '⬛' : ({'': '⬜', R: '🟥', Y: '🟨', B: '🟦', W: '⬜', RY: '🟧', BR: '🟪', BY: '🟩'}[pr.colors] || '🟫')).join('');
-    copyText(`Prism Mine ${s.date}: ${t('share_line', {score: scoreOf(s), beams: s.probes.length})}\n${squares}\nhttps://www.illerom.eu/prism-mine/`, t('result_copied'));
+    const squares = s.probes.map(pr => pr.exit === null ? '⬛' : ({
+        '': '⬜',
+        R: '🟥',
+        Y: '🟨',
+        B: '🟦',
+        W: '⬜',
+        RY: '🟧',
+        BR: '🟪',
+        BY: '🟩'
+    }[pr.colors] || '🟫')).join('');
+    copyText(`Prism Mine ${s.date}: ${t('share_line', {
+        score: scoreOf(s),
+        beams: s.probes.length
+    })}\n${squares}\nhttps://www.illerom.eu/prism-mine/`, t('result_copied'));
 }
 
 async function leaveGame() {
@@ -1619,7 +1765,11 @@ function beamDiagram(gems, ports, crop, cls = '') {
     };
     let cells = '';
     for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) cells += `<rect x="${(c - c0) * 10 + 0.4}" y="${(r - r0) * 10 + 0.4}" width="9.2" height="9.2" rx="1.2" class="dg-cell"/>`;
-    const polys = gems.map(g => (P.gemCells(g) || []).filter(x => inside(x.r, x.c)).map(({r, c, t: type}) => `<polygon points="${CELL_POLY[type].split(' ').map(pt => {
+    const polys = gems.map(g => (P.gemCells(g) || []).filter(x => inside(x.r, x.c)).map(({
+                                                                                             r,
+                                                                                             c,
+                                                                                             t: type
+                                                                                         }) => `<polygon points="${CELL_POLY[type].split(' ').map(pt => {
         const [x, y] = pt.split(',').map(Number);
         return `${(c - c0 + x) * 10},${(r - r0 + y) * 10}`;
     }).join(' ')}" fill="${GEM_FILL[g.color]}"/>`).join('')).join('');
@@ -1656,7 +1806,13 @@ function beamDiagram(gems, ports, crop, cls = '') {
 
 // The lobby art: a real beam that bounces off two gems and comes out orange (red + yellow)
 function renderHeroArt() {
-    const gems = [{shape: 'diamond', color: 'B', r: 1, c: 1, rot: 0}, {shape: 'pyramid', color: 'R', r: 5, c: 5, rot: 1}, {shape: 'shard', color: 'Y', r: 1, c: 6, rot: 2}];
+    const gems = [{shape: 'diamond', color: 'B', r: 1, c: 1, rot: 0}, {
+        shape: 'pyramid',
+        color: 'R',
+        r: 5,
+        c: 5,
+        rot: 1
+    }, {shape: 'shard', color: 'Y', r: 1, c: 6, rot: 2}];
     $('hero-art').innerHTML = beamDiagram(gems, [9, 2], [0, 0, 7, 7], 'hero');
 }
 

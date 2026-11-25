@@ -13,7 +13,7 @@ if (!function_exists('fig_cssadv_flex')) {
     {
         $row = function (int $y, string $name, array $xs) {
             $o = "<text x=\"356\" y=\"" . ($y - 8) . "\" font-family=\"ui-monospace, Menlo, monospace\" font-size=\"13\">$name</text>"
-               . "<rect x=\"356\" y=\"$y\" width=\"264\" height=\"40\" rx=\"8\" fill=\"#F7F6FC\" stroke=\"#8A87B0\" stroke-width=\"2\"/>";
+                . "<rect x=\"356\" y=\"$y\" width=\"264\" height=\"40\" rx=\"8\" fill=\"#F7F6FC\" stroke=\"#8A87B0\" stroke-width=\"2\"/>";
             foreach ($xs as $x) $o .= "<rect x=\"$x\" y=\"" . ($y + 6) . "\" width=\"50\" height=\"28\" rx=\"6\" fill=\"#FFE8D6\" stroke=\"#E8590C\" stroke-width=\"2\"/>";
             return $o;
         };

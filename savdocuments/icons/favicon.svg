@@ -1,1 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><rect width="96" height="96" rx="22" fill="#0f6e56"/><rect x="24" y="16" width="48" height="64" rx="6" fill="#e1f5ee"/><path d="M33 30h30M33 41h30M33 52h14" stroke="#0f6e56" stroke-width="5" stroke-linecap="round"/><path d="M56 46v22" stroke="#d85a30" stroke-width="6" stroke-linecap="round"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <defs>
+        <linearGradient id="a" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#3fd6a6"/>
+            <stop offset="1" stop-color="#109a74"/>
+        </linearGradient>
+        <linearGradient id="b" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#0d7a5e"/>
+            <stop offset="1" stop-color="#095a46"/>
+        </linearGradient>
+    </defs>
+    <!-- an S made of two sheets: the first one has a folded corner, on the second one the text is being written -->
+    <path d="M20.500 4H46l12 12v10.500a5 5 0 0 1-5 5H20.500A13.750 13.750 0 0 1 20.500 4z" fill="url(#a)"/>
+    <path d="M46 4v8a4 4 0 0 0 4 4h8z" fill="#c9f5e6"/>
+    <path d="M18 14h19M18 22h28" stroke="#fff" stroke-opacity=".9" stroke-width="3.400" stroke-linecap="round"/>
+    <path d="M43.500 60H11a5 5 0 0 1-5-5V37.500a5 5 0 0 1 5-5h32.500a13.750 13.750 0 0 1 0 27.500z" fill="url(#b)"/>
+    <path d="M14 41.500h24M14 50.500h13" stroke="#fff" stroke-opacity=".85" stroke-width="3.400" stroke-linecap="round"/>
+    <rect x="31" y="44.500" width="4.400" height="12" rx="2.200" fill="#ffd166"/>
+</svg>

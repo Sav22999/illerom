@@ -35,8 +35,12 @@
                 const g = q.lasersData.grid, n = g.length;
                 let x = q.lasersData.startX, y = q.lasersData.startY, dx = 1, dy = 0, hit = null;
                 for (let s = 0; s < 200 && !hit; s++) {
-                    x += dx; y += dy;
-                    if (x < 0 || y < 0 || x >= n || y >= n) { hit = 'out'; break; }
+                    x += dx;
+                    y += dy;
+                    if (x < 0 || y < 0 || x >= n || y >= n) {
+                        hit = 'out';
+                        break;
+                    }
                     const c = g[y][x];
                     if (c === '/') [dx, dy] = [-dy, -dx];
                     else if (c === '\\') [dx, dy] = [dy, dx];
@@ -49,7 +53,8 @@
                 const beams = q.mobilesData.beams;
                 const total = b => v(b.left) + (b.right.type === 'beam' ? total(beams[b.right.subBeamIdx]) : v(b.right));
                 beams.forEach(b => {
-                    const l = v(b.left) * b.dL, rr = (b.right.type === 'beam' ? total(beams[b.right.subBeamIdx]) : v(b.right)) * b.dR;
+                    const l = v(b.left) * b.dL,
+                        rr = (b.right.type === 'beam' ? total(beams[b.right.subBeamIdx]) : v(b.right)) * b.dR;
                     if (l !== rr) bad(q, 'a beam out of balance');
                 });
                 const target = beams.flatMap(b => [b.left, b.right]).filter(s => s.isTarget);
@@ -74,7 +79,8 @@
                 for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
                     let px = x, py = y;
                     o.stepBounds.forEach(st => {
-                        const b = st.bBefore, midX = Math.floor((b.xMin + b.xMax) / 2), midY = Math.floor((b.yMin + b.yMax) / 2);
+                        const b = st.bBefore, midX = Math.floor((b.xMin + b.xMax) / 2),
+                            midY = Math.floor((b.yMin + b.yMax) / 2);
                         if (st.fold === 'L_TO_R' && px <= midX) px = st.sx - px;
                         if (st.fold === 'R_TO_L' && px > midX) px = st.sx - px;
                         if (st.fold === 'T_TO_B' && py <= midY) py = st.sy - py;

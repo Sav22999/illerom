@@ -5,12 +5,12 @@
  * Without credentials.php the app cannot start.
  */
 
-$localhost_db  = "localhost";
-$username_db   = "";
-$password_db   = "";
+$localhost_db = "localhost";
+$username_db = "";
+$password_db = "";
 $database_name = "";
 
-$table_prefix  = "mc_";
+$table_prefix = "mc_";
 
 // Sign in with Google (optional): OAuth client ID of type "Web application" 
 $google_client_id = "";

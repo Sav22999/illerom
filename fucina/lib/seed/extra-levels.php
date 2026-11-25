@@ -208,7 +208,8 @@ if (!function_exists('fig_xl_srcset')) {
             }
             return $o;
         };
-        $a = $chips(52, 800); $b = $chips(172, 800);
+        $a = $chips(52, 800);
+        $b = $chips(172, 800);
         return <<<SVG
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
 <rect x="20" y="30" width="44" height="78" rx="8" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>

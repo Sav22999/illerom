@@ -46,8 +46,8 @@ PRIVACY-FIRST
 • English, Italian, Spanish, French and German; light and dark theme
 ```
 
-**Category**: Game → Puzzle (alternative: Brain games) · **Tags** (up to 5): Logic puzzle, Deduction, Brain teaser, Daily puzzle, Multiplayer
-**Website**: https://www.illerom.eu/prism-mine/
+**Category**: Game → Puzzle (alternative: Brain games) · **Tags** (up to 5): Logic puzzle, Deduction, Brain teaser,
+Daily puzzle, Multiplayer **Website**: https://www.illerom.eu/prism-mine/
 **Privacy policy**: https://www.illerom.eu/prism-mine/privacy.html
 
 ### Screenshot order (phone)
@@ -59,7 +59,9 @@ PRIVACY-FIRST
 
 ### Data safety (Play Console → App content → Data safety)
 
-- Data collected: the nickname the player types and the chat messages, for online duels only. Declare **Personal info → Name** and **Messages → Other in-app messages**, purpose **App functionality**, not shared with third parties. Nothing else is collected: no email, phone, location or device identifiers.
+- Data collected: the nickname the player types and the chat messages, for online duels only. Declare **Personal info →
+  Name** and **Messages → Other in-app messages**, purpose **App functionality**, not shared with third parties. Nothing
+  else is collected: no email, phone, location or device identifiers.
 - Solo games, the mine of the day and the example game send nothing to the server.
 - Temporary data: duel rooms, nicknames and chat are deleted automatically within 48 hours of the last activity.
 - Data encrypted in transit (HTTPS). No ad networks, tracking SDKs or profiling.

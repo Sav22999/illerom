@@ -29,7 +29,8 @@ export function setAudioPrefs(p) {
     Object.assign(prefs, p);
     try {
         localStorage.setItem('forkville-audio', JSON.stringify(prefs));
-    } catch (e) { /* storage blocked */ }
+    } catch (e) { /* storage blocked */
+    }
     if (!ctx) return;
     master.gain.setTargetAtTime(prefs.volume, ctx.currentTime, 0.1);
     musicBus.gain.setTargetAtTime(prefs.music ? 0.32 : 0, ctx.currentTime, 0.3);
@@ -110,7 +111,18 @@ function loopNoise(dest, type, freq, gain) {
  * the stove this moment, washers = people at a sink, sweepers = people with a broom or a mop; open = guests welcome;
  * paused = the game clock stopped.
  */
-export function setAmbience({rain = false, snow = false, guests = 0, isNight = false, cooks = 0, washers = 0, sweepers = 0, open = true, paused = false, restaurantKind = 'generic'}) {
+export function setAmbience({
+                                rain = false,
+                                snow = false,
+                                guests = 0,
+                                isNight = false,
+                                cooks = 0,
+                                washers = 0,
+                                sweepers = 0,
+                                open = true,
+                                paused = false,
+                                restaurantKind = 'generic'
+                            }) {
     if (!ctx) return;
     night = isNight;
     cooking = paused ? 0 : cooks;
@@ -133,10 +145,18 @@ const NIGHT = {tempo: 74, chords: [[57, 60, 64, 67], [53, 57, 60, 64], [48, 52, 
 /** Each kind of restaurant has its own day song: a bistro swings, fast food bounces, an inn is folky, luxury is slow. */
 const SONGS = {
     generic: DAY,
-    fast_food: {tempo: 118, chords: [[60, 64, 67, 72], [65, 69, 72, 77], [67, 71, 74, 79], [65, 69, 72, 77]], drums: 'busy'},   // C F G F
+    fast_food: {
+        tempo: 118,
+        chords: [[60, 64, 67, 72], [65, 69, 72, 77], [67, 71, 74, 79], [65, 69, 72, 77]],
+        drums: 'busy'
+    },   // C F G F
     cafe: {tempo: 88, chords: [[62, 65, 69, 72], [55, 59, 62, 65], [60, 64, 67, 71], [57, 60, 64, 67]], drums: 'brush'},      // Dm7 G7 Cmaj7 Am7
     inn: {tempo: 92, chords: [[55, 59, 62, 67], [60, 64, 67, 72], [62, 66, 69, 74], [55, 59, 62, 67]], drums: 'folk'},       // G C D G
-    luxury: {tempo: 70, chords: [[60, 64, 67, 71], [62, 65, 69, 72], [64, 67, 71, 74], [57, 60, 64, 67]], drums: 'none'},      // Cmaj7 Dm7 Em7 Am7
+    luxury: {
+        tempo: 70,
+        chords: [[60, 64, 67, 71], [62, 65, 69, 72], [64, 67, 71, 74], [57, 60, 64, 67]],
+        drums: 'none'
+    },      // Cmaj7 Dm7 Em7 Am7
 };
 const PENTA = [0, 2, 4, 7, 9];
 const hz = (m) => 440 * Math.pow(2, (m - 69) / 12);

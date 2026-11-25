@@ -7,15 +7,17 @@
 
 **Nome (≤ 30):** MyCurriculum
 
-**Descrizione breve IT (≤ 80):** Il tuo CV in ogni lingua: modelli, PDF e pagina web da condividere.
-**Short description EN (≤ 80):** Your CV in every language: templates, PDF and a web page to share.
+**Descrizione breve IT (≤ 80):** Il tuo CV in ogni lingua: modelli, PDF e pagina web da condividere. **Short description
+EN (≤ 80):** Your CV in every language: templates, PDF and a web page to share.
 
 **Descrizione completa (IT):**
-Scrivi il curriculum una volta e tienine una versione per ogni lingua che ti serve: italiano, inglese, francese, tedesco,
+Scrivi il curriculum una volta e tienine una versione per ogni lingua che ti serve: italiano, inglese, francese,
+tedesco,
 spagnolo e altre ancora, anche una lingua tutta tua. Quando aggiungi una lingua, titoli delle sezioni, date e consenso
 privacy si traducono da soli: a te restano solo i testi.
 
-• Undici modelli (Classico, Moderno, Minimal, Elegante, Fascia, Timeline, Compatto, Studio, Monogramma, Contrasto, Svizzero), il tuo colore e dodici caratteri.
+• Undici modelli (Classico, Moderno, Minimal, Elegante, Fascia, Timeline, Compatto, Studio, Monogramma, Contrasto,
+Svizzero), il tuo colore e dodici caratteri.
 • Ogni lingua diventa un PDF vero, con il testo selezionabile, i link scritti per intero e «Pagina X di Y».
 • Una pagina web pubblica con il menu delle lingue: mostra solo quello che scegli tu.
 • Importa il CV che hai già, anche Europass, da un PDF: i campi si compilano da soli (il file resta sul telefono).
@@ -28,22 +30,24 @@ Write your CV once and keep a version for every language you need: English, Ital
 even a language of your own. When you add a language, section titles, dates and the privacy consent translate by
 themselves: only your own texts are left.
 
-• Eleven templates (Classic, Modern, Minimal, Elegant, Banner, Timeline, Compact, Studio, Monogram, Contrast, Swiss), your colour and twelve typefaces.
+• Eleven templates (Classic, Modern, Minimal, Elegant, Banner, Timeline, Compact, Studio, Monogram, Contrast, Swiss),
+your colour and twelve typefaces.
 • Every language becomes a real PDF, with selectable text, links written out in full and "Page X of Y".
 • A public web page with a language menu: it shows only what you choose.
-• Import the CV you already have, Europass included, from a PDF: the fields fill themselves (the file stays on your phone).
+• Import the CV you already have, Europass included, from a PDF: the fields fill themselves (the file stays on your
+phone).
 • Experience, education with EQF level and grade, projects, skills and languages with dots, custom fields.
 • Drag sections and entries to reorder them, undo and redo, a history of every change.
 • Sign in with email or with Google. No ads.
 
 ## Grafica
 
-| Elemento | File |
-|---|---|
-| Icona 512×512 | `android/play-store-icon-512.png` |
-| Grafica in primo piano 1024×500 | `android/store/it-IT/feature-graphic-1024x500.png`, `android/store/en-GB/feature-graphic-1024x500.png` |
-| Screenshot telefono 1080×1920 (IT) | `store/screens/it/1-editor.png` … `5-public.png` |
-| Phone screenshots 1080×1920 (EN) | `store/screens/en/1-editor.png` … `5-public.png` |
+| Elemento                           | File                                                                                                   |
+|------------------------------------|--------------------------------------------------------------------------------------------------------|
+| Icona 512×512                      | `android/play-store-icon-512.png`                                                                      |
+| Grafica in primo piano 1024×500    | `android/store/it-IT/feature-graphic-1024x500.png`, `android/store/en-GB/feature-graphic-1024x500.png` |
+| Screenshot telefono 1080×1920 (IT) | `store/screens/it/1-editor.png` … `5-public.png`                                                       |
+| Phone screenshots 1080×1920 (EN)   | `store/screens/en/1-editor.png` … `5-public.png`                                                       |
 
 Gli screenshot vengono dall'app vera con un CV dimostrativo (`php -S` + database di prova):
 `java tools/Screens.java <url app> <cookie della sessione demo> store/screens <utente pubblico>`; la grafica con
@@ -51,7 +55,8 @@ Gli screenshot vengono dall'app vera con un CV dimostrativo (`php -S` + database
 
 ## Sicurezza dei dati (Data safety)
 
-- **Dati raccolti:** nome, email, numero di telefono e gli altri contenuti che l'utente scrive nel CV, foto (facoltativa).
+- **Dati raccolti:** nome, email, numero di telefono e gli altri contenuti che l'utente scrive nel CV, foto
+  (facoltativa).
   Scopo: funzionalità dell'app e gestione dell'account. Non condivisi con terze parti, nessuna pubblicità né analisi.
 - **Crittografia in transito:** sì (HTTPS). **Cancellazione:** sì, dall'app (*Condividi → Account → Elimina account*).
 - Il PDF importato è letto solo sul dispositivo e non viene inviato.

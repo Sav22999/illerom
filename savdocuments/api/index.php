@@ -4,8 +4,8 @@
  *
  * Accounts:     auth.config, auth.me, auth.register, auth.login, auth.google (and the routes of ../identity/identity.php), auth.resend, auth.verify, auth.logout,
  *               auth.password, auth.forgot, auth.reset, auth.prefs, auth.profile, auth.delete
- * Home:         doc.list, folder.create, folder.rename, folder.delete
- * Documents:    doc.create, doc.get, doc.sync, doc.duplicate, doc.move, doc.star, doc.trash, doc.restore, doc.delete, doc.leave
+ * Home:         doc.list, doc.previews, folder.create, folder.rename, folder.delete
+ * Documents:    doc.create, doc.get, doc.sync, doc.duplicate, doc.move, doc.star, doc.trash, doc.restore, doc.delete, doc.empty_trash, doc.leave
  * Sharing:      share.get, share.visibility, share.add, share.role, share.remove, invite.create, invite.accept
  * Comments:     comment.list, comment.add, comment.resolve, comment.delete  (private = personal notes)
  * Versions:     version.list, version.get, version.save, version.restore
@@ -402,6 +402,21 @@ switch ($r) {
         $st->execute([$u['id']]);
         send_json(['ok' => true, 'docs' => $out, 'folders' => array_map(fn($f) => ['id' => (int)$f['id'], 'name' => $f['name']], $st->fetchAll())]);
 
+    case 'doc.previews':
+        // The beginning of the documents that are being looked at in the home (at most 24 at a time)
+        $u = reader();
+        $out = [];
+        foreach (array_slice(array_unique(explode(',', (string)($_GET['ids'] ?? ''))), 0, 24) as $id) {
+            $d = doc_by_pid($id);
+            if (!$d || doc_role($d, $u) === null) continue;
+            if ($d['preview'] === null) { // made before the previews
+                $d['preview'] = doc_preview(doc_data($d));
+                db()->prepare('UPDATE ' . t('documents') . ' SET preview = ? WHERE id = ?')->execute([$d['preview'], $d['id']]);
+            }
+            $out[$id] = json_decode((string)$d['preview'], true);
+        }
+        send_json(['ok' => true, 'previews' => (object)$out]);
+
     case 'folder.create':
         $u = writer();
         $name = s(body(), 'name', 80);
@@ -496,7 +511,7 @@ switch ($r) {
         db()->beginTransaction();
         $n = create_doc($u['id'], clean_title(body()['title'] ?? '') ?: $d['title'], $doc, (int)$d['owner_id'] === (int)$u['id'] && $d['folder_id'] !== null ? (int)$d['folder_id'] : null);
         $doc = copy_images($doc, (int)$d['id'], (int)$n['id'], $u['id']);
-        db()->prepare('UPDATE ' . t('documents') . ' SET doc = ? WHERE id = ?')->execute([json_out($doc), $n['id']]);
+        db()->prepare('UPDATE ' . t('documents') . ' SET doc = ?, preview = ? WHERE id = ?')->execute([json_out($doc), doc_preview($doc), $n['id']]);
         db()->commit();
         send_json(['ok' => true, 'doc' => out_meta($n, 'owner')]);
 
@@ -545,6 +560,13 @@ switch ($r) {
         if (!$d['deleted_at']) fail('not_in_trash', 409);
         db()->prepare('DELETE FROM ' . t('documents') . ' WHERE id = ?')->execute([$d['id']]);
         send_json(['ok' => true]);
+
+    case 'doc.empty_trash':
+        // Everything of the own trash goes away for good, now (with its pictures, comments and versions)
+        $u = writer();
+        $st = db()->prepare('DELETE FROM ' . t('documents') . ' WHERE owner_id = ? AND deleted_at IS NOT NULL');
+        $st->execute([$u['id']]);
+        send_json(['ok' => true, 'deleted' => $st->rowCount()]);
 
     case 'doc.leave':
         // A document of someone else goes away from the own list
@@ -737,7 +759,7 @@ switch ($r) {
         $doc = json_decode($v['doc'], true);
         foreach ($doc['blocks'] as &$bl) $bl['v'] = (int)$bl['v'] + 100000; // never equal to a version some browser knows
         unset($bl);
-        db()->prepare('UPDATE ' . t('documents') . ' SET doc = ?, title = ?, words = ?, rev = rev + 2, updated_at = ?, updated_by = ? WHERE id = ?')->execute([json_out($doc), $v['title'], $v['words'], now_utc(), $u['id'], $d['id']]);
+        db()->prepare('UPDATE ' . t('documents') . ' SET doc = ?, preview = ?, title = ?, words = ?, rev = rev + 2, updated_at = ?, updated_by = ? WHERE id = ?')->execute([json_out($doc), doc_preview($doc), $v['title'], $v['words'], now_utc(), $u['id'], $d['id']]);
         db()->commit();
         send_json(['ok' => true]);
 

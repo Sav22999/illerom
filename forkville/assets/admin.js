@@ -3,7 +3,8 @@
  * prices and rules of the game, and the history of every change. Talks to the admin.* routes.
  * In Italian or English, like the game.
  */
-import {nameIn, getLang, setLang} from './i18n.js';
+import {getLang, nameIn, setLang} from './i18n.js';
+import {icon} from './icons.js';
 
 /** The panel speaks Italian or English (same choice as the game; switch in the header). */
 const LANG = getLang() === 'it' ? 'it' : 'en';
@@ -177,11 +178,10 @@ const EN = {
     "monete": "coins",
     "Disattivare @{u}? Verrà disconnesso subito.": "Disable @{u}? They will be signed out at once.",
     "Eliminare per sempre @{u} e il suo ristorante? Scrivi lo username per confermare.": "Delete @{u} and their restaurant forever? Type the username to confirm."
-    };
+};
 const T = (it) => (LANG === 'en' ? EN[it] ?? it : it);
 const LOCALE = LANG === 'it' ? 'it-IT' : 'en-GB';
 document.documentElement.lang = LANG;
-import {icon} from './icons.js';
 
 const ING_KEYS = ['tomato', 'basil', 'potato', 'onion', 'garlic', 'carrot', 'lemon', 'strawberry', 'pepper', 'mushroom', 'flour', 'cheese', 'egg', 'milk', 'rice', 'fish', 'beef', 'chicken', 'chocolate', 'coffee', 'olive', 'sugar'];
 const ingPic = (k) => h('span.pic', {html: icon('ing', k)});
@@ -211,9 +211,17 @@ function h(tag, attrs, ...kids) {
 const put = (el, ...kids) => el.replaceChildren(...kids.flat().filter(k => k != null && k !== false));
 
 const ERR = {
-    forbidden: T('Accesso riservato agli amministratori.'), unauthenticated: T('Accedi prima al gioco.'), csrf: T('Sessione scaduta: ricarica la pagina.'), not_found: T('Non trovato.'),
-    not_yourself: T('Non puoi farlo sul tuo account.'), bad_value: T('Valore non valido.'), no_restaurant: T('Questo giocatore non ha ancora aperto il ristorante.'),
-    market_empty: T('Il mercato deve vendere almeno un ingrediente.'), name_required: T('Il nome è troppo corto.'), network: T('Nessuna connessione.'), server: T('Errore del server.'),
+    forbidden: T('Accesso riservato agli amministratori.'),
+    unauthenticated: T('Accedi prima al gioco.'),
+    csrf: T('Sessione scaduta: ricarica la pagina.'),
+    not_found: T('Non trovato.'),
+    not_yourself: T('Non puoi farlo sul tuo account.'),
+    bad_value: T('Valore non valido.'),
+    no_restaurant: T('Questo giocatore non ha ancora aperto il ristorante.'),
+    market_empty: T('Il mercato deve vendere almeno un ingrediente.'),
+    name_required: T('Il nome è troppo corto.'),
+    network: T('Nessuna connessione.'),
+    server: T('Errore del server.'),
 };
 
 async function api(route, body = {}) {
@@ -240,7 +248,10 @@ function toast(msg, kind = 'good') {
 
 const fail = (e) => toast((ERR[e.code] || T('Errore: ') + e.code) + (e.field ? ` (${e.field})` : ''), 'bad');
 const fmt = (n) => Number(n ?? 0).toLocaleString(LOCALE);
-const when = (s) => s ? new Date(s.replace(' ', 'T') + 'Z').toLocaleString(LOCALE, {dateStyle: 'short', timeStyle: 'short'}) : '—';
+const when = (s) => s ? new Date(s.replace(' ', 'T') + 'Z').toLocaleString(LOCALE, {
+    dateStyle: 'short',
+    timeStyle: 'short'
+}) : '—';
 
 // ---------------------------------------------------------------- boot
 
@@ -263,7 +274,10 @@ function render() {
     const main = h('main.admin-main');
     put(root,
         h('header.admin-top',
-            h('a.admin-brand', {href: './'}, h('img', {src: 'icons/favicon.svg', alt: ''}), h('b', 'Forkville'), h('span', 'admin')),
+            h('a.admin-brand', {href: './'}, h('img', {
+                src: 'icons/favicon.svg',
+                alt: ''
+            }), h('b', 'Forkville'), h('span', 'admin')),
             h('nav.tabs', TABS.map(([k, label]) => h('button.tab' + (S.tab === k ? '.on' : ''), {onclick: () => ((S.tab = k), render())}, label))),
             h('div.lang-switch', ['it', 'en'].map(l => h('button' + (LANG === l ? '.on' : ''), {onclick: () => (setLang(l), location.reload())}, l.toUpperCase()))),
             h('span.muted', '@' + S.me.username)),
@@ -318,8 +332,14 @@ async function players(main) {
                 h('tbody', d.users.map(u => h('tr', {onclick: () => openUser(u.id, detail)},
                     h('td', badge(u)), h('td', h('b', '@' + u.username), h('div.muted.small', u.name)), h('td.small', u.email),
                     h('td', u.level ?? '—'), h('td', u.coins == null ? '—' : fmt(u.coins)), h('td.small', when(u.lastLogin)))))),
-            pages > 1 && h('div.row', h('button.btn.btn-small', {disabled: S.users.page === 0, onclick: () => (S.users.page--, load())}, '←'),
-                h('span', `${S.users.page + 1} / ${pages}`), h('button.btn.btn-small', {disabled: S.users.page + 1 >= pages, onclick: () => (S.users.page++, load())}, '→')));
+            pages > 1 && h('div.row', h('button.btn.btn-small', {
+                    disabled: S.users.page === 0,
+                    onclick: () => (S.users.page--, load())
+                }, '←'),
+                h('span', `${S.users.page + 1} / ${pages}`), h('button.btn.btn-small', {
+                    disabled: S.users.page + 1 >= pages,
+                    onclick: () => (S.users.page++, load())
+                }, '→')));
     };
     S.reloadList = load; // a change in the detail refreshes the numbers in the list
     load();
@@ -362,15 +382,27 @@ function drawUser(d, box) {
     const pantry = h('div.pantry-grid', ING_KEYS.map(k => h('label.ing', h('span', ingPic(k), nm(k)),
         h('input', {type: 'number', min: 0, max: 100000, 'data-ing': k, value: d.ingredients[k] ?? 0}))));
     const recipes = h('div.recipe-grid', dishKeys().map(k => {
-        const sel = h('select', {onchange: () => call('admin.user.recipe', {dish: k, level: +sel.value}, T('Ricetta aggiornata'))},
-            [0, 1, 2, 3, 4, 5].map(l => h('option', {value: l, selected: (d.recipes[k] || 0) === l}, l ? T('livello ') + l : T('non nota'))));
+        const sel = h('select', {
+                onchange: () => call('admin.user.recipe', {
+                    dish: k,
+                    level: +sel.value
+                }, T('Ricetta aggiornata'))
+            },
+            [0, 1, 2, 3, 4, 5].map(l => h('option', {
+                value: l,
+                selected: (d.recipes[k] || 0) === l
+            }, l ? T('livello ') + l : T('non nota'))));
         return h('label.ing', h('span', nm(k) + (r?.menu.includes(k) ? T(' · nel menù') : '')), sel);
     }));
 
     put(box,
         h('div.detail-head', h('div', h('h2', '@' + u.username), h('div.muted', `${u.name} · ${u.email}`), h('div.row.wrap.small', badge(u),
-            u.google && h('span.tag', 'Google'), u.password && h('span.tag', 'password'), h('span.muted', T('creato ') + when(u.createdAt)))),
-            h('button.icon-btn', {title: T('Chiudi'), html: icon('ui', 'close'), onclick: () => put(box, h('p.muted', T('Scegli un giocatore dalla lista.')))})),
+                u.google && h('span.tag', 'Google'), u.savaccount && h('span.tag', 'SavAccount'), u.password && h('span.tag', 'password'), h('span.muted', T('creato ') + when(u.createdAt)))),
+            h('button.icon-btn', {
+                title: T('Chiudi'),
+                html: icon('ui', 'close'),
+                onclick: () => put(box, h('p.muted', T('Scegli un giocatore dalla lista.')))
+            })),
 
         h('section.block', h('h3', 'Account'), h('div.row.wrap',
             !u.verified && h('button.btn.btn-small', {onclick: () => call('admin.user.update', {verify: true}, T('Email confermata'))}, T('Conferma email')),
@@ -400,8 +432,18 @@ function drawUser(d, box) {
                 h('label.field', h('span', T('Nome del ristorante')), h('div.row', nameIn, h('button.btn.btn-small', {onclick: () => call('admin.user.update', {restaurantName: nameIn.value}, T('Nome salvato'))}, T('Salva'))))),
             h('section.block', h('h3', T('Monete')), h('p.muted.small', T('Un numero positivo aggiunge, uno negativo toglie (il saldo non scende sotto zero).')),
                 h('div.row.wrap', coinsIn, reasonIn,
-                    h('button.btn.btn-small.btn-primary', {onclick: () => +coinsIn.value && call('admin.user.coins', {delta: +coinsIn.value, reason: reasonIn.value}, T('Monete aggiornate'))}, T('Applica'))),
-                h('div.row.wrap', [100, 500, 1000, 5000].map(n => h('button.btn.btn-small.btn-ghost', {onclick: () => call('admin.user.coins', {delta: n, reason: reasonIn.value}, `+${n} ${T('monete')}`)}, '+' + fmt(n))))),
+                    h('button.btn.btn-small.btn-primary', {
+                        onclick: () => +coinsIn.value && call('admin.user.coins', {
+                            delta: +coinsIn.value,
+                            reason: reasonIn.value
+                        }, T('Monete aggiornate'))
+                    }, T('Applica'))),
+                h('div.row.wrap', [100, 500, 1000, 5000].map(n => h('button.btn.btn-small.btn-ghost', {
+                    onclick: () => call('admin.user.coins', {
+                        delta: n,
+                        reason: reasonIn.value
+                    }, `+${n} ${T('monete')}`)
+                }, '+' + fmt(n))))),
             h('section.block', h('h3', T('Esperienza e livello')), h('div.row', xpIn, h('button.btn.btn-small', {onclick: () => call('admin.user.xp', {xp: +xpIn.value}, T('Esperienza aggiornata'))}, T('Imposta'))),
                 h('p.muted.small', T('Il livello segue l’esperienza: livello 2 = 100, 3 = 300, 4 = 600, 5 = 1000…'))),
             h('section.block', h('h3', T('Dispensa')), pantry, h('button.btn.btn-small.btn-primary', {
@@ -428,12 +470,35 @@ const dishKeys = () => DISH_KEYS || [];
 // ---------------------------------------------------------------- catalog (prices and rules)
 
 const CAT_TABS = [['items', T('Arredi')], ['dishes', T('Piatti')], ['crops', T('Orto')], ['market', T('Mercato')], ['staff', T('Staff e ampliamenti')], ['rules', T('Regole')]];
-const ITEM_CAT = {table: T('Tavoli'), chair: T('Sedie'), stove: T('Cucina'), counter: T('Cucina'), kitchen: T('Cucina'), service: T('Servizio'), lounge: T('Relax'), deco: T('Decori'), rug: T('Tappeti'), outdoor: T('Esterno'), restroom: T('Bagno'), partition: T('Muri e separè'), floor: T('Pavimenti'), wall: T('Pareti')};
+const ITEM_CAT = {
+    table: T('Tavoli'),
+    chair: T('Sedie'),
+    stove: T('Cucina'),
+    counter: T('Cucina'),
+    kitchen: T('Cucina'),
+    service: T('Servizio'),
+    lounge: T('Relax'),
+    deco: T('Decori'),
+    rug: T('Tappeti'),
+    outdoor: T('Esterno'),
+    restroom: T('Bagno'),
+    partition: T('Muri e separè'),
+    floor: T('Pavimenti'),
+    wall: T('Pareti')
+};
 const RULE_LABEL = {
-    start_coins: T('Monete iniziali di un nuovo ristorante'), sell_back: T('Rimborso alla vendita di un arredo (0–1, 0,5 = metà prezzo)'),
-    offline_hours: T('Ore massime di guadagno mentre il giocatore è via'), offline_rate: T('Velocità del guadagno da via (0–1 rispetto al gioco live)'),
-    visit_host: T('Monete al ristorante visitato (una volta al giorno per amico)'), visit_base: T('Monete base a chi visita (+5 per livello del ristorante visitato)'),
-    level_reward: T('Monete regalate a ogni livello (× il numero del livello)'), market_limit: T('Pezzi acquistabili al giorno per ingrediente'), market_slots: T('Ingredienti in vendita ogni giorno'), xp_customer: T('Esperienza per cliente servito'), xp_harvest: T('Esperienza per raccolto'), expand_rate: T('Costo degli ampliamenti (monete per casella, cresce con la sala)'),
+    start_coins: T('Monete iniziali di un nuovo ristorante'),
+    sell_back: T('Rimborso alla vendita di un arredo (0–1, 0,5 = metà prezzo)'),
+    offline_hours: T('Ore massime di guadagno mentre il giocatore è via'),
+    offline_rate: T('Velocità del guadagno da via (0–1 rispetto al gioco live)'),
+    visit_host: T('Monete al ristorante visitato (una volta al giorno per amico)'),
+    visit_base: T('Monete base a chi visita (+5 per livello del ristorante visitato)'),
+    level_reward: T('Monete regalate a ogni livello (× il numero del livello)'),
+    market_limit: T('Pezzi acquistabili al giorno per ingrediente'),
+    market_slots: T('Ingredienti in vendita ogni giorno'),
+    xp_customer: T('Esperienza per cliente servito'),
+    xp_harvest: T('Esperienza per raccolto'),
+    expand_rate: T('Costo degli ampliamenti (monete per casella, cresce con la sala)'),
 };
 
 async function catalog(main) {
@@ -460,7 +525,10 @@ function drawCatalog(main) {
     const refreshBar = () => {
         const n = changedCount();
         put(bar, h('span', n ? `${n} modifiche da salvare` : T('Nessuna modifica')),
-            h('button.btn.btn-small.btn-ghost', {disabled: !n, onclick: () => ((S.draft = structuredClone(S.catalog)), drawCatalog(main))}, T('Annulla')),
+            h('button.btn.btn-small.btn-ghost', {
+                disabled: !n,
+                onclick: () => ((S.draft = structuredClone(S.catalog)), drawCatalog(main))
+            }, T('Annulla')),
             h('button.btn.btn-small.btn-primary', {disabled: !n, onclick: save}, T('Salva')));
     };
     const save = async () => {
@@ -479,7 +547,12 @@ function drawCatalog(main) {
     /** A number input bound to draft[group][key].value[field], highlighted when it differs from the default. */
     const num = (group, key, field, step = 1) => {
         const row = S.draft[group][key];
-        const input = h('input', {type: 'number', step, value: row.value[field], title: T('Predefinito: ') + row.default[field]});
+        const input = h('input', {
+            type: 'number',
+            step,
+            value: row.value[field],
+            title: T('Predefinito: ') + row.default[field]
+        });
         const mark = () => input.classList.toggle('changed', +input.value !== +row.default[field]);
         input.addEventListener('input', () => {
             row.value[field] = input.value === '' ? row.default[field] : +input.value;
@@ -530,7 +603,13 @@ function drawCatalog(main) {
                 table([T('Ruolo'), T('Costo del primo'), T('Aumento per ogni altro'), ''], Object.keys(S.draft.staff).map(k => h('tr', h('td', h('b', nm(k))), h('td', num('staff', k, 'base')), h('td', num('staff', k, 'step')), h('td', reset('staff', k)))))),
         ],
         rules: () => h('section.panel', table([T('Regola'), T('Valore'), T('Predefinito')], Object.entries(S.draft.rules).map(([k, r]) => {
-            const input = h('input', {type: 'number', step: Number.isInteger(r.default) ? 1 : 0.05, min: r.min, max: r.max, value: r.value});
+            const input = h('input', {
+                type: 'number',
+                step: Number.isInteger(r.default) ? 1 : 0.05,
+                min: r.min,
+                max: r.max,
+                value: r.value
+            });
             const mark = () => input.classList.toggle('changed', +input.value !== +r.default);
             input.addEventListener('input', () => {
                 r.value = input.value === '' ? r.default : +input.value;
@@ -554,11 +633,15 @@ async function log(main, page = 0) {
     const d = await api('admin.log', {page}).catch(e => (fail(e), null));
     if (!d) return;
     put(main, h('section.panel', h('h2', T('Registro delle modifiche')), logTable(d.log),
-        h('div.row', h('button.btn.btn-small', {disabled: page === 0, onclick: () => log(main, page - 1)}, '←'), h('span', `${T('pagina')} ${page + 1}`),
+        h('div.row', h('button.btn.btn-small', {
+                disabled: page === 0,
+                onclick: () => log(main, page - 1)
+            }, '←'), h('span', `${T('pagina')} ${page + 1}`),
             h('button.btn.btn-small', {disabled: d.log.length < 50, onclick: () => log(main, page + 1)}, '→'))));
 }
 
 // The dish list comes from the catalog (same order as the game)
 fetch('api/index.php?r=game.catalog', {credentials: 'same-origin'}).then(r => r.json()).then(d => {
     DISH_KEYS = Object.keys(d.catalog?.dishes || {});
-}).catch(() => {}).finally(boot);
+}).catch(() => {
+}).finally(boot);

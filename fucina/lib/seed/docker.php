@@ -8,10 +8,13 @@ if (!function_exists('fig_docker_vm')) {
     {
         $cols = '';
         foreach (['A', 'B', 'C'] as $i => $a) {
-            $x = 20 + $i * 96; $cx = $x + 44; $x2 = 336 + $i * 96; $cx2 = $x2 + 44;
+            $x = 20 + $i * 96;
+            $cx = $x + 44;
+            $x2 = 336 + $i * 96;
+            $cx2 = $x2 + 44;
             $cols .= "<rect x=\"$x\" y=\"58\" width=\"88\" height=\"50\" rx=\"8\" fill=\"#DCEBFF\" stroke=\"#2F8CF0\" stroke-width=\"2\"/><text x=\"$cx\" y=\"80\" text-anchor=\"middle\" font-weight=\"700\">App $a</text><text x=\"$cx\" y=\"99\" text-anchor=\"middle\" font-size=\"13\">{$t[2]}</text>"
-                   . "<rect x=\"$x\" y=\"114\" width=\"88\" height=\"54\" rx=\"8\" fill=\"#FFE3EE\" stroke=\"#F03E82\" stroke-width=\"2\"/><text x=\"$cx\" y=\"146\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"700\">{$t[3]}</text>"
-                   . "<rect x=\"$x2\" y=\"118\" width=\"88\" height=\"50\" rx=\"8\" fill=\"#DCEBFF\" stroke=\"#2F8CF0\" stroke-width=\"2\"/><text x=\"$cx2\" y=\"140\" text-anchor=\"middle\" font-weight=\"700\">App $a</text><text x=\"$cx2\" y=\"159\" text-anchor=\"middle\" font-size=\"13\">{$t[2]}</text>";
+                . "<rect x=\"$x\" y=\"114\" width=\"88\" height=\"54\" rx=\"8\" fill=\"#FFE3EE\" stroke=\"#F03E82\" stroke-width=\"2\"/><text x=\"$cx\" y=\"146\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"700\">{$t[3]}</text>"
+                . "<rect x=\"$x2\" y=\"118\" width=\"88\" height=\"50\" rx=\"8\" fill=\"#DCEBFF\" stroke=\"#2F8CF0\" stroke-width=\"2\"/><text x=\"$cx2\" y=\"140\" text-anchor=\"middle\" font-weight=\"700\">App $a</text><text x=\"$cx2\" y=\"159\" text-anchor=\"middle\" font-size=\"13\">{$t[2]}</text>";
         }
         return <<<SVG
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
@@ -38,7 +41,9 @@ if (!function_exists('fig_docker_layers')) {
     {
         $rows = '';
         foreach (['FROM node:22-slim', 'WORKDIR /app', 'COPY package*.json ./', 'RUN npm ci --omit=dev', 'COPY . .', 'CMD ["node", "server.js"]'] as $i => $ins) {
-            $y = 246 - $i * 40; $ty = $y + 22; $top = $i >= 4;
+            $y = 246 - $i * 40;
+            $ty = $y + 22;
+            $top = $i >= 4;
             [$f, $st] = $top ? ['#FFE8D6', '#E8590C'] : ['#D5F6EA', '#0B7F5C'];
             $cls = $top ? ' class="re"' : '';
             $rows .= "<g$cls><rect x=\"16\" y=\"$y\" width=\"330\" height=\"34\" rx=\"8\" fill=\"$f\" stroke=\"$st\" stroke-width=\"2\"/><text x=\"32\" y=\"$ty\" font-family=\"ui-monospace, Menlo, monospace\" font-size=\"14\">$ins</text></g>";

@@ -13,29 +13,37 @@ if (!function_exists('fig_api_seq')) {
         foreach ($actors as $i => $a) {
             $x = $xs[$i];
             $out .= "<line x1=\"$x\" y1=\"50\" x2=\"$x\" y2=\"" . ($h - 8) . "\" stroke=\"#8A87B0\" stroke-width=\"2\" stroke-dasharray=\"5 5\"/>"
-                  . "<rect x=\"" . ($x - 66) . "\" y=\"12\" width=\"132\" height=\"38\" rx=\"10\" fill=\"#ECE6FF\" stroke=\"#7048E8\" stroke-width=\"2\"/><text x=\"$x\" y=\"36\" text-anchor=\"middle\" font-weight=\"700\">$a</text>";
+                . "<rect x=\"" . ($x - 66) . "\" y=\"12\" width=\"132\" height=\"38\" rx=\"10\" fill=\"#ECE6FF\" stroke=\"#7048E8\" stroke-width=\"2\"/><text x=\"$x\" y=\"36\" text-anchor=\"middle\" font-weight=\"700\">$a</text>";
         }
         foreach ($msgs as $k => [$f, $t, $label, $kind]) {
-            $y = 70 + $k * $step + 22; $x1 = $xs[$f]; $x2 = $xs[$t];
+            $y = 70 + $k * $step + 22;
+            $x1 = $xs[$f];
+            $x2 = $xs[$t];
             if ($kind === 'gap') {
                 $out .= "<line x1=\"16\" y1=\"" . ($y - 4) . "\" x2=\"624\" y2=\"" . ($y - 4) . "\" stroke=\"#D9D7E8\" stroke-width=\"2\"/><rect x=\"250\" y=\"" . ($y - 16) . "\" width=\"140\" height=\"24\" rx=\"12\" fill=\"#FFFFFF\" stroke=\"#D9D7E8\" stroke-width=\"2\"/><text x=\"320\" y=\"" . $y . "\" text-anchor=\"middle\" font-size=\"13\" font-style=\"italic\">$label</text>";
                 continue;
             }
             if ($kind === 'note' || $kind === 'noteL') {
-                $w = 12 + (int) ceil(mb_strlen(strip_tags($label)) * 6.9);
+                $w = 12 + (int)ceil(mb_strlen(strip_tags($label)) * 6.9);
                 $nx = $kind === 'note' ? $x1 + 10 : $x1 - 10 - $w;
                 $out .= "<rect x=\"$nx\" y=\"" . ($y - 20) . "\" width=\"$w\" height=\"28\" rx=\"8\" fill=\"#FFF3EA\" stroke=\"#E8590C\" stroke-width=\"2\"/><text x=\"" . ($nx + 8) . "\" y=\"" . ($y - 1) . "\" font-size=\"13\">$label</text>";
                 continue;
             }
-            [$col, $dash, $mk] = match ($kind) { 'back' => ['#1E1C52', ' stroke-dasharray="6 4"', 'a'], 'ok' => ['#0B7F5C', ' stroke-dasharray="6 4"', 'g'], 'lost' => ['#F03E82', ' stroke-dasharray="6 4"', ''], default => ['#1E1C52', '', 'a'] };
-            $mid = ($x1 + $x2) / 2; $dir = $x2 > $x1 ? 1 : -1;
+            [$col, $dash, $mk] = match ($kind) {
+                'back' => ['#1E1C52', ' stroke-dasharray="6 4"', 'a'],
+                'ok' => ['#0B7F5C', ' stroke-dasharray="6 4"', 'g'],
+                'lost' => ['#F03E82', ' stroke-dasharray="6 4"', ''],
+                default => ['#1E1C52', '', 'a']
+            };
+            $mid = ($x1 + $x2) / 2;
+            $dir = $x2 > $x1 ? 1 : -1;
             $end = $kind === 'lost' ? $mid : $x2 - $dir * 4;
             $marker = $mk ? " marker-end=\"url(#$mk)\"" : '';
             $out .= "<path d=\"M" . ($x1 + $dir * 2) . ",$y H$end\" stroke=\"$col\" stroke-width=\"2\" fill=\"none\"$dash$marker/>";
             if ($kind === 'lost') $out .= "<path d=\"M" . ($mid - 8) . "," . ($y - 8) . " L" . ($mid + 8) . "," . ($y + 8) . " M" . ($mid + 8) . "," . ($y - 8) . " L" . ($mid - 8) . "," . ($y + 8) . "\" stroke=\"#F03E82\" stroke-width=\"3\"/>";
             $tc = $kind === 'ok' ? '#0B7F5C' : ($kind === 'lost' ? '#B0205A' : '#1E1C52');
             $lx = $kind === 'lost' ? ($x1 + $mid) / 2 : $mid;
-            $lw = 10 + (int) ceil(mb_strlen(html_entity_decode(strip_tags($label))) * 6.6);
+            $lw = 10 + (int)ceil(mb_strlen(html_entity_decode(strip_tags($label))) * 6.6);
             $out .= "<rect x=\"" . ($lx - $lw / 2) . "\" y=\"" . ($y - 21) . "\" width=\"$lw\" height=\"18\" rx=\"4\" fill=\"#FFFFFF\" opacity=\"0.9\"/>";
             $out .= "<text x=\"$lx\" y=\"" . ($y - 7) . "\" text-anchor=\"middle\" font-size=\"13\" fill=\"$tc\">$label</text>";
         }
@@ -85,7 +93,8 @@ if (!function_exists('fig_api_graphql')) {
     function fig_api_graphql(array $t): string
     {
         $chips = function (int $x, int $y, array $f): string {
-            $o = ''; $cx = $x;
+            $o = '';
+            $cx = $x;
             foreach ($f as [$name, $used]) {
                 $w = 16 + strlen($name) * 8;
                 $o .= $used

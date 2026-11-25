@@ -15,12 +15,19 @@ if (!function_exists('fig_algo_bigo')) {
         ];
         $out = '';
         foreach ($curves as [$label, $f, $col, $dash]) {
-            $pts = []; $last = null;
-            for ($n = 1; $n <= 32; $n += 0.25) { $v = $f($n); $pts[] = round($fx($n), 1) . ',' . round($fy($v), 1); $last = [$n, $v]; if ($v > 70) break; }
+            $pts = [];
+            $last = null;
+            for ($n = 1; $n <= 32; $n += 0.25) {
+                $v = $f($n);
+                $pts[] = round($fx($n), 1) . ',' . round($fy($v), 1);
+                $last = [$n, $v];
+                if ($v > 70) break;
+            }
             $out .= "<polyline points=\"" . implode(' ', $pts) . "\" fill=\"none\" stroke=\"$col\" stroke-width=\"3\"$dash clip-path=\"url(#c)\"/>";
             [$n, $v] = $last;
             $end = $label === 'O(2ⁿ)';
-            $lx = $v > 64 ? round($fx($n)) + ($end ? -6 : 6) : 528; $ly = $v > 64 ? 46 : round($fy($v)) + 5;
+            $lx = $v > 64 ? round($fx($n)) + ($end ? -6 : 6) : 528;
+            $ly = $v > 64 ? 46 : round($fy($v)) + 5;
             $out .= "<text x=\"$lx\" y=\"$ly\" font-size=\"13\" font-weight=\"700\" fill=\"$col\"" . ($end ? ' text-anchor="end"' : '') . ">$label</text>";
         }
         return <<<SVG
@@ -101,22 +108,32 @@ if (!function_exists('fig_algo_bubble')) {
     function fig_algo_bubble(): string
     {
         $vals = [5, 1, 4, 2, 3];
-        $order = [0, 1, 2, 3, 4]; $frames = [$order]; $a = $vals;
+        $order = [0, 1, 2, 3, 4];
+        $frames = [$order];
+        $a = $vals;
         for ($i = 0; $i < 5; $i++) for ($j = 0; $j < 4 - $i; $j++) if ($a[$j] > $a[$j + 1]) {
-            [$a[$j], $a[$j + 1]] = [$a[$j + 1], $a[$j]]; [$order[$j], $order[$j + 1]] = [$order[$j + 1], $order[$j]]; $frames[] = $order;
+            [$a[$j], $a[$j + 1]] = [$a[$j + 1], $a[$j]];
+            [$order[$j], $order[$j + 1]] = [$order[$j + 1], $order[$j]];
+            $frames[] = $order;
         }
-        $n = count($frames); $total = $n + 2; $css = ''; $bars = '';
+        $n = count($frames);
+        $total = $n + 2;
+        $css = '';
+        $bars = '';
         foreach ($vals as $b => $v) {
             $kf = '';
             foreach ($frames as $k => $fr) {
                 $dx = (array_search($b, $fr) - $b) * 100;
-                $p1 = round($k / $total * 100, 1); $p2 = round(($k + 0.6) / $total * 100, 1);
+                $p1 = round($k / $total * 100, 1);
+                $p2 = round(($k + 0.6) / $total * 100, 1);
                 $kf .= "{$p1}%,{$p2}%{transform:translateX({$dx}px)}";
             }
             $final = (array_search($b, end($frames)) - $b) * 100;
             $kf .= "100%{transform:translateX({$final}px)}";
             $css .= ".b$b{transform:translateX({$final}px);animation:k$b {$total}s ease-in-out infinite}@keyframes k$b{0%{transform:translateX(0)}$kf}";
-            $h = $v * 44; $x = 90 + $b * 100; $y = 250 - $h;
+            $h = $v * 44;
+            $x = 90 + $b * 100;
+            $y = 250 - $h;
             [$f, $s] = [['#FFE8D6', '#E8590C'], ['#DCEBFF', '#2F8CF0'], ['#D5F6EA', '#0B7F5C'], ['#ECE6FF', '#7048E8'], ['#FFE3EE', '#F03E82']][$v - 1];
             $bars .= "<g class=\"b$b\"><rect x=\"$x\" y=\"$y\" width=\"60\" height=\"$h\" rx=\"8\" fill=\"$f\" stroke=\"$s\" stroke-width=\"2\"/><text x=\"" . ($x + 30) . "\" y=\"" . ($y - 8) . "\" text-anchor=\"middle\" font-weight=\"700\">$v</text></g>";
         }
@@ -167,9 +184,13 @@ if (!function_exists('fig_algo_bst')) {
         };
         $l = fn($x1, $y1, $x2, $y2, $on) => "<line x1=\"$x1\" y1=\"$y1\" x2=\"$x2\" y2=\"$y2\" stroke=\"" . ($on ? '#E8590C' : '#8A87B0') . "\" stroke-width=\"" . ($on ? 3 : 2) . "\"/>";
         $left = $l(160, 74, 100, 136, 1) . $l(160, 74, 220, 136, 0) . $l(100, 156, 60, 216, 0) . $l(100, 156, 140, 216, 1)
-              . $node(160, 64, 50, 1) . $node(100, 146, 30, 1) . $node(220, 146, 70, 0) . $node(60, 226, 20, 0) . $node(140, 226, 40, 1);
+            . $node(160, 64, 50, 1) . $node(100, 146, 30, 1) . $node(220, 146, 70, 0) . $node(60, 226, 20, 0) . $node(140, 226, 40, 1);
         $right = '';
-        foreach ([20, 30, 40, 50, 70] as $i => $v) { $x = 380 + $i * 52; $y = 64 + $i * 44; if ($i) $right .= $l($x - 52 + 14, $y - 44 + 14, $x - 14, $y - 14, 0); }
+        foreach ([20, 30, 40, 50, 70] as $i => $v) {
+            $x = 380 + $i * 52;
+            $y = 64 + $i * 44;
+            if ($i) $right .= $l($x - 52 + 14, $y - 44 + 14, $x - 14, $y - 14, 0);
+        }
         foreach ([20, 30, 40, 50, 70] as $i => $v) $right .= $node(380 + $i * 52, 64 + $i * 44, $v, 0);
         return <<<SVG
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 310" font-family="ui-monospace, Menlo, monospace" font-size="14" fill="#1E1C52">
@@ -194,7 +215,8 @@ if (!function_exists('fig_algo_heap')) {
         $out = '';
         foreach ([[0, 1], [0, 2], [1, 3], [1, 4], [2, 5]] as [$a, $b]) $out .= "<line x1=\"{$pos[$a][0]}\" y1=\"" . ($pos[$a][1] + 20) . "\" x2=\"{$pos[$b][0]}\" y2=\"" . ($pos[$b][1] - 20) . "\" stroke=\"#8A87B0\" stroke-width=\"2\"/>";
         foreach ($vals as $i => $v) {
-            [$x, $y] = $pos[$i]; [$f, $s] = $i === 0 ? ['#FFE8D6', '#E8590C'] : ['#DCEBFF', '#2F8CF0'];
+            [$x, $y] = $pos[$i];
+            [$f, $s] = $i === 0 ? ['#FFE8D6', '#E8590C'] : ['#DCEBFF', '#2F8CF0'];
             $out .= "<circle cx=\"$x\" cy=\"$y\" r=\"20\" fill=\"$f\" stroke=\"$s\" stroke-width=\"2\"/><text x=\"$x\" y=\"" . ($y + 5) . "\" text-anchor=\"middle\" font-weight=\"700\">$v</text><text x=\"" . ($x + 24) . "\" y=\"" . ($y - 14) . "\" font-size=\"13\" fill=\"#6E6B96\">$i</text>";
             $cx = 330 + $i * 48;
             $out .= "<rect x=\"$cx\" y=\"110\" width=\"44\" height=\"40\" rx=\"7\" fill=\"$f\" stroke=\"$s\" stroke-width=\"2\"/><text x=\"" . ($cx + 22) . "\" y=\"136\" text-anchor=\"middle\" font-weight=\"700\">$v</text><text x=\"" . ($cx + 22) . "\" y=\"170\" text-anchor=\"middle\" font-size=\"13\" fill=\"#6E6B96\">$i</text>";
@@ -214,11 +236,17 @@ SVG;
 if (!function_exists('fig_algo_window')) {
     function fig_algo_window(string $sum, string $best): string
     {
-        $vals = [2, 1, 5, 1, 3, 2]; $cells = '';
-        foreach ($vals as $i => $v) { $x = 110 + $i * 72; $cells .= "<rect x=\"$x\" y=\"90\" width=\"62\" height=\"56\" rx=\"10\" fill=\"#FFFFFF\" stroke=\"#8A87B0\" stroke-width=\"2\"/><text x=\"" . ($x + 31) . "\" y=\"125\" text-anchor=\"middle\" font-size=\"18\" font-weight=\"700\">$v</text>"; }
-        $sums = [8, 7, 9, 6]; $labels = '';
+        $vals = [2, 1, 5, 1, 3, 2];
+        $cells = '';
+        foreach ($vals as $i => $v) {
+            $x = 110 + $i * 72;
+            $cells .= "<rect x=\"$x\" y=\"90\" width=\"62\" height=\"56\" rx=\"10\" fill=\"#FFFFFF\" stroke=\"#8A87B0\" stroke-width=\"2\"/><text x=\"" . ($x + 31) . "\" y=\"125\" text-anchor=\"middle\" font-size=\"18\" font-weight=\"700\">$v</text>";
+        }
+        $sums = [8, 7, 9, 6];
+        $labels = '';
         foreach ($sums as $k => $s) {
-            $cls = "s$k"; $x = 104 + $k * 72 + 105;
+            $cls = "s$k";
+            $x = 104 + $k * 72 + 105;
             $labels .= "<text class=\"$cls\" x=\"$x\" y=\"190\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"15\" font-weight=\"700\"" . ($s === 9 ? ' fill="#0B7F5C"' : '') . ">$sum = $s" . ($s === 9 ? " · $best" : '') . "</text>";
         }
         return <<<SVG

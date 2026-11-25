@@ -52,7 +52,7 @@ function admin_user_row(array $u): array
     return [
         'id' => (int)$u['id'], 'username' => $u['username'], 'name' => $u['name'], 'email' => $u['email'],
         'verified' => !empty($u['email_verified_at']), 'status' => $u['status'], 'admin' => (int)$u['role'] >= ROLE_ADMIN,
-        'google' => !empty($u['google_sub']), 'password' => ($u['password_hash'] ?? '') !== '',
+        'google' => !empty($u['google_sub']), 'savaccount' => !empty($u['sav_sub']), 'password' => ($u['password_hash'] ?? '') !== '',
         'createdAt' => $u['created_at'], 'lastLogin' => $u['last_login_at'],
         'level' => isset($u['level']) ? (int)$u['level'] : null, 'coins' => isset($u['coins']) ? (int)$u['coins'] : null,
         'popularity' => isset($u['popularity']) ? (int)$u['popularity'] : null, 'lastSeen' => $u['last_seen_at'] ?? null,

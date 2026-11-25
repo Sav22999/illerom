@@ -3,21 +3,32 @@
  * the HUD over the 3D world, build mode, menu and recipes, garden, market, staff, friends, visits,
  * rankings and the account panel.
  */
-import {World} from './scene.js';
-import {Sim, dishIcon, isNight, hourMood} from './sim.js';
+import {weatherFor, World} from './scene.js';
+import {dishIcon, hourMood, isNight, Sim} from './sim.js';
 import {Editor} from './editor.js';
 import {swatch} from './models.js';
-import {t, n, errText, getLang, setLang} from './i18n.js';
+import {errText, getLang, n, setLang, t} from './i18n.js';
 import {icon as svgIcon} from './icons.js';
-import {thumbFor, portrait, doorThumb} from './thumbs.js';
-import {weatherFor} from './scene.js';
+import {doorThumb, portrait, thumbFor} from './thumbs.js';
 import {holidayAt} from './town.js';
-import {start as startAudio, sfx, setAmbience, audioPrefs, setAudioPrefs} from './audio.js';
+import {audioPrefs, setAmbience, setAudioPrefs, sfx, start as startAudio} from './audio.js';
 
 /** An SVG picture as an element (never emoji). */
 const ic = (group, key, cls = 'pic') => h('span.' + cls, {html: svgIcon(group, key)});
 
-const S = {user: null, csrf: '', config: null, catalog: null, game: null, mode: 'home', visit: null, world: null, sim: null, editor: null, sheet: null};
+const S = {
+    user: null,
+    csrf: '',
+    config: null,
+    catalog: null,
+    game: null,
+    mode: 'home',
+    visit: null,
+    world: null,
+    sim: null,
+    editor: null,
+    sheet: null
+};
 const app = document.getElementById('app');
 
 // ---------------------------------------------------------------- helpers
@@ -61,7 +72,8 @@ let channel = null;
 try {
     channel = new BroadcastChannel('forkville');
     channel.onmessage = (e) => e.data?.type === 'claim' && e.data.id !== INSTANCE && S.game && elsewhere();
-} catch (e) { /* old browser: the server check is enough */ }
+} catch (e) { /* old browser: the server check is enough */
+}
 
 /** The game was opened in another tab or device: this copy stops and offers to take over. */
 function elsewhere() {
@@ -70,7 +82,8 @@ function elsewhere() {
     try {
         S.sim?.stop();
         S.editor?.active && S.editor.end();
-    } catch (e) { /* stopping anyway */ }
+    } catch (e) { /* stopping anyway */
+    }
     document.querySelector('.modal-bg')?.remove();
     const el = h('div.elsewhere', h('div.modal', h('h2', t('elsewhere_title')), h('p', t('elsewhere_body')),
         h('button.btn.btn-primary', {style: 'width:100%', onclick: () => location.reload()}, t('play_here'))));
@@ -78,7 +91,11 @@ function elsewhere() {
 }
 
 async function api(route, body) {
-    const opts = {method: body === undefined ? 'GET' : 'POST', credentials: 'same-origin', headers: {'X-Instance': INSTANCE}};
+    const opts = {
+        method: body === undefined ? 'GET' : 'POST',
+        credentials: 'same-origin',
+        headers: {'X-Instance': INSTANCE}
+    };
     if (body !== undefined) {
         opts.headers['Content-Type'] = 'application/json';
         if (S.csrf) opts.headers['X-CSRF-Token'] = S.csrf;
@@ -136,7 +153,11 @@ const LOGO = `<svg aria-hidden="true" viewBox="0 0 64 64"><defs><linearGradient 
 
 function credit() {
     return h('div.credit-block',
-        h('a.credit', {href: 'https://www.saveriomorelli.com/', target: '_blank', rel: 'noopener'}, h('span', t('credit_by')), h('span.credit-name', 'Saverio Morelli')),
+        h('a.credit', {
+            href: 'https://www.saveriomorelli.com/',
+            target: '_blank',
+            rel: 'noopener'
+        }, h('span', t('credit_by')), h('span.credit-name', 'Saverio Morelli')),
         h('span.credit-ai', t('credit_ai')));
 }
 
@@ -144,8 +165,15 @@ function credit() {
 
 // Google and SavAccount: joining an account that already exists, new accounts, ways of signing in (../identity/)
 if (window.Identity) Identity.setup({
-    name: 'Forkville', lang: getLang, accent: '#B5472F', google: (slot, cb) => S.config.googleClientId && mountGoogle(slot, cb),
-    username: {it: '3–20 lettere, numeri o _. È l’unica cosa che vedono gli altri giocatori.', en: '3–20 letters, numbers or _. It is the only thing other players see.'}, body: () => ({lang: getLang()}),
+    name: 'Forkville',
+    lang: getLang,
+    accent: '#B5472F',
+    google: (slot, cb) => S.config.googleClientId && mountGoogle(slot, cb),
+    username: {
+        it: '3–20 lettere, numeri o _. È l’unica cosa che vedono gli altri giocatori.',
+        en: '3–20 letters, numbers or _. It is the only thing other players see.'
+    },
+    body: () => ({lang: getLang()}),
 });
 
 async function boot() {
@@ -174,13 +202,31 @@ function route() {
 
 function authScreen(mode) {
     const err = h('p.form-error');
-    const field = (name, label, type = 'text', extra = {}) => h('label.field', h('span', label), h('input', {name, type, required: true, ...extra}));
+    const field = (name, label, type = 'text', extra = {}) => h('label.field', h('span', label), h('input', {
+        name,
+        type,
+        required: true, ...extra
+    }));
     const form = h('form.auth-form', {novalidate: true},
         mode === 'signup' && field('name', t('name'), 'text', {autocomplete: 'name', maxlength: 80}),
-        mode === 'signup' && h('label.field', h('span', t('username')), h('input', {name: 'username', required: true, autocomplete: 'username', maxlength: 20, pattern: '[A-Za-z0-9_]{3,20}'}), h('small', t('username_hint'))),
+        mode === 'signup' && h('label.field', h('span', t('username')), h('input', {
+            name: 'username',
+            required: true,
+            autocomplete: 'username',
+            maxlength: 20,
+            pattern: '[A-Za-z0-9_]{3,20}'
+        }), h('small', t('username_hint'))),
         field('email', t('email'), 'email', {autocomplete: 'email'}),
-        h('label.field', h('span', t('password')), h('input', {name: 'password', type: 'password', required: true, autocomplete: mode === 'signup' ? 'new-password' : 'current-password'}), mode === 'signup' && h('small', t('password_hint'))),
-        mode === 'signup' && h('label.check', h('input', {type: 'checkbox', name: 'privacy'}), h('span', {html: t('privacy_accept')})),
+        h('label.field', h('span', t('password')), h('input', {
+            name: 'password',
+            type: 'password',
+            required: true,
+            autocomplete: mode === 'signup' ? 'new-password' : 'current-password'
+        }), mode === 'signup' && h('small', t('password_hint'))),
+        mode === 'signup' && h('label.check', h('input', {
+            type: 'checkbox',
+            name: 'privacy'
+        }), h('span', {html: t('privacy_accept')})),
         err,
         h('button.btn.btn-primary.btn-wide', {type: 'submit'}, mode === 'signup' ? t('signup') : t('signin')));
     form.addEventListener('submit', async (e) => {
@@ -191,7 +237,11 @@ function authScreen(mode) {
         err.textContent = '';
         try {
             const body = {email: f.get('email'), password: f.get('password'), lang: getLang()};
-            if (mode === 'signup') Object.assign(body, {name: f.get('name'), username: f.get('username'), acceptPrivacy: !!f.get('privacy')});
+            if (mode === 'signup') Object.assign(body, {
+                name: f.get('name'),
+                username: f.get('username'),
+                acceptPrivacy: !!f.get('privacy')
+            });
             const d = await api(mode === 'signup' ? 'auth.register' : 'auth.login', body);
             // Signing up never signs in: the link in the email does (the answer is the same for a known address)
             if (d.checkEmail) return checkEmailScreen(body.email);
@@ -208,15 +258,24 @@ function authScreen(mode) {
         langSwitch(() => authScreen(mode)),
         h('div.auth-hero', h('div.logo-big', {html: LOGO}), h('h1', 'Forkville'), h('p.tagline', t('tagline'))),
         h('div.auth-card',
-            h('div.tabs', h('button.tab' + (mode === 'signup' ? '.on' : ''), {type: 'button', onclick: () => authScreen('signup')}, t('signup')),
-                h('button.tab' + (mode === 'signin' ? '.on' : ''), {type: 'button', onclick: () => authScreen('signin')}, t('signin'))),
+            h('div.tabs', h('button.tab' + (mode === 'signup' ? '.on' : ''), {
+                    type: 'button',
+                    onclick: () => authScreen('signup')
+                }, t('signup')),
+                h('button.tab' + (mode === 'signin' ? '.on' : ''), {
+                    type: 'button',
+                    onclick: () => authScreen('signin')
+                }, t('signin'))),
             google, sav, S.config.googleClientId || sav ? h('div.or', h('span', t('or'))) : null, form),
         credit()));
     if (S.config.googleClientId) mountGoogle(google);
 }
 
 function langSwitch(rerender) {
-    return h('div.lang-switch', ['it', 'en'].map(l => h('button' + (getLang() === l ? '.on' : ''), {type: 'button', onclick: () => (setLang(l), rerender())}, l.toUpperCase())));
+    return h('div.lang-switch', ['it', 'en'].map(l => h('button' + (getLang() === l ? '.on' : ''), {
+        type: 'button',
+        onclick: () => (setLang(l), rerender())
+    }, l.toUpperCase())));
 }
 
 // ---------------------------------------------------------------- the Android app (android/: a WebView, see MainActivity)
@@ -335,7 +394,14 @@ function mountGoogle(slot, done = googleSignIn) {
     const hold = googleHold(slot, t('continue_google'), false, 300);
     loadGis().then((g) => {
         g.accounts.id.initialize({client_id: S.config.googleClientId, callback: (r) => done(r.credential)});
-        hold.swap((host) => g.accounts.id.renderButton(host, {theme: 'outline', size: 'large', shape: 'pill', text: 'continue_with', width: 300, locale: getLang()}));
+        hold.swap((host) => g.accounts.id.renderButton(host, {
+            theme: 'outline',
+            size: 'large',
+            shape: 'pill',
+            text: 'continue_with',
+            width: 300,
+            locale: getLang()
+        }));
     }, () => put(slot, h('p.note', t('google_unavailable'))));
 }
 
@@ -355,14 +421,26 @@ async function googleSignIn(credential, extra = {}) {
 function googleFinish(credential) {
     const err = h('p.form-error');
     const form = h('form.auth-form',
-        h('label.field', h('span', t('username')), h('input', {name: 'username', required: true, maxlength: 20}), h('small', t('username_hint'))),
+        h('label.field', h('span', t('username')), h('input', {
+            name: 'username',
+            required: true,
+            maxlength: 20
+        }), h('small', t('username_hint'))),
         h('label.check', h('input', {type: 'checkbox', name: 'privacy'}), h('span', {html: t('privacy_accept')})), err,
-        h('div.row', h('button.btn', {type: 'button', onclick: closeModal}, t('cancel')), h('button.btn.btn-primary', {type: 'submit'}, t('continue'))));
+        h('div.row', h('button.btn', {
+            type: 'button',
+            onclick: closeModal
+        }, t('cancel')), h('button.btn.btn-primary', {type: 'submit'}, t('continue'))));
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const f = new FormData(form);
         try {
-            const d = await api('auth.google', {credential, username: f.get('username'), acceptPrivacy: !!f.get('privacy'), lang: getLang()});
+            const d = await api('auth.google', {
+                credential,
+                username: f.get('username'),
+                acceptPrivacy: !!f.get('privacy'),
+                lang: getLang()
+            });
             S.user = d.user;
             closeModal();
             route();
@@ -438,12 +516,19 @@ function verifyLinkScreen(token) {
     put(app, h('main.auth', h('div.auth-card.verify', h('div.logo-big', {html: LOGO}), h('h1', t('verify_link_title')), h('p', t('verify_link_body')), btn, msg)));
 }
 
-const escapeHtml = (s) => String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+const escapeHtml = (s) => String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+}[c]));
 
 async function logout() {
     try {
         await api('auth.logout', {});
-    } catch (e) { /* signed out anyway */ }
+    } catch (e) { /* signed out anyway */
+    }
     location.href = location.pathname;
 }
 
@@ -480,11 +565,22 @@ async function startGame() {
         renderClock();
         renderInfo();
     };
-    S.editor = new Editor(S.world, S.catalog, {changed: renderBuild, selected: renderSelection, toast: (k) => toast(t(k), 'bad'), coins: () => S.game.restaurant.coins, name: n, text: t, placed: () => sfx.pop?.(), moveDoor: (x) => act('game.door', {x}, {done: () => {
-        S.editor.end();
-        enterBuild(buildTab);
-        toast(t('door_moved'), 'good');
-    }})});
+    S.editor = new Editor(S.world, S.catalog, {
+        changed: renderBuild,
+        selected: renderSelection,
+        toast: (k) => toast(t(k), 'bad'),
+        coins: () => S.game.restaurant.coins,
+        name: n,
+        text: t,
+        placed: () => sfx.pop?.(),
+        moveDoor: (x) => act('game.door', {x}, {
+            done: () => {
+                S.editor.end();
+                enterBuild(buildTab);
+                toast(t('door_moved'), 'good');
+            }
+        })
+    });
     S.world.on('tap', onWorldTap);
     loadHome();
     renderHud();
@@ -510,7 +606,18 @@ function applyState(st) {
 }
 
 function simRestaurant(r) {
-    return {size: r.size, depth: r.depth || r.size, floors: r.floors || [], door: r.door, kind: r.kind, layout: r.layout, staff: r.staff, menu: r.menu, popularity: r.popularity, status: r.status || 'open'};
+    return {
+        size: r.size,
+        depth: r.depth || r.size,
+        floors: r.floors || [],
+        door: r.door,
+        kind: r.kind,
+        layout: r.layout,
+        staff: r.staff,
+        menu: r.menu,
+        popularity: r.popularity,
+        status: r.status || 'open'
+    };
 }
 
 /** Every frame: the game clock drives day and night, the weather changes each game day, the season follows the calendar. */
@@ -540,9 +647,18 @@ function envTick() {
         // Only the work being done right now makes a sound (floors not in view count for less)
         const at = (a) => (S.sim.floorOfAgent?.(a) ?? 0) === (S.world.viewFloor || 0) ? 1 : 0.4;
         const doing = (...anims) => S.sim.agents.filter(a => a.staff && a.state === 'busy' && anims.includes(a.anim)).reduce((n, a) => n + at(a), 0);
-        setAmbience({rain: ['drizzle', 'rain', 'hail'].includes(S.weather), snow: ['light_snow', 'snow'].includes(S.weather), guests: S.sim.agents.filter(a => a.role === 'customer' && a.seat && a.state !== 'leaving').length,
-            isNight: isNight(S.sim.hour), cooks: doing('cook'), washers: doing('wash'), sweepers: doing('sweep', 'mop'), open: (S.game.restaurant.status || 'open') !== 'closed',
-            paused: !S.sim.speed, restaurantKind: S.game.restaurant.kind || 'generic'});
+        setAmbience({
+            rain: ['drizzle', 'rain', 'hail'].includes(S.weather),
+            snow: ['light_snow', 'snow'].includes(S.weather),
+            guests: S.sim.agents.filter(a => a.role === 'customer' && a.seat && a.state !== 'leaving').length,
+            isNight: isNight(S.sim.hour),
+            cooks: doing('cook'),
+            washers: doing('wash'),
+            sweepers: doing('sweep', 'mop'),
+            open: (S.game.restaurant.status || 'open') !== 'closed',
+            paused: !S.sim.speed,
+            restaurantKind: S.game.restaurant.kind || 'generic'
+        });
     }
 }
 
@@ -582,7 +698,10 @@ function openCalendar() {
                 h('div.cal-season', h('span.pic', {html: svgIcon('ui', 's_' + d.season)}), h('b', t('season_' + d.season)),
                     h('span.pic', {html: svgIcon('ui', 'w_' + (S.weather || 'clear'))}), h('span.muted', t('weather_' + (S.weather || 'clear')))),
                 h('div.cal-grid', Array.from({length: d.per}, (_, i) => h('span.cal-cell' + (i + 1 === d.day ? '.today' : i + 1 < d.day ? '.past' : ''), String(i + 1)))),
-                h('div.cal-progress', h('small', t('season_progress', {d: dayInSeason, n: d.per * 3})), h('span.track', h('i', {style: `width:${dayInSeason / (d.per * 3) * 100}%`})),
+                h('div.cal-progress', h('small', t('season_progress', {
+                        d: dayInSeason,
+                        n: d.per * 3
+                    })), h('span.track', h('i', {style: `width:${dayInSeason / (d.per * 3) * 100}%`})),
                     h('small.muted', t('next_season', {n: d.per * 3 - dayInSeason + 1, s: t('season_' + next)}))),
                 h('p.note', t('calendar_note')))),
         h('button.btn.btn-primary.btn-wide', {onclick: closeModal}, 'OK')]);
@@ -647,7 +766,13 @@ async function sendReport(beacon = false) {
     try {
         const body = JSON.stringify(b);
         if (beacon) {
-            fetch('api/index.php?r=game.report', {method: 'POST', keepalive: true, credentials: 'same-origin', headers: {'Content-Type': 'application/json', 'X-CSRF-Token': S.csrf, 'X-Instance': INSTANCE}, body});
+            fetch('api/index.php?r=game.report', {
+                method: 'POST',
+                keepalive: true,
+                credentials: 'same-origin',
+                headers: {'Content-Type': 'application/json', 'X-CSRF-Token': S.csrf, 'X-Instance': INSTANCE},
+                body
+            });
         } else {
             const st = await api('game.report', b);
             softState(st);
@@ -686,7 +811,11 @@ function onWorldTap(e) {
         S.sim.selected = a;
         S.world.select(a.mesh);
         renderInfo();
-        if (S.mode === 'home') openPie(e, S.sim.actionsFor(a).map(x => ({...x, label: t('pie_' + x.id), run: () => toast(t(S.sim.interact(a, x.id) || 'saved_ok'))})));
+        if (S.mode === 'home') openPie(e, S.sim.actionsFor(a).map(x => ({
+            ...x,
+            label: t('pie_' + x.id),
+            run: () => toast(t(S.sim.interact(a, x.id) || 'saved_ok'))
+        })));
         return;
     }
     S.sim.selected = null;
@@ -700,7 +829,11 @@ function onWorldTap(e) {
     if (itemId != null) {
         const acts = S.sim.itemActions(itemId);
         if (acts.some(a => a.id === 'clean')) return toast(t(S.sim.interactItem(itemId, 'clean')));
-        if (acts.length) openPie(e, acts.map(x => ({...x, label: t('pie_' + x.id), run: () => toast(t(S.sim.interactItem(itemId, x.id) || 'saved_ok'))})));
+        if (acts.length) openPie(e, acts.map(x => ({
+            ...x,
+            label: t('pie_' + x.id),
+            run: () => toast(t(S.sim.interactItem(itemId, x.id) || 'saved_ok'))
+        })));
         return;
     }
     const plot = S.world.plotAt(e);
@@ -713,13 +846,16 @@ function openPie(e, actions) {
     if (!actions.length) return;
     const box = document.querySelector('.game');
     const rect = box.getBoundingClientRect();
-    const x = Math.min(rect.width - 90, Math.max(90, e.clientX - rect.left)), y = Math.min(rect.height - 110, Math.max(90, e.clientY - rect.top));
+    const x = Math.min(rect.width - 90, Math.max(90, e.clientX - rect.left)),
+        y = Math.min(rect.height - 110, Math.max(90, e.clientY - rect.top));
     const pie = h('div.pie', {style: `left:${x}px;top:${y}px`});
     const r = 72;
     actions.forEach((a, i) => {
         const ang = -Math.PI / 2 + (i - (actions.length - 1) / 2) * 0.95;
         const b = h('button.pie-item' + (a.done ? '.done' : ''), {
-            style: `--x:${Math.cos(ang) * r}px;--y:${Math.sin(ang) * r}px;--d:${i * 40}ms`, disabled: a.done, title: a.label,
+            style: `--x:${Math.cos(ang) * r}px;--y:${Math.sin(ang) * r}px;--d:${i * 40}ms`,
+            disabled: a.done,
+            title: a.label,
             onclick: (ev) => {
                 ev.stopPropagation();
                 closePie();
@@ -751,16 +887,22 @@ const ICONS = {
     globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
     user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/>',
     gift: '<rect x="3" y="8" width="18" height="5" rx="1"/><path d="M5 13v8h14v-8M12 8v13M12 8c-2-4-6-4-6-1s6 1 6 1zm0 0c2-4 6-4 6-1s-6 1-6 1z"/>',
-    left: '<path d="M4 12a8 8 0 1 0 2.3-5.7M4 4v4h4"/>', right: '<path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v4h-4"/>',
-    top: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 12h16M12 4v16"/>', cube: '<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM12 12l8-4.5M12 12v9M12 12L4 7.5"/>',
-    plus: '<path d="M12 5v14M5 12h14"/>', minus: '<path d="M5 12h14"/>', center: '<circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>',
-    x: '<path d="M6 6l12 12M18 6L6 18"/>', home: '<path d="M3 11l9-8 9 8M5 10v10h14V10"/>',
+    left: '<path d="M4 12a8 8 0 1 0 2.3-5.7M4 4v4h4"/>',
+    right: '<path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v4h-4"/>',
+    top: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 12h16M12 4v16"/>',
+    cube: '<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM12 12l8-4.5M12 12v9M12 12L4 7.5"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    minus: '<path d="M5 12h14"/>',
+    center: '<circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>',
+    x: '<path d="M6 6l12 12M18 6L6 18"/>',
+    home: '<path d="M3 11l9-8 9 8M5 10v10h14V10"/>',
     star: '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
     expand: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5M9 12h6M12 9v6"/>',
     car: '<path d="M3 16v-4l2-5h14l2 5v4zM3 16v2h3v-2M18 16v2h3v-2M5 12h14"/><circle cx="7.5" cy="14" r="1"/><circle cx="16.5" cy="14" r="1"/>',
     stairs: '<path d="M3 20h5v-5h5v-5h5V5h3"/>',
     box: '<path d="M3 8l9-4 9 4v9l-9 4-9-4z"/><path d="M3 8l9 4 9-4M12 12v9"/>',
-    up: '<path d="M6 15l6-6 6 6"/>', down: '<path d="M6 9l6 6 6-6"/>',
+    up: '<path d="M6 15l6-6 6 6"/>',
+    down: '<path d="M6 9l6 6 6-6"/>',
     door: '<path d="M5 21V4h11v17M3 21h18M13 12h.01M16 6l3 1v13l-3 1"/>',
     walls: '<path d="M3 20h18M4 20V9h6v11M14 20v-6h6v6"/>',
     coin: '<circle cx="12" cy="12" r="8"/><path d="M12 8v8M9.5 10c0-1 1-2 2.5-2s2.5.8 2.5 2-1 1.6-2.5 2-2.5 1-2.5 2 1 2 2.5 2 2.5-1 2.5-2"/>',
@@ -770,7 +912,7 @@ const icon = (name) => h('span.ic', {html: `<svg viewBox="0 0 24 24" fill="none"
 function renderHud() {
     const hud = document.getElementById('hud');
     if (!hud) return;
-    put(hud, 
+    put(hud,
         h('div.topbar#topbar'),
         h('div.status#status'),
         h('div.clock#clock'),
@@ -778,12 +920,18 @@ function renderHud() {
         h('div.camctl',
             h('button.cam', {title: t('rotate_left'), onclick: () => S.world.rotate(Math.PI / 4)}, icon('left')),
             h('button.cam', {title: t('rotate_right'), onclick: () => S.world.rotate(-Math.PI / 4)}, icon('right')),
-            h('button.cam#topbtn', {title: t('top_view'), onclick: () => (S.world.setTopView(!S.world.top), renderHud())}, icon(S.world.top ? 'cube' : 'top')),
+            h('button.cam#topbtn', {
+                title: t('top_view'),
+                onclick: () => (S.world.setTopView(!S.world.top), renderHud())
+            }, icon(S.world.top ? 'cube' : 'top')),
             h('button.cam', {title: t('zoom_in'), onclick: () => S.world.zoom(0.8)}, icon('plus')),
             h('button.cam', {title: t('zoom_out'), onclick: () => S.world.zoom(1.25)}, icon('minus')),
             h('button.cam', {title: t('recenter'), onclick: () => S.world.recenter()}, icon('center')),
             h('div.wallmode-wrap',
-                h('button.cam.wallmode' + (S.wallMenu ? '.on' : ''), {title: t('walls_' + S.world.wallMode), onclick: (e) => (e.stopPropagation(), (S.wallMenu = !S.wallMenu), renderHud())}, icon('walls'), h('i.wm-' + S.world.wallMode)),
+                h('button.cam.wallmode' + (S.wallMenu ? '.on' : ''), {
+                    title: t('walls_' + S.world.wallMode),
+                    onclick: (e) => (e.stopPropagation(), (S.wallMenu = !S.wallMenu), renderHud())
+                }, icon('walls'), h('i.wm-' + S.world.wallMode)),
                 // A small panel like the restaurant's status: the three ways of showing the walls, the current one marked
                 S.wallMenu && h('div.status-menu.wall-menu', {onclick: (e) => e.stopPropagation()}, ['adaptive', 'low', 'high'].map(m => h('button.status-opt' + (m === S.world.wallMode ? '.on' : ''), {
                     onclick: () => {
@@ -810,17 +958,39 @@ function renderTop() {
     const levels = S.catalog.levels;
     const lo = levels[r.level - 1] || 0, hi = levels[r.level] || lo + 1;
     const pct = Math.min(100, Math.max(0, (r.xp - lo) / (hi - lo) * 100));
-    put(bar, 
+    put(bar,
         h('div.brand', h('div.logo-small', {html: LOGO}), h('div',
             h('div.rname', S.mode === 'visit' ? S.visit.restaurant.name : r.name),
-            S.mode === 'visit' ? h('div.rsub', '@' + S.visit.username) : h('button.xp', {title: t('levels_title'), onclick: () => openSheet('levels')},
-                h('span.lvl', t('level_title', {n: r.level, t: levelTitle(r.level)})), h('span.xpbar', h('i', {style: `width:${pct}%`}))))),
+            S.mode === 'visit' ? h('div.rsub', '@' + S.visit.username) : h('button.xp', {
+                    title: t('levels_title'),
+                    onclick: () => openSheet('levels')
+                },
+                h('span.lvl', t('level_title', {
+                    n: r.level,
+                    t: levelTitle(r.level)
+                })), h('span.xpbar', h('i', {style: `width:${pct}%`}))))),
         h('div.pills',
-            S.mode !== 'visit' && h('button.pill.coins', {title: t('ledger_title'), onclick: () => openSheet('ledger')}, coin(r.coins + (S.liveCoins || 0))),
-            h('button.pill.stars', {title: t('reputation'), onclick: () => S.mode === 'visit' ? visitReviews() : openSheet('reviews')}, starsEl(S.mode === 'visit' ? S.visit.restaurant.stars : r.stars, 5), h('small', (S.mode === 'visit' ? S.visit.restaurant : r).rating != null ? (S.mode === 'visit' ? S.visit.restaurant : r).rating.toFixed(1) : t('not_rated'))),
-            S.mode !== 'visit' && h('button.pill.iconpill', {title: t('inbox'), onclick: () => openSheet('friends', {tab: 'inbox'})}, icon('gift'), S.game.inbox ? h('b.badge', String(S.game.inbox)) : null),
-            h('button.pill.langpill', {title: t('language'), 'aria-label': t('language') + ': ' + getLang().toUpperCase(), onclick: () => switchLang(getLang() === 'it' ? 'en' : 'it')}, icon('globe'), getLang().toUpperCase()),
-            S.mode !== 'visit' && h('button.pill.iconpill', {title: t('account'), onclick: () => openSheet('account')}, icon('user'))));
+            S.mode !== 'visit' && h('button.pill.coins', {
+                title: t('ledger_title'),
+                onclick: () => openSheet('ledger')
+            }, coin(r.coins + (S.liveCoins || 0))),
+            h('button.pill.stars', {
+                title: t('reputation'),
+                onclick: () => S.mode === 'visit' ? visitReviews() : openSheet('reviews')
+            }, starsEl(S.mode === 'visit' ? S.visit.restaurant.stars : r.stars, 5), h('small', (S.mode === 'visit' ? S.visit.restaurant : r).rating != null ? (S.mode === 'visit' ? S.visit.restaurant : r).rating.toFixed(1) : t('not_rated'))),
+            S.mode !== 'visit' && h('button.pill.iconpill', {
+                title: t('inbox'),
+                onclick: () => openSheet('friends', {tab: 'inbox'})
+            }, icon('gift'), S.game.inbox ? h('b.badge', String(S.game.inbox)) : null),
+            h('button.pill.langpill', {
+                title: t('language'),
+                'aria-label': t('language') + ': ' + getLang().toUpperCase(),
+                onclick: () => switchLang(getLang() === 'it' ? 'en' : 'it')
+            }, icon('globe'), getLang().toUpperCase()),
+            S.mode !== 'visit' && h('button.pill.iconpill', {
+                title: t('account'),
+                onclick: () => openSheet('account')
+            }, icon('user'))));
 }
 
 /** Italian / English at any moment: texts, the door sign and the menu board in the room follow. */
@@ -838,7 +1008,7 @@ function switchLang(l) {
 function renderStatus() {
     const el = document.getElementById('status');
     if (!el || !S.sim) return;
-    if (S.mode !== 'home') return put(el, );
+    if (S.mode !== 'home') return put(el,);
     const problems = S.sim.problems || [];
     const guests = S.sim.guestsInside; // whoever walked out of the door (or waits outside) is not in the room
     const status = S.game.restaurant.status || 'open';
@@ -850,9 +1020,15 @@ function renderStatus() {
     const menuWasOpen = S.statusKey?.includes('|true|');
     S.statusKey = key;
     put(el,
-        h('button.chip.status-' + status, {onclick: (e) => (e.stopPropagation(), toggleStatusMenu()), title: t('status_title')}, h('i.dot'), label, h('span.caret', S.statusMenu ? '▴' : '▾')),
+        h('button.chip.status-' + status, {
+            onclick: (e) => (e.stopPropagation(), toggleStatusMenu()),
+            title: t('status_title')
+        }, h('i.dot'), label, h('span.caret', S.statusMenu ? '▴' : '▾')),
         S.statusMenu && statusMenu(status, menuWasOpen),
-        todo > 0 && h('button.chip.todo-chip', {onclick: () => openSheet('todo'), title: t('todo_title')}, ic('ui', 'todo'), t('todo_chip', {n: todo})),
+        todo > 0 && h('button.chip.todo-chip', {
+            onclick: () => openSheet('todo'),
+            title: t('todo_title')
+        }, ic('ui', 'todo'), t('todo_chip', {n: todo})),
         problems.length > 0 && h('button.chip.warn', {onclick: () => fixProblem(problems[0])}, ic('ui', 'warning'), t(problems[0])),
         !problems.length && (S.sim.warnings || []).map(w => h('button.chip.warn', {onclick: () => enterBuild(w.key === 'need_toilet' ? 'restroom' : 'table')}, ic('ui', 'warning'), t(w.key, {n: w.n}))));
 }
@@ -868,7 +1044,10 @@ function toggleStatusMenu(force) {
 function applyStatus(st, auto = false) {
     const hours = S.game.restaurant.hours || {mode: 'manual'};
     // Opening by hand with "open for N hours": the countdown starts now
-    const extra = st === 'open' && hours.mode === 'timer' && !auto ? () => setHours({...hours, until: Math.round(S.sim.clock + hours.timer * 60)}) : null;
+    const extra = st === 'open' && hours.mode === 'timer' && !auto ? () => setHours({
+        ...hours,
+        until: Math.round(S.sim.clock + hours.timer * 60)
+    }) : null;
     act('game.status', {status: st}, {
         done: () => {
             S.sim.setStatus(st);
@@ -919,25 +1098,42 @@ function statusMenu(cur, still = false) {
     const r = S.game.restaurant, hrs = r.hours || {mode: 'manual'};
     const timers = S.catalog.hoursTimers || [2, 4, 6, 8, 10, 12];
     const left = hrs.mode === 'timer' && hrs.until && cur === 'open' ? Math.max(0, hrs.until - S.sim.clock) : null;
-    const hourSel = (key, val) => h('select.hours-sel', {onchange: (e) => setHours({...hrs, [key]: +e.target.value})}, Array.from({length: 24}, (_, i) => h('option', {value: i, selected: i === val}, hh(i))));
+    const hourSel = (key, val) => h('select.hours-sel', {
+        onchange: (e) => setHours({
+            ...hrs,
+            [key]: +e.target.value
+        })
+    }, Array.from({length: 24}, (_, i) => h('option', {value: i, selected: i === val}, hh(i))));
     return h('div.status-menu' + (still ? '.still' : ''), {onclick: (e) => e.stopPropagation()}, ['open', 'paused', 'closed'].map(st => h('button.status-opt.status-' + st + (st === cur ? '.on' : ''), {
-        onclick: () => {
-            S.statusMenu = false;
-            applyStatus(st);
-        },
-    }, h('i.dot'), statusLabels()[st])),
-    // Opening hours: by hand, open for a while, or a daily schedule
-    h('div.hours',
-        h('small.muted', t('hours_title')),
-        h('div.hours-modes', ['manual', 'timer', 'schedule'].map(m => h('button.hours-mode' + (hrs.mode === m ? '.on' : ''), {
-            onclick: () => setHours(m === 'timer' ? {mode: 'timer', timer: hrs.timer || 8} : m === 'schedule' ? {mode: 'schedule', open: hrs.open ?? 9, close: hrs.close ?? 22} : {mode: 'manual'}),
-        }, t('hours_' + m)))),
-        hrs.mode === 'timer' && h('div.hours-row', t('hours_for'), h('select.hours-sel', {onchange: (e) => setHours({mode: 'timer', timer: +e.target.value, ...(cur === 'open' ? {until: Math.round(S.sim.clock + +e.target.value * 60)} : {})})},
-            timers.map(n => h('option', {value: n, selected: n === hrs.timer}, t('hours_n', {n})))),
-            h('small.muted', left != null ? t('hours_left', {t: fmtGameSpan(left)}) : t('hours_timer_hint'))),
-        hrs.mode === 'schedule' && h('div.hours-row', t('hours_from'), hourSel('open', hrs.open ?? 9), t('hours_to'), hourSel('close', hrs.close ?? 22)),
-        hrs.mode !== 'manual' && h('small.muted.hours-note', t('hours_note'))),
-    h('button.status-opt.status-todo', {onclick: () => (S.statusMenu = false, openSheet('todo'))}, ic('ui', 'todo'), t('todo_title')));
+            onclick: () => {
+                S.statusMenu = false;
+                applyStatus(st);
+            },
+        }, h('i.dot'), statusLabels()[st])),
+        // Opening hours: by hand, open for a while, or a daily schedule
+        h('div.hours',
+            h('small.muted', t('hours_title')),
+            h('div.hours-modes', ['manual', 'timer', 'schedule'].map(m => h('button.hours-mode' + (hrs.mode === m ? '.on' : ''), {
+                onclick: () => setHours(m === 'timer' ? {
+                    mode: 'timer',
+                    timer: hrs.timer || 8
+                } : m === 'schedule' ? {
+                    mode: 'schedule',
+                    open: hrs.open ?? 9,
+                    close: hrs.close ?? 22
+                } : {mode: 'manual'}),
+            }, t('hours_' + m)))),
+            hrs.mode === 'timer' && h('div.hours-row', t('hours_for'), h('select.hours-sel', {
+                        onchange: (e) => setHours({
+                            mode: 'timer',
+                            timer: +e.target.value, ...(cur === 'open' ? {until: Math.round(S.sim.clock + +e.target.value * 60)} : {})
+                        })
+                    },
+                    timers.map(n => h('option', {value: n, selected: n === hrs.timer}, t('hours_n', {n})))),
+                h('small.muted', left != null ? t('hours_left', {t: fmtGameSpan(left)}) : t('hours_timer_hint'))),
+            hrs.mode === 'schedule' && h('div.hours-row', t('hours_from'), hourSel('open', hrs.open ?? 9), t('hours_to'), hourSel('close', hrs.close ?? 22)),
+            hrs.mode !== 'manual' && h('small.muted.hours-note', t('hours_note'))),
+        h('button.status-opt.status-todo', {onclick: () => (S.statusMenu = false, openSheet('todo'))}, ic('ui', 'todo'), t('todo_title')));
 }
 
 /** Game minutes as "3 h 20 min". */
@@ -969,9 +1165,15 @@ function renderClock(force = false) {
     }, h('span.speed-pic', {html: svgIcon('ui', name)}));
     const gd = gameDate(S.sim.clock);
     put(el,
-        h('button.clock-time', {title: t('calendar_title'), onclick: openCalendar}, h('span.clock-pic', {html: svgIcon('ui', night ? 'moon' : 'sun')}), h('b', `${hh}:${mm}`),
+        h('button.clock-time', {
+                title: t('calendar_title'),
+                onclick: openCalendar
+            }, h('span.clock-pic', {html: svgIcon('ui', night ? 'moon' : 'sun')}), h('b', `${hh}:${mm}`),
             h('small.clock-date', `${gd.day} ${monthName(gd.month).slice(0, 3)} · ${t('year_short', {n: gd.year})}`),
-            h('span.clock-pic', {title: t('weather_' + (S.weather || 'clear')), html: svgIcon('ui', 'w_' + (S.weather || 'clear'))}),
+            h('span.clock-pic', {
+                title: t('weather_' + (S.weather || 'clear')),
+                html: svgIcon('ui', 'w_' + (S.weather || 'clear'))
+            }),
             h('span.clock-pic', {title: t('season_' + S.season), html: svgIcon('ui', 's_' + S.season)})),
         busy && h('span.busy.busy-' + busy, {title: t('busy_' + busy + '_d')}, t('busy_' + busy)),
         S.mode !== 'build' && h('div.speeds', sp(0, 'pause', t('speed_pause')), sp(1, 'play1', t('speed_1')), sp(2, 'play2', t('speed_2'))));
@@ -1044,7 +1246,10 @@ function requirements() {
     const st = [];
     const per = (role, key, ok, tab) => {
         const list = hired(role);
-        if (list.length) st.push(line(key, list.every(ok), fix.build(tab), {n: list.filter(ok).length, m: list.length}));
+        if (list.length) st.push(line(key, list.every(ok), fix.build(tab), {
+            n: list.filter(ok).length,
+            m: list.length
+        }));
     };
     per('chef', 'req_st_chef', a => a.stove, 'kitchen');
     per('waiter', 'req_st_waiter', a => a.tables?.length, 'table');
@@ -1078,9 +1283,18 @@ function openSheet(kind, opts = {}) {
     closeSheet();
     const body = h('div.sheet-body');
     const title = h('h2');
-    const el = h('section.sheet', h('header', title, h('button.icon-btn', {onclick: closeSheet, title: t('close')}, icon('x'))), body);
+    const el = h('section.sheet', h('header', title, h('button.icon-btn', {
+        onclick: closeSheet,
+        title: t('close')
+    }, icon('x'))), body);
     document.querySelector('.game').append(el); // outside #hud: redrawing the HUD keeps the panel
-    S.sheet = {kind, opts, el, live: kind === 'garden' || kind === 'todo', render: () => SHEETS[kind](body, title, S.sheet.opts)};
+    S.sheet = {
+        kind,
+        opts,
+        el,
+        live: kind === 'garden' || kind === 'todo',
+        render: () => SHEETS[kind](body, title, S.sheet.opts)
+    };
     updateInsets();
     S.sheet.render();
     requestAnimationFrame(() => el.classList.add('in'));
@@ -1135,7 +1349,10 @@ const SHEETS = {
                 h('h3', t(gk), h('small.muted', ` ${lines.filter(l => l.done).length}/${lines.length}`)),
                 lines.map(l => h('div.todo-line' + (l.done ? '.done' : ''),
                     h('span.todo-check', {html: l.done ? '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}),
-                    h('div.todo-text', h('b', t(l.key, {n: l.n ?? '', m: l.m ?? ''})), h('small.muted', t(l.key + '_d'))),
+                    h('div.todo-text', h('b', t(l.key, {
+                        n: l.n ?? '',
+                        m: l.m ?? ''
+                    })), h('small.muted', t(l.key + '_d'))),
                     !l.done && h('button.btn.btn-small', {onclick: l.go}, t('todo_go')))))));
     },
 
@@ -1153,7 +1370,10 @@ const SHEETS = {
         const cookEl = (k, d) => {
             if (cold(k)) return h('span.cook', {title: t('cook_cold')}, ic('ui', 'timer'), t('cook_cold_short'));
             const here = S.sim && best ? Math.round(S.sim.cookTime(k, null, best)) : null;
-            return h('span.cook', {title: t('cook_hint')}, ic('ui', 'timer'), here != null && here < d.cook ? t('cook_secs_here', {b: d.cook, n: here}) : t('cook_secs', {b: d.cook}));
+            return h('span.cook', {title: t('cook_hint')}, ic('ui', 'timer'), here != null && here < d.cook ? t('cook_secs_here', {
+                b: d.cook,
+                n: here
+            }) : t('cook_secs', {b: d.cook}));
         };
         const rows = Object.entries(S.catalog.dishes).sort((a, b) => a[1].level - b[1].level).map(([k, d]) => {
             const lvl = rec[k] || 0;
@@ -1163,7 +1383,7 @@ const SHEETS = {
             return h('div.dish' + (locked ? '.locked' : ''),
                 h('div.dish-icon', {html: dishIcon(k)}),
                 h('div.dish-main', h('b', n(k)), h('div.dish-meta', lvl ? h('span.lv', starsEl(lvl, S.catalog.dishMax)) : h('span.muted', locked ? t('locked_level', {n: d.level}) : t('not_learned')),
-                    h('span', coin(price)), cookEl(k, d)),
+                        h('span', coin(price)), cookEl(k, d)),
                     !locked && lvl < S.catalog.dishMax && h('div.needs', needs(k, lvl + 1))),
                 h('div.dish-act',
                     lvl > 0 && h('label.switch', {title: t('on_menu')}, h('input', {
@@ -1172,10 +1392,20 @@ const SHEETS = {
                             act('game.menu', {dishes: next}, {live: true});
                         },
                     }), h('i')),
-                    !locked && !lvl && d.enabled !== false && h('button.btn.btn-small.btn-primary', {onclick: () => act('game.learn', {dish: k}, {live: true, done: () => toast(t('learned', {d: n(k)}), 'good')})}, t('learn')),
-                    !locked && lvl > 0 && lvl < S.catalog.dishMax && h('button.btn.btn-small', {onclick: () => act('game.upgrade', {dish: k}, {live: true, done: () => toast(t('improved', {d: n(k), n: lvl + 1}), 'good')})}, t('upgrade'))));
+                    !locked && !lvl && d.enabled !== false && h('button.btn.btn-small.btn-primary', {
+                        onclick: () => act('game.learn', {dish: k}, {
+                            live: true,
+                            done: () => toast(t('learned', {d: n(k)}), 'good')
+                        })
+                    }, t('learn')),
+                    !locked && lvl > 0 && lvl < S.catalog.dishMax && h('button.btn.btn-small', {
+                        onclick: () => act('game.upgrade', {dish: k}, {
+                            live: true,
+                            done: () => toast(t('improved', {d: n(k), n: lvl + 1}), 'good')
+                        })
+                    }, t('upgrade'))));
         });
-        put(body, 
+        put(body,
             h('p.muted', t('menu_slots', {n: menu.length, m: r.maxMenu})),
             h('div.list', rows),
             pantry());
@@ -1200,7 +1430,7 @@ const SHEETS = {
                     : h('div.plot', h('span.plot-ic', {html: svgIcon('ing', g.crop)}), h('b', n(g.crop)), h('span.bar', h('i', {style: `width:${pct}%`})), h('small', t('grows_in', {t: fmtTime(left)}))));
             }
         }
-        put(body, 
+        put(body,
             anyRipe && h('button.btn.btn-primary.btn-wide', {onclick: () => act('game.harvest', {plot: -1}, {done: (st) => toast(t('harvested', {list: ingList(st.result.got)}), 'good')})}, t('harvest_all')),
             h('div.plots', plots));
     },
@@ -1211,8 +1441,16 @@ const SHEETS = {
             h('div.list', S.game.market.map(m => h('div.dish',
                 h('div.dish-icon', {html: svgIcon('ing', m.ing)}), h('div.dish-main', h('b', n(m.ing)), h('div.dish-meta', coin(m.price), h('span.muted', m.left ? t('left', {n: m.left}) : t('sold_out')))),
                 h('div.dish-act',
-                    h('button.btn.btn-small', {disabled: !m.left, onclick: () => act('game.market', {ing: m.ing, qty: 1})}, t('buy')),
-                    m.left > 1 && h('button.btn.btn-small.btn-primary', {onclick: () => act('game.market', {ing: m.ing, qty: m.left})}, t('buy_n', {n: m.left})))))),
+                    h('button.btn.btn-small', {
+                        disabled: !m.left,
+                        onclick: () => act('game.market', {ing: m.ing, qty: 1})
+                    }, t('buy')),
+                    m.left > 1 && h('button.btn.btn-small.btn-primary', {
+                        onclick: () => act('game.market', {
+                            ing: m.ing,
+                            qty: m.left
+                        })
+                    }, t('buy_n', {n: m.left})))))),
             pantry());
     },
 
@@ -1221,14 +1459,30 @@ const SHEETS = {
         const r = S.game.restaurant, mg = S.catalog.manager, roles = S.catalog.roles;
         const roleIcon = (role) => role === 'chef' ? 'chef' : role === 'cleaner' ? 'broom' : role === 'manager' ? 'manager' : role === 'cashier' ? 'register' : 'waiter';
         const stoves = r.layout.filter(it => S.catalog.items[it.k]?.cat === 'stove').length;
-        const limits = {chef: r.maxChefs ?? stoves, waiter: r.maxWaiters, cleaner: r.maxCleaners, manager: r.maxManagers, cashier: r.maxCashiers};
+        const limits = {
+            chef: r.maxChefs ?? stoves,
+            waiter: r.maxWaiters,
+            cleaner: r.maxCleaners,
+            manager: r.maxManagers,
+            cashier: r.maxCashiers
+        };
         const people = r.staff.map(s => {
             const rank = s.rank || 1, next = mg.promote[rank + 1];
             const select = h('select.role-select', {
-                onchange: (e) => act('game.assign', {id: s.id, role: e.target.value}, {live: true, done: () => toast(t('role_changed', {n: s.name, r: n(e.target.value)}), 'good')}),
-            }, roles.map(role => h('option', {value: role, selected: role === s.role, disabled: role === 'manager' && r.level < mg.level}, n(role))));
+                onchange: (e) => act('game.assign', {id: s.id, role: e.target.value}, {
+                    live: true,
+                    done: () => toast(t('role_changed', {n: s.name, r: n(e.target.value)}), 'good')
+                }),
+            }, roles.map(role => h('option', {
+                value: role,
+                selected: role === s.role,
+                disabled: role === 'manager' && r.level < mg.level
+            }, n(role))));
             return h('div.person',
-                h('div.person-head', h('img.portrait', {src: portrait(s.role, s.color, s.id * 7.3, lookOf(s)), alt: ''}), h('span.pic', {html: svgIcon('ui', roleIcon(s.role))}),
+                h('div.person-head', h('img.portrait', {
+                        src: portrait(s.role, s.color, s.id * 7.3, lookOf(s)),
+                        alt: ''
+                    }), h('span.pic', {html: svgIcon('ui', roleIcon(s.role))}),
                     h('div.staff-main', h('b', s.name), h('span.muted', s.trait ? t('trait_' + s.trait) + ' · ' + t('trait_' + s.trait + '_d') : '')), select),
                 cv(s.skills, s.role),
                 zoneRow(s),
@@ -1236,7 +1490,12 @@ const SHEETS = {
                 h('div.seniority', t('seniority', {t: seniorityText(s.years || 0)}), ' · ', t('next_point', {p: Math.floor(((s.skills?.[s.role] ?? 5) % 1) * 100)})),
                 s.role === 'manager' && h('div.rank', starsEl(rank, 5), ' ', t('manager_rank', {h: Math.round(mg.hours[rank] * (0.6 + 0.06 * (s.skills?.manager ?? 5)))})),
                 h('div.row.wrap',
-                    s.role === 'manager' && next != null && h('button.btn.btn-small.btn-primary', {onclick: () => act('game.promote', {id: s.id}, {live: true, done: () => toast(t('promoted', {n: s.name}), 'good')})}, t('promote'), ' · ', coin(next)),
+                    s.role === 'manager' && next != null && h('button.btn.btn-small.btn-primary', {
+                        onclick: () => act('game.promote', {id: s.id}, {
+                            live: true,
+                            done: () => toast(t('promoted', {n: s.name}), 'good')
+                        })
+                    }, t('promote'), ' · ', coin(next)),
                     h('button.btn.btn-small', {onclick: () => openLook(s)}, t('look_title')),
                     h('button.btn.btn-small.btn-ghost', {onclick: () => confirm(t('fire_confirm', {n: s.name})) && act('game.fire', {id: s.id}, {live: true})}, t('fire'))));
         });
@@ -1246,7 +1505,10 @@ const SHEETS = {
             h('div.role-limits', roles.map(role => h('span.limit', ic('ui', roleIcon(role)), n(role) + ': ', h('b', String(r.staff.filter(x => x.role === role).length)), ' / ', String(limits[role] ?? 0), role === 'chef' ? h('small.muted', ' · ' + t('chef_stoves', {n: stoves})) : null))),
             h('button.btn.btn-primary.btn-wide', {onclick: () => openCandidates()}, t('find_staff')),
             h('div.list', people),
-            r.level < mg.level ? h('p.muted', t('locked_level', {n: mg.level}) + ' · ' + t('manager_what')) : h('p.muted', t('manager_hint', {n: r.maxManagers, h: r.managerHours})));
+            r.level < mg.level ? h('p.muted', t('locked_level', {n: mg.level}) + ' · ' + t('manager_what')) : h('p.muted', t('manager_hint', {
+                n: r.maxManagers,
+                h: r.managerHours
+            })));
     },
 
     ledger(body, title, opts) {
@@ -1261,10 +1523,16 @@ const SHEETS = {
             };
             const dayKeys = Array.from({length: 7}, (_, i) => new Date(Date.parse(d.day + 'T00:00:00Z') - (6 - i) * 86400000).toISOString().slice(0, 10));
             const maxBar = Math.max(1, ...dayKeys.map(k => Math.max(totals(k).inc, totals(k).out)));
-            const fmtDay = (k) => new Date(k + 'T12:00:00Z').toLocaleDateString(getLang() === 'it' ? 'it-IT' : 'en-GB', {weekday: 'short', day: 'numeric'});
+            const fmtDay = (k) => new Date(k + 'T12:00:00Z').toLocaleDateString(getLang() === 'it' ? 'it-IT' : 'en-GB', {
+                weekday: 'short',
+                day: 'numeric'
+            });
             const today = totals(d.day);
             const kinds = Object.entries(days[d.day] || {}).sort((a, b) => b[1].sum - a[1].sum);
-            const hm = (ts) => new Date(ts * 1000).toLocaleTimeString(getLang() === 'it' ? 'it-IT' : 'en-GB', {hour: '2-digit', minute: '2-digit'});
+            const hm = (ts) => new Date(ts * 1000).toLocaleTimeString(getLang() === 'it' ? 'it-IT' : 'en-GB', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
             put(body,
                 h('p.note', t('ledger_readonly')),
                 h('div.ledger-chart', dayKeys.map(k => {
@@ -1287,7 +1555,15 @@ const SHEETS = {
             if (!d.count) return put(body, h('div.empty-art', {html: svgIcon('mood', 'greet')}), h('p.muted', t('reviews_none')));
             const max = Math.max(...Object.values(d.distribution));
             const factors = (obj, cls) => h('div.factors', Object.entries(obj).slice(0, 6).map(([k, v]) => h('span.factor.' + cls, t('f_' + k), h('b', '×' + v))));
-            const tips = Object.keys(d.bad).map(k => ({slow: 'tip_slow', plain: 'tip_plain', bare: 'tip_bare', dirty: 'tip_dirty', dark: 'tip_dark', no_toilet: 'tip_no_toilet', toilet_dirty: 'tip_toilet_dirty'})[k]).filter(Boolean).slice(0, 3);
+            const tips = Object.keys(d.bad).map(k => ({
+                slow: 'tip_slow',
+                plain: 'tip_plain',
+                bare: 'tip_bare',
+                dirty: 'tip_dirty',
+                dark: 'tip_dark',
+                no_toilet: 'tip_no_toilet',
+                toilet_dirty: 'tip_toilet_dirty'
+            })[k]).filter(Boolean).slice(0, 3);
             put(body,
                 h('div.rep-head',
                     // The score: the restaurant's rating (all guests, rolling); the bars: the latest written reviews
@@ -1327,16 +1603,26 @@ function zoneRow(s) {
     const r = S.game.restaurant, z = s.zone || {mode: 'auto'};
     const floors = r.floors?.length || 0;
     const tablesOk = ['waiter', 'cleaner'].includes(s.role);
-    const tables = (S.sim?.tables || []).map(tb => ({id: tb.id, num: tb.num, floor: Math.max(0, Math.floor((tb.seats[0].z + 100) / 1000))}));
+    const tables = (S.sim?.tables || []).map(tb => ({
+        id: tb.id,
+        num: tb.num,
+        floor: Math.max(0, Math.floor((tb.seats[0].z + 100) / 1000))
+    }));
     const cur = z.mode === 'floor' ? 'floor:' + (z.floor || 0) : z.mode;
-    const send = (body) => act('game.zone', {id: s.id, ...body}, {live: true, done: () => toast(t('zone_set', {n: s.name}), 'good')});
+    const send = (body) => act('game.zone', {id: s.id, ...body}, {
+        live: true,
+        done: () => toast(t('zone_set', {n: s.name}), 'good')
+    });
     const opts = [['auto', t('zone_auto')], ['all', t('zone_all')]];
     for (let f = 0; f <= floors; f++) opts.push(['floor:' + f, t('zone_floor', {f: f ? String(f) : t('floor_ground_short')})]);
     if (tablesOk && tables.length) opts.push(['tables', t('zone_tables')]);
     const select = h('select.role-select.zone-select', {
         onchange: (e) => {
             const v = e.target.value;
-            if (v === 'tables') return send({mode: 'tables', tables: z.mode === 'tables' ? z.tables : tables.slice(0, 2).map(x => x.id)});
+            if (v === 'tables') return send({
+                mode: 'tables',
+                tables: z.mode === 'tables' ? z.tables : tables.slice(0, 2).map(x => x.id)
+            });
             if (v.startsWith('floor:')) return send({mode: 'floor', floor: +v.slice(6)});
             send({mode: v});
         },
@@ -1358,13 +1644,26 @@ function zoneRow(s) {
 /** The look of a worker for the 3D model: hairstyle, hair colour, uniform from the catalog. */
 const lookOf = (s, over = {}) => {
     const outfit = over.outfit ?? s.outfit ?? 'default';
-    return {hair: over.hair ?? s.hair, hairColor: over.hairColor ?? s.hairColor, uniform: outfit !== 'default' ? S.catalog.uniforms[outfit] : null,
-        glasses: over.glasses ?? s.glasses, facial: over.facial ?? s.facial, headwear: over.headwear ?? s.headwear};
+    return {
+        hair: over.hair ?? s.hair,
+        hairColor: over.hairColor ?? s.hairColor,
+        uniform: outfit !== 'default' ? S.catalog.uniforms[outfit] : null,
+        glasses: over.glasses ?? s.glasses,
+        facial: over.facial ?? s.facial,
+        headwear: over.headwear ?? s.headwear
+    };
 };
 
 /** Uniforms and the hairdresser, with a live 3D preview. You pay only for what changes. */
 function openLook(s) {
-    const cur = {outfit: s.outfit || 'default', hair: s.hair || 'short', hairColor: s.hairColor || S.catalog.hairColors[0], glasses: s.glasses || 'none', facial: s.facial || 'none', headwear: s.headwear || 'none'};
+    const cur = {
+        outfit: s.outfit || 'default',
+        hair: s.hair || 'short',
+        hairColor: s.hairColor || S.catalog.hairColors[0],
+        glasses: s.glasses || 'none',
+        facial: s.facial || 'none',
+        headwear: s.headwear || 'none'
+    };
     const ACC = S.catalog.accessories || {};
     const pick = {...cur};
     const img = h('img.look-preview', {alt: ''});
@@ -1378,7 +1677,11 @@ function openLook(s) {
         put(total, coin(cost()));
         body.querySelectorAll('[data-k]').forEach(b => b.classList.toggle('on', pick[b.dataset.k] === b.dataset.v));
     };
-    const opt = (k, v, label, extra = {}) => h('button.look-opt', {'data-k': k, 'data-v': v, ...extra, onclick: () => ((pick[k] = v), draw())}, label);
+    const opt = (k, v, label, extra = {}) => h('button.look-opt', {
+        'data-k': k,
+        'data-v': v, ...extra,
+        onclick: () => ((pick[k] = v), draw())
+    }, label);
     const body = h('div.look',
         h('div.look-left', img, h('p.muted', t('look_cost')), total),
         h('div.look-right',
@@ -1389,7 +1692,10 @@ function openLook(s) {
             ], {disabled: u.level > lvl}))),
             h('h3', t('hairstyle'), h('small.muted', ' · ' + S.catalog.hairPrice + ' ' + t('coins'))),
             h('div.look-grid', S.catalog.hairstyles.map(k => opt('hair', k, h('span', t('hair_' + k))))),
-            h('div.look-colors', S.catalog.hairColors.map(c => opt('hairColor', c, '', {style: `background:${c}`, title: c}))),
+            h('div.look-colors', S.catalog.hairColors.map(c => opt('hairColor', c, '', {
+                style: `background:${c}`,
+                title: c
+            }))),
             ...Object.entries(ACC).flatMap(([slot, options]) => [
                 h('h3', t('acc_' + slot), h('small.muted', ' · ' + (S.catalog.accessoryPrice || 60) + ' ' + t('coins'))),
                 h('div.look-grid', options.map(k => opt(slot, k, h('span', t('acc_' + slot + '_' + k))))),
@@ -1434,7 +1740,11 @@ async function openCandidates(refresh = false) {
     const list = st.result.candidates;
     const cards = list.map((c, idx) => {
         const best = S.catalog.roles.reduce((a, b) => (c.skills[b] > c.skills[a] ? b : a), 'chef');
-        const select = h('select.role-select', S.catalog.roles.map(role => h('option', {value: role, selected: role === best, disabled: role === 'manager' && S.game.restaurant.level < S.catalog.manager.level}, n(role))));
+        const select = h('select.role-select', S.catalog.roles.map(role => h('option', {
+            value: role,
+            selected: role === best,
+            disabled: role === 'manager' && S.game.restaurant.level < S.catalog.manager.level
+        }, n(role))));
         return h('div.candidate',
             h('div.person-head', h('i.swatch', {style: `background:${c.color}`}), h('div.staff-main', h('b', c.name), h('span.muted', t('trait_' + c.trait) + ' · ' + t('trait_' + c.trait + '_d')))),
             cv(c.skills, best),
@@ -1457,23 +1767,40 @@ async function openCandidates(refresh = false) {
 function ledgerText(e) {
     const [a, b] = String(e.detail || '').split('|');
     switch (e.kind) {
-        case 'customers': return t('lt_customers', {n: a || 0});
-        case 'away': return t('lt_away', {n: a || 0});
-        case 'level': return t('lt_level', {n: a});
-        case 'hire': return t('lt_hire', {n: a, r: b ? n(b) : ''});
-        case 'market': return t('lt_market', {i: a ? n(a) : '', q: b || 1});
-        case 'plant': return t('lt_plant', {i: a ? n(a) : ''});
-        case 'expand': return t('lt_expand', {n: a});
-        case 'promote': return t('lt_promote', {n: a});
-        case 'visit': return t('lt_visit', {n: a || ''});
-        case 'admin': return t('lt_admin') + (a ? ' · ' + a : '');
-        case 'wages': return t('lt_wages', {n: a || 0, d: b || 1});
-        case 'parking': return t('lt_parking', {n: a || 1});
-        case 'garage': return t('lt_garage', {n: a || 1});
-        case 'floor': return t('lt_floor', {n: a || 1});
-        case 'tip_given': return t('lt_tip_given', {n: a || ''});
-        case 'tip_friend': return t('lt_tip_friend', {n: a ? '@' + a : ''});
-        default: return t('lk_' + e.kind);
+        case 'customers':
+            return t('lt_customers', {n: a || 0});
+        case 'away':
+            return t('lt_away', {n: a || 0});
+        case 'level':
+            return t('lt_level', {n: a});
+        case 'hire':
+            return t('lt_hire', {n: a, r: b ? n(b) : ''});
+        case 'market':
+            return t('lt_market', {i: a ? n(a) : '', q: b || 1});
+        case 'plant':
+            return t('lt_plant', {i: a ? n(a) : ''});
+        case 'expand':
+            return t('lt_expand', {n: a});
+        case 'promote':
+            return t('lt_promote', {n: a});
+        case 'visit':
+            return t('lt_visit', {n: a || ''});
+        case 'admin':
+            return t('lt_admin') + (a ? ' · ' + a : '');
+        case 'wages':
+            return t('lt_wages', {n: a || 0, d: b || 1});
+        case 'parking':
+            return t('lt_parking', {n: a || 1});
+        case 'garage':
+            return t('lt_garage', {n: a || 1});
+        case 'floor':
+            return t('lt_floor', {n: a || 1});
+        case 'tip_given':
+            return t('lt_tip_given', {n: a || ''});
+        case 'tip_friend':
+            return t('lt_tip_friend', {n: a ? '@' + a : ''});
+        default:
+            return t('lk_' + e.kind);
     }
 }
 
@@ -1493,10 +1820,21 @@ function qualitySettings() {
 
 function soundSettings() {
     const p = audioPrefs();
-    const toggle = (key, label) => h('label.check', h('input', {type: 'checkbox', checked: p[key], onchange: (e) => setAudioPrefs({[key]: e.target.checked})}), h('span', label));
+    const toggle = (key, label) => h('label.check', h('input', {
+        type: 'checkbox',
+        checked: p[key],
+        onchange: (e) => setAudioPrefs({[key]: e.target.checked})
+    }), h('span', label));
     return h('div.field', h('span', t('sound_title')),
         h('div.row.wrap', toggle('music', t('sound_music')), toggle('sfx', t('sound_effects'))),
-        h('label.row', h('small', t('sound_volume')), h('input', {type: 'range', min: 0, max: 1, step: 0.05, value: p.volume, oninput: (e) => setAudioPrefs({volume: +e.target.value})})));
+        h('label.row', h('small', t('sound_volume')), h('input', {
+            type: 'range',
+            min: 0,
+            max: 1,
+            step: 0.05,
+            value: p.volume,
+            oninput: (e) => setAudioPrefs({volume: +e.target.value})
+        })));
 }
 
 /** What a level unlocks, as short labels. */
@@ -1509,11 +1847,18 @@ function unlocksAt(l) {
     if (dishes.length) out.push(t('unlock_dishes') + ': ' + dishes.join(', '));
     if (crops.length) out.push(t('unlock_crops') + ': ' + crops.join(', '));
     if (l > 1 && maxSide(l) > maxSide(l - 1)) out.push(t('unlock_side', {n: maxSide(l)}));
-    for (const [pl, p] of Object.entries(S.catalog.parking || {})) if (p.level === l) out.push(t('unlock_parking', {n: p.spaces, l: pl}));
-    for (const [gl, p] of Object.entries(S.catalog.garage || {})) if (p.level === l) out.push(t('unlock_garage', {n: p.spaces, l: gl}));
+    for (const [pl, p] of Object.entries(S.catalog.parking || {})) if (p.level === l) out.push(t('unlock_parking', {
+        n: p.spaces,
+        l: pl
+    }));
+    for (const [gl, p] of Object.entries(S.catalog.garage || {})) if (p.level === l) out.push(t('unlock_garage', {
+        n: p.spaces,
+        l: gl
+    }));
     for (const [fl, p] of Object.entries(S.catalog.floors || {})) if (p.level === l) out.push(t('unlock_floor', {n: fl}));
     const f = (fn) => fn(l) > fn(l - 1) ? fn(l) : null;
-    const w = f(x => Math.min(6, 1 + Math.floor(x / 3))), c = f(x => Math.min(4, 1 + Math.floor(x / 5))), m = f(x => Math.min(8, 3 + Math.floor(x / 4))), p = f(x => Math.min(12, 4 + Math.floor(x / 2)));
+    const w = f(x => Math.min(6, 1 + Math.floor(x / 3))), c = f(x => Math.min(4, 1 + Math.floor(x / 5))),
+        m = f(x => Math.min(8, 3 + Math.floor(x / 4))), p = f(x => Math.min(12, 4 + Math.floor(x / 2)));
     const mg = f(x => x < S.catalog.manager.level ? 0 : Math.min(3, 1 + Math.floor((x - S.catalog.manager.level) / 6)));
     if (l > 1 && w) out.push(t('unlock_waiters', {n: w}));
     if (l === (S.catalog.cashier?.level || 9)) out.push(t('unlock_cashier'));
@@ -1557,13 +1902,16 @@ function showLevelUp(from, to) {
             (i % 3 ? '' : 'border-radius:50%;'),
     })));
     modal(t('level_up_title', {n: to}), [
-        confetti,
-        h('div.lvl-badge', h('span.lvl-star', {html: svgIcon('mood', 'star')}), h('b.lvl-num', String(to))),
-        h('p.lvl-title', levelTitle(to)),
-        h('div.lvl-reward', coin('+' + reward)),
-        blocks.length ? h('h3', t('unlocks')) : null, ...blocks,
-        h('div.row', h('button.btn', {onclick: () => (closeModal(), openSheet('levels'))}, t('levels_title')), h('button.btn.btn-primary', {style: 'flex:1', onclick: closeModal}, t('level_up_ok')))],
-    'levelup-modal');
+            confetti,
+            h('div.lvl-badge', h('span.lvl-star', {html: svgIcon('mood', 'star')}), h('b.lvl-num', String(to))),
+            h('p.lvl-title', levelTitle(to)),
+            h('div.lvl-reward', coin('+' + reward)),
+            blocks.length ? h('h3', t('unlocks')) : null, ...blocks,
+            h('div.row', h('button.btn', {onclick: () => (closeModal(), openSheet('levels'))}, t('levels_title')), h('button.btn.btn-primary', {
+                style: 'flex:1',
+                onclick: closeModal
+            }, t('level_up_ok')))],
+        'levelup-modal');
 }
 
 function visitReviews() {
@@ -1603,8 +1951,16 @@ const SHEETS_MORE = {
         const r = S.game.restaurant;
         const nameInput = h('input', {value: r.name, maxlength: 40});
         const pwForm = h('form.auth-form',
-            S.user.hasPassword && h('label.field', h('span', t('current_password')), h('input', {type: 'password', name: 'current', autocomplete: 'current-password'})),
-            h('label.field', h('span', t('new_password')), h('input', {type: 'password', name: 'password', autocomplete: 'new-password'})),
+            S.user.hasPassword && h('label.field', h('span', t('current_password')), h('input', {
+                type: 'password',
+                name: 'current',
+                autocomplete: 'current-password'
+            })),
+            h('label.field', h('span', t('new_password')), h('input', {
+                type: 'password',
+                name: 'password',
+                autocomplete: 'new-password'
+            })),
             h('button.btn', {type: 'submit'}, t('change_password')));
         pwForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -1618,25 +1974,45 @@ const SHEETS_MORE = {
                 fail(ex);
             }
         });
-        put(body, 
+        put(body,
             h('div.acct', h('b', '@' + S.user.username), h('span.muted', S.user.email)),
-            S.user.isAdmin && h('a.btn.btn-wide', {href: 'admin.html', target: '_blank'}, ic('ui', 'gear'), t('admin_panel')),
+            S.user.isAdmin && h('a.btn.btn-wide', {
+                href: 'admin.html',
+                target: '_blank'
+            }, ic('ui', 'gear'), t('admin_panel')),
             soundSettings(),
             qualitySettings(),
             h('div.field', h('span', t('kind_title')), h('div.kinds', Object.entries(S.catalog.kinds).map(([k, v]) => {
                 const cur = (r.kind || 'generic') === k, locked = v.level > r.level;
                 return h('div.kind' + (cur ? '.on' : '') + (locked ? '.locked' : ''),
-                    h('b', t('kind_' + k)), h('small', t('kind_' + k + '_d')), h('small.muted', t('kind_effects', {p: v.price, c: v.customers})),
+                    h('b', t('kind_' + k)), h('small', t('kind_' + k + '_d')), h('small.muted', t('kind_effects', {
+                        p: v.price,
+                        c: v.customers
+                    })),
                     cur ? h('span.tag-now', t('kind_current')) : locked ? h('small', t('locked_level', {n: v.level}))
-                        : h('button.btn.btn-small', {onclick: () => confirm(t('kind_title') + ': ' + t('kind_' + k) + '?') && act('game.kind', {kind: k}, {live: true, done: () => toast(t('kind_' + k), 'good')})}, t('kind_switch', {c: v.cost})));
+                        : h('button.btn.btn-small', {
+                            onclick: () => confirm(t('kind_title') + ': ' + t('kind_' + k) + '?') && act('game.kind', {kind: k}, {
+                                live: true,
+                                done: () => toast(t('kind_' + k), 'good')
+                            })
+                        }, t('kind_switch', {c: v.cost})));
             }))),
             h('label.field', h('span', t('restaurant_name')), h('div.row', nameInput, h('button.btn', {
                 onclick: () => act('game.rename', {name: nameInput.value}, {done: () => S.world.setSign(S.game.restaurant.name)}),
             }, t('save')))),
-            h('div.field', h('span', t('language')), h('div.lang-switch', ['it', 'en'].map(l => h('button' + (getLang() === l ? '.on' : ''), {type: 'button', onclick: () => switchLang(l)}, l.toUpperCase())))),
+            h('div.field', h('span', t('language')), h('div.lang-switch', ['it', 'en'].map(l => h('button' + (getLang() === l ? '.on' : ''), {
+                type: 'button',
+                onclick: () => switchLang(l)
+            }, l.toUpperCase())))),
             pwForm,
-            window.Identity ? h('button.btn', {type: 'button', onclick: Identity.methods}, Identity.text('methods')) : null,
-            h('div.row.wrap', h('button.btn', {onclick: logout}, t('logout')), h('a.btn.btn-ghost', {href: 'privacy.html', target: '_blank'}, t('privacy')),
+            window.Identity ? h('button.btn', {
+                type: 'button',
+                onclick: Identity.methods
+            }, Identity.text('methods')) : null,
+            h('div.row.wrap', h('button.btn', {onclick: logout}, t('logout')), h('a.btn.btn-ghost', {
+                    href: 'privacy.html',
+                    target: '_blank'
+                }, t('privacy')),
                 h('button.btn.btn-danger', {onclick: deleteAccount}, t('delete_account'))),
             credit());
     },
@@ -1651,15 +2027,27 @@ function pantry() {
     return h('div.pantry', h('h3', t('pantry')),
         keys.length ? h('div.chips', keys.map(k => h('span.ichip', ic('ing', k), n(k) + ' ', h('b', '×' + ing[k])))) : h('p.muted', t('pantry_empty')),
         h('label.field.inline', h('span', t('wish')), h('select', {onchange: (e) => act('game.wish', {ing: e.target.value})},
-            h('option', {value: ''}, t('wish_none')), Object.keys(S.catalog.ingredients).map(k => h('option', {value: k, selected: k === wish}, n(k))))));
+            h('option', {value: ''}, t('wish_none')), Object.keys(S.catalog.ingredients).map(k => h('option', {
+                value: k,
+                selected: k === wish
+            }, n(k))))));
 }
 
 function cropPicker(body, plot) {
     const lvl = S.game.restaurant.level;
     put(body, h('button.btn.btn-ghost', {onclick: () => ((S.sheet.opts.plot = null), S.sheet.render())}, '← ' + t('back')), h('h3', t('choose_crop')),
         h('div.list', Object.entries(S.catalog.crops).filter(([, c]) => c.enabled !== false).map(([k, c]) => h('div.dish' + (c.level > lvl ? '.locked' : ''),
-            h('div.dish-icon', {html: svgIcon('ing', k)}), h('div.dish-main', h('b', n(k)), h('div.dish-meta', c.level > lvl ? t('locked_level', {n: c.level}) : t('seed', {c: c.cost, t: fmtTime(c.secs), y: c.yield}))),
-            c.level <= lvl && h('button.btn.btn-small.btn-primary', {onclick: () => act('game.plant', {plot, crop: k}, {done: () => ((S.sheet.opts.plot = null), S.sheet.render())})}, t('plant'))))));
+            h('div.dish-icon', {html: svgIcon('ing', k)}), h('div.dish-main', h('b', n(k)), h('div.dish-meta', c.level > lvl ? t('locked_level', {n: c.level}) : t('seed', {
+                c: c.cost,
+                t: fmtTime(c.secs),
+                y: c.yield
+            }))),
+            c.level <= lvl && h('button.btn.btn-small.btn-primary', {
+                onclick: () => act('game.plant', {
+                    plot,
+                    crop: k
+                }, {done: () => ((S.sheet.opts.plot = null), S.sheet.render())})
+            }, t('plant'))))));
 }
 
 async function renderFriends(el) {
@@ -1671,7 +2059,7 @@ async function renderFriends(el) {
         clearTimeout(timer);
         timer = setTimeout(async () => {
             const q = search.value.trim();
-            if (q.length < 2) return put(results, );
+            if (q.length < 2) return put(results,);
             const d = await api('social.search', {q}).catch(() => ({players: []}));
             put(results, ...d.players.map(p => h('div.friend', h('span.who', '@' + p.username),
                 p.status === 'none' ? h('button.btn.btn-small.btn-primary', {onclick: () => api('social.request', {username: p.username}).then(draw).then(() => search.dispatchEvent(new Event('input'))).catch(fail)}, t('add'))
@@ -1681,7 +2069,7 @@ async function renderFriends(el) {
     put(el, h('div.search', search), results, listEl);
     const draw = (d) => {
         const bonus = (f) => S.catalog.rules.visitBase + 5 * f.level;
-        put(listEl, 
+        put(listEl,
             d.incoming.length ? h('div', h('h3', t('requests')), h('div.list', d.incoming.map(u => h('div.friend', h('span.who', '@' + u),
                 h('button.btn.btn-small.btn-primary', {onclick: () => api('social.accept', {username: u}).then(draw).catch(fail)}, t('accept')),
                 h('button.btn.btn-small.btn-ghost', {onclick: () => api('social.decline', {username: u}).then(draw).catch(fail)}, t('decline')))))) : null,
@@ -1691,8 +2079,14 @@ async function renderFriends(el) {
                 h('div.friend-main', h('b.who', '@' + f.username), h('span.muted', `${t('level')} ${f.level} `, starsEl(f.stars)), f.wish && h('span.wish', ic('ing', f.wish), t('wants', {i: n(f.wish)}))),
                 h('div.friend-act',
                     h('button.btn.btn-small.btn-primary', {onclick: () => startVisit(f.username)}, f.visited ? t('visit') : t('visit_bonus', {c: bonus(f)})),
-                    h('button.btn.btn-small', {disabled: f.gifted, onclick: () => giftPicker(f)}, f.gifted ? t('gifted') : t('gift')),
-                    h('button.btn.btn-small.btn-ghost', {title: t('remove'), onclick: () => confirm(t('remove_confirm', {u: f.username})) && api('social.remove', {username: f.username}).then(draw).catch(fail)}, icon('x')))))) : h('p.muted', t('no_friends')));
+                    h('button.btn.btn-small', {
+                        disabled: f.gifted,
+                        onclick: () => giftPicker(f)
+                    }, f.gifted ? t('gifted') : t('gift')),
+                    h('button.btn.btn-small.btn-ghost', {
+                        title: t('remove'),
+                        onclick: () => confirm(t('remove_confirm', {u: f.username})) && api('social.remove', {username: f.username}).then(draw).catch(fail)
+                    }, icon('x')))))) : h('p.muted', t('no_friends')));
     };
     api('social.friends', {}).then(draw).catch(fail);
 }
@@ -1719,9 +2113,9 @@ async function renderInbox(el) {
     const d = await api('social.inbox', {}).catch(e => (fail(e), null));
     if (!d) return;
     put(el, d.gifts.length
-        ? h('div', h('button.btn.btn-primary.btn-wide', {onclick: () => act('social.claim', {}, {done: (st) => toast(t('got', {list: ingList(st.result.got)}), 'good')})}, t('claim_all')),
-            h('div.list', d.gifts.map(g => h('div.friend', h('span', ic('ing', g.ing), n(g.ing)), h('span.muted', t('gift_from', {u: g.from}))))))
-        : h('p.muted', t('inbox_empty')),
+            ? h('div', h('button.btn.btn-primary.btn-wide', {onclick: () => act('social.claim', {}, {done: (st) => toast(t('got', {list: ingList(st.result.got)}), 'good')})}, t('claim_all')),
+                h('div.list', d.gifts.map(g => h('div.friend', h('span', ic('ing', g.ing), n(g.ing)), h('span.muted', t('gift_from', {u: g.from}))))))
+            : h('p.muted', t('inbox_empty')),
         d.incoming.length ? h('div', h('h3', t('requests')), h('div.list', d.incoming.map(u => h('div.friend', h('span.who', '@' + u),
             h('button.btn.btn-small.btn-primary', {onclick: () => api('social.accept', {username: u}).then(() => S.sheet.render()).catch(fail)}, t('accept')))))) : null);
 }
@@ -1826,7 +2220,8 @@ const SORTS = {
 let buildSort = 'level';
 try {
     buildSort = SORTS[localStorage.getItem('forkville-sort')] ? localStorage.getItem('forkville-sort') : 'level';
-} catch (e) { /* storage blocked */ }
+} catch (e) { /* storage blocked */
+}
 
 function enterBuild(tab) {
     closeSheet();
@@ -1834,7 +2229,12 @@ function enterBuild(tab) {
     if (tab) buildTab = tab;
     S.mode = 'build';
     S.sim.stop();
-    S.world.setRestaurant(S.game.restaurant, {plots: S.game.restaurant.plots, garden: gardenForScene(), now: nowSec(), keepCamera: true});
+    S.world.setRestaurant(S.game.restaurant, {
+        plots: S.game.restaurant.plots,
+        garden: gardenForScene(),
+        now: nowSec(),
+        keepCamera: true
+    });
     S.editor.begin(S.game.restaurant);
     renderHud();
 }
@@ -1875,7 +2275,15 @@ function rolesOfItem(k, d) {
     if (tag === 'coffee' || tag === 'rest') return ['staff'];
     return [];
 }
-const ROLE_ICON = {chef: ['ui', 'chef'], waiter: ['ui', 'waiter'], cleaner: ['ui', 'broom'], cashier: ['ui', 'register'], manager: ['ui', 'manager'], staff: ['mood', 'sleep']};
+
+const ROLE_ICON = {
+    chef: ['ui', 'chef'],
+    waiter: ['ui', 'waiter'],
+    cleaner: ['ui', 'broom'],
+    cashier: ['ui', 'register'],
+    manager: ['ui', 'manager'],
+    staff: ['mood', 'sleep']
+};
 
 /** The event going on now on the real calendar (valentine, easter, summer, autumn, christmas), or null: the server says. */
 const eventsInfo = () => S.game?.restaurant?.events || S.catalog.events || {};
@@ -1884,7 +2292,10 @@ const inSeason = (k) => !S.catalog.seasonal?.[k] || S.catalog.seasonal[k] === cu
 /** "12 December": a date of an event window, in the player's language. */
 const eventDate = (ev, edge) => {
     const d = eventsInfo().dates?.[ev]?.[edge];
-    return d ? new Date(d + 'T12:00:00Z').toLocaleDateString(getLang() === 'it' ? 'it-IT' : 'en-GB', {day: 'numeric', month: 'long'}) : '';
+    return d ? new Date(d + 'T12:00:00Z').toLocaleDateString(getLang() === 'it' ? 'it-IT' : 'en-GB', {
+        day: 'numeric',
+        month: 'long'
+    }) : '';
 };
 
 function renderBuild() {
@@ -1902,7 +2313,11 @@ function renderBuild() {
         const d = cat[k], sellable = (ed.storage[k] || 0) - ed.draft.filter(x => x.st && x.k === k).length > 0;
         const refund = Math.floor(d.price * S.catalog.rules.sellBack);
         return h('div.shopitem.stored' + (ed.placing?.it.k === k && ed.placing.it.st ? '.on' : ''), {onclick: () => ed.startPlacing(k, null, 0, true)},
-            h('span.stock-count', '×' + count), h('img.thumb3d', {src: thumbFor(k), alt: '', loading: 'lazy'}), h('b', n(k)), h('small.free', t('storage_free')),
+            h('span.stock-count', '×' + count), h('img.thumb3d', {
+                src: thumbFor(k),
+                alt: '',
+                loading: 'lazy'
+            }), h('b', n(k)), h('small.free', t('storage_free')),
             sellable && h('button.btn.btn-small.btn-danger.stock-sell', {
                 title: t('storage_sell_hint'),
                 onclick: (e) => {
@@ -1926,35 +2341,55 @@ function renderBuild() {
         const owned = finish && r.finishes.includes(k);
         const current = finish && ed[d.cat] === k;
         return h('button.shopitem' + (locked ? '.locked' : '') + (current || ed.placing?.it.k === k ? '.on' : ''), {
-            disabled: locked,
-            onclick: () => finish ? ed.setFinish(k) : ed.startPlacing(k),
-        }, roles.length ? h('span.role-badges', {title: roles.map(x => t('for_role_' + x)).join(' · ')}, roles.map(x => h('span.role-badge', {html: svgIcon(...ROLE_ICON[x])}))) : null, finish ? h('img', {src: swatch(k), alt: ''}) : h('img.thumb3d', {src: thumbFor(k), alt: '', loading: 'lazy'}),
+                disabled: locked,
+                onclick: () => finish ? ed.setFinish(k) : ed.startPlacing(k),
+            }, roles.length ? h('span.role-badges', {title: roles.map(x => t('for_role_' + x)).join(' · ')}, roles.map(x => h('span.role-badge', {html: svgIcon(...ROLE_ICON[x])}))) : null, finish ? h('img', {
+                src: swatch(k),
+                alt: ''
+            }) : h('img.thumb3d', {src: thumbFor(k), alt: '', loading: 'lazy'}),
             h('b', n(k)), sev ? h('span.tier.seasonal', t('ev_' + sev)) : d.tier ? h('span.tier.tier-' + d.tier, t('tier_' + d.tier)) : null,
             h('small', away ? t('ev_back', {m: eventDate(sev, 'from')}) : locked ? t('locked_level', {n: d.level}) : owned ? t('owned') : coin(d.price)),
             d.pop > 0 && h('small.pop', t('pop', {n: d.pop})), d.speed > 1 && h('small.pop', t('speed', {n: d.speed})));
     };
-    put(el, 
+    put(el,
         h('div.build-head',
             h('div.tabs.scroll', BUILD_TABS.map(([k]) => h('button.tab' + (buildTab === k ? '.on' : ''), {onclick: () => ((buildTab = k), S.world.frameOutdoor(k === 'outdoor'), renderBuild())},
                 t('cat_' + k), k === 'storage' && stock.length ? ` (${stock.reduce((a, [, x]) => a + x, 0)})` : ''))),
             ed.doorMove ? h('div.placing', h('span', t('door_pick')), h('button.btn.btn-small.btn-ghost', {onclick: () => ed.stopDoorMove()}, t('cancel'))) :
-            ed.placing ? h('div.placing',
-                    h('span', t(ed.placing.moving ? 'moving_piece' : 'placing')),
-                    h('button.icon-btn', {title: t('rotate_left') + ' (Q)', onclick: () => ed.rotate(-1)}, icon('left')),
-                    h('button.icon-btn', {title: t('rotate_right') + ' (R)', onclick: () => ed.rotate(1)}, icon('right')),
-                    h('button.btn.btn-small.btn-primary', {disabled: !ed.placing.ok, onclick: () => ed.confirm()}, t('place_here')),
-                    !ed.placing.moving ? h('label.repeat', {title: t('repeat_hint')}, h('input', {type: 'checkbox', checked: ed.repeatFor(cat[ed.placing.it.k].cat), onchange: (e) => ed.setRepeat(cat[ed.placing.it.k].cat, e.target.checked)}), h('span', t('repeat_place'))) : null,
-                    h('button.btn.btn-small.btn-ghost', {onclick: () => ed.cancelPlacing()}, t('cancel')))
-                : h('div.build-tools', h('small.muted', t('build_hint')),
-                    h('label.sortby', h('span', t('sort_by')), h('select', {
-                        onchange: (e) => {
-                            buildSort = e.target.value;
-                            try {
-                                localStorage.setItem('forkville-sort', buildSort);
-                            } catch (err) { /* storage blocked */ }
-                            renderBuild();
-                        },
-                    }, Object.keys(SORTS).map(k => h('option', {value: k, selected: k === buildSort}, t('sort_' + k))))))),
+                ed.placing ? h('div.placing',
+                        h('span', t(ed.placing.moving ? 'moving_piece' : 'placing')),
+                        h('button.icon-btn', {
+                            title: t('rotate_left') + ' (Q)',
+                            onclick: () => ed.rotate(-1)
+                        }, icon('left')),
+                        h('button.icon-btn', {
+                            title: t('rotate_right') + ' (R)',
+                            onclick: () => ed.rotate(1)
+                        }, icon('right')),
+                        h('button.btn.btn-small.btn-primary', {
+                            disabled: !ed.placing.ok,
+                            onclick: () => ed.confirm()
+                        }, t('place_here')),
+                        !ed.placing.moving ? h('label.repeat', {title: t('repeat_hint')}, h('input', {
+                            type: 'checkbox',
+                            checked: ed.repeatFor(cat[ed.placing.it.k].cat),
+                            onchange: (e) => ed.setRepeat(cat[ed.placing.it.k].cat, e.target.checked)
+                        }), h('span', t('repeat_place'))) : null,
+                        h('button.btn.btn-small.btn-ghost', {onclick: () => ed.cancelPlacing()}, t('cancel')))
+                    : h('div.build-tools', h('small.muted', t('build_hint')),
+                        h('label.sortby', h('span', t('sort_by')), h('select', {
+                            onchange: (e) => {
+                                buildSort = e.target.value;
+                                try {
+                                    localStorage.setItem('forkville-sort', buildSort);
+                                } catch (err) { /* storage blocked */
+                                }
+                                renderBuild();
+                            },
+                        }, Object.keys(SORTS).map(k => h('option', {
+                            value: k,
+                            selected: k === buildSort
+                        }, t('sort_' + k))))))),
         buildTab === 'seasonal' ? h('div.event-banner' + (ev ? '.on' : ''), ic('ui', ev === 'christmas' || ev === 'autumn' ? 's_winter' : 's_spring'),
             h('div', h('b', ev ? t('ev_now', {e: t('ev_' + ev)}) : t('ev_none')), h('small', [ev ? t('ev_until', {m: eventDate(ev, 'to')}) + ' · ' : '', t('ev_kept')].join('')))) : null,
         buildTab === 'storage' ? (stock.length ? h('div.shop', stock.map(storeTile)) : h('p.muted.storage-empty', t('storage_empty'))) : h('div.shop', items.map(tile)),
@@ -1984,7 +2419,10 @@ function openDoor() {
                 closeModal();
                 act('game.door', {style: k}, {done: () => (S.editor.end(), enterBuild(buildTab), toast(t('door_changed'), 'good'))});
             },
-        }, h('img', {src: doorThumb(k), alt: ''}), h('b', t('door_' + k)), h('small', k === cur ? t('door_current') : d.level > r.level ? t('locked_level', {n: d.level}) : d.price ? coin(d.price) : t('free'))))),
+        }, h('img', {
+            src: doorThumb(k),
+            alt: ''
+        }), h('b', t('door_' + k)), h('small', k === cur ? t('door_current') : d.level > r.level ? t('locked_level', {n: d.level}) : d.price ? coin(d.price) : t('free'))))),
         h('div.expand-opt', h('div.expand-pic', icon('door')), h('div', h('b', t('door_move')), h('small.muted', t('door_move_d'))),
             h('button.btn.btn-primary.btn-small', {onclick: move}, coin(S.catalog.doorMove || 250)))), 'door-modal');
 }
@@ -1995,9 +2433,17 @@ function floorPicker() {
     if (!fl.length) return null;
     const cur = S.world.viewFloor || 0;
     return h('div.floorpick',
-        h('button.cam', {title: t('floor_up') + ' (PgUp)', disabled: cur >= fl.length, onclick: () => goFloor(cur + 1)}, icon('up')),
+        h('button.cam', {
+            title: t('floor_up') + ' (PgUp)',
+            disabled: cur >= fl.length,
+            onclick: () => goFloor(cur + 1)
+        }, icon('up')),
         h('div.floor-now', h('small', t('floor_view')), h('b', cur ? String(cur) : t('floor_ground_short'))),
-        h('button.cam', {title: t('floor_down') + ' (PgDn)', disabled: cur <= 0, onclick: () => goFloor(cur - 1)}, icon('down')));
+        h('button.cam', {
+            title: t('floor_down') + ' (PgDn)',
+            disabled: cur <= 0,
+            onclick: () => goFloor(cur - 1)
+        }, icon('down')));
 }
 
 /** Look at (and build on) another floor, one at a time. */
@@ -2008,6 +2454,7 @@ function goFloor(f) {
     if (S.editor?.active) S.editor.setLevel(f);
     renderHud();
 }
+
 // On touch screens a long press or a double tap would select text or open the callout: only fields may
 document.addEventListener('selectstart', (e) => {
     if (!e.target.closest?.('input, textarea, [contenteditable]')) e.preventDefault();
@@ -2032,14 +2479,18 @@ function expandCost(w, d, dir) {
 
 /** Enlarge the room one row or one column at a time, and buy (or enlarge) the car park. */
 function openExpand() {
-    const r = S.game.restaurant, W = r.size, D = r.depth || r.size, max = maxSide(r.level), top = S.catalog.expand?.max || 22;
+    const r = S.game.restaurant, W = r.size, D = r.depth || r.size, max = maxSide(r.level),
+        top = S.catalog.expand?.max || 22;
     const grow = (dir) => {
         const side = dir === 'col' ? W : D, cost = expandCost(W, D, dir);
         const locked = side >= max, full = side >= top;
         const nextLevel = Array.from({length: 40}, (_, i) => i + 1).find(l => maxSide(l) > side);
         return h('div.expand-opt',
             h('div.expand-pic', h('div.room-mini', {style: `--w:${dir === 'col' ? W + 1 : W};--d:${dir === 'row' ? D + 1 : D}`}, h('i.add-' + dir))),
-            h('div', h('b', t(dir === 'col' ? 'add_col' : 'add_row')), h('small.muted', t(dir === 'col' ? 'add_col_d' : 'add_row_d', {w: dir === 'col' ? W + 1 : W, d: dir === 'row' ? D + 1 : D})),
+            h('div', h('b', t(dir === 'col' ? 'add_col' : 'add_row')), h('small.muted', t(dir === 'col' ? 'add_col_d' : 'add_row_d', {
+                    w: dir === 'col' ? W + 1 : W,
+                    d: dir === 'row' ? D + 1 : D
+                })),
                 full ? h('small', t('max_size')) : locked ? h('small', t('locked_level', {n: nextLevel})) : null),
             h('button.btn.btn-primary.btn-small', {
                 disabled: locked || cost > r.coins,
@@ -2060,7 +2511,8 @@ function openExpand() {
     const pl = r.parking || 0, park = S.catalog.parking || {}, next = park[pl + 1];
     const gl = r.garage || 0, gar = S.catalog.garage || {}, gnext = gar[gl + 1];
     // Upper floors: each grows inside the one below; the next one can be built from its level
-    const floors = r.floors || [], rectOf = (f) => f ? {x0: floors[f - 1][2], w: floors[f - 1][0], d: floors[f - 1][1]} : {x0: 0, w: W, d: D};
+    const floors = r.floors || [],
+        rectOf = (f) => f ? {x0: floors[f - 1][2], w: floors[f - 1][0], d: floors[f - 1][1]} : {x0: 0, w: W, d: D};
     const growUp = (f, dir) => {
         const me = rectOf(f), below = rectOf(f - 1), cost = Math.round(expandCost(me.w, me.d, dir) * 0.8);
         const room = dir === 'row' ? me.d + 1 <= below.d : me.x0 + me.w + 1 <= below.x0 + below.w || me.x0 > below.x0;
@@ -2073,7 +2525,10 @@ function openExpand() {
                 disabled: !room || locked || cost > r.coins,
                 onclick: () => {
                     closeModal();
-                    act('game.expand', {dir, floor: f}, {done: () => S.editor.active && (S.editor.end(), enterBuild(buildTab))});
+                    act('game.expand', {
+                        dir,
+                        floor: f
+                    }, {done: () => S.editor.active && (S.editor.end(), enterBuild(buildTab))});
                 },
             }, coin(cost)));
     };
@@ -2086,12 +2541,14 @@ function openExpand() {
                 disabled: nextFloor.level > r.level || nextFloor.cost > r.coins,
                 onclick: () => {
                     closeModal();
-                    act('game.floor', {}, {rebuild: true, done: () => {
-                        toast(t('floor_built', {n: floors.length + 1}), 'good');
-                        S.world.setViewFloor(floors.length + 1);
-                        if (S.editor.active) (S.editor.end(), enterBuild('stairs'));
-                        renderHud();
-                    }});
+                    act('game.floor', {}, {
+                        rebuild: true, done: () => {
+                            toast(t('floor_built', {n: floors.length + 1}), 'good');
+                            S.world.setViewFloor(floors.length + 1);
+                            if (S.editor.active) (S.editor.end(), enterBuild('stairs'));
+                            renderHud();
+                        }
+                    });
                 },
             }, coin(nextFloor.cost))) : null,
     ];
@@ -2109,7 +2566,10 @@ function openExpand() {
                 disabled: next.level > r.level || next.cost > r.coins,
                 onclick: () => {
                     closeModal();
-                    act('game.parking', {}, {rebuild: true, done: () => S.editor.active && (S.editor.end(), enterBuild(buildTab))});
+                    act('game.parking', {}, {
+                        rebuild: true,
+                        done: () => S.editor.active && (S.editor.end(), enterBuild(buildTab))
+                    });
                 },
             }, coin(next.cost))) : h('p', t('parking_max')),
         // The underground car park (floor −1): later levels, many more spaces
@@ -2122,7 +2582,10 @@ function openExpand() {
                 disabled: gnext.level > r.level || gnext.cost > r.coins,
                 onclick: () => {
                     closeModal();
-                    act('game.garage', {}, {rebuild: true, done: () => S.editor.active && (S.editor.end(), enterBuild(buildTab))});
+                    act('game.garage', {}, {
+                        rebuild: true,
+                        done: () => S.editor.active && (S.editor.end(), enterBuild(buildTab))
+                    });
                 },
             }, coin(gnext.cost))) : h('p', t('garage_max'))), 'expand-modal');
 }
@@ -2130,15 +2593,25 @@ function openExpand() {
 function renderSelection(it) {
     const el = document.getElementById('selbar');
     if (!el) return;
-    if (!it) return put(el, );
+    if (!it) return put(el,);
     const refund = it.id > 0 ? Math.floor(S.catalog.items[it.k].price * S.catalog.rules.sellBack) : S.catalog.items[it.k].price;
     put(el, h('div.selcard', h('b', n(it.k)),
         h('button.icon-btn', {title: t('rotate_left') + ' (Q)', onclick: () => S.editor.rotate(-1)}, icon('left')),
         h('button.icon-btn', {title: t('rotate_right') + ' (R)', onclick: () => S.editor.rotate(1)}, icon('right')),
         h('button.btn.btn-small', {title: 'M', onclick: () => S.editor.moveSelected()}, t('move')),
-        h('button.btn.btn-small', {title: 'C', disabled: !inSeason(it.k), onclick: () => S.editor.copySelected()}, t('copy_piece'), ' ', coin(S.catalog.items[it.k].price)),
-        h('button.btn.btn-small', {title: t('store_hint'), onclick: () => S.editor.storeSelected()}, icon('box'), ' ', t('store_piece')),
-        !it.st && h('button.btn.btn-small.btn-danger', {title: t('key_delete'), onclick: () => S.editor.sellSelected()}, t('sell'), ' +', String(refund)),
+        h('button.btn.btn-small', {
+            title: 'C',
+            disabled: !inSeason(it.k),
+            onclick: () => S.editor.copySelected()
+        }, t('copy_piece'), ' ', coin(S.catalog.items[it.k].price)),
+        h('button.btn.btn-small', {
+            title: t('store_hint'),
+            onclick: () => S.editor.storeSelected()
+        }, icon('box'), ' ', t('store_piece')),
+        !it.st && h('button.btn.btn-small.btn-danger', {
+            title: t('key_delete'),
+            onclick: () => S.editor.sellSelected()
+        }, t('sell'), ' +', String(refund)),
         h('button.icon-btn', {onclick: () => S.editor.select(null)}, icon('x')),
         h('small.muted.selhint', t('drag_hint'))));
 }
@@ -2169,15 +2642,39 @@ function closeModal() {
 
 /** While you were away: who ran the restaurant, from when to when, and how to make it run longer. */
 function showAway(a) {
-    const hm = (ts) => new Date(ts * 1000).toLocaleTimeString(getLang() === 'it' ? 'it-IT' : 'en-GB', {hour: '2-digit', minute: '2-digit'});
+    const hm = (ts) => new Date(ts * 1000).toLocaleTimeString(getLang() === 'it' ? 'it-IT' : 'en-GB', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
     const lines = [];
-    if (a.managed > 0) lines.push(h('p.away-line.ok', ic('ui', 'manager'), h('span', {html: t('away_slot_manager', {a: hm(a.from), b: hm(a.managedTo), p: a.managerPct})})));
-    if (a.aloneTo > a.managedTo) lines.push(h('p.away-line', ic('ui', 'chef'), h('span', {html: t('away_slot_alone', {a: hm(a.managedTo), b: hm(a.aloneTo), p: a.alonePct})})));
+    if (a.managed > 0) lines.push(h('p.away-line.ok', ic('ui', 'manager'), h('span', {
+        html: t('away_slot_manager', {
+            a: hm(a.from),
+            b: hm(a.managedTo),
+            p: a.managerPct
+        })
+    })));
+    if (a.aloneTo > a.managedTo) lines.push(h('p.away-line', ic('ui', 'chef'), h('span', {
+        html: t('away_slot_alone', {
+            a: hm(a.managedTo),
+            b: hm(a.aloneTo),
+            p: a.alonePct
+        })
+    })));
     if (a.now - a.aloneTo > 120) lines.push(h('p.away-line.off', ic('mood', 'sleep'), h('span', {html: t('away_slot_closed', {a: hm(a.aloneTo)})})));
-    modal(t('away_title'), [h('div.away-art', {html: svgIcon('ui', a.managed ? 'manager' : 'chef')}), h('p', {html: t('away_body', {n: a.served, m: a.minutes, c: a.coins})}),
+    modal(t('away_title'), [h('div.away-art', {html: svgIcon('ui', a.managed ? 'manager' : 'chef')}), h('p', {
+        html: t('away_body', {
+            n: a.served,
+            m: a.minutes,
+            c: a.coins
+        })
+    }),
         ...lines,
         h('p.tip', ic('mood', 'sparkle'), t(a.hasManager ? 'away_tip_promote' : 'away_tip_hire')),
-        h('div.row', h('button.btn', {onclick: () => (closeModal(), openSheet('staff'))}, t('dock_staff')), h('button.btn.btn-primary', {onclick: closeModal, style: 'flex:1'}, 'OK'))]);
+        h('div.row', h('button.btn', {onclick: () => (closeModal(), openSheet('staff'))}, t('dock_staff')), h('button.btn.btn-primary', {
+            onclick: closeModal,
+            style: 'flex:1'
+        }, 'OK'))]);
 }
 
 // Browsers allow sound only after a tap: the first one starts the music
@@ -2186,5 +2683,6 @@ document.addEventListener('click', (e) => {
     if (e.target.closest?.('button, .btn, a.btn')) sfx.click();
 }, true);
 
-if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {
+});
 boot();

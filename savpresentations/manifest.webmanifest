@@ -2,7 +2,7 @@
   "id": "/savpresentations/", "name": "SavPresentations", "short_name": "SavPresentations",
   "description": "Presentations, without the weight.",
   "start_url": "./", "scope": "./", "display": "standalone", "display_override": ["window-controls-overlay", "standalone"],
-  "background_color": "#f3f6f5", "theme_color": "#0b7f72", "categories": ["productivity", "business", "education"],
+  "background_color": "#f7f5fc", "theme_color": "#6d3bef", "categories": ["productivity", "business", "education"],
   "icons": [
     { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },

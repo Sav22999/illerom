@@ -100,7 +100,10 @@ if (!function_exists('fig_sqlbase_order')) {
             $lines .= '<line x1="' . (84 + $i * 120) . '" y1="92" x2="' . (84 + $j * 120) . '" y2="196" stroke="' . ($w === 'SELECT' ? '#E8590C' : '#8A87B0') . '" stroke-width="2" stroke-dasharray="' . ($w === 'SELECT' ? '0' : '5 4') . '"/>';
         }
         $arrows = '';
-        for ($i = 0; $i < 4; $i++) { $x = 134 + $i * 120; $arrows .= '<path d="M' . ($x + 4) . ' 210 L' . ($x + 16) . ' 216 L' . ($x + 4) . ' 222 Z" fill="#1E1C52"/>'; }
+        for ($i = 0; $i < 4; $i++) {
+            $x = 134 + $i * 120;
+            $arrows .= '<path d="M' . ($x + 4) . ' 210 L' . ($x + 16) . ' 216 L' . ($x + 4) . ' 222 Z" fill="#1E1C52"/>';
+        }
         return <<<SVG
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 290" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
 <style>.dot{animation:walk 8s ease-in-out infinite}@keyframes walk{0%,8%{transform:translateX(0)}22%,30%{transform:translateX(120px)}44%,52%{transform:translateX(240px)}66%,74%{transform:translateX(360px)}88%,100%{transform:translateX(480px)}}@media (prefers-reduced-motion:reduce){.dot{animation:none}}</style>

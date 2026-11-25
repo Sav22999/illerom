@@ -39,7 +39,8 @@ export class Editor {
         this.repeatPrefs[cat] = on;
         try {
             localStorage.setItem('forkville-repeat', JSON.stringify(this.repeatPrefs));
-        } catch (e) { /* storage blocked */ }
+        } catch (e) { /* storage blocked */
+        }
         this.hooks.changed();
     }
 
@@ -155,7 +156,11 @@ export class Editor {
         const pts = [];
         for (let x = 0; x <= rect.w; x++) pts.push(rect.x0 + x, 0, 0, rect.x0 + x, 0, rect.d);
         for (let z = 0; z <= rect.d; z++) pts.push(rect.x0, 0, z, rect.x0 + rect.w, 0, z);
-        this.grid = new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(pts, 3)), new THREE.LineBasicMaterial({color: '#8A6A4A', transparent: true, opacity: 0.28}));
+        this.grid = new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(pts, 3)), new THREE.LineBasicMaterial({
+            color: '#8A6A4A',
+            transparent: true,
+            opacity: 0.28
+        }));
         this.grid.position.set(0, this.level * FH + 0.05, 0);
         this.world.root.add(this.grid);
         this.doorMark = new THREE.Group();
@@ -196,7 +201,12 @@ export class Editor {
     }
 
     tileMark(x, z, color, opacity = 0.45) {
-        const m = new THREE.Mesh(new THREE.PlaneGeometry(0.96, 0.96), new THREE.MeshBasicMaterial({color, transparent: true, opacity, depthWrite: false}));
+        const m = new THREE.Mesh(new THREE.PlaneGeometry(0.96, 0.96), new THREE.MeshBasicMaterial({
+            color,
+            transparent: true,
+            opacity,
+            depthWrite: false
+        }));
         m.rotation.x = -Math.PI / 2;
         m.position.set(x + 0.5, (this.level || 0) * FH + 0.06, z + 0.5);
         return m;
@@ -258,7 +268,10 @@ export class Editor {
             if (!it.k.startsWith('lift')) {
                 const exits = [...this.world.stairExits(this.level + 1, [{...it, f: this.level}], this.catalog.items)];
                 this.reason = 'stairs_exit';
-                if (!exits.every(k => { const [x, z] = k.split(',').map(Number); return inRect(up, x, z) && !above.has(k); })) return false;
+                if (!exits.every(k => {
+                    const [x, z] = k.split(',').map(Number);
+                    return inRect(up, x, z) && !above.has(k);
+                })) return false;
             }
         }
         return true;
@@ -295,7 +308,15 @@ export class Editor {
         const take = {};
         for (const it of this.draft) if (it.st) take[it.k] = (take[it.k] || 0) + 1;
         const store = [...this.stored].filter(id => !this.draft.some(d => d.id === id));
-        return {layout: this.draft.map(it => ({id: it.id > 0 ? it.id : 0, k: it.k, x: it.x, z: it.z, r: it.r, ...(it.f ? {f: it.f} : {})})), floor: this.floor, wall: this.wall, store, take};
+        return {
+            layout: this.draft.map(it => ({
+                id: it.id > 0 ? it.id : 0,
+                k: it.k,
+                x: it.x,
+                z: it.z,
+                r: it.r, ...(it.f ? {f: it.f} : {})
+            })), floor: this.floor, wall: this.wall, store, take
+        };
     }
 
     // ------------------------------------------------------------ placing
@@ -310,9 +331,19 @@ export class Editor {
         const last = this.lastPos && this.catalog.items[this.lastPos.k]?.cat === this.catalog.items[key].cat ? this.lastPos : null;
         const rect = this.world.floorRect(this.level);
         const isWin = this.catalog.items[key].cat === 'window';
-        const it = existing ? {...existing} : {id: this.tempId--, k: key, x: last ? last.x : outdoor ? 1 : rect.x0 + Math.floor(rect.w / 2), z: last ? last.z : outdoor ? this.D + 1 : Math.floor(rect.d / 2), r};
+        const it = existing ? {...existing} : {
+            id: this.tempId--,
+            k: key,
+            x: last ? last.x : outdoor ? 1 : rect.x0 + Math.floor(rect.w / 2),
+            z: last ? last.z : outdoor ? this.D + 1 : Math.floor(rect.d / 2),
+            r
+        };
         if (!existing && isWin && last) it.r = last.r ?? it.r;
-        if (!existing && isWin && !last) Object.assign(it, {x: rect.x0 + Math.max(0, Math.floor((rect.w - this.catalog.items[key].w) / 2)), z: 0, r: 0}); // starts on the back wall
+        if (!existing && isWin && !last) Object.assign(it, {
+            x: rect.x0 + Math.max(0, Math.floor((rect.w - this.catalog.items[key].w) / 2)),
+            z: 0,
+            r: 0
+        }); // starts on the back wall
         if (!existing && this.level) it.f = this.level;
         if (!existing && fromStorage) it.st = true; // taken out of storage: free
         // Moving a table takes along the chairs turned towards it (moving a chair moves only the chair)
@@ -334,13 +365,22 @@ export class Editor {
             }
         });
         this.world.root.add(ghost);
-        this.placing = {it, ghost, moving: existing ? {...existing} : null, attached: attached.map(c => {
-            const g = this.ghostOf(c.k);
-            this.world.root.add(g);
-            const tf = this.world.footprint(existing, this.catalog.items);
-            // Where the chair sits, from the middle of the table (turned with it)
-            return {orig: {...c}, it: {...c}, ghost: g, cx: c.x + 0.5 - (existing.x + tf.w / 2), cz: c.z + 0.5 - (existing.z + tf.d / 2), r0: existing.r};
-        })};
+        this.placing = {
+            it, ghost, moving: existing ? {...existing} : null, attached: attached.map(c => {
+                const g = this.ghostOf(c.k);
+                this.world.root.add(g);
+                const tf = this.world.footprint(existing, this.catalog.items);
+                // Where the chair sits, from the middle of the table (turned with it)
+                return {
+                    orig: {...c},
+                    it: {...c},
+                    ghost: g,
+                    cx: c.x + 0.5 - (existing.x + tf.w / 2),
+                    cz: c.z + 0.5 - (existing.z + tf.d / 2),
+                    r0: existing.r
+                };
+            })
+        };
         this.updateGhost();
         this.hooks.changed();
     }
@@ -377,7 +417,12 @@ export class Editor {
             for (const c of p.attached) {
                 let cx = c.cx, cz = c.cz, cr = c.orig.r;
                 for (let k = 0; k < ((p.it.r - c.r0) + 4) % 4; k++) [cx, cz, cr] = [cz, -cx, (cr + 1) % 4];
-                Object.assign(c.it, {x: Math.round(p.it.x + tf.w / 2 + cx - 0.5), z: Math.round(p.it.z + tf.d / 2 + cz - 0.5), r: cr, f: p.it.f});
+                Object.assign(c.it, {
+                    x: Math.round(p.it.x + tf.w / 2 + cx - 0.5),
+                    z: Math.round(p.it.z + tf.d / 2 + cz - 0.5),
+                    r: cr,
+                    f: p.it.f
+                });
                 if (!c.it.f) delete c.it.f;
                 this.world.placeObject(c.ghost, c.it, this.catalog.items);
                 c.ghost.position.y = (c.it.f || 0) * FH + 0.04;

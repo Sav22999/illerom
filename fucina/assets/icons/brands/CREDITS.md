@@ -9,14 +9,14 @@ The white logos in the course badges. Every file here is a single-colour SVG dra
 
 Some of the original logos come with their own free licence, which asks for attribution:
 
-| File | Logo licence |
-|---|---|
-| `angular.svg` | CC BY 4.0, Google |
-| `git.svg` | CC BY 3.0, Jason Long |
-| `php.svg` | CC BY-SA 4.0, Colin Viebrock |
-| `r.svg` | CC BY-SA 4.0, The R Foundation |
-| `rust.svg` | CC BY-SA 4.0, The Rust Foundation |
-| `bootstrap.svg`, `javascript.svg`, `vala.svg`, `gnubash.svg`, `githubcopilot.svg` | MIT |
+| File                                                                              | Logo licence                      |
+|-----------------------------------------------------------------------------------|-----------------------------------|
+| `angular.svg`                                                                     | CC BY 4.0, Google                 |
+| `git.svg`                                                                         | CC BY 3.0, Jason Long             |
+| `php.svg`                                                                         | CC BY-SA 4.0, Colin Viebrock      |
+| `r.svg`                                                                           | CC BY-SA 4.0, The R Foundation    |
+| `rust.svg`                                                                        | CC BY-SA 4.0, The Rust Foundation |
+| `bootstrap.svg`, `javascript.svg`, `vala.svg`, `gnubash.svg`, `githubcopilot.svg` | MIT                               |
 
 The logos are trademarks of their owners and are shown only to name the technology a course teaches; Fucina is not
 endorsed by them. Logos left out on purpose, so their courses keep the text badge: those under a non-commercial licence

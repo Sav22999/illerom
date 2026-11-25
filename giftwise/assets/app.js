@@ -1428,7 +1428,13 @@
     function openProfileForm() {
         const name = input({value: S.user.name, maxlength: 80, autocomplete: 'name'});
         // The email identifies the account: shown, never changed
-        const email = input({type: 'email', value: S.user.email, readonly: true, disabled: true, title: t('The email can’t be changed.')});
+        const email = input({
+            type: 'email',
+            value: S.user.email,
+            readonly: true,
+            disabled: true,
+            title: t('The email can’t be changed.')
+        });
         const save = btn(t('Save'), {
             icon: 'check', onclick: async () => {
                 await act('auth.profile', {name: name.value}, save);
@@ -1982,7 +1988,10 @@
                 render();
             }
         });
-        root.replaceChildren(h('div.auth', langPill('.on-auth'), h('div.auth-top', h('div.logo', h('img', {src: 'assets/icons/icon-192.png', alt: ''})), h('h1', 'Giftwise'), h('p', t('Confirm your email'))),
+        root.replaceChildren(h('div.auth', langPill('.on-auth'), h('div.auth-top', h('div.logo', h('img', {
+                src: 'assets/icons/icon-192.png',
+                alt: ''
+            })), h('h1', 'Giftwise'), h('p', t('Confirm your email'))),
             h('div.auth-body.center', h('p', t('We sent a link to {email}. Open it to start using your account: until then the account stays locked.', {email: S.user.email})),
                 status, h('div.verify-actions', check, resend, out))));
     }
@@ -2002,13 +2011,22 @@
                     }
                 }
             });
-            const s = sheet({title: t('Confirm your email'), body: [h('p.sheet-text', t('Tap the button to confirm the address of your Giftwise account.'))], actions: [ok], onclose: resolve});
+            const s = sheet({
+                title: t('Confirm your email'),
+                body: [h('p.sheet-text', t('Tap the button to confirm the address of your Giftwise account.'))],
+                actions: [ok],
+                onclose: resolve
+            });
         });
     }
 
     // Google and SavAccount: joining an account that already exists, new accounts, ways of signing in (../identity/)
     if (window.Identity) Identity.setup({
-        name: 'Giftwise', lang: () => I18N.lang, accent: 'var(--primary)', onAccent: 'var(--on-primary)', google: (slot, cb) => S.config.googleClientId && UI.googleButton(slot, S.config.googleClientId, cb, 'continue_with'),
+        name: 'Giftwise',
+        lang: () => I18N.lang,
+        accent: 'var(--primary)',
+        onAccent: 'var(--on-primary)',
+        google: (slot, cb) => S.config.googleClientId && UI.googleButton(slot, S.config.googleClientId, cb, 'continue_with'),
         invite: () => pendingInvite(),
     });
 

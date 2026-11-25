@@ -79,6 +79,22 @@ function clean_title($t): string
     return mb_substr($t, 0, 160);
 }
 
+/** The beginning of a document, for its small picture in the home: at most 12 blocks and 20 kB. */
+function doc_preview(array $doc): string
+{
+    $out = [];
+    $len = 0;
+    foreach ($doc['blocks'] as $b) {
+        $n = strlen($b['h']);
+        if (count($out) >= 12 || $len + $n > 20000) break;
+        $out[] = $b['h'];
+        $len += $n;
+        if (strpos($b['h'], 'class="pb"') !== false) break;
+    }
+    $json = json_out(['settings' => $doc['settings'], 'blocks' => $out]);
+    return strlen($json) < 60000 ? $json : json_out(['settings' => $doc['settings'], 'blocks' => []]);
+}
+
 function create_doc(int $uid, string $title, array $doc, ?int $folder): array
 {
     $st = db()->prepare('SELECT COUNT(*) FROM ' . t('documents') . ' WHERE owner_id = ?');
@@ -88,8 +104,8 @@ function create_doc(int $uid, string $title, array $doc, ?int $folder): array
     if (strlen($json) > MAX_DOC_BYTES) fail('doc_too_big', 413);
     if ($folder !== null) own_folder($uid, $folder);
     $pid = new_pid();
-    db()->prepare('INSERT INTO ' . t('documents') . ' (pid, owner_id, folder_id, title, doc, words, created_at, updated_at, updated_by) VALUES (?,?,?,?,?,?,?,?,?)')
-        ->execute([$pid, $uid, $folder, $title, $json, doc_words($doc), now_utc(), now_utc(), $uid]);
+    db()->prepare('INSERT INTO ' . t('documents') . ' (pid, owner_id, folder_id, title, doc, preview, words, created_at, updated_at, updated_by) VALUES (?,?,?,?,?,?,?,?,?,?)')
+        ->execute([$pid, $uid, $folder, $title, $json, doc_preview($doc), doc_words($doc), now_utc(), now_utc(), $uid]);
     return doc_by_pid($pid);
 }
 
@@ -223,7 +239,7 @@ function save_ops(array $d, array $doc, string $title, array $done, string $clie
     $json = json_out($doc);
     if (strlen($json) > MAX_DOC_BYTES) fail('doc_too_big', 413);
     $rev = (int)$d['rev'] + 1;
-    db()->prepare('UPDATE ' . t('documents') . ' SET doc = ?, title = ?, rev = ?, words = ?, updated_at = ?, updated_by = ? WHERE id = ?')->execute([$json, $title, $rev, doc_words($doc), now_utc(), $uid, $d['id']]);
+    db()->prepare('UPDATE ' . t('documents') . ' SET doc = ?, preview = ?, title = ?, rev = ?, words = ?, updated_at = ?, updated_by = ? WHERE id = ?')->execute([$json, doc_preview($doc), $title, $rev, doc_words($doc), now_utc(), $uid, $d['id']]);
     db()->prepare('INSERT INTO ' . t('ops') . ' (doc_id, rev, client, ops, created_at) VALUES (?,?,?,?,?)')->execute([$d['id'], $rev, $client, json_out($done), now_utc()]);
     if ($rev % 50 === 0) db()->prepare('DELETE FROM ' . t('ops') . ' WHERE doc_id = ? AND rev < ?')->execute([$d['id'], $rev - KEEP_OPS]);
     return $rev;

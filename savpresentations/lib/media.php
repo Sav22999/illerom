@@ -1,9 +1,10 @@
 <?php
 /**
- * SavPresentations — pictures (uploaded or imported) and the search of free images and videos.
+ * SavPresentations — pictures (uploaded or imported), uploaded videos and the search of free images and videos.
  *
  * Pictures are re-encoded with GD (metadata such as the place of a photo is lost on purpose), kept as files in the
  * storage folder (never reachable from the browser) and served by their random id: api/?r=media&id=…
+ * Videos arrive in pieces, are kept as they are and served with ranges. While one is arriving its mime is "upload".
  * Searches go through the server: the portals never see who is searching. Imports only accept results of a recent
  * search (or a YouTube/Vimeo poster), never an address chosen by the browser.
  */
@@ -26,7 +27,7 @@ function media_used(int $userId): int
 
 function media_out(array $m): array
 {
-    return ['id' => $m['id'], 'src' => 'm:' . $m['id'], 'w' => (int)$m['width'], 'h' => (int)$m['height'], 'bytes' => (int)$m['bytes'], 'name' => $m['name'], 'credit' => $m['credit']];
+    return ['id' => $m['id'], 'src' => 'm:' . $m['id'], 'video' => strpos($m['mime'], 'video/') === 0, 'poster' => $m['poster'] ? 'm:' . $m['poster'] : '', 'w' => (int)$m['width'], 'h' => (int)$m['height'], 'bytes' => (int)$m['bytes'], 'name' => $m['name'], 'credit' => $m['credit']];
 }
 
 /** Checks, re-encodes and stores the bytes of a picture. */
@@ -97,13 +98,113 @@ function serve_media(string $id): void
         http_response_code(404);
         exit;
     }
+    if ($m['mime'] === 'upload') {
+        http_response_code(404);
+        exit;
+    }
     header('Content-Type: ' . $m['mime']);
-    header('Content-Length: ' . filesize(media_path($id)));
     header('X-Content-Type-Options: nosniff');
     header('Cache-Control: private, max-age=31536000, immutable');
     header("Content-Security-Policy: default-src 'none'");
-    readfile(media_path($id));
+    $size = (int)filesize(media_path($id));
+    [$from, $to] = [0, $size - 1];
+    if (strpos($m['mime'], 'video/') === 0) {
+        // players ask for the part they need
+        header('Accept-Ranges: bytes');
+        if (preg_match('/^bytes=(\d*)-(\d*)$/', (string)($_SERVER['HTTP_RANGE'] ?? ''), $x) && $x[1] . $x[2] !== '') {
+            if ($x[1] === '') $from = max(0, $size - (int)$x[2]);
+            else {
+                $from = (int)$x[1];
+                if ($x[2] !== '') $to = min($to, (int)$x[2]);
+            }
+            if ($from > $to) {
+                http_response_code(416);
+                header("Content-Range: bytes */$size");
+                exit;
+            }
+            http_response_code(206);
+            header("Content-Range: bytes $from-$to/$size");
+        }
+    }
+    header('Content-Length: ' . ($to - $from + 1));
+    while (ob_get_level()) ob_end_clean();
+    @set_time_limit(0);
+    $f = fopen(media_path($id), 'rb');
+    fseek($f, $from);
+    for ($left = $to - $from + 1; $left > 0 && !connection_aborted(); $left -= strlen($buf)) {
+        $buf = (string)fread($f, min(262144, $left));
+        if ($buf === '') break;
+        echo $buf;
+        flush();
+    }
     exit;
+}
+
+/** A video that is about to arrive: its place is booked at once, so the space of a person cannot be exceeded. */
+function video_begin(int $userId, string $name, int $size): array
+{
+    if ($size < 1 || $size > MAX_VIDEO_BYTES) fail('video_big', 413);
+    // what was left half way yesterday goes
+    $st = db()->prepare('SELECT id FROM ' . t('media') . " WHERE user_id = ? AND mime = 'upload' AND created_at < ?");
+    $st->execute([$userId, gmdate('Y-m-d H:i:s', time() - 86400)]);
+    foreach ($st->fetchAll(PDO::FETCH_COLUMN) as $old) video_drop($userId, (string)$old);
+    if (media_used($userId) + $size > (int)config_value('quota')) fail('quota', 413);
+    $id = bin2hex(random_bytes(16));
+    $dir = dirname(media_path($id));
+    if (!is_dir($dir) && !@mkdir($dir, 0755, true) && !is_dir($dir)) throw new RuntimeException('storage folder not writable');
+    db()->prepare('INSERT INTO ' . t('media') . " (id, user_id, mime, width, height, bytes, name, credit, created_at) VALUES (?,?,'upload',0,0,?,?,'',?)")->execute([$id, $userId, $size, mb_substr($name, 0, 120), now_utc()]);
+    return ['id' => $id, 'piece' => VIDEO_PIECE];
+}
+
+function video_row(int $userId, string $id): array
+{
+    if (!preg_match('/^[a-f0-9]{32}$/', $id)) fail('not_found', 404);
+    $st = db()->prepare('SELECT * FROM ' . t('media') . " WHERE id = ? AND user_id = ? AND mime = 'upload'");
+    $st->execute([$id, $userId]);
+    $m = $st->fetch();
+    if (!$m) fail('not_found', 404);
+    return $m;
+}
+
+/** One piece; answers with how much has arrived, so a piece sent twice does no harm. */
+function video_piece(array $m, int $from, string $bytes): int
+{
+    $f = fopen(media_path($m['id']), 'c+b');
+    if (!$f || !flock($f, LOCK_EX)) throw new RuntimeException('storage folder not writable');
+    $have = (int)fstat($f)['size'];
+    if ($from === $have && $bytes !== '' && $have + strlen($bytes) <= (int)$m['bytes']) {
+        fseek($f, 0, SEEK_END);
+        if (fwrite($f, $bytes) !== strlen($bytes)) throw new RuntimeException('storage full');
+        $have += strlen($bytes);
+    }
+    fclose($f);
+    return $have;
+}
+
+/** Everything has arrived: is it really a video? */
+function video_end(int $userId, array $m, int $w, int $h, string $poster): array
+{
+    $file = media_path($m['id']);
+    $head = is_file($file) ? (string)file_get_contents($file, false, null, 0, 64) : '';
+    $mime = substr($head, 4, 4) === 'ftyp' ? (substr($head, 8, 4) === 'qt  ' ? 'video/quicktime' : 'video/mp4') : (strncmp($head, "\x1A\x45\xDF\xA3", 4) === 0 ? 'video/webm' : (strncmp($head, 'OggS', 4) === 0 ? 'video/ogg' : ''));
+    if ($mime === '' || filesize($file) !== (int)$m['bytes']) {
+        video_drop($userId, $m['id']);
+        fail('video_type', 422);
+    }
+    $st = db()->prepare('SELECT id FROM ' . t('media') . ' WHERE id = ? AND user_id = ?');
+    $st->execute([substr($poster, 2), $userId]);
+    $p = (string)$st->fetchColumn();
+    db()->prepare('UPDATE ' . t('media') . ' SET mime = ?, width = ?, height = ?, poster = ? WHERE id = ?')->execute([$mime, max(1, min(8000, $w)), max(1, min(8000, $h)), $p, $m['id']]);
+    $st = db()->prepare('SELECT * FROM ' . t('media') . ' WHERE id = ?');
+    $st->execute([$m['id']]);
+    return media_out($st->fetch());
+}
+
+function video_drop(int $userId, string $id): void
+{
+    $st = db()->prepare('DELETE FROM ' . t('media') . " WHERE id = ? AND user_id = ? AND mime = 'upload'");
+    $st->execute([$id, $userId]);
+    if ($st->rowCount()) delete_media_files([$id]);
 }
 
 function delete_media_files(array $ids): void
@@ -182,7 +283,7 @@ function search_media(string $kind, string $source, string $q, int $page, bool $
 {
     $sources = search_sources()[$kind] ?? [];
     if (!in_array($source, $sources, true)) fail('bad_request', 422);
-    $key = hash('sha256', implode('|', ['v1', $kind, $source, mb_strtolower($q), $page, (int)$free]));
+    $key = hash('sha256', implode('|', ['v2', $kind, $source, mb_strtolower($q), $page, (int)$free]));
     $st = db()->prepare('SELECT v FROM ' . t('cache') . ' WHERE k = ? AND expires_at > ?');
     $st->execute([$key, now_utc()]);
     $hit = $st->fetchColumn();
@@ -217,12 +318,12 @@ function search_wikimedia(string $kind, string $q, int $page, bool $free): ?arra
     $isVideo = $kind === 'video';
     $prop = $isVideo ? 'videoinfo' : 'imageinfo';
     $pre = $isVideo ? 'vi' : 'ii';
-    $lic = $free ? ' incategory:"CC-Zero"|"PD-self"' : '';
+    $lic = $free ? ' haswbstatement:P6216=Q19652|P6216=Q88088423|P275=Q6938433' : ''; // public domain, dedicated to it, CC0
     $d = http_json('https://commons.wikimedia.org/w/api.php?' . http_build_query([
-        'action' => 'query', 'format' => 'json', 'formatversion' => 2, 'generator' => 'search', 'gsrnamespace' => 6, 'gsrlimit' => 24, 'gsroffset' => ($page - 1) * 24,
-        'gsrsearch' => $q . ' filetype:' . ($isVideo ? 'video' : 'bitmap') . $lic, 'prop' => $prop, $pre . 'prop' => 'url|size|mime|extmetadata' . ($isVideo ? '|derivatives' : ''), $pre . 'urlwidth' => 400,
-        $pre . 'extmetadatafilter' => 'LicenseShortName|Artist|ImageDescription|AttributionRequired',
-    ]));
+            'action' => 'query', 'format' => 'json', 'formatversion' => 2, 'generator' => 'search', 'gsrnamespace' => 6, 'gsrlimit' => 24, 'gsroffset' => ($page - 1) * 24,
+            'gsrsearch' => $q . ' filetype:' . ($isVideo ? 'video' : 'bitmap') . $lic, 'prop' => $prop, $pre . 'prop' => 'url|size|mime|extmetadata' . ($isVideo ? '|derivatives' : ''), $pre . 'urlwidth' => 400,
+            $pre . 'extmetadatafilter' => 'LicenseShortName|Artist|ImageDescription|AttributionRequired',
+        ]));
     if (!$d) return null;
     $pages = $d['query']['pages'] ?? [];
     usort($pages, fn($a, $b) => ($a['index'] ?? 0) <=> ($b['index'] ?? 0));
@@ -240,7 +341,7 @@ function search_wikimedia(string $kind, string $q, int $page, bool $free): ?arra
             // a light version every browser can play (the originals can be huge)
             $best = null;
             foreach ($i['derivatives'] ?? [] as $v) {
-                if (empty($v['src']) || (int)($v['height'] ?? 0) < 240 || (int)($v['height'] ?? 0) > 760) continue;
+                if (empty($v['src']) || (int)($v['height'] ?? 0) < 200 || (int)($v['height'] ?? 0) > 1100) continue;
                 if (!preg_match('~^video/(mp4|webm)~', (string)($v['type'] ?? ''))) continue;
                 if (!$best || (int)$v['height'] > (int)$best['height']) $best = $v;
             }

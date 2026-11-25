@@ -208,7 +208,7 @@ head_arrow|Arrow|Freccia
 head_dot|Dot|Punto
 head_none|Nothing|Niente
 hh|H|H
-hide_slide|Skip in the show|Salta nella presentazione
+hide_slide|Hide this page|Nascondi questa pagina
 highlight|Highlight|Evidenzia
 home|Home|Home
 image|Image|Immagine
@@ -273,7 +273,7 @@ lay_three-cards|Three cards|Tre schede
 lay_timeline|Timeline|Linea del tempo
 lay_title-body|Title and text|Titolo e testo
 lay_two-cols|Two columns|Due colonne
-layout_new|Add as a new slide|Aggiungi come nuova slide
+layout_new|New slide|Nuova slide
 layouts|Layouts|Layout
 leave|Leave|Abbandona
 leave_t|“{title}” disappears from your list. To see it again you will need a new invitation.|“{title}” sparisce dal tuo elenco. Per rivederla servirà un nuovo invito.
@@ -515,7 +515,7 @@ sharing|Sharing and emails|Condivisione ed email
 shortcuts|Keyboard shortcuts|Scorciatoie da tastiera
 show|Show|Presentazione
 show_closed|Closed ones|Quelle chiuse
-show_slide|Show it again|Mostrala di nuovo
+show_slide|Show the page|Mostra la pagina
 sign_in|Sign in|Accedi
 sign_in_first|Sign in to write|Accedi per scrivere
 sign_in_first_t|Comments and personal notes need a free account.|Per commenti e note personali serve un account gratuito.
@@ -531,9 +531,9 @@ someone_writing|{name} is writing here|{name} sta scrivendo qui
 sort_created|Newest|Più nuove
 sort_title|Title|Titolo
 sort_updated|Last change|Ultima modifica
-source|Source code|Codice sorgente
-source_site|Where to search|Dove cercare
-space|Space|Spazio
+source|Source|Fonte
+source_site|Where to search (one or more)|Dove cercare (uno o più)
+space|Total space for pictures and videos|Spazio totale per immagini e video
 space_used|{a} of {b}|{a} di {b}
 speaker_notes|Speaker notes|Note del relatore
 speaker_notes_t|Seen by editors and in the presenter view.|Le vedono gli editor, e tu nella vista relatore.
@@ -623,6 +623,211 @@ who|Who|Chi
 whole_deck|Whole presentation|Tutta la presentazione
 your_data|Your data|I tuoi dati
 your_data_t|Download everything we keep about you, or delete it.|Scarica tutto quello che conserviamo su di te, o eliminalo.
+add_from_text|Slides from a text|Slide da un testo
+align|Alignment|Allineamento
+auto_version|Automatic|Automatica
+chart|Chart|Grafico
+column|Column|Colonna
+copy_style|Copy style|Copia stile
+ct_area|Area|Area
+ct_bar|Columns|Colonne
+ct_donut|Ring|Ciambella
+ct_hbar|Bars|Barre
+ct_line|Lines|Linee
+ct_pie|Pie|Torta
+data|Data|Dati
+empty_starred|No favourites yet|Ancora nessun preferito
+empty_starred_t|Press the star of a presentation to find it here.|Premi la stella di una presentazione per ritrovarla qui.
+find|Find|Trova
+find_replace|Find and replace|Trova e sostituisci
+fit_l|Fit|Adattamento
+folders_hint|Create one with the button above.|Creane una con il pulsante qui sopra.
+follow|Follow|Segui
+from_text|From a text|Da un testo
+general|General|Generale
+group|Group|Raggruppa
+header_row|Header row|Riga di intestazione
+icon|Icon|Icona
+icons|Icons|Icone
+icons_hint|Names are in English: heart, rocket, map…|I nomi sono in inglese: heart, rocket, map…
+is_presenting|{name} is presenting|{name} sta presentando
+kind|Kind|Tipo
+l_slide7|In violet|In viola
+lay_big-image|Wide picture|Immagine larga
+lay_certificate|Certificate|Attestato
+lay_chart|Chart|Grafico
+lay_checklist|Checklist|Lista di controllo
+lay_contacts|Contacts|Contatti
+lay_icons|Three icons|Tre icone
+lay_menu|Menu|Menù
+lay_pricing|Prices|Prezzi
+lay_quiz|Quiz|Quiz
+lay_steps|Steps|Passaggi
+lay_swot|Four quadrants|Quattro quadranti
+lay_table|Table|Tabella
+lay_team|Team|Squadra
+layout_change|This slide|Questa slide
+layout_mode|Where|Dove
+legend|Legend|Legenda
+match_case|Match upper and lower case|Distingui maiuscole e minuscole
+n_found|{n} found|{n} trovati
+n_replaced|{n} texts changed|{n} testi modificati
+no_versions|No versions yet: one is kept every half hour of work.|Ancora nessuna versione: se ne conserva una ogni mezz’ora di lavoro.
+overview|All the slides|Tutte le slide
+palette_l|Commands|Comandi
+palette_ph|What do you want to do?|Che cosa vuoi fare?
+paste_hint|You can paste cells copied from a spreadsheet.|Puoi incollare celle copiate da un foglio di calcolo.
+paste_style|Paste style|Incolla stile
+pen|Pen|Penna
+ph_answer|Answer|Risposta
+ph_date|Place and date|Luogo e data
+ph_name|Name|Nome
+ph_question|The question|La domanda
+ph_role|Role|Ruolo
+ph_sign|Signature|Firma
+present_here|From this slide|Da questa slide
+present_start|From the start|Dall’inizio
+quarter|Q|T
+replace_all|Replace all|Sostituisci tutto
+replace_with|Replace with|Sostituisci con
+restore_t|The presentation goes back to this version for everybody. How it is now is kept as a version too.|La presentazione torna a questa versione per tutti. Anche com’è adesso resta tra le versioni.
+row|Row|Riga
+save_version|Save a version|Salva una versione
+search_icons|Search icons|Cerca icone
+series|Series|Serie
+show_values|Values|Valori
+starred|Favourites|Preferiti
+style_copied|Style copied|Stile copiato
+table|Table|Tabella
+tc_business|Work|Lavoro
+tc_creative|Creative|Creativi
+tc_documents|Pages and posts|Pagine e post
+tc_school|School|Scuola
+tc_talk|Talks|Interventi
+text_help|# cover or section, ## slide, - list, > quote, --- new slide, Notes: what to say|# copertina o sezione, ## slide, - elenco, > citazione, --- nuova slide, Note: cosa dire
+text_ph|# My talk|# Il mio intervento
+tools|Tools|Strumenti
+ungroup|Ungroup|Separa
+valign|Vertical alignment|Allineamento verticale
+versions|Versions|Versioni
+versions_t|One is kept every half hour of work, and whenever you save one.|Se ne conserva una ogni mezz’ora di lavoro, e ogni volta che ne salvi una.
+your_text|Your text|Il tuo testo
+zebra|Striped rows|Righe alternate
+err_disabled|This account has been blocked|Questo account è stato bloccato
+err_identity_other|This address is linked to another account of the same kind|Questo indirizzo è collegato a un altro account dello stesso tipo
+err_version_not_found|This version is no longer there|Questa versione non c’è più
+all_pages|All pages|Tutte le pagine
+as_deck|As the presentation|Come la presentazione
+as_role|Their own permission|Il loro permesso
+columns|Columns|Colonne
+ct_radar|Radar|Radar
+ct_scatter|Scatter|Dispersione
+ct_stack|Stacked|In pila
+everyone|Everyone else|Tutti gli altri
+everyone_link|Also who opens it with the link|Anche chi la apre con il link
+everyone_t|Who has no permission of their own on these pages|Chi non ha un permesso suo su queste pagine
+grid|Grid|Griglia
+grid_deco|Old decorations|Vecchie decorazioni
+grid_deco_t|This page has {n} shapes without text, made for another layout. In a grid they would be out of place.|Questa pagina ha {n} forme senza testo, fatte per un altro layout. In una griglia sarebbero fuori posto.
+grid_first|Choose a grid first|Prima scegli una griglia
+grid_gap|Space between the cells|Spazio tra le celle
+grid_none|Remove the grid|Togli la griglia
+grid_own|Make your own|Crea la tua
+grid_pick|Choose a grid: then fill its cells with a press or by dragging.|Scegli una griglia: poi riempi le celle con un tocco o trascinando.
+grids|Grids|Griglie
+height|Height|Altezza
+hh_low|Low|Bassa
+hh_normal|Normal|Normale
+hh_tall|Tall|Alta
+hidden|Hidden|Nascosta
+hide_show|Hide or show the page|Nascondi o mostra la pagina
+hide_t|Hidden pages are seen only by who can edit them, and skipped in the show.|Le pagine nascoste le vede solo chi può modificarle, e si saltano presentando.
+import_csv|Import a CSV|Importa un CSV
+keep|Keep|Lasciale
+mixed|Different|Diversi
+mode|Mode|Modalità
+mode_adv|Advanced|Avanzata
+mode_adv_t|Move, overlap and resize freely|Sposta, sovrapponi e ridimensiona liberamente
+mode_simple|Simple|Semplice
+mode_simple_set|Simple mode|Modalità semplificata
+mode_simple_t|Ready grids: elements go into the cells and arrange themselves|Griglie pronte: gli elementi vanno nelle celle e si sistemano da soli
+mode_switch|Simple or advanced mode|Modalità semplice o avanzata
+no_access|No access|Nessun accesso
+no_pages|No page|Nessuna pagina
+page|Page|Pagina
+page_denied|You can no longer edit that page: it has been reloaded|Non puoi più modificare quella pagina: è stata ricaricata
+page_locked|You cannot edit this page|Non puoi modificare questa pagina
+page_locked_t|The owner allows you to edit only some pages.|Il proprietario ti permette di modificare solo alcune pagine.
+page_name|Name of the page|Nome della pagina
+page_rules|Page permissions|Permessi delle pagine
+page_rules_alone|Share the presentation with someone first, then you can give each person different permissions page by page.|Prima condividi la presentazione con qualcuno, poi potrai dare a ciascuno permessi diversi pagina per pagina.
+page_rules_t|Choose some pages and what each person can do on them. With “No access” those pages do not exist for that person.|Scegli le pagine e che cosa può farci ogni persona. Con “Nessun accesso”, per quella persona quelle pagine non esistono.
+pages|Pages|Pagine
+rename_page|Rename the page|Rinomina la pagina
+scatter_t|The first column holds the X values.|La prima colonna contiene i valori X.
+to_adv|Advanced mode|Modalità avanzata
+to_simple|Simple mode|Modalità semplificata
+use|Use|Usa
+err_pages_limited|Versions are only for who can edit every page|Le versioni sono solo per chi può modificare tutte le pagine
+max_picture|Up to 15 MB each|Fino a 15 MB l’una
+trash_is_empty|The trash is empty|Il cestino è vuoto
+trash_is_empty_t|The presentations you delete stay here 30 days before they go for good.|Le presentazioni che elimini restano qui 30 giorni, poi spariscono per sempre.
+uploading|Uploading|Caricamento
+no_videos|No videos uploaded yet|Ancora nessun video caricato
+drop_videos|Drop videos here, or choose them|Trascina qui i video, o sceglili
+drop_media|Drop pictures and videos here, or choose them|Trascina qui immagini e video, o sceglili
+max_video|MP4, WebM or MOV, up to 150 MB each|MP4, WebM o MOV, fino a 150 MB l’uno
+max_media|Pictures up to 15 MB, videos up to 150 MB|Immagini fino a 15 MB, video fino a 150 MB
+my_videos|My videos|I miei video
+source_add|Add the source (optional)|Aggiungi la fonte (facoltativa)
+source_who|Author or source|Autore o fonte
+source_ph|e.g. © Name Surname, 2024|es. © Nome Cognome, 2024
+source_url|Link to the source|Link alla fonte
+source_t|Write it to show it on the page; it is also listed in the credits slide.|Scrivila per mostrarla sulla pagina; finisce anche nella slide dei crediti.
+cite|On the page|Sulla pagina
+cite_no|Hidden|Nascosta
+cite_in|On top|Sopra
+cite_below|Below|Sotto
+cite_search|Write the source on the page|Scrivi la fonte sulla pagina
+cite_search_t|Pictures that require it always have it.|Chi la richiede ce l’ha sempre.
+on_point|on a point|su un punto
+err_video_big|This video is too big: 150 MB at most|Questo video è troppo grande: al massimo 150 MB
+err_video_type|This file cannot be played in the browser: use MP4 (H.264), WebM or MOV|Questo file non si può riprodurre nel browser: usa MP4 (H.264), WebM o MOV
+grid_done|{n} pages turned into grids: nothing moved, and you can undo|{n} pagine trasformate in griglia: niente si è spostato, e puoi annullare
+grid_read_t|This grid follows what was on the page. Drag a block onto another to swap them, or onto an empty place. A grid above tidies everything up.|Questa griglia segue ciò che c’era nella pagina. Trascina un blocco su un altro per scambiarli, o in un punto vuoto. Una griglia qui sopra riordina tutto.
+format_tab|Format|Formato
+nothing_selected|Nothing selected|Niente di selezionato
+nothing_selected_t|Press an element of the page to change how it looks.|Premi un elemento della pagina per cambiarne l’aspetto.
+page_settings|Page settings|Impostazioni della pagina
+transition_in|How this page comes in|Come entra questa pagina
+transition_t|The transition of the whole presentation is in its options.|Quella di tutta la presentazione è nelle sue opzioni.
+toolbar_edit|Customise the toolbar|Personalizza la barra
+toolbar_edit_t|Choose the buttons and drag them in the order you like. Each one adds something to the page.|Scegli i pulsanti e trascinali nell’ordine che vuoi. Ognuno aggiunge qualcosa alla pagina.
+speaker_notes_ph|Speaker notes of this page: only editors see them, and you while presenting|Note del relatore per questa pagina: le vedono gli editor, e tu mentre presenti
+present_speaker|Speaker: slides + notes in two windows|Relatore: slide e note in due finestre
+speaker_view|Speaker view|Vista relatore
+popup_blocked|The browser blocked the second window: allow pop-ups for this site|Il browser ha bloccato la seconda finestra: consenti i popup per questo sito
+speaker_wait|Waiting for the presentation…|In attesa della presentazione…
+speaker_lost|The presentation has ended. You can close this window.|La presentazione è finita. Puoi chiudere questa finestra.
+speaker_hint|This is the window for the audience: move it to the projector. The notes are in the other one.|Questa è la finestra per il pubblico: portala sul proiettore. Le note sono nell’altra.
+to_fullscreen|Full screen|Schermo intero
+black|Black screen|Schermo nero
+laser_on|Laser on|Laser attivo
+pen_on|Pen on|Penna attiva
+black_on|Black screen|Schermo nero
+turn_off_key|press {k} to turn it off|premi {k} per disattivarlo
+pen_clear|Clear the drawings|Cancella i disegni
+pen_color|Colour of the pen|Colore della penna
+pause|Pause|Pausa
+resume|Resume|Riprendi
+notes_bigger|Bigger notes|Note più grandi
+notes_smaller|Smaller notes|Note più piccole
+current_slide|Now|Adesso
+elapsed|Elapsed|Tempo trascorso
+go_to_page|Go to page|Vai alla pagina
+page_rules_share_t|Decide who can see, comment or change each page.|Decidi chi può vedere, commentare o modificare ogni pagina.
+end_show_b|End|Termina
+search|Search|Cerca
 err_admin_private|Private presentation: it can only be looked at when it is public or reported|Presentazione privata: si può guardare solo se è pubblica o segnalata
 err_admin_protected|Admins cannot be changed from here|Gli admin non si possono modificare da qui
 err_bad_credentials|Wrong email or password|Email o password sbagliate
@@ -648,7 +853,7 @@ err_forbidden|You cannot do this|Non puoi farlo
 err_google_disabled|Google sign-in is not available|L’accesso con Google non è disponibile
 err_google_email|Google has not confirmed this email|Google non ha confermato questa email
 err_google_token|Google sign-in did not work|L’accesso con Google non è riuscito
-err_image_big|This picture is too big|Questa immagine è troppo grande
+err_image_big|This picture is too big: 15 MB at most|Questa immagine è troppo grande: al massimo 15 MB
 err_image_type|This is not a picture we can use|Questa non è un’immagine utilizzabile
 err_import_failed|It could not be downloaded: try another one|Non si riesce a scaricare: provane un’altra
 err_link_expired|This link has expired|Questo link è scaduto
@@ -675,12 +880,20 @@ err_user_not_found|This person no longer exists|Questo utente non esiste più
 err_video_url|This address is not a video we can show|Questo indirizzo non è un video che possiamo mostrare
 `;
 const D = {};
-for (const l of RAW.trim().split('\n')) { const [k, en, it] = l.split('|'); D[k] = { en, it }; }
+for (const l of RAW.trim().split('\n')) {
+    const [k, en, it] = l.split('|');
+    D[k] = {en, it};
+}
 let cur = 'en';
 export const lang = () => cur;
-export function setLang(l) { cur = /^it/i.test(l || '') ? 'it' : 'en'; document.documentElement.lang = cur; }
+
+export function setLang(l) {
+    cur = /^it/i.test(l || '') ? 'it' : 'en';
+    document.documentElement.lang = cur;
+}
+
 export function t(key, vars) {
-  let s = D[key]?.[cur] ?? key;
-  for (const k in vars || {}) s = s.replaceAll('{' + k + '}', vars[k]);
-  return s;
+    let s = D[key]?.[cur] ?? key;
+    for (const k in vars || {}) s = s.replaceAll('{' + k + '}', vars[k]);
+    return s;
 }

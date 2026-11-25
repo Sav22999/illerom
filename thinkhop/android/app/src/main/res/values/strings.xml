@@ -4,7 +4,9 @@
     <string name="host_name" translatable="false">www.illerom.eu</string>
     <string name="launch_url" translatable="false">https://www.illerom.eu/thinkhop/</string>
     <string name="offline_title">No connection</string>
-    <string name="offline_text">ThinkHop needs the internet the first time it opens. Check your connection and try again.</string>
+    <string name="offline_text">ThinkHop needs the internet the first time it opens. Check your connection and try
+        again.
+    </string>
     <string name="offline_retry">Try again</string>
     <string name="channel_news">News and reminders</string>
 </resources>

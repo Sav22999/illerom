@@ -504,7 +504,7 @@ const IDENTITY_TEXT = [
 ];
 
 identity_setup([
-    'name' => 'FoodTrack', 'cookie' => 'foodtrack', 'lang' => fn() => lang(),
+    'name' => 'FoodTrack', 'cookie' => 'foodtrack', 'lang' => fn() => lang(), 'pages' => ['admin' => 'admin.html'],
     'fail' => function (string $code, int $http): void {
         fail(IDENTITY_TEXT[$code] ?? 'Something went wrong. Please try again.', $http, $code);
     },
@@ -1437,7 +1437,8 @@ switch ($route) {
     case 'admin.users':
         only('GET');
         $me = require_user(ROLE_ADMIN);
-        $rows = db()->query('SELECT u.id, u.name, u.email, u.role, u.status, u.must_change_password, u.created_at, u.last_login_at, u.last_seen_at, (u.google_sub IS NOT NULL) AS google, (u.password_hash = \'\') AS no_password,
+        ident_schema();
+        $rows = db()->query('SELECT u.id, u.name, u.email, u.role, u.status, u.must_change_password, u.created_at, u.last_login_at, u.last_seen_at, (u.google_sub IS NOT NULL) AS google, (u.sav_sub IS NOT NULL) AS savaccount, (u.password_hash = \'\') AS no_password,
             (SELECT COUNT(*) FROM ' . t('household_members') . ' m WHERE m.user_id = u.id) AS households
             FROM ' . t('users') . ' u ORDER BY u.role DESC, u.created_at DESC')->fetchAll();
         send_json(['ok' => true, 'users' => array_map(function ($r) use ($me) {
@@ -1446,7 +1447,7 @@ switch ($route) {
                 'roleLabel' => tr(ROLE_LABELS[(int)$r['role']] ?? 'User'), 'status' => $r['status'],
                 'mustChangePassword' => (bool)$r['must_change_password'], 'createdAt' => $r['created_at'],
                 'lastLoginAt' => $r['last_login_at'], 'lastSeenAt' => $r['last_seen_at'], 'households' => (int)$r['households'],
-                'google' => (bool)$r['google'], 'hasPassword' => !$r['no_password'],
+                'google' => (bool)$r['google'], 'savaccount' => (bool)$r['savaccount'], 'hasPassword' => !$r['no_password'],
                 'canManage' => can_manage($me, $r), 'isMe' => (int)$r['id'] === $me['id'],
             ];
         }, $rows)]);

@@ -234,7 +234,13 @@ const PrismMine = (() => {
             for (let g = 0; g < set.length && ok; g++) {
                 ok = false;
                 for (let tries = 0; tries < 200; tries++) {
-                    gems[g] = {shape: set[g].shape, color: set[g].color, r: Math.floor(rand() * size), c: Math.floor(rand() * size), rot: Math.floor(rand() * ORIENTATIONS[set[g].shape].length)};
+                    gems[g] = {
+                        shape: set[g].shape,
+                        color: set[g].color,
+                        r: Math.floor(rand() * size),
+                        c: Math.floor(rand() * size),
+                        rot: Math.floor(rand() * ORIENTATIONS[set[g].shape].length)
+                    };
                     if (buildMap(gems, size)) {
                         ok = true;
                         break;

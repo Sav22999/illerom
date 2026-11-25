@@ -4,6 +4,8 @@
     <string name="host_name" translatable="false">www.illerom.eu</string>
     <string name="launch_url" translatable="false">https://www.illerom.eu/prism-mine/</string>
     <string name="offline_title">No connection</string>
-    <string name="offline_text">Prism Mine needs internet the first time and for online duels. Check your network and try again.</string>
+    <string name="offline_text">Prism Mine needs internet the first time and for online duels. Check your network and
+        try again.
+    </string>
     <string name="offline_retry">Try again</string>
 </resources>

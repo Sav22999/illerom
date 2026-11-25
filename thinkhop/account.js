@@ -29,7 +29,12 @@
 
     async function api(route, body) {
         const headers = {Accept: 'application/json', 'X-Lang': lang()};
-        const init = {method: body === undefined ? 'GET' : 'POST', headers, credentials: 'same-origin', cache: 'no-store'};
+        const init = {
+            method: body === undefined ? 'GET' : 'POST',
+            headers,
+            credentials: 'same-origin',
+            cache: 'no-store'
+        };
         if (body !== undefined) {
             headers['Content-Type'] = 'application/json';
             if (csrf) headers['X-CSRF-Token'] = csrf;
@@ -126,15 +131,28 @@
 
     // Google and SavAccount: joining an account that already exists, new accounts, ways of signing in (../identity/)
     if (window.Identity) Identity.setup({
-        name: 'ThinkHop', lang, accent: '#5B3FD6', google: (slot, cb) => config.googleClientId && googleButton(slot, cb, 'continue_with'),
-        username: {it: 'Da 3 a 20 lettere, numeri o _: è il nome che vedono gli altri.', en: '3 to 20 letters, numbers or _: the name others see.'},
+        name: 'ThinkHop',
+        lang,
+        accent: '#5B3FD6',
+        google: (slot, cb) => config.googleClientId && googleButton(slot, cb, 'continue_with'),
+        username: {
+            it: 'Da 3 a 20 lettere, numeri o _: è il nome che vedono gli altri.',
+            en: '3 to 20 letters, numbers or _: the name others see.'
+        },
     });
 
     async function start(changed) {
         onChange = changed;
         try {
             const c = await api('auth.config');
-            config = {accounts: !!c.accounts, googleClientId: c.googleClientId || '', savAccount: !!c.savAccount, game: c.game || null, installNeeded: !!c.installNeeded, needsAdmin: !!c.needsAdmin};
+            config = {
+                accounts: !!c.accounts,
+                googleClientId: c.googleClientId || '',
+                savAccount: !!c.savAccount,
+                game: c.game || null,
+                installNeeded: !!c.installNeeded,
+                needsAdmin: !!c.needsAdmin
+            };
             store.set('config', config);
             window.ThinkHopEngine.configure(config.game);
             if (config.accounts) {
@@ -187,7 +205,10 @@
                     err.hidden = false;
                 }
             }
-        }, usernameField(username), err, h('div.actions', h('button.btn.btn-ghost', {type: 'button', onclick: () => m.close()}, t('cancel')), save))]);
+        }, usernameField(username), err, h('div.actions', h('button.btn.btn-ghost', {
+            type: 'button',
+            onclick: () => m.close()
+        }, t('cancel')), save))]);
     }
 
     /**
@@ -270,7 +291,10 @@
                 }
             }, t('verify_confirm_btn'));
             const m = modal([h('div.intro', h('div.verify-icon', icon('mail')), h('h3', t('verify_confirm_title')), h('p', t('verify_confirm_text'))), err,
-                h('div.verify-actions', ok, h('button.btn.btn-ghost.btn-block', {type: 'button', onclick: () => m.close()}, t('cancel')))], {onclose: resolve});
+                h('div.verify-actions', ok, h('button.btn.btn-ghost.btn-block', {
+                    type: 'button',
+                    onclick: () => m.close()
+                }, t('cancel')))], {onclose: resolve});
         });
     }
 
@@ -409,8 +433,14 @@
                 use_fedcm_for_button: true,
             });
             hold.swap(host => g.accounts.id.renderButton(host, {
-                type: 'standard', theme: dark ? 'filled_black' : 'outline', size: 'large', text: text || 'continue_with', shape: 'pill',
-                logo_alignment: 'center', locale: lang(), width,
+                type: 'standard',
+                theme: dark ? 'filled_black' : 'outline',
+                size: 'large',
+                text: text || 'continue_with',
+                shape: 'pill',
+                logo_alignment: 'center',
+                locale: lang(),
+                width,
             }));
         } catch (e) {
             slot.replaceChildren(h('p.muted.center', t('google_off')));
@@ -421,13 +451,26 @@
     const field = (label, input) => h('label.field', h('span', label), input);
     const input = (type, value, auto) => h('input', {type, value: value || '', autocomplete: auto, required: true});
 
-    const usernameInput = value => h('input', {type: 'text', value: value || '', maxlength: 20, autocomplete: 'username', autocapitalize: 'none', spellcheck: 'false', required: true});
+    const usernameInput = value => h('input', {
+        type: 'text',
+        value: value || '',
+        maxlength: 20,
+        autocomplete: 'username',
+        autocapitalize: 'none',
+        spellcheck: 'false',
+        required: true
+    });
     const usernameField = el => h('label.field', h('span', t('username')), el, h('small.muted', t('username_hint')));
 
     const privacyCheck = () => {
         const box = h('input', {type: 'checkbox'});
         return {
-            box, el: h('label.check', box, h('span', t('privacy_accept'), h('a', {href: 'privacy.html', target: '_blank', rel: 'noopener'}, t('privacy_policy')))),
+            box,
+            el: h('label.check', box, h('span', t('privacy_accept'), h('a', {
+                href: 'privacy.html',
+                target: '_blank',
+                rel: 'noopener'
+            }, t('privacy_policy')))),
         };
     };
 
@@ -492,7 +535,14 @@
                         try {
                             const d = await busy(submit, () => mode === 'login'
                                 ? api('auth.login', {email: email.value, password: pw.value})
-                                : api('auth.register', {lang: lang(), name: name.value, username: username.value, email: email.value, password: pw.value, acceptPrivacy: privacy.box.checked}));
+                                : api('auth.register', {
+                                    lang: lang(),
+                                    name: name.value,
+                                    username: username.value,
+                                    email: email.value,
+                                    password: pw.value,
+                                    acceptPrivacy: privacy.box.checked
+                                }));
                             m.close();
                             if (d.checkEmail) return showCheckEmail(email.value.trim());
                             await afterSignIn(d);
@@ -508,7 +558,10 @@
                 field(t(mode === 'login' ? 'password' : 'password_new'), pw),
                 mode === 'register' ? privacy.el : null,
                 err, submit,
-                mode === 'login' ? h('button.btn.btn-ghost.btn-block', {type: 'button', onclick: showForgot}, t('forgot')) : null),
+                mode === 'login' ? h('button.btn.btn-ghost.btn-block', {
+                    type: 'button',
+                    onclick: showForgot
+                }, t('forgot')) : null),
         ]);
         if (config.googleClientId) googleButton(gslot, cred => googleSignIn(cred, m), mode === 'login' ? 'continue_with' : 'signup_with');
     }
@@ -534,7 +587,11 @@
                         return;
                     }
                     try {
-                        const d = await busy(ok, () => api('auth.google', {credential, acceptPrivacy: true, username: username.value}));
+                        const d = await busy(ok, () => api('auth.google', {
+                            credential,
+                            acceptPrivacy: true,
+                            username: username.value
+                        }));
                         s.close();
                         parent.close();
                         await afterSignIn(d);
@@ -544,13 +601,22 @@
                 }
             }, t('sign_up'));
             const s = modal([h('h3', t('create_title')), h('p.muted', [e.data.name, e.data.email].filter(Boolean).join(' · ')), usernameField(username), privacy.el,
-                h('div.actions', h('button.btn.btn-ghost', {type: 'button', onclick: () => s.close()}, t('cancel')), ok)]);
+                h('div.actions', h('button.btn.btn-ghost', {
+                    type: 'button',
+                    onclick: () => s.close()
+                }, t('cancel')), ok)]);
         }
     }
 
     function showProfileForm(parent) {
         const name = input('text', user.name, 'name');
-        const email = h('input', {type: 'email', value: user.email, readonly: true, disabled: true, 'aria-readonly': 'true'});
+        const email = h('input', {
+            type: 'email',
+            value: user.email,
+            readonly: true,
+            disabled: true,
+            'aria-readonly': 'true'
+        });
         const err = h('p.form-error', {role: 'alert', hidden: true});
         const save = h('button.btn.btn-primary', {type: 'submit'}, t('save'));
         const m = modal([h('h3', t('profile_edit')), h('form.form', {
@@ -570,7 +636,10 @@
                     err.hidden = false;
                 }
             }
-        }, field(t('name'), name), h('label.field', h('span', t('email')), email, h('small.muted', t('email_fixed'))), err, h('div.actions', h('button.btn.btn-ghost', {type: 'button', onclick: () => m.close()}, t('cancel')), save))]);
+        }, field(t('name'), name), h('label.field', h('span', t('email')), email, h('small.muted', t('email_fixed'))), err, h('div.actions', h('button.btn.btn-ghost', {
+            type: 'button',
+            onclick: () => m.close()
+        }, t('cancel')), save))]);
     }
 
     function showPasswordForm(parent) {
@@ -579,23 +648,29 @@
         const err = h('p.form-error', {role: 'alert', hidden: true});
         const save = h('button.btn.btn-primary', {type: 'submit'}, t('save'));
         const m = modal([h('h3', t(user.hasPassword ? 'password_change' : 'password_set')), h('form.form', {
-            novalidate: true, onsubmit: async e => {
-                e.preventDefault();
-                err.hidden = true;
-                try {
-                    const d = await busy(save, () => api('auth.password', {current: current.value, password: pw.value}));
-                    user = d.user;
-                    m.close();
-                    parent.close();
-                    toast(t('password_saved'), 'ok');
-                    showProfile();
-                } catch (ex) {
-                    err.textContent = ex.message;
-                    err.hidden = false;
+                novalidate: true, onsubmit: async e => {
+                    e.preventDefault();
+                    err.hidden = true;
+                    try {
+                        const d = await busy(save, () => api('auth.password', {
+                            current: current.value,
+                            password: pw.value
+                        }));
+                        user = d.user;
+                        m.close();
+                        parent.close();
+                        toast(t('password_saved'), 'ok');
+                        showProfile();
+                    } catch (ex) {
+                        err.textContent = ex.message;
+                        err.hidden = false;
+                    }
                 }
-            }
-        }, user.hasPassword ? field(t('password_current'), current) : null, field(t('password_new'), pw), err,
-            h('div.actions', h('button.btn.btn-ghost', {type: 'button', onclick: () => m.close()}, t('cancel')), save))]);
+            }, user.hasPassword ? field(t('password_current'), current) : null, field(t('password_new'), pw), err,
+            h('div.actions', h('button.btn.btn-ghost', {
+                type: 'button',
+                onclick: () => m.close()
+            }, t('cancel')), save))]);
     }
 
     async function signOut(parent) {
@@ -615,22 +690,22 @@
         const err = h('p.form-error', {role: 'alert', hidden: true});
         const ok = h('button.btn.btn-danger', {type: 'submit'}, t('delete_ok'));
         const m = modal([h('h3', t('delete_title')), h('p.muted', t('delete_text')), h('form.form', {
-            novalidate: true, onsubmit: async e => {
-                e.preventDefault();
-                err.hidden = true;
-                try {
-                    await busy(ok, () => api('auth.delete', {password: pw.value}));
-                    forgetDevice();
-                    m.close();
-                    parent.close();
-                    toast(t('deleted'), 'ok');
-                    onChange();
-                } catch (ex) {
-                    err.textContent = ex.message;
-                    err.hidden = false;
+                novalidate: true, onsubmit: async e => {
+                    e.preventDefault();
+                    err.hidden = true;
+                    try {
+                        await busy(ok, () => api('auth.delete', {password: pw.value}));
+                        forgetDevice();
+                        m.close();
+                        parent.close();
+                        toast(t('deleted'), 'ok');
+                        onChange();
+                    } catch (ex) {
+                        err.textContent = ex.message;
+                        err.hidden = false;
+                    }
                 }
-            }
-        }, user.hasPassword ? field(t('delete_password'), pw) : null, err,
+            }, user.hasPassword ? field(t('delete_password'), pw) : null, err,
             h('div.actions', h('button.btn.btn-ghost', {type: 'button', onclick: () => m.close()}, t('cancel')), ok))]);
     }
 
@@ -644,7 +719,11 @@
                 h('div.donate-reason', h('div.donate-reason-icon', icon('check')), h('div', h('strong', t('donate_reason_ads_title')), h('p', t('donate_reason_ads_desc')))),
                 h('div.donate-reason', h('div.donate-reason-icon', icon('magic')), h('div', h('strong', t('donate_reason_oss_title')), h('p', t('donate_reason_oss_desc')))),
                 h('div.donate-reason', h('div.donate-reason-icon', icon('globe')), h('div', h('strong', t('donate_reason_server_title')), h('p', t('donate_reason_server_desc'))))),
-            h('div.actions', h('a.btn.btn-primary.btn-block.donate-cta-btn', {href: 'https://www.saveriomorelli.com/donate/', target: '_blank', rel: 'noopener'}, icon('heart'), h('span', t('donate_cta')))),
+            h('div.actions', h('a.btn.btn-primary.btn-block.donate-cta-btn', {
+                href: 'https://www.saveriomorelli.com/donate/',
+                target: '_blank',
+                rel: 'noopener'
+            }, icon('heart'), h('span', t('donate_cta')))),
         ]);
     }
 
@@ -677,9 +756,19 @@
         if (parent) parent.close();
         const labelName = user ? (user.name || user.username || '?') : 'ThinkHop';
         const now = Av.parse(myAvatar());
-        const pick = {character: now.character, background: now.background || 'violet', accessory: now.accessory, frame: now.frame};
+        const pick = {
+            character: now.character,
+            background: now.background || 'violet',
+            accessory: now.accessory,
+            frame: now.frame
+        };
         let kind = 'character';
-        const dict = {character: Av.CHARACTERS, accessory: Av.ACCESSORIES, frame: Av.FRAMES, background: Av.BACKGROUNDS};
+        const dict = {
+            character: Av.CHARACTERS,
+            accessory: Av.ACCESSORIES,
+            frame: Av.FRAMES,
+            background: Av.BACKGROUNDS
+        };
         const item = id => shopItems().find(x => x.id === id);
         const owned = id => !id || !!(item(id) && item(id).owned);
         const fmt = n => Number(n).toLocaleString(lang());
@@ -717,12 +806,12 @@
                 const face = Av.encode(Object.assign({}, pick, {[kind]: x.id}));
                 const label = x.id ? Av.name(dict[kind][x.id]) : (kind === 'character' ? t('avatar_initial') : t('avatar_none'));
                 return h('button.av-tile' + (on ? '.on' : '') + (x.owned ? '' : '.locked'), {
-                    type: 'button', 'aria-pressed': String(on), onclick: () => {
-                        pick[kind] = x.id;
-                        draw();
-                    }
-                }, Av.render(face, labelName, 'md'), h('span.av-name', label),
-                x.owned ? h('span.av-price.own', icon('tick'), x.price ? t('avatar_owned') : t('avatar_free')) : h('span.av-price', icon('star'), fmt(x.price)));
+                        type: 'button', 'aria-pressed': String(on), onclick: () => {
+                            pick[kind] = x.id;
+                            draw();
+                        }
+                    }, Av.render(face, labelName, 'md'), h('span.av-name', label),
+                    x.owned ? h('span.av-price.own', icon('tick'), x.price ? t('avatar_owned') : t('avatar_free')) : h('span.av-price', icon('star'), fmt(x.price)));
             });
             grid.replaceChildren(...tiles);
             // What is in the preview but not owned yet: buy it, one item at a time
@@ -734,7 +823,10 @@
                 const label = Av.name(Av.item(id));
                 const b = h('button.btn.btn-block' + (short ? '.btn-soft' : '.btn-primary'), {
                     type: 'button', disabled: short || undefined, onclick: async () => {
-                        if (!await confirmBox(t('avatar_buy_title', {name: label}), t('avatar_buy_text', {n: fmt(it.price), m: fmt(pts)}), t('avatar_buy_ok'), t('cancel'))) return;
+                        if (!await confirmBox(t('avatar_buy_title', {name: label}), t('avatar_buy_text', {
+                            n: fmt(it.price),
+                            m: fmt(pts)
+                        }), t('avatar_buy_ok'), t('cancel'))) return;
                         try {
                             await busy(b, async () => {
                                 if (user) {
@@ -809,18 +901,42 @@
                 }, pic, h('i', icon('pen'))),
                 h('div', h('h3', t('hello', {name: user.name.split(' ')[0]})), h('p.muted', user.username ? `@${user.username} · ${user.email}` : user.email))),
             h('div.menu-list',
-                h('button', {type: 'button', onclick: () => openAvatarShop(m)}, icon('image'), h('span', t('avatar_title'))),
-                h('button', {type: 'button', onclick: () => showProfileForm(m)}, icon('pen'), h('span', t('profile_edit'))),
-                h('button', {type: 'button', onclick: () => showUsernameForm(m)}, icon('user'), h('span', t(user.username ? 'username_change' : 'username_title'))),
-                h('button', {type: 'button', onclick: () => showPasswordForm(m)}, icon('key'), h('span', t(user.hasPassword ? 'password_change' : 'password_set'))),
-                window.Identity ? h('button', {type: 'button', onclick: window.Identity.methods}, icon('user'), h('span', window.Identity.text('methods'))) : null,
+                h('button', {
+                    type: 'button',
+                    onclick: () => openAvatarShop(m)
+                }, icon('image'), h('span', t('avatar_title'))),
+                h('button', {
+                    type: 'button',
+                    onclick: () => showProfileForm(m)
+                }, icon('pen'), h('span', t('profile_edit'))),
+                h('button', {
+                    type: 'button',
+                    onclick: () => showUsernameForm(m)
+                }, icon('user'), h('span', t(user.username ? 'username_change' : 'username_title'))),
+                h('button', {
+                    type: 'button',
+                    onclick: () => showPasswordForm(m)
+                }, icon('key'), h('span', t(user.hasPassword ? 'password_change' : 'password_set'))),
+                window.Identity ? h('button', {
+                    type: 'button',
+                    onclick: window.Identity.methods
+                }, icon('user'), h('span', window.Identity.text('methods'))) : null,
                 rankingToggle(),
-                h('button', {type: 'button', onclick: () => window.ThinkHopSocial.showNotifications()}, icon('bell'), h('span', t('notify_title'))),
-                window.ThinkHopReports ? h('button', {type: 'button', onclick: () => window.ThinkHopReports.showMine()}, icon('flag'), h('span', t('reports_mine'))) : null,
+                h('button', {
+                    type: 'button',
+                    onclick: () => window.ThinkHopSocial.showNotifications()
+                }, icon('bell'), h('span', t('notify_title'))),
+                window.ThinkHopReports ? h('button', {
+                    type: 'button',
+                    onclick: () => window.ThinkHopReports.showMine()
+                }, icon('flag'), h('span', t('reports_mine'))) : null,
                 h('button', {type: 'button', onclick: showDonate}, icon('heart'), h('span', t('donate'))),
                 user.isAdmin ? h('a.menu-link', {href: 'admin.html'}, icon('shield'), h('span', t('admin_panel'))) : null,
                 h('button', {type: 'button', onclick: () => signOut(m)}, icon('exit'), h('span', t('sign_out'))),
-                h('button.danger', {type: 'button', onclick: () => showDelete(m)}, icon('trash'), h('span', t('delete_account')))),
+                h('button.danger', {
+                    type: 'button',
+                    onclick: () => showDelete(m)
+                }, icon('trash'), h('span', t('delete_account')))),
         ]);
     }
 

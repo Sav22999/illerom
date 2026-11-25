@@ -1,6 +1,7 @@
 # Recipe cover images
 
-The photos of the initial recipes added in batches 2, 3, 4, 5, 6 and 7 are all in the **public domain** or released under **CC0**
+The photos of the initial recipes added in batches 2, 3, 4, 5, 6 and 7 are all in the **public domain** or released
+under **CC0**
 (no rights reserved): they can be used, modified and redistributed without permission or attribution. The authors are
 credited here anyway.
 

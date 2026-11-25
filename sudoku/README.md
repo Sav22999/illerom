@@ -30,7 +30,8 @@ The `android/` directory is an Android Studio project (Java) with a full-screen 
 
 1. Open the `sudoku/android` folder in Android Studio (File → Open).
 2. Wait for Gradle sync to complete.
-3. Copy `keystore.properties.sample` to `keystore.properties` (ignored by git) and enter your Google Play signing key details.
+3. Copy `keystore.properties.sample` to `keystore.properties` (ignored by git) and enter your Google Play signing key
+   details.
 4. Generate the bundle: **Build > Generate Signed App Bundle / APK > Android App Bundle**.
 5. Upload the `app-release.aab` file to Google Play Console.
 6. Populate the store listing using `android/store/listing.md` and upload the 512px icon and feature graphic.

@@ -283,7 +283,12 @@ function renderGrid(el, view) {
         cell.className = 'cell' + (mark ? ' ' + mark : '') + (view.last === i ? ' c-last' : '') + (view.fresh === i ? ' c-fresh' : '');
         if (cell.tagName === 'BUTTON') {
             cell.disabled = !!(view.disabled && view.disabled.has(i));
-            const state = {'c-miss': 'aria_miss', 'c-hit': 'aria_hit', 'c-sunk': 'aria_sunk', 'c-cleared': 'aria_cleared'}[mark];
+            const state = {
+                'c-miss': 'aria_miss',
+                'c-hit': 'aria_hit',
+                'c-sunk': 'aria_sunk',
+                'c-cleared': 'aria_cleared'
+            }[mark];
             cell.setAttribute('aria-label', SeaBattle.label(i) + (state ? ', ' + t(state) : ''));
         }
     });
@@ -485,7 +490,10 @@ function renderBattle() {
     theirShots.forEach(sh => ownMarks.set(sh.i, sh.r === 'miss' ? 'c-miss' : 'c-hit'));
     const mySunk = sunkShips(me);
     const mySunkSet = new Set(mySunk.map(o => o.k));
-    mySunk.forEach(({k, ship}) => SeaBattle.shipCells(ship, SeaBattle.FLEET[k]).forEach(i => ownMarks.set(i, 'c-sunk')));
+    mySunk.forEach(({
+                        k,
+                        ship
+                    }) => SeaBattle.shipCells(ship, SeaBattle.FLEET[k]).forEach(i => ownMarks.set(i, 'c-sunk')));
     const myFleet = s.fleets[me] || [];
     renderGrid($('grid-own'), {
         ships: myFleet.map((ship, k) => ({k, ship, cls: mySunkSet.has(k) ? 'sunk' : ''})),
@@ -505,7 +513,12 @@ function renderBattle() {
 
 // ==================== PLACEMENT ====================
 function newDraft(randomStart = true) {
-    return {ships: randomStart ? SeaBattle.randomFleet() : SeaBattle.FLEET.map(() => null), selected: null, dir: 'h', hover: null};
+    return {
+        ships: randomStart ? SeaBattle.randomFleet() : SeaBattle.FLEET.map(() => null),
+        selected: null,
+        dir: 'h',
+        hover: null
+    };
 }
 
 function draftPreview(d) {
@@ -531,7 +544,11 @@ function renderPlacement() {
     const marks = new Map();
     const preview = locked ? null : draftPreview(d);
     if (preview) SeaBattle.shipCells(preview.ship, SeaBattle.FLEET[d.selected]).forEach(i => marks.set(i, preview.ok ? 'c-preview' : 'c-preview-bad'));
-    const view = ships.map((ship, k) => ship ? {k, ship, cls: (!locked && k === d.selected) ? 'lifted' : ''} : null).filter(Boolean);
+    const view = ships.map((ship, k) => ship ? {
+        k,
+        ship,
+        cls: (!locked && k === d.selected) ? 'lifted' : ''
+    } : null).filter(Boolean);
     if (preview && preview.ok) view.push({k: d.selected, ship: preview.ship, cls: 'ghost'});
     renderGrid($('grid-place'), {ships: view, marks, last: null});
     $('grid-place').classList.toggle('locked', locked);
@@ -886,7 +903,11 @@ async function createOnlineGame() {
     const btn = $('btn-create');
     setBusy(btn, true);
     const tc = parseInt(document.querySelector('input[name="time-online"]:checked').value, 10); // seconds per shot
-    const res = await api('create_room', {name: playerName || t('player_one'), time: tc, bonus: $('bonus-online').checked ? 1 : 0});
+    const res = await api('create_room', {
+        name: playerName || t('player_one'),
+        time: tc,
+        bonus: $('bonus-online').checked ? 1 : 0
+    });
     setBusy(btn, false);
     if (res.error) {
         showError(res.error);
@@ -1190,9 +1211,18 @@ function endGame(winner, reason) {
     $('gameover-text').textContent = t('reason_' + reason, {name: nameOf(other(winner))});
     $('gameover-stats').innerHTML = [1, 2].map(slot => {
         const st = statsFor(slot);
-        return `<div class="stat"><dt>${escapeHtml(nameOf(slot))}</dt><dd>${escapeHtml(t('stats_line', {shots: st.shots, hits: st.hits, acc: st.acc}))}</dd></div>`;
+        return `<div class="stat"><dt>${escapeHtml(nameOf(slot))}</dt><dd>${escapeHtml(t('stats_line', {
+            shots: st.shots,
+            hits: st.hits,
+            acc: st.acc
+        }))}</dd></div>`;
     }).join('');
-    $('score-line').textContent = t('score_tracker', {p1: nameOf(1), s1: s.wins[1] || 0, p2: nameOf(2), s2: s.wins[2] || 0});
+    $('score-line').textContent = t('score_tracker', {
+        p1: nameOf(1),
+        s1: s.wins[1] || 0,
+        p2: nameOf(2),
+        s2: s.wins[2] || 0
+    });
     $('btn-rematch').disabled = false;
     $('rematch-status').textContent = '';
     addLog($('gameover-title').textContent, 'info');

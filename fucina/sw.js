@@ -38,7 +38,13 @@ async function onPush() {
     const windows = await self.clients.matchAll({type: 'window', includeUncontrolled: true});
     if (windows.some(c => c.visibilityState === 'visible')) return; // The open app says it by itself
     for (const n of d.items || []) {
-        await self.registration.showNotification('Fucina', {body: n.text, icon: 'assets/icons/icon-192.png?v=2', badge: 'assets/icons/favicon-32.png?v=2', tag: n.tag, data: {page: n.page}});
+        await self.registration.showNotification('Fucina', {
+            body: n.text,
+            icon: 'assets/icons/icon-192.png?v=2',
+            badge: 'assets/icons/favicon-32.png?v=2',
+            tag: n.tag,
+            data: {page: n.page}
+        });
     }
 }
 

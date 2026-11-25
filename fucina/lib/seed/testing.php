@@ -6,7 +6,10 @@ if (!function_exists('fig_test_pyramid')) {
     function fig_test_pyramid(string $l): string
     {
         $t = $l === 'it' ? ['unitari', 'integrazione', 'pochi', 'alcuni', 'tanti', 'più lenti|e realistici', 'più veloci|e precisi'] : ['unit', 'integration', 'few', 'some', 'many', 'slower and|more realistic', 'faster and|more precise'];
-        foreach ([5, 6] as $i) { [$a, $b] = explode('|', $t[$i]); $t[$i] = '<tspan x="516">' . $a . '</tspan><tspan x="516" dy="17">' . $b . '</tspan>'; }
+        foreach ([5, 6] as $i) {
+            [$a, $b] = explode('|', $t[$i]);
+            $t[$i] = '<tspan x="516">' . $a . '</tspan><tspan x="516" dy="17">' . $b . '</tspan>';
+        }
         return <<<SVG
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
 <defs><marker id="tpya" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>

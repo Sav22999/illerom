@@ -192,7 +192,7 @@ CREATE TABLE IF NOT EXISTS `gw_follows`
 (
     `id`
 )
-  ON DELETE CASCADE
+    ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE =utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `gw_lists`
@@ -280,7 +280,7 @@ CREATE TABLE IF NOT EXISTS `gw_list_viewers`
 (
     `id`
 )
-  ON DELETE CASCADE
+    ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE =utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `gw_items`
@@ -385,7 +385,7 @@ CREATE TABLE IF NOT EXISTS `gw_claims`
 (
     `id`
 )
-  ON DELETE CASCADE
+    ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE =utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `gw_comments`
@@ -441,7 +441,7 @@ CREATE TABLE IF NOT EXISTS `gw_comments`
 (
     `id`
 )
-  ON DELETE CASCADE,
+    ON DELETE CASCADE,
     CONSTRAINT `fk_gw_cm_user` FOREIGN KEY
 (
     `user_id`
@@ -449,7 +449,7 @@ CREATE TABLE IF NOT EXISTS `gw_comments`
 (
     `id`
 )
-  ON DELETE CASCADE
+    ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE =utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `gw_history`

@@ -9,8 +9,19 @@ import * as THREE from '../vendor/three.module.min.js';
 import {n as nameOf} from './i18n.js';
 
 export const PALETTE = {
-    cream: '#FFF3E0', terracotta: '#D9653B', olive: '#7A8B3A', berry: '#B43E5C', wood: '#B07A4A', woodDark: '#7B4E2C',
-    steel: '#B8BEC6', ink: '#3B2418', gold: '#E2B23A', leaf: '#5E9A3E', leafDark: '#3F7A2E', water: '#5CB8D6', skin: ['#F1C7A5', '#D9A47E', '#A8714E', '#7A4E33', '#F6D7BE'],
+    cream: '#FFF3E0',
+    terracotta: '#D9653B',
+    olive: '#7A8B3A',
+    berry: '#B43E5C',
+    wood: '#B07A4A',
+    woodDark: '#7B4E2C',
+    steel: '#B8BEC6',
+    ink: '#3B2418',
+    gold: '#E2B23A',
+    leaf: '#5E9A3E',
+    leafDark: '#3F7A2E',
+    water: '#5CB8D6',
+    skin: ['#F1C7A5', '#D9A47E', '#A8714E', '#7A4E33', '#F6D7BE'],
 };
 
 const matCache = new Map();
@@ -19,8 +30,16 @@ const matCache = new Map();
 export function mat(color, opts = {}) {
     const key = color + JSON.stringify(opts);
     if (!matCache.has(key)) {
-        matCache.set(key, new THREE.MeshStandardMaterial({color, roughness: opts.roughness ?? 0.78, metalness: opts.metalness ?? 0, flatShading: opts.flat ?? true,
-            transparent: !!opts.opacity, opacity: opts.opacity ?? 1, emissive: opts.emissive ?? '#000000', emissiveIntensity: opts.emissive ? (opts.glow ?? 0.8) : 0}));
+        matCache.set(key, new THREE.MeshStandardMaterial({
+            color,
+            roughness: opts.roughness ?? 0.78,
+            metalness: opts.metalness ?? 0,
+            flatShading: opts.flat ?? true,
+            transparent: !!opts.opacity,
+            opacity: opts.opacity ?? 1,
+            emissive: opts.emissive ?? '#000000',
+            emissiveIntensity: opts.emissive ? (opts.glow ?? 0.8) : 0
+        }));
     }
     return matCache.get(key);
 }
@@ -65,7 +84,10 @@ const FURNITURE = {
     table_round: () => group(cyl(0.42, 0.42, 0.06, PALETTE.cream, 0, 0.7, 0, 20), cyl(0.44, 0.44, 0.12, PALETTE.cream, 0, 0.62, 0, 20),
         cyl(0.05, 0.05, 0.62, PALETTE.ink, 0, 0, 0, 8), cyl(0.22, 0.25, 0.04, PALETTE.ink, 0, 0, 0, 12),
         cyl(0.04, 0.05, 0.12, PALETTE.berry, 0.12, 0.76, -0.1, 8), ball(0.05, '#F2A0B4', 0.12, 0.92, -0.1)),
-    table_marble: () => group(box(0.82, 0.07, 0.82, '#ECE8E2', 0, 0.68, 0, {roughness: 0.3}), box(0.84, 0.02, 0.84, PALETTE.gold, 0, 0.66, 0, {metalness: 0.6, roughness: 0.3}),
+    table_marble: () => group(box(0.82, 0.07, 0.82, '#ECE8E2', 0, 0.68, 0, {roughness: 0.3}), box(0.84, 0.02, 0.84, PALETTE.gold, 0, 0.66, 0, {
+            metalness: 0.6,
+            roughness: 0.3
+        }),
         legs(0.6, 0.6, 0.66, '#2C2522', 0.03), cyl(0.06, 0.04, 0.16, '#FFFFFF', 0, 0.75, 0, 10, {opacity: 0.55})),
     table_long: () => group(box(1.78, 0.06, 0.8, PALETTE.wood, 0, 0.7, 0), legs(1.6, 0.62, 0.7, PALETTE.woodDark),
         box(1.6, 0.012, 0.28, PALETTE.terracotta, 0, 0.76, 0), cyl(0.04, 0.04, 0.2, PALETTE.cream, -0.3, 0.76, 0, 8), cyl(0.04, 0.04, 0.2, PALETTE.cream, 0.3, 0.76, 0, 8)),
@@ -75,7 +97,10 @@ const FURNITURE = {
     chair_cushion: () => group(box(0.42, 0.05, 0.42, PALETTE.wood, 0, 0.42, 0.02), legs(0.34, 0.34, 0.42, PALETTE.woodDark, 0.025),
         box(0.38, 0.06, 0.38, PALETTE.terracotta, 0, 0.47, 0.03, {flat: false}), box(0.42, 0.46, 0.05, PALETTE.wood, 0, 0.47, -0.19),
         box(0.34, 0.3, 0.04, PALETTE.terracotta, 0, 0.55, -0.16)),
-    stool_bar: () => group(cyl(0.2, 0.2, 0.07, PALETTE.berry, 0, 0.6, 0, 16, {flat: false}), cyl(0.035, 0.035, 0.6, PALETTE.steel, 0, 0, 0, 8, {metalness: 0.6, roughness: 0.3}),
+    stool_bar: () => group(cyl(0.2, 0.2, 0.07, PALETTE.berry, 0, 0.6, 0, 16, {flat: false}), cyl(0.035, 0.035, 0.6, PALETTE.steel, 0, 0, 0, 8, {
+            metalness: 0.6,
+            roughness: 0.3
+        }),
         cyl(0.2, 0.22, 0.03, PALETTE.steel, 0, 0, 0, 14, {metalness: 0.6}), cyl(0.16, 0.16, 0.02, PALETTE.steel, 0, 0.28, 0, 14, {metalness: 0.6})),
     chair_velvet: () => group(box(0.5, 0.18, 0.48, PALETTE.berry, 0, 0.24, 0.01, {flat: false}), box(0.5, 0.5, 0.12, PALETTE.berry, 0, 0.42, -0.19, {flat: false}),
         box(0.08, 0.22, 0.44, PALETTE.berry, -0.23, 0.42, 0, {flat: false}), box(0.08, 0.22, 0.44, PALETTE.berry, 0.23, 0.42, 0, {flat: false}),
@@ -85,11 +110,20 @@ const FURNITURE = {
         cyl(0.13, 0.13, 0.025, '#151110', -0.2, 0.87, -0.05, 16), cyl(0.13, 0.13, 0.025, '#151110', 0.2, 0.87, -0.05, 16),
         box(0.6, 0.38, 0.02, '#3A3230', 0, 0.2, 0.39), box(0.4, 0.03, 0.03, PALETTE.steel, 0, 0.62, 0.4, {metalness: 0.7}),
         ...[-0.3, -0.1, 0.1, 0.3].map(x => cyl(0.03, 0.03, 0.03, PALETTE.ink, x, 0.7, 0.39, 8))),
-    stove_steel: () => group(box(0.9, 0.84, 0.82, PALETTE.steel, 0, 0, -0.02, {metalness: 0.65, roughness: 0.35}), box(0.92, 0.05, 0.84, '#222', 0, 0.84, -0.02),
+    stove_steel: () => group(box(0.9, 0.84, 0.82, PALETTE.steel, 0, 0, -0.02, {
+            metalness: 0.65,
+            roughness: 0.35
+        }), box(0.92, 0.05, 0.84, '#222', 0, 0.84, -0.02),
         ...[[-0.2, -0.2], [0.2, -0.2], [-0.2, 0.15], [0.2, 0.15]].map(([x, z]) => cyl(0.11, 0.11, 0.025, '#111', x, 0.89, z, 16)),
-        box(0.66, 0.42, 0.02, '#1E1E22', 0, 0.18, 0.4, {roughness: 0.2}), box(0.92, 0.5, 0.3, PALETTE.steel, 0, 1.75, -0.28, {metalness: 0.65, roughness: 0.35})),
+        box(0.66, 0.42, 0.02, '#1E1E22', 0, 0.18, 0.4, {roughness: 0.2}), box(0.92, 0.5, 0.3, PALETTE.steel, 0, 1.75, -0.28, {
+            metalness: 0.65,
+            roughness: 0.35
+        })),
     oven_brick: () => group(box(0.92, 0.5, 0.9, '#9C4A2E', 0, 0, 0), mesh(new THREE.SphereGeometry(0.44, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat('#C2572B'), 0, 0.5, 0),
-        box(0.3, 0.22, 0.1, '#FF9A3C', 0, 0.52, 0.38, {emissive: '#FF7A1A', glow: 1.2}), box(0.38, 0.05, 0.12, '#7B3A22', 0, 0.74, 0.38),
+        box(0.3, 0.22, 0.1, '#FF9A3C', 0, 0.52, 0.38, {
+            emissive: '#FF7A1A',
+            glow: 1.2
+        }), box(0.38, 0.05, 0.12, '#7B3A22', 0, 0.74, 0.38),
         cyl(0.07, 0.07, 0.45, '#7B3A22', 0.12, 0.85, -0.15, 8)),
     counter_wood: () => group(box(0.94, 0.92, 0.7, PALETTE.wood, 0, 0, -0.1), box(0.98, 0.06, 0.82, '#E8D3B0', 0, 0.92, -0.06),
         box(0.94, 0.06, 0.04, PALETTE.woodDark, 0, 0.3, 0.26), box(0.94, 0.06, 0.04, PALETTE.woodDark, 0, 0.62, 0.26)),
@@ -109,11 +143,17 @@ const FURNITURE = {
     bookshelf: () => group(box(0.92, 1.7, 0.36, PALETTE.woodDark, 0, 0, -0.3), ...[0.05, 0.45, 0.85, 1.25].map(y => box(0.84, 0.03, 0.32, PALETTE.wood, 0, y, -0.28)),
         ...booksRow(0.08), ...booksRow(0.48), ...booksRow(0.88), ...booksRow(1.28)),
     jukebox: () => group(box(0.7, 0.9, 0.5, PALETTE.berry, 0, 0, -0.15), mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.5, 16, 1, false, 0, Math.PI), mat(PALETTE.gold, {metalness: 0.4}), 0, 0.9, -0.15),
-        box(0.5, 0.3, 0.02, '#FFD27A', 0, 0.45, 0.11, {emissive: '#FFB347', glow: 0.7}), box(0.6, 0.06, 0.02, '#5CB8D6', 0, 0.82, 0.11, {emissive: '#5CB8D6', glow: 0.6})),
+        box(0.5, 0.3, 0.02, '#FFD27A', 0, 0.45, 0.11, {
+            emissive: '#FFB347',
+            glow: 0.7
+        }), box(0.6, 0.06, 0.02, '#5CB8D6', 0, 0.82, 0.11, {emissive: '#5CB8D6', glow: 0.6})),
     piano: () => group(box(1.7, 0.95, 0.5, '#1B1615', 0, 0.1, -0.2, {roughness: 0.25}), box(1.6, 0.05, 0.22, '#FFFFFF', 0, 0.7, 0.13), box(1.6, 0.02, 0.08, '#111', 0, 0.75, 0.08),
         legs(1.5, 0.4, 0.1, '#1B1615', 0.04), box(0.9, 0.06, 0.32, '#1B1615', 0, 0.45, 0.55), legs(0.8, 0.25, 0.45, '#1B1615', 0.025).map(l => (l.position.z += 0.55, l))),
     aquarium: () => {
-        const g = group(box(1.8, 0.6, 0.55, PALETTE.woodDark, 0, 0, -0.15), box(1.76, 0.7, 0.5, PALETTE.water, 0, 0.6, -0.15, {opacity: 0.45, roughness: 0.1}),
+        const g = group(box(1.8, 0.6, 0.55, PALETTE.woodDark, 0, 0, -0.15), box(1.76, 0.7, 0.5, PALETTE.water, 0, 0.6, -0.15, {
+                opacity: 0.45,
+                roughness: 0.1
+            }),
             box(1.76, 0.06, 0.52, '#E8D9A8', 0, 0.6, -0.15), box(1.8, 0.05, 0.55, PALETTE.ink, 0, 1.3, -0.15));
         g.userData.fish = [];
         ['#FF8C42', '#FFD23F', '#F25F5C'].forEach((c, i) => {
@@ -125,7 +165,10 @@ const FURNITURE = {
         });
         return g;
     },
-    fountain: () => group(cyl(0.46, 0.48, 0.25, '#E6E0D6', 0, 0, 0, 18), cyl(0.4, 0.4, 0.02, PALETTE.water, 0, 0.262, 0, 18, {opacity: 0.85, roughness: 0.1}), ring(0.43, 0.04, '#E6E0D6', 0.3),
+    fountain: () => group(cyl(0.46, 0.48, 0.25, '#E6E0D6', 0, 0, 0, 18), cyl(0.4, 0.4, 0.02, PALETTE.water, 0, 0.262, 0, 18, {
+            opacity: 0.85,
+            roughness: 0.1
+        }), ring(0.43, 0.04, '#E6E0D6', 0.3),
         cyl(0.08, 0.1, 0.55, '#E6E0D6', 0, 0.25, 0, 10), cyl(0.24, 0.12, 0.1, '#E6E0D6', 0, 0.8, 0, 14), cyl(0.2, 0.2, 0.02, PALETTE.water, 0, 0.905, 0, 14, {opacity: 0.85}),
         ball(0.07, PALETTE.water, 0, 1.0, 0, {opacity: 0.8})),
     statue_fork: () => group(box(0.6, 0.5, 0.6, '#E6E0D6', 0, 0, 0), box(0.66, 0.06, 0.66, '#D6CFC2', 0, 0.5, 0), forkMesh(PALETTE.gold, 1.2).translateY(0.56)),
@@ -133,7 +176,10 @@ const FURNITURE = {
         box(0.02, 0.12, 0.01, PALETTE.ink, 0, 1.49, 0.01), box(0.09, 0.02, 0.01, PALETTE.ink, 0.04, 1.45, 0.01), box(0.26, 0.5, 0.02, '#E9C46A', 0, 0.55, -0.01, {opacity: 0.6})),
     cake_stand: () => group(cyl(0.3, 0.3, 0.04, PALETTE.cream, 0, 0.7, 0, 18), legs(0.36, 0.36, 0.7, PALETTE.woodDark, 0.025),
         cyl(0.2, 0.2, 0.12, '#F7C6D0', 0, 0.74, 0, 16, {flat: false}), cyl(0.14, 0.14, 0.1, '#FFF1E6', 0, 0.86, 0, 16, {flat: false}), ball(0.04, '#D7263D', 0, 0.98, 0),
-        mesh(new THREE.SphereGeometry(0.3, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat('#FFFFFF', {opacity: 0.35, roughness: 0.1}), 0, 0.74, 0)),
+        mesh(new THREE.SphereGeometry(0.3, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat('#FFFFFF', {
+            opacity: 0.35,
+            roughness: 0.1
+        }), 0, 0.74, 0)),
 };
 
 function lightBulb() {
@@ -186,12 +232,24 @@ export function forkMesh(color, height = 1) {
 const GLOW_MATS = new Map();
 
 export function glowMat(color) {
-    if (!GLOW_MATS.has(color)) GLOW_MATS.set(color, new THREE.MeshStandardMaterial({color, emissive: color, emissiveIntensity: 0.25, roughness: 0.5}));
+    if (!GLOW_MATS.has(color)) GLOW_MATS.set(color, new THREE.MeshStandardMaterial({
+        color,
+        emissive: color,
+        emissiveIntensity: 0.25,
+        roughness: 0.5
+    }));
     return GLOW_MATS.get(color);
 }
 
 /** The warm pool of light a lamp throws on the ground: invisible by day, glowing at night. */
-export const POOL_MAT = new THREE.MeshBasicMaterial({color: '#FFD98A', transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, fog: false});
+export const POOL_MAT = new THREE.MeshBasicMaterial({
+    color: '#FFD98A',
+    transparent: true,
+    opacity: 0,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    fog: false
+});
 const POOL_TEX = (() => {
     const c = document.createElement('canvas');
     c.width = c.height = 64;
@@ -235,14 +293,18 @@ export function carModel(seed = 0, kind = null) {
     const len = [1.7, 2.05, 2.1, 2.1, 2.3][k], w = k === 2 ? 1.05 : 0.98;
     g.add(mesh(new THREE.BoxGeometry(w, 0.38, len), mat(color, shiny), 0, 0.36, 0));
     // The cabin with its windows
-    const cabLen = [0.95, 1.0, 1.55, 0.8, 1.15][k], cabZ = [-0.1, -0.1, -0.2, 0.25, -0.15][k], cabH = k === 2 ? 0.62 : 0.42;
+    const cabLen = [0.95, 1.0, 1.55, 0.8, 1.15][k], cabZ = [-0.1, -0.1, -0.2, 0.25, -0.15][k],
+        cabH = k === 2 ? 0.62 : 0.42;
     g.add(mesh(new THREE.BoxGeometry(w * 0.9, cabH, cabLen), mat(color, shiny), 0, 0.55 + cabH / 2, cabZ));
     const glass = mat('#9CC7DA', {flat: false, roughness: 0.1, metalness: 0.3});
     g.add(mesh(new THREE.BoxGeometry(w * 0.84, cabH * 0.7, cabLen + 0.02), glass, 0, 0.58 + cabH / 2, cabZ));
     g.add(mesh(new THREE.BoxGeometry(w * 0.92, cabH * 0.68, cabLen * 0.86), glass, 0, 0.58 + cabH / 2, cabZ));
     g.add(mesh(new THREE.BoxGeometry(w * 0.9, 0.04, cabLen), mat(color, shiny), 0, 0.56 + cabH, cabZ)); // roof
     if (k === 3) g.add(mesh(new THREE.BoxGeometry(w * 0.9, 0.18, 0.75), mat('#3A3F45'), 0, 0.6, -0.6)); // the open back of a pickup
-    if (k === 4) g.add(mesh(new THREE.BoxGeometry(0.06, 0.06, 0.06), mat('#E2B23A', {metalness: 0.8, roughness: 0.2}), 0, 0.58, len / 2 - 0.02));
+    if (k === 4) g.add(mesh(new THREE.BoxGeometry(0.06, 0.06, 0.06), mat('#E2B23A', {
+        metalness: 0.8,
+        roughness: 0.2
+    }), 0, 0.58, len / 2 - 0.02));
     // Wheels, lights, bumpers
     for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
         const wh = mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.14, 14), mat('#1E1E22'), sx * (w / 2 - 0.02), 0.17, sz * (len / 2 - 0.36));
@@ -266,8 +328,15 @@ Object.assign(FURNITURE, {
         box(1.6, 0.012, 0.7, '#F25F5C', 0, 0.76, 0, {opacity: 0.0}), ...[-0.6, -0.2, 0.2, 0.6].map(x => box(0.18, 0.012, 0.7, '#F25F5C', x, 0.765, 0))),
     table_bar: () => group(cyl(0.34, 0.34, 0.05, '#2C2522', 0, 1.0, 0, 18, {roughness: 0.3}), cyl(0.04, 0.04, 1.0, PALETTE.steel, 0, 0, 0, 8, {metalness: 0.6}),
         cyl(0.22, 0.24, 0.03, PALETTE.steel, 0, 0, 0, 14, {metalness: 0.6})),
-    table_glass: () => group(box(0.84, 0.03, 0.84, '#CFEAF2', 0, 0.7, 0, {opacity: 0.55, roughness: 0.05}), legs(0.7, 0.7, 0.7, PALETTE.gold, 0.02),
-        box(0.7, 0.02, 0.7, PALETTE.gold, 0, 0.3, 0, {metalness: 0.6, roughness: 0.3, opacity: 0.0}), cyl(0.05, 0.05, 0.14, '#FFFFFF', 0, 0.72, 0, 10), ball(0.05, '#F7A1C4', 0, 0.9, 0)),
+    table_glass: () => group(box(0.84, 0.03, 0.84, '#CFEAF2', 0, 0.7, 0, {
+            opacity: 0.55,
+            roughness: 0.05
+        }), legs(0.7, 0.7, 0.7, PALETTE.gold, 0.02),
+        box(0.7, 0.02, 0.7, PALETTE.gold, 0, 0.3, 0, {
+            metalness: 0.6,
+            roughness: 0.3,
+            opacity: 0.0
+        }), cyl(0.05, 0.05, 0.14, '#FFFFFF', 0, 0.72, 0, 10), ball(0.05, '#F7A1C4', 0, 0.9, 0)),
     chair_rattan: () => group(cyl(0.22, 0.2, 0.08, '#D9B47A', 0, 0.4, 0.02, 16), legs(0.3, 0.3, 0.4, '#B98A50', 0.022),
         mesh(new THREE.TorusGeometry(0.22, 0.04, 6, 16, Math.PI), mat('#D9B47A'), 0, 0.6, -0.12), box(0.36, 0.05, 0.36, '#FFF3E0', 0, 0.48, 0.02, {flat: false})),
     bench_wood: () => group(box(0.9, 0.06, 0.42, PALETTE.wood, 0, 0.42, 0.02), box(0.9, 0.4, 0.06, PALETTE.wood, 0, 0.5, -0.2),
@@ -284,28 +353,45 @@ Object.assign(FURNITURE, {
     fridge: () => group(box(0.8, 1.8, 0.7, '#F4F6F7', 0, 0, -0.1, {roughness: 0.35}), box(0.78, 0.01, 0.02, '#C8CDD2', 0, 1.15, 0.26),
         box(0.04, 0.4, 0.04, PALETTE.steel, 0.3, 1.3, 0.27, {metalness: 0.7}), box(0.04, 0.3, 0.04, PALETTE.steel, 0.3, 0.75, 0.27, {metalness: 0.7}),
         box(0.12, 0.12, 0.01, '#F25F5C', -0.2, 1.4, 0.26), box(0.1, 0.1, 0.01, '#FFD23F', -0.05, 1.5, 0.26)),
-    sink: () => group(box(0.92, 0.9, 0.7, '#E8D3B0', 0, 0, -0.1), box(0.96, 0.05, 0.8, '#F2EEE6', 0, 0.9, -0.06), box(0.6, 0.04, 0.45, '#9FB4BF', 0, 0.92, -0.06, {metalness: 0.5, roughness: 0.2}),
+    sink: () => group(box(0.92, 0.9, 0.7, '#E8D3B0', 0, 0, -0.1), box(0.96, 0.05, 0.8, '#F2EEE6', 0, 0.9, -0.06), box(0.6, 0.04, 0.45, '#9FB4BF', 0, 0.92, -0.06, {
+            metalness: 0.5,
+            roughness: 0.2
+        }),
         cyl(0.02, 0.02, 0.3, PALETTE.steel, 0, 0.95, -0.32, 8, {metalness: 0.7}), box(0.04, 0.03, 0.18, PALETTE.steel, 0, 1.24, -0.25, {metalness: 0.7})),
-    cash_register: () => group(box(0.8, 0.9, 0.6, PALETTE.woodDark, 0, 0, -0.1), box(0.4, 0.2, 0.35, '#3B3B40', 0, 0.9, -0.1), box(0.3, 0.12, 0.02, '#9FE0B0', 0, 1.15, -0.03, {emissive: '#5CCB7A', glow: 0.4}),
+    cash_register: () => group(box(0.8, 0.9, 0.6, PALETTE.woodDark, 0, 0, -0.1), box(0.4, 0.2, 0.35, '#3B3B40', 0, 0.9, -0.1), box(0.3, 0.12, 0.02, '#9FE0B0', 0, 1.15, -0.03, {
+            emissive: '#5CCB7A',
+            glow: 0.4
+        }),
         box(0.34, 0.06, 0.2, '#C8CDD2', 0, 1.1, 0.0)),
     trash_bin: () => group(cyl(0.18, 0.15, 0.5, '#7A8B3A', 0, 0, 0, 12), cyl(0.2, 0.2, 0.05, '#5D6B2C', 0, 0.5, 0, 12), box(0.12, 0.03, 0.02, '#FFF', 0, 0.3, 0.17)),
     menu_board: () => {
         const c = document.createElement('canvas');
-        c.width = 128; c.height = 160;
+        c.width = 128;
+        c.height = 160;
         const g = c.getContext('2d');
-        g.fillStyle = '#26302B'; g.fillRect(0, 0, 128, 160);
-        g.fillStyle = '#F4EFE2'; g.font = 'bold 18px sans-serif'; g.textAlign = 'center'; g.fillText(document.documentElement.lang === 'it' ? 'MENÙ' : 'MENU', 64, 26);
+        g.fillStyle = '#26302B';
+        g.fillRect(0, 0, 128, 160);
+        g.fillStyle = '#F4EFE2';
+        g.font = 'bold 18px sans-serif';
+        g.textAlign = 'center';
+        g.fillText(document.documentElement.lang === 'it' ? 'MENÙ' : 'MENU', 64, 26);
         g.font = '12px sans-serif';
         ['bruschetta', 'tomato_soup', 'pizza', 'pasta_tomato', 'carrot_cake'].forEach((k, i) => g.fillText(nameOf(k).slice(0, 16), 64, 52 + i * 21)); // in the player's language
         const t = new THREE.CanvasTexture(c);
         t.colorSpace = THREE.SRGBColorSpace;
-        const board = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.62), new THREE.MeshStandardMaterial({map: t, roughness: 0.9}));
+        const board = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.62), new THREE.MeshStandardMaterial({
+            map: t,
+            roughness: 0.9
+        }));
         board.position.set(0, 0.85, 0.04);
         board.rotation.x = -0.18;
         return group(box(0.58, 0.7, 0.04, PALETTE.wood, 0, 0.5, 0, {}).rotateX(-0.18), board, box(0.04, 0.6, 0.04, PALETTE.woodDark, -0.24, 0, -0.18).rotateX(0.3), box(0.04, 0.6, 0.04, PALETTE.woodDark, 0.24, 0, -0.18).rotateX(0.3));
     },
 
-    coffee_machine: () => group(box(0.85, 0.9, 0.6, PALETTE.wood, 0, 0, -0.15), box(0.5, 0.45, 0.4, '#B43E5C', 0, 0.9, -0.15, {metalness: 0.3, roughness: 0.3}),
+    coffee_machine: () => group(box(0.85, 0.9, 0.6, PALETTE.wood, 0, 0, -0.15), box(0.5, 0.45, 0.4, '#B43E5C', 0, 0.9, -0.15, {
+            metalness: 0.3,
+            roughness: 0.3
+        }),
         box(0.3, 0.06, 0.1, PALETTE.steel, 0, 1.05, 0.08, {metalness: 0.7}), cyl(0.05, 0.04, 0.08, '#FFFFFF', -0.1, 0.92, 0.1, 10), cyl(0.05, 0.04, 0.08, '#FFFFFF', 0.1, 0.92, 0.1, 10),
         cyl(0.1, 0.1, 0.06, PALETTE.gold, 0, 1.38, -0.15, 12, {metalness: 0.6})),
     sofa: () => group(box(1.8, 0.24, 0.8, '#7A8B3A', 0, 0.16, 0.0, {flat: false}), box(1.8, 0.55, 0.2, '#7A8B3A', 0, 0.3, -0.32, {flat: false}),
@@ -318,7 +404,10 @@ Object.assign(FURNITURE, {
         box(0.66, 0.14, 0.3, '#2C2C30', 0, 0.95, 0.2), ball(0.04, '#F25F5C', -0.1, 1.05, 0.25), ball(0.03, '#FFD23F', 0.08, 1.04, 0.26), ball(0.03, '#5CB8D6', 0.16, 1.04, 0.26),
         glow(new THREE.BoxGeometry(0.66, 0.12, 0.02), '#FFD23F', 0, 1.6, 0.26)),
     gramophone: () => group(box(0.5, 0.7, 0.5, PALETTE.woodDark, 0, 0, 0), box(0.44, 0.1, 0.44, PALETTE.wood, 0, 0.7, 0), cyl(0.18, 0.18, 0.01, '#111', 0, 0.8, 0, 18),
-        mesh(new THREE.ConeGeometry(0.22, 0.45, 14, 1, true), mat(PALETTE.gold, {metalness: 0.6, roughness: 0.3}), 0.08, 1.15, -0.05).rotateX(-0.6)),
+        mesh(new THREE.ConeGeometry(0.22, 0.45, 14, 1, true), mat(PALETTE.gold, {
+            metalness: 0.6,
+            roughness: 0.3
+        }), 0.08, 1.15, -0.05).rotateX(-0.6)),
     fireplace: () => group(box(1.8, 1.3, 0.5, '#B5532E', 0, 0, -0.25), box(1.1, 0.75, 0.1, '#2A1A14', 0, 0.12, 0.0), box(1.95, 0.1, 0.6, '#E6E0D6', 0, 1.3, -0.25),
         glow(new THREE.ConeGeometry(0.16, 0.4, 6), '#FF8A2A', -0.12, 0.33, 0.0), glow(new THREE.ConeGeometry(0.12, 0.3, 6), '#FFC24A', 0.12, 0.28, 0.0),
         box(0.7, 0.08, 0.12, PALETTE.woodDark, 0, 0.12, 0.02), cyl(0.06, 0.06, 0.2, PALETTE.gold, -0.6, 1.35, -0.25, 8), ball(0.08, '#7A8B3A', 0.6, 1.45, -0.25)),
@@ -358,9 +447,15 @@ Object.assign(FURNITURE, {
     neon_sign: () => group(box(0.7, 0.5, 0.08, '#1E1E24', 0, 0.9, -0.3), box(0.04, 0.9, 0.04, '#1E1E24', 0, 0, -0.3),
         glow(new THREE.TorusGeometry(0.15, 0.025, 6, 20), '#FF5DA2', -0.12, 0.95, -0.24), glow(new THREE.BoxGeometry(0.03, 0.3, 0.03), '#5CF2E0', 0.15, 0.95, -0.24),
         glow(new THREE.BoxGeometry(0.16, 0.03, 0.03), '#5CF2E0', 0.15, 1.08, -0.24)),
-    trophy_case: () => group(box(0.9, 1.7, 0.45, PALETTE.woodDark, 0, 0, -0.25), box(0.84, 1.5, 0.02, '#CFEAF2', 0, 0.1, -0.02, {opacity: 0.35, roughness: 0.05}),
+    trophy_case: () => group(box(0.9, 1.7, 0.45, PALETTE.woodDark, 0, 0, -0.25), box(0.84, 1.5, 0.02, '#CFEAF2', 0, 0.1, -0.02, {
+            opacity: 0.35,
+            roughness: 0.05
+        }),
         ...[0.3, 0.75, 1.2].map(y => box(0.8, 0.03, 0.38, PALETTE.wood, 0, y, -0.25)), ...[[-0.2, 0.33], [0.15, 0.33], [0, 0.78], [-0.2, 1.23], [0.2, 1.23]].map(([x, y]) =>
-            group(cyl(0.05, 0.07, 0.04, PALETTE.gold, x, y, -0.25, 8, {metalness: 0.7}), cyl(0.07, 0.03, 0.14, PALETTE.gold, x, y + 0.04, -0.25, 10, {metalness: 0.7, roughness: 0.25})))),
+            group(cyl(0.05, 0.07, 0.04, PALETTE.gold, x, y, -0.25, 8, {metalness: 0.7}), cyl(0.07, 0.03, 0.14, PALETTE.gold, x, y + 0.04, -0.25, 10, {
+                metalness: 0.7,
+                roughness: 0.25
+            })))),
     flower_arch: () => group(...[-0.85, 0.85].map(x => box(0.1, 1.9, 0.1, '#FFFFFF', x, 0, 0)), mesh(new THREE.TorusGeometry(0.85, 0.05, 6, 20, Math.PI), mat('#FFFFFF'), 0, 1.9, 0),
         ...Array.from({length: 22}, (_, i) => {
             const a = Math.PI * i / 21;
@@ -386,28 +481,58 @@ Object.assign(FURNITURE, {
         ...[-0.3, -0.1, 0.1, 0.3].map(x => cyl(0.035, 0.035, 0.03, '#FFFFFF', x, 0.71, 0.39, 10)), legs(0.76, 0.66, 0.06, PALETTE.steel, 0.03)),
     stove_pro: () => group(box(0.92, 0.86, 0.84, '#1E1E22', 0, 0, -0.02, {roughness: 0.3}), box(0.94, 0.05, 0.86, '#2E2E33', 0, 0.86, -0.02),
         ...[[-0.25, -0.22], [0, -0.22], [0.25, -0.22], [-0.25, 0.12], [0, 0.12], [0.25, 0.12]].map(([x, z]) => cyl(0.09, 0.09, 0.025, '#111', x, 0.91, z, 16)),
-        box(0.92, 0.04, 0.04, PALETTE.gold, 0, 0.66, 0.41, {metalness: 0.8, roughness: 0.25}), box(0.7, 0.4, 0.02, '#333', 0, 0.18, 0.41, {roughness: 0.2}),
+        box(0.92, 0.04, 0.04, PALETTE.gold, 0, 0.66, 0.41, {
+            metalness: 0.8,
+            roughness: 0.25
+        }), box(0.7, 0.4, 0.02, '#333', 0, 0.18, 0.41, {roughness: 0.2}),
         ...[-0.32, -0.16, 0, 0.16, 0.32].map(x => cyl(0.03, 0.03, 0.03, PALETTE.gold, x, 0.74, 0.41, 10, {metalness: 0.8})),
         box(0.94, 0.5, 0.3, '#1E1E22', 0, 1.75, -0.28, {roughness: 0.3}), box(0.94, 0.03, 0.31, PALETTE.gold, 0, 1.75, -0.28, {metalness: 0.8})),
     stove_gold: () => group(box(0.92, 0.86, 0.84, '#F4EFE6', 0, 0, -0.02, {roughness: 0.25}), box(0.94, 0.06, 0.86, '#1B1B1B', 0, 0.86, -0.02, {roughness: 0.2}),
-        ...[[-0.22, -0.2], [0.22, -0.2], [-0.22, 0.14], [0.22, 0.14]].map(([x, z]) => cyl(0.1, 0.1, 0.03, PALETTE.gold, x, 0.92, z, 18, {metalness: 0.85, roughness: 0.2})),
-        box(0.8, 0.46, 0.02, '#2A2A2A', 0, 0.14, 0.41, {roughness: 0.15}), box(0.84, 0.05, 0.05, PALETTE.gold, 0, 0.66, 0.42, {metalness: 0.85, roughness: 0.2}),
-        ...[-0.3, -0.1, 0.1, 0.3].map(x => ball(0.04, PALETTE.gold, x, 0.76, 0.42, {metalness: 0.85, roughness: 0.2})), legs(0.8, 0.7, 0.05, PALETTE.gold, 0.035),
+        ...[[-0.22, -0.2], [0.22, -0.2], [-0.22, 0.14], [0.22, 0.14]].map(([x, z]) => cyl(0.1, 0.1, 0.03, PALETTE.gold, x, 0.92, z, 18, {
+            metalness: 0.85,
+            roughness: 0.2
+        })),
+        box(0.8, 0.46, 0.02, '#2A2A2A', 0, 0.14, 0.41, {roughness: 0.15}), box(0.84, 0.05, 0.05, PALETTE.gold, 0, 0.66, 0.42, {
+            metalness: 0.85,
+            roughness: 0.2
+        }),
+        ...[-0.3, -0.1, 0.1, 0.3].map(x => ball(0.04, PALETTE.gold, x, 0.76, 0.42, {
+            metalness: 0.85,
+            roughness: 0.2
+        })), legs(0.8, 0.7, 0.05, PALETTE.gold, 0.035),
         mesh(new THREE.SphereGeometry(0.3, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat('#F4EFE6', {roughness: 0.25}), 0, 1.6, -0.25)),
     counter_marble: () => group(box(0.94, 0.92, 0.7, '#2C2522', 0, 0, -0.1), box(0.98, 0.07, 0.84, '#ECE8E2', 0, 0.92, -0.06, {roughness: 0.2}),
         box(0.98, 0.03, 0.03, PALETTE.gold, 0, 0.9, 0.36, {metalness: 0.7, roughness: 0.3})),
     counter_gold: () => group(box(0.94, 0.92, 0.7, PALETTE.berry, 0, 0, -0.1, {roughness: 0.4}), box(0.98, 0.07, 0.84, '#F7F2E8', 0, 0.92, -0.06, {roughness: 0.15}),
-        ...[-0.3, 0, 0.3].map(x => box(0.04, 0.8, 0.03, PALETTE.gold, x, 0.06, 0.26, {metalness: 0.85, roughness: 0.2})), box(0.98, 0.04, 0.05, PALETTE.gold, 0, 0.88, 0.36, {metalness: 0.85})),
+        ...[-0.3, 0, 0.3].map(x => box(0.04, 0.8, 0.03, PALETTE.gold, x, 0.06, 0.26, {
+            metalness: 0.85,
+            roughness: 0.2
+        })), box(0.98, 0.04, 0.05, PALETTE.gold, 0, 0.88, 0.36, {metalness: 0.85})),
     fridge_retro: () => group(box(0.78, 1.7, 0.7, '#9ED2C0', 0, 0.05, -0.1, {flat: false}), mesh(new THREE.CylinderGeometry(0.39, 0.39, 0.7, 16, 1, false, -Math.PI / 2, Math.PI), mat('#9ED2C0', {flat: false}), 0, 1.75, -0.1).rotateX(Math.PI / 2).rotateZ(Math.PI / 2),
         box(0.78, 0.01, 0.02, '#7DB8A5', 0, 1.1, 0.26), box(0.06, 0.3, 0.05, PALETTE.steel, 0.3, 1.3, 0.27, {metalness: 0.8}), legs(0.6, 0.5, 0.05, PALETTE.steel, 0.03)),
-    fridge_pro: () => group(box(0.9, 1.9, 0.72, PALETTE.steel, 0, 0, -0.1, {metalness: 0.65, roughness: 0.3}), box(0.01, 1.84, 0.02, '#8A9097', 0, 0.03, 0.27),
+    fridge_pro: () => group(box(0.9, 1.9, 0.72, PALETTE.steel, 0, 0, -0.1, {
+            metalness: 0.65,
+            roughness: 0.3
+        }), box(0.01, 1.84, 0.02, '#8A9097', 0, 0.03, 0.27),
         box(0.04, 0.8, 0.04, '#E6E9EC', -0.06, 0.6, 0.28, {metalness: 0.8}), box(0.04, 0.8, 0.04, '#E6E9EC', 0.06, 0.6, 0.28, {metalness: 0.8}),
         glow(new THREE.PlaneGeometry(0.16, 0.08), '#5CF2E0', 0.25, 1.5, 0.27)),
-    sink_steel: () => group(box(0.92, 0.9, 0.7, PALETTE.steel, 0, 0, -0.1, {metalness: 0.6, roughness: 0.3}), box(0.96, 0.05, 0.8, '#D8DDE2', 0, 0.9, -0.06, {metalness: 0.7, roughness: 0.2}),
-        box(0.34, 0.04, 0.42, '#9FB4BF', -0.2, 0.92, -0.06, {metalness: 0.6, roughness: 0.15}), box(0.34, 0.04, 0.42, '#9FB4BF', 0.2, 0.92, -0.06, {metalness: 0.6, roughness: 0.15}),
+    sink_steel: () => group(box(0.92, 0.9, 0.7, PALETTE.steel, 0, 0, -0.1, {
+            metalness: 0.6,
+            roughness: 0.3
+        }), box(0.96, 0.05, 0.8, '#D8DDE2', 0, 0.9, -0.06, {metalness: 0.7, roughness: 0.2}),
+        box(0.34, 0.04, 0.42, '#9FB4BF', -0.2, 0.92, -0.06, {
+            metalness: 0.6,
+            roughness: 0.15
+        }), box(0.34, 0.04, 0.42, '#9FB4BF', 0.2, 0.92, -0.06, {metalness: 0.6, roughness: 0.15}),
         cyl(0.02, 0.02, 0.45, PALETTE.steel, 0, 0.95, -0.34, 8, {metalness: 0.8}), mesh(new THREE.TorusGeometry(0.12, 0.018, 6, 12, Math.PI), mat(PALETTE.steel, {metalness: 0.8}), 0, 1.4, -0.22).rotateY(Math.PI / 2)),
-    coffee_luxe: () => group(box(0.85, 0.9, 0.6, '#2C2522', 0, 0, -0.15), box(0.62, 0.5, 0.42, '#C9CED4', 0, 0.9, -0.15, {metalness: 0.8, roughness: 0.2}),
-        ...[-0.18, 0.18].map(x => box(0.12, 0.06, 0.12, '#222', x, 1.05, 0.1)), cyl(0.1, 0.1, 0.25, PALETTE.gold, 0, 1.4, -0.15, 14, {metalness: 0.85, roughness: 0.2}),
+    coffee_luxe: () => group(box(0.85, 0.9, 0.6, '#2C2522', 0, 0, -0.15), box(0.62, 0.5, 0.42, '#C9CED4', 0, 0.9, -0.15, {
+            metalness: 0.8,
+            roughness: 0.2
+        }),
+        ...[-0.18, 0.18].map(x => box(0.12, 0.06, 0.12, '#222', x, 1.05, 0.1)), cyl(0.1, 0.1, 0.25, PALETTE.gold, 0, 1.4, -0.15, 14, {
+            metalness: 0.85,
+            roughness: 0.2
+        }),
         ball(0.08, PALETTE.gold, 0, 1.68, -0.15, {metalness: 0.85}), cyl(0.05, 0.04, 0.08, '#FFFFFF', -0.18, 0.92, 0.1, 10), cyl(0.05, 0.04, 0.08, '#FFFFFF', 0.18, 0.92, 0.1, 10)),
     table_rustic: () => group(box(0.8, 0.08, 0.8, '#8A5A35', 0, 0.68, 0), ...[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([a, b]) => box(0.08, 0.68, 0.08, '#6B4426', a * 0.32, 0, b * 0.32)),
         box(0.64, 0.05, 0.05, '#6B4426', 0, 0.2, 0.32), box(0.64, 0.05, 0.05, '#6B4426', 0, 0.2, -0.32)),
@@ -450,12 +575,23 @@ Object.assign(FURNITURE, {
         const g = group(box(0.5, 0.75, 0.04, '#26302B', 0, 0, 0.12).rotateX(-0.25), box(0.5, 0.75, 0.04, '#26302B', 0, 0, -0.12).rotateX(0.25),
             box(0.56, 0.05, 0.05, PALETTE.wood, 0, 0.78, 0));
         const c = document.createElement('canvas');
-        c.width = 96; c.height = 128;
+        c.width = 96;
+        c.height = 128;
         const x = c.getContext('2d');
-        x.fillStyle = '#26302B'; x.fillRect(0, 0, 96, 128);
-        x.strokeStyle = '#F4EFE2'; x.lineWidth = 3;
-        for (let i = 0; i < 5; i++) { x.beginPath(); x.moveTo(14, 30 + i * 20); x.lineTo(82, 30 + i * 20); x.stroke(); }
-        x.fillStyle = '#F6C945'; x.beginPath(); x.arc(48, 14, 8, 0, Math.PI * 2); x.fill();
+        x.fillStyle = '#26302B';
+        x.fillRect(0, 0, 96, 128);
+        x.strokeStyle = '#F4EFE2';
+        x.lineWidth = 3;
+        for (let i = 0; i < 5; i++) {
+            x.beginPath();
+            x.moveTo(14, 30 + i * 20);
+            x.lineTo(82, 30 + i * 20);
+            x.stroke();
+        }
+        x.fillStyle = '#F6C945';
+        x.beginPath();
+        x.arc(48, 14, 8, 0, Math.PI * 2);
+        x.fill();
         const t = new THREE.CanvasTexture(c);
         t.colorSpace = THREE.SRGBColorSpace;
         const face = new THREE.Mesh(new THREE.PlaneGeometry(0.44, 0.66), new THREE.MeshStandardMaterial({map: t}));
@@ -469,7 +605,10 @@ Object.assign(FURNITURE, {
         box(0.45, 0.04, 0.04, '#D7263D', -0.05, 0.42, 0.12)),
     gnome: () => group(cyl(0.12, 0.15, 0.3, '#3E7CB4', 0, 0, 0, 10), ball(0.11, PALETTE.skin[0], 0, 0.38, 0, {flat: false}, 10), mesh(new THREE.ConeGeometry(0.12, 0.3, 10), mat('#D7263D'), 0, 0.58, 0),
         mesh(new THREE.ConeGeometry(0.09, 0.16, 8), mat('#FFFFFF'), 0, 0.27, 0.08).rotateX(Math.PI)),
-    garden_fountain: () => group(cyl(0.46, 0.5, 0.35, '#B8B0A2', 0, 0, 0, 18), cyl(0.4, 0.4, 0.02, PALETTE.water, 0, 0.362, 0, 18, {opacity: 0.85, roughness: 0.05}), ring(0.43, 0.045, '#B8B0A2', 0.4),
+    garden_fountain: () => group(cyl(0.46, 0.5, 0.35, '#B8B0A2', 0, 0, 0, 18), cyl(0.4, 0.4, 0.02, PALETTE.water, 0, 0.362, 0, 18, {
+            opacity: 0.85,
+            roughness: 0.05
+        }), ring(0.43, 0.045, '#B8B0A2', 0.4),
         cyl(0.07, 0.09, 0.6, '#B8B0A2', 0, 0.35, 0, 10), cyl(0.22, 0.1, 0.12, '#B8B0A2', 0, 0.95, 0, 14), ball(0.12, '#B8B0A2', 0, 1.15, 0, {flat: false}),
         ball(0.05, PALETTE.water, 0.12, 1.0, 0, {opacity: 0.8}), ball(0.05, PALETTE.water, -0.12, 1.0, 0, {opacity: 0.8})),
     food_truck: () => {
@@ -515,9 +654,19 @@ function fire(x, y, z, w = 1) {
 
 Object.assign(FURNITURE, {
     woodstove: () => {
-        const g = group(cyl(0.32, 0.34, 0.75, '#2C2C30', 0, 0.12, -0.05, 16, {metalness: 0.5, roughness: 0.5}), legs(0.38, 0.38, 0.12, '#2C2C30', 0.03),
-            mesh(new THREE.SphereGeometry(0.32, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat('#2C2C30', {metalness: 0.5, roughness: 0.5}), 0, 0.87, -0.05),
-            cyl(0.07, 0.07, 1.2, '#2C2C30', 0, 1.1, -0.05, 10, {metalness: 0.5}), box(0.34, 0.3, 0.03, '#FFB25A', 0, 0.3, 0.27, {opacity: 0.6, emissive: '#FF8A2A', glow: 0.6}),
+        const g = group(cyl(0.32, 0.34, 0.75, '#2C2C30', 0, 0.12, -0.05, 16, {
+                metalness: 0.5,
+                roughness: 0.5
+            }), legs(0.38, 0.38, 0.12, '#2C2C30', 0.03),
+            mesh(new THREE.SphereGeometry(0.32, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat('#2C2C30', {
+                metalness: 0.5,
+                roughness: 0.5
+            }), 0, 0.87, -0.05),
+            cyl(0.07, 0.07, 1.2, '#2C2C30', 0, 1.1, -0.05, 10, {metalness: 0.5}), box(0.34, 0.3, 0.03, '#FFB25A', 0, 0.3, 0.27, {
+                opacity: 0.6,
+                emissive: '#FF8A2A',
+                glow: 0.6
+            }),
             box(0.4, 0.04, 0.05, PALETTE.gold, 0, 0.64, 0.27, {metalness: 0.7}));
         const f = fire(0, 0.22, 0.12, 0.7);
         g.add(f);
@@ -538,8 +687,14 @@ Object.assign(FURNITURE, {
         return g;
     },
     fireplace_modern: () => {
-        const g = group(box(1.9, 1.0, 0.45, '#1E1E24', 0, 0, -0.27, {roughness: 0.3}), box(1.5, 0.42, 0.02, '#CFE8F2', 0, 0.3, -0.04, {opacity: 0.25, roughness: 0.05}),
-            box(1.5, 0.05, 0.3, '#3A3A40', 0, 0.28, -0.2), box(1.95, 0.05, 0.5, '#B8BEC6', 0, 1.0, -0.27, {metalness: 0.7, roughness: 0.25}),
+        const g = group(box(1.9, 1.0, 0.45, '#1E1E24', 0, 0, -0.27, {roughness: 0.3}), box(1.5, 0.42, 0.02, '#CFE8F2', 0, 0.3, -0.04, {
+                opacity: 0.25,
+                roughness: 0.05
+            }),
+            box(1.5, 0.05, 0.3, '#3A3A40', 0, 0.28, -0.2), box(1.95, 0.05, 0.5, '#B8BEC6', 0, 1.0, -0.27, {
+                metalness: 0.7,
+                roughness: 0.25
+            }),
             ...[-0.5, 0, 0.5].map(x => mesh(new THREE.IcosahedronGeometry(0.06, 0), mat('#DCD7CD'), x, 0.33, -0.16)));
         // A long line of low blue-orange flames
         const flames = [];
@@ -556,10 +711,16 @@ Object.assign(FURNITURE, {
     },
     fireplace_marble: () => {
         const g = group(box(1.9, 1.35, 0.5, '#F3F1EC', 0, 0, -0.25, {roughness: 0.2}), box(1.1, 0.78, 0.1, '#2A1A14', 0, 0.02, -0.04),
-            box(2.05, 0.1, 0.62, '#ECE8E2', 0, 1.35, -0.25, {roughness: 0.15}), box(2.05, 0.03, 0.64, PALETTE.gold, 0, 1.33, -0.25, {metalness: 0.85, roughness: 0.2}),
+            box(2.05, 0.1, 0.62, '#ECE8E2', 0, 1.35, -0.25, {roughness: 0.15}), box(2.05, 0.03, 0.64, PALETTE.gold, 0, 1.33, -0.25, {
+                metalness: 0.85,
+                roughness: 0.2
+            }),
             ...[-0.72, 0.72].map(x => cyl(0.09, 0.1, 1.3, '#ECE8E2', x, 0, 0.02, 14, {roughness: 0.2})),
             ...[-0.72, 0.72].map(x => box(0.26, 0.08, 0.26, PALETTE.gold, x, 1.27, 0.02, {metalness: 0.85})),
-            mesh(new THREE.TorusGeometry(0.2, 0.03, 8, 20), mat(PALETTE.gold, {metalness: 0.85, roughness: 0.2}), 0, 1.75, -0.45),
+            mesh(new THREE.TorusGeometry(0.2, 0.03, 8, 20), mat(PALETTE.gold, {
+                metalness: 0.85,
+                roughness: 0.2
+            }), 0, 1.75, -0.45),
             cyl(0.05, 0.07, 0.25, PALETTE.gold, -0.6, 1.4, -0.25, 10, {metalness: 0.8}), ...[-0.62, -0.58].map(x => cyl(0.012, 0.012, 0.1, '#FFF8E7', x, 1.65, -0.25, 6)),
             box(1.15, 0.05, 0.02, PALETTE.gold, 0, 0.42, 0.02, {metalness: 0.85}), ...[-0.4, -0.2, 0, 0.2, 0.4].map(x => box(0.02, 0.42, 0.02, PALETTE.gold, x, 0.0, 0.02, {metalness: 0.85})));
         const f = fire(0, 0.03, -0.06, 1.1);
@@ -613,10 +774,16 @@ Object.assign(FURNITURE, {
         box(0.08, 0.05, 0.03, PALETTE.gold, 0.16, 0.8, -0.22, {metalness: 0.8})),
     washbasin: () => group(cyl(0.08, 0.11, 0.7, porcelain, 0, 0, -0.1, 12, {flat: false}), mesh(new THREE.SphereGeometry(0.24, 16, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), mat(porcelain, {flat: false}), 0, 0.86, -0.1).rotateX(0),
         cyl(0.24, 0.24, 0.03, '#E6E9EC', 0, 0.84, -0.1, 18), cyl(0.015, 0.015, 0.2, PALETTE.steel, 0, 0.86, -0.3, 8, {metalness: 0.8}), box(0.03, 0.03, 0.12, PALETTE.steel, 0, 1.05, -0.25, {metalness: 0.8}),
-        box(0.5, 0.6, 0.03, '#CFE8F2', 0, 1.15, -0.44, {roughness: 0.05, metalness: 0.3}), box(0.54, 0.64, 0.02, '#B8BEC6', 0, 1.13, -0.46)),
+        box(0.5, 0.6, 0.03, '#CFE8F2', 0, 1.15, -0.44, {
+            roughness: 0.05,
+            metalness: 0.3
+        }), box(0.54, 0.64, 0.02, '#B8BEC6', 0, 1.13, -0.46)),
     washbasin_marble: () => group(box(0.9, 0.8, 0.5, '#2C2522', 0, 0, -0.22), box(0.94, 0.08, 0.54, '#F3F1EC', 0, 0.8, -0.22, {roughness: 0.15}),
         cyl(0.18, 0.15, 0.06, porcelain, 0, 0.86, -0.18, 18, {flat: false}), cyl(0.015, 0.015, 0.22, PALETTE.gold, 0, 0.88, -0.4, 8, {metalness: 0.85}), box(0.03, 0.03, 0.12, PALETTE.gold, 0, 1.08, -0.35, {metalness: 0.85}),
-        box(0.7, 0.7, 0.03, '#CFE8F2', 0, 1.2, -0.47, {roughness: 0.05, metalness: 0.3}), box(0.76, 0.76, 0.02, PALETTE.gold, 0, 1.17, -0.49, {metalness: 0.8}),
+        box(0.7, 0.7, 0.03, '#CFE8F2', 0, 1.2, -0.47, {
+            roughness: 0.05,
+            metalness: 0.3
+        }), box(0.76, 0.76, 0.02, PALETTE.gold, 0, 1.17, -0.49, {metalness: 0.8}),
         cyl(0.04, 0.04, 0.12, '#F7A1C4', 0.32, 0.88, -0.3, 8), ball(0.05, PALETTE.leaf, 0.32, 1.05, -0.3, {}, 6)),
     hand_dryer: () => group(box(0.06, 1.0, 0.06, '#B8BEC6', 0, 0, -0.4, {metalness: 0.6}), box(0.34, 0.28, 0.2, '#E6E9EC', 0, 1.0, -0.32, {flat: false}),
         box(0.24, 0.03, 0.12, '#5B6670', 0, 0.99, -0.24), glow(new THREE.BoxGeometry(0.04, 0.04, 0.01), '#5CF2E0', 0.11, 1.18, -0.21)),
@@ -630,12 +797,26 @@ Object.assign(FURNITURE, {
     },
     wc_sign: () => {
         const c = document.createElement('canvas');
-        c.width = 128; c.height = 128;
+        c.width = 128;
+        c.height = 128;
         const g = c.getContext('2d');
-        g.fillStyle = '#3E7CB4'; g.beginPath(); g.roundRect(4, 4, 120, 120, 20); g.fill();
+        g.fillStyle = '#3E7CB4';
+        g.beginPath();
+        g.roundRect(4, 4, 120, 120, 20);
+        g.fill();
         g.fillStyle = '#FFFFFF';
-        g.beginPath(); g.arc(40, 34, 10, 0, Math.PI * 2); g.fill(); g.fillRect(31, 48, 18, 40); // man
-        g.beginPath(); g.arc(88, 34, 10, 0, Math.PI * 2); g.fill(); g.beginPath(); g.moveTo(88, 46); g.lineTo(104, 88); g.lineTo(72, 88); g.fill(); // woman
+        g.beginPath();
+        g.arc(40, 34, 10, 0, Math.PI * 2);
+        g.fill();
+        g.fillRect(31, 48, 18, 40); // man
+        g.beginPath();
+        g.arc(88, 34, 10, 0, Math.PI * 2);
+        g.fill();
+        g.beginPath();
+        g.moveTo(88, 46);
+        g.lineTo(104, 88);
+        g.lineTo(72, 88);
+        g.fill(); // woman
         g.fillRect(62, 22, 4, 84);
         const t = new THREE.CanvasTexture(c);
         t.colorSpace = THREE.SRGBColorSpace;
@@ -649,7 +830,8 @@ Object.assign(FURNITURE, {
 
 /** A wall joint: arms from the middle of the tile to its edges (w = −x, e = +x, n = −z, s = +z), so straight pieces meet. */
 const wallJoint = (depth, color, arms, trim = PALETTE.woodDark) => {
-    const L = 0.49, g = group(box(depth, 2.0, depth, color, 0, 0, 0), box(depth + 0.04, 0.1, depth + 0.04, trim, 0, 0, 0), box(depth + 0.04, 0.05, depth + 0.04, trim, 0, 2.0, 0));
+    const L = 0.49,
+        g = group(box(depth, 2.0, depth, color, 0, 0, 0), box(depth + 0.04, 0.1, depth + 0.04, trim, 0, 0, 0), box(depth + 0.04, 0.05, depth + 0.04, trim, 0, 2.0, 0));
     for (const arm of arms) {
         const along = arm === 'w' || arm === 'e', sign = arm === 'w' || arm === 'n' ? -1 : 1, c = sign * (L / 2);
         const [w, d, x, z] = along ? [L, depth, c, 0] : [depth, L, 0, c];
@@ -695,7 +877,10 @@ Object.assign(FURNITURE, {
     })),
     screen_bamboo: () => group(...Array.from({length: 9}, (_, i) => cyl(0.04, 0.04, 1.8, i % 2 ? '#C9B06A' : '#B89A4E', -0.4 + i * 0.1, 0, 0, 7)),
         ...[0.4, 1.4].map(y => box(0.92, 0.04, 0.1, '#8A7240', 0, y, 0)), box(0.92, 0.12, 0.25, '#6B5530', 0, 0, 0)),
-    glass_partition: () => group(box(1.96, 0.12, 0.14, '#2C2C30', 0, 0, 0), box(1.9, 1.7, 0.04, '#CFE8F2', 0, 0.12, 0, {opacity: 0.35, roughness: 0.05}),
+    glass_partition: () => group(box(1.96, 0.12, 0.14, '#2C2C30', 0, 0, 0), box(1.9, 1.7, 0.04, '#CFE8F2', 0, 0.12, 0, {
+            opacity: 0.35,
+            roughness: 0.05
+        }),
         ...[-0.97, 0, 0.97].map(x => box(0.05, 1.86, 0.08, '#2C2C30', x, 0, 0)), box(1.96, 0.05, 0.08, '#2C2C30', 0, 1.82, 0)),
 });
 
@@ -762,12 +947,18 @@ Object.assign(FURNITURE, {
     },
     table_cafe: () => group(...roundTable('#D7263D', '#C9CED4', 0.36, 0.72, shinyO), cyl(0.38, 0.38, 0.015, '#FFFFFF', 0, 0.715, 0, 22), ...vase(0, 0.77, 0, '#FFFFFF', '#D7263D')),
     table_marble_round: () => group(cyl(0.44, 0.44, 0.06, '#F1EEEA', 0, 0.68, 0, 24, {roughness: 0.25}), cyl(0.46, 0.46, 0.02, PALETTE.gold, 0, 0.66, 0, 24, metalO),
-        cyl(0.07, 0.12, 0.66, '#2C2522', 0, 0, 0, 12, shinyO), cyl(0.28, 0.3, 0.04, PALETTE.gold, 0, 0, 0, 16, metalO), cyl(0.04, 0.04, 0.2, '#FFFFFF', 0.12, 0.74, 0.05, 10, {opacity: 0.6}), ball(0.04, '#F2E4C8', 0.12, 0.98, 0.05, {emissive: '#FFB347', glow: 1})),
+        cyl(0.07, 0.12, 0.66, '#2C2522', 0, 0, 0, 12, shinyO), cyl(0.28, 0.3, 0.04, PALETTE.gold, 0, 0, 0, 16, metalO), cyl(0.04, 0.04, 0.2, '#FFFFFF', 0.12, 0.74, 0.05, 10, {opacity: 0.6}), ball(0.04, '#F2E4C8', 0.12, 0.98, 0.05, {
+            emissive: '#FFB347',
+            glow: 1
+        })),
     table_gold: () => group(box(0.86, 0.06, 0.86, '#1E1E24', 0, 0.68, 0, {roughness: 0.15}), box(0.9, 0.03, 0.9, PALETTE.gold, 0, 0.65, 0, metalO), ...legs(0.7, 0.7, 0.65, PALETTE.gold, 0.035).map(l => (l.material = mat(PALETTE.gold, metalO), l)),
         box(0.7, 0.012, 0.18, '#B43E5C', 0, 0.745, 0), cyl(0.05, 0.03, 0.18, '#FFFFFF', -0.2, 0.74, 0, 10, {opacity: 0.5}), cyl(0.05, 0.03, 0.18, '#FFFFFF', 0.2, 0.74, 0, 10, {opacity: 0.5}), ...vase(0, 0.75, 0, PALETTE.gold, '#FFFFFF')),
     table_rustic_long: () => group(box(1.8, 0.08, 0.82, '#9C6B3F', 0, 0.68, 0), ...[-0.4, -0.13, 0.13, 0.4].map(z => box(1.8, 0.005, 0.012, '#6B4A33', 0, 0.762, z)),
         ...[-0.75, 0.75].map(x => group(box(0.08, 0.68, 0.08, '#6B4A33', x, 0, -0.3), box(0.08, 0.68, 0.08, '#6B4A33', x, 0, 0.3), box(0.08, 0.06, 0.6, '#6B4A33', x, 0.2, 0))),
-        box(1.4, 0.06, 0.06, '#6B4A33', 0, 0.2, 0), ...[-0.4, 0.4].map(x => cyl(0.05, 0.05, 0.14, '#F4E6D0', x, 0.76, 0, 10)), ...[-0.4, 0.4].map(x => ball(0.03, '#FFB347', x, 0.93, 0, {emissive: '#FF9A3C', glow: 1.2}, 6))),
+        box(1.4, 0.06, 0.06, '#6B4A33', 0, 0.2, 0), ...[-0.4, 0.4].map(x => cyl(0.05, 0.05, 0.14, '#F4E6D0', x, 0.76, 0, 10)), ...[-0.4, 0.4].map(x => ball(0.03, '#FFB347', x, 0.93, 0, {
+            emissive: '#FF9A3C',
+            glow: 1.2
+        }, 6))),
     table_banquet: () => group(box(2.8, 0.06, 0.86, '#FFFFFF', 0, 0.7, 0, {flat: false}), box(2.84, 0.4, 0.9, '#FFFFFF', 0, 0.36, 0, {flat: false}),
         box(2.6, 0.012, 0.3, PALETTE.gold, 0, 0.76, 0), ...[-1, 0, 1].map(x => group(...vase(x, 0.77, 0, '#FFFFFF', '#F7A1C4'))), ...[-0.5, 0.5].map(x => cyl(0.04, 0.05, 0.25, PALETTE.gold, x, 0.77, 0, 10, metalO))),
     table_booth: () => group(box(1.7, 0.06, 0.7, '#7B4E2C', 0, 0.72, 0), cyl(0.06, 0.06, 0.72, '#2B2B2E', -0.5, 0, 0, 8), cyl(0.06, 0.06, 0.72, '#2B2B2E', 0.5, 0, 0, 8),
@@ -788,8 +979,14 @@ Object.assign(FURNITURE, {
         l.rotation.set(-b * 0.08, 0, a * 0.08);
         return l;
     }), box(0.38, 0.3, 0.03, '#4A8C7E', 0, 0.5, -0.19, metalO), box(0.22, 0.04, 0.035, '#2E6B5E', 0, 0.68, -0.19)),
-    chair_ghost: () => group(box(0.42, 0.04, 0.42, '#DDF1F7', 0, 0.44, 0.02, {opacity: 0.45, roughness: 0.05}), ...legs(0.34, 0.34, 0.44, '#DDF1F7', 0.022).map(l => (l.material = mat('#DDF1F7', {opacity: 0.45}), l)),
-        mesh(new THREE.TorusGeometry(0.19, 0.03, 6, 16, Math.PI), mat('#DDF1F7', {opacity: 0.45, roughness: 0.05}), 0, 0.62, -0.18)),
+    chair_ghost: () => group(box(0.42, 0.04, 0.42, '#DDF1F7', 0, 0.44, 0.02, {
+            opacity: 0.45,
+            roughness: 0.05
+        }), ...legs(0.34, 0.34, 0.44, '#DDF1F7', 0.022).map(l => (l.material = mat('#DDF1F7', {opacity: 0.45}), l)),
+        mesh(new THREE.TorusGeometry(0.19, 0.03, 6, 16, Math.PI), mat('#DDF1F7', {
+            opacity: 0.45,
+            roughness: 0.05
+        }), 0, 0.62, -0.18)),
     chair_leather: () => group(box(0.5, 0.16, 0.48, '#7B3F22', 0, 0.26, 0.01, shinyO), box(0.5, 0.5, 0.12, '#7B3F22', 0, 0.42, -0.19, shinyO), ...[-1, 1].map(s => box(0.08, 0.2, 0.44, '#6B3519', s * 0.23, 0.42, 0, shinyO)),
         ...Array.from({length: 6}, (_, i) => ball(0.012, PALETTE.gold, -0.15 + (i % 3) * 0.15, 0.6 + Math.floor(i / 3) * 0.15, -0.125, metalO, 5)), ...legs(0.4, 0.38, 0.26, '#3B2418', 0.025)),
     chair_throne: () => group(box(0.56, 0.2, 0.52, '#6B1E3A', 0, 0.26, 0, shinyO), box(0.6, 0.85, 0.12, PALETTE.gold, 0, 0.3, -0.22, metalO), box(0.46, 0.72, 0.04, '#6B1E3A', 0, 0.4, -0.155, shinyO),
@@ -797,7 +994,10 @@ Object.assign(FURNITURE, {
         ...[-1, 1].map(s => box(0.08, 0.26, 0.46, PALETTE.gold, s * 0.26, 0.44, 0, metalO)), ...legs(0.46, 0.42, 0.26, PALETTE.gold, 0.03).map(l => (l.material = mat(PALETTE.gold, metalO), l))),
     chair_bamboo: () => group(...chairBase('#C9B06A', '#A08A48'), ...Array.from({length: 5}, (_, i) => cyl(0.018, 0.018, 0.45, i % 2 ? '#B89A4E' : '#C9B06A', -0.16 + i * 0.08, 0.46, -0.19, 6)), box(0.42, 0.04, 0.04, '#A08A48', 0, 0.88, -0.19)),
     chair_egg: () => group(cyl(0.22, 0.26, 0.04, '#2C2C30', 0, 0, 0, 16, metalO), cyl(0.03, 0.03, 0.3, '#2C2C30', 0, 0, 0, 8, metalO),
-        mesh(new THREE.SphereGeometry(0.36, 18, 12, Math.PI * 0.15, Math.PI * 1.7, 0, Math.PI * 0.7), mat('#F6F1E9', {flat: false, roughness: 0.4}), 0, 0.62, 0).rotateY(Math.PI / 2 + 0.6).rotateZ(0.2),
+        mesh(new THREE.SphereGeometry(0.36, 18, 12, Math.PI * 0.15, Math.PI * 1.7, 0, Math.PI * 0.7), mat('#F6F1E9', {
+            flat: false,
+            roughness: 0.4
+        }), 0, 0.62, 0).rotateY(Math.PI / 2 + 0.6).rotateZ(0.2),
         cyl(0.26, 0.26, 0.12, '#E07B39', 0, 0.3, 0.03, 18, {flat: false})),
     stool_wood: () => group(cyl(0.18, 0.18, 0.05, '#B07A4A', 0, 0.62, 0, 14), ...[0, 1, 2, 3].map(i => {
         const l = cyl(0.02, 0.025, 0.64, '#7B4E2C', Math.cos(i * Math.PI / 2 + 0.78) * 0.12, 0, Math.sin(i * Math.PI / 2 + 0.78) * 0.12, 6);
@@ -813,29 +1013,47 @@ Object.assign(FURNITURE, {
 
     // ---- kitchen
     stove_rustic: () => group(box(0.9, 0.82, 0.8, '#5A4A3E', 0, 0, -0.02), box(0.92, 0.06, 0.82, '#2E2724', 0, 0.82, -0.02), ...[-0.22, 0.22].map(x => cyl(0.14, 0.14, 0.03, '#151110', x, 0.88, -0.05, 14)),
-        box(0.5, 0.3, 0.02, '#FF9A3C', 0, 0.18, 0.39, {emissive: '#FF7A1A', glow: 0.8}), box(0.6, 0.04, 0.04, PALETTE.gold, 0, 0.56, 0.4, metalO), cyl(0.12, 0.1, 0.18, '#7B3A22', 0.22, 0.91, -0.05, 12)),
+        box(0.5, 0.3, 0.02, '#FF9A3C', 0, 0.18, 0.39, {
+            emissive: '#FF7A1A',
+            glow: 0.8
+        }), box(0.6, 0.04, 0.04, PALETTE.gold, 0, 0.56, 0.4, metalO), cyl(0.12, 0.1, 0.18, '#7B3A22', 0.22, 0.91, -0.05, 12)),
     stove_induction: () => group(box(0.9, 0.84, 0.8, '#FFFFFF', 0, 0, -0.02, shinyO), box(0.92, 0.04, 0.82, '#151515', 0, 0.84, -0.02, {roughness: 0.1}),
         ...[[-0.2, -0.2], [0.2, -0.2], [-0.2, 0.15], [0.2, 0.15]].map(([x, z]) => mesh(new THREE.TorusGeometry(0.1, 0.006, 4, 20), glowMat('#FF5A3C'), x, 0.885, z).rotateX(Math.PI / 2)),
-        box(0.7, 0.4, 0.02, '#2C2C30', 0, 0.2, 0.39, {roughness: 0.15}), box(0.3, 0.05, 0.02, '#5CB8D6', 0.2, 0.7, 0.39, {emissive: '#5CB8D6', glow: 0.6})),
+        box(0.7, 0.4, 0.02, '#2C2C30', 0, 0.2, 0.39, {roughness: 0.15}), box(0.3, 0.05, 0.02, '#5CB8D6', 0.2, 0.7, 0.39, {
+            emissive: '#5CB8D6',
+            glow: 0.6
+        })),
     wok_station: () => group(box(0.92, 0.82, 0.82, '#B8BEC6', 0, 0, -0.02, metalO), box(0.94, 0.05, 0.84, '#222', 0, 0.82, -0.02),
         glow(new THREE.CylinderGeometry(0.18, 0.18, 0.02, 14), '#FF6A2A', -0.18, 0.87, -0.05), mesh(new THREE.SphereGeometry(0.22, 14, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), mat('#2C2C30', metalO), -0.18, 1.08, -0.05),
         cyl(0.012, 0.012, 0.3, '#5A3218', 0.08, 1.0, -0.05, 6).rotateZ(1.3), cyl(0.12, 0.1, 0.16, '#B8BEC6', 0.24, 0.87, -0.1, 12, metalO), box(0.94, 0.5, 0.3, '#B8BEC6', 0, 1.65, -0.28, metalO)),
     oven_pizza_steel: () => group(box(0.94, 0.7, 0.9, '#2C2C30', 0, 0, 0, metalO), mesh(new THREE.SphereGeometry(0.45, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat('#B8BEC6', metalO), 0, 0.7, 0),
-        box(0.36, 0.2, 0.08, '#FF9A3C', 0, 0.72, 0.4, {emissive: '#FF7A1A', glow: 1.2}), cyl(0.08, 0.08, 0.5, '#2C2C30', 0, 1.1, -0.1, 10, metalO), box(0.5, 0.06, 0.2, '#C98F5A', 0, 0.62, 0.48)),
+        box(0.36, 0.2, 0.08, '#FF9A3C', 0, 0.72, 0.4, {
+            emissive: '#FF7A1A',
+            glow: 1.2
+        }), cyl(0.08, 0.08, 0.5, '#2C2C30', 0, 1.1, -0.1, 10, metalO), box(0.5, 0.06, 0.2, '#C98F5A', 0, 0.62, 0.48)),
     counter_steel: () => group(box(0.94, 0.9, 0.7, '#B8BEC6', 0, 0, -0.1, metalO), box(0.98, 0.05, 0.82, '#D5DAE0', 0, 0.9, -0.06, metalO), ...[-0.22, 0.22].map(x => box(0.42, 0.7, 0.02, '#A7AEB6', x, 0.1, 0.26, metalO)),
         ...[-0.22, 0.22].map(x => box(0.12, 0.03, 0.03, '#2C2C30', x, 0.72, 0.28))),
     counter_butcher: () => group(box(0.94, 0.86, 0.7, '#7B4E2C', 0, 0, -0.1), box(0.98, 0.1, 0.82, '#D9A45C', 0, 0.86, -0.06), ...Array.from({length: 6}, (_, i) => box(0.98, 0.1, 0.004, '#B98448', 0, 0.86, -0.4 + i * 0.14)),
         box(0.3, 0.02, 0.2, '#C9CED4', -0.2, 0.96, -0.1, metalO), ball(0.06, '#D7263D', 0.2, 1.0, -0.1, {}, 8), ball(0.05, '#7CB342', 0.3, 0.99, 0.0, {}, 8)),
-    counter_pastry: () => group(box(0.94, 0.6, 0.7, '#F4E6D0', 0, 0, -0.1), box(0.94, 0.42, 0.66, '#DDF1F7', 0, 0.6, -0.1, {opacity: 0.35, roughness: 0.05}), box(0.98, 0.04, 0.72, '#F7F4EE', 0, 1.02, -0.1),
+    counter_pastry: () => group(box(0.94, 0.6, 0.7, '#F4E6D0', 0, 0, -0.1), box(0.94, 0.42, 0.66, '#DDF1F7', 0, 0.6, -0.1, {
+            opacity: 0.35,
+            roughness: 0.05
+        }), box(0.98, 0.04, 0.72, '#F7F4EE', 0, 1.02, -0.1),
         box(0.9, 0.02, 0.6, '#FFFFFF', 0, 0.6, -0.1), cyl(0.1, 0.1, 0.08, '#F7C6D0', -0.25, 0.62, -0.1, 14, {flat: false}), cyl(0.09, 0.09, 0.1, '#5A3218', 0.05, 0.62, -0.1, 14, {flat: false}), cyl(0.08, 0.08, 0.07, '#F6D55C', 0.3, 0.62, -0.1, 14, {flat: false}),
         ...[-0.25, 0.05, 0.3].map(x => ball(0.025, '#D7263D', x, 0.73, -0.1, {}, 6))),
     counter_bar: () => group(box(0.96, 1.0, 0.6, '#5A3218', 0, 0, -0.15), box(1.0, 0.06, 0.8, '#2C2522', 0, 1.0, -0.05, {roughness: 0.2}), ...Array.from({length: 4}, (_, i) => box(0.2, 0.9, 0.02, '#6B4026', -0.36 + i * 0.24, 0.05, 0.16)),
         box(0.96, 0.04, 0.04, PALETTE.gold, 0, 0.12, 0.2, metalO), ...[-0.3, -0.1, 0.25].map((x, i) => cyl(0.03, 0.03, 0.2, ['#2F6F3E', '#7B1E2A', '#E9C46A'][i], x, 1.06, -0.2, 8, shinyO))),
     fridge_double: () => group(box(1.0, 1.9, 0.7, '#D5DAE0', 0, 0, -0.1, metalO), box(0.01, 1.84, 0.02, '#8A9097', 0, 0.03, 0.26), ...[-0.08, 0.08].map(x => box(0.03, 0.6, 0.04, '#2C2C30', x, 0.8, 0.27)),
         box(0.25, 0.2, 0.01, '#5CB8D6', -0.25, 1.4, 0.26, {emissive: '#5CB8D6', glow: 0.4})),
-    freezer_chest: () => group(box(0.94, 0.8, 0.66, '#F4F6F7', 0, 0, -0.1, shinyO), box(0.96, 0.06, 0.68, '#DDE2E6', 0, 0.8, -0.1), box(0.4, 0.04, 0.04, '#B8BEC6', 0, 0.7, 0.24, metalO), box(0.12, 0.06, 0.01, '#5CB8D6', 0.3, 0.6, 0.24, {emissive: '#5CB8D6', glow: 0.4})),
+    freezer_chest: () => group(box(0.94, 0.8, 0.66, '#F4F6F7', 0, 0, -0.1, shinyO), box(0.96, 0.06, 0.68, '#DDE2E6', 0, 0.8, -0.1), box(0.4, 0.04, 0.04, '#B8BEC6', 0, 0.7, 0.24, metalO), box(0.12, 0.06, 0.01, '#5CB8D6', 0.3, 0.6, 0.24, {
+        emissive: '#5CB8D6',
+        glow: 0.4
+    })),
     dishwasher: () => group(box(0.9, 0.88, 0.7, '#B8BEC6', 0, 0, -0.1, metalO), box(0.94, 0.05, 0.8, '#F2EEE6', 0, 0.88, -0.06), box(0.6, 0.04, 0.03, '#2C2C30', 0, 0.75, 0.26),
-        box(0.12, 0.04, 0.01, '#6BBF59', 0.3, 0.82, 0.26, {emissive: '#6BBF59', glow: 0.6}), ...[-0.2, 0, 0.2].map(x => cyl(0.1, 0.1, 0.012, '#FFFFFF', x, 0.95, -0.1, 14).rotateX(Math.PI / 2))),
+        box(0.12, 0.04, 0.01, '#6BBF59', 0.3, 0.82, 0.26, {
+            emissive: '#6BBF59',
+            glow: 0.6
+        }), ...[-0.2, 0, 0.2].map(x => cyl(0.1, 0.1, 0.012, '#FFFFFF', x, 0.95, -0.1, 14).rotateX(Math.PI / 2))),
     spice_rack: () => group(...cabinet(0.8, 1.2, 0.25, '#B07A4A'), ...[0.25, 0.6, 0.95].map(y => box(0.76, 0.03, 0.22, '#8A5A35', 0, y, -0.28)),
         ...Array.from({length: 15}, (_, i) => cyl(0.035, 0.035, 0.12, ['#D7263D', '#E9A21D', '#7CB342', '#5A3218', '#F4E6D0'][i % 5], -0.3 + (i % 5) * 0.15, 0.28 + Math.floor(i / 5) * 0.35, -0.28, 8))),
     shelf_pots: () => group(...[0, 0.5, 1.0, 1.5].map(y => box(0.9, 0.03, 0.4, '#B8BEC6', 0, y, -0.25, metalO)), ...[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([a, b]) => box(0.03, 1.55, 0.03, '#8A9097', a * 0.43, 0, -0.25 + b * 0.18)),
@@ -862,7 +1080,10 @@ Object.assign(FURNITURE, {
         box(0.7, 0.3, 0.7, '#B07A4A', 0.45, 0, 0.45), box(0.6, 0.02, 0.4, '#FFF3E0', 0.45, 0.3, 0.45)),
     espresso_bar: () => group(box(0.92, 0.95, 0.6, '#2C2522', 0, 0, -0.15), box(0.96, 0.05, 0.64, '#F1EEEA', 0, 0.95, -0.15, {roughness: 0.2}), box(0.6, 0.4, 0.35, '#C9CED4', 0, 1.0, -0.2, metalO),
         ...[-0.15, 0.15].map(x => cyl(0.04, 0.04, 0.08, '#2C2C30', x, 1.08, 0.0, 8)), ball(0.06, PALETTE.gold, 0, 1.46, -0.2, metalO, 10), ...[-0.3, 0.3].map(x => cyl(0.04, 0.035, 0.06, '#FFFFFF', x, 1.0, 0.05, 10))),
-    water_cooler: () => group(box(0.4, 0.95, 0.4, '#F4F6F7', 0, 0, -0.1), cyl(0.15, 0.15, 0.42, '#7FC4D9', 0, 0.95, -0.1, 16, {opacity: 0.6, roughness: 0.05}), box(0.06, 0.04, 0.06, '#3E7CB4', -0.08, 0.6, 0.11), box(0.06, 0.04, 0.06, '#D7263D', 0.08, 0.6, 0.11)),
+    water_cooler: () => group(box(0.4, 0.95, 0.4, '#F4F6F7', 0, 0, -0.1), cyl(0.15, 0.15, 0.42, '#7FC4D9', 0, 0.95, -0.1, 16, {
+        opacity: 0.6,
+        roughness: 0.05
+    }), box(0.06, 0.04, 0.06, '#3E7CB4', -0.08, 0.6, 0.11), box(0.06, 0.04, 0.06, '#D7263D', 0.08, 0.6, 0.11)),
     radio_retro: () => group(box(0.5, 0.75, 0.4, '#7B4E2C', 0, 0, -0.1), box(0.56, 0.4, 0.36, '#C98F5A', 0, 0.75, -0.1), mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.36, 16, 1, false, 0, Math.PI), mat('#C98F5A'), 0, 1.15, -0.1).rotateZ(Math.PI / 2).rotateY(Math.PI / 2),
         box(0.36, 0.2, 0.02, '#F4E6D0', 0, 0.88, 0.09), ...[-0.12, 0.12].map(x => cyl(0.04, 0.04, 0.03, '#3B2418', x, 0.8, 0.09, 10).rotateX(Math.PI / 2))),
     guitar_stand: () => {
@@ -892,7 +1113,10 @@ Object.assign(FURNITURE, {
         cyl(0.012, 0.02, 1.3, '#C98F5A', -0.4, 0.86, 0.2, 6).rotateZ(Math.PI / 2 - 0.05)),
     board_games: () => group(...cabinet(0.9, 1.4, 0.36, '#B07A4A'), ...[0.05, 0.5, 0.95].map(y => box(0.84, 0.03, 0.32, '#8A5A35', 0, y, -0.28)),
         ...Array.from({length: 9}, (_, i) => box(0.24, 0.06 + (i % 3) * 0.02, 0.26, ['#D7263D', '#3E7CB4', '#F6C945', '#2F9E8F', '#6B4FA0', '#E07B39'][i % 6], -0.28 + (i % 3) * 0.28, 0.08 + Math.floor(i / 3) * 0.45, -0.28))),
-    claw_machine: () => group(box(0.8, 0.9, 0.8, '#F7A1C4', 0, 0, 0), box(0.76, 0.8, 0.76, '#DDF1F7', 0, 0.9, 0, {opacity: 0.3, roughness: 0.05}), box(0.8, 0.2, 0.8, '#F7A1C4', 0, 1.7, 0),
+    claw_machine: () => group(box(0.8, 0.9, 0.8, '#F7A1C4', 0, 0, 0), box(0.76, 0.8, 0.76, '#DDF1F7', 0, 0.9, 0, {
+            opacity: 0.3,
+            roughness: 0.05
+        }), box(0.8, 0.2, 0.8, '#F7A1C4', 0, 1.7, 0),
         glow(new THREE.BoxGeometry(0.7, 0.1, 0.02), '#FFD23F', 0, 1.75, 0.41), ...Array.from({length: 6}, (_, i) => ball(0.08, ['#F6C945', '#7FC4D9', '#E07B39', '#9B5DE5', '#6BBF59', '#FFFFFF'][i], -0.2 + (i % 3) * 0.2, 1.0, -0.15 + Math.floor(i / 3) * 0.25, {flat: false}, 8)),
         cyl(0.01, 0.01, 0.3, '#C9CED4', 0, 1.4, 0, 6, metalO), box(0.12, 0.06, 0.12, '#C9CED4', 0, 1.35, 0, metalO)),
     stove_tile: () => {
@@ -905,7 +1129,10 @@ Object.assign(FURNITURE, {
     },
     electric_fire: () => group(box(0.9, 0.7, 0.3, '#2C2C30', 0, 0, -0.3), glow(new THREE.BoxGeometry(0.7, 0.35, 0.02), '#FF8A2A', 0, 0.15, -0.14), box(0.96, 0.06, 0.36, '#F2EEE6', 0, 0.7, -0.3),
         ...[-0.2, 0, 0.2].map(x => glow(new THREE.ConeGeometry(0.06, 0.22, 6), '#FFD23F', x, 0.26, -0.13))),
-    popcorn_machine: () => group(box(0.6, 0.7, 0.5, '#D7263D', 0, 0, -0.05, shinyO), ...legs(0.5, 0.4, 0.15, PALETTE.gold, 0.02), box(0.56, 0.6, 0.46, '#FFF7DD', 0, 0.7, -0.05, {opacity: 0.45, roughness: 0.05}),
+    popcorn_machine: () => group(box(0.6, 0.7, 0.5, '#D7263D', 0, 0, -0.05, shinyO), ...legs(0.5, 0.4, 0.15, PALETTE.gold, 0.02), box(0.56, 0.6, 0.46, '#FFF7DD', 0, 0.7, -0.05, {
+            opacity: 0.45,
+            roughness: 0.05
+        }),
         box(0.62, 0.15, 0.52, '#D7263D', 0, 1.3, -0.05, shinyO), ...Array.from({length: 16}, (_, i) => ball(0.04, '#FFF3C4', -0.2 + (i % 4) * 0.13, 0.76 + Math.floor(i / 4) * 0.05, -0.15 + (i % 3) * 0.1, {}, 5)), glow(new THREE.BoxGeometry(0.4, 0.08, 0.02), '#FFD23F', 0, 1.33, 0.21)),
     ice_cream_cart: () => group(box(1.0, 0.7, 0.6, '#FFFFFF', 0, 0.2, 0, shinyO), box(1.0, 0.12, 0.6, '#F7A1C4', 0, 0.2, 0), ...[-0.4, 0.4].map(x => cyl(0.18, 0.18, 0.06, '#2C2C30', x, 0.18, 0.32, 14).rotateX(Math.PI / 2)),
         cyl(0.02, 0.02, 1.0, '#C9CED4', 0, 0.9, 0, 6), mesh(new THREE.ConeGeometry(0.7, 0.3, 8), mat('#F7A1C4'), 0, 2.0, 0), ...['#F7A1C4', '#FFF3C4', '#7B4E2C', '#9ED2C0'].map((c, i) => ball(0.07, c, -0.3 + i * 0.2, 0.95, 0, {flat: false}, 8))),
@@ -942,7 +1169,10 @@ Object.assign(FURNITURE, {
         ...Array.from({length: 8}, (_, i) => leafy(0.4 + Math.cos(i) * 0.12, 1.1 - i * 0.07, Math.sin(i) * 0.12, 0.07, i % 2 ? '#4E8A3A' : '#6FAF45')), box(0.3, 0.04, 0.3, '#5A3218', 0, 0, 0)),
     plant_lavender: () => group(box(0.8, 0.3, 0.32, '#F2EEE6', 0, 0, 0), ...Array.from({length: 12}, (_, i) => group(cyl(0.008, 0.008, 0.3, '#7A8B5A', -0.33 + (i % 6) * 0.13, 0.3, -0.07 + Math.floor(i / 6) * 0.14, 4),
         cyl(0.025, 0.015, 0.12, '#9B7BC8', -0.33 + (i % 6) * 0.13, 0.56, -0.07 + Math.floor(i / 6) * 0.14, 6)))),
-    terrarium: () => group(box(0.5, 0.75, 0.4, '#5A3218', 0, 0, 0), mesh(new THREE.SphereGeometry(0.22, 14, 10), mat('#DDF1F7', {opacity: 0.3, roughness: 0.05}), 0, 0.97, 0), cyl(0.18, 0.18, 0.05, '#7B5A3A', 0, 0.8, 0, 14),
+    terrarium: () => group(box(0.5, 0.75, 0.4, '#5A3218', 0, 0, 0), mesh(new THREE.SphereGeometry(0.22, 14, 10), mat('#DDF1F7', {
+            opacity: 0.3,
+            roughness: 0.05
+        }), 0, 0.97, 0), cyl(0.18, 0.18, 0.05, '#7B5A3A', 0, 0.8, 0, 14),
         leafy(-0.05, 0.92, 0, 0.08, '#6FAF45'), cyl(0.03, 0.04, 0.15, '#4E8A3A', 0.08, 0.82, 0.02, 6), ball(0.04, '#C9CED4', 0.02, 0.86, -0.08, {}, 5)),
     cactus_trio: () => group(...[[-0.2, 0.3, '#4E8A3A'], [0.05, 0.55, '#5E9A3E'], [0.25, 0.4, '#3F7A2E']].map(([x, h, c], i) => group(cyl(0.11, 0.09, 0.18, ['#D9653B', '#F2EEE6', '#3E7CB4'][i], x, 0, 0, 10),
         cyl(0.06, 0.07, h, c, x, 0.18, 0, 8), ball(0.03, '#F7A1C4', x, 0.2 + h, 0, {}, 5)))),
@@ -951,7 +1181,10 @@ Object.assign(FURNITURE, {
     vase_tall: () => group(mesh(new THREE.LatheGeometry([[0.0, 0], [0.16, 0.02], [0.22, 0.3], [0.12, 0.7], [0.15, 0.9], [0.0, 0.9]].map(([x, y]) => new THREE.Vector2(x, y)), 18), mat('#2F5DA8', shinyO), 0, 0, 0),
         mesh(new THREE.TorusGeometry(0.2, 0.012, 5, 18), mat('#FFFFFF'), 0, 0.3, 0).rotateX(Math.PI / 2), ...Array.from({length: 5}, (_, i) => cyl(0.006, 0.006, 0.5, '#3F7A2E', Math.cos(i) * 0.05, 0.9, Math.sin(i) * 0.05, 4)),
         ...Array.from({length: 5}, (_, i) => ball(0.05, ['#FFFFFF', '#F7A1C4', '#FFD23F'][i % 3], Math.cos(i) * 0.12, 1.4 + (i % 2) * 0.06, Math.sin(i) * 0.12, {}, 6))),
-    mirror_standing: () => group(box(0.6, 1.7, 0.06, PALETTE.gold, 0, 0.05, -0.1, metalO), box(0.5, 1.5, 0.02, '#CFE3EC', 0, 0.15, -0.06, {roughness: 0.05, metalness: 0.4}), box(0.5, 0.05, 0.4, PALETTE.gold, 0, 0, -0.1, metalO)),
+    mirror_standing: () => group(box(0.6, 1.7, 0.06, PALETTE.gold, 0, 0.05, -0.1, metalO), box(0.5, 1.5, 0.02, '#CFE3EC', 0, 0.15, -0.06, {
+        roughness: 0.05,
+        metalness: 0.4
+    }), box(0.5, 0.05, 0.4, PALETTE.gold, 0, 0, -0.1, metalO)),
     telescope: () => group(...[0, 1, 2].map(i => {
         const l = cyl(0.015, 0.02, 1.0, '#7B4E2C', Math.cos(i * 2.1) * 0.15, 0, Math.sin(i * 2.1) * 0.15, 6);
         l.rotation.set(Math.sin(i * 2.1) * 0.25, 0, -Math.cos(i * 2.1) * 0.25);
@@ -997,15 +1230,29 @@ Object.assign(FURNITURE, {
     }), cyl(0.18, 0.24, 0.32, '#F4E6D0', 0, 1.35, 0, 14, {flat: false}), lampHead(0, 1.38, 0, 0.07)),
     candelabra_floor: () => group(cyl(0.18, 0.2, 0.05, PALETTE.gold, 0, 0, 0, 12, metalO), cyl(0.025, 0.03, 1.3, PALETTE.gold, 0, 0, 0, 8, metalO), ...[-1, 0, 1].map(s => group(box(0.25, 0.02, 0.02, PALETTE.gold, s * 0.12, 1.3, 0, metalO),
         cyl(0.025, 0.025, 0.14, '#FFF7E6', s * 0.24, 1.3, 0, 8), mesh(new THREE.ConeGeometry(0.02, 0.06, 6), glowMat('#FFB347'), s * 0.24, 1.47, 0)))),
-    fishbowl: () => group(box(0.4, 0.8, 0.4, '#B07A4A', 0, 0, 0), mesh(new THREE.SphereGeometry(0.22, 16, 12), mat('#7FC4D9', {opacity: 0.4, roughness: 0.05}), 0, 1.0, 0), ball(0.04, '#FF8C42', 0.04, 1.0, 0.02, {}, 6),
+    fishbowl: () => group(box(0.4, 0.8, 0.4, '#B07A4A', 0, 0, 0), mesh(new THREE.SphereGeometry(0.22, 16, 12), mat('#7FC4D9', {
+            opacity: 0.4,
+            roughness: 0.05
+        }), 0, 1.0, 0), ball(0.04, '#FF8C42', 0.04, 1.0, 0.02, {}, 6),
         cyl(0.17, 0.2, 0.04, '#E8D9A8', 0, 0.8, 0, 14), leafy(-0.06, 0.88, 0, 0.05, '#4E8A3A')),
     sculpture: () => group(box(0.4, 0.8, 0.4, '#2C2C30', 0, 0, 0), mesh(new THREE.TorusKnotGeometry(0.16, 0.05, 60, 8), mat(PALETTE.gold, metalO), 0, 1.05, 0)),
     piano_grand: () => {
         const top = new THREE.Shape();
-        top.moveTo(-0.7, -0.7); top.lineTo(0.7, -0.7); top.lineTo(0.7, 0.3); top.quadraticCurveTo(0.6, 0.9, -0.1, 0.9); top.quadraticCurveTo(-0.7, 0.9, -0.7, 0.2); top.lineTo(-0.7, -0.7);
-        const body = mesh(new THREE.ExtrudeGeometry(top, {depth: 0.32, bevelEnabled: false}), mat('#1B1615', {roughness: 0.2}), 0, 0.98, 0);
+        top.moveTo(-0.7, -0.7);
+        top.lineTo(0.7, -0.7);
+        top.lineTo(0.7, 0.3);
+        top.quadraticCurveTo(0.6, 0.9, -0.1, 0.9);
+        top.quadraticCurveTo(-0.7, 0.9, -0.7, 0.2);
+        top.lineTo(-0.7, -0.7);
+        const body = mesh(new THREE.ExtrudeGeometry(top, {
+            depth: 0.32,
+            bevelEnabled: false
+        }), mat('#1B1615', {roughness: 0.2}), 0, 0.98, 0);
         body.rotation.x = Math.PI / 2;
-        const lid = mesh(new THREE.ExtrudeGeometry(top, {depth: 0.02, bevelEnabled: false}), mat('#1B1615', {roughness: 0.2}), 0, 1.0, -0.2);
+        const lid = mesh(new THREE.ExtrudeGeometry(top, {
+            depth: 0.02,
+            bevelEnabled: false
+        }), mat('#1B1615', {roughness: 0.2}), 0, 1.0, -0.2);
         lid.rotation.x = Math.PI / 2 - 0.6;
         return group(body, lid, box(1.36, 0.05, 0.2, '#FFFFFF', 0, 0.72, -0.75), box(1.36, 0.02, 0.08, '#111', 0, 0.77, -0.78), ...[[-0.6, -0.6], [0.6, -0.6], [0, 0.7]].map(([x, z]) => cyl(0.05, 0.04, 0.66, '#1B1615', x, 0, z, 8)),
             box(0.8, 0.06, 0.32, '#1B1615', 0, 0.45, -1.15));
@@ -1026,7 +1273,10 @@ Object.assign(FURNITURE, {
         for (let i = 0; i < 6; i++) g.add(box(0.16, 0.035, 0.16, i % 2 ? '#2F4B7C' : '#B5302A', -0.7 + i * 0.28, 0.031, 0).rotateY(Math.PI / 4));
         return g;
     },
-    rug_green: () => group(mesh(new THREE.CylinderGeometry(0.95, 0.95, 0.04, 28), mat('#7CB342', {flat: false, roughness: 1}), 0, 0.034, 0), ...Array.from({length: 18}, (_, i) => ball(0.05, '#8FC75A', Math.cos(i * 2.4) * Math.sqrt(i / 18) * 0.8, 0.05, Math.sin(i * 2.4) * Math.sqrt(i / 18) * 0.8, {}, 5))),
+    rug_green: () => group(mesh(new THREE.CylinderGeometry(0.95, 0.95, 0.04, 28), mat('#7CB342', {
+        flat: false,
+        roughness: 1
+    }), 0, 0.034, 0), ...Array.from({length: 18}, (_, i) => ball(0.05, '#8FC75A', Math.cos(i * 2.4) * Math.sqrt(i / 18) * 0.8, 0.05, Math.sin(i * 2.4) * Math.sqrt(i / 18) * 0.8, {}, 5))),
     rug_star: () => {
         const s = new THREE.Shape();
         for (let i = 0; i < 10; i++) {
@@ -1048,12 +1298,18 @@ Object.assign(FURNITURE, {
     toilet_gold: () => group(box(0.46, 0.5, 0.2, '#F4EAD5', 0, 0.4, -0.33, shinyO), box(0.48, 0.04, 0.22, PALETTE.gold, 0, 0.9, -0.33, metalO), cyl(0.18, 0.14, 0.4, '#F4EAD5', 0, 0, -0.02, 16, shinyO),
         cyl(0.21, 0.21, 0.05, PALETTE.gold, 0, 0.4, 0.02, 18, metalO), box(0.08, 0.03, 0.03, PALETTE.gold, 0.15, 0.8, -0.2, metalO)),
     washbasin_bowl: () => group(box(0.7, 0.8, 0.45, '#7B4E2C', 0, 0, -0.2), box(0.74, 0.04, 0.5, '#F2EEE6', 0, 0.8, -0.2), mesh(new THREE.SphereGeometry(0.17, 16, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), mat('#FFFFFF', shinyO), 0, 0.98, -0.18),
-        cyl(0.015, 0.015, 0.25, '#2C2C30', 0, 0.84, -0.4, 8), box(0.02, 0.02, 0.12, '#2C2C30', 0, 1.08, -0.35), cyl(0.25, 0.25, 0.02, '#CFE3EC', 0, 1.5, -0.42, 18, {metalness: 0.4, roughness: 0.05}).rotateX(Math.PI / 2)),
+        cyl(0.015, 0.015, 0.25, '#2C2C30', 0, 0.84, -0.4, 8), box(0.02, 0.02, 0.12, '#2C2C30', 0, 1.08, -0.35), cyl(0.25, 0.25, 0.02, '#CFE3EC', 0, 1.5, -0.42, 18, {
+            metalness: 0.4,
+            roughness: 0.05
+        }).rotateX(Math.PI / 2)),
     towel_rack: () => group(box(0.04, 1.2, 0.04, PALETTE.steel, -0.25, 0, -0.35, metalO), box(0.04, 1.2, 0.04, PALETTE.steel, 0.25, 0, -0.35, metalO), ...[0.7, 1.0].map(y => cyl(0.015, 0.015, 0.5, PALETTE.steel, 0, y, -0.35, 6, metalO).rotateZ(Math.PI / 2)),
         box(0.36, 0.5, 0.03, '#9ED2C0', 0, 0.5, -0.33), box(0.3, 0.4, 0.03, '#F7A1C4', 0, 0.62, -0.37)),
     baby_change: () => group(box(0.8, 0.85, 0.5, '#FFFFFF', 0, 0, -0.15, shinyO), box(0.76, 0.06, 0.46, '#9ED2C0', 0, 0.85, -0.15, {flat: false}), box(0.8, 0.12, 0.04, '#FFFFFF', 0, 0.9, -0.38), ...[-0.2, 0.2].map(x => box(0.3, 0.3, 0.02, '#F6C945', x, 0.3, 0.1))),
     mirror_led: () => group(box(0.7, 0.9, 0.4, '#F2EEE6', 0, 0, -0.25), box(0.74, 0.04, 0.44, '#2C2C30', 0, 0.9, -0.25), mesh(new THREE.TorusGeometry(0.3, 0.02, 6, 28), glowMat('#FFF4DB'), 0, 1.5, -0.44),
-        cyl(0.29, 0.29, 0.01, '#CFE3EC', 0, 1.5, -0.45, 24, {metalness: 0.4, roughness: 0.05}).rotateX(Math.PI / 2), cyl(0.03, 0.03, 0.12, '#FFFFFF', 0.25, 0.94, -0.3, 8)),
+        cyl(0.29, 0.29, 0.01, '#CFE3EC', 0, 1.5, -0.45, 24, {
+            metalness: 0.4,
+            roughness: 0.05
+        }).rotateX(Math.PI / 2), cyl(0.03, 0.03, 0.12, '#FFFFFF', 0.25, 0.94, -0.3, 8)),
     soap_station: () => group(box(0.04, 1.2, 0.04, PALETTE.steel, 0, 0, -0.35, metalO), box(0.18, 0.3, 0.12, '#FFFFFF', 0, 1.0, -0.3, shinyO), box(0.1, 0.12, 0.02, '#9ED2C0', 0, 1.1, -0.23), box(0.3, 0.06, 0.3, PALETTE.steel, 0, 0, -0.35, metalO)),
 
     // ---- walls and screens
@@ -1064,7 +1320,10 @@ Object.assign(FURNITURE, {
     },
     wall_glass_brick: () => {
         const g = group(box(0.98, 0.08, 0.2, '#E6E0D6', 0, 0, 0));
-        for (let r = 0; r < 8; r++) for (let c = 0; c < 4; c++) g.add(box(0.23, 0.2, 0.16, '#BFE3F0', -0.36 + c * 0.24, 0.1 + r * 0.21, 0, {opacity: 0.55, roughness: 0.05}));
+        for (let r = 0; r < 8; r++) for (let c = 0; c < 4; c++) g.add(box(0.23, 0.2, 0.16, '#BFE3F0', -0.36 + c * 0.24, 0.1 + r * 0.21, 0, {
+            opacity: 0.55,
+            roughness: 0.05
+        }));
         return g;
     },
     lattice_screen: () => {
@@ -1122,7 +1381,10 @@ Object.assign(FURNITURE, {
     // ---- outdoor: garden
     flower_bed: () => group(box(1.9, 0.25, 0.9, '#9C6B3F', 0, 0, 0), box(1.82, 0.05, 0.82, '#6B4A33', 0, 0.22, 0), ...Array.from({length: 24}, (_, i) => group(cyl(0.008, 0.008, 0.2, '#3F7A2E', -0.8 + (i % 8) * 0.23, 0.25, -0.3 + Math.floor(i / 8) * 0.3, 4),
         ball(0.06, ['#F25F5C', '#FFD23F', '#F7A1C4', '#FFFFFF', '#9B5DE5'][i % 5], -0.8 + (i % 8) * 0.23, 0.48, -0.3 + Math.floor(i / 8) * 0.3, {}, 5)))),
-    pond: () => group(mesh(new THREE.CylinderGeometry(0.9, 0.95, 0.12, 20), mat('#9A9488'), 0, 0, 0).translateY(0.06), mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.02, 20), mat(PALETTE.water, {opacity: 0.85, roughness: 0.05}), 0, 0.135, 0),
+    pond: () => group(mesh(new THREE.CylinderGeometry(0.9, 0.95, 0.12, 20), mat('#9A9488'), 0, 0, 0).translateY(0.06), mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.02, 20), mat(PALETTE.water, {
+            opacity: 0.85,
+            roughness: 0.05
+        }), 0, 0.135, 0),
         ...[[0.3, 0.2], [-0.35, -0.1], [0.05, -0.4]].map(([x, z]) => cyl(0.12, 0.12, 0.01, '#5E9A3E', x, 0.125, z, 10)), ball(0.05, '#F7A1C4', 0.3, 0.16, 0.2, {}, 6), ...[[0.2, -0.1, '#FF8C42'], [-0.2, 0.25, '#FFFFFF']].map(([x, z, c]) => ball(0.05, c, x, 0.1, z, {}, 6)),
         ...Array.from({length: 10}, (_, i) => ball(0.1, '#B5AFA3', Math.cos(i * 0.628) * 0.92, 0.1, Math.sin(i * 0.628) * 0.92, {}, 5))),
     swing_garden: () => group(...[-0.9, 0.9].map(x => group(box(0.08, 2.0, 0.08, '#9C6B3F', x, 0, -0.3).rotateX(0.15), box(0.08, 2.0, 0.08, '#9C6B3F', x, 0, 0.3).rotateX(-0.15))), box(1.9, 0.1, 0.1, '#9C6B3F', 0, 1.95, 0),
@@ -1170,6 +1432,7 @@ Object.assign(FURNITURE, {
 // ---------------------------------------------------------------- stairs and lifts (one storey is 2.6 high)
 
 const STOREY = 2.6;
+
 /** Straight stairs, 1 × 2 tiles: you step on at the front (+z) and come out on the floor above, behind the back end. */
 function straightStairs(step, side, rail) {
     const g = group();
@@ -1189,6 +1452,7 @@ function straightStairs(step, side, rail) {
     }
     return g;
 }
+
 Object.assign(FURNITURE, {
     stairs_wood: () => straightStairs('#B07A4A', '#8A5A35', '#5A3218'),
     stairs_stone: () => straightStairs('#D6CFC2', '#B5AFA3', '#2C2C30'),
@@ -1196,7 +1460,10 @@ Object.assign(FURNITURE, {
         const g = group(cyl(0.05, 0.05, STOREY + 0.9, '#2C2C30', 0, 0, 0, 10, {metalness: 0.6, roughness: 0.3}));
         const n = 12;
         for (let i = 0; i < n; i++) {
-            const st = mesh(new THREE.CylinderGeometry(0.48, 0.48, 0.05, 12, 1, false, 0, Math.PI / 3), mat('#B8BEC6', {metalness: 0.5, roughness: 0.35}), 0, (i + 1) * STOREY / n, 0);
+            const st = mesh(new THREE.CylinderGeometry(0.48, 0.48, 0.05, 12, 1, false, 0, Math.PI / 3), mat('#B8BEC6', {
+                metalness: 0.5,
+                roughness: 0.35
+            }), 0, (i + 1) * STOREY / n, 0);
             st.rotation.y = Math.PI / 2 + i * (Math.PI * 2 / n) * 0.75;
             g.add(st, cyl(0.012, 0.012, 0.9, '#2C2C30', Math.cos(-st.rotation.y - Math.PI / 6) * 0.45, (i + 1) * STOREY / n, Math.sin(-st.rotation.y - Math.PI / 6) * 0.45, 5));
         }
@@ -1208,16 +1475,28 @@ Object.assign(FURNITURE, {
             ...[[-0.45, -0.45], [0.45, -0.45], [-0.45, 0.45], [0.45, 0.45]].map(([x, z]) => box(0.06, 2.4, 0.06, '#5D6D7E', x, 0, z, {metalness: 0.5})),
             box(0.88, 2.3, 0.02, '#CFE8F2', 0, 0.06, -0.45, glassM), box(0.02, 2.3, 0.88, '#CFE8F2', -0.45, 0.06, 0, glassM), box(0.02, 2.3, 0.88, '#CFE8F2', 0.45, 0.06, 0, glassM),
             // The two sliding doors (scene.js opens them: userData.liftDoor = which way they slide)
-            Object.assign(box(0.42, 2.2, 0.03, '#B8BEC6', -0.21, 0.08, 0.46, {metalness: 0.6, roughness: 0.25}), {userData: {liftDoor: -1}}),
-            Object.assign(box(0.42, 2.2, 0.03, '#B8BEC6', 0.21, 0.08, 0.46, {metalness: 0.6, roughness: 0.25}), {userData: {liftDoor: 1}}),
-            glow(new THREE.BoxGeometry(0.16, 0.08, 0.02), '#7FD1F0', 0, 2.22, 0.48), box(0.06, 0.14, 0.02, '#2C2C30', 0.5, 1.1, 0.46), ball(0.015, '#FFD23F', 0.5, 1.13, 0.475, {emissive: '#FFD23F', glow: 1}, 6));
+            Object.assign(box(0.42, 2.2, 0.03, '#B8BEC6', -0.21, 0.08, 0.46, {
+                metalness: 0.6,
+                roughness: 0.25
+            }), {userData: {liftDoor: -1}}),
+            Object.assign(box(0.42, 2.2, 0.03, '#B8BEC6', 0.21, 0.08, 0.46, {
+                metalness: 0.6,
+                roughness: 0.25
+            }), {userData: {liftDoor: 1}}),
+            glow(new THREE.BoxGeometry(0.16, 0.08, 0.02), '#7FD1F0', 0, 2.22, 0.48), box(0.06, 0.14, 0.02, '#2C2C30', 0.5, 1.1, 0.46), ball(0.015, '#FFD23F', 0.5, 1.13, 0.475, {
+                emissive: '#FFD23F',
+                glow: 1
+            }, 6));
     },
 });
 
 /** The lift's cabin, which rides up and down the shaft: a floor, a back rail, a mirror and a ceiling light. */
 export function liftCabin() {
     return group(box(0.84, 0.05, 0.84, '#8A9097', 0, 0.02, 0, {metalness: 0.5}), box(0.84, 0.04, 0.84, '#D8DDE2', 0, 2.26, 0, {metalness: 0.4}),
-        box(0.7, 0.03, 0.03, '#C9CED4', 0, 0.95, -0.38, {metalness: 0.8, roughness: 0.2}), box(0.5, 0.9, 0.01, '#DDEFF6', 0, 1.15, -0.41, {metalness: 0.6, roughness: 0.05}),
+        box(0.7, 0.03, 0.03, '#C9CED4', 0, 0.95, -0.38, {
+            metalness: 0.8,
+            roughness: 0.2
+        }), box(0.5, 0.9, 0.01, '#DDEFF6', 0, 1.15, -0.41, {metalness: 0.6, roughness: 0.05}),
         glow(new THREE.BoxGeometry(0.4, 0.02, 0.4), '#FFF4D6', 0, 2.24, 0));
 }
 
@@ -1231,11 +1510,18 @@ function heart(size, color, depth = 0.05, o = {flat: false}) {
     s.bezierCurveTo(-0.08, 1.0, 0, 0.88, 0, 0.78);
     s.bezierCurveTo(0, 0.88, 0.08, 1.0, 0.25, 0.95);
     s.bezierCurveTo(0.55, 0.85, 0.5, 0.35, 0, 0);
-    const g = new THREE.ExtrudeGeometry(s, {depth, bevelEnabled: true, bevelSize: depth * 0.4, bevelThickness: depth * 0.4, bevelSegments: 2});
+    const g = new THREE.ExtrudeGeometry(s, {
+        depth,
+        bevelEnabled: true,
+        bevelSize: depth * 0.4,
+        bevelThickness: depth * 0.4,
+        bevelSegments: 2
+    });
     g.translate(0, 0, -depth / 2);
     g.scale(size, size, size);
     return mesh(g, mat(color, o));
 }
+
 const egg = (x, y, z, r, c, stripe = '#FFFFFF') => {
     const e = ball(r, c, x, y, z, {flat: false}, 12);
     e.scale.y = 1.3;
@@ -1274,22 +1560,22 @@ Object.assign(FURNITURE, {
         const body = ball(0.22, '#F4F1EA', 0, 0.25, 0, softO, 14);
         body.scale.set(1, 1.1, 1);
         return group(body, ball(0.15, '#F4F1EA', 0, 0.58, 0.05, softO, 12), ...[-1, 1].map(sx => {
-            const ear = capsuleMesh(0.045, 0.22, '#F4F1EA', sx * 0.06, 0.82, 0.02);
-            ear.rotation.z = sx * -0.15;
-            return group(ear, capsuleMesh(0.025, 0.16, '#F7A1C4', sx * 0.06, 0.82, 0.05).rotateZ(sx * -0.15));
-        }), ball(0.06, '#FFFFFF', 0, 0.2, -0.22, softO, 8), ball(0.022, '#F7A1C4', 0, 0.58, 0.2, {}, 6), ball(0.018, '#2A1D17', -0.05, 0.62, 0.18, {}, 5), ball(0.018, '#2A1D17', 0.05, 0.62, 0.18, {}, 5),
+                const ear = capsuleMesh(0.045, 0.22, '#F4F1EA', sx * 0.06, 0.82, 0.02);
+                ear.rotation.z = sx * -0.15;
+                return group(ear, capsuleMesh(0.025, 0.16, '#F7A1C4', sx * 0.06, 0.82, 0.05).rotateZ(sx * -0.15));
+            }), ball(0.06, '#FFFFFF', 0, 0.2, -0.22, softO, 8), ball(0.022, '#F7A1C4', 0, 0.58, 0.2, {}, 6), ball(0.018, '#2A1D17', -0.05, 0.62, 0.18, {}, 5), ball(0.018, '#2A1D17', 0.05, 0.62, 0.18, {}, 5),
             ...egg(0.18, 0.08, 0.15, 0.07, '#FFD23F', '#3E7CB4'));
     },
     egg_basket: () => group(cyl(0.26, 0.2, 0.22, '#C9A16E', 0, 0, 0, 14), mesh(new THREE.TorusGeometry(0.24, 0.02, 5, 16, Math.PI), mat('#B98A50'), 0, 0.22, 0),
         cyl(0.24, 0.24, 0.03, '#9CCB5A', 0, 0.2, 0, 14), ...[[-0.1, 0.05, '#F7A1C4'], [0.1, 0.04, '#9ED2C0'], [0, -0.1, '#FFD23F'], [0.02, 0.12, '#B9A3E0'], [-0.14, -0.06, '#F08A24']].flatMap(([x, z, c]) => egg(x, 0.28, z, 0.06, c))),
     easter_tree: () => group(cyl(0.18, 0.15, 0.3, '#F2EEE6', 0, 0, 0, 12), ...[[0.5, 0], [-0.4, 0.4], [0.2, -0.6], [-0.3, -0.3], [0, 0.6]].map(([rx, rz], i) => {
-        const b = cyl(0.015, 0.025, 0.9, '#8A5A35', 0, 0.3, 0, 5);
-        b.rotation.set(rx * 0.6, 0, rz * 0.6);
-        return b;
-    }), ...Array.from({length: 9}, (_, i) => egg(Math.cos(i * 1.3) * 0.25, 0.85 + (i % 3) * 0.15, Math.sin(i * 1.3) * 0.25, 0.045, ['#F7A1C4', '#9ED2C0', '#FFD23F', '#B9A3E0'][i % 4])).flat(),
+            const b = cyl(0.015, 0.025, 0.9, '#8A5A35', 0, 0.3, 0, 5);
+            b.rotation.set(rx * 0.6, 0, rz * 0.6);
+            return b;
+        }), ...Array.from({length: 9}, (_, i) => egg(Math.cos(i * 1.3) * 0.25, 0.85 + (i % 3) * 0.15, Math.sin(i * 1.3) * 0.25, 0.045, ['#F7A1C4', '#9ED2C0', '#FFD23F', '#B9A3E0'][i % 4])).flat(),
         ...Array.from({length: 5}, (_, i) => ball(0.04, '#F7B6CF', Math.cos(i * 2) * 0.2, 1.1 + i * 0.05, Math.sin(i * 2) * 0.2, {}, 5))),
     chick_planter: () => group(box(0.8, 0.3, 0.5, '#B07A4A', 0, 0, 0), box(0.76, 0.04, 0.46, '#9CCB5A', 0, 0.28, 0), ...[-0.22, 0.05, 0.25].map((x, i) => group(ball(0.08, '#FFD23F', x, 0.38, (i % 2) * 0.08, softO, 10),
-        ball(0.055, '#FFD23F', x, 0.5, (i % 2) * 0.08 + 0.03, softO, 8), mesh(new THREE.ConeGeometry(0.018, 0.04, 4), mat('#F08A24'), x, 0.5, (i % 2) * 0.08 + 0.09).rotateX(Math.PI / 2))),
+            ball(0.055, '#FFD23F', x, 0.5, (i % 2) * 0.08 + 0.03, softO, 8), mesh(new THREE.ConeGeometry(0.018, 0.04, 4), mat('#F08A24'), x, 0.5, (i % 2) * 0.08 + 0.09).rotateX(Math.PI / 2))),
         ...Array.from({length: 6}, (_, i) => ball(0.04, ['#FFFFFF', '#F7A1C4'][i % 2], -0.32 + i * 0.13, 0.33, -0.15, {}, 5))),
     lemonade_stand: () => group(box(0.9, 0.85, 0.5, '#FFF3C4', 0, 0, -0.1), box(0.94, 0.06, 0.56, '#F6C945', 0, 0.85, -0.1), ...[-0.42, 0.42].map(x => box(0.05, 0.9, 0.05, '#FFFFFF', x, 0.9, -0.3)),
         ...Array.from({length: 6}, (_, i) => box(0.16, 0.04, 0.6, i % 2 ? '#FFFFFF' : '#F6C945', -0.4 + i * 0.16, 1.8, -0.05).rotateX(0.25)), cyl(0.07, 0.06, 0.22, '#DDF1F7', -0.2, 0.91, -0.1, 12, {opacity: 0.6}),
@@ -1377,7 +1663,10 @@ Object.assign(FURNITURE, {
         const body = ball(0.25, '#9C6B3F', 0, 0.75, 0, softO, 12);
         body.scale.set(0.8, 0.8, 1.5);
         return group(body, ...[[-0.12, -0.25], [0.12, -0.25], [-0.12, 0.25], [0.12, 0.25]].map(([x, z]) => cyl(0.04, 0.035, 0.6, '#7B4E2C', x, 0, z, 6)),
-            cyl(0.07, 0.08, 0.35, '#9C6B3F', 0, 0.95, 0.32, 8).rotateX(-0.5), ball(0.12, '#9C6B3F', 0, 1.2, 0.45, softO, 10), ball(0.04, '#E63946', 0, 1.18, 0.57, {emissive: '#E63946', glow: 0.8}, 8),
+            cyl(0.07, 0.08, 0.35, '#9C6B3F', 0, 0.95, 0.32, 8).rotateX(-0.5), ball(0.12, '#9C6B3F', 0, 1.2, 0.45, softO, 10), ball(0.04, '#E63946', 0, 1.18, 0.57, {
+                emissive: '#E63946',
+                glow: 0.8
+            }, 8),
             ...[-1, 1].flatMap(sx => [cyl(0.015, 0.015, 0.3, '#5A3218', sx * 0.08, 1.3, 0.42, 4).rotateZ(sx * -0.5), cyl(0.012, 0.012, 0.15, '#5A3218', sx * 0.18, 1.45, 0.42, 4).rotateZ(sx * 0.6)]),
             mesh(new THREE.TorusGeometry(0.1, 0.02, 5, 12), mat(PALETTE.gold, {metalness: 0.6}), 0, 1.02, 0.36).rotateX(Math.PI / 3));
     },
@@ -1395,19 +1684,34 @@ Object.assign(FURNITURE, {
 // ---------------------------------------------------------------- cold service: drinks fridge and gelato freezer
 Object.assign(FURNITURE, {
     drinks_fridge: () => {
-        const g = group(box(0.86, 1.95, 0.7, '#D7263D', 0, 0, -0.1, {flat: false, roughness: 0.35}), box(0.86, 0.3, 0.72, '#B5302A', 0, 1.65, -0.1, {flat: false}),
-            glow(new THREE.BoxGeometry(0.74, 0.14, 0.02), '#FFF4C2', 0, 1.79, 0.265), box(0.74, 1.45, 0.02, '#DDF1F7', 0, 0.12, 0.25, {opacity: 0.35, roughness: 0.05}),
+        const g = group(box(0.86, 1.95, 0.7, '#D7263D', 0, 0, -0.1, {
+                flat: false,
+                roughness: 0.35
+            }), box(0.86, 0.3, 0.72, '#B5302A', 0, 1.65, -0.1, {flat: false}),
+            glow(new THREE.BoxGeometry(0.74, 0.14, 0.02), '#FFF4C2', 0, 1.79, 0.265), box(0.74, 1.45, 0.02, '#DDF1F7', 0, 0.12, 0.25, {
+                opacity: 0.35,
+                roughness: 0.05
+            }),
             glow(new THREE.BoxGeometry(0.7, 1.4, 0.01), '#EAF7FF', 0, 0.15, 0.2), box(0.04, 0.5, 0.05, '#C9CED4', 0.33, 0.6, 0.28, {metalness: 0.7}));
         const cols = ['#2F9E8F', '#F6C945', '#E07B39', '#7FC4D9', '#9B5DE5', '#6BBF59'];
         for (let r = 0; r < 4; r++) {
             g.add(box(0.7, 0.02, 0.5, '#C9CED4', 0, 0.18 + r * 0.34, -0.05, {metalness: 0.5}));
-            for (let c = 0; c < 6; c++) g.add(cyl(0.035, 0.04, 0.2 + (c % 2) * 0.04, cols[(r * 2 + c) % cols.length], -0.28 + c * 0.112, 0.2 + r * 0.34, -0.02 + (c % 2) * 0.06, 8, {flat: false, roughness: 0.3}));
+            for (let c = 0; c < 6; c++) g.add(cyl(0.035, 0.04, 0.2 + (c % 2) * 0.04, cols[(r * 2 + c) % cols.length], -0.28 + c * 0.112, 0.2 + r * 0.34, -0.02 + (c % 2) * 0.06, 8, {
+                flat: false,
+                roughness: 0.3
+            }));
         }
         return g;
     },
     gelato_freezer: () => {
-        const g = group(box(0.94, 0.85, 0.72, '#FFFFFF', 0, 0, -0.08, {flat: false, roughness: 0.4}), box(0.94, 0.12, 0.74, '#F7A1C4', 0, 0.75, -0.08),
-            box(0.9, 0.04, 0.68, '#C9CED4', 0, 0.85, -0.08, {metalness: 0.5}), box(0.9, 0.4, 0.02, '#DDF1F7', 0, 0.9, 0.18, {opacity: 0.35, roughness: 0.05}).rotateX(-0.45),
+        const g = group(box(0.94, 0.85, 0.72, '#FFFFFF', 0, 0, -0.08, {
+                flat: false,
+                roughness: 0.4
+            }), box(0.94, 0.12, 0.74, '#F7A1C4', 0, 0.75, -0.08),
+            box(0.9, 0.04, 0.68, '#C9CED4', 0, 0.85, -0.08, {metalness: 0.5}), box(0.9, 0.4, 0.02, '#DDF1F7', 0, 0.9, 0.18, {
+                opacity: 0.35,
+                roughness: 0.05
+            }).rotateX(-0.45),
             box(0.9, 0.04, 0.3, '#DDF1F7', 0, 1.25, -0.3, {opacity: 0.4}), ...[0.15, 0.45].map(y => box(0.9, 0.05, 0.02, '#F7A1C4', 0, y, 0.285)));
         const flavours = [['#F7A1C4', '#E63946'], ['#FFF3C4', '#E9C46A'], ['#7B4E2C', '#5A3218'], ['#9ED2C0', '#2F9E8F'], ['#F6E27A', '#F6C945'], ['#B9A3E0', '#6B4FA0']];
         flavours.forEach(([c, top], i) => {
@@ -1428,8 +1732,21 @@ FURNITURE.lamp_floor = () => group(cyl(0.16, 0.18, 0.04, PALETTE.ink, 0, 0, 0, 1
 
 /** Categories whose pieces are used from one side (a chair's seat, a stove's front…): build mode shows an arrow there. */
 const ARROW_CATS = ['chair', 'stove', 'counter', 'kitchen', 'service', 'lounge', 'restroom', 'stairs', 'deco', 'outdoor'];
-const ARROW_MAT = new THREE.MeshBasicMaterial({color: '#E2B23A', transparent: true, opacity: 0.95, depthWrite: false, side: THREE.DoubleSide});
-const ARROW_EDGE = new THREE.MeshBasicMaterial({color: '#3B2418', transparent: true, opacity: 0.9, depthWrite: false, side: THREE.DoubleSide});
+const ARROW_MAT = new THREE.MeshBasicMaterial({
+    color: '#E2B23A',
+    transparent: true,
+    opacity: 0.95,
+    depthWrite: false,
+    side: THREE.DoubleSide
+});
+const ARROW_EDGE = new THREE.MeshBasicMaterial({
+    color: '#3B2418',
+    transparent: true,
+    opacity: 0.9,
+    depthWrite: false,
+    side: THREE.DoubleSide
+});
+
 /**
  * A flat arrow on the floor at the front edge of a piece, pointing out of it: where it is used from (models face +z).
  * def: the catalog entry ({cat, w, d}); null when the side does not matter. Seen only in build mode (userData.buildOnly).
@@ -1704,7 +2021,11 @@ function makeProps(role, armL, armR, p) {
         can.add(pp(new THREE.CylinderGeometry(0.07, 0.08, 0.14, 12), '#4CAF50'), pp(new THREE.TorusGeometry(0.05, 0.012, 5, 10, Math.PI), '#3E8E41', 0, 0.08, 0));
         const spout = pp(new THREE.CylinderGeometry(0.012, 0.02, 0.2, 6), '#4CAF50', 0, 0.02, 0.13);
         spout.rotation.x = 1.0;
-        const stream = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.02, 0.35, 6), new THREE.MeshBasicMaterial({color: '#8CC8EC', transparent: true, opacity: 0.7}));
+        const stream = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.02, 0.35, 6), new THREE.MeshBasicMaterial({
+            color: '#8CC8EC',
+            transparent: true,
+            opacity: 0.7
+        }));
         stream.position.set(0, -0.12, 0.27);
         can.add(spout, stream);
         g.add(can);
@@ -1803,12 +2124,30 @@ export function personModel(role, color, seed = 0, look = {}) {
     const rnd = (n) => Math.abs(Math.sin(seed * 12.9898 + n * 78.233) * 43758.5453) % 1;
     const skin = PALETTE.skin[Math.floor(rnd(1) * PALETTE.skin.length)];
     const uni = look.uniform && look.uniform.top ? look.uniform : null;
-    const roleTop = {chef: '#FFFFFF', waiter: '#FAFAFA', cleaner: '#7FC4D9', manager: '#3D5A8C', cashier: '#2F9E8F'}[role];
-    const roleBottom = {chef: '#3B3B3B', waiter: '#22201F', cleaner: '#2F6F8F', manager: '#34405E', cashier: '#1E3A4A'}[role];
+    const roleTop = {
+        chef: '#FFFFFF',
+        waiter: '#FAFAFA',
+        cleaner: '#7FC4D9',
+        manager: '#3D5A8C',
+        cashier: '#2F9E8F'
+    }[role];
+    const roleBottom = {
+        chef: '#3B3B3B',
+        waiter: '#22201F',
+        cleaner: '#2F6F8F',
+        manager: '#34405E',
+        cashier: '#1E3A4A'
+    }[role];
     const shirt = uni?.top || roleTop || (color || SHIRTS[Math.floor(rnd(2) * SHIRTS.length)]);
     const pants = uni?.bottom || roleBottom || ['#2F3B52', '#4A3B2F', '#2E2E2E', '#5B5F4A'][Math.floor(rnd(3) * 4)];
     const accent = uni?.accent || color || PALETTE.terracotta;
-    const cut = uni?.cut || {chef: 'apron', waiter: 'vest', cleaner: 'overalls', manager: 'tie', cashier: 'vest'}[role] || '';
+    const cut = uni?.cut || {
+        chef: 'apron',
+        waiter: 'vest',
+        cleaner: 'overalls',
+        manager: 'tie',
+        cashier: 'vest'
+    }[role] || '';
     const p = new THREE.Group();
     const body = new THREE.Group();
     body.position.y = 0.5;
@@ -1908,7 +2247,11 @@ export function personModel(role, color, seed = 0, look = {}) {
     // Accessories: glasses for some, and (customers) earrings, a moustache or a beard
     const hairC = look.hairColor || HAIR[Math.floor(rnd(4) * HAIR.length)];
     // Staff wear what the player chose; customers come as they are
-    const acc = customer ? {glasses: rnd(8) > 0.78 ? (rnd(16) > 0.5 ? 'round' : 'square') : 'none', facial: rnd(10) > 0.8 ? 'beard' : rnd(10) > 0.66 ? 'moustache' : 'none', headwear: 'none'}
+    const acc = customer ? {
+            glasses: rnd(8) > 0.78 ? (rnd(16) > 0.5 ? 'round' : 'square') : 'none',
+            facial: rnd(10) > 0.8 ? 'beard' : rnd(10) > 0.66 ? 'moustache' : 'none',
+            headwear: 'none'
+        }
         : {glasses: look.glasses || 'none', facial: look.facial || 'none', headwear: look.headwear || 'none'};
     const frame = customer && rnd(16) > 0.5 ? PALETTE.berry : '#2A1D17';
     if (acc.glasses === 'round' || acc.glasses === 'square') {
@@ -2021,8 +2364,23 @@ export function personModel(role, color, seed = 0, look = {}) {
         return l;
     };
     const armL = arm(-1), armR = arm(1);
-    p.userData = {body, head, armL, armR, legL: leg(-1), legR: leg(1), role, eyes, brows, smile, mouthO, props: makeProps(role, armL, armR, p),
-        seed: rnd(17) * 10, gait: 0.9 + rnd(13) * 0.2, base: customer ? 0.93 + rnd(12) * 0.14 : 1};
+    p.userData = {
+        body,
+        head,
+        armL,
+        armR,
+        legL: leg(-1),
+        legR: leg(1),
+        role,
+        eyes,
+        brows,
+        smile,
+        mouthO,
+        props: makeProps(role, armL, armR, p),
+        seed: rnd(17) * 10,
+        gait: 0.9 + rnd(13) * 0.2,
+        base: customer ? 0.93 + rnd(12) * 0.14 : 1
+    };
     return p;
 }
 
@@ -2475,9 +2833,18 @@ const DISHES_3D = {
         g.add(swirl, leafBasil(-0.03, 0.135, -0.02), mesh(new THREE.BoxGeometry(0.12, 0.02, 0.05), food('#D9A45C'), 0.16, 0.03, 0.02));
     },
     lemonade: (g) => {
-        g.add(mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.19, 16, 1, true), food('#FFFFFF', {opacity: 0.35, roughness: 0.05}), 0, 0.095, 0));
-        g.add(mesh(new THREE.CylinderGeometry(0.055, 0.046, 0.15, 16), food('#F6E27A', {opacity: 0.8, roughness: 0.1}), 0, 0.077, 0));
-        for (let i = 0; i < 3; i++) g.add(mesh(new THREE.BoxGeometry(0.025, 0.025, 0.025), food('#E8F6FF', {opacity: 0.7, roughness: 0.05}), (i - 1) * 0.022, 0.14, (i % 2) * 0.015));
+        g.add(mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.19, 16, 1, true), food('#FFFFFF', {
+            opacity: 0.35,
+            roughness: 0.05
+        }), 0, 0.095, 0));
+        g.add(mesh(new THREE.CylinderGeometry(0.055, 0.046, 0.15, 16), food('#F6E27A', {
+            opacity: 0.8,
+            roughness: 0.1
+        }), 0, 0.077, 0));
+        for (let i = 0; i < 3; i++) g.add(mesh(new THREE.BoxGeometry(0.025, 0.025, 0.025), food('#E8F6FF', {
+            opacity: 0.7,
+            roughness: 0.05
+        }), (i - 1) * 0.022, 0.14, (i % 2) * 0.015));
         const lemon = mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.008, 16), food('#F6C945'), 0.05, 0.18, 0);
         lemon.rotation.z = Math.PI / 2.4;
         const straw = mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.25, 6), food('#F7A1C4'), -0.02, 0.17, 0.01);
@@ -2619,14 +2986,21 @@ const bowl = (g, inner, r = 0.12, outer = '#FFFFFF') => {
     g.add(mesh(new THREE.CylinderGeometry(r * 0.92, r * 0.92, 0.01, 22), food(inner, {roughness: 0.3}), 0, r + 0.005, 0));
 };
 const glassCup = (g, drink, h = 0.18) => {
-    g.add(mesh(new THREE.CylinderGeometry(0.06, 0.05, h, 16, 1, true), food('#FFFFFF', {opacity: 0.35, roughness: 0.05}), 0, h / 2, 0));
-    g.add(mesh(new THREE.CylinderGeometry(0.055, 0.046, h * 0.8, 16), food(drink, {opacity: 0.85, roughness: 0.1}), 0, h * 0.4, 0));
+    g.add(mesh(new THREE.CylinderGeometry(0.06, 0.05, h, 16, 1, true), food('#FFFFFF', {
+        opacity: 0.35,
+        roughness: 0.05
+    }), 0, h / 2, 0));
+    g.add(mesh(new THREE.CylinderGeometry(0.055, 0.046, h * 0.8, 16), food(drink, {
+        opacity: 0.85,
+        roughness: 0.1
+    }), 0, h * 0.4, 0));
 };
 Object.assign(DISHES_3D, {
     caprese: (g) => {
         plateMesh(g);
         for (let i = 0; i < 6; i++) {
-            const a = i * Math.PI / 3, sl = mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.02, 14), food(i % 2 ? '#FFF8E7' : '#D7263D'), Math.cos(a) * 0.08, 0.04, Math.sin(a) * 0.08);
+            const a = i * Math.PI / 3,
+                sl = mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.02, 14), food(i % 2 ? '#FFF8E7' : '#D7263D'), Math.cos(a) * 0.08, 0.04, Math.sin(a) * 0.08);
             sl.rotation.z = 0.25;
             sl.rotation.y = a;
             g.add(sl, leafBasil(Math.cos(a + 0.5) * 0.08, 0.06, Math.sin(a + 0.5) * 0.08, a));
@@ -2645,7 +3019,10 @@ Object.assign(DISHES_3D, {
     },
     iced_tea: (g) => {
         glassCup(g, '#C98A3D');
-        for (let i = 0; i < 3; i++) g.add(mesh(new THREE.BoxGeometry(0.025, 0.025, 0.025), food('#E8F6FF', {opacity: 0.7, roughness: 0.05}), (i - 1) * 0.022, 0.13, (i % 2) * 0.015));
+        for (let i = 0; i < 3; i++) g.add(mesh(new THREE.BoxGeometry(0.025, 0.025, 0.025), food('#E8F6FF', {
+            opacity: 0.7,
+            roughness: 0.05
+        }), (i - 1) * 0.022, 0.13, (i % 2) * 0.015));
         const lemon = mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.008, 16), food('#F6C945'), 0.05, 0.17, 0);
         lemon.rotation.z = Math.PI / 2.4;
         g.add(lemon, mesh(new THREE.SphereGeometry(0.018, 6, 4), food('#4E8A3A'), -0.03, 0.18, 0.02));
@@ -2672,7 +3049,10 @@ Object.assign(DISHES_3D, {
         g.add(leafBasil(0.02, 0.135, 0.01));
     },
     banana_split: (g) => {
-        const dish = mesh(new THREE.BoxGeometry(0.3, 0.04, 0.12), food('#DDF1F7', {opacity: 0.6, roughness: 0.05}), 0, 0.02, 0);
+        const dish = mesh(new THREE.BoxGeometry(0.3, 0.04, 0.12), food('#DDF1F7', {
+            opacity: 0.6,
+            roughness: 0.05
+        }), 0, 0.02, 0);
         g.add(dish);
         for (const sz of [-0.03, 0.03]) {
             const b = mesh(new THREE.CapsuleGeometry(0.02, 0.22, 4, 8), food('#F6D55C'), 0, 0.05, sz);
@@ -2804,14 +3184,23 @@ Object.assign(DISHES_3D, {
         g.add(wafer, mesh(new THREE.SphereGeometry(0.014, 8, 6), food('#D7263D', {roughness: 0.3}), -0.01, 0.2, 0.0));
     },
     sorbet: (g) => {
-        g.add(mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.01, 14), food('#FFFFFF', {opacity: 0.6, roughness: 0.05}), 0, 0.005, 0), mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.08, 6), food('#FFFFFF', {opacity: 0.6}), 0, 0.05, 0));
-        g.add(mesh(new THREE.SphereGeometry(0.08, 16, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), food('#FFFFFF', {opacity: 0.5, roughness: 0.05}), 0, 0.17, 0));
+        g.add(mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.01, 14), food('#FFFFFF', {
+            opacity: 0.6,
+            roughness: 0.05
+        }), 0, 0.005, 0), mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.08, 6), food('#FFFFFF', {opacity: 0.6}), 0, 0.05, 0));
+        g.add(mesh(new THREE.SphereGeometry(0.08, 16, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), food('#FFFFFF', {
+            opacity: 0.5,
+            roughness: 0.05
+        }), 0, 0.17, 0));
         [['#F6E27A', -0.03], ['#E63946', 0.03]].forEach(([c, x]) => g.add(mesh(new THREE.SphereGeometry(0.04, 12, 10), food(c, {roughness: 0.6}), x, 0.17, 0)));
         g.add(leafBasil(0, 0.21, 0));
     },
     cold_brew: (g) => {
         glassCup(g, '#5A3218', 0.2);
-        for (let i = 0; i < 3; i++) g.add(mesh(new THREE.BoxGeometry(0.025, 0.025, 0.025), food('#E8F6FF', {opacity: 0.7, roughness: 0.05}), (i - 1) * 0.022, 0.15, (i % 2) * 0.015));
+        for (let i = 0; i < 3; i++) g.add(mesh(new THREE.BoxGeometry(0.025, 0.025, 0.025), food('#E8F6FF', {
+            opacity: 0.7,
+            roughness: 0.05
+        }), (i - 1) * 0.022, 0.15, (i % 2) * 0.015));
         const swirl = mesh(new THREE.TorusGeometry(0.035, 0.008, 6, 14), food('#F4E6D0'), 0, 0.12, 0);
         swirl.rotation.x = Math.PI / 2;
         const straw = mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.24, 6), food('#2C2C30'), 0.02, 0.2, 0);
@@ -2928,7 +3317,11 @@ const FLOOR_DRAW = {
             g.fillStyle = (i + j) % 2 ? '#3E7CB4' : '#9CC3E4';
             g.beginPath();
             const x = i * s / 4 + s / 8, y = j * s / 4 + s / 8;
-            g.moveTo(x, y - s / 9); g.lineTo(x + s / 9, y); g.lineTo(x, y + s / 9); g.lineTo(x - s / 9, y); g.fill();
+            g.moveTo(x, y - s / 9);
+            g.lineTo(x + s / 9, y);
+            g.lineTo(x, y + s / 9);
+            g.lineTo(x - s / 9, y);
+            g.fill();
         }
     },
     floor_herringbone: (g, s) => {
@@ -2939,8 +3332,10 @@ const FLOOR_DRAW = {
             g.save();
             g.translate(x + (Math.floor(y / (w * 2)) % 2) * l / 2, y);
             g.fillStyle = ['#C48A55', '#B67C48', '#D29A63'][Math.abs(Math.floor(x / l + y / w)) % 3];
-            g.rotate(Math.PI / 4); g.fillRect(0, 0, l - 2, w - 2);
-            g.rotate(-Math.PI / 2); g.fillRect(0, 0, l - 2, w - 2);
+            g.rotate(Math.PI / 4);
+            g.fillRect(0, 0, l - 2, w - 2);
+            g.rotate(-Math.PI / 2);
+            g.fillRect(0, 0, l - 2, w - 2);
             g.restore();
         }
     },
@@ -3034,9 +3429,15 @@ const WALL_DRAW = {
         for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) {
             const x = i * s / 5 + (j % 2) * s / 10 + s / 10, y = j * s / 5 + s / 10;
             g.fillStyle = ['#F25F5C', '#F7A1C4', '#E2B23A'][(i + j) % 3];
-            for (let k = 0; k < 5; k++) { g.beginPath(); g.arc(x + Math.cos(k * 1.26) * 7, y + Math.sin(k * 1.26) * 7, 5, 0, Math.PI * 2); g.fill(); }
+            for (let k = 0; k < 5; k++) {
+                g.beginPath();
+                g.arc(x + Math.cos(k * 1.26) * 7, y + Math.sin(k * 1.26) * 7, 5, 0, Math.PI * 2);
+                g.fill();
+            }
             g.fillStyle = '#7A8B3A';
-            g.beginPath(); g.arc(x, y, 4, 0, Math.PI * 2); g.fill();
+            g.beginPath();
+            g.arc(x, y, 4, 0, Math.PI * 2);
+            g.fill();
         }
         g.fillStyle = '#7A8B3A';
         g.fillRect(0, s * 0.62, s, 6);
@@ -3145,7 +3546,10 @@ Object.assign(FLOOR_DRAW, {
         g.fillRect(0, 0, s, s);
         g.fillStyle = '#26262A';
         g.beginPath();
-        g.moveTo(s / 2, 0); g.lineTo(s, s / 2); g.lineTo(s / 2, s); g.lineTo(0, s / 2);
+        g.moveTo(s / 2, 0);
+        g.lineTo(s, s / 2);
+        g.lineTo(s / 2, s);
+        g.lineTo(0, s / 2);
         g.fill();
     },
     floor_cork: (g, s) => {
@@ -3275,7 +3679,8 @@ Object.assign(WALL_DRAW, {
         g.arc(s * 0.65, s * 0.3, 22, 0, Math.PI * 2);
         g.stroke();
         g.beginPath();
-        g.moveTo(s * 0.2, s * 0.5); g.lineTo(s * 0.8, s * 0.5);
+        g.moveTo(s * 0.2, s * 0.5);
+        g.lineTo(s * 0.8, s * 0.5);
         g.stroke();
         wainscot(g, s, '#7B4E2C');
     },
@@ -3460,7 +3865,10 @@ const GROUND_DRAW = {
     },
 };
 const groundTile = (key) => () => {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(1, 0.03, 1), new THREE.MeshStandardMaterial({map: canvasTexture('g_' + key, GROUND_DRAW[key]), roughness: 0.92}));
+    const m = new THREE.Mesh(new THREE.BoxGeometry(1, 0.03, 1), new THREE.MeshStandardMaterial({
+        map: canvasTexture('g_' + key, GROUND_DRAW[key]),
+        roughness: 0.92
+    }));
     m.position.y = -0.005;
     m.receiveShadow = true;
     return group(m);
@@ -3478,12 +3886,23 @@ const windowMarker = (w, color = '#7FC4D9') => () => {
 };
 
 Object.assign(FURNITURE, {
-    window_small: windowMarker(1), window_round: windowMarker(1, '#9ED2C0'), window_wide: windowMarker(2), window_tall: windowMarker(1, '#5CB8D6'),
-    window_large: windowMarker(3), window_arched: windowMarker(1, '#F6D58E'), glass_wall_2: windowMarker(2, '#3E7CB4'), window_stained: windowMarker(1, '#C06C84'),
-    glass_wall_3: windowMarker(3, '#3E7CB4'), glass_wall_4: windowMarker(4, '#3E7CB4'), window_panorama: windowMarker(4, '#2F5DA8'),
+    window_small: windowMarker(1),
+    window_round: windowMarker(1, '#9ED2C0'),
+    window_wide: windowMarker(2),
+    window_tall: windowMarker(1, '#5CB8D6'),
+    window_large: windowMarker(3),
+    window_arched: windowMarker(1, '#F6D58E'),
+    glass_wall_2: windowMarker(2, '#3E7CB4'),
+    window_stained: windowMarker(1, '#C06C84'),
+    glass_wall_3: windowMarker(3, '#3E7CB4'),
+    glass_wall_4: windowMarker(4, '#3E7CB4'),
+    window_panorama: windowMarker(4, '#2F5DA8'),
     ...Object.fromEntries(Object.keys(GROUND_DRAW).map(k => [k, groundTile(k)])),
 
-    table_glass: () => group(box(0.84, 0.03, 0.84, '#CFEAF2', 0, 0.72, 0, {opacity: 0.45, roughness: 0.05}), box(0.86, 0.015, 0.86, '#9AA3AD', 0, 0.71, 0, metalO),
+    table_glass: () => group(box(0.84, 0.03, 0.84, '#CFEAF2', 0, 0.72, 0, {
+            opacity: 0.45,
+            roughness: 0.05
+        }), box(0.86, 0.015, 0.86, '#9AA3AD', 0, 0.71, 0, metalO),
         cyl(0.04, 0.04, 0.71, '#C9CED4', 0, 0, 0, 10, metalO), box(0.5, 0.02, 0.5, '#C9CED4', 0, 0, 0, metalO), cyl(0.04, 0.03, 0.14, '#FFFFFF', 0.1, 0.75, 0, 10, {opacity: 0.6}), ball(0.04, '#F25F5C', 0.1, 0.92, 0, {}, 7)),
     table_banquet: () => group(box(1.86, 0.07, 0.86, '#FFFFFF', 0, 0.68, 0, {flat: false}), box(1.88, 0.3, 0.88, '#F7F4EE', 0, 0.4, 0, {flat: false}), legs(1.7, 0.7, 0.4, PALETTE.woodDark),
         box(1.86, 0.012, 0.22, PALETTE.gold, 0, 0.75, 0, metalO), ...[-0.55, 0, 0.55].map(x => cyl(0.025, 0.035, 0.28, PALETTE.gold, x, 0.76, 0, 8, metalO)),
@@ -3494,8 +3913,14 @@ Object.assign(FURNITURE, {
         box(0.44, 0.06, 0.44, '#F6C945', 0, 0.42, 0, shinyO), box(0.44, 0.42, 0.06, '#F6C945', 0, 0.48, -0.2, shinyO), ...[-0.15, 0.15].map(x => cyl(0.02, 0.02, 0.42, '#2C2C30', x, 0, 0, 6))),
     chair_royal: () => group(box(0.56, 0.2, 0.52, '#7B1E2A', 0, 0.3, 0.02, {flat: false}), box(0.56, 0.9, 0.12, '#7B1E2A', 0, 0.42, -0.22, {flat: false}), box(0.62, 0.08, 0.16, PALETTE.gold, 0, 1.3, -0.22, metalO),
         ...[-0.25, 0, 0.25].map(x => ball(0.05, PALETTE.gold, x, 1.4, -0.22, metalO, 8)), ...[-0.28, 0.28].map(x => box(0.08, 0.28, 0.5, PALETTE.gold, x, 0.42, 0, metalO)), legs(0.48, 0.44, 0.3, PALETTE.gold, 0.03)),
-    stove_teppanyaki: () => group(box(0.94, 0.84, 0.82, '#2C2C30', 0, 0, -0.02, metalO), box(0.96, 0.05, 0.84, '#B8BEC6', 0, 0.84, -0.02, {metalness: 0.8, roughness: 0.15}),
-        box(0.7, 0.01, 0.55, '#3A3A40', 0, 0.89, -0.05, {metalness: 0.7, roughness: 0.2}), box(0.12, 0.02, 0.18, '#C9CED4', 0.25, 0.9, 0.1, metalO), box(0.96, 0.06, 0.06, '#D7263D', 0, 0.6, 0.39), glow(new THREE.BoxGeometry(0.6, 0.02, 0.02), '#FF7A1A', 0, 0.86, 0.4)),
+    stove_teppanyaki: () => group(box(0.94, 0.84, 0.82, '#2C2C30', 0, 0, -0.02, metalO), box(0.96, 0.05, 0.84, '#B8BEC6', 0, 0.84, -0.02, {
+            metalness: 0.8,
+            roughness: 0.15
+        }),
+        box(0.7, 0.01, 0.55, '#3A3A40', 0, 0.89, -0.05, {
+            metalness: 0.7,
+            roughness: 0.2
+        }), box(0.12, 0.02, 0.18, '#C9CED4', 0.25, 0.9, 0.1, metalO), box(0.96, 0.06, 0.06, '#D7263D', 0, 0.6, 0.39), glow(new THREE.BoxGeometry(0.6, 0.02, 0.02), '#FF7A1A', 0, 0.86, 0.4)),
     stove_master: () => group(box(0.94, 0.88, 0.84, '#1E2B2B', 0, 0, -0.02, metalO), box(0.96, 0.05, 0.86, PALETTE.gold, 0, 0.88, -0.02, metalO),
         ...[[-0.22, -0.2], [0.22, -0.2], [-0.22, 0.15], [0.22, 0.15]].map(([x, z]) => cyl(0.12, 0.12, 0.025, '#111', x, 0.93, z, 16)), box(0.7, 0.4, 0.02, '#111', 0, 0.2, 0.41, {roughness: 0.15}),
         box(0.5, 0.03, 0.03, PALETTE.gold, 0, 0.66, 0.42, metalO), ...[-0.33, -0.11, 0.11, 0.33].map(x => cyl(0.035, 0.035, 0.03, PALETTE.gold, x, 0.76, 0.42, 8, metalO)),
@@ -3508,7 +3933,10 @@ Object.assign(FURNITURE, {
         ...Array.from({length: 6}, (_, i) => group(box(0.04, 0.22, 0.012, '#C9CED4', -0.25 + i * 0.1, 0.96, -0.39, metalO), box(0.035, 0.1, 0.03, '#2C2C30', -0.25 + i * 0.1, 1.18, -0.39)))),
     herb_wall: () => group(box(0.9, 1.7, 0.1, '#7B4E2C', 0, 0, -0.42), ...Array.from({length: 9}, (_, i) => group(box(0.24, 0.16, 0.16, PALETTE.terracotta, -0.3 + (i % 3) * 0.3, 0.3 + Math.floor(i / 3) * 0.5, -0.32),
         ball(0.12, ['#5E9A3E', '#7CB342', '#3F7A2E'][i % 3], -0.3 + (i % 3) * 0.3, 0.55 + Math.floor(i / 3) * 0.5, -0.32, {}, 7)))),
-    sous_vide: () => group(box(0.9, 0.86, 0.7, '#B8BEC6', 0, 0, -0.1, metalO), box(0.94, 0.05, 0.8, '#F2EEE6', 0, 0.86, -0.06), box(0.5, 0.25, 0.36, '#DDF1F7', -0.1, 0.91, -0.1, {opacity: 0.55, roughness: 0.05}),
+    sous_vide: () => group(box(0.9, 0.86, 0.7, '#B8BEC6', 0, 0, -0.1, metalO), box(0.94, 0.05, 0.8, '#F2EEE6', 0, 0.86, -0.06), box(0.5, 0.25, 0.36, '#DDF1F7', -0.1, 0.91, -0.1, {
+            opacity: 0.55,
+            roughness: 0.05
+        }),
         cyl(0.05, 0.05, 0.35, '#2C2C30', 0.25, 0.91, -0.15, 10), glow(new THREE.BoxGeometry(0.06, 0.04, 0.01), '#6BBF59', 0.25, 1.15, -0.1)),
     blast_chiller: () => group(box(0.92, 1.8, 0.72, '#E4E8EC', 0, 0, -0.1, metalO), box(0.84, 0.02, 0.02, '#2C2C30', 0, 0.9, 0.27), box(0.04, 0.5, 0.05, '#2C2C30', 0.35, 0.65, 0.28),
         glow(new THREE.BoxGeometry(0.3, 0.12, 0.01), '#5CB8D6', -0.2, 1.55, 0.27)),
@@ -3546,16 +3974,28 @@ Object.assign(FURNITURE, {
     chandelier_crystal: () => {
         const g = group(cyl(0.015, 0.015, 0.7, PALETTE.gold, 0, 2.0, 0, 6, metalO), cyl(0.38, 0.2, 0.08, PALETTE.gold, 0, 2.0, 0, 16, metalO),
             ...Array.from({length: 10}, (_, i) => lampHead(Math.cos(i * 0.628) * 0.36, 2.12, Math.sin(i * 0.628) * 0.36, 0.045, '#FFF1C9')),
-            ...Array.from({length: 18}, (_, i) => mesh(new THREE.OctahedronGeometry(0.04), mat('#E8F6FF', {opacity: 0.7, roughness: 0.05, metalness: 0.2}), Math.cos(i * 0.35) * (0.15 + (i % 3) * 0.1), 1.82 - (i % 3) * 0.08, Math.sin(i * 0.35) * (0.15 + (i % 3) * 0.1))),
+            ...Array.from({length: 18}, (_, i) => mesh(new THREE.OctahedronGeometry(0.04), mat('#E8F6FF', {
+                opacity: 0.7,
+                roughness: 0.05,
+                metalness: 0.2
+            }), Math.cos(i * 0.35) * (0.15 + (i % 3) * 0.1), 1.82 - (i % 3) * 0.08, Math.sin(i * 0.35) * (0.15 + (i % 3) * 0.1))),
             cyl(0.12, 0.16, 0.04, PALETTE.gold, 0, 0, 0, 12, metalO), cyl(0.02, 0.02, 1.95, PALETTE.gold, 0, 0.04, 0, 6, metalO), lightPool(1.5));
         const l = new THREE.PointLight('#FFE2A8', 0.6, 4.5, 1.4);
         l.position.set(0, 1.9, 0);
         g.add(l);
         return g;
     },
-    sculpture_modern: () => group(box(0.5, 0.5, 0.5, '#F2EEE8', 0, 0, 0), mesh(new THREE.TorusKnotGeometry(0.22, 0.06, 60, 8), mat('#E07B39', {metalness: 0.5, roughness: 0.3}), 0, 0.95, 0)),
+    sculpture_modern: () => group(box(0.5, 0.5, 0.5, '#F2EEE8', 0, 0, 0), mesh(new THREE.TorusKnotGeometry(0.22, 0.06, 60, 8), mat('#E07B39', {
+        metalness: 0.5,
+        roughness: 0.3
+    }), 0, 0.95, 0)),
     aquarium_wall: () => {
-        const g = group(box(1.9, 2.1, 0.5, '#1E2B2B', 0, 0, -0.22), box(1.76, 1.8, 0.4, '#3FA7D6', 0, 0.15, -0.2, {opacity: 0.45, roughness: 0.05, emissive: '#1E6E9A', glow: 0.25}),
+        const g = group(box(1.9, 2.1, 0.5, '#1E2B2B', 0, 0, -0.22), box(1.76, 1.8, 0.4, '#3FA7D6', 0, 0.15, -0.2, {
+                opacity: 0.45,
+                roughness: 0.05,
+                emissive: '#1E6E9A',
+                glow: 0.25
+            }),
             box(1.76, 0.1, 0.4, '#E8D9A8', 0, 0.15, -0.2), ...[-0.6, -0.1, 0.5].map((x, i) => cyl(0.03, 0.05, 0.5 + i * 0.2, '#3F7A2E', x, 0.25, -0.25, 6)));
         g.userData.fish = [];
         ['#FF8C42', '#FFD23F', '#F25F5C', '#9B5DE5', '#FFFFFF'].forEach((c, i) => {
@@ -3585,8 +4025,16 @@ Object.assign(FURNITURE, {
     gazebo: () => group(box(1.9, 0.08, 1.9, '#E8D3B0', 0, 0, 0), ...[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([a, b]) => cyl(0.06, 0.06, 2.2, '#F7F4EE', a * 0.85, 0.08, b * 0.85, 8)),
         mesh(new THREE.ConeGeometry(1.45, 0.8, 4), mat('#B43E5C'), 0, 2.65, 0).rotateY(Math.PI / 4), ball(0.08, PALETTE.gold, 0, 3.1, 0, metalO, 8),
         ...[[-0.85, 0], [0.85, 0]].map(([x, z]) => box(0.06, 0.5, 1.6, '#F7F4EE', x, 0.08, z)), lampHead(0, 2.1, 0, 0.1, '#FFE7A8'), lightPool(2.2)),
-    water_wall: () => group(box(0.96, 2.2, 0.3, '#3B3B40', 0, 0, -0.2, shinyO), box(0.84, 1.9, 0.02, '#7FC4D9', 0, 0.2, -0.04, {opacity: 0.55, roughness: 0.05, emissive: '#3FA7D6', glow: 0.25}),
-        box(0.96, 0.25, 0.5, '#3B3B40', 0, 0, 0.05, shinyO), box(0.86, 0.02, 0.4, '#5CB8D6', 0, 0.24, 0.05, {opacity: 0.7, roughness: 0.05}), glow(new THREE.BoxGeometry(0.84, 0.03, 0.03), '#DFF6FF', 0, 2.1, -0.03)),
+    water_wall: () => group(box(0.96, 2.2, 0.3, '#3B3B40', 0, 0, -0.2, shinyO), box(0.84, 1.9, 0.02, '#7FC4D9', 0, 0.2, -0.04, {
+            opacity: 0.55,
+            roughness: 0.05,
+            emissive: '#3FA7D6',
+            glow: 0.25
+        }),
+        box(0.96, 0.25, 0.5, '#3B3B40', 0, 0, 0.05, shinyO), box(0.86, 0.02, 0.4, '#5CB8D6', 0, 0.24, 0.05, {
+            opacity: 0.7,
+            roughness: 0.05
+        }), glow(new THREE.BoxGeometry(0.84, 0.03, 0.03), '#DFF6FF', 0, 2.1, -0.03)),
 });
 
 export function floorMaterial(key, w, d = w) {
@@ -3597,7 +4045,10 @@ export function floorMaterial(key, w, d = w) {
 }
 
 export function wallMaterial(key) {
-    return new THREE.MeshStandardMaterial({map: canvasTexture(key, WALL_DRAW[key] || WALL_DRAW.wall_cream, 1), roughness: 0.9});
+    return new THREE.MeshStandardMaterial({
+        map: canvasTexture(key, WALL_DRAW[key] || WALL_DRAW.wall_cream, 1),
+        roughness: 0.9
+    });
 }
 
 /** A flat swatch (data URL) for the shop buttons. */

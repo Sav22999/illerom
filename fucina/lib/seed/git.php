@@ -140,7 +140,8 @@ if (!function_exists('fig_git_reset')) {
                 'lost' => ['#FFE3EE', '#F03E82', ' stroke-dasharray="6 4"', '#B0205A'],
                 default => ['#F1F0F8', '#8A87B0', '', '#4A4870'],
             };
-            $cx = $x + 78; $ty = $y + 30;
+            $cx = $x + 78;
+            $ty = $y + 30;
             return "<rect x=\"$x\" y=\"$y\" width=\"156\" height=\"48\" rx=\"10\" fill=\"$fill\" stroke=\"$stroke\" stroke-width=\"2\"$dash/><text x=\"$cx\" y=\"$ty\" text-anchor=\"middle\" font-weight=\"700\" fill=\"$col\">$text</text>";
         };
         $rows = '';
@@ -149,7 +150,11 @@ if (!function_exists('fig_git_reset')) {
             $rows .= '<text x="20" y="' . ($y + 30) . '" font-family="ui-monospace, Menlo, monospace" font-weight="700">' . $row[0] . '</text>';
             $rows .= $cell(136, $y, 'gone', $t[3]);
             $rows .= $row[2] === 'keep' ? $cell(302, $y, 'keep', $t[4]) : $cell(302, $y, 'gone', $t[5]);
-            $rows .= match ($row[3]) { 'keep' => $cell(468, $y, 'keep', $t[6]), 'keep2' => $cell(468, $y, 'keep', $t[4]), default => $cell(468, $y, 'lost', $t[7]) };
+            $rows .= match ($row[3]) {
+                'keep' => $cell(468, $y, 'keep', $t[6]),
+                'keep2' => $cell(468, $y, 'keep', $t[4]),
+                default => $cell(468, $y, 'lost', $t[7])
+            };
         }
         return <<<SVG
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">

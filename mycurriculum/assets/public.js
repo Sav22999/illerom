@@ -4,8 +4,8 @@
  * The data is the public copy embedded by lib/public-page.php: the same things the PDF shows, nothing more.
  */
 
-import {t, getLang, flagSrc} from './i18n.js';
-import {buildModel, renderCV, esc, langLabel, fixContactSeparators} from './cv.js';
+import {flagSrc, getLang, t} from './i18n.js';
+import {buildModel, esc, fixContactSeparators, langLabel, renderCV} from './cv.js';
 import {downloadPdf, pdfFileName} from './pdf.js';
 
 const root = document.getElementById('pub');

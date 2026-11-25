@@ -9,10 +9,13 @@ if (!function_exists('fig_cloud_models')) {
         $mine = [4, 2, 2, 1]; // how many layers from the top you manage, per model
         $cells = '';
         foreach (['IaaS', 'PaaS', 'Serverless', 'SaaS'] as $c => $m) {
-            $x = 206 + $c * 106; $cx = $x + 50;
+            $x = 206 + $c * 106;
+            $cx = $x + 50;
             $cells .= "<text x=\"$cx\" y=\"38\" text-anchor=\"middle\" font-weight=\"700\">$m</text>";
             foreach ($rows as $r => $label) {
-                $y = 52 + $r * 38; $ty = $y + 21; $own = $r < $mine[$c];
+                $y = 52 + $r * 38;
+                $ty = $y + 21;
+                $own = $r < $mine[$c];
                 $cells .= $own
                     ? "<rect x=\"$x\" y=\"$y\" width=\"100\" height=\"32\" rx=\"8\" fill=\"#FFE8D6\" stroke=\"#E8590C\" stroke-width=\"2\"/><text x=\"$cx\" y=\"$ty\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"700\" fill=\"#B84508\">$you</text>"
                     : "<rect x=\"$x\" y=\"$y\" width=\"100\" height=\"32\" rx=\"8\" fill=\"url(#h)\" stroke=\"#8A87B0\" stroke-width=\"2\"/><text x=\"$cx\" y=\"$ty\" text-anchor=\"middle\" font-size=\"13\" fill=\"#4A4870\">$prov</text>";
@@ -36,12 +39,13 @@ if (!function_exists('fig_cloud_zones')) {
     {
         $zones = '';
         foreach (['A', 'B', 'C'] as $i => $z) {
-            $x = 36 + $i * 196; $cx = $x + 88;
+            $x = 36 + $i * 196;
+            $cx = $x + 88;
             $zones .= "<path d=\"M320,92 C320,108 $cx,104 $cx,120\" fill=\"none\" stroke=\"#1E1C52\" stroke-width=\"2\"/>"
-                    . "<rect x=\"$x\" y=\"120\" width=\"176\" height=\"126\" rx=\"12\" fill=\"#DCEBFF\" stroke=\"#2F8CF0\" stroke-width=\"2\"/><text x=\"$cx\" y=\"146\" text-anchor=\"middle\" font-weight=\"700\">{$t[1]} $z</text>"
-                    . "<rect x=\"" . ($x + 16) . "\" y=\"160\" width=\"66\" height=\"34\" rx=\"8\" fill=\"#FFFFFF\" stroke=\"#2F8CF0\" stroke-width=\"2\"/><text x=\"" . ($x + 49) . "\" y=\"182\" text-anchor=\"middle\" font-size=\"13\">app</text>"
-                    . "<rect x=\"" . ($x + 94) . "\" y=\"160\" width=\"66\" height=\"34\" rx=\"8\" fill=\"#FFFFFF\" stroke=\"#2F8CF0\" stroke-width=\"2\"/><text x=\"" . ($x + 127) . "\" y=\"182\" text-anchor=\"middle\" font-size=\"13\">app</text>"
-                    . "<text x=\"$cx\" y=\"226\" text-anchor=\"middle\" font-size=\"13\">{$t[2]}</text>";
+                . "<rect x=\"$x\" y=\"120\" width=\"176\" height=\"126\" rx=\"12\" fill=\"#DCEBFF\" stroke=\"#2F8CF0\" stroke-width=\"2\"/><text x=\"$cx\" y=\"146\" text-anchor=\"middle\" font-weight=\"700\">{$t[1]} $z</text>"
+                . "<rect x=\"" . ($x + 16) . "\" y=\"160\" width=\"66\" height=\"34\" rx=\"8\" fill=\"#FFFFFF\" stroke=\"#2F8CF0\" stroke-width=\"2\"/><text x=\"" . ($x + 49) . "\" y=\"182\" text-anchor=\"middle\" font-size=\"13\">app</text>"
+                . "<rect x=\"" . ($x + 94) . "\" y=\"160\" width=\"66\" height=\"34\" rx=\"8\" fill=\"#FFFFFF\" stroke=\"#2F8CF0\" stroke-width=\"2\"/><text x=\"" . ($x + 127) . "\" y=\"182\" text-anchor=\"middle\" font-size=\"13\">app</text>"
+                . "<text x=\"$cx\" y=\"226\" text-anchor=\"middle\" font-size=\"13\">{$t[2]}</text>";
         }
         return <<<SVG
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 276" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">

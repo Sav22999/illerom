@@ -4,9 +4,11 @@
  *
  * Accounts:      auth.config, me, register, login, google, resend, verify, forgot, reset, logout, password, profile, settings, export, delete
  * Home:          home.list, folder.create|rename|delete, deck.create|get|sync|move|trash|restore|purge|duplicate|template
+ * Pages:         page.rules, page.rule (permissions of single people on single pages)
  * Sharing:       share.get, share.access, share.invite, share.role, share.remove, share.link, share.unlink, share.accept, deck.leave
+ * Versions:      version.list|get|save|restore
  * Comments:      comment.list|add|edit|resolve|delete        Personal notes: note.list|save|delete
- * Pictures:      media (public by id), media.upload, media.list, media.delete, media.import, media.poster, search, search.thumb
+ * Pictures:      media (public by id), media.upload, media.video.begin|piece|end|drop, media.list, media.delete, media.import, media.poster, search, search.thumb
  * Reports:       report.create
  * Master admin:  admin.overview, admin.users, admin.user, admin.decks, admin.deck, admin.view, admin.reports, admin.report, admin.log
  *
@@ -30,7 +32,7 @@ set_exception_handler(function (Throwable $e) {
 $r = (string)($_GET['r'] ?? '');
 if (!credentials()) fail('not_installed', 503);
 if ($r === 'media') serve_media((string)($_GET['id'] ?? ''));
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $r !== 'media.upload' && stripos((string)($_SERVER['CONTENT_TYPE'] ?? ''), 'application/json') !== 0) fail('bad_request', 415);
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !in_array($r, ['media.upload', 'media.video.piece'], true) && stripos((string)($_SERVER['CONTENT_TYPE'] ?? ''), 'application/json') !== 0) fail('bad_request', 415);
 remember_app_url();
 
 function only(string $method): void
@@ -134,22 +136,50 @@ function deck_title(array $b): string
     return mb_substr(trim(clean_text($b['title'] ?? '', 150)), 0, 150) ?: 'Untitled';
 }
 
-/** Options that only the people with the right role must not see are not needed by viewers: speaker notes. */
-function slides_for(array $d, string $role): array
+/** The pages this person can see; the speaker notes only of those they can edit. */
+function slides_for(array $d, array $acc): array
 {
-    $slides = deck_slides((int)$d['id']);
-    if (role_rank($role) < role_rank('editor')) foreach ($slides as $s) unset($s['d']->notes);
-    return $slides;
+    $out = [];
+    foreach (deck_slides((int)$d['id']) as $s) {
+        $role = page_role($acc, $s['sid']);
+        if ($role === '') continue;
+        if (role_rank($role) < role_rank('editor')) unset($s['d']->notes);
+        $out[] = $s;
+    }
+    return $out;
 }
 
-function ops_for(?array $ops, string $role): ?array
+/** The changes this person can know. Null = something about who sees what has changed: the page reads everything again. */
+function ops_for(?array $ops, array $acc): ?array
 {
-    if ($ops === null || role_rank($role) >= role_rank('editor')) return $ops;
+    if ($ops === null || $acc['role'] === 'owner') return $ops;
+    $out = [];
     foreach ($ops as $o) {
-        if (isset($o['o']->p->notes)) unset($o['o']->p->notes);
-        if (isset($o['o']->d->notes)) unset($o['o']->d->notes);
+        $k = $o['o']->k ?? '';
+        if ($k === 'page.rules') return null;
+        if ($k === 'deck.set') {
+            $out[] = $o;
+            continue;
+        }
+        $role = page_role($acc, (string)($o['o']->s ?? ''));
+        $editor = role_rank($role) >= role_rank('editor');
+        if (!$editor && $k === 'slide.set' && property_exists($o['o']->p, 'hide')) return null;
+        if ($role === '') continue;
+        if (!$editor) {
+            if (isset($o['o']->p->notes)) unset($o['o']->p->notes);
+            if (isset($o['o']->d->notes)) unset($o['o']->d->notes);
+        }
+        $out[] = $o;
     }
-    return $ops;
+    return $out;
+}
+
+/** The versions are whole copies: only for who can edit every page. */
+function require_versions(array $u, string $uid): array
+{
+    [$d, $role] = require_deck($u, $uid, 'editor');
+    if (pages_limited(page_access($d, $u, $role))) fail('pages_limited', 403);
+    return $d;
 }
 
 function require_master(): array
@@ -187,12 +217,31 @@ function delete_user(int $id): void
     delete_media_files($files);
 }
 
+// ---------- Google and SavAccount: signing in and joining an account that already exists (../identity/identity.php) ----------
+
+require dirname(__DIR__, 2) . '/identity/identity.php';
+
+identity_setup([
+    'name' => APP_NAME, 'cookie' => 'savpresentations',
+    'lang' => fn() => strpos(strtolower((string)($_SERVER['HTTP_X_LANG'] ?? ($_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? ''))), 'it') === 0 ? 'it' : 'en',
+    'fail' => function (string $code, int $http): void {
+        fail($code, $http);
+    },
+    'accepted' => fn(array $b) => !empty($b['acceptTerms']),
+    'create' => fn(array $who, array $b) => new_user($who['name'] ?: explode('@', $who['email'])[0], $who['email'], '', null, ui_lang($b)),
+    'after' => function (int $uid, array $b): void {
+        accept_invites(user_row($uid));
+    },
+    'writer' => fn() => writer(),
+]);
+identity_route($r);
+
 switch ($r) {
 
     // ================================================================ accounts
 
     case 'auth.config':
-        send_json(['ok' => true, 'googleClientId' => (string)config_value('google_client_id', ''), 'mailReady' => mail_settings() !== null, 'sources' => search_sources()]);
+        send_json(['ok' => true, 'googleClientId' => (string)config_value('google_client_id', ''), 'savAccount' => sav_enabled(), 'mailReady' => mail_settings() !== null, 'sources' => search_sources()]);
 
     case 'auth.me':
         only('GET');
@@ -245,29 +294,8 @@ switch ($r) {
         only('POST');
         if (too_many_attempts('login', 20, 15)) fail('rate_limited', 429);
         $b = body();
-        $g = verify_google_token((string)($b['credential'] ?? ''));
-        $st = db()->prepare('SELECT * FROM ' . t('users') . ' WHERE google_sub = ?');
-        $st->execute([$g['sub']]);
-        $row = $st->fetch() ?: null;
-        if (!$row) {
-            $row = user_by_email($g['email']);
-            if ($row) refuse_blocked($row);
-            // Same address already registered: the Google account is linked to it. If nobody confirmed that
-            // address, the password someone else may have chosen is dropped, with its sessions.
-            if ($row) {
-                if (empty($row['email_verified_at'])) db()->prepare('DELETE FROM ' . t('auth_tokens') . ' WHERE user_id = ?')->execute([$row['id']]);
-                db()->prepare('UPDATE ' . t('users') . ' SET google_sub = ?, password_hash = IF(email_verified_at IS NULL, \'\', password_hash), email_verified_at = COALESCE(email_verified_at, ?) WHERE id = ?')->execute([$g['sub'], now_utc(), $row['id']]);
-            }
-        }
-        if (!$row) {
-            if (empty($b['acceptTerms'])) send_json(['ok' => false, 'error' => 'needs_signup', 'name' => $g['name']], 200);
-            if (too_many_attempts('register', 5, 60)) fail('rate_limited', 429);
-            record_attempt('register');
-            $row = user_row(new_user($g['name'] ?: explode('@', $g['email'])[0], $g['email'], '', $g['sub'], ui_lang($b)));
-            db()->prepare('UPDATE ' . t('users') . ' SET email_verified_at = ? WHERE id = ?')->execute([now_utc(), $row['id']]);
-        }
-        refuse_blocked($row);
-        signed_in((int)$row['id']);
+        // Already linked: signs in. An address that has an account: whoever signs in proves it is theirs first
+        ident_sign_in('google', verify_google_token((string)($b['credential'] ?? '')), $b);
 
     case 'auth.resend':
         $u = writer(true);
@@ -352,7 +380,9 @@ switch ($r) {
         $enum = ['mode' => ['auto', 'light', 'dark'], 'format' => ['16-9', '16-10', '4-3', 'a4', 'a4-p', 'a3', 'a3-p', 'square', 'story'], 'access' => ['private', 'link'], 'linkRole' => ['viewer', 'commenter', 'editor'], 'tr' => TRANSITIONS, 'view' => ['grid', 'list'],
             'head' => array_merge([''], array_slice(FONT_IDS, 2)), 'body' => array_merge([''], array_slice(FONT_IDS, 2))];
         foreach ($enum as $k => $vals) if (isset($in[$k]) && in_array($in[$k], $vals, true)) $cur[$k] = $in[$k];
-        foreach (['snap', 'grid', 'guides', 'numbers', 'mailShare', 'mailComments', 'spell'] as $k) if (isset($in[$k])) $cur[$k] = (bool)$in[$k];
+        foreach (['simple', 'snap', 'grid', 'guides', 'numbers', 'mailShare', 'mailComments', 'spell', 'notesBar'] as $k) if (isset($in[$k])) $cur[$k] = (bool)$in[$k];
+        if (isset($in['tools']) && is_array($in['tools'])) $cur['tools'] = array_values(array_unique(array_filter(array_slice($in['tools'], 0, 20), fn($x) => is_string($x) && preg_match('/^[a-z]{2,12}$/', $x))));
+        if (isset($in['stars']) && is_array($in['stars'])) $cur['stars'] = array_values(array_filter(array_slice($in['stars'], 0, 200), fn($x) => is_string($x) && preg_match('/^[A-Za-z0-9]{22}$/', $x)));
         if (isset($in['theme']) && preg_match('/^[a-z0-9-]{1,24}$/', (string)$in['theme'])) $cur['theme'] = $in['theme'];
         db()->prepare('UPDATE ' . t('users') . ' SET settings = ? WHERE id = ?')->execute([json_out($cur ?: new stdClass()), $u['id']]);
         send_json(['ok' => true, 'user' => public_user(user_row($u['id']))]);
@@ -393,6 +423,8 @@ switch ($r) {
         $st = db()->prepare("SELECT d.*, d.folder_id AS my_folder, $first, (SELECT COUNT(*) FROM " . t('members') . ' m WHERE m.deck_id = d.id) AS members FROM ' . t('decks') . ' d WHERE d.owner_id = ? ORDER BY d.updated_at DESC LIMIT 500');
         $st->execute([$u['id']]);
         $decks = array_map(fn($d) => deck_card($d + ['owner_name' => $u['name']], 'owner'), $st->fetchAll());
+        $seen = " AND s.data NOT LIKE '%\\\"hide\\\":1%' AND COALESCE((SELECT p1.role FROM " . t('page_rules') . ' p1 WHERE p1.deck_id = d.id AND p1.sid = s.sid AND p1.who = \'u:' . (int)$u['id'] . '\'), (SELECT p2.role FROM ' . t('page_rules') . " p2 WHERE p2.deck_id = d.id AND p2.sid = s.sid AND p2.who = '*'), 'viewer') <> 'none'";
+        $first = str_replace('s.deck_id = d.id', 's.deck_id = d.id' . $seen, $first);
         $st = db()->prepare("SELECT d.*, m.role, o.name AS owner_name, $first FROM " . t('members') . ' m JOIN ' . t('decks') . ' d ON d.id = m.deck_id JOIN ' . t('users') . " o ON o.id = d.owner_id AND o.status = 'active' WHERE m.user_id = ? AND d.status = 'active' ORDER BY d.updated_at DESC LIMIT 300");
         $st->execute([$u['id']]);
         $shared = array_map(fn($d) => deck_card($d, $d['role']), $st->fetchAll());
@@ -451,10 +483,21 @@ switch ($r) {
         only('GET');
         $u = visitor();
         [$d, $role] = require_deck($u, (string)($_GET['d'] ?? ''));
-        send_json(['ok' => true, 'role' => $role, 'me' => $u ? public_user($u) : null, 'deck' => ['uid' => $d['uid'], 'title' => $d['title'], 'owner' => $d['owner_name'], 'access' => $d['access'], 'status' => $d['status'], 'template' => (bool)$d['is_template'], 'meta' => json_decode($d['meta']), 'seq' => (int)$d['seq'], 'updated' => iso($d['updated_at']), 'slides' => slides_for($d, $role)]]);
+        $acc = page_access($d, $u, $role);
+        $slides = slides_for($d, $acc);
+        // the pages where this person can do something different from the rest
+        $perms = [];
+        foreach ($slides as $s) if (($r2 = page_role($acc, $s['sid'])) !== $role) $perms[$s['sid']] = $r2;
+        $ruled = [];
+        if ($role === 'owner') {
+            $st = db()->prepare('SELECT DISTINCT sid FROM ' . t('page_rules') . ' WHERE deck_id = ?');
+            $st->execute([$d['id']]);
+            $ruled = $st->fetchAll(PDO::FETCH_COLUMN);
+        }
+        send_json(['ok' => true, 'role' => $role, 'me' => $u ? public_user($u) : null, 'deck' => ['uid' => $d['uid'], 'title' => $d['title'], 'owner' => $d['owner_name'], 'access' => $d['access'], 'status' => $d['status'], 'template' => (bool)$d['is_template'], 'meta' => json_decode($d['meta']), 'seq' => (int)$d['seq'], 'updated' => iso($d['updated_at']), 'perms' => $perms ?: new stdClass(), 'ruled' => $ruled, 'limited' => $role !== 'owner' && pages_limited($acc), 'slides' => $slides]]);
 
     case 'deck.sync':
-        // Sends the changes of this browser (editors) and gets those of the others, with who is here
+        // Sends the changes of this browser (who can edit) and gets those of the others, with who is here
         only('POST');
         $u = visitor();
         if ($u) require_csrf($u);
@@ -462,19 +505,25 @@ switch ($r) {
         [$d, $role] = require_deck($u, (string)($b['d'] ?? ''));
         $client = (string)($b['client'] ?? '');
         if (!valid_key($client)) fail('bad_request', 422);
+        $since = (int)($b['since'] ?? 0);
         $seq = (int)$d['seq'];
+        $acc = page_access($d, $u, $role);
         $ops = $b['ops'] ?? [];
+        $denied = 0;
         if ($ops) {
-            if (role_rank($role) < role_rank('editor')) fail('forbidden', 403);
+            if (!$u || !can_write($acc)) fail('forbidden', 403);
             if ($d['status'] !== 'active') fail('deck_trashed', 409);
-            $seq = apply_ops($d, $u, $client, $ops);
+            $seq = apply_ops($d, $u, $client, $ops, $role, $denied);
+            $acc = page_access($d, $u, $role);
         }
         touch_presence((int)$d['id'], $client, $u, $b['state'] ?? null);
-        $news = ops_for(ops_since((int)$d['id'], (int)($b['since'] ?? 0), $seq), $role);
-        // the comments and the role can change too: their number tells the page to read them again
+        $raw = ops_since((int)$d['id'], $since, $seq);
+        $news = ops_for($raw, $acc);
+        // the comments can change too: their number tells the page to read them again
         $st = db()->prepare('SELECT COUNT(*), COALESCE(MAX(id), 0), COALESCE(SUM(resolved_at IS NOT NULL), 0) FROM ' . t('comments') . ' WHERE deck_id = ?');
         $st->execute([$d['id']]);
-        send_json(['ok' => true, 'role' => $role, 'seq' => $news ? end($news)['n'] : ($news === null ? $seq : (int)($b['since'] ?? 0)), 'ops' => $news, 'reload' => $news === null, 'people' => presence_list((int)$d['id'], $client), 'cv' => implode('.', $st->fetch(PDO::FETCH_NUM))]);
+        // the number of the last change read counts also the ones this person cannot see
+        send_json(['ok' => true, 'role' => $role, 'seq' => $raw ? end($raw)['n'] : ($raw === null ? $seq : $since), 'ops' => $news, 'reload' => $news === null, 'denied' => $denied, 'people' => presence_list((int)$d['id'], $client, $acc), 'cv' => implode('.', $st->fetch(PDO::FETCH_NUM))]);
 
     case 'deck.bye':
         // The page is closing (sendBeacon: no custom headers, so it can only remove this browser's own presence)
@@ -493,8 +542,8 @@ switch ($r) {
     case 'deck.rename':
         $u = writer();
         $b = body();
-        [$d] = require_deck($u, (string)($b['d'] ?? ''), 'editor');
-        apply_ops($d, $u, 'server', [['k' => 'deck.set', 'p' => ['title' => deck_title($b)]]]);
+        [$d, $role] = require_deck($u, (string)($b['d'] ?? ''), 'editor');
+        apply_ops($d, $u, 'server', [['k' => 'deck.set', 'p' => ['title' => deck_title($b)]]], $role);
         send_json(['ok' => true]);
 
     case 'deck.trash':
@@ -519,7 +568,7 @@ switch ($r) {
         [$d, $role] = require_deck($u, (string)($b['d'] ?? ''));
         $meta = json_decode($d['meta'], true) ?: [];
         if (role_rank($role) < role_rank('editor') && isset($meta['opts']['copy']) && !$meta['opts']['copy']) fail('copy_off', 403);
-        $slides = json_decode(json_out(slides_for($d, $role)), true);
+        $slides = json_decode(json_out(slides_for($d, page_access($d, $u, $role))), true);
         $uid = create_deck((int)$u['id'], mb_substr(deck_title($b + ['title' => $d['title']]), 0, 150), clean_meta($meta), $slides, $role === 'owner' ? ($d['folder_id'] ? (int)$d['folder_id'] : null) : null, !empty($b['template']));
         send_json(['ok' => true, 'uid' => $uid]);
 
@@ -533,6 +582,7 @@ switch ($r) {
     case 'deck.leave':
         $u = writer();
         $d = deck_by_uid((string)(body()['d'] ?? ''));
+        if ($d) db()->prepare('DELETE FROM ' . t('page_rules') . ' WHERE deck_id = ? AND who = ?')->execute([$d['id'], 'u:' . (int)$u['id']]);
         if ($d) db()->prepare('DELETE FROM ' . t('members') . ' WHERE deck_id = ? AND user_id = ?')->execute([$d['id'], $u['id']]);
         send_json(['ok' => true]);
 
@@ -598,7 +648,55 @@ switch ($r) {
         $table = t($byEmail ? 'invites' : 'members');
         $col = $byEmail ? 'email' : 'user_id';
         if ($r === 'share.role') db()->prepare("UPDATE $table SET role = ? WHERE deck_id = ? AND $col = ?")->execute([share_role($b), $d['id'], $who[0]]);
-        else db()->prepare("DELETE FROM $table WHERE deck_id = ? AND $col = ?")->execute([$d['id'], $who[0]]);
+        else {
+            db()->prepare("DELETE FROM $table WHERE deck_id = ? AND $col = ?")->execute([$d['id'], $who[0]]);
+            db()->prepare('DELETE FROM ' . t('page_rules') . ' WHERE deck_id = ? AND who = ?')->execute([$d['id'], ($byEmail ? 'e:' : 'u:') . $who[0]]);
+        }
+        send_json(['ok' => true]);
+
+    case 'page.rules':
+        // Who can do what on the single pages (the owner only)
+        $u = reader();
+        [$d] = require_deck($u, (string)($_GET['d'] ?? ''), 'owner');
+        $st = db()->prepare('SELECT sid, who, role FROM ' . t('page_rules') . ' WHERE deck_id = ?');
+        $st->execute([$d['id']]);
+        send_json(['ok' => true, 'rules' => $st->fetchAll()]);
+
+    case 'page.rule':
+        // Sets (or with role '' removes) a rule on some pages. Everyone else reads the presentation again
+        $u = writer();
+        $b = body();
+        [$d] = require_deck($u, (string)($b['d'] ?? ''), 'owner');
+        $role = (string)($b['role'] ?? '');
+        if (!in_array($role, ['', 'none', 'viewer', 'commenter', 'editor'], true)) fail('bad_request', 422);
+        $who = (string)($b['who'] ?? '');
+        $ok = $who === '*';
+        if (preg_match('/^u:(\d+)$/', $who, $m)) {
+            $st = db()->prepare('SELECT COUNT(*) FROM ' . t('members') . ' WHERE deck_id = ? AND user_id = ?');
+            $st->execute([$d['id'], (int)$m[1]]);
+            $ok = (int)$st->fetchColumn() > 0;
+        } elseif (strpos($who, 'e:') === 0) {
+            $who = mb_strtolower($who);
+            $st = db()->prepare('SELECT COUNT(*) FROM ' . t('invites') . ' WHERE deck_id = ? AND email = ?');
+            $st->execute([$d['id'], substr($who, 2)]);
+            $ok = (int)$st->fetchColumn() > 0;
+        }
+        $sids = array_values(array_unique(array_filter(array_slice((array)($b['pages'] ?? []), 0, MAX_SLIDES), 'valid_key')));
+        if (!$ok || !$sids) fail('bad_request', 422);
+        $db = db();
+        $db->beginTransaction();
+        $st = $db->prepare('SELECT seq FROM ' . t('decks') . ' WHERE id = ? FOR UPDATE');
+        $st->execute([$d['id']]);
+        $seq = (int)$st->fetchColumn() + 1;
+        $has = $db->prepare('SELECT COUNT(*) FROM ' . t('slides') . ' WHERE deck_id = ? AND sid = ?');
+        $set = $db->prepare($role === '' ? 'DELETE FROM ' . t('page_rules') . ' WHERE deck_id = ? AND sid = ? AND who = ?' : 'REPLACE INTO ' . t('page_rules') . ' (deck_id, sid, who, role) VALUES (?,?,?,?)');
+        foreach ($sids as $sid) {
+            $has->execute([$d['id'], $sid]);
+            if ((int)$has->fetchColumn()) $set->execute($role === '' ? [$d['id'], $sid, $who] : [$d['id'], $sid, $who, $role]);
+        }
+        $db->prepare('INSERT INTO ' . t('ops') . ' (deck_id, seq, client, user_id, op, created_at) VALUES (?,?,?,?,?,?)')->execute([$d['id'], $seq, 'server', $u['id'], json_out(['k' => 'page.rules']), now_utc()]);
+        $db->prepare('UPDATE ' . t('decks') . ' SET seq = ? WHERE id = ?')->execute([$seq, $d['id']]);
+        $db->commit();
         send_json(['ok' => true]);
 
     case 'share.link':
@@ -644,20 +742,59 @@ switch ($r) {
         db()->commit();
         send_json(['ok' => true, 'uid' => $l['uid']]);
 
+    // ================================================================ versions
+
+    case 'version.list':
+        $u = reader();
+        $d = require_versions($u, (string)($_GET['d'] ?? ''));
+        $st = db()->prepare('SELECT v.id, v.label, v.title, v.created_at, u.name FROM ' . t('versions') . ' v LEFT JOIN ' . t('users') . ' u ON u.id = v.user_id WHERE v.deck_id = ? ORDER BY v.id DESC LIMIT 100');
+        $st->execute([$d['id']]);
+        send_json(['ok' => true, 'versions' => array_map(fn($v) => ['id' => (int)$v['id'], 'label' => $v['label'], 'title' => $v['title'], 'by' => $v['name'] ?? '', 'at' => iso($v['created_at'])], $st->fetchAll())]);
+
+    case 'version.get':
+        $u = reader();
+        $d = require_versions($u, (string)($_GET['d'] ?? ''));
+        $st = db()->prepare('SELECT * FROM ' . t('versions') . ' WHERE id = ? AND deck_id = ?');
+        $st->execute([(int)($_GET['id'] ?? 0), $d['id']]);
+        $v = $st->fetch();
+        if (!$v) fail('version_not_found', 404);
+        send_json(['ok' => true, 'title' => $v['title'], 'meta' => json_decode($v['meta']), 'slides' => json_decode($v['slides'])]);
+
+    case 'version.save':
+        $u = writer();
+        $b = body();
+        $d = require_versions($u, (string)($b['d'] ?? ''));
+        if (too_many_attempts('version', 20, 60)) fail('rate_limited', 429);
+        record_attempt('version');
+        send_json(['ok' => true, 'id' => save_version($d, $u, $d['title'], $d['meta'], s($b, 'label', 80) ?: '—')]);
+
+    case 'version.restore':
+        $u = writer();
+        $b = body();
+        $d = require_versions($u, (string)($b['d'] ?? ''));
+        $st = db()->prepare('SELECT * FROM ' . t('versions') . ' WHERE id = ? AND deck_id = ?');
+        $st->execute([(int)($b['id'] ?? 0), $d['id']]);
+        $v = $st->fetch();
+        if (!$v) fail('version_not_found', 404);
+        restore_version($d, $u, $v);
+        send_json(['ok' => true]);
+
     // ================================================================ comments and personal notes
 
     case 'comment.list':
         only('GET');
         $u = visitor();
-        [$d] = require_deck($u, (string)($_GET['d'] ?? ''));
+        [$d, $role] = require_deck($u, (string)($_GET['d'] ?? ''));
+        $acc = page_access($d, $u, $role);
         $st = db()->prepare('SELECT c.*, u.name FROM ' . t('comments') . ' c JOIN ' . t('users') . ' u ON u.id = c.user_id WHERE c.deck_id = ? ORDER BY c.id LIMIT 2000');
         $st->execute([$d['id']]);
-        send_json(['ok' => true, 'comments' => array_map(fn($c) => ['id' => (int)$c['id'], 'parent' => $c['parent_id'] ? (int)$c['parent_id'] : null, 'user' => (int)$c['user_id'], 'name' => $c['name'], 'color' => user_color((int)$c['user_id']), 's' => $c['sid'], 'a' => $c['anchor'] ? json_decode($c['anchor']) : null, 'body' => $c['body'], 'resolved' => $c['resolved_at'] !== null, 'at' => iso($c['created_at'])], $st->fetchAll())]);
+        send_json(['ok' => true, 'comments' => array_map(fn($c) => ['id' => (int)$c['id'], 'parent' => $c['parent_id'] ? (int)$c['parent_id'] : null, 'user' => (int)$c['user_id'], 'name' => $c['name'], 'color' => user_color((int)$c['user_id']), 's' => $c['sid'], 'a' => $c['anchor'] ? json_decode($c['anchor']) : null, 'body' => $c['body'], 'resolved' => $c['resolved_at'] !== null, 'at' => iso($c['created_at'])], array_values(array_filter($st->fetchAll(), fn($c) => $c['sid'] === '' || page_role($acc, $c['sid']) !== '')))]);
 
     case 'comment.add':
         $u = writer();
         $b = body();
-        [$d, $role] = require_deck($u, (string)($b['d'] ?? ''), 'commenter');
+        [$d, $role] = require_deck($u, (string)($b['d'] ?? ''));
+        $acc = page_access($d, $u, $role);
         $meta = json_decode($d['meta'], true) ?: [];
         if (isset($meta['opts']['comments']) && !$meta['opts']['comments']) fail('comments_off', 403);
         if (too_many_attempts('comment', 60, 10)) fail('rate_limited', 429);
@@ -672,9 +809,11 @@ switch ($r) {
             if (!$thread) fail('comment_not_found', 404);
             $parent = (int)$thread['id'];
         }
+        $sid = $parent ? $thread['sid'] : (valid_key($b['s'] ?? '') ? $b['s'] : '');
+        if (role_rank($sid === '' ? $role : page_role($acc, $sid)) < role_rank('commenter')) fail('forbidden', 403);
         record_attempt('comment');
         db()->prepare('INSERT INTO ' . t('comments') . ' (deck_id, parent_id, user_id, sid, anchor, body, created_at) VALUES (?,?,?,?,?,?,?)')
-            ->execute([$d['id'], $parent, $u['id'], $parent ? $thread['sid'] : (valid_key($b['s'] ?? '') ? $b['s'] : ''), $parent ? '' : anchor($b['a'] ?? null), $text, now_utc()]);
+            ->execute([$d['id'], $parent, $u['id'], $sid, $parent ? '' : anchor($b['a'] ?? null), $text, now_utc()]);
         $cid = (int)db()->lastInsertId();
         // the owner and, in a thread, who started it
         foreach (array_unique([(int)$d['owner_id'], (int)($thread['user_id'] ?? 0)]) as $to) {
@@ -682,6 +821,9 @@ switch ($r) {
             $row = user_row($to);
             $set = json_decode((string)($row['settings'] ?? ''), true) ?: [];
             if (!$row || $row['status'] !== 'active' || !($set['mailComments'] ?? true)) continue;
+            // who can no longer see that page is not told what is said about it
+            $his = deck_role($d, $row);
+            if ($his === '' || ($sid !== '' && page_role(page_access($d, $row, $his), $sid) === '')) continue;
             $T = mail_t($row['ui_lang']);
             $v = ['by' => $u['name'], 'title' => $d['title']];
             send_notice($row['email'], $row['name'], $row['ui_lang'], fill($T['comment_subject'], $v), $T['comment_title'], [fill($T['comment_body'], $v), mb_substr($text, 0, 500)], app_url() . '?d=' . $d['uid'] . '&comments=1', $T['comment_button']);
@@ -693,13 +835,16 @@ switch ($r) {
     case 'comment.resolve':
         $u = writer();
         $b = body();
-        [$d, $role] = require_deck($u, (string)($b['d'] ?? ''), 'commenter');
+        [$d, $role] = require_deck($u, (string)($b['d'] ?? ''));
         $st = db()->prepare('SELECT * FROM ' . t('comments') . ' WHERE id = ? AND deck_id = ?');
         $st->execute([(int)($b['id'] ?? 0), $d['id']]);
         $c = $st->fetch();
         if (!$c) fail('comment_not_found', 404);
         $mine = (int)$c['user_id'] === (int)$u['id'];
-        $editor = role_rank($role) >= role_rank('editor');
+        $here = $c['sid'] === '' ? $role : page_role(page_access($d, $u, $role), $c['sid']);
+        if ($here === '') fail('comment_not_found', 404);
+        if (role_rank($here) < role_rank('commenter')) fail('forbidden', 403);
+        $editor = role_rank($here) >= role_rank('editor');
         if ($r === 'comment.edit') {
             $text = multiline($b, 'body', 2000);
             if (!$mine) fail('forbidden', 403);
@@ -749,28 +894,56 @@ switch ($r) {
         $u = writer();
         if (too_many_attempts('upload', 200, 60)) fail('rate_limited', 429);
         record_attempt('upload');
-        if ((int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 20000000) fail('image_big', 413);
-        $bytes = (string)file_get_contents('php://input');
+        if ((int)($_SERVER['CONTENT_LENGTH'] ?? 0) > MAX_UPLOAD_BYTES) fail('image_big', 413);
+        $bytes = (string)file_get_contents('php://input', false, null, 0, MAX_UPLOAD_BYTES + 1);
+        if (strlen($bytes) > MAX_UPLOAD_BYTES) fail('image_big', 413);
         if ($bytes === '') fail('image_type', 422);
         send_json(['ok' => true, 'media' => store_picture((int)$u['id'], $bytes, clean_text((string)($_GET['name'] ?? ''), 120))]);
 
+    case 'media.video.begin':
+        $u = writer();
+        if (too_many_attempts('video', 40, 60)) fail('rate_limited', 429);
+        record_attempt('video');
+        $b = body();
+        send_json(['ok' => true] + video_begin((int)$u['id'], clean_text($b['name'] ?? '', 120), (int)($b['size'] ?? 0)));
+
+    case 'media.video.piece':
+        $u = writer();
+        $m = video_row((int)$u['id'], (string)($_GET['id'] ?? ''));
+        $bytes = (string)file_get_contents('php://input', false, null, 0, VIDEO_PIECE + 1);
+        if (strlen($bytes) > VIDEO_PIECE) fail('video_big', 413);
+        send_json(['ok' => true, 'have' => video_piece($m, (int)($_GET['from'] ?? -1), $bytes)]);
+
+    case 'media.video.end':
+        $u = writer();
+        $b = body();
+        send_json(['ok' => true, 'media' => video_end((int)$u['id'], video_row((int)$u['id'], (string)($b['id'] ?? '')), (int)($b['w'] ?? 0), (int)($b['h'] ?? 0), clean_media($b['poster'] ?? ''))]);
+
+    case 'media.video.drop':
+        $u = writer();
+        video_drop((int)$u['id'], (string)(body()['id'] ?? ''));
+        send_json(['ok' => true]);
+
     case 'media.list':
         $u = reader();
-        $st = db()->prepare('SELECT * FROM ' . t('media') . ' WHERE user_id = ? ORDER BY created_at DESC LIMIT 200');
-        $st->execute([$u['id']]);
+        $st = db()->prepare('SELECT * FROM ' . t('media') . " WHERE user_id = ? AND mime <> 'upload' AND id NOT IN (SELECT poster FROM (SELECT poster FROM " . t('media') . " WHERE user_id = ? AND poster <> '') x) ORDER BY created_at DESC LIMIT 200");
+        $st->execute([$u['id'], $u['id']]);
         send_json(['ok' => true, 'media' => array_map('media_out', $st->fetchAll()), 'used' => media_used((int)$u['id']), 'quota' => (int)config_value('quota')]);
 
     case 'media.delete':
         $u = writer();
         $id = (string)(body()['id'] ?? '');
-        $st = db()->prepare('DELETE FROM ' . t('media') . ' WHERE id = ? AND user_id = ?');
+        $st = db()->prepare('SELECT poster FROM ' . t('media') . ' WHERE id = ? AND user_id = ?');
         $st->execute([$id, $u['id']]);
-        if ($st->rowCount()) delete_media_files([$id]);
+        $poster = (string)$st->fetchColumn(); // the still of a video goes with it
+        $st = db()->prepare('DELETE FROM ' . t('media') . ' WHERE id IN (?, ?) AND user_id = ?');
+        $st->execute([$id, $poster, $u['id']]);
+        if ($st->rowCount()) delete_media_files(array_filter([$id, $poster]));
         send_json(['ok' => true]);
 
     case 'search':
         $u = reader();
-        if (too_many_attempts('search', 120, 10)) fail('rate_limited', 429);
+        if (too_many_attempts('search', 300, 10)) fail('rate_limited', 429);
         record_attempt('search');
         $q = s($_GET, 'q', 100);
         if (mb_strlen($q) < 2) fail('text_required', 422);
@@ -940,9 +1113,10 @@ switch ($r) {
         if (!$d) fail('deck_not_found', 404);
         $st = db()->prepare('SELECT COUNT(*) FROM ' . t('reports') . ' WHERE deck_id = ?');
         $st->execute([$d['id']]);
-        if ($d['access'] !== 'link' && !(int)$st->fetchColumn()) fail('admin_private', 403);
+        $reported = (int)$st->fetchColumn() > 0;
+        if ($d['access'] !== 'link' && !$reported) fail('admin_private', 403); // of a public one, only the pages everybody sees
         audit($u, 'view', $d['title'] . ' (' . $d['uid'] . ')');
-        send_json(['ok' => true, 'title' => $d['title'], 'meta' => json_decode($d['meta']), 'slides' => slides_for($d, 'viewer')]);
+        send_json(['ok' => true, 'title' => $d['title'], 'meta' => json_decode($d['meta']), 'slides' => slides_for($d, $reported ? ['role' => 'owner'] : page_access($d, null, 'viewer'))]);
 
     case 'admin.reports':
         require_master();

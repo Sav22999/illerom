@@ -5,48 +5,253 @@
     const VERSION = '1.28.0';
     /** What changed, newest first: add an entry at every release, and keep VERSION equal to the first one. */
     const RELEASES = [
-        {v: '1.28.0', date: '2026-11-25', it: ['Accesso con SavAccount', 'Se hai già un account con lo stesso indirizzo, prima di collegare Google o SavAccount ti chiediamo di confermare che sei tu', 'Metodi di accesso: nel profilo colleghi e scolleghi Google e SavAccount'], en: ['Sign in with SavAccount', 'If you already have an account with the same address, we ask you to confirm it is you before linking Google or SavAccount', 'Sign-in methods: link and unlink Google and SavAccount from your profile']},
-        {v: '1.27.1', date: '2026-11-25', it: ['La lingua si cambia dall’intestazione, anche prima di accedere'], en: ['Change the language from the header, even before signing in']},
-        {v: '1.27.0', date: '2026-11-18', it: ['Tutti i corsi rivisti e aggiornati: 380 nuovi livelli, da 632 a 1.012, e informazioni corrette dove erano superate o sbagliate', '5 nuovi corsi: SavComponents avanzato, C intermedio, C++ intermedio, Go intermedio e C# intermedio', 'Nella teoria gli esempi HTML si vedono anche disegnati, e nelle anteprime di SavComponents, Bootstrap e Tailwind i componenti appaiono davvero', 'I corsi mostrano il logo della loro tecnologia, quando è libero', 'Negli esercizi i controlli superati e mancati si distinguono a colpo d’occhio', 'Corretto un errore che, finito un corso, faceva salire XP e Scintille senza fine e bloccava gli esami ripetuti: i conti degli account coinvolti sono stati sistemati'], en: ['Every course reviewed and updated: 380 new levels, from 632 to 1,012, and facts corrected where they were outdated or wrong', '5 new courses: SavComponents advanced, intermediate C, intermediate C++, intermediate Go and intermediate C#', 'In the theory, HTML samples are also shown rendered, and in the SavComponents, Bootstrap and Tailwind previews the components really appear', 'Courses show the logo of their technology, when it is free to use', 'In exercises, passed and missed checks stand out at a glance', 'Fixed a bug that, after finishing a course, kept raising XP and Sparks without end and stalled repeated exams: the accounts involved have been put right']},
-        {v: '1.26.0', date: '2026-11-17', it: ['2 nuovi corsi su SavComponents, la libreria di componenti web senza framework: base (installazione, pulsanti, card, avvisi e form) e intermedio (temi e stili, token, dialoghi, navigazione, eventi, grafici e integrazione)', 'I corsi appena arrivati hanno l’etichetta «Nuovo» e una sezione tutta loro nella home'], en: ['2 new courses on SavComponents, the framework-free web component library: basics (installation, buttons, cards, alerts and forms) and intermediate (themes and styles, tokens, dialogs, navigation, events, charts and integration)', 'Just-added courses carry a “New” label and get their own section on the home page']},
-        {v: '1.25.1', date: '2026-11-16', it: ['Nell’app Android le notifiche arrivano anche ad app chiusa'], en: ['In the Android app notifications arrive even when the app is closed']},
-        {v: '1.25.0', date: '2026-11-14', it: ['50 nuovi livelli: ogni corso ne ha almeno cinque, dagli assistenti AI al design, da Git a Excel', 'I corsi iniziati e non finiti sono in cima, nella home e nella pagina dei corsi, dal più recente'], en: ['50 new levels: every course has at least five, from AI assistants to design, from Git to Excel', 'Courses started and not finished are at the top, on the home page and the courses page, most recent first']},
-        {v: '1.24.0', date: '2026-11-13', it: ['Il certificato dice in che lingua hai seguito il corso, e puoi ottenerlo in più lingue: se lo hai già in italiano, puoi fare l’esame anche in inglese', 'Nella ricerca dei corsi i linguaggi si aprono e chiudono con un pulsante; le categorie restano sempre visibili'], en: ['The certificate says which language you took the course in, and you can earn it in more than one: if you already have it in Italian, you can take the exam in English too', 'In the course search the languages open and close with a button; the categories stay always visible']},
-        {v: '1.23.0', date: '2026-11-13', it: ['14 nuovi corsi di design: UX base, intermedio e avanzato, UX su mobile, su desktop e in realtà virtuale, UI base e intermedio, UI su mobile, pattern di interfaccia, Material Design, design per iOS, Fluent Design e Bootstrap', 'Nuovi corsi: come funzionano i motori di ricerca e i crawler, e come funzionano gli LLM', 'Nuova categoria: Design'], en: ['14 new design courses: UX basics, intermediate and advanced, UX on mobile, on desktop and in virtual reality, UI basics and intermediate, UI on mobile, UI design patterns, Material Design, iOS design, Fluent Design and Bootstrap', 'New courses: how search engines and crawlers work, and how LLMs work', 'New category: Design']},
-        {v: '1.22.0', date: '2026-11-11', it: ['35 nuovi corsi: React, Next.js, Node.js, analisi dati con pandas, Git e GitHub, terminale Bash, Docker, Kubernetes, cloud, Go, C#, C, C++, testing, design pattern, espressioni regolari, API REST e GraphQL, Redis, algoritmi, sicurezza web e di base, accessibilità, Excel e Power BI', 'Nuovi corsi sugli strumenti AI: GitHub Copilot, Microsoft Copilot, Perplexity, editor e agenti AI, Hugging Face, AI per immagini, video e audio, Grok, Meta AI, Qwen e Apple Intelligence', 'Nuove categorie: DevOps, Sicurezza e Produttività', 'Domande più eque: la risposta giusta non è più riconoscibile perché è la più lunga', 'Esercizi meno rigidi: accettano più modi corretti di scrivere la soluzione'], en: ['35 new courses: React, Next.js, Node.js, data analysis with pandas, Git and GitHub, the Bash terminal, Docker, Kubernetes, cloud, Go, C#, C, C++, testing, design patterns, regular expressions, REST and GraphQL APIs, Redis, algorithms, web and everyday security, accessibility, Excel and Power BI', 'New courses on AI tools: GitHub Copilot, Microsoft Copilot, Perplexity, AI editors and agents, Hugging Face, AI for images, video and audio, Grok, Meta AI, Qwen and Apple Intelligence', 'New categories: DevOps, Security and Productivity', 'Fairer questions: the right answer no longer stands out by being the longest', 'Less rigid exercises: they accept more correct ways of writing the solution']},
-        {v: '1.21.0', date: '2026-11-11', it: ['20 nuovi corsi sull’intelligenza artificiale, dal base all’avanzato: fondamenti, prompt engineering, AI responsabile, matematica, machine learning, deep learning, API, RAG, agenti e MCP, MLOps e modelli locali', 'Corsi dedicati agli assistenti: ChatGPT, Claude, Gemini, Mistral (Le Chat e Vibe), Proton Lumo e DeepSeek', 'Nuova categoria AI nei filtri dei corsi', 'Nella barra laterale, accanto a Corsi, Giochi e Certificati, compare il loro numero'], en: ['20 new artificial intelligence courses, from basics to advanced: fundamentals, prompt engineering, responsible AI, maths, machine learning, deep learning, APIs, RAG, agents and MCP, MLOps and local models', 'Courses on the assistants: ChatGPT, Claude, Gemini, Mistral (Le Chat and Vibe), Proton Lumo and DeepSeek', 'New AI category in the course filters', 'In the sidebar, Courses, Games and Certificates now show how many there are']},
-        {v: '1.20.0', date: '2026-11-10', it: ['6 nuovi corsi sui database: MySQL, MariaDB, PostgreSQL, SQLite, SQL Server (T-SQL) e MongoDB', 'Le risposte delle domande compaiono in ordine casuale (prima la giusta era quasi sempre la prima)', 'Portale admin: gli esercizi in SQL, Python, Rust e negli altri linguaggi non diventano più HTML quando li salvi'], en: ['6 new database courses: MySQL, MariaDB, PostgreSQL, SQLite, SQL Server (T-SQL) and MongoDB', 'Question options now appear in random order (the right one used to be almost always first)', 'Admin portal: exercises in SQL, Python, Rust and the other languages no longer turn into HTML when you save them']},
-        {v: '1.19.4', date: '2026-11-09', it: ['Immagine del profilo ancora più personalizzabile: 26 nuovi personaggi, 27 accessori, 18 cornici e 21 nuovi sfondi', 'Sezione Certificati nella barra di navigazione e «Corsi» al posto di «Percorso»', 'Nel certificato il punteggio è in decimi, e con 10 su 10 il titolo è «Certificate of completion with honours»'], en: ['Even more profile picture options: 26 new characters, 27 accessories, 18 frames and 21 new backgrounds', 'Certificates section in the navigation bar and “Courses” instead of “Path”', 'On the certificate the score is out of 10, and with 10 of 10 the title is “Certificate of completion with honours”']},
-        {v: '1.19.2', date: '2026-11-08', it: ['Ricerca corsi: selezione multipla delle chip per categorie e linguaggi'], en: ['Course search: multiple selection of category and language chips']},
-        {v: '1.19.1', date: '2026-11-08', it: ['Ricerca corsi: categorie e linguaggi sono chip da toccare, e la ricerca ha la sua lente'], en: ['Course search: categories and languages are chips to tap, and the search has its magnifier']},
-        {v: '1.19.0', date: '2026-11-08', it: ['28 nuovi corsi: Tailwind CSS, Angular, Vue, Python, Java, SQL, R, Flutter, Swift, Kotlin, Rust e Vala, più un nuovo PHP avanzato', 'Il vecchio PHP avanzato ora si chiama PHP intermedio: progressi e certificati restano', 'Nel Percorso cerchi un corso, filtri per categoria (frontend, backend, mobile, dati, sistemi, desktop) e trovi i corsi raggruppati per linguaggio', 'Il tempo dell’esame finale si può impostare corso per corso dal portale admin'], en: ['28 new courses: Tailwind CSS, Angular, Vue, Python, Java, SQL, R, Flutter, Swift, Kotlin, Rust and Vala, plus a new Advanced PHP', 'The old Advanced PHP is now Intermediate PHP: progress and certificates stay', 'In the Path you can search for a course, filter by category (frontend, backend, mobile, data, systems, desktop) and see courses grouped by language', 'The final exam time can be set course by course from the admin portal']},
-        {v: '1.18.0', date: '2026-11-08', it: ['Immagine del profilo: scegli un personaggio e uno sfondo, comprali con le Scintille dal profilo; si vedono in classifica e tra gli amici', 'Il certificato dice che si può verificare con il suo numero sul sito ufficiale di Fucina, senza indirizzo', 'Più nomi per i gradi: 14, da Scintilla a Fiamma eterna, tutti elencati nelle statistiche', 'Portale admin più comodo da telefono: barra in alto, sezioni scorrevoli e tabelle a schede'], en: ['Profile picture: pick a character and a background and buy them with Sparks from your profile; they show in the leaderboards and among friends', 'The certificate says it can be checked with its number on the official Fucina website, with no address', 'More grade names: 14, from Spark to Eternal flame, all listed in the stats', 'Admin portal easier on a phone: top bar, scrolling sections and tables as cards']},
-        {v: '1.17.0', date: '2026-11-08', it: ['Chi si registra con email e password conferma l’indirizzo con un link: finché non lo apre l’account resta bloccato'], en: ['If you sign up with email and password you confirm the address with a link: until you open it the account stays locked']},
-        {v: '1.16.2', date: '2026-11-08', it: ['Ogni nuovo badge dà +50 XP e +50 Scintille'], en: ['Every new badge gives +50 XP and +50 Sparks']},
-        {v: '1.16.1', date: '2026-11-08', it: ['Laboratorio flex non blocca più il browser', 'Quattro di fila diventa un forza quattro con le domande: risposta giusta, cade il tuo gettone verde; risposta sbagliata, il computer mette un gettone rosso. Nessun altro gettone'], en: ['Flex lab no longer freezes the browser', 'Four in a line becomes four in a row with questions: a right answer drops your green disc, a wrong one lets the computer drop a red disc. No other discs']},
-        {v: '1.16.0', date: '2026-11-07', it: ['Quattro nuovi giochi: Tinta giusta, Duello di selettori, Laboratorio flex e Che cosa stampa?', 'Tagdoku cresce con i livelli: 4×4, poi 9×9, poi 16×16', 'La scacchiera CSS cresce con i livelli: da 3×3 fino a 10×10', 'Quattro di fila: i gettoni cadono, la colonna scelta si illumina e la fila vincente lampeggia', 'Negli esercizi «Ora tocca a te» le due metà hanno le etichette Codice e Anteprima'], en: ['Four new games: Right shade, Selector duel, Flex lab and What does it print?', 'Tagdoku grows with the levels: 4×4, then 9×9, then 16×16', 'The CSS board grows with the levels: from 3×3 up to 10×10', 'Four in a line: discs fall, the chosen column lights up and the winning line flashes', 'In the “Now you try” exercises the two halves are labelled Code and Preview']},
-        {v: '1.15.3', date: '2026-11-07', it: ['Salti di riga: ora sposti le righe trascinandole (da telefono, dalla maniglia a sinistra); il tocco per scambiarle resta'], en: ['Line hop: you now move lines by dragging them (on a phone, by the handle on the left); tapping to swap still works']},
-        {v: '1.15.2', date: '2026-11-07', it: ['Tagdoku: i riquadri sono separati da linee più marcate e i tag che inserisci sono blu, così non sembrano errori'], en: ['Tagdoku: the boxes have stronger dividing lines and the tags you enter are blue, so they no longer look like mistakes']},
-        {v: '1.15.1', date: '2026-11-07', it: ['Quattro in fila: il tuo gettone è verde e una risposta sbagliata fa cadere un gettone rosso, che non è di nessuno', 'Corretto un errore grafico che allargava la colonna scelta'], en: ['Four in a line: your disc is green and a wrong answer drops a red disc that belongs to nobody', 'Fixed a display bug that stretched the chosen column']},
-        {v: '1.15.0', date: '2026-11-07', it: ['Alla prima partita fai un giro di prova guidato, con i pezzi veri del gioco'], en: ['Your first game starts with a guided practice round, using the real pieces of the game']},
-        {v: '1.14.0', date: '2026-11-07', it: ['Alla prima partita di ogni gioco una guida spiega come si gioca; poi la ritrovi nel pulsante ?'], en: ['The first time you play a game a guide explains how; then you find it under the ? button']},
-        {v: '1.13.0', date: '2026-11-07', it: ['Mentre una pagina si carica ne vedi già la forma', 'Il pulsante di Google non ha più lo sfondo bianco nel tema scuro'], en: ['While a page loads you already see its shape', 'The Google button no longer has a white background in the dark theme']},
-        {v: '1.12.1', date: '2026-11-07', it: ['I livelli superati con l’esame mostrano da 1 a 3 fuochi, in base al voto', 'Sfida del giorno e Palestra indicano il linguaggio di ogni esercizio', 'Su telefono il corso si apre sull’ultimo livello sbloccato', 'L’email dell’account non si può più modificare'], en: ['Levels passed with the exam show 1 to 3 fires, based on the score', 'Daily challenge and Gym show the language of each exercise', 'On phones a course opens on the last unlocked level', 'The email of the account can no longer be changed']},
-        {v: '1.11.0', date: '2026-11-07', it: ['Notifiche: sfida del giorno, serie a rischio, premi e amici, ognuna attivabile dal profilo'], en: ['Notifications: daily challenge, streak at risk, prizes and friends, each one set from your profile']},
-        {v: '1.10.0', date: '2026-11-07', it: ['Chiunque può verificare un certificato con il suo numero, senza account'], en: ['Anyone can verify a certificate with its number, without an account']},
-        {v: '1.9.0', date: '2026-11-07', it: ['L’esame ha un tempo massimo di 15 minuti', 'Sfida del giorno cronometrata: a parità di risposte vince chi è più veloce'], en: ['The exam has a time limit of 15 minutes', 'Timed daily challenge: with equal answers the fastest wins']},
-        {v: '1.8.0', date: '2026-11-07', it: ['Nuovo certificato: un’immagine in inglese, da salvare in PNG o PDF'], en: ['New certificate: an image in English, to save as PNG or PDF']},
-        {v: '1.7.0', date: '2026-11-07', it: ['Superando l’esame i livelli non giocati risultano risolti: 2 stelle dal 90%, altrimenti 1', 'La terza stella si guadagna giocando il livello'], en: ['Passing the exam solves the levels not played: 2 stars from 90%, otherwise 1', 'The third star is earned by playing the level']},
+        {
+            v: '1.28.0',
+            date: '2026-11-25',
+            it: ['Accesso con SavAccount', 'Se hai già un account con lo stesso indirizzo, prima di collegare Google o SavAccount ti chiediamo di confermare che sei tu', 'Metodi di accesso: nel profilo colleghi e scolleghi Google e SavAccount'],
+            en: ['Sign in with SavAccount', 'If you already have an account with the same address, we ask you to confirm it is you before linking Google or SavAccount', 'Sign-in methods: link and unlink Google and SavAccount from your profile']
+        },
+        {
+            v: '1.27.1',
+            date: '2026-11-25',
+            it: ['La lingua si cambia dall’intestazione, anche prima di accedere'],
+            en: ['Change the language from the header, even before signing in']
+        },
+        {
+            v: '1.27.0',
+            date: '2026-11-18',
+            it: ['Tutti i corsi rivisti e aggiornati: 380 nuovi livelli, da 632 a 1.012, e informazioni corrette dove erano superate o sbagliate', '5 nuovi corsi: SavComponents avanzato, C intermedio, C++ intermedio, Go intermedio e C# intermedio', 'Nella teoria gli esempi HTML si vedono anche disegnati, e nelle anteprime di SavComponents, Bootstrap e Tailwind i componenti appaiono davvero', 'I corsi mostrano il logo della loro tecnologia, quando è libero', 'Negli esercizi i controlli superati e mancati si distinguono a colpo d’occhio', 'Corretto un errore che, finito un corso, faceva salire XP e Scintille senza fine e bloccava gli esami ripetuti: i conti degli account coinvolti sono stati sistemati'],
+            en: ['Every course reviewed and updated: 380 new levels, from 632 to 1,012, and facts corrected where they were outdated or wrong', '5 new courses: SavComponents advanced, intermediate C, intermediate C++, intermediate Go and intermediate C#', 'In the theory, HTML samples are also shown rendered, and in the SavComponents, Bootstrap and Tailwind previews the components really appear', 'Courses show the logo of their technology, when it is free to use', 'In exercises, passed and missed checks stand out at a glance', 'Fixed a bug that, after finishing a course, kept raising XP and Sparks without end and stalled repeated exams: the accounts involved have been put right']
+        },
+        {
+            v: '1.26.0',
+            date: '2026-11-17',
+            it: ['2 nuovi corsi su SavComponents, la libreria di componenti web senza framework: base (installazione, pulsanti, card, avvisi e form) e intermedio (temi e stili, token, dialoghi, navigazione, eventi, grafici e integrazione)', 'I corsi appena arrivati hanno l’etichetta «Nuovo» e una sezione tutta loro nella home'],
+            en: ['2 new courses on SavComponents, the framework-free web component library: basics (installation, buttons, cards, alerts and forms) and intermediate (themes and styles, tokens, dialogs, navigation, events, charts and integration)', 'Just-added courses carry a “New” label and get their own section on the home page']
+        },
+        {
+            v: '1.25.1',
+            date: '2026-11-16',
+            it: ['Nell’app Android le notifiche arrivano anche ad app chiusa'],
+            en: ['In the Android app notifications arrive even when the app is closed']
+        },
+        {
+            v: '1.25.0',
+            date: '2026-11-14',
+            it: ['50 nuovi livelli: ogni corso ne ha almeno cinque, dagli assistenti AI al design, da Git a Excel', 'I corsi iniziati e non finiti sono in cima, nella home e nella pagina dei corsi, dal più recente'],
+            en: ['50 new levels: every course has at least five, from AI assistants to design, from Git to Excel', 'Courses started and not finished are at the top, on the home page and the courses page, most recent first']
+        },
+        {
+            v: '1.24.0',
+            date: '2026-11-13',
+            it: ['Il certificato dice in che lingua hai seguito il corso, e puoi ottenerlo in più lingue: se lo hai già in italiano, puoi fare l’esame anche in inglese', 'Nella ricerca dei corsi i linguaggi si aprono e chiudono con un pulsante; le categorie restano sempre visibili'],
+            en: ['The certificate says which language you took the course in, and you can earn it in more than one: if you already have it in Italian, you can take the exam in English too', 'In the course search the languages open and close with a button; the categories stay always visible']
+        },
+        {
+            v: '1.23.0',
+            date: '2026-11-13',
+            it: ['14 nuovi corsi di design: UX base, intermedio e avanzato, UX su mobile, su desktop e in realtà virtuale, UI base e intermedio, UI su mobile, pattern di interfaccia, Material Design, design per iOS, Fluent Design e Bootstrap', 'Nuovi corsi: come funzionano i motori di ricerca e i crawler, e come funzionano gli LLM', 'Nuova categoria: Design'],
+            en: ['14 new design courses: UX basics, intermediate and advanced, UX on mobile, on desktop and in virtual reality, UI basics and intermediate, UI on mobile, UI design patterns, Material Design, iOS design, Fluent Design and Bootstrap', 'New courses: how search engines and crawlers work, and how LLMs work', 'New category: Design']
+        },
+        {
+            v: '1.22.0',
+            date: '2026-11-11',
+            it: ['35 nuovi corsi: React, Next.js, Node.js, analisi dati con pandas, Git e GitHub, terminale Bash, Docker, Kubernetes, cloud, Go, C#, C, C++, testing, design pattern, espressioni regolari, API REST e GraphQL, Redis, algoritmi, sicurezza web e di base, accessibilità, Excel e Power BI', 'Nuovi corsi sugli strumenti AI: GitHub Copilot, Microsoft Copilot, Perplexity, editor e agenti AI, Hugging Face, AI per immagini, video e audio, Grok, Meta AI, Qwen e Apple Intelligence', 'Nuove categorie: DevOps, Sicurezza e Produttività', 'Domande più eque: la risposta giusta non è più riconoscibile perché è la più lunga', 'Esercizi meno rigidi: accettano più modi corretti di scrivere la soluzione'],
+            en: ['35 new courses: React, Next.js, Node.js, data analysis with pandas, Git and GitHub, the Bash terminal, Docker, Kubernetes, cloud, Go, C#, C, C++, testing, design patterns, regular expressions, REST and GraphQL APIs, Redis, algorithms, web and everyday security, accessibility, Excel and Power BI', 'New courses on AI tools: GitHub Copilot, Microsoft Copilot, Perplexity, AI editors and agents, Hugging Face, AI for images, video and audio, Grok, Meta AI, Qwen and Apple Intelligence', 'New categories: DevOps, Security and Productivity', 'Fairer questions: the right answer no longer stands out by being the longest', 'Less rigid exercises: they accept more correct ways of writing the solution']
+        },
+        {
+            v: '1.21.0',
+            date: '2026-11-11',
+            it: ['20 nuovi corsi sull’intelligenza artificiale, dal base all’avanzato: fondamenti, prompt engineering, AI responsabile, matematica, machine learning, deep learning, API, RAG, agenti e MCP, MLOps e modelli locali', 'Corsi dedicati agli assistenti: ChatGPT, Claude, Gemini, Mistral (Le Chat e Vibe), Proton Lumo e DeepSeek', 'Nuova categoria AI nei filtri dei corsi', 'Nella barra laterale, accanto a Corsi, Giochi e Certificati, compare il loro numero'],
+            en: ['20 new artificial intelligence courses, from basics to advanced: fundamentals, prompt engineering, responsible AI, maths, machine learning, deep learning, APIs, RAG, agents and MCP, MLOps and local models', 'Courses on the assistants: ChatGPT, Claude, Gemini, Mistral (Le Chat and Vibe), Proton Lumo and DeepSeek', 'New AI category in the course filters', 'In the sidebar, Courses, Games and Certificates now show how many there are']
+        },
+        {
+            v: '1.20.0',
+            date: '2026-11-10',
+            it: ['6 nuovi corsi sui database: MySQL, MariaDB, PostgreSQL, SQLite, SQL Server (T-SQL) e MongoDB', 'Le risposte delle domande compaiono in ordine casuale (prima la giusta era quasi sempre la prima)', 'Portale admin: gli esercizi in SQL, Python, Rust e negli altri linguaggi non diventano più HTML quando li salvi'],
+            en: ['6 new database courses: MySQL, MariaDB, PostgreSQL, SQLite, SQL Server (T-SQL) and MongoDB', 'Question options now appear in random order (the right one used to be almost always first)', 'Admin portal: exercises in SQL, Python, Rust and the other languages no longer turn into HTML when you save them']
+        },
+        {
+            v: '1.19.4',
+            date: '2026-11-09',
+            it: ['Immagine del profilo ancora più personalizzabile: 26 nuovi personaggi, 27 accessori, 18 cornici e 21 nuovi sfondi', 'Sezione Certificati nella barra di navigazione e «Corsi» al posto di «Percorso»', 'Nel certificato il punteggio è in decimi, e con 10 su 10 il titolo è «Certificate of completion with honours»'],
+            en: ['Even more profile picture options: 26 new characters, 27 accessories, 18 frames and 21 new backgrounds', 'Certificates section in the navigation bar and “Courses” instead of “Path”', 'On the certificate the score is out of 10, and with 10 of 10 the title is “Certificate of completion with honours”']
+        },
+        {
+            v: '1.19.2',
+            date: '2026-11-08',
+            it: ['Ricerca corsi: selezione multipla delle chip per categorie e linguaggi'],
+            en: ['Course search: multiple selection of category and language chips']
+        },
+        {
+            v: '1.19.1',
+            date: '2026-11-08',
+            it: ['Ricerca corsi: categorie e linguaggi sono chip da toccare, e la ricerca ha la sua lente'],
+            en: ['Course search: categories and languages are chips to tap, and the search has its magnifier']
+        },
+        {
+            v: '1.19.0',
+            date: '2026-11-08',
+            it: ['28 nuovi corsi: Tailwind CSS, Angular, Vue, Python, Java, SQL, R, Flutter, Swift, Kotlin, Rust e Vala, più un nuovo PHP avanzato', 'Il vecchio PHP avanzato ora si chiama PHP intermedio: progressi e certificati restano', 'Nel Percorso cerchi un corso, filtri per categoria (frontend, backend, mobile, dati, sistemi, desktop) e trovi i corsi raggruppati per linguaggio', 'Il tempo dell’esame finale si può impostare corso per corso dal portale admin'],
+            en: ['28 new courses: Tailwind CSS, Angular, Vue, Python, Java, SQL, R, Flutter, Swift, Kotlin, Rust and Vala, plus a new Advanced PHP', 'The old Advanced PHP is now Intermediate PHP: progress and certificates stay', 'In the Path you can search for a course, filter by category (frontend, backend, mobile, data, systems, desktop) and see courses grouped by language', 'The final exam time can be set course by course from the admin portal']
+        },
+        {
+            v: '1.18.0',
+            date: '2026-11-08',
+            it: ['Immagine del profilo: scegli un personaggio e uno sfondo, comprali con le Scintille dal profilo; si vedono in classifica e tra gli amici', 'Il certificato dice che si può verificare con il suo numero sul sito ufficiale di Fucina, senza indirizzo', 'Più nomi per i gradi: 14, da Scintilla a Fiamma eterna, tutti elencati nelle statistiche', 'Portale admin più comodo da telefono: barra in alto, sezioni scorrevoli e tabelle a schede'],
+            en: ['Profile picture: pick a character and a background and buy them with Sparks from your profile; they show in the leaderboards and among friends', 'The certificate says it can be checked with its number on the official Fucina website, with no address', 'More grade names: 14, from Spark to Eternal flame, all listed in the stats', 'Admin portal easier on a phone: top bar, scrolling sections and tables as cards']
+        },
+        {
+            v: '1.17.0',
+            date: '2026-11-08',
+            it: ['Chi si registra con email e password conferma l’indirizzo con un link: finché non lo apre l’account resta bloccato'],
+            en: ['If you sign up with email and password you confirm the address with a link: until you open it the account stays locked']
+        },
+        {
+            v: '1.16.2',
+            date: '2026-11-08',
+            it: ['Ogni nuovo badge dà +50 XP e +50 Scintille'],
+            en: ['Every new badge gives +50 XP and +50 Sparks']
+        },
+        {
+            v: '1.16.1',
+            date: '2026-11-08',
+            it: ['Laboratorio flex non blocca più il browser', 'Quattro di fila diventa un forza quattro con le domande: risposta giusta, cade il tuo gettone verde; risposta sbagliata, il computer mette un gettone rosso. Nessun altro gettone'],
+            en: ['Flex lab no longer freezes the browser', 'Four in a line becomes four in a row with questions: a right answer drops your green disc, a wrong one lets the computer drop a red disc. No other discs']
+        },
+        {
+            v: '1.16.0',
+            date: '2026-11-07',
+            it: ['Quattro nuovi giochi: Tinta giusta, Duello di selettori, Laboratorio flex e Che cosa stampa?', 'Tagdoku cresce con i livelli: 4×4, poi 9×9, poi 16×16', 'La scacchiera CSS cresce con i livelli: da 3×3 fino a 10×10', 'Quattro di fila: i gettoni cadono, la colonna scelta si illumina e la fila vincente lampeggia', 'Negli esercizi «Ora tocca a te» le due metà hanno le etichette Codice e Anteprima'],
+            en: ['Four new games: Right shade, Selector duel, Flex lab and What does it print?', 'Tagdoku grows with the levels: 4×4, then 9×9, then 16×16', 'The CSS board grows with the levels: from 3×3 up to 10×10', 'Four in a line: discs fall, the chosen column lights up and the winning line flashes', 'In the “Now you try” exercises the two halves are labelled Code and Preview']
+        },
+        {
+            v: '1.15.3',
+            date: '2026-11-07',
+            it: ['Salti di riga: ora sposti le righe trascinandole (da telefono, dalla maniglia a sinistra); il tocco per scambiarle resta'],
+            en: ['Line hop: you now move lines by dragging them (on a phone, by the handle on the left); tapping to swap still works']
+        },
+        {
+            v: '1.15.2',
+            date: '2026-11-07',
+            it: ['Tagdoku: i riquadri sono separati da linee più marcate e i tag che inserisci sono blu, così non sembrano errori'],
+            en: ['Tagdoku: the boxes have stronger dividing lines and the tags you enter are blue, so they no longer look like mistakes']
+        },
+        {
+            v: '1.15.1',
+            date: '2026-11-07',
+            it: ['Quattro in fila: il tuo gettone è verde e una risposta sbagliata fa cadere un gettone rosso, che non è di nessuno', 'Corretto un errore grafico che allargava la colonna scelta'],
+            en: ['Four in a line: your disc is green and a wrong answer drops a red disc that belongs to nobody', 'Fixed a display bug that stretched the chosen column']
+        },
+        {
+            v: '1.15.0',
+            date: '2026-11-07',
+            it: ['Alla prima partita fai un giro di prova guidato, con i pezzi veri del gioco'],
+            en: ['Your first game starts with a guided practice round, using the real pieces of the game']
+        },
+        {
+            v: '1.14.0',
+            date: '2026-11-07',
+            it: ['Alla prima partita di ogni gioco una guida spiega come si gioca; poi la ritrovi nel pulsante ?'],
+            en: ['The first time you play a game a guide explains how; then you find it under the ? button']
+        },
+        {
+            v: '1.13.0',
+            date: '2026-11-07',
+            it: ['Mentre una pagina si carica ne vedi già la forma', 'Il pulsante di Google non ha più lo sfondo bianco nel tema scuro'],
+            en: ['While a page loads you already see its shape', 'The Google button no longer has a white background in the dark theme']
+        },
+        {
+            v: '1.12.1',
+            date: '2026-11-07',
+            it: ['I livelli superati con l’esame mostrano da 1 a 3 fuochi, in base al voto', 'Sfida del giorno e Palestra indicano il linguaggio di ogni esercizio', 'Su telefono il corso si apre sull’ultimo livello sbloccato', 'L’email dell’account non si può più modificare'],
+            en: ['Levels passed with the exam show 1 to 3 fires, based on the score', 'Daily challenge and Gym show the language of each exercise', 'On phones a course opens on the last unlocked level', 'The email of the account can no longer be changed']
+        },
+        {
+            v: '1.11.0',
+            date: '2026-11-07',
+            it: ['Notifiche: sfida del giorno, serie a rischio, premi e amici, ognuna attivabile dal profilo'],
+            en: ['Notifications: daily challenge, streak at risk, prizes and friends, each one set from your profile']
+        },
+        {
+            v: '1.10.0',
+            date: '2026-11-07',
+            it: ['Chiunque può verificare un certificato con il suo numero, senza account'],
+            en: ['Anyone can verify a certificate with its number, without an account']
+        },
+        {
+            v: '1.9.0',
+            date: '2026-11-07',
+            it: ['L’esame ha un tempo massimo di 15 minuti', 'Sfida del giorno cronometrata: a parità di risposte vince chi è più veloce'],
+            en: ['The exam has a time limit of 15 minutes', 'Timed daily challenge: with equal answers the fastest wins']
+        },
+        {
+            v: '1.8.0',
+            date: '2026-11-07',
+            it: ['Nuovo certificato: un’immagine in inglese, da salvare in PNG o PDF'],
+            en: ['New certificate: an image in English, to save as PNG or PDF']
+        },
+        {
+            v: '1.7.0',
+            date: '2026-11-07',
+            it: ['Superando l’esame i livelli non giocati risultano risolti: 2 stelle dal 90%, altrimenti 1', 'La terza stella si guadagna giocando il livello'],
+            en: ['Passing the exam solves the levels not played: 2 stars from 90%, otherwise 1', 'The third star is earned by playing the level']
+        },
         {v: '1.6.2', date: '2026-11-07', it: ['Testi dell’esame più chiari'], en: ['Clearer exam texts']},
-        {v: '1.6.1', date: '2026-11-07', it: ['Un esame superato con il massimo non si ripete più'], en: ['An exam passed with full marks can no longer be repeated']},
-        {v: '1.6.0', date: '2026-11-07', it: ['Favilla ti accompagna di più: in home, nei consigli delle lezioni e prima degli esami'], en: ['Favilla keeps you company more: at home, in lesson tips and before exams']},
-        {v: '1.5.0', date: '2026-11-07', it: ['Sai già la materia? Fai subito l’esame finale di qualsiasi corso: se lo superi, il corso è finito e si aprono i successivi', 'Nuovo carattere per il codice, uguale su tutti i dispositivi'], en: ['Already know the subject? Take the final exam of any course right away: pass it and the course is finished and the next ones open', 'New font for code, the same on every device']},
-        {v: '1.4.1', date: '2026-11-07', it: ['La firma nel profilo usa il carattere del sito dell’autore'], en: ['The credit in the profile uses the font of the author’s website']},
-        {v: '1.4.0', date: '2026-11-07', it: ['Note di rilascio: tocca il numero di versione nel profilo', 'Nel profilo trovi chi ha creato Fucina e come sostenerla', 'A fine sfida restano solo il risultato e il pulsante per continuare', 'Il trascinamento delle righe ora funziona, con mouse e dito'], en: ['Release notes: tap the version number in your profile', 'Your profile shows who made Fucina and how to support it', 'At the end of a drill only the result and the continue button remain', 'Dragging lines now works, with mouse and finger']},
-        {v: '1.3.0', date: '2026-11-07', it: ['Username: l’unico dato pubblico del tuo account', 'Amici: cerca, aggiungi e rimuovi', 'Classifiche della sfida del giorno, tra tutti o tra amici', 'I premi di fine giornata vanno alla sfida del giorno', 'Nuova icona'], en: ['Username: the only public data of your account', 'Friends: search, add and remove', 'Daily challenge rankings, among everyone or among friends', 'End-of-day prizes go to the daily challenge', 'New icon']},
-        {v: '1.2.0', date: '2026-11-07', it: ['Nove nuovi corsi: JavaScript, TypeScript, PHP, HTML e CSS intermedi, Animazioni', 'Più livelli nei corsi esistenti', 'Il certificato si sblocca con le Scintille', 'Classifica giornaliera con premi', 'Grado sempre in vista e molti nuovi badge'], en: ['Nine new courses: JavaScript, TypeScript, PHP, intermediate HTML and CSS, Animations', 'More levels in the existing courses', 'Certificates are unlocked with Sparks', 'Daily leaderboard with prizes', 'Grade always in sight and many new badges']},
-        {v: '1.1.0', date: '2026-11-07', it: ['Grafica tutta nuova con Favilla, la mascotte', 'Mappa dei livelli', 'Sfide lampo: tessere, riordina, caccia al bug, coppie, vero o falso, regola', 'Palestra: sei sfide quando vuoi'], en: ['A brand new look with Favilla, the mascot', 'Level map', 'Quick drills: tiles, sort it, bug hunt, pairs, true or false, tune it', 'Gym: six drills whenever you want']},
-        {v: '1.0.0', date: '2026-11-07', it: ['Prima versione: corsi a livelli, quiz, esercizi, giochi, certificati e pannello admin'], en: ['First release: level-based courses, quizzes, exercises, games, certificates and admin portal']},
+        {
+            v: '1.6.1',
+            date: '2026-11-07',
+            it: ['Un esame superato con il massimo non si ripete più'],
+            en: ['An exam passed with full marks can no longer be repeated']
+        },
+        {
+            v: '1.6.0',
+            date: '2026-11-07',
+            it: ['Favilla ti accompagna di più: in home, nei consigli delle lezioni e prima degli esami'],
+            en: ['Favilla keeps you company more: at home, in lesson tips and before exams']
+        },
+        {
+            v: '1.5.0',
+            date: '2026-11-07',
+            it: ['Sai già la materia? Fai subito l’esame finale di qualsiasi corso: se lo superi, il corso è finito e si aprono i successivi', 'Nuovo carattere per il codice, uguale su tutti i dispositivi'],
+            en: ['Already know the subject? Take the final exam of any course right away: pass it and the course is finished and the next ones open', 'New font for code, the same on every device']
+        },
+        {
+            v: '1.4.1',
+            date: '2026-11-07',
+            it: ['La firma nel profilo usa il carattere del sito dell’autore'],
+            en: ['The credit in the profile uses the font of the author’s website']
+        },
+        {
+            v: '1.4.0',
+            date: '2026-11-07',
+            it: ['Note di rilascio: tocca il numero di versione nel profilo', 'Nel profilo trovi chi ha creato Fucina e come sostenerla', 'A fine sfida restano solo il risultato e il pulsante per continuare', 'Il trascinamento delle righe ora funziona, con mouse e dito'],
+            en: ['Release notes: tap the version number in your profile', 'Your profile shows who made Fucina and how to support it', 'At the end of a drill only the result and the continue button remain', 'Dragging lines now works, with mouse and finger']
+        },
+        {
+            v: '1.3.0',
+            date: '2026-11-07',
+            it: ['Username: l’unico dato pubblico del tuo account', 'Amici: cerca, aggiungi e rimuovi', 'Classifiche della sfida del giorno, tra tutti o tra amici', 'I premi di fine giornata vanno alla sfida del giorno', 'Nuova icona'],
+            en: ['Username: the only public data of your account', 'Friends: search, add and remove', 'Daily challenge rankings, among everyone or among friends', 'End-of-day prizes go to the daily challenge', 'New icon']
+        },
+        {
+            v: '1.2.0',
+            date: '2026-11-07',
+            it: ['Nove nuovi corsi: JavaScript, TypeScript, PHP, HTML e CSS intermedi, Animazioni', 'Più livelli nei corsi esistenti', 'Il certificato si sblocca con le Scintille', 'Classifica giornaliera con premi', 'Grado sempre in vista e molti nuovi badge'],
+            en: ['Nine new courses: JavaScript, TypeScript, PHP, intermediate HTML and CSS, Animations', 'More levels in the existing courses', 'Certificates are unlocked with Sparks', 'Daily leaderboard with prizes', 'Grade always in sight and many new badges']
+        },
+        {
+            v: '1.1.0',
+            date: '2026-11-07',
+            it: ['Grafica tutta nuova con Favilla, la mascotte', 'Mappa dei livelli', 'Sfide lampo: tessere, riordina, caccia al bug, coppie, vero o falso, regola', 'Palestra: sei sfide quando vuoi'],
+            en: ['A brand new look with Favilla, the mascot', 'Level map', 'Quick drills: tiles, sort it, bug hunt, pairs, true or false, tune it', 'Gym: six drills whenever you want']
+        },
+        {
+            v: '1.0.0',
+            date: '2026-11-07',
+            it: ['Prima versione: corsi a livelli, quiz, esercizi, giochi, certificati e pannello admin'],
+            en: ['First release: level-based courses, quizzes, exercises, games, certificates and admin portal']
+        },
     ];
     const t = I18N.t;
     const {h, icon, tile, chip, btn, iconBtn, busy, toast, sheet, confirm} = UI;
@@ -58,29 +263,199 @@
     const CONTACT_URL = '../../contact-me/';
     const DESK = matchMedia('(min-width: 960px)');
 
-    const S = {user: null, config: {googleClientId: ''}, loaded: false, state: null, course: {}, board: {type: 'daily', scope: 'all'}, path: {q: '', cats: new Set(), fams: new Set()}};
+    const S = {
+        user: null,
+        config: {googleClientId: ''},
+        loaded: false,
+        state: null,
+        course: {},
+        board: {type: 'daily', scope: 'all'},
+        path: {q: '', cats: new Set(), fams: new Set()}
+    };
 
     /** Names of the languages (course families) and what a course can be for. */
-    const FAMILY_NAMES = {html: 'HTML', css: 'CSS', scss: 'SCSS', sass: 'Sass', tailwind: 'Tailwind CSS', js: 'JavaScript', ts: 'TypeScript', angular: 'Angular', vue: 'Vue',
-        php: 'PHP', python: 'Python', java: 'Java', sql: 'SQL', mysql: 'MySQL', mariadb: 'MariaDB', postgresql: 'PostgreSQL', sqlite: 'SQLite', mssql: 'SQL Server', mongodb: 'MongoDB', ai: 'AI fundamentals', ml: 'Machine learning', dl: 'Deep learning', prompt: 'Prompt engineering', llm: 'LLM', assistants: 'AI assistants', react: 'React', next: 'Next.js', node: 'Node.js', git: 'Git', bash: 'Bash', go: 'Go', csharp: 'C#', c: 'C', cpp: 'C++', docker: 'Docker', kubernetes: 'Kubernetes', cloud: 'Cloud', testing: 'Testing', patterns: 'Design patterns', regex: 'Regex', security: 'Security', a11y: 'Accessibility', api: 'API', redis: 'Redis', algorithms: 'Algorithms', excel: 'Excel', powerbi: 'Power BI', search: 'Search engines', ux: 'UX design', ui: 'UI design', material: 'Material Design', ios: 'iOS design', fluent: 'Fluent Design', bootstrap: 'Bootstrap', savcomponents: 'SavComponents', r: 'R', flutter: 'Flutter', swift: 'Swift', kotlin: 'Kotlin', rust: 'Rust', vala: 'Vala'};
+    const FAMILY_NAMES = {
+        html: 'HTML',
+        css: 'CSS',
+        scss: 'SCSS',
+        sass: 'Sass',
+        tailwind: 'Tailwind CSS',
+        js: 'JavaScript',
+        ts: 'TypeScript',
+        angular: 'Angular',
+        vue: 'Vue',
+        php: 'PHP',
+        python: 'Python',
+        java: 'Java',
+        sql: 'SQL',
+        mysql: 'MySQL',
+        mariadb: 'MariaDB',
+        postgresql: 'PostgreSQL',
+        sqlite: 'SQLite',
+        mssql: 'SQL Server',
+        mongodb: 'MongoDB',
+        ai: 'AI fundamentals',
+        ml: 'Machine learning',
+        dl: 'Deep learning',
+        prompt: 'Prompt engineering',
+        llm: 'LLM',
+        assistants: 'AI assistants',
+        react: 'React',
+        next: 'Next.js',
+        node: 'Node.js',
+        git: 'Git',
+        bash: 'Bash',
+        go: 'Go',
+        csharp: 'C#',
+        c: 'C',
+        cpp: 'C++',
+        docker: 'Docker',
+        kubernetes: 'Kubernetes',
+        cloud: 'Cloud',
+        testing: 'Testing',
+        patterns: 'Design patterns',
+        regex: 'Regex',
+        security: 'Security',
+        a11y: 'Accessibility',
+        api: 'API',
+        redis: 'Redis',
+        algorithms: 'Algorithms',
+        excel: 'Excel',
+        powerbi: 'Power BI',
+        search: 'Search engines',
+        ux: 'UX design',
+        ui: 'UI design',
+        material: 'Material Design',
+        ios: 'iOS design',
+        fluent: 'Fluent Design',
+        bootstrap: 'Bootstrap',
+        savcomponents: 'SavComponents',
+        r: 'R',
+        flutter: 'Flutter',
+        swift: 'Swift',
+        kotlin: 'Kotlin',
+        rust: 'Rust',
+        vala: 'Vala'
+    };
     const familyName = f => FAMILY_NAMES[f] ? t(FAMILY_NAMES[f]) : f.toUpperCase();
     /** The short label in the square badge of a course card. */
-    const FAMILY_SHORT = {tailwind: 'TW', angular: 'NG', python: 'PY', flutter: 'FL', kotlin: 'KT', swift: 'SW', rust: 'RS', vala: 'VA', mysql: 'MY', mariadb: 'MA', postgresql: 'PG', sqlite: 'SL', mssql: 'MS', mongodb: 'MG', ai: 'AI', ml: 'ML', dl: 'DL', prompt: 'PE', llm: 'LLM', assistants: 'AS', react: 'RE', next: 'NX', node: 'ND', bash: 'SH', csharp: 'C#', docker: 'DK', kubernetes: 'K8S', cloud: 'CL', testing: 'QA', patterns: 'DP', regex: 'RX', security: 'SEC', a11y: 'A11Y', redis: 'RD', algorithms: 'ALG', excel: 'XL', powerbi: 'BI', search: 'SEO', material: 'M3', ios: 'iOS', fluent: 'FL2', bootstrap: 'BS', savcomponents: 'SC'};
+    const FAMILY_SHORT = {
+        tailwind: 'TW',
+        angular: 'NG',
+        python: 'PY',
+        flutter: 'FL',
+        kotlin: 'KT',
+        swift: 'SW',
+        rust: 'RS',
+        vala: 'VA',
+        mysql: 'MY',
+        mariadb: 'MA',
+        postgresql: 'PG',
+        sqlite: 'SL',
+        mssql: 'MS',
+        mongodb: 'MG',
+        ai: 'AI',
+        ml: 'ML',
+        dl: 'DL',
+        prompt: 'PE',
+        llm: 'LLM',
+        assistants: 'AS',
+        react: 'RE',
+        next: 'NX',
+        node: 'ND',
+        bash: 'SH',
+        csharp: 'C#',
+        docker: 'DK',
+        kubernetes: 'K8S',
+        cloud: 'CL',
+        testing: 'QA',
+        patterns: 'DP',
+        regex: 'RX',
+        security: 'SEC',
+        a11y: 'A11Y',
+        redis: 'RD',
+        algorithms: 'ALG',
+        excel: 'XL',
+        powerbi: 'BI',
+        search: 'SEO',
+        material: 'M3',
+        ios: 'iOS',
+        fluent: 'FL2',
+        bootstrap: 'BS',
+        savcomponents: 'SC'
+    };
     const familyShort = f => FAMILY_SHORT[f] || f.toUpperCase();
     /** Free logos (assets/icons/brands, see CREDITS.md) shown in the badge instead of the short label: by family, or by course when a family mixes brands. */
-    const LOGOS = {html: 'html5', css: 'css', tailwind: 'tailwindcss', bootstrap: 'bootstrap', savcomponents: 'savcomponents', js: 'javascript', ts: 'typescript', angular: 'angular',
-        react: 'react', next: 'nextdotjs', node: 'nodedotjs', php: 'php', python: 'python', go: 'go', mysql: 'mysql', mariadb: 'mariadb', postgresql: 'postgresql', sqlite: 'sqlite',
-        mongodb: 'mongodb', redis: 'redis', r: 'r', flutter: 'flutter', swift: 'swift', kotlin: 'kotlin', rust: 'rust', vala: 'vala', c: 'c', cpp: 'cplusplus', git: 'git',
-        bash: 'gnubash', docker: 'docker', kubernetes: 'kubernetes', material: 'materialdesign', ios: 'apple'};
-    const COURSE_LOGOS = {'python-pandas': 'pandas', claude: 'claude', gemini: 'googlegemini', mistral: 'mistralai', lumo: 'proton', deepseek: 'deepseek', 'github-copilot': 'githubcopilot',
-        perplexity: 'perplexity', huggingface: 'huggingface', 'meta-ai': 'meta', qwen: 'qwen', 'apple-intelligence': 'apple'};
+    const LOGOS = {
+        html: 'html5',
+        css: 'css',
+        tailwind: 'tailwindcss',
+        bootstrap: 'bootstrap',
+        savcomponents: 'savcomponents',
+        js: 'javascript',
+        ts: 'typescript',
+        angular: 'angular',
+        react: 'react',
+        next: 'nextdotjs',
+        node: 'nodedotjs',
+        php: 'php',
+        python: 'python',
+        go: 'go',
+        mysql: 'mysql',
+        mariadb: 'mariadb',
+        postgresql: 'postgresql',
+        sqlite: 'sqlite',
+        mongodb: 'mongodb',
+        redis: 'redis',
+        r: 'r',
+        flutter: 'flutter',
+        swift: 'swift',
+        kotlin: 'kotlin',
+        rust: 'rust',
+        vala: 'vala',
+        c: 'c',
+        cpp: 'cplusplus',
+        git: 'git',
+        bash: 'gnubash',
+        docker: 'docker',
+        kubernetes: 'kubernetes',
+        material: 'materialdesign',
+        ios: 'apple'
+    };
+    const COURSE_LOGOS = {
+        'python-pandas': 'pandas',
+        claude: 'claude',
+        gemini: 'googlegemini',
+        mistral: 'mistralai',
+        lumo: 'proton',
+        deepseek: 'deepseek',
+        'github-copilot': 'githubcopilot',
+        perplexity: 'perplexity',
+        huggingface: 'huggingface',
+        'meta-ai': 'meta',
+        qwen: 'qwen',
+        'apple-intelligence': 'apple'
+    };
     /** The square badge of a course: its logo in white when there is a free one, otherwise the short label of its family. */
     const famBadge = c => {
         const logo = COURSE_LOGOS[c.id] || LOGOS[c.family];
-        return logo ? h('span.fam.has-logo', {title: familyName(c.family)}, h('i.logo', {style: {webkitMaskImage: 'url(assets/icons/brands/' + logo + '.svg?v=1)', maskImage: 'url(assets/icons/brands/' + logo + '.svg?v=1)'}})) : h('span.fam', familyShort(c.family));
+        return logo ? h('span.fam.has-logo', {title: familyName(c.family)}, h('i.logo', {
+            style: {
+                webkitMaskImage: 'url(assets/icons/brands/' + logo + '.svg?v=1)',
+                maskImage: 'url(assets/icons/brands/' + logo + '.svg?v=1)'
+            }
+        })) : h('span.fam', familyShort(c.family));
     };
     /** Courses just added, shown as new until the given day (included): a "New" chip on their cards and a spot on the home page. */
-    const NEW_COURSES = {'savcomponents-base': '2026-12-17', 'savcomponents-intermediate': '2026-12-17', 'savcomponents-advanced': '2026-12-18', 'c-intermediate': '2026-12-18', 'cpp-intermediate': '2026-12-18', 'go-intermediate': '2026-12-18', 'csharp-intermediate': '2026-12-18'};
+    const NEW_COURSES = {
+        'savcomponents-base': '2026-12-17',
+        'savcomponents-intermediate': '2026-12-17',
+        'savcomponents-advanced': '2026-12-18',
+        'c-intermediate': '2026-12-18',
+        'cpp-intermediate': '2026-12-18',
+        'go-intermediate': '2026-12-18',
+        'csharp-intermediate': '2026-12-18'
+    };
     const isNew = c => !!NEW_COURSES[c.id] && new Date().toLocaleDateString('sv') <= NEW_COURSES[c.id]; // 'sv' writes the local day as YYYY-MM-DD
     const CATEGORIES = [['frontend', 'Frontend'], ['backend', 'Backend'], ['mobile', 'Mobile'], ['data', 'Data'], ['systems', 'Systems'], ['desktop', 'Desktop'], ['ai', 'AI'], ['devops', 'DevOps'], ['security', 'Security'], ['productivity', 'Productivity'], ['design', 'Design']];
 
@@ -118,13 +493,21 @@
 
     /** Levels passed with the exam: fires instead of stars, from its score. */
     function fires(n) {
-        return h('span.stars.fires', {'aria-label': t('{n} fires out of 3: passed with the exam', {n}), title: t('Passed with the exam')}, [0, 1, 2].map(i => icon('fire', i < n ? 'on' : 'off')));
+        return h('span.stars.fires', {
+            'aria-label': t('{n} fires out of 3: passed with the exam', {n}),
+            title: t('Passed with the exam')
+        }, [0, 1, 2].map(i => icon('fire', i < n ? 'on' : 'off')));
     }
 
     const progressMark = p => p.skipped ? fires(p.stars) : stars(p.stars);
 
     function stars(n, total = 3) {
-        return h('span.stars', {'aria-label': t('{n} stars out of {total}', {n, total})}, Array.from({length: total}, (_, i) => icon('star', i < n ? 'on' : 'off')));
+        return h('span.stars', {
+            'aria-label': t('{n} stars out of {total}', {
+                n,
+                total
+            })
+        }, Array.from({length: total}, (_, i) => icon('star', i < n ? 'on' : 'off')));
     }
 
     function difficultyDots(d) {
@@ -139,7 +522,10 @@
     /** The grade, always in sight: number, rank and how close the next one is. */
     function gradeChip() {
         const l = S.state.level;
-        return h('a.grade.r-' + l.rankId, {href: '#/stats', title: t('Grade {n}', {n: l.level}) + ' · ' + l.rank}, h('b.grade-num', String(l.level)),
+        return h('a.grade.r-' + l.rankId, {
+                href: '#/stats',
+                title: t('Grade {n}', {n: l.level}) + ' · ' + l.rank
+            }, h('b.grade-num', String(l.level)),
             h('span.grade-text', h('strong', l.rank), h('span.grade-bar', h('i', {style: {width: Math.round(l.into * 100 / l.need) + '%'}}))));
     }
 
@@ -175,6 +561,7 @@
     };
     /** Courses whose HTML samples are shown rendered under the code, in the theory of a level. */
     const PREVIEW_FAMILIES = ['html', 'css', 'a11y', 'search', 'savcomponents', 'bootstrap', 'tailwind'];
+
     /**
      * The height a preview needs: the lowest edge of what is laid out in the page, plus the height of what is fixed to the
      * window (a bottom bar would otherwise cover the content). Nothing in it depends on the size of the frame, so the frame
@@ -217,12 +604,16 @@
      */
     function previewMedia(doc, keep) {
         function esc(t) {
-            return String(t).slice(0, 38).replace(/[&<>"]/g, function (c) { return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]; });
+            return String(t).slice(0, 38).replace(/[&<>"]/g, function (c) {
+                return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c];
+            });
         }
+
         function fileName(u) {
             u = String(u || '').split(',')[0].trim().split(' ')[0].split(/[?#]/)[0];
             return u.slice(u.lastIndexOf('/') + 1) || u;
         }
+
         function box(label, w, h, video) {
             w = Math.max(80, Math.min(640, w || 240));
             h = Math.max(50, Math.min(480, h || 150));
@@ -234,6 +625,7 @@
                 + '<text x="' + cx + '" y="' + (cy + 34) + '" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="#5F5C87">' + esc(label) + '</text></svg>';
             return 'data:image/svg+xml,' + encodeURIComponent(svg);
         }
+
         var i, imgs = doc.querySelectorAll('img:not([data-fucina-ph])');
         for (i = 0; i < imgs.length; i++) {
             var img = imgs[i];
@@ -287,7 +679,10 @@
         ? '<!doctype html><meta charset="utf-8">' + (exercise ? '<script>window.FUCINA_KEEP = true<\/script>' : '') + PREVIEW_HELPER + PREVIEW_LIBS[family] + body : body;
 
     function previewFrame(family, cls, exercise) {
-        const frame = h('iframe.preview' + (cls ? '.' + cls : ''), {sandbox: previewScripted(family) ? 'allow-scripts' : 'allow-same-origin', title: t('Preview')});
+        const frame = h('iframe.preview' + (cls ? '.' + cls : ''), {
+            sandbox: previewScripted(family) ? 'allow-scripts' : 'allow-same-origin',
+            title: t('Preview')
+        });
         // Without scripts inside, the app itself keeps links from opening pages in the preview and draws the missing media
         // (with scripts, the helper does it)
         if (!previewScripted(family)) frame.addEventListener('load', () => {
@@ -302,7 +697,8 @@
                     later = setTimeout(() => previewMedia(doc, !!exercise), 30);
                 }, true);
                 previewMedia(doc, !!exercise);
-            } catch (e) { /* nothing to hold back */ }
+            } catch (e) { /* nothing to hold back */
+            }
         });
         return frame;
     }
@@ -350,7 +746,8 @@
                 // Images and fonts arrive later and change the height
                 if (window.ResizeObserver && doc.body) new ResizeObserver(measure).observe(doc.body);
                 doc.querySelectorAll('img').forEach(img => img.addEventListener('load', measure));
-            } catch (e) { /* the frame cannot be read: it keeps its height */ }
+            } catch (e) { /* the frame cannot be read: it keeps its height */
+            }
         });
         frame.srcdoc = previewPage(family, code);
         frame.dataset.shown = '1';
@@ -366,7 +763,12 @@
     /** A figure of the theory: an SVG drawing shown as an image, so nothing in it can run; its animations stop for those who reduce motion. */
     function figure(b) {
         if (!b.svg) return null;
-        return h('figure.fig', h('img', {src: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(b.svg), alt: b.alt || '', loading: 'lazy', decoding: 'async'}),
+        return h('figure.fig', h('img', {
+                src: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(b.svg),
+                alt: b.alt || '',
+                loading: 'lazy',
+                decoding: 'async'
+            }),
             b.caption ? h('figcaption', rich(b.caption)) : null);
     }
 
@@ -427,13 +829,19 @@
     }
 
     function bottomNav(active) {
-        const tab = (name, label, ic) => h('a' + (active === name ? '.active' : ''), {href: '#/' + name, 'aria-current': active === name ? 'page' : null}, h('span.pill', icon(ic)), label);
+        const tab = (name, label, ic) => h('a' + (active === name ? '.active' : ''), {
+            href: '#/' + name,
+            'aria-current': active === name ? 'page' : null
+        }, h('span.pill', icon(ic)), label);
         return h('nav.bottomnav', {'aria-label': t('Sections')}, tab('home', t('Home'), 'home'), tab('path', t('Courses'), 'book'), tab('games', t('Games'), 'game'), tab('board', t('Ranking'), 'trophy'), tab('certificates', t('Certificates'), 'cert'), tab('stats', t('Stats'), 'stats'));
     }
 
     function sideNav(active) {
         // count: a small label after the name (how many courses and games there are, how many certificates are earned)
-        const link = (name, label, ic, count = null) => h('a.sn-link' + (active === name ? '.active' : ''), {href: '#/' + name, 'aria-current': active === name ? 'page' : null},
+        const link = (name, label, ic, count = null) => h('a.sn-link' + (active === name ? '.active' : ''), {
+                href: '#/' + name,
+                'aria-current': active === name ? 'page' : null
+            },
             icon(ic), h('span', label), count === null ? null : h('b.sn-badge', {'aria-label': t('{n} items', {n: count})}, String(count)));
         const st = S.state;
         return h('nav.sidenav', {'aria-label': t('Sections')},
@@ -446,7 +854,17 @@
             h('a.sn-user' + (active === 'profile' ? '.active' : ''), {href: '#/profile'}, avatar(S.user.name, 'sm', myAvatar()), h('span', S.user.name)));
     }
 
-    const TAB_OF = {courses: 'path', course: 'path', lesson: 'path', exam: 'path', daily: 'home', gym: 'home', game: 'games', play: 'games', friends: 'board'};
+    const TAB_OF = {
+        courses: 'path',
+        course: 'path',
+        lesson: 'path',
+        exam: 'path',
+        daily: 'home',
+        gym: 'home',
+        game: 'games',
+        play: 'games',
+        friends: 'board'
+    };
     const FULL_SCREEN = ['lesson', 'exam', 'daily', 'gym', 'play'];
 
     /** The shape of the page that is on its way, shown only when the data take a moment to arrive. */
@@ -496,7 +914,24 @@
         const waiting = setTimeout(() => {
             if (route().name === r.name) showSkeleton(r.name);
         }, 180);
-        const views = {home: viewHome, path: viewPath, courses: viewPath, course: viewCourse, lesson: viewLesson, exam: viewExam, daily: viewDaily, gym: viewGym, board: viewBoard, friends: viewFriends, games: viewGames, game: viewGame, play: viewPlay, certificates: viewCertificates, stats: viewStats, profile: viewProfile};
+        const views = {
+            home: viewHome,
+            path: viewPath,
+            courses: viewPath,
+            course: viewCourse,
+            lesson: viewLesson,
+            exam: viewExam,
+            daily: viewDaily,
+            gym: viewGym,
+            board: viewBoard,
+            friends: viewFriends,
+            games: viewGames,
+            game: viewGame,
+            play: viewPlay,
+            certificates: viewCertificates,
+            stats: viewStats,
+            profile: viewProfile
+        };
         let v;
         try {
             v = await (views[r.name] || viewHome)(r.a, r.b);
@@ -508,7 +943,11 @@
         const bar = v.back
             ? h('header.appbar.small', iconBtn('back', t('Back'), () => go(v.back)), h('div.titles', h('h1', v.title)), S.state ? gradeChip() : null, S.state ? sparksChip() : null, v.actions || [])
             : h('header.appbar', h('div.titles', h('h1', v.title)), gradeChip(), sparksChip(), v.actions || [], langPill(),
-                h('button.avatar-btn', {type: 'button', 'aria-label': t('Profile and settings'), onclick: () => go('profile')}, avatar(S.user.name, '', myAvatar())));
+                h('button.avatar-btn', {
+                    type: 'button',
+                    'aria-label': t('Profile and settings'),
+                    onclick: () => go('profile')
+                }, avatar(S.user.name, '', myAvatar())));
         const nav = v.nav !== false;
         const main = h('main.view' + (!nav ? '.no-nav' : '.no-fab'), v.body);
         const content = h('div.content', bar, main);
@@ -541,7 +980,11 @@
             h('div.rank-body',
                 h('div.rank-top', h('div.grow', h('span.rank-label', t('Your grade')), h('strong', l.rank)),
                     h('div.streak' + (S.state.practicedToday ? '.lit' : ''), {title: t('Days in a row')}, icon('fire'), h('b', String(S.state.user.streak)))),
-                h('div.bar', {role: 'progressbar', 'aria-valuenow': l.into, 'aria-valuemax': l.need}, h('i', {style: {width: Math.round(l.into * 100 / l.need) + '%'}})),
+                h('div.bar', {
+                    role: 'progressbar',
+                    'aria-valuenow': l.into,
+                    'aria-valuemax': l.need
+                }, h('i', {style: {width: Math.round(l.into * 100 / l.need) + '%'}})),
                 h('p.rank-xp', t('{n} XP to the next grade', {n: l.need - l.into}))));
     }
 
@@ -562,7 +1005,11 @@
         if (!list.length) return null;
         return [h('h2.section-title', t('In progress')), h('div.started-row', list.map(c => h('a.started.fam-' + c.family, {href: '#/course/' + c.id},
             famBadge(c), h('strong', c.title),
-            h('div.bar', {role: 'progressbar', 'aria-valuenow': c.done, 'aria-valuemax': c.lessons}, h('i', {style: {width: Math.round(c.done * 100 / Math.max(1, c.lessons)) + '%'}})),
+            h('div.bar', {
+                role: 'progressbar',
+                'aria-valuenow': c.done,
+                'aria-valuemax': c.lessons
+            }, h('i', {style: {width: Math.round(c.done * 100 / Math.max(1, c.lessons)) + '%'}})),
             h('span.muted.small', t('Level {a} of {b}', {a: c.done + 1, b: c.lessons})))))];
     }
 
@@ -572,7 +1019,10 @@
         if (!list.length) return null;
         return [h('h2.section-title', t('New courses')), h('div.started-row.new-row', list.map(c => h('a.started.new-course.fam-' + c.family, {href: '#/course/' + c.id},
             h('div.new-top', famBadge(c), chip(t('New'), 'new', 'spark')), h('strong', c.title), h('p.muted.small', c.desc),
-            h('span.new-go', c.done ? t('Level {a} of {b}', {a: c.done + 1, b: c.lessons}) : c.locked ? t('To unlock') : t('Start now'), icon(c.locked && !c.done ? 'lock' : 'right')))))];
+            h('span.new-go', c.done ? t('Level {a} of {b}', {
+                a: c.done + 1,
+                b: c.lessons
+            }) : c.locked ? t('To unlock') : t('Start now'), icon(c.locked && !c.done ? 'lock' : 'right')))))];
     }
 
     /** Favilla says one thing at a time, about what matters now. */
@@ -594,15 +1044,24 @@
                 rankCard(),
                 n ? h('a.cta.fam-' + n.family, {href: '#/course/' + n.id}, h('span.kicker', n.done ? t('Pick up where you left off') : t('Start here')), h('strong', n.title),
                     h('div.bar', h('i', {style: {width: Math.round(n.done * 100 / Math.max(1, n.lessons)) + '%'}})),
-                    h('div.cta-foot', h('span', n.done < n.lessons ? t('Level {a} of {b}', {a: n.done + 1, b: n.lessons}) : t('Ready for the exam')), h('span.cta-go', icon('play')))) : null,
+                    h('div.cta-foot', h('span', n.done < n.lessons ? t('Level {a} of {b}', {
+                        a: n.done + 1,
+                        b: n.lessons
+                    }) : t('Ready for the exam')), h('span.cta-go', icon('play')))) : null,
                 startedRow(n && n.id),
                 newCoursesRow(),
                 h('h2.section-title', t('Today')),
                 h('div.quick',
-                    quick('#/daily', 'calendar', 'sun', t('Daily challenge'), d ? t('Done: {a} out of {b}', {a: d.correct, b: d.total}) : t('Five questions from all the courses'), d ? 'check' : null),
+                    quick('#/daily', 'calendar', 'sun', t('Daily challenge'), d ? t('Done: {a} out of {b}', {
+                        a: d.correct,
+                        b: d.total
+                    }) : t('Five questions from all the courses'), d ? 'check' : null),
                     quick('#/gym', 'bolt', 'mint', t('Gym'), t('Six quick drills, right now')),
                     quick('#/games', 'game', 'sky', t('Play a game'), t('Extra Sparks, on top of the courses')),
-                    quick('#/board', 'trophy', 'pink', t('Ranking'), S.state.board.place ? t('You are number {a} of {b}', {a: S.state.board.place, b: S.state.board.participants}) : t('Do the daily challenge to enter'))),
+                    quick('#/board', 'trophy', 'pink', t('Ranking'), S.state.board.place ? t('You are number {a} of {b}', {
+                        a: S.state.board.place,
+                        b: S.state.board.participants
+                    }) : t('Do the daily challenge to enter'))),
                 h('h2.section-title', t('Your results')),
                 h('div.tiles',
                     statTile('book', S.state.totals.lessons, t('Levels done')), statTile('star', S.state.totals.stars, t('Stars')),
@@ -628,7 +1087,14 @@
     function viewPath() {
         const list = h('div.path-groups');
         const count = h('p.muted.small.path-count', {role: 'status'});
-        const search = UI.input({type: 'search', class: 'path-search', value: S.path.q, placeholder: t('Search a course or a language'), 'aria-label': t('Search a course or a language'), autocomplete: 'off'});
+        const search = UI.input({
+            type: 'search',
+            class: 'path-search',
+            value: S.path.q,
+            placeholder: t('Search a course or a language'),
+            'aria-label': t('Search a course or a language'),
+            autocomplete: 'off'
+        });
         const used = new Set(S.state.courses.flatMap(c => c.categories || []));
         const families = [...new Set(S.state.courses.map(c => c.family))];
         /** A row of filter chips: multiple choices can be selected, each with a check mark; tapping one toggles it. */
@@ -672,6 +1138,7 @@
             famsToggle.setAttribute('aria-expanded', String(open));
             famsToggle.replaceChildren(...[icon('code'), h('span', t('Languages')), n ? h('span.path-more-n', String(n)) : null, icon('chevronDown', 'path-more-chev')].filter(Boolean));
         }
+
         const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
         function draw() {
@@ -687,11 +1154,17 @@
                 if (!g) groups.push(g = {family: c.family, courses: []});
                 g.courses.push(c);
             }
-            count.textContent = shown.length === S.state.courses.length ? t('{n} courses', {n: shown.length}) : t('{a} of {b} courses', {a: shown.length, b: S.state.courses.length});
+            count.textContent = shown.length === S.state.courses.length ? t('{n} courses', {n: shown.length}) : t('{a} of {b} courses', {
+                a: shown.length,
+                b: S.state.courses.length
+            });
             list.replaceChildren(...(groups.length ? groups.map(g => {
                 const done = g.courses.filter(c => c.lessons && c.done === c.lessons || c.examScore).length;
                 return h('section.path-group.fam-' + g.family, h('header.path-head', h('i.path-dot'), h('strong', familyName(g.family)),
-                    h('span.muted.small', t('{a} of {b} completed', {a: done, b: g.courses.length}))), h('div.course-list', g.courses.map(courseCard)));
+                    h('span.muted.small', t('{a} of {b} completed', {
+                        a: done,
+                        b: g.courses.length
+                    }))), h('div.course-list', g.courses.map(courseCard)));
             }) : [empty(t('No course found'), t('Try another word or another category.'))]));
         }
 
@@ -773,7 +1246,12 @@
                 const inner = [current ? h('span.node-go', i ? t('Next') : t('Start!')) : null, h('span.node-dot', face),
                     h('span.node-name', l.title), l.progress ? progressMark(l.progress) : difficultyDots(l.difficulty)];
                 const cls = current ? '.current' : l.progress ? '.cleared' : '';
-                return h('li.node-spot', {style: {left: spots[i].x + '%', top: spots[i].y + 'px'}}, open ? h('a.node' + cls, {href: '#/lesson/' + c.id + '/' + l.id}, inner) : h('div.node.locked', inner));
+                return h('li.node-spot', {
+                    style: {
+                        left: spots[i].x + '%',
+                        top: spots[i].y + 'px'
+                    }
+                }, open ? h('a.node' + cls, {href: '#/lesson/' + c.id + '/' + l.id}, inner) : h('div.node.locked', inner));
             }));
     }
 
@@ -806,20 +1284,45 @@
         const passed = score > 0 && !c.certificate;
         const perfect = score >= 100;
         const elsewhere = certsOf(c).filter(x => x.lang !== I18N.lang);
-        const text = perfect && c.certificate ? t('Passed with full marks: there is nothing left to improve.') : passed ? t('Exam passed with {n}%: unlock your certificate with {c} Sparks.', {n: score, c: S.state.costs.certificate})
-            : elsewhere.length && !c.certificate ? t('You already have this certificate in {a}. Do you want to take the exam in {b} too?', {a: elsewhere.map(x => langName(x.lang)).join(', '), b: langName(I18N.lang)}) + ' '
-                + t('{n} questions, pass with {p}%. Then unlock the certificate with {c} Sparks.', {n: c.examQuestions, p: c.examPass, c: S.state.costs.certificate})
-            : (allDone || c.examScore ? '' : t('Already know this? Take it now: if you pass, the course counts as finished and the next ones open.') + ' ')
-            + t('{n} questions, pass with {p}%. Then unlock the certificate with {c} Sparks.', {n: c.examQuestions, p: c.examPass, c: S.state.costs.certificate});
+        const text = perfect && c.certificate ? t('Passed with full marks: there is nothing left to improve.') : passed ? t('Exam passed with {n}%: unlock your certificate with {c} Sparks.', {
+                n: score,
+                c: S.state.costs.certificate
+            })
+            : elsewhere.length && !c.certificate ? t('You already have this certificate in {a}. Do you want to take the exam in {b} too?', {
+                    a: elsewhere.map(x => langName(x.lang)).join(', '),
+                    b: langName(I18N.lang)
+                }) + ' '
+                + t('{n} questions, pass with {p}%. Then unlock the certificate with {c} Sparks.', {
+                    n: c.examQuestions,
+                    p: c.examPass,
+                    c: S.state.costs.certificate
+                })
+                : (allDone || c.examScore ? '' : t('Already know this? Take it now: if you pass, the course counts as finished and the next ones open.') + ' ')
+                + t('{n} questions, pass with {p}%. Then unlock the certificate with {c} Sparks.', {
+                    n: c.examQuestions,
+                    p: c.examPass,
+                    c: S.state.costs.certificate
+                });
         // One button per certificate: the language goes in the label as soon as it is not the only one in the language in use
         const own = certsOf(c).slice().sort((a, b) => (b.lang === I18N.lang) - (a.lang === I18N.lang));
-        const links = own.map(x => h('a.btn.btn-tonal', {href: certUrl(x.code), target: '_blank', rel: 'noopener'}, icon('cert'),
+        const links = own.map(x => h('a.btn.btn-tonal', {
+                href: certUrl(x.code),
+                target: '_blank',
+                rel: 'noopener'
+            }, icon('cert'),
             h('span', own.length === 1 && x.lang === I18N.lang ? t('Open the certificate') : t('Certificate in {l}', {l: langName(x.lang)}))));
         const start = elsewhere.length && !c.certificate && !passed ? t('Take it in {l}', {l: langName(I18N.lang)}) : c.certificate || passed ? t('Try again') : t('Start');
         return h('section.card.exam-card', tile('icon', 'cert', 'lg'), h('div.grow', h('strong', t('Final exam')), h('p.muted', text),
-            links.length ? h('div.btn-row', links) : null),
-            passed ? btn(t('Unlock · {n}', {n: S.state.costs.certificate}), {icon: 'spark', onclick: () => claimCertificate(c.id, render)}) : null,
-            perfect ? null : btn(start, {kind: c.certificate || passed ? 'text' : 'filled', disabled: !c.items.length, onclick: () => go('exam/' + c.id)}));
+                links.length ? h('div.btn-row', links) : null),
+            passed ? btn(t('Unlock · {n}', {n: S.state.costs.certificate}), {
+                icon: 'spark',
+                onclick: () => claimCertificate(c.id, render)
+            }) : null,
+            perfect ? null : btn(start, {
+                kind: c.certificate || passed ? 'text' : 'filled',
+                disabled: !c.items.length,
+                onclick: () => go('exam/' + c.id)
+            }));
     }
 
     /** The certificate is the prize you buy with what you earned: the price is shown first. */
@@ -828,7 +1331,10 @@
         if (have < cost) {
             const s = sheet({
                 title: t('{n} Sparks to go', {n: cost - have}),
-                body: [h('div.levelup', mascot('sad', 'lg'), h('p', t('The certificate costs {c} Sparks and you have {m}. Games, drills and the daily challenge earn more.', {c: cost, m: have})))],
+                body: [h('div.levelup', mascot('sad', 'lg'), h('p', t('The certificate costs {c} Sparks and you have {m}. Games, drills and the daily challenge earn more.', {
+                    c: cost,
+                    m: have
+                })))],
                 actions: [btn(t('Later'), {kind: 'text', onclick: () => s.close()}), btn(t('Play a game'), {
                     onclick: () => {
                         s.close();
@@ -838,7 +1344,10 @@
             });
             return;
         }
-        if (!await confirm(t('Unlock the certificate?'), t('It costs {n} Sparks. You have {m}.', {n: cost, m: have}), t('Use {n} Sparks', {n: cost}))) return;
+        if (!await confirm(t('Unlock the certificate?'), t('It costs {n} Sparks. You have {m}.', {
+            n: cost,
+            m: have
+        }), t('Use {n} Sparks', {n: cost}))) return;
         try {
             const d = await Api.post('certificate.claim', {course: courseId});
             applyState(d);
@@ -860,7 +1369,10 @@
             toast(t('You need {n} Sparks: you have {m}.', {n: cost, m: S.state.user.points}), 'error');
             return null;
         }
-        if (!await confirm(t('Use a hint?'), t('It costs {n} Sparks. You have {m}.', {n: cost, m: S.state.user.points}), t('Use {n} Sparks', {n: cost}))) return null;
+        if (!await confirm(t('Use a hint?'), t('It costs {n} Sparks. You have {m}.', {
+            n: cost,
+            m: S.state.user.points
+        }), t('Use {n} Sparks', {n: cost}))) return null;
         const d = await Api.post('hint.buy', body);
         S.state.user.points = d.points;
         showSparks();
@@ -875,7 +1387,10 @@
         const firstAnswers = {};
         let taskDone = false;
 
-        const steps = [{kind: 'theory'}, ...lesson.drills.map(d => ({kind: 'drill', d})), ...lesson.quiz.map(q => ({kind: 'quiz', q})), ...(lesson.task ? [{kind: 'task'}] : [])];
+        const steps = [{kind: 'theory'}, ...lesson.drills.map(d => ({
+            kind: 'drill',
+            d
+        })), ...lesson.quiz.map(q => ({kind: 'quiz', q})), ...(lesson.task ? [{kind: 'task'}] : [])];
         const bar = h('i');
         let step = 0;
 
@@ -894,18 +1409,28 @@
 
         function theory() {
             return h('article.theory', lesson.body.map(b => b.t === 'code' ? [codeBlock(b.code, b.lang), sampleOf(b, c.family)] : b.t === 'fig' ? figure(b) : b.t === 'tip' ? h('aside.tip', mascot('happy', 'still'), h('p', rich(b.text))) : h('p', rich(b.text))),
-                h('div.step-actions', btn(lesson.drills.length ? t('Let’s play') : t('Go to the questions'), {icon: 'right', onclick: next})));
+                h('div.step-actions', btn(lesson.drills.length ? t('Let’s play') : t('Go to the questions'), {
+                    icon: 'right',
+                    onclick: next
+                })));
         }
 
         function quiz(q) {
             // Buttons keep the index of their option (answers, hints and checks speak of it), but are shown in a random order
             const order = shuffledOrder(q.options.length);
-            const buttons = q.options.map((o, i) => h('button.option', {type: 'button', onclick: () => answer(i)}, h('b.opt-key', 'ABCDEFGH'[order.indexOf(i)]), h('span', rich(o))));
+            const buttons = q.options.map((o, i) => h('button.option', {
+                type: 'button',
+                onclick: () => answer(i)
+            }, h('b.opt-key', 'ABCDEFGH'[order.indexOf(i)]), h('span', rich(o))));
             const feedback = h('div.feedback');
             const actions = h('div.step-actions');
             const hintBtn = btn(t('Hint · {n}', {n: S.state.costs.question}), {
                 kind: 'text', icon: 'bulb', onclick: async () => {
-                    const hint = await askHint(S.state.costs.question, {kind: 'question', course: c.id, question: q.id}).catch(e => toast(e.message, 'error'));
+                    const hint = await askHint(S.state.costs.question, {
+                        kind: 'question',
+                        course: c.id,
+                        question: q.id
+                    }).catch(e => toast(e.message, 'error'));
                     if (!hint) return;
                     hint.remove.forEach(i => {
                         buttons[i].disabled = true;
@@ -938,7 +1463,13 @@
 
         function taskView() {
             const task = lesson.task;
-            const ta = h('textarea.editor', {spellcheck: false, autocapitalize: 'off', autocomplete: 'off', value: task.start, 'aria-label': t('Your code')});
+            const ta = h('textarea.editor', {
+                spellcheck: false,
+                autocapitalize: 'off',
+                autocomplete: 'off',
+                value: task.start,
+                'aria-label': t('Your code')
+            });
             const live = task.lang === 'html' || task.lang === 'css';
             const frame = live ? previewFrame(c.family, null, true) : null;
             const scripted = live && previewScripted(c.family);
@@ -991,11 +1522,18 @@
 
             const hintBtn = btn(t('Hint · {n}', {n: S.state.costs.task}), {
                 kind: 'text', icon: 'bulb', onclick: async () => {
-                    const hint = await askHint(S.state.costs.task, {kind: 'task', course: c.id, lesson: lesson.id}).catch(e => toast(e.message, 'error'));
+                    const hint = await askHint(S.state.costs.task, {
+                        kind: 'task',
+                        course: c.id,
+                        lesson: lesson.id
+                    }).catch(e => toast(e.message, 'error'));
                     if (hint) hintBox.replaceChildren(hint.code ? codeBlock(hint.code, t('Hint')) : h('p.muted', t('No hint for this exercise.')));
                 }
             });
-            const actions = h('div.step-actions', hintBtn, btn(t('Skip'), {kind: 'text', onclick: next}), btn(t('Check'), {icon: 'check', onclick: verify}));
+            const actions = h('div.step-actions', hintBtn, btn(t('Skip'), {
+                kind: 'text',
+                onclick: next
+            }), btn(t('Check'), {icon: 'check', onclick: verify}));
             setTimeout(refreshFrame);
             return h('section.task', h('h2', t('Now you try')), h('p', rich(task.prompt)),
                 task.lang === 'css' ? h('details.page-src', h('summary', t('The page your CSS applies to')), codeBlock(task.html, 'html')) : null,
@@ -1006,7 +1544,12 @@
         async function finish() {
             stage.replaceChildren(h('div.loader'));
             try {
-                const d = await Api.post('lesson.complete', {course: c.id, lesson: lesson.id, answers: firstAnswers, taskDone});
+                const d = await Api.post('lesson.complete', {
+                    course: c.id,
+                    lesson: lesson.id,
+                    answers: firstAnswers,
+                    taskDone
+                });
                 applyState(d);
                 delete S.course[c.id];
                 bar.style.width = '100%';
@@ -1014,9 +1557,18 @@
                 const following = c.items[index + 1];
                 if (d.stars === 3) confetti();
                 stage.replaceChildren(h('section.done', mascot(d.stars === 3 ? 'wow' : 'happy', 'lg'), stars(d.stars), h('h2', d.stars === 3 ? t('Perfect level!') : t('Level complete')),
-                    h('p', t('{a} correct answers out of {b}', {a: d.correct, b: d.total})), h('p.gain', icon('spark'), t('+{n} XP and Sparks', {n: d.xp})),
-                    h('div.step-actions', btn(t('Back to the course'), {kind: 'tonal', onclick: () => go('course/' + c.id)}),
-                        following ? btn(t('Next level'), {icon: 'right', onclick: () => go('lesson/' + c.id + '/' + following.id)}) : btn(t('Go to the exam'), {icon: 'cert', onclick: () => go('exam/' + c.id)}))));
+                    h('p', t('{a} correct answers out of {b}', {
+                        a: d.correct,
+                        b: d.total
+                    })), h('p.gain', icon('spark'), t('+{n} XP and Sparks', {n: d.xp})),
+                    h('div.step-actions', btn(t('Back to the course'), {
+                            kind: 'tonal',
+                            onclick: () => go('course/' + c.id)
+                        }),
+                        following ? btn(t('Next level'), {
+                            icon: 'right',
+                            onclick: () => go('lesson/' + c.id + '/' + following.id)
+                        }) : btn(t('Go to the exam'), {icon: 'cert', onclick: () => go('exam/' + c.id)}))));
                 celebrate({...d, xp: 0});
             } catch (e) {
                 stage.replaceChildren(banner('error', 'warning', e.message));
@@ -1024,14 +1576,23 @@
         }
 
         show();
-        return {title: lesson.title, back: 'course/' + c.id, tab: 'path', nav: false, body: [h('div.bar.top', bar), stage]};
+        return {
+            title: lesson.title,
+            back: 'course/' + c.id,
+            tab: 'path',
+            nav: false,
+            body: [h('div.bar.top', bar), stage]
+        };
     }
 
     /** A drill, wherever it is played. The result is saved in the background: the learner goes on at once. */
     function drillView(d, next) {
         return Drills.render(d, {
             rich, cost: S.state.costs.drill, next, skip: next,
-            buyHint: async () => !!await askHint(S.state.costs.drill, {kind: 'drill', drill: d.id}).catch(e => toast(e.message, 'error')),
+            buyHint: async () => !!await askHint(S.state.costs.drill, {
+                kind: 'drill',
+                drill: d.id
+            }).catch(e => toast(e.message, 'error')),
             onDone(mistakes) {
                 Api.post('drill.finish', {drill: d.id, mistakes}).then(r => {
                     applyState(r);
@@ -1103,7 +1664,10 @@
             bar.style.width = Math.round(i * 100 / questions.length) + '%';
             if (i >= questions.length) return finish();
             const q = questions[i];
-            stage.replaceChildren(h('section.quiz', h('div.quiz-head', h('span.kicker', t('Question {a} of {b}', {a: i + 1, b: questions.length})), langChip(q.family)), h('h2', rich(q.q)),
+            stage.replaceChildren(h('section.quiz', h('div.quiz-head', h('span.kicker', t('Question {a} of {b}', {
+                    a: i + 1,
+                    b: questions.length
+                })), langChip(q.family)), h('h2', rich(q.q)),
                 h('div.options', shuffledOrder(q.options.length).map((k, pos) => h('button.option', {
                     type: 'button', onclick: () => {
                         answers[keyOf(q)] = k;
@@ -1160,12 +1724,25 @@
                 delete S.course[courseId];
                 if (d.passed) confetti();
                 stage.replaceChildren(h('section.done', mascot(d.passed ? 'wow' : 'sad', 'lg'), h('h2', d.passed ? t('You passed!') : t('Not this time')),
-                    d.expired ? h('p', t('Time ran out before the answers arrived.')) : null, h('p.score', d.score + '%'), h('p', t('{a} correct answers out of {b}', {a: d.correct, b: d.total})),
+                    d.expired ? h('p', t('Time ran out before the answers arrived.')) : null, h('p.score', d.score + '%'), h('p', t('{a} correct answers out of {b}', {
+                        a: d.correct,
+                        b: d.total
+                    })),
                     d.passed && d.xp ? h('p.gain', icon('spark'), t('+{n} XP and Sparks', {n: d.xp})) : null,
                     d.passed ? h('p', t('The course counts as finished: its levels are solved and the next courses are open.')) : null,
-                    d.passed && d.certificate ? h('div.step-actions', h('a.btn.btn-filled', {href: certUrl(d.certificate.code), target: '_blank', rel: 'noopener'}, icon('cert'), h('span', t('Open the certificate')))) : null,
-                    d.passed && !d.certificate ? h('div.step-actions', btn(t('Unlock the certificate · {n}', {n: S.state.costs.certificate}), {icon: 'spark', onclick: () => claimCertificate(courseId, () => go('course/' + courseId))})) : null,
-                    h('div.step-actions', btn(t('Back to the course'), {kind: 'tonal', onclick: () => go('course/' + courseId)}), !d.passed ? btn(t('Try again'), {onclick: intro}) : null),
+                    d.passed && d.certificate ? h('div.step-actions', h('a.btn.btn-filled', {
+                        href: certUrl(d.certificate.code),
+                        target: '_blank',
+                        rel: 'noopener'
+                    }, icon('cert'), h('span', t('Open the certificate')))) : null,
+                    d.passed && !d.certificate ? h('div.step-actions', btn(t('Unlock the certificate · {n}', {n: S.state.costs.certificate}), {
+                        icon: 'spark',
+                        onclick: () => claimCertificate(courseId, () => go('course/' + courseId))
+                    })) : null,
+                    h('div.step-actions', btn(t('Back to the course'), {
+                        kind: 'tonal',
+                        onclick: () => go('course/' + courseId)
+                    }), !d.passed ? btn(t('Try again'), {onclick: intro}) : null),
                     d.review.length ? h('h3', t('To review')) : null, reviewList(d.review)));
                 celebrate({...d, xp: 0});
             } catch (e) {
@@ -1175,7 +1752,13 @@
 
         if (!c) throw new Error(t('Course not found.'));
         intro();
-        return {title: t('Final exam'), back: 'course/' + courseId, tab: 'path', nav: false, body: [h('div.bar.top', bar), slot, stage]};
+        return {
+            title: t('Final exam'),
+            back: 'course/' + courseId,
+            tab: 'path',
+            nav: false,
+            body: [h('div.bar.top', bar), slot, stage]
+        };
     }
 
     async function viewDaily() {
@@ -1183,7 +1766,10 @@
         const bar = h('i');
         const slot = h('div.clock-slot');
         if (S.state.daily) {
-            stage.replaceChildren(h('section.done', mascot('happy', 'lg'), h('h2', t('See you tomorrow')), h('p', t('Today you got {a} out of {b}.', {a: S.state.daily.correct, b: S.state.daily.total})),
+            stage.replaceChildren(h('section.done', mascot('happy', 'lg'), h('h2', t('See you tomorrow')), h('p', t('Today you got {a} out of {b}.', {
+                    a: S.state.daily.correct,
+                    b: S.state.daily.total
+                })),
                 h('div.step-actions', btn(t('Play a game'), {onclick: () => go('games')}))));
         } else {
             const d = await Api.get('daily.get');
@@ -1197,7 +1783,10 @@
                     const r = await Api.post('daily.submit', {answers});
                     applyState(r);
                     if (r.correct === r.total) confetti();
-                    stage.replaceChildren(h('section.done', mascot(r.correct === r.total ? 'wow' : 'happy', 'lg'), stars(r.correct === r.total ? 3 : r.correct >= 3 ? 2 : 1), h('h2', t('{a} out of {b}', {a: r.correct, b: r.total})), r.seconds ? h('p', t('Time: {n} seconds', {n: r.seconds})) : null, h('p.gain', icon('spark'), t('+{n} XP and Sparks', {n: r.xp})),
+                    stage.replaceChildren(h('section.done', mascot(r.correct === r.total ? 'wow' : 'happy', 'lg'), stars(r.correct === r.total ? 3 : r.correct >= 3 ? 2 : 1), h('h2', t('{a} out of {b}', {
+                            a: r.correct,
+                            b: r.total
+                        })), r.seconds ? h('p', t('Time: {n} seconds', {n: r.seconds})) : null, h('p.gain', icon('spark'), t('+{n} XP and Sparks', {n: r.xp})),
                         h('div.step-actions', btn(t('Back home'), {onclick: () => go('home')})), reviewList(r.review.filter(x => !x.ok))));
                     celebrate({...r, xp: 0});
                 } catch (e) {
@@ -1205,7 +1794,13 @@
                 }
             });
         }
-        return {title: t('Daily challenge'), back: 'home', tab: 'home', nav: false, body: [h('div.bar.top', bar), slot, stage]};
+        return {
+            title: t('Daily challenge'),
+            back: 'home',
+            tab: 'home',
+            nav: false,
+            body: [h('div.bar.top', bar), slot, stage]
+        };
     }
 
     // ---------------------------------------------------------------- gym
@@ -1221,14 +1816,26 @@
             if (i >= d.drills.length) {
                 confetti();
                 stage.replaceChildren(h('section.done', mascot('wow', 'lg'), h('h2', t('Workout complete!')), h('p', t('Your hands are getting faster.')),
-                    h('div.step-actions', btn(t('Back home'), {kind: 'tonal', onclick: () => go('home')}), btn(t('Again'), {icon: 'bolt', onclick: render}))));
+                    h('div.step-actions', btn(t('Back home'), {
+                        kind: 'tonal',
+                        onclick: () => go('home')
+                    }), btn(t('Again'), {icon: 'bolt', onclick: render}))));
             } else stage.replaceChildren(drillView(d.drills[i++], next));
             window.scrollTo(0, 0);
         }
 
         if (d.drills.length) next();
-        else stage.replaceChildren(empty(t('The gym opens soon'), t('Start the first level of a course to unlock the drills.'), btn(t('Open the courses'), {icon: 'book', onclick: () => go('path')})));
-        return {title: t('Gym'), back: 'home', tab: 'home', nav: false, body: [d.drills.length ? h('div.bar.top', bar) : null, stage]};
+        else stage.replaceChildren(empty(t('The gym opens soon'), t('Start the first level of a course to unlock the drills.'), btn(t('Open the courses'), {
+            icon: 'book',
+            onclick: () => go('path')
+        })));
+        return {
+            title: t('Gym'),
+            back: 'home',
+            tab: 'home',
+            nav: false,
+            body: [d.drills.length ? h('div.bar.top', bar) : null, stage]
+        };
     }
 
     // ---------------------------------------------------------------- games
@@ -1242,7 +1849,10 @@
                 h('div.game-list', S.state.games.map(g => {
                     const won = Object.keys(g.won).length;
                     return h('a.card.game-card', {href: '#/game/' + g.id}, tile('icon', g.icon, 'lg'), h('div.grow', h('strong', g.title), h('p.muted', g.desc),
-                        h('div.bar', h('i', {style: {width: Math.round(won * 100 / g.levels) + '%'}})), h('span.muted.small', t('{a} of {b} levels', {a: won, b: g.levels}))));
+                        h('div.bar', h('i', {style: {width: Math.round(won * 100 / g.levels) + '%'}})), h('span.muted.small', t('{a} of {b} levels', {
+                            a: won,
+                            b: g.levels
+                        }))));
                 })),
             ]
         };
@@ -1279,7 +1889,10 @@
             /** Registers what the help button does; it is paid first. */
             onHint(fn) {
                 hintBtn.onclick = async () => {
-                    const paid = await askHint(S.state.costs.game, {kind: 'game', game: id}).catch(e => toast(e.message, 'error'));
+                    const paid = await askHint(S.state.costs.game, {
+                        kind: 'game',
+                        game: id
+                    }).catch(e => toast(e.message, 'error'));
                     if (paid) fn();
                 };
             },
@@ -1287,7 +1900,14 @@
                 if (finished) return;
                 finished = true;
                 try {
-                    const r = await Api.post('game.finish', {game: id, level, won: result.won, stars: result.stars, score: result.score || 0, seconds: Math.round((Date.now() - started) / 1000)});
+                    const r = await Api.post('game.finish', {
+                        game: id,
+                        level,
+                        won: result.won,
+                        stars: result.stars,
+                        score: result.score || 0,
+                        seconds: Math.round((Date.now() - started) / 1000)
+                    });
                     applyState(r);
                     const nextLevel = result.won && level < d.game.levels;
                     const s = sheet({
@@ -1319,7 +1939,14 @@
             UI.store.set('guide.' + id, true);
             setTimeout(() => gameGuide(id, d.game.title), 300);
         }
-        return {title: t('{name} · level {n}', {name: d.game.title, n: level}), back: 'game/' + id, tab: 'games', nav: false, actions: [iconBtn('help', t('How to play'), () => gameGuide(id, d.game.title))], body: [stage, h('div.step-actions', hintBtn)]};
+        return {
+            title: t('{name} · level {n}', {name: d.game.title, n: level}),
+            back: 'game/' + id,
+            tab: 'games',
+            nav: false,
+            actions: [iconBtn('help', t('How to play'), () => gameGuide(id, d.game.title))],
+            body: [stage, h('div.step-actions', hintBtn)]
+        };
     }
 
     // ---------------------------------------------------------------- daily leaderboard
@@ -1337,7 +1964,10 @@
         const daily = type === 'daily';
         return {
             title: t('Ranking'), tab: 'board', body: [
-                h('section.board-head', mascot(d.me && d.me.place === 1 ? 'wow' : 'happy'), h('div.grow', h('strong', daily ? t('Daily challenge') : t('Today’s forge')), h('p', d.participants === 1 ? t('1 participant') : t('{n} participants', {n: d.participants})), h('p.small', t('Closes in {h} h {m} min', {h: hours, m: minutes})))),
+                h('section.board-head', mascot(d.me && d.me.place === 1 ? 'wow' : 'happy'), h('div.grow', h('strong', daily ? t('Daily challenge') : t('Today’s forge')), h('p', d.participants === 1 ? t('1 participant') : t('{n} participants', {n: d.participants})), h('p.small', t('Closes in {h} h {m} min', {
+                    h: hours,
+                    m: minutes
+                })))),
                 seg([['daily', t('Daily challenge')], ['xp', t('Today’s XP')]], type, pick('type')),
                 seg([['all', t('Everyone')], ['friends', t('Friends')]], scope, pick('scope')),
                 h('p.lead', daily ? t('Most right answers first; at a tie, the fastest. The top three win Sparks: the more people take part, the bigger the prize.') : t('Who earned the most XP today. This one is just for fun: the prizes go to the daily challenge.')),
@@ -1370,7 +2000,13 @@
             }))) : [h('p.muted', t('No friends yet: search for a username.'))]));
         }
 
-        const input = UI.input({autocomplete: 'off', autocapitalize: 'off', spellcheck: false, maxlength: 20, 'aria-label': t('Search by username')});
+        const input = UI.input({
+            autocomplete: 'off',
+            autocapitalize: 'off',
+            spellcheck: false,
+            maxlength: 20,
+            'aria-label': t('Search by username')
+        });
         let timer = null;
 
         async function search() {
@@ -1416,7 +2052,11 @@
         confetti();
         const s = sheet({
             title: t('You made the podium!'),
-            body: [h('div.levelup', mascot('wow', 'lg'), list.map(p => h('p', t('{day}: number {place} out of {n}', {day: UI.fmtDate(p.day), place: p.place, n: p.participants}))), h('p.gain', icon('spark'), t('+{n} Sparks', {n: total})))],
+            body: [h('div.levelup', mascot('wow', 'lg'), list.map(p => h('p', t('{day}: number {place} out of {n}', {
+                day: UI.fmtDate(p.day),
+                place: p.place,
+                n: p.participants
+            }))), h('p.gain', icon('spark'), t('+{n} Sparks', {n: total})))],
             actions: [btn(best === 1 ? t('Champion!') : t('Great!'), {onclick: () => s.close()})]
         });
         S.state.prizes = [];
@@ -1484,19 +2124,34 @@
                 ready.length ? [
                     h('h2.section-title', t('Ready to unlock')),
                     h('div.group', ready.map(c => h('div.cert-row', tile('icon', 'cert'),
-                        h('div.grow', h('strong', c.title), h('p.muted', t('Exam passed with {n}%: unlock your certificate with {c} Sparks.', {n: c.examLangScore ?? c.examScore, c: st.costs.certificate}))),
-                        btn(t('Unlock · {n}', {n: st.costs.certificate}), {icon: 'spark', onclick: () => claimCertificate(c.id, render)})))),
+                        h('div.grow', h('strong', c.title), h('p.muted', t('Exam passed with {n}%: unlock your certificate with {c} Sparks.', {
+                            n: c.examLangScore ?? c.examScore,
+                            c: st.costs.certificate
+                        }))),
+                        btn(t('Unlock · {n}', {n: st.costs.certificate}), {
+                            icon: 'spark',
+                            onclick: () => claimCertificate(c.id, render)
+                        })))),
                 ] : null,
                 other.length ? [
                     h('h2.section-title', t('Also in {l}?', {l: langName(I18N.lang)})),
                     h('div.group', other.map(c => h('div.cert-row', tile('icon', 'cert'),
-                        h('div.grow', h('strong', c.title), h('p.muted', t('You already have this certificate in {a}. Do you want to take the exam in {b} too?', {a: certsOf(c).map(x => langName(x.lang)).join(', '), b: langName(I18N.lang)}))),
-                        btn(t('Take it in {l}', {l: langName(I18N.lang)}), {kind: 'tonal', onclick: () => go('exam/' + c.id)})))),
+                        h('div.grow', h('strong', c.title), h('p.muted', t('You already have this certificate in {a}. Do you want to take the exam in {b} too?', {
+                            a: certsOf(c).map(x => langName(x.lang)).join(', '),
+                            b: langName(I18N.lang)
+                        }))),
+                        btn(t('Take it in {l}', {l: langName(I18N.lang)}), {
+                            kind: 'tonal',
+                            onclick: () => go('exam/' + c.id)
+                        })))),
                 ] : null,
                 earned.length ? [
                     ready.length || other.length ? h('h2.section-title', t('Your certificates')) : null,
                     h('div.group', earned.map(certRow)),
-                ] : empty(t('No certificates yet.'), t('Finish a course and pass its exam to earn the first one.'), btn(t('Open the courses'), {icon: 'book', onclick: () => go('path')})),
+                ] : empty(t('No certificates yet.'), t('Finish a course and pass its exam to earn the first one.'), btn(t('Open the courses'), {
+                    icon: 'book',
+                    onclick: () => go('path')
+                })),
                 h('a.btn.btn-tonal.btn-block', {href: 'verify.php'}, icon('cert'), h('span', t('Verify a certificate'))),
             ]
         };
@@ -1504,7 +2159,12 @@
 
     function certRow(c) {
         return h('div.cert-row', tile('icon', 'cert'), h('div.grow', h('strong', c.title), h('p.muted', `${c.certificate.score}% · ${t('in {l}', {l: langName(c.certificate.lang)})} · ${UI.fmtDate(c.certificate.issuedAt.slice(0, 10))} · ${c.certificate.name}`)),
-            h('a.icon-btn', {href: certUrl(c.certificate.code), target: '_blank', rel: 'noopener', 'aria-label': t('Open the certificate')}, icon('right')));
+            h('a.icon-btn', {
+                href: certUrl(c.certificate.code),
+                target: '_blank',
+                rel: 'noopener',
+                'aria-label': t('Open the certificate')
+            }, icon('right')));
     }
 
     // ---------------------------------------------------------------- profile picture
@@ -1515,9 +2175,19 @@
      */
     function openAvatarShop() {
         const now = Avatars.parse(myAvatar());
-        let pick = {character: now.character, background: now.background || 'violet', accessory: now.accessory, frame: now.frame};
+        let pick = {
+            character: now.character,
+            background: now.background || 'violet',
+            accessory: now.accessory,
+            frame: now.frame
+        };
         let kind = 'character';
-        const dict = {character: Avatars.CHARACTERS, accessory: Avatars.ACCESSORIES, frame: Avatars.FRAMES, background: Avatars.BACKGROUNDS};
+        const dict = {
+            character: Avatars.CHARACTERS,
+            accessory: Avatars.ACCESSORIES,
+            frame: Avatars.FRAMES,
+            background: Avatars.BACKGROUNDS
+        };
         const item = id => S.state.shop.find(x => x.id === id);
         const owned = id => !id || (item(id) && item(id).owned);
         const preview = h('div.av-preview');
@@ -1545,11 +2215,11 @@
                 const face = Avatars.encode(Object.assign({}, pick, {[kind]: x.id}));
                 const label = x.id ? Avatars.name(dict[kind][x.id]) : kind === 'character' ? t('Your initial') : t('None');
                 return h('button.av-tile' + (on ? '.on' : '') + (x.owned ? '' : '.locked'), {
-                    type: 'button', 'aria-pressed': String(on), onclick: () => {
-                        pick[kind] = x.id;
-                        draw();
-                    }
-                }, avatar(S.state.user.name, 'md', face), h('span.av-name', label),
+                        type: 'button', 'aria-pressed': String(on), onclick: () => {
+                            pick[kind] = x.id;
+                            draw();
+                        }
+                    }, avatar(S.state.user.name, 'md', face), h('span.av-name', label),
                     x.owned ? h('span.av-price.own', icon('check'), x.price ? t('Owned') : t('Free')) : h('span.av-price', icon('spark'), String(x.price)));
             });
             grid.replaceChildren(...tiles);
@@ -1561,7 +2231,10 @@
                 const label = Avatars.name(Avatars.item(id));
                 const b = btn(t('Buy {name} · {n}', {name: label, n: it.price}), {
                     icon: 'spark', kind: short ? 'tonal' : 'filled', disabled: short, onclick: async () => {
-                        if (!await confirm(t('Buy {name}?', {name: label}), t('It costs {n} Sparks: you have {m}.', {n: it.price, m: S.state.user.points}), t('Buy'))) return;
+                        if (!await confirm(t('Buy {name}?', {name: label}), t('It costs {n} Sparks: you have {m}.', {
+                            n: it.price,
+                            m: S.state.user.points
+                        }), t('Buy'))) return;
                         try {
                             applyState(await busy(b, () => Api.post('avatar.buy', {item: id})));
                             toast(t('Bought: {name}', {name: label}), 'ok');
@@ -1588,19 +2261,28 @@
             }
         }
 
-        const s = sheet({title: t('Profile picture'), body: [preview, buyBox, tabs, grid, wallet],
-            actions: [btn(t('Cancel'), {kind: 'text', onclick: () => s.close()}), save]});
+        const s = sheet({
+            title: t('Profile picture'), body: [preview, buyBox, tabs, grid, wallet],
+            actions: [btn(t('Cancel'), {kind: 'text', onclick: () => s.close()}), save]
+        });
         draw();
     }
 
     // ---------------------------------------------------------------- profile
 
     function viewProfile() {
-        const row = (ic, label, onclick, danger) => h('button.setting' + (danger ? '.danger' : ''), {type: 'button', onclick}, icon(ic), h('span', label), icon('right'));
+        const row = (ic, label, onclick, danger) => h('button.setting' + (danger ? '.danger' : ''), {
+            type: 'button',
+            onclick
+        }, icon(ic), h('span', label), icon('right'));
         const u = S.state.user;
         return {
             title: t('Profile'), back: 'home', tab: 'profile', body: [
-                h('div.card.pad.profile-head', h('button.avatar-edit', {type: 'button', 'aria-label': t('Change profile picture'), onclick: openAvatarShop}, avatar(u.name, 'lg', myAvatar()), h('i', icon('edit'))), h('div.grow', h('strong', u.name), h('p.muted', '@' + u.username), h('p.muted', u.email))),
+                h('div.card.pad.profile-head', h('button.avatar-edit', {
+                    type: 'button',
+                    'aria-label': t('Change profile picture'),
+                    onclick: openAvatarShop
+                }, avatar(u.name, 'lg', myAvatar()), h('i', icon('edit'))), h('div.grow', h('strong', u.name), h('p.muted', '@' + u.username), h('p.muted', u.email))),
                 rankCard(),
                 h('h2.section-title', t('Preferences')),
                 seg(I18N.langs, I18N.lang, I18N.set),
@@ -1629,8 +2311,16 @@
                     }),
                     row('delete', t('Delete account'), deleteAccount, true)),
                 h('h2.section-title', t('Support the project')),
-                h('a.donate', {href: DONATE_URL, target: '_blank', rel: 'noopener'}, h('span.quick-ic', icon('heart')), h('span.grow', h('strong', t('Donate')), h('span', t('Fucina is open source and free. A donation supports the project.'))), icon('right')),
-                h('div.center', h('a.credit', {href: AUTHOR_URL, target: '_blank', rel: 'noopener'}, h('span', t('A project by')), h('span.credit-name', 'Saverio Morelli'))),
+                h('a.donate', {
+                    href: DONATE_URL,
+                    target: '_blank',
+                    rel: 'noopener'
+                }, h('span.quick-ic', icon('heart')), h('span.grow', h('strong', t('Donate')), h('span', t('Fucina is open source and free. A donation supports the project.'))), icon('right')),
+                h('div.center', h('a.credit', {
+                    href: AUTHOR_URL,
+                    target: '_blank',
+                    rel: 'noopener'
+                }, h('span', t('A project by')), h('span.credit-name', 'Saverio Morelli'))),
                 h('div.center', h('button.version-btn', {type: 'button', onclick: releaseNotes}, 'Fucina ' + VERSION)),
             ]
         };
@@ -1639,22 +2329,28 @@
     /** Everyone needs a username: it is the only public data of an account, and the app stops here until it is chosen. */
     function renderUsername(changing) {
         const current = S.state.user.username || '';
-        const name = UI.input({value: current, autocomplete: 'off', autocapitalize: 'off', spellcheck: false, maxlength: 20});
+        const name = UI.input({
+            value: current,
+            autocomplete: 'off',
+            autocapitalize: 'off',
+            spellcheck: false,
+            maxlength: 20
+        });
         const err = h('div.err-box', {hidden: true});
         const save = btn(changing ? t('Save') : t('Continue'), {type: 'submit', cls: 'btn-block'});
         const form = h('form', {
-            novalidate: true, onsubmit: async e => {
-                e.preventDefault();
-                err.hidden = true;
-                try {
-                    applyState(await busy(save, () => Api.post('auth.username', {username: name.value})));
-                    render();
-                } catch (ex) {
-                    err.textContent = ex.message;
-                    err.hidden = false;
+                novalidate: true, onsubmit: async e => {
+                    e.preventDefault();
+                    err.hidden = true;
+                    try {
+                        applyState(await busy(save, () => Api.post('auth.username', {username: name.value})));
+                        render();
+                    } catch (ex) {
+                        err.textContent = ex.message;
+                        err.hidden = false;
+                    }
                 }
-            }
-        }, UI.field(t('Username'), name), h('p.muted.small', t('3 to 20 letters, numbers, dots or underscores. It is the only thing others can see about you: avoid your real name if you prefer.')), err, h('div.spacer'), save,
+            }, UI.field(t('Username'), name), h('p.muted.small', t('3 to 20 letters, numbers, dots or underscores. It is the only thing others can see about you: avoid your real name if you prefer.')), err, h('div.spacer'), save,
             changing ? h('div.center', btn(t('Cancel'), {kind: 'text', onclick: render})) : null);
         root.replaceChildren(h('div.auth', langPill('.on-auth'), h('div.auth-top', mascot('happy', 'auth-pet'), h('h1', changing ? t('Change username') : t('Choose your username')), h('p', t('This is how others find you'))), h('div.auth-body', form)));
     }
@@ -1708,7 +2404,10 @@
         if (await Notification.requestPermission() !== 'granted') throw new Error(t('Permission denied: you can turn them on in the browser settings.'));
         const {publicKey} = await Api.get('push.key');
         if (!publicKey) throw new Error(t('Notifications are not available on this device.'));
-        if (!sub) sub = await reg.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: keyBytes(publicKey)});
+        if (!sub) sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: keyBytes(publicKey)
+        });
         await Api.post('push.subscribe', {endpoint: sub.endpoint});
     }
 
@@ -1728,11 +2427,18 @@
             ['friends', 'group', t('Friends'), t('When someone adds you'), false]
         ];
         const box = h('div');
-        const s = sheet({title: t('Notifications'), body: [box], actions: [btn(t('Close'), {onclick: () => s.close()})]});
+        const s = sheet({
+            title: t('Notifications'),
+            body: [box],
+            actions: [btn(t('Close'), {onclick: () => s.close()})]
+        });
 
         const info = await Api.get('notify.get').catch(() => null);
         let off = new Set((info && info.off) || (S.state && S.state.user && S.state.user.notifyOff) || []);
-        let hours = Object.assign({daily: 18, streak: 18}, (info && info.hours) || (S.state && S.state.user && S.state.user.notifyHours) || {});
+        let hours = Object.assign({
+            daily: 18,
+            streak: 18
+        }, (info && info.hours) || (S.state && S.state.user && S.state.user.notifyHours) || {});
         const serverOffset = typeof (info && (info.serverOffset ?? info.server_offset)) === 'number'
             ? (info.serverOffset ?? info.server_offset)
             : (typeof (S.state && (S.state.serverOffset ?? S.state.server_offset)) === 'number'
@@ -1746,7 +2452,12 @@
         function currentServerTimeString() {
             if (serverTime) return serverTime;
             try {
-                return new Intl.DateTimeFormat([], {timeZone: serverTz, hour: '2-digit', minute: '2-digit', hour12: false}).format(new Date());
+                return new Intl.DateTimeFormat([], {
+                    timeZone: serverTz,
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                }).format(new Date());
             } catch (e) {
                 const d = new Date(Date.now() + (serverOffset * 60 + new Date().getTimezoneOffset()) * 60000);
                 return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
@@ -1785,7 +2496,10 @@
                             if (localH < 0) localH += 24;
                             label += ' · ' + t('{h}:00 on your device', {h: String(localH).padStart(2, '0')});
                         }
-                        const opt = h('option', {value: hVal, selected: (hours[key] ?? 18) === hVal || undefined}, label);
+                        const opt = h('option', {
+                            value: hVal,
+                            selected: (hours[key] ?? 18) === hVal || undefined
+                        }, label);
                         hourSelect.appendChild(opt);
                     }
                 }
@@ -1830,12 +2544,12 @@
 
             box.replaceChildren(
                 pushReady() ? h('div.group', h('button.setting.toggle', {
-                    type: 'button', role: 'switch', 'aria-checked': sub ? 'true' : 'false', onclick: async e => {
-                        e.currentTarget.disabled = true;
-                        await setDevice(!sub).catch(err => toast(err.message, 'error'));
-                        paint();
-                    }
-                }, icon('bell'), h('span', h('strong', t('On this device')), h('small', sub ? t('On') : t('Off'))), h('i.switch' + (sub ? '.on' : ''))))
+                        type: 'button', role: 'switch', 'aria-checked': sub ? 'true' : 'false', onclick: async e => {
+                            e.currentTarget.disabled = true;
+                            await setDevice(!sub).catch(err => toast(err.message, 'error'));
+                            paint();
+                        }
+                    }, icon('bell'), h('span', h('strong', t('On this device')), h('small', sub ? t('On') : t('Off'))), h('i.switch' + (sub ? '.on' : ''))))
                     : banner('info', 'info', t('Not available here'), t('This browser cannot receive notifications. On iPhone, add Fucina to the home screen first.')),
                 h('h2.section-title', t('Notify me about')),
                 h('div.group', items),
@@ -1869,7 +2583,8 @@
             }
         });
         const s = sheet({
-            title: t('Name'), body: [UI.field(t('Name'), name), h('p.sheet-text', t('Email: {email}', {email: S.state.user.email})), h('p.muted.small', t('The email identifies your account and cannot be changed.'))],
+            title: t('Name'),
+            body: [UI.field(t('Name'), name), h('p.sheet-text', t('Email: {email}', {email: S.state.user.email})), h('p.muted.small', t('The email identifies your account and cannot be changed.'))],
             actions: [btn(t('Cancel'), {kind: 'text', onclick: () => s.close()}), save]
         });
     }
@@ -1889,7 +2604,11 @@
                 }
             }
         });
-        const s = sheet({title: t('Password'), body: [S.state.user.hasPassword ? UI.field(t('Current password'), cur) : null, UI.field(t('New password (min. 8 characters)'), pw)], actions: [btn(t('Cancel'), {kind: 'text', onclick: () => s.close()}), save]});
+        const s = sheet({
+            title: t('Password'),
+            body: [S.state.user.hasPassword ? UI.field(t('Current password'), cur) : null, UI.field(t('New password (min. 8 characters)'), pw)],
+            actions: [btn(t('Cancel'), {kind: 'text', onclick: () => s.close()}), save]
+        });
     }
 
     function deleteAccount() {
@@ -1947,7 +2666,12 @@
                     try {
                         const d = await busy(submit, () => mode === 'login'
                             ? Api.post('auth.login', {email: email.value, password: pw.value}, {silentAuth: true})
-                            : Api.post('auth.register', {name: name.value, email: email.value, password: pw.value, acceptPrivacy: privacy.checked}, {silentAuth: true}));
+                            : Api.post('auth.register', {
+                                name: name.value,
+                                email: email.value,
+                                password: pw.value,
+                                acceptPrivacy: privacy.checked
+                            }, {silentAuth: true}));
                         if (d.checkEmail) return checkEmail(email.value.trim());
                         S.user = d.user;
                         start();
@@ -1958,13 +2682,21 @@
                 }
             },
             mode === 'register' ? UI.field(t('Name'), name) : null, UI.field('Email', email), UI.field(mode === 'login' ? t('Password') : t('Password (min. 8 characters)'), pw),
-            mode === 'register' ? h('label.check', privacy, h('span', t('I have read and accept the '), h('a', {href: 'privacy.html', target: '_blank', rel: 'noopener'}, t('privacy policy')))) : null,
+            mode === 'register' ? h('label.check', privacy, h('span', t('I have read and accept the '), h('a', {
+                href: 'privacy.html',
+                target: '_blank',
+                rel: 'noopener'
+            }, t('privacy policy')))) : null,
             err, h('div.spacer'), submit,
             mode === 'login' ? h('div.center', {style: {marginTop: '6px'}}, btn(t('Forgot your password?'), {
                 kind: 'text', onclick: () => {
                     const s = sheet({
                         title: t('Forgot password'),
-                        body: [h('p.sheet-text', t('Write to us through the contact form, from the email address of your account: we will help you get back in.')), h('div.btn-row', h('a.btn.btn-tonal', {href: CONTACT_URL, target: '_blank', rel: 'noopener'}, h('span', t('Open the contact form'))))],
+                        body: [h('p.sheet-text', t('Write to us through the contact form, from the email address of your account: we will help you get back in.')), h('div.btn-row', h('a.btn.btn-tonal', {
+                            href: CONTACT_URL,
+                            target: '_blank',
+                            rel: 'noopener'
+                        }, h('span', t('Open the contact form'))))],
                         actions: [btn(t('Got it'), {onclick: () => s.close()})]
                     });
                 }
@@ -1975,7 +2707,10 @@
             h('li', tile('icon', 'spark', 'sm'), t('Earn Sparks and spend them on hints')),
             h('li', tile('icon', 'cert', 'sm'), t('A certificate for every course you complete')));
         root.replaceChildren(h('div.auth', langPill('.on-auth'),
-            h('div.auth-top', h('div.auth-brand', h('img', {src: LOGO, alt: ''}), h('h1', 'Fucina')), h('p', t('Where the code is forged')), mascot('happy', 'auth-pet'), features('desk-only')),
+            h('div.auth-top', h('div.auth-brand', h('img', {
+                src: LOGO,
+                alt: ''
+            }), h('h1', 'Fucina')), h('p', t('Where the code is forged')), mascot('happy', 'auth-pet'), features('desk-only')),
             h('div.auth-body',
                 seg([['login', t('Sign in')], ['register', t('Create account')]], mode, v => {
                     UI.store.set('authMode', v);
@@ -2007,7 +2742,10 @@
             const ok = btn(t('Create account'), {
                 onclick: async () => {
                     if (!privacy.checked) return toast(t('To continue, accept the privacy policy.'), 'error');
-                    const d = await busy(ok, () => Api.post('auth.google', {credential, acceptPrivacy: true}, {silentAuth: true}));
+                    const d = await busy(ok, () => Api.post('auth.google', {
+                        credential,
+                        acceptPrivacy: true
+                    }, {silentAuth: true}));
                     s.close();
                     S.user = d.user;
                     setTimeout(start, 150);
@@ -2015,14 +2753,21 @@
             });
             const s = sheet({
                 title: t('Create your account'),
-                body: [h('p.sheet-text', e.data.email), h('label.check', privacy, h('span', t('I have read and accept the '), h('a', {href: 'privacy.html', target: '_blank', rel: 'noopener'}, t('privacy policy'))))],
+                body: [h('p.sheet-text', e.data.email), h('label.check', privacy, h('span', t('I have read and accept the '), h('a', {
+                    href: 'privacy.html',
+                    target: '_blank',
+                    rel: 'noopener'
+                }, t('privacy policy'))))],
                 actions: [btn(t('Cancel'), {kind: 'text', onclick: () => s.close()}), ok]
             });
         }
     }
 
     function fatal(title, text, action) {
-        root.replaceChildren(h('div.auth', langPill('.on-auth'), h('div.auth-top', h('div.auth-brand', h('img', {src: LOGO, alt: ''}), h('h1', 'Fucina')), h('p', title), mascot('sad', 'auth-pet')),
+        root.replaceChildren(h('div.auth', langPill('.on-auth'), h('div.auth-top', h('div.auth-brand', h('img', {
+                src: LOGO,
+                alt: ''
+            }), h('h1', 'Fucina')), h('p', title), mascot('sad', 'auth-pet')),
             h('div.auth-body.center', h('p', text), action || btn(t('Try again'), {onclick: start}))));
     }
 
@@ -2065,7 +2810,10 @@
                 render();
             }
         });
-        root.replaceChildren(h('div.auth', langPill('.on-auth'), h('div.auth-top', h('div.auth-brand', h('img', {src: LOGO, alt: ''}), h('h1', 'Fucina')), h('p', t('Confirm your email')), mascot('happy', 'auth-pet')),
+        root.replaceChildren(h('div.auth', langPill('.on-auth'), h('div.auth-top', h('div.auth-brand', h('img', {
+                src: LOGO,
+                alt: ''
+            }), h('h1', 'Fucina')), h('p', t('Confirm your email')), mascot('happy', 'auth-pet')),
             h('div.auth-body.center', h('p', t('We sent a link to {email}. Open it to start using your account: until then the account stays locked.', {email: S.user.email})),
                 status, h('div.verify-actions', check, resend, out))));
         document.title = t('Confirm your email') + ' · Fucina';
@@ -2086,13 +2834,22 @@
                     }
                 }
             });
-            const s = sheet({title: t('Confirm your email'), body: [h('p.sheet-text', t('Tap the button to confirm the address of your Fucina account.'))], actions: [ok], onclose: resolve});
+            const s = sheet({
+                title: t('Confirm your email'),
+                body: [h('p.sheet-text', t('Tap the button to confirm the address of your Fucina account.'))],
+                actions: [ok],
+                onclose: resolve
+            });
         });
     }
 
     // Google and SavAccount: joining an account that already exists, new accounts, ways of signing in (../identity/)
     if (window.Identity) Identity.setup({
-        name: 'Fucina', lang: () => I18N.lang, accent: 'var(--primary)', onAccent: 'var(--on-primary)', google: (slot, cb) => S.config.googleClientId && UI.googleButton(slot, S.config.googleClientId, cb, 'continue_with'),
+        name: 'Fucina',
+        lang: () => I18N.lang,
+        accent: 'var(--primary)',
+        onAccent: 'var(--on-primary)',
+        google: (slot, cb) => S.config.googleClientId && UI.googleButton(slot, S.config.googleClientId, cb, 'continue_with'),
     });
 
     async function start() {

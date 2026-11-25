@@ -433,21 +433,42 @@
     }
 
     function computeOrigamiBounds(folds, size = 4) {
-        let b = { xMin: 0, xMax: size - 1, yMin: 0, yMax: size - 1 };
+        let b = {xMin: 0, xMax: size - 1, yMin: 0, yMax: size - 1};
         const steps = [];
         for (const f of folds) {
-            const bBefore = { xMin: b.xMin, xMax: b.xMax, yMin: b.yMin, yMax: b.yMax, cols: b.xMax - b.xMin + 1, rows: b.yMax - b.yMin + 1 };
+            const bBefore = {
+                xMin: b.xMin,
+                xMax: b.xMax,
+                yMin: b.yMin,
+                yMax: b.yMax,
+                cols: b.xMax - b.xMin + 1,
+                rows: b.yMax - b.yMin + 1
+            };
             const sx = b.xMin + b.xMax;
             const sy = b.yMin + b.yMax;
             if (f === 'L_TO_R') b.xMin = Math.floor((b.xMin + b.xMax) / 2) + 1;
             else if (f === 'R_TO_L') b.xMax = Math.floor((b.xMin + b.xMax) / 2);
             else if (f === 'T_TO_B') b.yMin = Math.floor((b.yMin + b.yMax) / 2) + 1;
             else if (f === 'B_TO_T') b.yMax = Math.floor((b.yMin + b.yMax) / 2);
-            const bAfter = { xMin: b.xMin, xMax: b.xMax, yMin: b.yMin, yMax: b.yMax, cols: b.xMax - b.xMin + 1, rows: b.yMax - b.yMin + 1 };
-            steps.push({ fold: f, bBefore, bAfter, sx, sy });
+            const bAfter = {
+                xMin: b.xMin,
+                xMax: b.xMax,
+                yMin: b.yMin,
+                yMax: b.yMax,
+                cols: b.xMax - b.xMin + 1,
+                rows: b.yMax - b.yMin + 1
+            };
+            steps.push({fold: f, bBefore, bAfter, sx, sy});
         }
-        const finalBounds = { xMin: b.xMin, xMax: b.xMax, yMin: b.yMin, yMax: b.yMax, cols: b.xMax - b.xMin + 1, rows: b.yMax - b.yMin + 1 };
-        return { steps, finalBounds };
+        const finalBounds = {
+            xMin: b.xMin,
+            xMax: b.xMax,
+            yMin: b.yMin,
+            yMax: b.yMax,
+            cols: b.xMax - b.xMin + 1,
+            rows: b.yMax - b.yMin + 1
+        };
+        return {steps, finalBounds};
     }
 
     function makeOrigamiSheet(cols, rows, u, extraClass, children, showGuides) {
@@ -482,8 +503,8 @@
         const rightLetter = typeof rawRight === 'string' ? rawRight : (rawRight && rawRight.letter ? rawRight.letter : '');
 
         const size = d.size || 4;
-        const { steps, finalBounds } = (d.stepBounds && d.finalBounds)
-            ? { steps: d.stepBounds, finalBounds: d.finalBounds }
+        const {steps, finalBounds} = (d.stepBounds && d.finalBounds)
+            ? {steps: d.stepBounds, finalBounds: d.finalBounds}
             : computeOrigamiBounds(d.folds || [], size);
 
         const u = size === 8 ? 8 : (size === 6 ? 10 : 16);
@@ -594,10 +615,26 @@
                 parts.push(rect(base, FRONT), dots(holes[m], base, 1));
                 let flap, line, transform;
                 const sc = -1 + 2 * v; // -1: lying on the sheet, 0: on its edge, 1: open
-                if (s.fold === 'L_TO_R') { flap = {xMin: whole.xMin, xMax: base.xMin - 1, yMin: base.yMin, yMax: base.yMax}; line = px(base.xMin); transform = `translate(${line} 0) scale(${sc.toFixed(3)} 1) translate(${-line} 0)`; }
-                if (s.fold === 'R_TO_L') { flap = {xMin: base.xMax + 1, xMax: whole.xMax, yMin: base.yMin, yMax: base.yMax}; line = px(base.xMax + 1); transform = `translate(${line} 0) scale(${sc.toFixed(3)} 1) translate(${-line} 0)`; }
-                if (s.fold === 'T_TO_B') { flap = {xMin: base.xMin, xMax: base.xMax, yMin: whole.yMin, yMax: base.yMin - 1}; line = px(base.yMin); transform = `translate(0 ${line}) scale(1 ${sc.toFixed(3)}) translate(0 ${-line})`; }
-                if (s.fold === 'B_TO_T') { flap = {xMin: base.xMin, xMax: base.xMax, yMin: base.yMax + 1, yMax: whole.yMax}; line = px(base.yMax + 1); transform = `translate(0 ${line}) scale(1 ${sc.toFixed(3)}) translate(0 ${-line})`; }
+                if (s.fold === 'L_TO_R') {
+                    flap = {xMin: whole.xMin, xMax: base.xMin - 1, yMin: base.yMin, yMax: base.yMax};
+                    line = px(base.xMin);
+                    transform = `translate(${line} 0) scale(${sc.toFixed(3)} 1) translate(${-line} 0)`;
+                }
+                if (s.fold === 'R_TO_L') {
+                    flap = {xMin: base.xMax + 1, xMax: whole.xMax, yMin: base.yMin, yMax: base.yMax};
+                    line = px(base.xMax + 1);
+                    transform = `translate(${line} 0) scale(${sc.toFixed(3)} 1) translate(${-line} 0)`;
+                }
+                if (s.fold === 'T_TO_B') {
+                    flap = {xMin: base.xMin, xMax: base.xMax, yMin: whole.yMin, yMax: base.yMin - 1};
+                    line = px(base.yMin);
+                    transform = `translate(0 ${line}) scale(1 ${sc.toFixed(3)}) translate(0 ${-line})`;
+                }
+                if (s.fold === 'B_TO_T') {
+                    flap = {xMin: base.xMin, xMax: base.xMax, yMin: base.yMax + 1, yMax: whole.yMax};
+                    line = px(base.yMax + 1);
+                    transform = `translate(0 ${line}) scale(1 ${sc.toFixed(3)}) translate(0 ${-line})`;
+                }
                 parts.push(`<g transform="${transform}">${rect(flap, sc < 0 ? BACK : FRONT)}${dots(holes[m - 1], flap, 1)}</g>`);
                 const vert = s.fold === 'L_TO_R' || s.fold === 'R_TO_L';
                 parts.push(vert
@@ -658,8 +695,18 @@
         const st = replays[key] || (replays[key] = {t: still ? 1 : 0, playing: !still});
         const stage = h('div.anim-stage');
         const btn = h('button.anim-btn', {type: 'button'});
-        const again = h('button.anim-btn', {type: 'button', title: t('anim_replay'), 'aria-label': t('anim_replay')}, icon('replay'));
-        const range = h('input.anim-range', {type: 'range', min: '0', max: '1000', step: '1', 'aria-label': t('anim_progress')});
+        const again = h('button.anim-btn', {
+            type: 'button',
+            title: t('anim_replay'),
+            'aria-label': t('anim_replay')
+        }, icon('replay'));
+        const range = h('input.anim-range', {
+            type: 'range',
+            min: '0',
+            max: '1000',
+            step: '1',
+            'aria-label': t('anim_progress')
+        });
         const wrap = h('div.anim-player', stage, h('div.anim-bar', btn, again, range));
         let raf = 0, last = null, waits = 0, shown = null;
         const paint = () => {
@@ -682,14 +729,19 @@
                 return;
             }
             waits = 0;
-            if (!st.playing) { last = null; return; }
+            if (!st.playing) {
+                last = null;
+                return;
+            }
             if (last !== null) st.t = Math.min(1, st.t + (now - last) / duration);
             last = now;
             if (st.t >= 1) st.playing = false;
             paint();
             if (st.playing) raf = requestAnimationFrame(frame); else last = null;
         };
-        const run = () => { if (!raf) raf = requestAnimationFrame(frame); };
+        const run = () => {
+            if (!raf) raf = requestAnimationFrame(frame);
+        };
         btn.addEventListener('click', () => {
             if (!st.playing && st.t >= 1) st.t = 0;
             st.playing = !st.playing;
@@ -697,12 +749,23 @@
             paint();
             run();
         });
-        again.addEventListener('click', () => { st.t = 0; st.playing = true; last = null; paint(); run(); });
-        range.addEventListener('input', () => { st.t = +range.value / 1000; st.playing = false; paint(); });
+        again.addEventListener('click', () => {
+            st.t = 0;
+            st.playing = true;
+            last = null;
+            paint();
+            run();
+        });
+        range.addEventListener('input', () => {
+            st.t = +range.value / 1000;
+            st.playing = false;
+            paint();
+        });
         paint();
         run();
         return wrap;
     }
+
     const replayKey = (q, kind) => kind + '|' + (q.sig || '') + '|' + q.answer + '|' + JSON.stringify(q.options).length;
 
     // ---------- gears ----------
@@ -741,9 +804,16 @@
             });
         }
         const outer = g => g.rp + MOD * .9;
-        const minX = Math.min(...gears.map(g => g.x - outer(g))) - 6, maxX = Math.max(...gears.map(g => g.x + outer(g))) + 6;
-        const minY = Math.min(...gears.map(g => g.y - outer(g))) - 24, maxY = Math.max(...gears.map(g => g.y + outer(g))) + 24;
-        gears.forEach(g => { g.x -= minX; g.y -= minY; g.outer = outer(g); g.mod = MOD; });
+        const minX = Math.min(...gears.map(g => g.x - outer(g))) - 6,
+            maxX = Math.max(...gears.map(g => g.x + outer(g))) + 6;
+        const minY = Math.min(...gears.map(g => g.y - outer(g))) - 24,
+            maxY = Math.max(...gears.map(g => g.y + outer(g))) + 24;
+        gears.forEach(g => {
+            g.x -= minX;
+            g.y -= minY;
+            g.outer = outer(g);
+            g.mod = MOD;
+        });
         // Contacts from the start gear, for the wave that carries the movement along
         const start = d.startIdx || 0;
         const dist = Array(n).fill(-1);
@@ -752,7 +822,10 @@
         for (let k = 0; k < order.length; k++) {
             d.links.forEach(([a, b]) => {
                 [[a, b], [b, a]].forEach(([x, y]) => {
-                    if (x === order[k] && dist[y] < 0) { dist[y] = dist[x] + 1; order.push(y); }
+                    if (x === order[k] && dist[y] < 0) {
+                        dist[y] = dist[x] + 1;
+                        order.push(y);
+                    }
                 });
             });
         }
@@ -825,7 +898,11 @@
             duration = Math.min(9000, 1600 * d.turns + 800);
             stateAt = tt => {
                 const turnsA = d.turns * ease(tt);
-                return {reveal: Array(n).fill(tt >= 1), angle: i => sign(i) * 360 * turnsA * d.teeth[0] / d.teeth[i], turnsA};
+                return {
+                    reveal: Array(n).fill(tt >= 1),
+                    angle: i => sign(i) * 360 * turnsA * d.teeth[0] / d.teeth[i],
+                    turnsA
+                };
             };
         } else {
             // First the movement travels from gear to gear, one contact at a time; then the whole train turns
@@ -854,9 +931,15 @@
                     const ring = Array.from({length: n}, (_, k) => (d.startIdx + k) % n);
                     const count = Math.floor(clamp01(tt / wave) * n + 1e-9);
                     const r2 = Array(n).fill(false);
-                    ring.forEach((gi, k) => { r2[gi] = k < count; });
+                    ring.forEach((gi, k) => {
+                        r2[gi] = k < count;
+                    });
                     const turn = tt > wave ? (tt - wave) / (1 - wave) : 0;
-                    return {reveal: r2, pulse: tt < wave ? ring[Math.min(n - 1, count)] : -1, angle: i => sign(i) * 200 * ease(turn) * 10 / lay.gears[i].t};
+                    return {
+                        reveal: r2,
+                        pulse: tt < wave ? ring[Math.min(n - 1, count)] : -1,
+                        angle: i => sign(i) * 200 * ease(turn) * 10 / lay.gears[i].t
+                    };
                 }
                 const turn = tt > wave ? (tt - wave) / (1 - wave) : 0;
                 return {reveal, pulse, angle: i => sign(i) * 220 * ease(turn) * 10 / lay.gears[i].t};
@@ -1031,7 +1114,13 @@
         const d = q.pipesData;
         if (!d) return q.lines ? h('div.lines', q.lines.map(l => h('div', l)), h('div.ask', q.ask)) : null;
         if (!answered) {
-            return h('div.pipes-view', h('div.pipes-stage.svg', {html: pipesSvg(q, {level: {[d.source || 'A']: .12}, flowing: new Set(), done: false})}));
+            return h('div.pipes-view', h('div.pipes-stage.svg', {
+                html: pipesSvg(q, {
+                    level: {[d.source || 'A']: .12},
+                    flowing: new Set(),
+                    done: false
+                })
+            }));
         }
         const steps = pipesSteps(d).length;
         return player(replayKey(q, 'pipes'), 1500 * steps + 900 * (steps - 1), tt => {
@@ -1053,8 +1142,10 @@
         const apply = (row, move) => {
             const out = row.slice();
             const m = move.match(/(\d+)\s*↔\s*(\d+)/);
-            if (m) { const a = +m[1] - 1, b = +m[2] - 1; [out[a], out[b]] = [out[b], out[a]]; }
-            else if (move.includes('⇄')) out.reverse();
+            if (m) {
+                const a = +m[1] - 1, b = +m[2] - 1;
+                [out[a], out[b]] = [out[b], out[a]];
+            } else if (move.includes('⇄')) out.reverse();
             else if (move.includes('⏪')) out.push(out.shift());
             return out;
         };
@@ -1091,7 +1182,12 @@
         if (q.grid) {
             const n = q.grid.length;
             let y = 0, x = 0;
-            q.grid.forEach((row, r) => row.forEach((c, k) => { if (c === '🐢') { y = r; x = k; } }));
+            q.grid.forEach((row, r) => row.forEach((c, k) => {
+                if (c === '🐢') {
+                    y = r;
+                    x = k;
+                }
+            }));
             const label = (r, k) => String.fromCharCode(65 + r * n + k);
             const MOVES = {'⬆️': [-1, 0], '➡️': [0, 1], '⬇️': [1, 0], '⬅️': [0, -1]};
             const steps = q.lines[0].split(/\s+/).filter(Boolean);
@@ -1111,7 +1207,8 @@
                 const [y1, x1, bump, dy, dx] = cells[k + 1];
                 // Against the edge the turtle tries, bumps and comes back
                 const nudge = bump ? Math.sin(Math.PI * u) * .3 : 0;
-                const ty = y0 + (y1 - y0) * u + (bump ? dy * nudge : 0), tx = x0 + (x1 - x0) * u + (bump ? dx * nudge : 0);
+                const ty = y0 + (y1 - y0) * u + (bump ? dy * nudge : 0),
+                    tx = x0 + (x1 - x0) * u + (bump ? dx * nudge : 0);
                 const end = tt >= 1;
                 const board = [];
                 for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {

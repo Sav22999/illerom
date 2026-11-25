@@ -8,13 +8,17 @@ if (!function_exists('fig_k8s_cluster')) {
     {
         $nodes = '';
         foreach ([1, 2, 3] as $i) {
-            $x = 16 + ($i - 1) * 208; $cx = $x + 96;
+            $x = 16 + ($i - 1) * 208;
+            $cx = $x + 96;
             $pods = '';
-            foreach (range(0, $i === 2 ? 1 : 2) as $k) { $px = $x + 14 + $k * 58; $pods .= "<rect x=\"$px\" y=\"222\" width=\"50\" height=\"40\" rx=\"8\" fill=\"#DCEBFF\" stroke=\"#2F8CF0\" stroke-width=\"2\"/><text x=\"" . ($px + 25) . "\" y=\"247\" text-anchor=\"middle\" font-size=\"13\">pod</text>"; }
+            foreach (range(0, $i === 2 ? 1 : 2) as $k) {
+                $px = $x + 14 + $k * 58;
+                $pods .= "<rect x=\"$px\" y=\"222\" width=\"50\" height=\"40\" rx=\"8\" fill=\"#DCEBFF\" stroke=\"#2F8CF0\" stroke-width=\"2\"/><text x=\"" . ($px + 25) . "\" y=\"247\" text-anchor=\"middle\" font-size=\"13\">pod</text>";
+            }
             $nodes .= "<rect x=\"$x\" y=\"150\" width=\"192\" height=\"126\" rx=\"12\" fill=\"#F1F0F8\" stroke=\"#8A87B0\" stroke-width=\"2\"/><text x=\"" . ($x + 14) . "\" y=\"174\" font-weight=\"700\">{$t[1]} $i</text>"
-                    . "<rect x=\"" . ($x + 100) . "\" y=\"160\" width=\"80\" height=\"26\" rx=\"8\" fill=\"#D5F6EA\" stroke=\"#0B7F5C\" stroke-width=\"2\"/><text x=\"" . ($x + 140) . "\" y=\"178\" text-anchor=\"middle\" font-size=\"13\" font-family=\"ui-monospace, Menlo, monospace\">kubelet</text>"
-                    . "<text x=\"" . ($x + 14) . "\" y=\"208\" font-size=\"13\">container runtime</text>" . $pods
-                    . "<path d=\"M$cx,112 V150\" stroke=\"#7048E8\" stroke-width=\"2\" stroke-dasharray=\"5 4\"/>";
+                . "<rect x=\"" . ($x + 100) . "\" y=\"160\" width=\"80\" height=\"26\" rx=\"8\" fill=\"#D5F6EA\" stroke=\"#0B7F5C\" stroke-width=\"2\"/><text x=\"" . ($x + 140) . "\" y=\"178\" text-anchor=\"middle\" font-size=\"13\" font-family=\"ui-monospace, Menlo, monospace\">kubelet</text>"
+                . "<text x=\"" . ($x + 14) . "\" y=\"208\" font-size=\"13\">container runtime</text>" . $pods
+                . "<path d=\"M$cx,112 V150\" stroke=\"#7048E8\" stroke-width=\"2\" stroke-dasharray=\"5 4\"/>";
         }
         return <<<SVG
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 290" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
@@ -39,10 +43,12 @@ if (!function_exists('fig_k8s_rolling')) {
     {
         $pods = '';
         foreach ([0, 1, 2] as $i) {
-            $x = 40 + $i * 200; $cx = $x + 80; $n = $i + 1;
+            $x = 40 + $i * 200;
+            $cx = $x + 80;
+            $n = $i + 1;
             $pods .= "<path d=\"M320,74 C320,110 $cx,104 $cx,142\" fill=\"none\" stroke=\"#8A87B0\" stroke-width=\"2\"/>"
-                   . "<rect x=\"$x\" y=\"142\" width=\"160\" height=\"84\" rx=\"12\" fill=\"#DCEBFF\" stroke=\"#2F8CF0\" stroke-width=\"2\"/><text x=\"$cx\" y=\"172\" text-anchor=\"middle\" font-weight=\"700\">pod</text><text x=\"$cx\" y=\"204\" text-anchor=\"middle\" font-family=\"ui-monospace, Menlo, monospace\" font-size=\"14\" fill=\"#1B66BC\">web:1.4</text>"
-                   . "<g class=\"n$n\"><rect x=\"$x\" y=\"142\" width=\"160\" height=\"84\" rx=\"12\" fill=\"#D5F6EA\" stroke=\"#0B7F5C\" stroke-width=\"3\"/><text x=\"$cx\" y=\"172\" text-anchor=\"middle\" font-weight=\"700\">pod</text><text x=\"$cx\" y=\"204\" text-anchor=\"middle\" font-family=\"ui-monospace, Menlo, monospace\" font-size=\"14\" font-weight=\"700\" fill=\"#0B7F5C\">web:1.5</text></g>";
+                . "<rect x=\"$x\" y=\"142\" width=\"160\" height=\"84\" rx=\"12\" fill=\"#DCEBFF\" stroke=\"#2F8CF0\" stroke-width=\"2\"/><text x=\"$cx\" y=\"172\" text-anchor=\"middle\" font-weight=\"700\">pod</text><text x=\"$cx\" y=\"204\" text-anchor=\"middle\" font-family=\"ui-monospace, Menlo, monospace\" font-size=\"14\" fill=\"#1B66BC\">web:1.4</text>"
+                . "<g class=\"n$n\"><rect x=\"$x\" y=\"142\" width=\"160\" height=\"84\" rx=\"12\" fill=\"#D5F6EA\" stroke=\"#0B7F5C\" stroke-width=\"3\"/><text x=\"$cx\" y=\"172\" text-anchor=\"middle\" font-weight=\"700\">pod</text><text x=\"$cx\" y=\"204\" text-anchor=\"middle\" font-family=\"ui-monospace, Menlo, monospace\" font-size=\"14\" font-weight=\"700\" fill=\"#0B7F5C\">web:1.5</text></g>";
         }
         return <<<SVG
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
@@ -63,7 +69,8 @@ if (!function_exists('fig_k8s_service')) {
     {
         $pods = '';
         foreach ([['app=web', 1], ['app=web', 1], ['app=web', 1], ['app=db', 0]] as $i => [$lab, $on]) {
-            $y = 24 + $i * 58; $cy = $y + 22;
+            $y = 24 + $i * 58;
+            $cy = $y + 22;
             $pods .= $on
                 ? "<path d=\"M444,135 C462,135 462,$cy 484,$cy\" fill=\"none\" stroke=\"#1E1C52\" stroke-width=\"2\" marker-end=\"url(#ah)\"/><rect x=\"490\" y=\"$y\" width=\"134\" height=\"44\" rx=\"10\" fill=\"#D5F6EA\" stroke=\"#0B7F5C\" stroke-width=\"2\"/>"
                 : "<rect x=\"490\" y=\"$y\" width=\"134\" height=\"44\" rx=\"10\" fill=\"#F1F0F8\" stroke=\"#8A87B0\" stroke-width=\"2\" stroke-dasharray=\"6 4\"/>";

@@ -16,7 +16,14 @@
     const TRANSLATIONS = {
         it: {
             sol_title: 'Come ci si arriva · Passo dopo passo',
-            sol_grid_box: 'Simboli già presenti nel riquadro', sol_grid_diag: 'Simboli già presenti sulla diagonale', sol_grid_more: 'Da sola questa casella lascia ancora più simboli: completa prima le altre caselle vuote di riga, colonna e riquadro, e alla fine ne resta uno solo.', sol_walk_bump: '🚫 = la mossa porterebbe fuori dalla griglia, quindi la tartaruga resta ferma.', sol_lamp_press: '{n}ª pressione: pulsante {b}', sol_lamp_changed: 'Lampadine che hanno cambiato stato: i due pulsanti insieme devono commutare proprio queste (una commutata due volte torna com’era).', sol_cup_back: 'Parti dalla fila finale e rifai gli scambi al contrario, dall’ultimo al primo: ogni scambio annulla sé stesso.', sol_seq_diffs: 'Differenze tra numeri vicini:',
+            sol_grid_box: 'Simboli già presenti nel riquadro',
+            sol_grid_diag: 'Simboli già presenti sulla diagonale',
+            sol_grid_more: 'Da sola questa casella lascia ancora più simboli: completa prima le altre caselle vuote di riga, colonna e riquadro, e alla fine ne resta uno solo.',
+            sol_walk_bump: '🚫 = la mossa porterebbe fuori dalla griglia, quindi la tartaruga resta ferma.',
+            sol_lamp_press: '{n}ª pressione: pulsante {b}',
+            sol_lamp_changed: 'Lampadine che hanno cambiato stato: i due pulsanti insieme devono commutare proprio queste (una commutata due volte torna com’era).',
+            sol_cup_back: 'Parti dalla fila finale e rifai gli scambi al contrario, dall’ultimo al primo: ogni scambio annulla sé stesso.',
+            sol_seq_diffs: 'Differenze tra numeri vicini:',
             sol_s1: '1. Punto di partenza',
             sol_s2: '2. Passaggio chiave',
             sol_s3: '3. Soluzione finale',
@@ -158,7 +165,14 @@
         },
         en: {
             sol_title: 'How to get there · Step by step',
-            sol_grid_box: 'Symbols already in the box', sol_grid_diag: 'Symbols already on the diagonal', sol_grid_more: 'This cell alone still leaves several symbols: fill in the other empty cells of its row, column and box first, and in the end only one is left.', sol_walk_bump: '🚫 = the move would leave the board, so the turtle stays put.', sol_lamp_press: 'Press {n}: button {b}', sol_lamp_changed: 'Lamps that changed: the two buttons together must switch exactly these (a lamp switched twice is back as it was).', sol_cup_back: 'Start from the final row and undo the swaps backwards, from the last to the first: every swap undoes itself.', sol_seq_diffs: 'Differences between neighbouring numbers:',
+            sol_grid_box: 'Symbols already in the box',
+            sol_grid_diag: 'Symbols already on the diagonal',
+            sol_grid_more: 'This cell alone still leaves several symbols: fill in the other empty cells of its row, column and box first, and in the end only one is left.',
+            sol_walk_bump: '🚫 = the move would leave the board, so the turtle stays put.',
+            sol_lamp_press: 'Press {n}: button {b}',
+            sol_lamp_changed: 'Lamps that changed: the two buttons together must switch exactly these (a lamp switched twice is back as it was).',
+            sol_cup_back: 'Start from the final row and undo the swaps backwards, from the last to the first: every swap undoes itself.',
+            sol_seq_diffs: 'Differences between neighbouring numbers:',
             sol_s1: '1. Starting point',
             sol_s2: '2. Key deduction',
             sol_s3: '3. Final solution',
@@ -300,7 +314,14 @@
         },
         es: {
             sol_title: 'Cómo se llega · Paso a paso',
-            sol_grid_box: 'Símbolos ya presentes en la caja', sol_grid_diag: 'Símbolos ya presentes en la diagonal', sol_grid_more: 'Esta casilla sola aún deja varios símbolos: completa antes las otras casillas vacías de su fila, columna y caja, y al final queda solo uno.', sol_walk_bump: '🚫 = el movimiento saldría del tablero, así que la tortuga se queda quieta.', sol_lamp_press: 'Pulsación {n}: botón {b}', sol_lamp_changed: 'Lámparas que cambiaron: los dos botones juntos deben conmutar justo estas (una conmutada dos veces vuelve a como estaba).', sol_cup_back: 'Parte de la fila final y deshaz los cambios al revés, del último al primero: cada cambio se anula a sí mismo.', sol_seq_diffs: 'Diferencias entre números vecinos:',
+            sol_grid_box: 'Símbolos ya presentes en la caja',
+            sol_grid_diag: 'Símbolos ya presentes en la diagonal',
+            sol_grid_more: 'Esta casilla sola aún deja varios símbolos: completa antes las otras casillas vacías de su fila, columna y caja, y al final queda solo uno.',
+            sol_walk_bump: '🚫 = el movimiento saldría del tablero, así que la tortuga se queda quieta.',
+            sol_lamp_press: 'Pulsación {n}: botón {b}',
+            sol_lamp_changed: 'Lámparas que cambiaron: los dos botones juntos deben conmutar justo estas (una conmutada dos veces vuelve a como estaba).',
+            sol_cup_back: 'Parte de la fila final y deshaz los cambios al revés, del último al primero: cada cambio se anula a sí mismo.',
+            sol_seq_diffs: 'Diferencias entre números vecinos:',
             sol_s1: '1. Punto de partida',
             sol_s2: '2. Deducción clave',
             sol_s3: '3. Solución final',
@@ -442,7 +463,14 @@
         },
         fr: {
             sol_title: 'Comment y parvenir · Pas à pas',
-            sol_grid_box: 'Symboles déjà présents dans le bloc', sol_grid_diag: 'Symboles déjà présents sur la diagonale', sol_grid_more: 'Cette case seule laisse encore plusieurs symboles : remplis d’abord les autres cases vides de sa ligne, de sa colonne et de son bloc, et à la fin il n’en reste qu’un.', sol_walk_bump: '🚫 = le mouvement sortirait de la grille, donc la tortue reste sur place.', sol_lamp_press: 'Appui {n} : bouton {b}', sol_lamp_changed: 'Lampes qui ont changé : les deux boutons ensemble doivent commuter exactement celles-ci (une lampe commutée deux fois revient comme avant).', sol_cup_back: 'Pars de la rangée finale et refais les échanges à l’envers, du dernier au premier : chaque échange s’annule lui-même.', sol_seq_diffs: 'Différences entre nombres voisins :',
+            sol_grid_box: 'Symboles déjà présents dans le bloc',
+            sol_grid_diag: 'Symboles déjà présents sur la diagonale',
+            sol_grid_more: 'Cette case seule laisse encore plusieurs symboles : remplis d’abord les autres cases vides de sa ligne, de sa colonne et de son bloc, et à la fin il n’en reste qu’un.',
+            sol_walk_bump: '🚫 = le mouvement sortirait de la grille, donc la tortue reste sur place.',
+            sol_lamp_press: 'Appui {n} : bouton {b}',
+            sol_lamp_changed: 'Lampes qui ont changé : les deux boutons ensemble doivent commuter exactement celles-ci (une lampe commutée deux fois revient comme avant).',
+            sol_cup_back: 'Pars de la rangée finale et refais les échanges à l’envers, du dernier au premier : chaque échange s’annule lui-même.',
+            sol_seq_diffs: 'Différences entre nombres voisins :',
             sol_s1: '1. Point de départ',
             sol_s2: '2. Déduction clé',
             sol_s3: '3. Solution finale',
@@ -584,7 +612,14 @@
         },
         de: {
             sol_title: 'Lösungsweg · Schritt für Schritt',
-            sol_grid_box: 'Symbole, die schon im Block stehen', sol_grid_diag: 'Symbole, die schon auf der Diagonale stehen', sol_grid_more: 'Dieses Feld allein lässt noch mehrere Symbole offen: Fülle zuerst die anderen leeren Felder in Zeile, Spalte und Block, am Ende bleibt nur eines übrig.', sol_walk_bump: '🚫 = der Zug würde das Brett verlassen, also bleibt die Schildkröte stehen.', sol_lamp_press: '{n}. Druck: Knopf {b}', sol_lamp_changed: 'Lampen, die sich geändert haben: Die zwei Knöpfe zusammen müssen genau diese umschalten (zweimal umgeschaltet ist wie vorher).', sol_cup_back: 'Beginne bei der Endreihe und mache die Tauschzüge rückwärts, vom letzten zum ersten: Jeder Tausch hebt sich selbst auf.', sol_seq_diffs: 'Unterschiede zwischen benachbarten Zahlen:',
+            sol_grid_box: 'Symbole, die schon im Block stehen',
+            sol_grid_diag: 'Symbole, die schon auf der Diagonale stehen',
+            sol_grid_more: 'Dieses Feld allein lässt noch mehrere Symbole offen: Fülle zuerst die anderen leeren Felder in Zeile, Spalte und Block, am Ende bleibt nur eines übrig.',
+            sol_walk_bump: '🚫 = der Zug würde das Brett verlassen, also bleibt die Schildkröte stehen.',
+            sol_lamp_press: '{n}. Druck: Knopf {b}',
+            sol_lamp_changed: 'Lampen, die sich geändert haben: Die zwei Knöpfe zusammen müssen genau diese umschalten (zweimal umgeschaltet ist wie vorher).',
+            sol_cup_back: 'Beginne bei der Endreihe und mache die Tauschzüge rückwärts, vom letzten zum ersten: Jeder Tausch hebt sich selbst auf.',
+            sol_seq_diffs: 'Unterschiede zwischen benachbarten Zahlen:',
             sol_s1: '1. Ausgangspunkt',
             sol_s2: '2. Wichtiger Schritt',
             sol_s3: '3. Endergebnis',
@@ -895,7 +930,10 @@
                     const at = queue.shift();
                     gd.links.forEach(([a, b]) => {
                         [[a, b], [b, a]].forEach(([x, y]) => {
-                            if (x === at && prev[y] === undefined) { prev[y] = at; queue.push(y); }
+                            if (x === at && prev[y] === undefined) {
+                                prev[y] = at;
+                                queue.push(y);
+                            }
                         });
                     });
                 }
@@ -911,7 +949,12 @@
                     addStep(
                         t('sol_gear_contact', {prev: cog(a), next: cog(b)}),
                         flowRow(chip(`${cog(a)} (${sym(gd.dirs[a])})`), arrow('➔'), chip(`${cog(b)} (${sym(gd.dirs[b])})`, b === targetIdx ? 'target' : '')),
-                        t('sol_gear_step_note', {prev: cog(a), next: cog(b), prevDir: word(gd.dirs[a]), nextDir: word(gd.dirs[b])})
+                        t('sol_gear_step_note', {
+                            prev: cog(a),
+                            next: cog(b),
+                            prevDir: word(gd.dirs[a]),
+                            nextDir: word(gd.dirs[b])
+                        })
                     );
                 }
                 addFinalStep(
@@ -1194,14 +1237,20 @@
                 addStep(t('sol_step_start'), flowRow(...row.map(it => chip(it, 'initial'))), t('sol_cup_back'));
                 filled.slice().reverse().forEach((move, idx) => {
                     row = apply(row, move);
-                    addStep(t('sol_cup_swap_step', {n: filled.length - idx, move}), flowRow(chip(move, 'target'), arrow('➔'), ...row.map(it => chip(it))), '');
+                    addStep(t('sol_cup_swap_step', {
+                        n: filled.length - idx,
+                        move
+                    }), flowRow(chip(move, 'target'), arrow('➔'), ...row.map(it => chip(it))), '');
                 });
             } else {
                 let row = items(q.lines[0]);
                 addStep(t('sol_step_start'), flowRow(...row.map(it => chip(it, 'initial'))), t('sol_cup_start'));
                 filled.forEach((move, idx) => {
                     row = apply(row, move);
-                    addStep(t('sol_cup_swap_step', {n: idx + 1, move}), flowRow(chip(move, moves[idx].includes('?') ? 'target' : ''), arrow('➔'), ...row.map(it => chip(it))), '');
+                    addStep(t('sol_cup_swap_step', {
+                        n: idx + 1,
+                        move
+                    }), flowRow(chip(move, moves[idx].includes('?') ? 'target' : ''), arrow('➔'), ...row.map(it => chip(it))), '');
                 });
             }
             addFinalStep(t('sol_step_final'), winnerChip(t('sol_gen_res', {ans: ansVal})), whyNote);
@@ -1210,7 +1259,12 @@
         else if (q.cat === 'grid' && q.grid && Array.isArray(q.grid) && q.grid.some(row => row.includes('?'))) {
             const g = q.grid, n = g.length;
             let tr = -1, tc = -1;
-            g.forEach((row, r) => row.forEach((c, k) => { if (c === '?') { tr = r; tc = k; } }));
+            g.forEach((row, r) => row.forEach((c, k) => {
+                if (c === '?') {
+                    tr = r;
+                    tc = k;
+                }
+            }));
             const symbols = [...new Set([...q.options.map(o => optionStr(q, o)), ...g.flat().filter(c => c && c !== '?')])];
             addStep(t('sol_grid_target'), flowRow(chip(t('sol_target_cell', {r: tr + 1, c: tc + 1}), 'initial')), '');
             const groups = [[t('sol_grid_row', {r: tr + 1}), g[tr]], [t('sol_grid_col', {c: tc + 1}), g.map(row => row[tc])]];
@@ -1243,7 +1297,12 @@
             if (q.grid) {
                 const n = q.grid.length;
                 let y = 0, x = 0;
-                q.grid.forEach((row, r) => row.forEach((c, k) => { if (c === '🐢') { y = r; x = k; } }));
+                q.grid.forEach((row, r) => row.forEach((c, k) => {
+                    if (c === '🐢') {
+                        y = r;
+                        x = k;
+                    }
+                }));
                 const label = (r, k) => String.fromCharCode(65 + r * n + k);
                 addStep(t('sol_step_start'), flowRow(chip(`🐢 = ${label(y, x)}`, 'initial')), '');
                 const MOVES = {'⬆️': [-1, 0], '➡️': [0, 1], '⬇️': [1, 0], '⬅️': [0, -1]};
@@ -1251,7 +1310,10 @@
                 q.lines[0].split(/\s+/).filter(Boolean).forEach((step, idx) => {
                     const [dy, dx] = MOVES[step] || [0, 0];
                     const inside = y + dy >= 0 && y + dy < n && x + dx >= 0 && x + dx < n;
-                    if (inside) { y += dy; x += dx; }
+                    if (inside) {
+                        y += dy;
+                        x += dx;
+                    }
                     trail.push(chip(`${idx + 1}. ${step} ${inside ? label(y, x) : '🚫 ' + label(y, x)}`, inside ? '' : 'wrong'));
                 });
                 addStep(t('sol_walk_moves'), flowRow(...trail), q.pk === 'q_walk_bump' ? t('sol_walk_bump') : '');
@@ -1332,7 +1394,10 @@
                 const order = (q.ask ? lineStr(q, q.ask) : '').split('=')[0].trim().split(/\s+/).filter(b => buttons[b]);
                 order.forEach((b, idx) => {
                     row = press(row, b);
-                    addStep(t('sol_lamp_press', {n: idx + 1, b}), flowRow(chip(`${b} → ${buttons[b].join(' ')}`), arrow('➔'), chip(B(row), idx === order.length - 1 ? 'target' : '')), '');
+                    addStep(t('sol_lamp_press', {
+                        n: idx + 1,
+                        b
+                    }), flowRow(chip(`${b} → ${buttons[b].join(' ')}`), arrow('➔'), chip(B(row), idx === order.length - 1 ? 'target' : '')), '');
                 });
             }
             addFinalStep(t('sol_step_final'), winnerChip(q.pk === 'q_lamps_back' ? t('sol_gen_res', {ans: ansVal}) : (UI.bulbs ? h('span', t('sol_lamp_res', {ans: ''}), ' ', UI.bulbs(ansVal, true)) : t('sol_lamp_res', {ans: ansVal}))), '');
@@ -1365,7 +1430,10 @@
         // 20. Riddles (riddles.js & riddles-more.js)
         else if (q.cat === 'riddle' || q.view === 'riddle' || (q.why && q.why.some(w => w && w.riddle))) {
             const rText = q.cat === 'riddle' ? getRiddleText(q) : null;
-            const asked = [q.pk ? lineStr(q, {k: q.pk, v: q.pv}) : '', q.ask ? lineStr(q, q.ask) : ''].filter(Boolean).join(' ');
+            const asked = [q.pk ? lineStr(q, {
+                k: q.pk,
+                v: q.pv
+            }) : '', q.ask ? lineStr(q, q.ask) : ''].filter(Boolean).join(' ');
             const questionText = (rText && rText[0]) || asked || t('cat_' + q.cat);
             const explanationText = (rText && rText[1]) || (q.why && lineStr(q, q.why[0])) || '';
 

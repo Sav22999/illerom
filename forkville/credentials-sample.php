@@ -5,12 +5,12 @@
  * Without credentials.php the game cannot start.
  */
 
-$localhost_db  = "localhost";
-$username_db   = "";
-$password_db   = "";
+$localhost_db = "localhost";
+$username_db = "";
+$password_db = "";
 $database_name = "";
 
-$table_prefix  = "fv_";
+$table_prefix = "fv_";
 
 // Sign in with Google (optional): OAuth client ID of type "Web application" 
 $google_client_id = "";

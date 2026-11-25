@@ -103,7 +103,9 @@ if (!function_exists('fig_uibase_gestalt')) {
         $t = $lg === 'it'
             ? ['Vicinanza', 'Somiglianza', 'Regione comune', 'vedi due gruppi', 'vedi righe di colore', 'il riquadro unisce']
             : ['Proximity', 'Similarity', 'Common region', 'you see two groups', 'you see rows by colour', 'the box joins them'];
-        $a = ''; $b = ''; $c = '';
+        $a = '';
+        $b = '';
+        $c = '';
         foreach ([0, 1, 2] as $r) foreach ([0, 1] as $k) {
             $a .= '<circle cx="' . (50 + $k * 26) . '" cy="' . (70 + $r * 30) . '" r="9" fill="#8A87B0"/><circle cx="' . (140 + $k * 26) . '" cy="' . (70 + $r * 30) . '" r="9" fill="#8A87B0"/>';
         }

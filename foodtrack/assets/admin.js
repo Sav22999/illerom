@@ -749,7 +749,12 @@
         for (const r of d.recipes) for (const i of r.ingredients) if (i.productId) uses.set(i.productId, (uses.get(i.productId) || 0) + 1);
         const popular = d.products.filter(p => uses.has(p.id)).sort((a, b) => uses.get(b.id) - uses.get(a.id)).slice(0, 12);
         const english = p => ((p.i18n || {}).en || {}).name || '';
-        const search = inp({type: 'search', placeholder: t('Search a product'), 'aria-label': t('Search a product'), enterkeyhint: 'search'});
+        const search = inp({
+            type: 'search',
+            placeholder: t('Search a product'),
+            'aria-label': t('Search a product'),
+            enterkeyhint: 'search'
+        });
         const chips = h('div.chips.scroll');
         const results = h('div.pick-results');
         const finish = btn(t('Done'), {icon: 'check', onclick: () => dlg.close()});
@@ -818,7 +823,10 @@
             list = list.slice().sort((a, b) => (norm(a.name).startsWith(q) ? 0 : 1) - (norm(b.name).startsWith(q) ? 0 : 1) || a.name.localeCompare(b.name));
             const parts = [];
             if (text && !d.products.some(p => norm(p.name) === q)) {
-                parts.push(h('button.pick-create', {type: 'button', onclick: () => createProduct(text)}, icon('add'), h('span', t('Create “{name}”', {name: text}))));
+                parts.push(h('button.pick-create', {
+                    type: 'button',
+                    onclick: () => createProduct(text)
+                }, icon('add'), h('span', t('Create “{name}”', {name: text}))));
             }
             if (!q && !category && popular.length) parts.push(...section(t('Most used'), popular), ...section(t('All products'), list));
             else if (list.length) parts.push(...section(null, list));
@@ -867,7 +875,10 @@
             const p = {name, icon: 'generic'};
             const nameIt = inp({value: name, maxlength: 80});
             const nameEn = inp({maxlength: 80});
-            const cat = sel([{value: '', label: '—'}].concat(d.categories.map(c => ({value: c.id, label: c.name}))), '');
+            const cat = sel([{value: '', label: '—'}].concat(d.categories.map(c => ({
+                value: c.id,
+                label: c.name
+            }))), '');
             const unit = sel(d.units.map(u => ({value: u, label: UI.unitLabel(u)})), unitValue);
             const env = sel([{value: '', label: t('Not set')}].concat(UI.environments()), '');
             let created = null;
@@ -879,8 +890,14 @@
                     }
                     const i18n = nameEn.value.trim() ? {en: {name: nameEn.value.trim()}} : {};
                     const data = {
-                        name: nameIt.value.trim(), icon: p.icon, categoryId: cat.value ? Number(cat.value) : null, unit: unit.value,
-                        environment: env.value || null, expiryTip: '', active: true, i18n
+                        name: nameIt.value.trim(),
+                        icon: p.icon,
+                        categoryId: cat.value ? Number(cat.value) : null,
+                        unit: unit.value,
+                        environment: env.value || null,
+                        expiryTip: '',
+                        active: true,
+                        i18n
                     };
                     const res = await busy(save, () => Api.post('admin.product.save', {id: 0, ...data}));
                     created = Object.assign(data, {id: res.id});
@@ -995,7 +1012,15 @@
         /** Ingredient of the v2 editor: a card with the product, its dose and the notes on request. */
         function ingCard(ing) {
             let current = ing.name;
-            const qty = inp({type: 'number', min: 0, step: 'any', inputmode: 'decimal', value: ing.quantity ?? '', placeholder: t('Qty'), 'aria-label': t('Qty')});
+            const qty = inp({
+                type: 'number',
+                min: 0,
+                step: 'any',
+                inputmode: 'decimal',
+                value: ing.quantity ?? '',
+                placeholder: t('Qty'),
+                'aria-label': t('Qty')
+            });
             const unit = sel(d.units.concat(d.units.includes(ing.unit) ? [] : [ing.unit]).map(u => ({
                 value: u,
                 label: UI.unitLabel(u)
@@ -1064,7 +1089,12 @@
             };
             paintLink();
             name.addEventListener('input', paintLink);
-            const tr = h('tr', h('td.drag', linked), h('td', {style: {width: '26%', minWidth: '170px'}}, name), h('td', {style: {width: '80px'}}, qty), h('td', {style: {width: '140px'}}, unit), h('td', notes), h('td', notesEn),
+            const tr = h('tr', h('td.drag', linked), h('td', {
+                    style: {
+                        width: '26%',
+                        minWidth: '170px'
+                    }
+                }, name), h('td', {style: {width: '80px'}}, qty), h('td', {style: {width: '140px'}}, unit), h('td', notes), h('td', notesEn),
                 h('td.del', iconBtn('delete', t('Remove'), () => tr.remove())));
             tr._get = () => {
                 const p = prodByName(name.value);
@@ -1578,7 +1608,7 @@
                 {
                     key: 'login',
                     label: t('Sign-in'),
-                    render: u => h('span.flag', h('span' + (u.hasPassword ? '.on' : ''), t('Password')), h('span' + (u.google ? '.on' : ''), 'Google'))
+                    render: u => h('span.flag', h('span' + (u.hasPassword ? '.on' : ''), t('Password')), h('span' + (u.google ? '.on' : ''), 'Google'), h('span' + (u.savaccount ? '.on' : ''), 'SavAccount'))
                 },
                 {
                     key: 'created',
@@ -1696,7 +1726,13 @@
 
     function editUser(u) {
         const name = inp({value: u.name, maxlength: 80});
-        const email = inp({type: 'email', value: u.email, readonly: true, disabled: true, title: t('The email can’t be changed.')}); // it identifies the account
+        const email = inp({
+            type: 'email',
+            value: u.email,
+            readonly: true,
+            disabled: true,
+            title: t('The email can’t be changed.')
+        }); // it identifies the account
         const status = sel([{value: 'active', label: t('Active')}, {
             value: 'disabled',
             label: t('Disabled (cannot sign in)')
@@ -1818,10 +1854,12 @@
         };
         const sub = btn(t('Sign in'), {type: 'submit', cls: 'btn-block'});
         const gslot = h('div.google-slot');
+        const sav = window.Identity ? Identity.button(config.savAccount) : null;
         root.replaceChildren(h('div.adm-login', h('div.card-l',
             h('div.logo', h('img', {src: 'assets/icons/icon-color.png', alt: ''}), 'FoodTrack'),
             h('p.lead', t('Admin portal')),
-            config.googleClientId ? [gslot, h('div.divider-text', t('or with your email'))] : null,
+            config.googleClientId ? gslot : null, sav,
+            config.googleClientId || sav ? h('div.divider-text', t('or with your email')) : null,
             h('form', {
                 onsubmit: async e => {
                     e.preventDefault();
@@ -1843,6 +1881,7 @@
                 await Api.post('auth.google', {credential}, {silentAuth: true});
                 start();
             } catch (e) {
+                if (window.Identity && Identity.handle(e)) return;
                 showErr(e.code === 'needs_signup' ? t('No FoodTrack account uses this Google account.') : e.message);
             }
         }, 'signin_with');
@@ -1871,6 +1910,17 @@
         }
         render();
     }
+
+    // SavAccount and the joining of accounts (../identity/): only existing accounts sign in here, new ones are created in the app
+    if (window.Identity) Identity.setup({
+        name: 'FoodTrack',
+        lang: () => I18N.lang,
+        accent: 'var(--primary)',
+        onAccent: 'var(--on-primary)',
+        page: 'admin',
+        signup: false,
+        google: (slot, cb) => config.googleClientId && UI.googleButton(slot, config.googleClientId, cb, 'continue_with'),
+    });
 
     Api.onUnauthenticated(() => loginForm(t('Session expired: sign in again.')));
     window.addEventListener('hashchange', render);

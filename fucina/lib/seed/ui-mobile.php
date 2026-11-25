@@ -19,7 +19,9 @@ if (!function_exists('fig_uimob_density')) {
             }
             return $s;
         };
-        $g1 = $cell(40, 4); $g2 = $cell(254, 8); $g3 = $cell(468, 12);
+        $g1 = $cell(40, 4);
+        $g2 = $cell(254, 8);
+        $g3 = $cell(468, 12);
         return <<<SVG
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
 <text x="320" y="30" text-anchor="middle" font-weight="700">{$t[0]}</text>
@@ -194,7 +196,7 @@ return [
             Q('c2', L('A che cosa serve una snackbar?', 'What is a snackbar for?'), [L('Una breve conferma, a volte con un’azione', 'A brief confirmation, sometimes with an action'), L('Un menu di cibo', 'A food menu'), L('Un errore bloccante', 'A blocking error'), L('La navigazione principale', 'Main navigation')], 0, L('“Messaggio eliminato · Annulla”.', '“Message deleted · Undo”.')),
             Q('c3', L('Quando usare una modale a tutto schermo?', 'When to use a full-screen modal?'), [L('Per un compito breve e chiuso', 'For a short, self-contained task'), L('Per ogni scelta, anche minima', 'For every choice, however small'), L('Per la navigazione principale', 'For main navigation'), L('Mai', 'Never')], 0, L('Interrompe: con giudizio.', 'It interrupts: use with care.')),
         ], task('text', L('Abbina ogni situazione al componente, una riga ciascuna nel formato `situazione: componente`: confermare “messaggio archiviato”, scegliere come condividere una foto, creare una nuova nota.', 'Match each situation with a component, one line each in the format `situation: component`: confirming “message archived”, choosing how to share a photo, creating a new note.'), '', [re('(archiv)[^\n]*:\s*(snackbar|toast)', L('Snackbar per la conferma', 'Snackbar for the confirmation')), re('(condivid|share)[^\n]*:\s*(bottom sheet|foglio)', L('Bottom sheet per condividere', 'Bottom sheet for sharing')), re('(nota|note)[^\n]*:\s*(fab|floating|pulsante|button)', L('FAB per creare', 'FAB to create'))], '', "messaggio archiviato: snackbar\ncondividere una foto: bottom sheet\nnuova nota: FAB"), [
-            dMatch(pMatch(), [['FAB', L('Azione principale fluttuante', 'Floating main action')],['Snackbar', L('Breve conferma', 'Brief confirmation')], ['Bottom sheet', L('Opzioni dal basso', 'Options from the bottom')], ['Chip', L('Filtro compatto', 'Compact filter')], ['Pull to refresh', L('Aggiorna trascinando', 'Refresh by pulling')]], L('I componenti del telefono.', 'Phone components.')),
+            dMatch(pMatch(), [['FAB', L('Azione principale fluttuante', 'Floating main action')], ['Snackbar', L('Breve conferma', 'Brief confirmation')], ['Bottom sheet', L('Opzioni dal basso', 'Options from the bottom')], ['Chip', L('Filtro compatto', 'Compact filter')], ['Pull to refresh', L('Aggiorna trascinando', 'Refresh by pulling')]], L('I componenti del telefono.', 'Phone components.')),
             dFlash(pFlash(), [[L('Gli elementi di una lista dovrebbero essere alti almeno 48 dp', 'List items should be at least 48 dp tall'), true], [L('Ogni scelta merita una modale a tutto schermo', 'Every choice deserves a full-screen modal'), false], [L('Una snackbar può offrire Annulla', 'A snackbar can offer Undo'), true], [L('Il FAB serve per azioni secondarie rare', 'The FAB is for rare secondary actions'), false]], L('Il componente giusto.', 'The right component.')),
         ]),
         lesson('platforms', L('Tema scuro e convenzioni delle piattaforme', 'Dark theme and platform conventions'), [

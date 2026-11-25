@@ -18,7 +18,10 @@ $site = require ROOT . '/data/site.php';
 $projects = require ROOT . '/data/projects.php';
 $strings = require ROOT . '/data/strings.php';
 
-if ($path === '/sitemap.xml') { require ROOT . '/pages/sitemap.php'; return; }
+if ($path === '/sitemap.xml') {
+    require ROOT . '/pages/sitemap.php';
+    return;
+}
 
 /** Italian only for browsers that prefer it to English; English for everyone else. */
 function preferred_lang(): string
@@ -54,9 +57,15 @@ $rest = '';
 $slug = '';
 if (preg_match('#^/(it|en)/(?:(about|privacy|status)/|projects/([a-z0-9-]+)/)?$#', $path, $m)) {
     $slug = $m[3] ?? '';
-    if ($slug !== '') { if (isset($projects[$slug])) { $page = 'project'; $rest = "projects/$slug/"; } }
-    elseif (($m[2] ?? '') !== '') { $page = $m[2]; $rest = $m[2] . '/'; }
-    else $page = 'home';
+    if ($slug !== '') {
+        if (isset($projects[$slug])) {
+            $page = 'project';
+            $rest = "projects/$slug/";
+        }
+    } elseif (($m[2] ?? '') !== '') {
+        $page = $m[2];
+        $rest = $m[2] . '/';
+    } else $page = 'home';
 }
 
 $t = $strings[$lang];

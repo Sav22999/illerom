@@ -3,6 +3,8 @@ import { zip } from './zip.js';
 import { sorted, decorOf } from './render.js';
 import { slideContext, styleOf, gradient, FONTS } from './themes.js';
 import { shapePath } from './shapes.js';
+import { expandSlide } from './parts.js';
+import { videoSrc } from './render.js';
 import { paragraphs, isEmpty, okLink } from './richtext.js';
 
 const E = 9525; // EMU for one CSS pixel
@@ -20,13 +22,13 @@ function fillXml(f, sc, o = 1) {
   if (g) return `<a:gradFill rotWithShape="1"><a:gsLst><a:gs pos="0">${clr(sc.color(g.a), o)}</a:gs><a:gs pos="100000">${clr(sc.color(g.b), o)}</a:gs></a:gsLst><a:lin ang="${Math.round(((g.ang - 90 + 360) % 360) * 60000)}" scaled="0"/></a:gradFill>`;
   return `<a:solidFill>${clr(sc.color(f), o)}</a:solidFill>`;
 }
-const lineXml = (el, sc, sw, color) => (sw ? `<a:ln w="${emu(sw)}"><a:solidFill>${clr(sc.color(color), el.o ?? 1)}</a:solidFill>${el.dash === 'dash' ? '<a:prstDash val="dash"/>' : el.dash === 'dot' ? '<a:prstDash val="sysDot"/>' : ''}<a:round/>${el.h1 ? `<a:headEnd type="${el.h1 === 'dot' ? 'oval' : 'triangle'}"/>` : ''}${el.h2 ? `<a:tailEnd type="${el.h2 === 'dot' ? 'oval' : 'triangle'}"/>` : ''}</a:ln>` : '<a:ln><a:noFill/></a:ln>');
-function geomXml(shape, w, h, rad) {
-  if (PRST[shape] && !rad) return `<a:prstGeom prst="${PRST[shape]}"><a:avLst/></a:prstGeom>`;
-  if (shape === 'rect' || shape === 'round') { const r = rad || (shape === 'round' ? Math.min(w, h) * .16 : 0); return r ? `<a:prstGeom prst="roundRect"><a:avLst><a:gd name="adj" fmla="val ${Math.round(Math.min(.5, r / Math.min(w, h)) * 100000)}"/></a:avLst></a:prstGeom>` : '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom>'; }
+const lineXml = (el, sc, sw, color) => (sw ? `<a:ln w="${emu(sw)}"${el.cap ? ' cap="rnd"' : ''}><a:solidFill>${clr(sc.color(color), el.o ?? 1)}</a:solidFill>${el.dash === 'dash' ? '<a:prstDash val="dash"/>' : el.dash === 'dot' ? '<a:prstDash val="sysDot"/>' : ''}<a:round/>${el.h1 ? `<a:headEnd type="${el.h1 === 'dot' ? 'oval' : 'triangle'}"/>` : ''}${el.h2 ? `<a:tailEnd type="${el.h2 === 'dot' ? 'oval' : 'triangle'}"/>` : ''}</a:ln>` : '<a:ln><a:noFill/></a:ln>');
+function geomXml(shape, w, h, rad, cmds, open) {
+  if (!cmds && PRST[shape] && !rad) return `<a:prstGeom prst="${PRST[shape]}"><a:avLst/></a:prstGeom>`;
+  if (!cmds && (shape === 'rect' || shape === 'round')) { const r = rad || (shape === 'round' ? Math.min(w, h) * .16 : 0); return r ? `<a:prstGeom prst="roundRect"><a:avLst><a:gd name="adj" fmla="val ${Math.round(Math.min(.5, r / Math.min(w, h)) * 100000)}"/></a:avLst></a:prstGeom>` : '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom>'; }
   const pt = (a, b) => `<a:pt x="${emu(a)}" y="${emu(b)}"/>`;
-  const p = shapePath(shape, w, h, rad).map(([c, ...v]) => (c === 'M' ? `<a:moveTo>${pt(v[0], v[1])}</a:moveTo>` : c === 'L' ? `<a:lnTo>${pt(v[0], v[1])}</a:lnTo>` : c === 'C' ? `<a:cubicBezTo>${pt(v[0], v[1])}${pt(v[2], v[3])}${pt(v[4], v[5])}</a:cubicBezTo>` : '<a:close/>')).join('');
-  return `<a:custGeom><a:avLst/><a:gdLst/><a:ahLst/><a:cxnLst/><a:rect l="0" t="0" r="r" b="b"/><a:pathLst><a:path w="${emu(w)}" h="${emu(h)}">${p}</a:path></a:pathLst></a:custGeom>`;
+  const p = (cmds || shapePath(shape, w, h, rad)).map(([c, ...v]) => (c === 'M' ? `<a:moveTo>${pt(v[0], v[1])}</a:moveTo>` : c === 'L' ? `<a:lnTo>${pt(v[0], v[1])}</a:lnTo>` : c === 'C' ? `<a:cubicBezTo>${pt(v[0], v[1])}${pt(v[2], v[3])}${pt(v[4], v[5])}</a:cubicBezTo>` : '<a:close/>')).join('');
+  return `<a:custGeom><a:avLst/><a:gdLst/><a:ahLst/><a:cxnLst/><a:rect l="0" t="0" r="r" b="b"/><a:pathLst><a:path w="${emu(w)}" h="${emu(h)}"${open ? ' fill="none"' : ''}>${p}</a:path></a:pathLst></a:custGeom>`;
 }
 const xfrm = (el) => `<a:xfrm${el.r ? ` rot="${Math.round(((el.r + 360) % 360) * 60000)}"` : ''}${el.flip ? ' flipH="1"' : ''}><a:off x="${emu(el.x)}" y="${emu(el.y)}"/><a:ext cx="${emu(el.w)}" cy="${emu(el.h)}"/></a:xfrm>`;
 const shadow = (n) => (n ? `<a:effectLst><a:outerShdw blurRad="${[0, 76200, 254000, 571500][n]}" dist="${[0, 19050, 76200, 190500][n]}" dir="5400000" algn="t" rotWithShape="0"><a:srgbClr val="000000"><a:alpha val="${[0, 16000, 20000, 28000][n]}"/></a:srgbClr></a:outerShdw></a:effectLst>` : '');
@@ -48,7 +50,7 @@ function body(el, sc, rel, tag = 'p:txBody') {
 export async function exportPptx(deck, ctx, media) {
   const files = [], slides = deck.order(), types = new Set(['png', 'jpeg']);
   const slideXml = (s) => {
-    const d = s.d, sc = slideContext(ctx, d), rels = [], cache = {};
+    const sc = slideContext(ctx, s.d), d = expandSlide(s.d, sc), rels = [], cache = {};
     const rel = (type, target, ext) => (cache[type + target] ||= (rels.push(`<Relationship Id="rId${rels.length + 1}" Type="${type}" Target="${x(target)}"${ext ? ' TargetMode="External"' : ''}/>`), 'rId' + rels.length));
     rel(RT + 'slideLayout', '../slideLayouts/slideLayout1.xml');
     const pic = (src) => { const m = media.get(src); return m ? { id: rel(RT + 'image', '../media/' + m.name), ...m } : null; };
@@ -63,7 +65,7 @@ export async function exportPptx(deck, ctx, media) {
       }
       if (el.t === 'shape' || el.t === 'text') {
         const sw = el.stroke || el.t === 'shape' ? el.sw || 0 : 0;
-        return `<p:sp><p:nvSpPr>${nv(el, el.t === 'text' ? 'Text' : 'Shape')}<p:cNvSpPr${el.t === 'text' ? ' txBox="1"' : ''}/><p:nvPr/></p:nvSpPr><p:spPr>${xfrm(el)}${geomXml(el.t === 'text' ? 'rect' : el.shape || 'rect', el.w, el.h, el.rad || 0)}${fillXml(el.fill, sc, o)}${lineXml(el, sc, sw, el.stroke || '@fg')}${shadow(el.shadow)}</p:spPr>${body(el, sc, rel)}</p:sp>`;
+        return `<p:sp><p:nvSpPr>${nv(el, el.t === 'text' ? 'Text' : 'Shape')}<p:cNvSpPr${el.t === 'text' ? ' txBox="1"' : ''}/><p:nvPr/></p:nvSpPr><p:spPr>${xfrm(el)}${geomXml(el.t === 'text' ? 'rect' : el.shape || 'rect', el.w, el.h, el.rad || 0, el.cmds, el.open)}${fillXml(el.fill, sc, o)}${lineXml(el, sc, sw, el.stroke || '@fg')}${shadow(el.shadow)}</p:spPr>${body(el, sc, rel)}</p:sp>`;
       }
       const m = pic(el.t === 'video' ? el.poster : el.src);
       if (!m) return `<p:sp><p:nvSpPr>${nv(el, 'Picture')}<p:cNvSpPr/><p:nvPr/></p:nvSpPr><p:spPr>${xfrm(el)}${geomXml('rect', el.w, el.h, el.rad || 0)}${fillXml(el.t === 'video' ? '#14181b' : '@surface', sc, o)}<a:ln><a:noFill/></a:ln></p:spPr></p:sp>`;
@@ -73,7 +75,7 @@ export async function exportPptx(deck, ctx, media) {
         const c = (v) => Math.round(Math.max(0, v) * 100000);
         crop = `<a:srcRect l="${c(-ox / iw)}" t="${c(-oy / ih)}" r="${c((iw + ox - el.w) / iw)}" b="${c((ih + oy - el.h) / ih)}"/>`;
       }
-      const vurl = el.t === 'video' && (el.kind === 'youtube' ? 'https://youtu.be/' + el.vid : el.kind === 'vimeo' ? 'https://vimeo.com/' + el.vid : el.vid);
+      const vurl = el.t === 'video' && videoSrc(el);
       const e2 = vurl && okLink(vurl) && !el.link ? { ...q, link: vurl } : q;
       return `<p:pic><p:nvPicPr>${nv(e2, 'Picture')}<p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr><p:blipFill><a:blip r:embed="${m.id}">${o < 1 ? `<a:alphaModFix amt="${Math.round(o * 100000)}"/>` : ''}</a:blip>${crop}<a:stretch><a:fillRect/></a:stretch></p:blipFill><p:spPr>${xfrm(q)}${geomXml(el.mask || 'rect', q.w, q.h, el.rad || 0)}${el.sw && el.stroke ? lineXml(el, sc, el.sw, el.stroke) : ''}${shadow(el.shadow)}</p:spPr></p:pic>`;
     };

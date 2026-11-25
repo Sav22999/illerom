@@ -28,12 +28,12 @@ function credentials_php(string $host, string $user, string $pass, string $name,
 {
     $q = fn(string $v): string => '"' . addcslashes($v, "\\\"\$") . '"';
     return "<?php\n/**\n * ThinkHop — database credentials. Created by install-db.php on " . gmdate('Y-m-d H:i') . " UTC.\n"
-        . " * NEVER commit this file (it is listed in .gitignore) and never publish it.\n */\n\n"
-        . '$localhost_db  = ' . $q($host) . ";\n" . '$username_db   = ' . $q($user) . ";\n"
-        . '$password_db   = ' . $q($pass) . ";\n" . '$database_name = ' . $q($name) . ";\n\n"
-        . '$table_prefix  = ' . $q($prefix) . ";\n\n"
-        . "// Sign in with Google (optional): OAuth client ID of type \"Web application\"\n"
-        . '$google_client_id = ' . $q($google) . ";\n\n\$debug = false;\n";
+            . " * NEVER commit this file (it is listed in .gitignore) and never publish it.\n */\n\n"
+            . '$localhost_db  = ' . $q($host) . ";\n" . '$username_db   = ' . $q($user) . ";\n"
+            . '$password_db   = ' . $q($pass) . ";\n" . '$database_name = ' . $q($name) . ";\n\n"
+            . '$table_prefix  = ' . $q($prefix) . ";\n\n"
+            . "// Sign in with Google (optional): OAuth client ID of type \"Web application\"\n"
+            . '$google_client_id = ' . $q($google) . ";\n\n\$debug = false;\n";
 }
 
 $existing = credentials();
@@ -82,7 +82,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             if (!$locked) {
                 $pdo->prepare("INSERT INTO `{$prefix}users` (name, username, email, password_hash, role, created_at, email_verified_at) VALUES (?,?,?,?,?,?,?)
                     ON DUPLICATE KEY UPDATE role = VALUES(role), password_hash = VALUES(password_hash), email_verified_at = COALESCE(email_verified_at, VALUES(email_verified_at))")
-                    ->execute([$adminName, $adminUsername, $adminEmail, password_hash($adminPw, PASSWORD_DEFAULT), ROLE_ADMIN, now_utc(), now_utc()]);
+                        ->execute([$adminName, $adminUsername, $adminEmail, password_hash($adminPw, PASSWORD_DEFAULT), ROLE_ADMIN, now_utc(), now_utc()]);
             }
             if (!$locked || ($google !== '' && $google !== $existing['google_client_id'])) {
                 $content = credentials_php($host, $user, $pass, $name, $prefix, $google !== '' ? $google : (string)($existing['google_client_id'] ?? ''));
@@ -105,11 +105,40 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     <title>Installazione · ThinkHop</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        main { max-width: 520px; margin: 0 auto; padding: 32px 16px; }
-        input { width: 100%; height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface); }
-        fieldset { border: 1px solid var(--line); border-radius: 14px; margin: 0 0 14px; display: flex; flex-direction: column; gap: 10px; }
-        .err { color: var(--wrong); }
-        pre { overflow: auto; padding: 12px; background: var(--surface-2); border-radius: 10px; }
+        main {
+            max-width: 520px;
+            margin: 0 auto;
+            padding: 32px 16px;
+        }
+
+        input {
+            width: 100%;
+            height: 44px;
+            padding: 0 12px;
+            border: 1px solid var(--line);
+            border-radius: 11px;
+            background: var(--surface);
+        }
+
+        fieldset {
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            margin: 0 0 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .err {
+            color: var(--wrong);
+        }
+
+        pre {
+            overflow: auto;
+            padding: 12px;
+            background: var(--surface-2);
+            border-radius: 10px;
+        }
     </style>
 </head>
 <body>
@@ -118,7 +147,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     <?php if ($done): ?>
         <p>Fatto: le tabelle sono pronte. Per sicurezza elimina <code>install-db.php</code> dal server.</p>
         <?php if ($manualFile !== null): ?>
-            <p class="err">Non è stato possibile scrivere <code>credentials.php</code>: crealo a mano con questo contenuto.</p>
+            <p class="err">Non è stato possibile scrivere <code>credentials.php</code>: crealo a mano con questo
+                contenuto.</p>
             <pre><?= h($manualFile) ?></pre>
         <?php endif; ?>
         <p><a class="btn btn-primary" href="admin.html">Apri il pannello admin</a></p>
@@ -129,25 +159,40 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             <fieldset>
                 <legend>Database</legend>
                 <?php if (!$connected): ?>
-                    <label class="field"><span>Host</span><input name="localhost_db" value="<?= h($_POST['localhost_db'] ?? 'localhost') ?>" required></label>
-                    <label class="field"><span>Utente</span><input name="username_db" value="<?= h($_POST['username_db'] ?? '') ?>" required></label>
-                    <label class="field"><span>Nome del database</span><input name="database_name" value="<?= h($_POST['database_name'] ?? '') ?>" required></label>
-                    <label class="field"><span>Prefisso tabelle</span><input name="table_prefix" value="<?= h($_POST['table_prefix'] ?? 'th_') ?>"></label>
+                    <label class="field"><span>Host</span><input name="localhost_db"
+                                                                 value="<?= h($_POST['localhost_db'] ?? 'localhost') ?>"
+                                                                 required></label>
+                    <label class="field"><span>Utente</span><input name="username_db"
+                                                                   value="<?= h($_POST['username_db'] ?? '') ?>"
+                                                                   required></label>
+                    <label class="field"><span>Nome del database</span><input name="database_name"
+                                                                              value="<?= h($_POST['database_name'] ?? '') ?>"
+                                                                              required></label>
+                    <label class="field"><span>Prefisso tabelle</span><input name="table_prefix"
+                                                                             value="<?= h($_POST['table_prefix'] ?? 'th_') ?>"></label>
                 <?php endif; ?>
-                <label class="field"><span>Password del database</span><input type="password" name="password_db"></label>
+                <label class="field"><span>Password del database</span><input type="password"
+                                                                              name="password_db"></label>
             </fieldset>
             <?php if (!$locked): ?>
                 <fieldset>
                     <legend>Primo amministratore</legend>
-                    <label class="field"><span>Nome</span><input name="admin_name" value="<?= h($_POST['admin_name'] ?? '') ?>" required></label>
-                    <label class="field"><span>Username pubblico</span><input name="admin_username" value="<?= h($_POST['admin_username'] ?? '') ?>" required></label>
-                    <label class="field"><span>Email</span><input type="email" name="admin_email" value="<?= h($_POST['admin_email'] ?? '') ?>" required></label>
-                    <label class="field"><span>Password (min. 8 caratteri)</span><input type="password" name="admin_password" required></label>
+                    <label class="field"><span>Nome</span><input name="admin_name"
+                                                                 value="<?= h($_POST['admin_name'] ?? '') ?>" required></label>
+                    <label class="field"><span>Username pubblico</span><input name="admin_username"
+                                                                              value="<?= h($_POST['admin_username'] ?? '') ?>"
+                                                                              required></label>
+                    <label class="field"><span>Email</span><input type="email" name="admin_email"
+                                                                  value="<?= h($_POST['admin_email'] ?? '') ?>"
+                                                                  required></label>
+                    <label class="field"><span>Password (min. 8 caratteri)</span><input type="password"
+                                                                                        name="admin_password" required></label>
                 </fieldset>
             <?php endif; ?>
             <fieldset>
                 <legend>Accesso con Google (facoltativo)</legend>
-                <label class="field"><span>Client ID «Applicazione web»</span><input name="google_client_id" value="<?= h($_POST['google_client_id'] ?? ($existing['google_client_id'] ?? '')) ?>"></label>
+                <label class="field"><span>Client ID «Applicazione web»</span><input name="google_client_id"
+                                                                                     value="<?= h($_POST['google_client_id'] ?? ($existing['google_client_id'] ?? '')) ?>"></label>
             </fieldset>
             <button class="btn btn-primary" type="submit"><?= $locked ? 'Ripara le tabelle' : 'Installa' ?></button>
         </form>

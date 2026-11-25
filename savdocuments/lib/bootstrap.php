@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 const APP_NAME = 'SavDocuments';
 const AUTH_COOKIE = 'savdocuments_auth';
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2; // 2: documents.preview
 const LANGS = ['en', 'it'];
 // What a person can do with a document, from the weakest: each role can do everything the ones before it can
 const ROLES = ['viewer', 'commenter', 'editor', 'owner'];
@@ -146,7 +146,8 @@ function app_url(): string
         $saved = '';
         try {
             $saved = (string)db()->query('SELECT v FROM ' . t('meta') . " WHERE k = 'app_url'")->fetchColumn();
-        } catch (Throwable $e) { /* not installed yet */ }
+        } catch (Throwable $e) { /* not installed yet */
+        }
         return $url = $saved ?: 'https://www.illerom.eu/savdocuments/';
     }
     $host = preg_replace('/[^a-z0-9.:-]/i', '', (string)$_SERVER['HTTP_HOST']);
@@ -164,7 +165,8 @@ function remember_app_url(): void
         if ((string)$st->fetchColumn() !== $url) {
             db()->prepare('INSERT INTO ' . t('meta') . " (k, v) VALUES ('app_url', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)")->execute([$url]);
         }
-    } catch (Throwable $e) { /* not important */ }
+    } catch (Throwable $e) { /* not important */
+    }
 }
 
 // ---------- JSON helpers ----------

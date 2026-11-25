@@ -116,7 +116,10 @@ if (!function_exists('fig_uipat_overlays')) {
         $page = function (int $x): string {
             return "<rect x=\"$x\" y=\"40\" width=\"145\" height=\"130\" rx=\"10\" fill=\"#FFFFFF\" stroke=\"#1E1C52\" stroke-width=\"2\"/><g fill=\"#E4E2F0\"><rect x=\"" . ($x + 12) . "\" y=\"54\" width=\"80\" height=\"10\" rx=\"5\"/><rect x=\"" . ($x + 12) . "\" y=\"74\" width=\"120\" height=\"8\" rx=\"4\"/><rect x=\"" . ($x + 12) . "\" y=\"90\" width=\"110\" height=\"8\" rx=\"4\"/><rect x=\"" . ($x + 12) . "\" y=\"108\" width=\"120\" height=\"48\" rx=\"6\"/></g>";
         };
-        $p1 = $page(10); $p2 = $page(170); $p3 = $page(330); $p4 = $page(490);
+        $p1 = $page(10);
+        $p2 = $page(170);
+        $p3 = $page(330);
+        $p4 = $page(490);
         return <<<SVG
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 230" font-family="system-ui, sans-serif" font-size="11" fill="#1E1C52">
 {$p1}{$p2}{$p3}{$p4}

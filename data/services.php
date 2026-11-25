@@ -9,6 +9,7 @@
 return [
     'opennewsletter' => ['app' => ['on_', 'Account, gruppi e iscritti', 'Accounts, groups and subscribers'], 'web' => ['widget' => ['widget.js', 'Widget di iscrizione', 'Subscription widget']]],
     'savdocuments' => ['app' => ['sd_', 'Account e documenti', 'Accounts and documents']],
+    'savpresentations' => ['app' => ['sp_', 'Account e presentazioni', 'Accounts and presentations']],
     'thinkhop' => ['app' => ['th_', 'Account e classifiche', 'Accounts and rankings']],
     'foodtrack' => ['app' => ['ft_', 'Account e dispensa', 'Accounts and pantry']],
     'mycurriculum' => ['app' => ['mc_', 'Account e CV', 'Accounts and CVs']],

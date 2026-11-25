@@ -7,7 +7,7 @@
  * runs along x in front of it. The garden is west of the room (x < 0); the car park, when bought, is west of it.
  */
 import * as THREE from '../vendor/three.module.min.js';
-import {mat, glowMat, PALETTE, personModel, animatePerson, carModel, lightPool} from './models.js';
+import {animatePerson, carModel, glowMat, lightPool, mat, PALETTE, personModel} from './models.js';
 
 const OUT = 5; // the outdoor strip around the room (OUTDOOR in lib/catalog.php)
 const PARK_SPACES = [0, 4, 8, 12]; // spaces per car park level (PARKING in lib/catalog.php)
@@ -103,7 +103,17 @@ export function buildNeighbourhood(world, r) {
     const garage = Math.min(GARAGE_SPACES.length - 1, r.garage || 0), garW = garage ? GARAGE_W + 0.4 : 0;
     const lotW = streetLotW + garW; // everything left of the plot: street car park, then the ramp down
     world.parkingW = lotW;
-    world.street = {roadZ, nearWalk: D + OUT + 2.6, farWalk: roadZ + 3.1, laneIn: roadZ - 1, laneOut: roadZ + 1, x0: -36 - lotW, x1: W + 40, D, W};
+    world.street = {
+        roadZ,
+        nearWalk: D + OUT + 2.6,
+        farWalk: roadZ + 3.1,
+        laneIn: roadZ - 1,
+        laneOut: roadZ + 1,
+        x0: -36 - lotW,
+        x1: W + 40,
+        D,
+        W
+    };
 
     // Sidewalks, road, the stripes and a zebra crossing at the door
     const len = W + 90 + lotW, cx = (W - lotW) / 2;
@@ -123,7 +133,10 @@ export function buildNeighbourhood(world, r) {
     for (let i = 0; i < 6; i++) add(world, box(0.34, 0.05, 3.4, mat('#F4F1E8'), doorMidOf(world, W) - 1.1 + i * 0.44, -0.02, roadZ));
 
     // The terrace in front (stone paving) and the path to the door across it
-    const patio = new THREE.Mesh(new THREE.PlaneGeometry(W + OUT, OUT), new THREE.MeshStandardMaterial({map: pavingTexture(W + OUT, OUT), roughness: 0.95}));
+    const patio = new THREE.Mesh(new THREE.PlaneGeometry(W + OUT, OUT), new THREE.MeshStandardMaterial({
+        map: pavingTexture(W + OUT, OUT),
+        roughness: 0.95
+    }));
     patio.rotation.x = -Math.PI / 2;
     patio.position.set((W + OUT) / 2, -0.035, D + OUT / 2);
     patio.receiveShadow = true;
@@ -138,13 +151,21 @@ export function buildNeighbourhood(world, r) {
     if (spaces) {
         const lotW = streetLotW;
         const zFront = D + OUT + 0.3, depth = 3.0;
-        const lot = new THREE.Mesh(new THREE.PlaneGeometry(lotW, depth), new THREE.MeshStandardMaterial({map: lotTexture(spaces), roughness: 0.95}));
+        const lot = new THREE.Mesh(new THREE.PlaneGeometry(lotW, depth), new THREE.MeshStandardMaterial({
+            map: lotTexture(spaces),
+            roughness: 0.95
+        }));
         lot.rotation.x = -Math.PI / 2;
         lot.position.set((lotX0 + lotX1) / 2, -0.03, zFront - depth / 2);
         lot.receiveShadow = true;
         world.outdoor.add(lot);
         add(world, box(lotW + 0.2, 0.14, 0.14, mat('#BDB2A1'), (lotX0 + lotX1) / 2, -0.03, zFront - depth - 0.05));
-        for (let i = 0; i < spaces; i++) world.parkingStalls.push({x: lotX0 + 0.3 + STALL_W * (i + 0.5), z: zFront - 1.55, busy: null, car: null});
+        for (let i = 0; i < spaces; i++) world.parkingStalls.push({
+            x: lotX0 + 0.3 + STALL_W * (i + 0.5),
+            z: zFront - 1.55,
+            busy: null,
+            car: null
+        });
         // A sign with the fork and a big P
         const c = document.createElement('canvas');
         c.width = c.height = 64;
@@ -337,12 +358,20 @@ function buildGarage(world, x0, zFront, spaces) {
     ksign.scale.setScalar(0.45);
     ksign.position.set(kx, 2.5, kz + 0.6);
     g.add(ksign);
-    g.traverse(o => { if (o.isMesh) o.castShadow = o.receiveShadow = true; });
+    g.traverse(o => {
+        if (o.isMesh) o.castShadow = o.receiveShadow = true;
+    });
     world.outdoor.add(g);
     world.garageInfo = {rx, zFront, len, drop, kx};
     groundHole(world, {x0: rx - rampW / 2 - 0.2, x1: rx + rampW / 2 + 0.2, z0: zFront - len - 0.1, z1: zFront});
     // Underground spaces: the guest steps out of the kiosk (stall x + 0.6 is where the simulation puts them)
-    for (let i = 0; i < spaces; i++) world.garageStalls.push({x: kx - 0.6, z: zFront, busy: null, car: null, garage: true});
+    for (let i = 0; i < spaces; i++) world.garageStalls.push({
+        x: kx - 0.6,
+        z: zFront,
+        busy: null,
+        car: null,
+        garage: true
+    });
 }
 
 /**
@@ -353,7 +382,10 @@ function mergeStatic(g, skip) {
     g.updateMatrixWorld(true);
     const inv = new THREE.Matrix4().copy(g.matrixWorld).invert();
     const byMat = new Map();
-    const inHoli = (o) => { for (let p = o.parent; p && p !== g; p = p.parent) if (p.userData.holi) return true; return false; };
+    const inHoli = (o) => {
+        for (let p = o.parent; p && p !== g; p = p.parent) if (p.userData.holi) return true;
+        return false;
+    };
     g.traverse(o => {
         if (!o.isMesh || Array.isArray(o.material) || skip.has(o) || inHoli(o)) return;
         (byMat.get(o.material) || byMat.set(o.material, []).get(o.material)).push(o);
@@ -367,7 +399,8 @@ function mergeStatic(g, skip) {
         });
         const withUv = geos.every(x => x.attributes.uv);
         const total = geos.reduce((n, x) => n + x.attributes.position.count, 0);
-        const pos = new Float32Array(total * 3), nor = new Float32Array(total * 3), uv = withUv ? new Float32Array(total * 2) : null;
+        const pos = new Float32Array(total * 3), nor = new Float32Array(total * 3),
+            uv = withUv ? new Float32Array(total * 2) : null;
         let at = 0;
         for (const x of geos) {
             pos.set(x.attributes.position.array, at * 3);
@@ -388,6 +421,7 @@ function mergeStatic(g, skip) {
 
 /** Shop signs: a pictogram (no words, so it works in every language) on a coloured board. Cached per kind. */
 const SIGNS = new Map();
+
 function signTexture(kind, bg) {
     const key = kind + bg;
     if (SIGNS.has(key)) return SIGNS.get(key);
@@ -406,43 +440,88 @@ function signTexture(kind, bg) {
         g.ellipse(cx, cy, 26, 13, 0, 0, Math.PI * 2);
         g.fill();
         g.strokeStyle = bg;
-        for (const dx of [-12, 0, 12]) { g.beginPath(); g.moveTo(cx + dx - 4, cy + 7); g.lineTo(cx + dx + 4, cy - 7); g.stroke(); }
+        for (const dx of [-12, 0, 12]) {
+            g.beginPath();
+            g.moveTo(cx + dx - 4, cy + 7);
+            g.lineTo(cx + dx + 4, cy - 7);
+            g.stroke();
+        }
     } else if (kind === 'florist') { // a flower
-        for (let k = 0; k < 5; k++) { g.beginPath(); g.arc(cx + Math.cos(k * 1.257) * 10, cy + Math.sin(k * 1.257) * 10, 7, 0, Math.PI * 2); g.fill(); }
+        for (let k = 0; k < 5; k++) {
+            g.beginPath();
+            g.arc(cx + Math.cos(k * 1.257) * 10, cy + Math.sin(k * 1.257) * 10, 7, 0, Math.PI * 2);
+            g.fill();
+        }
         g.fillStyle = '#FFD23F';
-        g.beginPath(); g.arc(cx, cy, 6, 0, Math.PI * 2); g.fill();
+        g.beginPath();
+        g.arc(cx, cy, 6, 0, Math.PI * 2);
+        g.fill();
     } else if (kind === 'cafe') { // a cup with steam
         g.fillRect(cx - 16, cy - 6, 26, 18);
-        g.beginPath(); g.arc(cx + 13, cy + 3, 6, -Math.PI / 2, Math.PI / 2); g.stroke();
-        for (const dx of [-9, 0]) { g.beginPath(); g.moveTo(cx + dx - 3, cy - 10); g.quadraticCurveTo(cx + dx + 4, cy - 15, cx + dx - 1, cy - 21); g.stroke(); }
+        g.beginPath();
+        g.arc(cx + 13, cy + 3, 6, -Math.PI / 2, Math.PI / 2);
+        g.stroke();
+        for (const dx of [-9, 0]) {
+            g.beginPath();
+            g.moveTo(cx + dx - 3, cy - 10);
+            g.quadraticCurveTo(cx + dx + 4, cy - 15, cx + dx - 1, cy - 21);
+            g.stroke();
+        }
     } else if (kind === 'grocer') { // an apple with a leaf
         g.arc(cx, cy + 3, 14, 0, Math.PI * 2);
         g.fill();
         g.fillStyle = '#9CD86B';
-        g.beginPath(); g.ellipse(cx + 7, cy - 13, 7, 3.5, -0.5, 0, Math.PI * 2); g.fill();
+        g.beginPath();
+        g.ellipse(cx + 7, cy - 13, 7, 3.5, -0.5, 0, Math.PI * 2);
+        g.fill();
     } else if (kind === 'books') { // an open book
-        g.moveTo(cx, cy - 10); g.lineTo(cx - 24, cy - 14); g.lineTo(cx - 24, cy + 12); g.lineTo(cx, cy + 16); g.lineTo(cx + 24, cy + 12); g.lineTo(cx + 24, cy - 14); g.closePath();
+        g.moveTo(cx, cy - 10);
+        g.lineTo(cx - 24, cy - 14);
+        g.lineTo(cx - 24, cy + 12);
+        g.lineTo(cx, cy + 16);
+        g.lineTo(cx + 24, cy + 12);
+        g.lineTo(cx + 24, cy - 14);
+        g.closePath();
         g.fill();
         g.strokeStyle = bg;
-        g.beginPath(); g.moveTo(cx, cy - 10); g.lineTo(cx, cy + 16); g.stroke();
+        g.beginPath();
+        g.moveTo(cx, cy - 10);
+        g.lineTo(cx, cy + 16);
+        g.stroke();
     } else if (kind === 'pharmacy') { // a cross
         g.fillRect(cx - 6, cy - 18, 12, 36);
         g.fillRect(cx - 18, cy - 6, 36, 12);
     } else { // ice cream: a cone and two scoops
-        g.moveTo(cx - 9, cy); g.lineTo(cx, cy + 20); g.lineTo(cx + 9, cy); g.closePath();
+        g.moveTo(cx - 9, cy);
+        g.lineTo(cx, cy + 20);
+        g.lineTo(cx + 9, cy);
+        g.closePath();
         g.fill();
         g.fillStyle = '#F7A1C4';
-        g.beginPath(); g.arc(cx - 4, cy - 4, 8, 0, Math.PI * 2); g.fill();
+        g.beginPath();
+        g.arc(cx - 4, cy - 4, 8, 0, Math.PI * 2);
+        g.fill();
         g.fillStyle = '#FFF6E9';
-        g.beginPath(); g.arc(cx + 5, cy - 9, 7, 0, Math.PI * 2); g.fill();
+        g.beginPath();
+        g.arc(cx + 5, cy - 9, 7, 0, Math.PI * 2);
+        g.fill();
     }
     const tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace;
     SIGNS.set(key, tex);
     return tex;
 }
+
 const SHOP_KINDS = ['bakery', 'florist', 'cafe', 'grocer', 'books', 'pharmacy', 'icecream'];
-const SHOP_COLORS = {bakery: '#C2572B', florist: '#B43E5C', cafe: '#5A3218', grocer: '#4E8A3A', books: '#2F5DA8', pharmacy: '#3E9A5A', icecream: '#E07BA8'};
+const SHOP_COLORS = {
+    bakery: '#C2572B',
+    florist: '#B43E5C',
+    cafe: '#5A3218',
+    grocer: '#4E8A3A',
+    books: '#2F5DA8',
+    pharmacy: '#3E9A5A',
+    icecream: '#E07BA8'
+};
 
 /** A street: asphalt with a dashed middle line and a sidewalk each side, along x (horizontal) or along z. */
 function street(world, a, b, at, along) {
@@ -487,17 +566,29 @@ function trafficLight(axis) {
     const g = new THREE.Group(), dark = mat('#2C2C30');
     g.add(box(0.1, 2.3, 0.1, dark, 0, 0, 0), box(0.3, 0.8, 0.22, dark, 0, 2.2, 0.08), box(0.36, 0.06, 0.26, dark, 0, 3.0, 0.08));
     const lamp = (c, y) => {
-        const m = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.085, 0.05, 12), new THREE.MeshStandardMaterial({color: c, emissive: c, emissiveIntensity: 0.05}));
+        const m = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.085, 0.05, 12), new THREE.MeshStandardMaterial({
+            color: c,
+            emissive: c,
+            emissiveIntensity: 0.05
+        }));
         m.rotation.x = Math.PI / 2;
         m.position.set(0, y, 0.2);
         g.add(m);
         return m;
     };
-    return {group: g, axis, red: lamp('#E63946', 2.84), yellow: lamp('#F6C945', 2.6), green: lamp('#4CAF50', 2.36), state: null};
+    return {
+        group: g,
+        axis,
+        red: lamp('#E63946', 2.84),
+        yellow: lamp('#F6C945', 2.6),
+        green: lamp('#4CAF50', 2.36),
+        state: null
+    };
 }
 
 /** A little person drawn on a canvas for the pedestrian signal: standing (red) or walking (green). */
 const pedIcons = {};
+
 function pedIcon(kind) {
     if (pedIcons[kind]) return pedIcons[kind];
     const c = document.createElement('canvas');
@@ -514,16 +605,26 @@ function pedIcon(kind) {
     g.fill();
     g.beginPath();
     if (kind === 'walk') { // mid-stride, arms swinging
-        g.moveTo(31, 22); g.lineTo(28, 40); g.lineTo(18, 56);
-        g.moveTo(28, 40); g.lineTo(40, 55);
-        g.moveTo(30, 26); g.lineTo(19, 36);
-        g.moveTo(30, 26); g.lineTo(42, 33);
+        g.moveTo(31, 22);
+        g.lineTo(28, 40);
+        g.lineTo(18, 56);
+        g.moveTo(28, 40);
+        g.lineTo(40, 55);
+        g.moveTo(30, 26);
+        g.lineTo(19, 36);
+        g.moveTo(30, 26);
+        g.lineTo(42, 33);
     } else { // standing still
-        g.moveTo(32, 22); g.lineTo(32, 40);
-        g.moveTo(32, 40); g.lineTo(26, 57);
-        g.moveTo(32, 40); g.lineTo(38, 57);
-        g.moveTo(32, 25); g.lineTo(22, 40);
-        g.moveTo(32, 25); g.lineTo(42, 40);
+        g.moveTo(32, 22);
+        g.lineTo(32, 40);
+        g.moveTo(32, 40);
+        g.lineTo(26, 57);
+        g.moveTo(32, 40);
+        g.lineTo(38, 57);
+        g.moveTo(32, 25);
+        g.lineTo(22, 40);
+        g.moveTo(32, 25);
+        g.lineTo(42, 40);
     }
     g.stroke();
     const t = new THREE.CanvasTexture(c);
@@ -536,7 +637,10 @@ function pedLight(axis) {
     const g = new THREE.Group(), dark = mat('#2C2C30');
     g.add(box(0.08, 2.0, 0.08, dark, 0, 0, 0), box(0.3, 0.62, 0.18, dark, 0, 1.75, 0.04), box(0.36, 0.05, 0.22, dark, 0, 2.37, 0.04));
     const panel = (kind, y) => {
-        const m = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.24), new THREE.MeshBasicMaterial({map: pedIcon(kind), color: '#444444'}));
+        const m = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.24), new THREE.MeshBasicMaterial({
+            map: pedIcon(kind),
+            color: '#444444'
+        }));
         m.position.set(0, y, 0.135);
         g.add(m);
         return m;
@@ -677,7 +781,11 @@ function buildHouses(world, W, D, level, lotW, rnd) {
             g.add(strip);
         }
         const sign = new THREE.Mesh(new THREE.BoxGeometry(Math.min(2.6, w * 0.6), 0.75, 0.07),
-            [mat(col), mat(col), mat(col), mat(col), new THREE.MeshStandardMaterial({map: signTexture(kind, kind === 'pharmacy' ? '#FFFFFF' : col), emissive: '#FFFFFF', emissiveIntensity: 0.08}), mat(col)]);
+            [mat(col), mat(col), mat(col), mat(col), new THREE.MeshStandardMaterial({
+                map: signTexture(kind, kind === 'pharmacy' ? '#FFFFFF' : col),
+                emissive: '#FFFFFF',
+                emissiveIntensity: 0.08
+            }), mat(col)]);
         sign.position.set(0, h - 0.55, d / 2 + 0.06);
         g.add(sign);
         if (kind === 'pharmacy') { // the green cross that glows, sticking out from the wall
@@ -818,7 +926,10 @@ function buildHouses(world, W, D, level, lotW, rnd) {
     }
     street(world, xL + 3.4, xR - 3.4, zB, 'x');
     street(world, xL - 40, xR + 40, zF, 'x');
-    for (let z = zB - 2; z < zF + 12; z += 7) if (Math.abs(z - roadZ) > 4 && Math.abs(z - zF) > 4) { lamp(xL + 2.5, z, 0); lamp(xR - 2.5, z + 3, 0); }
+    for (let z = zB - 2; z < zF + 12; z += 7) if (Math.abs(z - roadZ) > 4 && Math.abs(z - zF) > 4) {
+        lamp(xL + 2.5, z, 0);
+        lamp(xR - 2.5, z + 3, 0);
+    }
     for (let x = xL - 34; x < xR + 34; x += 8) if (offStreet(x)) lamp(x, zF - 2.5, 1);
 
     // Across the main road: the shops street, with a little square and a fountain right in front of the door
@@ -826,21 +937,35 @@ function buildHouses(world, W, D, level, lotW, rnd) {
     const gap = level < 5 ? 6.6 : 5.8;
     for (let x = xL - 26; x <= xR + 26; x += gap) {
         const xx = x + rnd(k) * 0.6;
-        if (!offStreet(xx) || Math.abs(xx - door) < 4.4) { k++; continue; }
+        if (!offStreet(xx) || Math.abs(xx - door) < 4.4) {
+            k++;
+            continue;
+        }
         if (rnd(k + 50) < (Math.abs(xx - door) < 16 ? 0.75 : 0.3)) shop(xx, roadZ + 7.4, Math.PI); // low buildings only: nothing tall in front of the restaurant
         else house(xx, roadZ + 7.4, Math.PI);
         k++;
     }
     {   // the square: paving, a fountain, two benches and a tree each side (the Christmas tree goes in the middle)
         const g = new THREE.Group();
-        const pave = new THREE.Mesh(new THREE.PlaneGeometry(7.6, 6), new THREE.MeshStandardMaterial({map: pavingTexture(7.6, 6), roughness: 0.95}));
+        const pave = new THREE.Mesh(new THREE.PlaneGeometry(7.6, 6), new THREE.MeshStandardMaterial({
+            map: pavingTexture(7.6, 6),
+            roughness: 0.95
+        }));
         pave.rotation.x = -Math.PI / 2;
         pave.position.set(0, -0.025, 0);
         g.add(pave);
         const basin = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.3, 0.45, 20), mat('#CFC6B8'));
         basin.position.y = 0.22;
         // The water stands a little above the stone (never level with it: two surfaces at the same height flicker), inside a rim
-        const waterMat = new THREE.MeshStandardMaterial({color: '#7EC8E3', roughness: 0.15, metalness: 0.05, emissive: '#2C6E8A', emissiveIntensity: 0.15, polygonOffset: true, polygonOffsetFactor: -2});
+        const waterMat = new THREE.MeshStandardMaterial({
+            color: '#7EC8E3',
+            roughness: 0.15,
+            metalness: 0.05,
+            emissive: '#2C6E8A',
+            emissiveIntensity: 0.15,
+            polygonOffset: true,
+            polygonOffsetFactor: -2
+        });
         const water = new THREE.Mesh(new THREE.CylinderGeometry(1.12, 1.12, 0.04, 28), waterMat);
         water.position.y = 0.455;
         const rim = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.1, 6, 32), mat('#D8D0C2'));
@@ -849,12 +974,21 @@ function buildHouses(world, W, D, level, lotW, rnd) {
         const bowlWater = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.03, 18), waterMat);
         bowlWater.position.y = 1.465;
         // Jets: a spout from the top and thin streams falling from the bowl into the basin
-        const jetMat = new THREE.MeshStandardMaterial({color: '#DFF6FF', transparent: true, opacity: 0.55, roughness: 0.1, emissive: '#9FD8EC', emissiveIntensity: 0.2, depthWrite: false});
+        const jetMat = new THREE.MeshStandardMaterial({
+            color: '#DFF6FF',
+            transparent: true,
+            opacity: 0.55,
+            roughness: 0.1,
+            emissive: '#9FD8EC',
+            emissiveIntensity: 0.2,
+            depthWrite: false
+        });
         const spout = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.06, 0.5, 8), jetMat);
         spout.position.y = 1.7;
         g.add(rim, bowlWater, spout);
         for (let k = 0; k < 6; k++) {
-            const a = k / 6 * Math.PI * 2, st = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.03, 0.95, 5), jetMat);
+            const a = k / 6 * Math.PI * 2,
+                st = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.03, 0.95, 5), jetMat);
             st.position.set(Math.cos(a) * 0.48, 0.98, Math.sin(a) * 0.48);
             g.add(st);
         }
@@ -889,7 +1023,10 @@ function buildHouses(world, W, D, level, lotW, rnd) {
         pick(xR + 6, z + rnd(k) * 0.6, -Math.PI / 2, k++, 0.2);
     }
     // Trees along the side streets and the second road
-    for (let z = zB - 8; z < zF + 12; z += 9) if (Math.abs(z - roadZ) > 4 && Math.abs(z - zF) > 4) { tree(xL - 2.6, z + 4, 0.9); tree(xR + 2.6, z, 0.9); }
+    for (let z = zB - 8; z < zF + 12; z += 9) if (Math.abs(z - roadZ) > 4 && Math.abs(z - zF) > 4) {
+        tree(xL - 2.6, z + 4, 0.9);
+        tree(xR + 2.6, z, 0.9);
+    }
     for (let x = xL - 30; x < xR + 30; x += 9) if (offStreet(x)) tree(x + 4, zF + 2.6, 0.9);
 }
 
@@ -986,7 +1123,11 @@ export class Traffic {
         // Indicators: an amber light at each corner, blinking on the side of the next turn
         const blink = {L: [], R: []};
         for (const [side, sx] of [['L', 0.47], ['R', -0.47]]) for (const sz of [0.98, -0.98]) {
-            const m = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.08, 0.06), new THREE.MeshStandardMaterial({color: '#FF9F1C', emissive: '#FF9F1C', emissiveIntensity: 0}));
+            const m = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.08, 0.06), new THREE.MeshStandardMaterial({
+                color: '#FF9F1C',
+                emissive: '#FF9F1C',
+                emissiveIntensity: 0
+            }));
             m.position.set(sx, 0.48, sz);
             mesh.add(m);
             blink[side].push(m);
@@ -1000,7 +1141,8 @@ export class Traffic {
 
     /** A guest's car: from the road into a free space. Returns the stall, or null when the car park is full. */
     driveIn(guest, onParked) {
-        const st = this.world.street, stall = [...(this.world.parkingStalls || []), ...(this.world.garageStalls || [])].find(s => !s.busy);
+        const st = this.world.street,
+            stall = [...(this.world.parkingStalls || []), ...(this.world.garageStalls || [])].find(s => !s.busy);
         if (!st || !stall) return null;
         stall.busy = guest;
         const gi = this.world.garageInfo;
@@ -1074,7 +1216,10 @@ export class Traffic {
             pts = [new THREE.Vector3(x, 0, -OUT - 34), new THREE.Vector3(x, 0, z)];
             if (Math.random() < 0.5) { // and some cross the main road on the zebra, on their green, to the far sidewalk
                 const cx = j + (east ? 3.1 : -3.1), zf = st.farWalk;
-                pts.push(new THREE.Vector3(cx, 0, z), Object.assign(new THREE.Vector3(cx, 0, zf), {cross: true, light: 'side'}), new THREE.Vector3(xEnd, 0, zf));
+                pts.push(new THREE.Vector3(cx, 0, z), Object.assign(new THREE.Vector3(cx, 0, zf), {
+                    cross: true,
+                    light: 'side'
+                }), new THREE.Vector3(xEnd, 0, zf));
             } else pts.push(new THREE.Vector3(xEnd, 0, z));
         } else pts = [new THREE.Vector3(east ? st.x0 + 4 : st.x1 - 4, 0, z), new THREE.Vector3(xEnd, 0, z)];
         const mesh = personModel('customer', null, Math.random() * 1000);
@@ -1085,7 +1230,16 @@ export class Traffic {
             dog.position.copy(mesh.position);
             this.group.add(dog);
         }
-        this.walkers.push({mesh, dog, pts, i: 1, speed: 1.0 + Math.random() * 0.6, clock: Math.random() * 10, mood: 50 + Math.random() * 50, far});
+        this.walkers.push({
+            mesh,
+            dog,
+            pts,
+            i: 1,
+            speed: 1.0 + Math.random() * 0.6,
+            clock: Math.random() * 10,
+            mood: 50 + Math.random() * 50,
+            far
+        });
     }
 
     /** Someone who might have come in, but the restaurant is closed (or not taking guests): they walk on by. */
@@ -1112,7 +1266,10 @@ export class Traffic {
         this.light = {main, side};
         // Pedestrians: green while the cars they cross are stopped (a little before the cars' green comes back),
         // the green figure blinks in its last seconds
-        const ped = {main: lc < 9 ? 'walk' : lc < 11 ? 'blink' : 'stop', side: lc >= 14.5 && lc < 18 ? 'walk' : lc >= 18 && lc < 20 ? 'blink' : 'stop'};
+        const ped = {
+            main: lc < 9 ? 'walk' : lc < 11 ? 'blink' : 'stop',
+            side: lc >= 14.5 && lc < 18 ? 'walk' : lc >= 18 && lc < 20 ? 'blink' : 'stop'
+        };
         this.ped = ped;
         const blinkPed = (this.lightClock % 0.6) < 0.3;
         for (const pl of this.world.pedLights || []) {
@@ -1180,13 +1337,15 @@ export class Traffic {
                 if (inBox(pos) || !inBox({x: nx, z: nz})) continue;
                 for (const o of this.cars) {
                     if (o === car || !inBox(o.mesh.position)) continue;
-                    const oy = o.mesh.rotation.y, same = Math.abs(Math.sin(oy) - hx) < 0.35 && Math.abs(Math.cos(oy) - hz) < 0.35;
+                    const oy = o.mesh.rotation.y,
+                        same = Math.abs(Math.sin(oy) - hx) < 0.35 && Math.abs(Math.cos(oy) - hz) < 0.35;
                     if (!same) speed = 0;
                 }
             }
             // A roundabout: wait at its edge while a car already going round is about to pass the way in
             if (flat) for (const rb of this.world.roundabouts || []) {
-                const dIn = Math.hypot(pos.x - rb.x, pos.z - rb.z), dNext = Math.hypot(target.x - rb.x, target.z - rb.z);
+                const dIn = Math.hypot(pos.x - rb.x, pos.z - rb.z),
+                    dNext = Math.hypot(target.x - rb.x, target.z - rb.z);
                 if (dIn < 3.3 || dIn > 5.2 || dNext > 3.1) continue;
                 for (const o of this.cars) {
                     if (o === car) continue;
@@ -1389,7 +1548,16 @@ export class Traffic {
         const mesh = personModel('customer', null, Math.random() * 1000);
         mesh.position.copy(pts[0]);
         this.group.add(mesh);
-        this.walkers.push({mesh, dog: null, pts, i: 1, speed: 1.0 + Math.random() * 0.6, clock: Math.random() * 10, mood: 50 + Math.random() * 50, second: true});
+        this.walkers.push({
+            mesh,
+            dog: null,
+            pts,
+            i: 1,
+            speed: 1.0 + Math.random() * 0.6,
+            clock: Math.random() * 10,
+            mood: 50 + Math.random() * 50,
+            second: true
+        });
     }
 
     /** A car passing through: along the main road, from a side street onto it, or from it into a side street. */
@@ -1509,6 +1677,7 @@ const bulb = (color, x, y, z, r = 1) => {
     if (r !== 1) m.scale.setScalar(r);
     return m;
 };
+
 /** A string of things between two points, sagging a little in the middle. */
 function hangLine(g, a, b, n, make, sag = 0.25) {
     for (let k = 0; k <= n; k++) {
@@ -1518,6 +1687,7 @@ function hangLine(g, a, b, n, make, sag = 0.25) {
         g.add(make(p, k));
     }
 }
+
 const flag = (color, p) => { // a little bunting triangle
     const m = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.28, 3), mat(color));
     m.rotation.x = Math.PI;
@@ -1613,7 +1783,13 @@ function bigTree(colors) {
  * strings of lights or bunting across the main road, and something special in the square.
  */
 export function applyHoliday(world, name) {
-    const clear = (g) => { while (g.children.length) { const c = g.children[0]; c.traverse(o => o.isMesh && o.geometry !== BULB_GEO && o.geometry.dispose()); g.remove(c); } };
+    const clear = (g) => {
+        while (g.children.length) {
+            const c = g.children[0];
+            c.traverse(o => o.isMesh && o.geometry !== BULB_GEO && o.geometry.dispose());
+            g.remove(c);
+        }
+    };
     for (const h of world.holiHosts || []) clear(h.holi);
     for (const t of world.trees || []) t.holi && clear(t.holi);
     for (const l of world.holiLamps || []) clear(l.holi);
@@ -1626,7 +1802,11 @@ export function applyHoliday(world, name) {
     for (const h of world.holiHosts || []) {
         const g = h.holi, top = h.kind === 'shop' ? h.h - 0.05 : h.h - 0.08, fz = h.d / 2 + 0.08;
         const a = V(-h.w / 2, top, fz), b = V(h.w / 2, top, fz), n = Math.round(h.w / 0.32);
-        if (name === 'christmas' || name === 'halloween' || name === 'valentine') hangLine(g, a, b, n, (p, k) => name === 'valentine' && k % 2 ? (() => { const hh = heart(C(k), 0.6); hh.position.copy(p); return hh; })() : bulb(C(k), p.x, p.y, p.z), 0.12);
+        if (name === 'christmas' || name === 'halloween' || name === 'valentine') hangLine(g, a, b, n, (p, k) => name === 'valentine' && k % 2 ? (() => {
+            const hh = heart(C(k), 0.6);
+            hh.position.copy(p);
+            return hh;
+        })() : bulb(C(k), p.x, p.y, p.z), 0.12);
         else if (name === 'summer') hangLine(g, a, b, Math.round(h.w / 0.7), (p, k) => lantern(C(k), p), 0.15);
         else hangLine(g, a, b, Math.round(h.w / 0.3), (p, k) => flag(C(k), p), 0.1); // easter, carnival: bunting
         const dx = h.doorX;
@@ -1663,9 +1843,15 @@ export function applyHoliday(world, name) {
             const a = k * 2.399 + t.i, y = (1.15 + (k % 4) * 0.3) * sc, r = (0.75 - (k % 4) * 0.1) * sc;
             const x = Math.cos(a) * r, z = Math.sin(a) * r;
             if (name === 'christmas' || name === 'halloween') t.holi.add(bulb(C(k), x, y, z, 1.2));
-            else if (name === 'easter') { const e = egg(C(k), 0.8); e.position.set(x, y - 0.1, z); t.holi.add(e); }
-            else if (name === 'valentine' && k % 2) { const hh = heart(C(k), 0.7); hh.position.set(x, y, z); t.holi.add(hh); }
-            else if (name === 'summer' && k % 3 === 0) t.holi.add(lantern(C(k), V(x, y + 0.1, z)));
+            else if (name === 'easter') {
+                const e = egg(C(k), 0.8);
+                e.position.set(x, y - 0.1, z);
+                t.holi.add(e);
+            } else if (name === 'valentine' && k % 2) {
+                const hh = heart(C(k), 0.7);
+                hh.position.set(x, y, z);
+                t.holi.add(hh);
+            } else if (name === 'summer' && k % 3 === 0) t.holi.add(lantern(C(k), V(x, y + 0.1, z)));
             else if (name === 'carnival' && k % 2) t.holi.add(bulb(C(k), x, y, z, 1.6));
         }
         if (name === 'christmas') {
@@ -1688,7 +1874,11 @@ export function applyHoliday(world, name) {
         bow.scale.set(1.6, 1, 0.6);
         bow.position.set(0, 2.05, 0.1);
         l.holi.add(ring, bow);
-        if (name === 'halloween') { const pk = pumpkin(0.7); pk.position.set(0.25, 0, 0.1); l.holi.add(pk); }
+        if (name === 'halloween') {
+            const pk = pumpkin(0.7);
+            pk.position.set(0.25, 0, 0.1);
+            l.holi.add(pk);
+        }
     }
     // Across the main road: lights or bunting from one sidewalk to the other, and the square
     const st = world.street;
@@ -1698,7 +1888,11 @@ export function applyHoliday(world, name) {
             const a = V(x, 3.3, z1), b = V(x + 1.5, 3.3, z2);
             if (name === 'christmas' || name === 'halloween') hangLine(world.holiStreet, a, b, 18, (p, k) => bulb(C(k + x), p.x, p.y, p.z, 1.4), 0.5);
             else if (name === 'summer') hangLine(world.holiStreet, a, b, 9, (p, k) => lantern(C(k), p), 0.5);
-            else if (name === 'valentine') hangLine(world.holiStreet, a, b, 9, (p, k) => { const hh = heart(C(k), 1.1); hh.position.copy(p); return hh; }, 0.5);
+            else if (name === 'valentine') hangLine(world.holiStreet, a, b, 9, (p, k) => {
+                const hh = heart(C(k), 1.1);
+                hh.position.copy(p);
+                return hh;
+            }, 0.5);
             else hangLine(world.holiStreet, a, b, 16, (p, k) => flag(C(k), p), 0.5);
         }
         const pl = world.plaza;
@@ -1707,7 +1901,11 @@ export function applyHoliday(world, name) {
             if (name === 'christmas') piece = bigTree(cols);
             else if (name === 'halloween') {
                 piece = new THREE.Group();
-                [[0, 0, 2.2], [0.6, 0.3, 1.4], [-0.6, 0.2, 1.6], [0.1, -0.6, 1.2]].forEach(([x, z, s]) => { const p = pumpkin(s); p.position.set(x, 0, z); piece.add(p); });
+                [[0, 0, 2.2], [0.6, 0.3, 1.4], [-0.6, 0.2, 1.6], [0.1, -0.6, 1.2]].forEach(([x, z, s]) => {
+                    const p = pumpkin(s);
+                    p.position.set(x, 0, z);
+                    piece.add(p);
+                });
             } else if (name === 'easter') {
                 piece = new THREE.Group();
                 const e = egg('#F7A1C4', 9);

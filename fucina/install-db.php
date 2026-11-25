@@ -367,16 +367,19 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             <label for="admin_name">Nome e cognome</label>
             <input id="admin_name" name="admin_name" required value="<?= h($_POST['admin_name'] ?? '') ?>">
             <label for="admin_email">Email</label>
-            <input id="admin_email" name="admin_email" type="email" required value="<?= h($_POST['admin_email'] ?? '') ?>">
+            <input id="admin_email" name="admin_email" type="email" required
+                   value="<?= h($_POST['admin_email'] ?? '') ?>">
             <label for="admin_password">Password (min. 10 caratteri)</label>
-            <input id="admin_password" name="admin_password" type="password" minlength="10" required autocomplete="new-password">
+            <input id="admin_password" name="admin_password" type="password" minlength="10" required
+                   autocomplete="new-password">
 
             <h2>3 · Accesso con Google (facoltativo)</h2>
             <label for="google_client_id">Client ID di Google</label>
             <input id="google_client_id" name="google_client_id"
                    placeholder="1234567890-xxxx.apps.googleusercontent.com"
                    value="<?= h($_POST['google_client_id'] ?? '') ?>">
-            <p class="hint">Puoi usare lo stesso client «Applicazione web» delle altre app (lo stesso sito è già un’origine
+            <p class="hint">Puoi usare lo stesso client «Applicazione web» delle altre app (lo stesso sito è già
+                un’origine
                 autorizzata). Se lo lasci vuoto puoi aggiungerlo dopo in <code>credentials.php</code>.</p>
             <button type="submit">Crea le tabelle e installa Fucina</button>
         </form>

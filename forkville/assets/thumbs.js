@@ -3,7 +3,7 @@
  */
 import * as THREE from '../vendor/three.module.min.js';
 import {furnitureModel, personModel} from './models.js';
-import {doorModel, windowModel, WINDOW_KIND} from './scene.js';
+import {doorModel, WINDOW_KIND, windowModel} from './scene.js';
 
 let renderer = null, scene = null, camera = null;
 const cache = new Map();

@@ -8,9 +8,31 @@ class SeaBattleEngine
     public const SIZE = 10;
     public const FLEET = [5, 4, 3, 3, 2];
 
-    public static function inside(int $r, int $c): bool
+    public static function decodeFleet(?string $text): ?array
     {
-        return $r >= 0 && $r < self::SIZE && $c >= 0 && $c < self::SIZE;
+        if (!is_string($text) || $text === '') return null;
+        $parts = explode(';', $text);
+        if (count($parts) !== count(self::FLEET)) return null;
+        $ships = [];
+        foreach ($parts as $part) {
+            if (!preg_match('/^(\d),(\d),([hv])$/', $part, $m)) return null;
+            $ships[] = ['r' => (int)$m[1], 'c' => (int)$m[2], 'd' => $m[3]];
+        }
+        return self::fleetMap($ships) === null ? null : $ships;
+    }
+
+    public static function fleetMap(array $ships): ?array
+    {
+        if (count($ships) !== count(self::FLEET)) return null;
+        $map = array_fill(0, self::SIZE * self::SIZE, -1);
+        foreach (self::FLEET as $s => $len) {
+            $cells = self::shipCells($ships[$s], $len);
+            if ($cells === null) return null;
+            foreach ($cells as $i) if ($map[$i] !== -1) return null;
+            foreach (self::around($cells) as $i) if ($map[$i] !== -1) return null;
+            foreach ($cells as $i) $map[$i] = $s;
+        }
+        return $map;
     }
 
     public static function shipCells(array $ship, int $len): ?array
@@ -23,6 +45,13 @@ class SeaBattleEngine
             $out[] = $r * self::SIZE + $c;
         }
         return $out;
+    }
+
+    // Cell -> ship index (-1 = water), or null when the fleet breaks a rule
+
+    public static function inside(int $r, int $c): bool
+    {
+        return $r >= 0 && $r < self::SIZE && $c >= 0 && $c < self::SIZE;
     }
 
     public static function around(array $cells): array
@@ -40,34 +69,6 @@ class SeaBattleEngine
             }
         }
         return array_keys($ring);
-    }
-
-    // Cell -> ship index (-1 = water), or null when the fleet breaks a rule
-    public static function fleetMap(array $ships): ?array
-    {
-        if (count($ships) !== count(self::FLEET)) return null;
-        $map = array_fill(0, self::SIZE * self::SIZE, -1);
-        foreach (self::FLEET as $s => $len) {
-            $cells = self::shipCells($ships[$s], $len);
-            if ($cells === null) return null;
-            foreach ($cells as $i) if ($map[$i] !== -1) return null;
-            foreach (self::around($cells) as $i) if ($map[$i] !== -1) return null;
-            foreach ($cells as $i) $map[$i] = $s;
-        }
-        return $map;
-    }
-
-    public static function decodeFleet(?string $text): ?array
-    {
-        if (!is_string($text) || $text === '') return null;
-        $parts = explode(';', $text);
-        if (count($parts) !== count(self::FLEET)) return null;
-        $ships = [];
-        foreach ($parts as $part) {
-            if (!preg_match('/^(\d),(\d),([hv])$/', $part, $m)) return null;
-            $ships[] = ['r' => (int)$m[1], 'c' => (int)$m[2], 'd' => $m[3]];
-        }
-        return self::fleetMap($ships) === null ? null : $ships;
     }
 
     public static function encodeFleet(array $ships): string

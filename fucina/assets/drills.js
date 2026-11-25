@@ -37,7 +37,14 @@
         const colours = ['#FF5B2E', '#FFC53D', '#12B886', '#2F8CF0', '#F03E82'];
         const box = h('div.confetti', {'aria-hidden': 'true'});
         for (let i = 0; i < 44; i++) {
-            const bit = h('i', {style: {left: Math.random() * 100 + '%', background: colours[i % colours.length], animationDelay: Math.random() * .25 + 's', animationDuration: 1 + Math.random() * .9 + 's'}});
+            const bit = h('i', {
+                style: {
+                    left: Math.random() * 100 + '%',
+                    background: colours[i % colours.length],
+                    animationDelay: Math.random() * .25 + 's',
+                    animationDuration: 1 + Math.random() * .9 + 's'
+                }
+            });
             bit.style.setProperty('--drift', (Math.random() * 160 - 80) + 'px');
             bit.style.setProperty('--spin', (Math.random() * 900 - 450) + 'deg');
             box.appendChild(bit);
@@ -65,8 +72,61 @@
         return out;
     }
 
-    const LANG_NAMES = {html: 'HTML', css: 'CSS', scss: 'SCSS', sass: 'Sass', tailwind: 'Tailwind CSS', js: 'JavaScript', ts: 'TypeScript', angular: 'Angular', vue: 'Vue',
-        php: 'PHP', python: 'Python', java: 'Java', sql: 'SQL', mysql: 'MySQL', mariadb: 'MariaDB', postgresql: 'PostgreSQL', sqlite: 'SQLite', mssql: 'SQL Server', mongodb: 'MongoDB', ai: 'AI fundamentals', ml: 'Machine learning', dl: 'Deep learning', prompt: 'Prompt engineering', llm: 'LLM', assistants: 'AI assistants', react: 'React', next: 'Next.js', node: 'Node.js', git: 'Git', bash: 'Bash', go: 'Go', csharp: 'C#', c: 'C', cpp: 'C++', docker: 'Docker', kubernetes: 'Kubernetes', cloud: 'Cloud', testing: 'Testing', patterns: 'Design patterns', regex: 'Regex', security: 'Security', a11y: 'Accessibility', api: 'API', redis: 'Redis', algorithms: 'Algorithms', excel: 'Excel', powerbi: 'Power BI', r: 'R', flutter: 'Flutter', swift: 'Swift', kotlin: 'Kotlin', rust: 'Rust', vala: 'Vala'};
+    const LANG_NAMES = {
+        html: 'HTML',
+        css: 'CSS',
+        scss: 'SCSS',
+        sass: 'Sass',
+        tailwind: 'Tailwind CSS',
+        js: 'JavaScript',
+        ts: 'TypeScript',
+        angular: 'Angular',
+        vue: 'Vue',
+        php: 'PHP',
+        python: 'Python',
+        java: 'Java',
+        sql: 'SQL',
+        mysql: 'MySQL',
+        mariadb: 'MariaDB',
+        postgresql: 'PostgreSQL',
+        sqlite: 'SQLite',
+        mssql: 'SQL Server',
+        mongodb: 'MongoDB',
+        ai: 'AI fundamentals',
+        ml: 'Machine learning',
+        dl: 'Deep learning',
+        prompt: 'Prompt engineering',
+        llm: 'LLM',
+        assistants: 'AI assistants',
+        react: 'React',
+        next: 'Next.js',
+        node: 'Node.js',
+        git: 'Git',
+        bash: 'Bash',
+        go: 'Go',
+        csharp: 'C#',
+        c: 'C',
+        cpp: 'C++',
+        docker: 'Docker',
+        kubernetes: 'Kubernetes',
+        cloud: 'Cloud',
+        testing: 'Testing',
+        patterns: 'Design patterns',
+        regex: 'Regex',
+        security: 'Security',
+        a11y: 'Accessibility',
+        api: 'API',
+        redis: 'Redis',
+        algorithms: 'Algorithms',
+        excel: 'Excel',
+        powerbi: 'Power BI',
+        r: 'R',
+        flutter: 'Flutter',
+        swift: 'Swift',
+        kotlin: 'Kotlin',
+        rust: 'Rust',
+        vala: 'Vala'
+    };
 
     /** The language of an exercise, in the colour of its course family. */
     function langChip(family) {
@@ -75,7 +135,14 @@
 
     // ---------------------------------------------------------------- the frame of a drill
 
-    const NAMES = {blanks: ['Tiles', 'grid'], order: ['Sort it', 'sort'], bug: ['Bug hunt', 'bug'], match: ['Pairs', 'link'], flash: ['Lightning', 'spark'], tune: ['Tune it', 'tune']};
+    const NAMES = {
+        blanks: ['Tiles', 'grid'],
+        order: ['Sort it', 'sort'],
+        bug: ['Bug hunt', 'bug'],
+        match: ['Pairs', 'link'],
+        flash: ['Lightning', 'spark'],
+        tune: ['Tune it', 'tune']
+    };
 
     /**
      * ctx: rich (text to nodes), cost (of a hint), buyHint() → true once paid, onDone(mistakes), next(), skip().
@@ -108,7 +175,10 @@
                 body.classList.add('finished'); // what was only needed to play goes away: see fucina.css
                 actions.replaceChildren();
                 if (!mistakes) confetti();
-                end.replaceChildren(h('div.win', mascot(mistakes ? 'happy' : 'wow'), h('div.grow', h('strong', mistakes ? t('Solved!') : t('Flawless!')), h('p', rich(d.why))), btn(t('Continue'), {icon: 'right', onclick: ctx.next})));
+                end.replaceChildren(h('div.win', mascot(mistakes ? 'happy' : 'wow'), h('div.grow', h('strong', mistakes ? t('Solved!') : t('Flawless!')), h('p', rich(d.why))), btn(t('Continue'), {
+                    icon: 'right',
+                    onclick: ctx.next
+                })));
                 end.scrollIntoView({behavior: calm() ? 'auto' : 'smooth', block: 'nearest'});
                 ctx.onDone(mistakes);
             },
@@ -137,7 +207,11 @@
             const b = h('button.tile-btn', {type: 'button', onclick: () => place(text, b)}, text);
             return b;
         });
-        const slots = d.gaps.map((_, k) => h('button.slot', {type: 'button', 'aria-label': t('Gap {n}', {n: k + 1}), onclick: () => clear(k)}));
+        const slots = d.gaps.map((_, k) => h('button.slot', {
+            type: 'button',
+            'aria-label': t('Gap {n}', {n: k + 1}),
+            onclick: () => clear(k)
+        }));
         const filled = d.gaps.map(() => null);
 
         function clear(k) {
@@ -290,7 +364,10 @@
         }, 500);
         let picked = null, left = d.pairs.length;
         const card = (pair, side, text) => {
-            const b = h('button.pair.' + side, {type: 'button', onclick: () => choose(b)}, side === 'l' ? h('code', String(text)) : h('span', api.rich(String(text))));
+            const b = h('button.pair.' + side, {
+                type: 'button',
+                onclick: () => choose(b)
+            }, side === 'l' ? h('code', String(text)) : h('span', api.rich(String(text))));
             b.dataset.pair = pair;
             b.dataset.side = side;
             return b;
@@ -407,7 +484,10 @@
             }
             if (!queue.length) {
                 card = null;
-                api.body.append(h('div.flash-done', icon('check'), h('strong', t('{a} of {b}', {a: total, b: total})), best > 1 ? h('span', t('Combo ×{n}', {n: best})) : null));
+                api.body.append(h('div.flash-done', icon('check'), h('strong', t('{a} of {b}', {
+                    a: total,
+                    b: total
+                })), best > 1 ? h('span', t('Combo ×{n}', {n: best})) : null));
                 return api.win();
             }
             deal();
@@ -492,7 +572,13 @@
             }
             const shown = h('b', value(p));
             const range = h('input', {
-                type: 'range', min: p.min, max: p.max, step: p.step, value: p.mine, 'aria-label': p.prop, oninput: () => {
+                type: 'range',
+                min: p.min,
+                max: p.max,
+                step: p.step,
+                value: p.mine,
+                'aria-label': p.prop,
+                oninput: () => {
                     if (api.won) return;
                     p.mine = Number(range.value);
                     shown.textContent = value(p);

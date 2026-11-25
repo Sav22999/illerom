@@ -18,9 +18,17 @@
     // ---------------------------------------------------------------- Who's the tag?
 
     const TRAITS = {
-        block: 'Is it a block element?', inline: 'Does it flow inside the text?', text: 'Is it made for text?', semantic: 'Does it describe a part of the page?',
-        attr: 'Does it need attributes to work?', interactive: 'Can the user interact with it?', void: 'Is it an empty element, with no closing tag?',
-        media: 'Does it show media?', form: 'Is it used in forms?', list: 'Is it used in lists?', table: 'Is it used in tables?',
+        block: 'Is it a block element?',
+        inline: 'Does it flow inside the text?',
+        text: 'Is it made for text?',
+        semantic: 'Does it describe a part of the page?',
+        attr: 'Does it need attributes to work?',
+        interactive: 'Can the user interact with it?',
+        void: 'Is it an empty element, with no closing tag?',
+        media: 'Does it show media?',
+        form: 'Is it used in forms?',
+        list: 'Is it used in lists?',
+        table: 'Is it used in tables?',
     };
 
     function whotag(ctx) {
@@ -36,18 +44,33 @@
         const left = h('p.game-status');
 
         const lengthQ = {id: 'short', label: t('Does its name have at most 2 letters?'), test: c => c.name.length <= 2};
-        const firstQ = {id: 'first', label: t('Does its name start with a letter from a to h?'), test: c => c.name[0] <= 'h'};
-        const all = [...Object.keys(TRAITS).map(k => ({id: k, label: t(TRAITS[k]), test: c => c.traits.includes(k)})), lengthQ, firstQ];
+        const firstQ = {
+            id: 'first',
+            label: t('Does its name start with a letter from a to h?'),
+            test: c => c.name[0] <= 'h'
+        };
+        const all = [...Object.keys(TRAITS).map(k => ({
+            id: k,
+            label: t(TRAITS[k]),
+            test: c => c.traits.includes(k)
+        })), lengthQ, firstQ];
 
         function draw() {
             left.textContent = t('{n} questions left: then tap the tag you suspect.', {n: allowed - asked});
-            board.replaceChildren(...cards.map(c => h('button.tag-card' + (c.out ? '.out' : ''), {type: 'button', disabled: c.out, onclick: () => guess(c)}, `<${c.name}>`)));
+            board.replaceChildren(...cards.map(c => h('button.tag-card' + (c.out ? '.out' : ''), {
+                type: 'button',
+                disabled: c.out,
+                onclick: () => guess(c)
+            }, `<${c.name}>`)));
             const useful = all.filter(q => {
                 if (q.done) return false;
                 const yes = cards.filter(c => !c.out && q.test(c)).length;
                 return yes > 0 && yes < cards.filter(c => !c.out).length;
             });
-            questions.replaceChildren(...(asked < allowed ? useful.map(q => h('button.chip-btn', {type: 'button', onclick: () => ask(q)}, q.label)) : []));
+            questions.replaceChildren(...(asked < allowed ? useful.map(q => h('button.chip-btn', {
+                type: 'button',
+                onclick: () => ask(q)
+            }, q.label)) : []));
         }
 
         function ask(q) {
@@ -63,7 +86,12 @@
 
         function guess(c) {
             const won = c === hidden;
-            ctx.finish({won, stars: won ? (asked <= allowed - 2 ? 3 : asked < allowed ? 2 : 1) : 0, score: won ? (allowed - asked + 1) * 10 * level : 0, note: won ? null : t('It was <{name}>.', {name: hidden.name})});
+            ctx.finish({
+                won,
+                stars: won ? (asked <= allowed - 2 ? 3 : asked < allowed ? 2 : 1) : 0,
+                score: won ? (allowed - asked + 1) * 10 * level : 0,
+                note: won ? null : t('It was <{name}>.', {name: hidden.name})
+            });
         }
 
         ctx.onHint(() => {
@@ -133,7 +161,10 @@
                     draw();
                 }
             }, cell.value === null ? '' : symbols[cell.value]))));
-            pad.replaceChildren(...symbols.map((s, i) => h('button.chip-btn', {type: 'button', onclick: () => put(i)}, s)), h('button.chip-btn', {type: 'button', 'aria-label': t('Clear'), onclick: () => put(null)}, '✕'));
+            pad.replaceChildren(...symbols.map((s, i) => h('button.chip-btn', {
+                type: 'button',
+                onclick: () => put(i)
+            }, s)), h('button.chip-btn', {type: 'button', 'aria-label': t('Clear'), onclick: () => put(null)}, '✕'));
         }
 
         function put(v) {
@@ -143,7 +174,11 @@
             if (v !== null && clash(r, c)) mistakes++;
             draw();
             const full = cells.every(row => row.every(x => x.value !== null));
-            if (full && !cells.some((row, i) => row.some((_, j) => clash(i, j)))) ctx.finish({won: true, stars: mistakes === 0 ? 3 : mistakes <= 2 ? 2 : 1, score: Math.max(10, 100 - mistakes * 10) * level});
+            if (full && !cells.some((row, i) => row.some((_, j) => clash(i, j)))) ctx.finish({
+                won: true,
+                stars: mistakes === 0 ? 3 : mistakes <= 2 ? 2 : 1,
+                score: Math.max(10, 100 - mistakes * 10) * level
+            });
         }
 
         ctx.onHint(() => {
@@ -244,7 +279,12 @@
          */
         function draw() {
             const inLine = (r, c) => line.some(([a, b]) => a === r && b === c);
-            view.replaceChildren(...Array.from({length: W}, (_, c) => h('button.four-col' + (c === picked ? '.picked' : ''), {type: 'button', disabled: !!board[0][c] || busy, 'aria-label': t('Column {n}', {n: c + 1}), onclick: () => choose(c)},
+            view.replaceChildren(...Array.from({length: W}, (_, c) => h('button.four-col' + (c === picked ? '.picked' : ''), {
+                    type: 'button',
+                    disabled: !!board[0][c] || busy,
+                    'aria-label': t('Column {n}', {n: c + 1}),
+                    onclick: () => choose(c)
+                },
                 ...board.map((row, r) => {
                     const fall = last && last[0] === r && last[1] === c;
                     return h('i.disc-' + ['e', 'me', 'ai'][row[c]] + (fall ? '.fall' : '') + (inLine(r, c) ? '.win' : ''), fall ? {style: {'--fall': r + 1}} : {});
@@ -263,7 +303,11 @@
             }
             // A moment to see the line before the result
             setTimeout(() => {
-                if (mine) ctx.finish({won: true, stars: wrongAnswers === 0 ? 3 : wrongAnswers <= 2 ? 2 : 1, score: Math.max(10, 100 - wrongAnswers * 15) * level});
+                if (mine) ctx.finish({
+                    won: true,
+                    stars: wrongAnswers === 0 ? 3 : wrongAnswers <= 2 ? 2 : 1,
+                    score: Math.max(10, 100 - wrongAnswers * 15) * level
+                });
                 else if (theirs) ctx.finish({won: false, stars: 0});
                 else ctx.finish({won: false, stars: 0, note: t('It’s a draw.')});
             }, mine || theirs ? 1300 : 500);
@@ -375,7 +419,11 @@
             lives--;
             board.classList.add('shake');
             setTimeout(() => board.classList.remove('shake'), 400);
-            if (lives <= 0) return ctx.finish({won: false, stars: 0, note: t('Selector: {s}', {s: rounds[round].selector})});
+            if (lives <= 0) return ctx.finish({
+                won: false,
+                stars: 0,
+                note: t('Selector: {s}', {s: rounds[round].selector})
+            });
             toast(t('Not the right squares.'), 'error');
             draw();
         }
@@ -459,9 +507,11 @@
         function draw() {
             title.textContent = `${rounds[round].title} · ${t('Moves: {n}', {n: moves})}`;
             list.replaceChildren(...lines.map((l, i) => {
-                const row = h('button.line' + (selected === i ? '.sel' : '') + (l === target[i] ? '.fit' : ''), {type: 'button', 'data-i': i, onclick: () => {
-                    if (!list.dataset.dragged) tap(i);
-                }}, h('span.grip', {'aria-hidden': 'true'}, icon('menu')), h('code', l));
+                const row = h('button.line' + (selected === i ? '.sel' : '') + (l === target[i] ? '.fit' : ''), {
+                    type: 'button', 'data-i': i, onclick: () => {
+                        if (!list.dataset.dragged) tap(i);
+                    }
+                }, h('span.grip', {'aria-hidden': 'true'}, icon('menu')), h('code', l));
                 row.addEventListener('pointerdown', e => dragLine(e, row, list, order => {
                     selected = null;
                     if (order.some((k, n) => k !== n)) moves++;
@@ -489,7 +539,11 @@
             if (lines.join('\n') === target.join('\n')) {
                 extra += Math.max(0, moves - (target.length - 1));
                 round++;
-                if (round >= rounds.length) return ctx.finish({won: true, stars: extra === 0 ? 3 : extra <= 3 ? 2 : 1, score: Math.max(10, 100 - extra * 5) * level});
+                if (round >= rounds.length) return ctx.finish({
+                    won: true,
+                    stars: extra === 0 ? 3 : extra <= 3 ? 2 : 1,
+                    score: Math.max(10, 100 - extra * 5) * level
+                });
                 toast(t('Right!'), 'ok');
                 load();
             }
@@ -525,14 +579,29 @@
         const feedback = h('p.qr-why');
 
         function next() {
-            if (round >= total) return ctx.finish({won: true, stars: mistakes === 0 ? 3 : mistakes === 1 ? 2 : 1, score: (total - mistakes) * 10 * level});
+            if (round >= total) return ctx.finish({
+                won: true,
+                stars: mistakes === 0 ? 3 : mistakes === 1 ? 2 : 1,
+                score: (total - mistakes) * 10 * level
+            });
             current = make(round);
-            status.textContent = t('Round {a} of {b} · mistakes: {n} of {m}', {a: round + 1, b: total, n: mistakes, m: MAX});
+            status.textContent = t('Round {a} of {b} · mistakes: {n} of {m}', {
+                a: round + 1,
+                b: total,
+                n: mistakes,
+                m: MAX
+            });
             feedback.textContent = '';
             const keys = 'ABCD';
             buttons = shuffle(current.options).map((o, i) => {
-                const b = h('button.option' + (o.swatch ? '.swatch-opt' : ''), {type: 'button', onclick: () => answer(b, o)},
-                    h('b.opt-key', keys[i]), o.swatch ? h('i.swatch', {style: {background: o.swatch}, 'aria-label': t('Option {k}', {k: keys[i]})}) : h('span', o.label));
+                const b = h('button.option' + (o.swatch ? '.swatch-opt' : ''), {
+                        type: 'button',
+                        onclick: () => answer(b, o)
+                    },
+                    h('b.opt-key', keys[i]), o.swatch ? h('i.swatch', {
+                        style: {background: o.swatch},
+                        'aria-label': t('Option {k}', {k: keys[i]})
+                    }) : h('span', o.label));
                 b.ok = o.ok;
                 return b;
             });
@@ -551,7 +620,11 @@
             }
             if (current.explain) feedback.textContent = current.explain;
             round++;
-            if (mistakes >= MAX) return setTimeout(() => ctx.finish({won: false, stars: 0, note: current.explain || null}), 1400);
+            if (mistakes >= MAX) return setTimeout(() => ctx.finish({
+                won: false,
+                stars: 0,
+                note: current.explain || null
+            }), 1400);
             setTimeout(next, o.ok ? 900 : 2000);
         }
 
@@ -572,8 +645,26 @@
         return [0, 8, 4].map(n => Math.round(255 * (l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1))))));
     };
     const hex2 = v => v.toString(16).padStart(2, '0');
-    const NAMED = {red: '#ff0000', orange: '#ffa500', gold: '#ffd700', yellow: '#ffff00', green: '#008000', lime: '#00ff00', teal: '#008080', cyan: '#00ffff',
-        blue: '#0000ff', navy: '#000080', purple: '#800080', magenta: '#ff00ff', pink: '#ffc0cb', brown: '#a52a2a', gray: '#808080', black: '#000000', white: '#ffffff', tomato: '#ff6347'};
+    const NAMED = {
+        red: '#ff0000',
+        orange: '#ffa500',
+        gold: '#ffd700',
+        yellow: '#ffff00',
+        green: '#008000',
+        lime: '#00ff00',
+        teal: '#008080',
+        cyan: '#00ffff',
+        blue: '#0000ff',
+        navy: '#000080',
+        purple: '#800080',
+        magenta: '#ff00ff',
+        pink: '#ffc0cb',
+        brown: '#a52a2a',
+        gray: '#808080',
+        black: '#000000',
+        white: '#ffffff',
+        tomato: '#ff6347'
+    };
 
     function shade(ctx) {
         const {t, level} = ctx;
@@ -626,7 +717,11 @@
             };
             return {
                 prompt: h('div.qr-prompt', h('p', t('Tap the colour of this code.')), h('code.selector', c.right)),
-                options: [{label: c.right, swatch: css(c.right), ok: true}, ...c.wrong.map(w => ({label: w, swatch: css(w), ok: false}))], swatches: true, explain: null,
+                options: [{label: c.right, swatch: css(c.right), ok: true}, ...c.wrong.map(w => ({
+                    label: w,
+                    swatch: css(w),
+                    ok: false
+                }))], swatches: true, explain: null,
             };
         });
     }
@@ -722,11 +817,19 @@
         [
             () => {
                 const a = 2 + rand(9), b = 2 + rand(9);
-                return {code: `const a = ${a};\nconst b = ${b};\nconsole.log(a + b);`, out: a + b, wrong: [`${a}${b}`, a * b, a - b]};
+                return {
+                    code: `const a = ${a};\nconst b = ${b};\nconsole.log(a + b);`,
+                    out: a + b,
+                    wrong: [`${a}${b}`, a * b, a - b]
+                };
             },
             () => {
                 const name = pickOne(['Luca', 'Sara', 'Anna', 'Marco']);
-                return {code: `const name = '${name}';\nconsole.log('Ciao, ' + name);`, out: `Ciao, ${name}`, wrong: ['Ciao, name', `Ciao,${name}`, `'Ciao, ' + name`]};
+                return {
+                    code: `const name = '${name}';\nconsole.log('Ciao, ' + name);`,
+                    out: `Ciao, ${name}`,
+                    wrong: ['Ciao, name', `Ciao,${name}`, `'Ciao, ' + name`]
+                };
             },
             () => {
                 const w = pickOne(['fucina', 'codice', 'tag', 'scintilla', 'css']);
@@ -749,7 +852,11 @@
             },
             () => {
                 const [v, type] = pickOne([['42', 'number'], ["'ciao'", 'string'], ['true', 'boolean'], ['null', 'object'], ['undefined', 'undefined'], ['[1, 2]', 'object'], ['3.5', 'number']]);
-                return {code: `console.log(typeof ${v});`, out: type, wrong: ['number', 'string', 'boolean', 'object', 'undefined', 'array', 'null'].filter(x => x !== type)};
+                return {
+                    code: `console.log(typeof ${v});`,
+                    out: type,
+                    wrong: ['number', 'string', 'boolean', 'object', 'undefined', 'array', 'null'].filter(x => x !== type)
+                };
             },
             () => {
                 const a = 1 + rand(8);
@@ -760,66 +867,118 @@
         [
             () => {
                 const a = shuffle([3, 5, 7, 9, 11, 2]).slice(0, 3 + rand(3));
-                return {code: `const a = [${a.join(', ')}];\nconsole.log(a.length);`, out: a.length, wrong: [a.length - 1, a.length + 1, a[a.length - 1]]};
+                return {
+                    code: `const a = [${a.join(', ')}];\nconsole.log(a.length);`,
+                    out: a.length,
+                    wrong: [a.length - 1, a.length + 1, a[a.length - 1]]
+                };
             },
             () => {
                 const a = shuffle(['rosso', 'verde', 'blu', 'giallo']), i = rand(3);
-                return {code: `const a = ${fmt(a)};\nconsole.log(a[${i + 1}]);`, out: a[i + 1], wrong: [a[i], a[(i + 2) % 4], 'undefined']};
+                return {
+                    code: `const a = ${fmt(a)};\nconsole.log(a[${i + 1}]);`,
+                    out: a[i + 1],
+                    wrong: [a[i], a[(i + 2) % 4], 'undefined']
+                };
             },
             () => {
                 const a = shuffle([1, 2, 3, 4, 5]).slice(0, 3);
-                return {code: `const a = [${a.join(', ')}];\nconsole.log(a.push(8));`, out: 4, wrong: [fmt([...a, 8]), 8, 3]};
+                return {
+                    code: `const a = [${a.join(', ')}];\nconsole.log(a.push(8));`,
+                    out: 4,
+                    wrong: [fmt([...a, 8]), 8, 3]
+                };
             },
             () => {
                 const a = shuffle(['a', 'b', 'c', 'd']).slice(0, 3), miss = Math.random() < .4;
                 const v = miss ? 'z' : pickOne(a);
-                return {code: `const a = ${fmt(a)};\nconsole.log(a.indexOf('${v}'));`, out: a.indexOf(v), wrong: miss ? [0, 3, 'undefined'] : [a.indexOf(v) + 1, -1, 'undefined'].filter(x => x !== a.indexOf(v))};
+                return {
+                    code: `const a = ${fmt(a)};\nconsole.log(a.indexOf('${v}'));`,
+                    out: a.indexOf(v),
+                    wrong: miss ? [0, 3, 'undefined'] : [a.indexOf(v) + 1, -1, 'undefined'].filter(x => x !== a.indexOf(v))
+                };
             },
         ],
         // 4: loops and conditions
         [
             () => {
                 const n = 3 + rand(5);
-                return {code: `let s = 0;\nfor (let i = 1; i <= ${n}; i++) {\n  s += i;\n}\nconsole.log(s);`, out: n * (n + 1) / 2, wrong: [n * (n - 1) / 2, n, n * n]};
+                return {
+                    code: `let s = 0;\nfor (let i = 1; i <= ${n}; i++) {\n  s += i;\n}\nconsole.log(s);`,
+                    out: n * (n + 1) / 2,
+                    wrong: [n * (n - 1) / 2, n, n * n]
+                };
             },
             () => {
                 const a = 10 + rand(20), b = 3 + rand(4);
-                return {code: `console.log(${a} % ${b});`, out: a % b, wrong: [Math.floor(a / b), (a / b).toFixed(1), b - (a % b) || b]};
+                return {
+                    code: `console.log(${a} % ${b});`,
+                    out: a % b,
+                    wrong: [Math.floor(a / b), (a / b).toFixed(1), b - (a % b) || b]
+                };
             },
             () => {
                 const n = 1 + rand(20), lim = 10;
-                return {code: `const n = ${n};\nconsole.log(n > ${lim} ? 'grande' : 'piccolo');`, out: n > lim ? 'grande' : 'piccolo', wrong: [n > lim ? 'piccolo' : 'grande', 'true', 'undefined']};
+                return {
+                    code: `const n = ${n};\nconsole.log(n > ${lim} ? 'grande' : 'piccolo');`,
+                    out: n > lim ? 'grande' : 'piccolo',
+                    wrong: [n > lim ? 'piccolo' : 'grande', 'true', 'undefined']
+                };
             },
             () => {
                 const n = 10 + rand(40);
                 let x = 1;
                 while (x < n) x *= 2;
-                return {code: `let x = 1;\nwhile (x < ${n}) {\n  x *= 2;\n}\nconsole.log(x);`, out: x, wrong: [x / 2, n, x * 2]};
+                return {
+                    code: `let x = 1;\nwhile (x < ${n}) {\n  x *= 2;\n}\nconsole.log(x);`,
+                    out: x,
+                    wrong: [x / 2, n, x * 2]
+                };
             },
         ],
         // 5: array methods
         [
             () => {
                 const a = shuffle([1, 2, 3, 4, 5]).slice(0, 3);
-                return {code: `const a = [${a.join(', ')}];\nconsole.log(a.map(x => x * 2));`, out: fmt(a.map(x => x * 2)), wrong: [fmt(a), fmt(a.map(x => x + 2)), a.reduce((s, x) => s + x * 2, 0)]};
+                return {
+                    code: `const a = [${a.join(', ')}];\nconsole.log(a.map(x => x * 2));`,
+                    out: fmt(a.map(x => x * 2)),
+                    wrong: [fmt(a), fmt(a.map(x => x + 2)), a.reduce((s, x) => s + x * 2, 0)]
+                };
             },
             () => {
                 const a = shuffle([1, 2, 3, 4, 5, 6]).slice(0, 5);
-                return {code: `const a = [${a.join(', ')}];\nconsole.log(a.filter(x => x % 2 === 0));`, out: fmt(a.filter(x => x % 2 === 0)), wrong: [fmt(a.filter(x => x % 2)), fmt(a.map(x => x % 2 === 0)), a.filter(x => x % 2 === 0).length]};
+                return {
+                    code: `const a = [${a.join(', ')}];\nconsole.log(a.filter(x => x % 2 === 0));`,
+                    out: fmt(a.filter(x => x % 2 === 0)),
+                    wrong: [fmt(a.filter(x => x % 2)), fmt(a.map(x => x % 2 === 0)), a.filter(x => x % 2 === 0).length]
+                };
             },
             () => {
                 const a = shuffle([1, 2, 3, 4, 5, 10]).slice(0, 4);
                 const sum = a.reduce((s, x) => s + x, 0);
-                return {code: `const a = [${a.join(', ')}];\nconsole.log(a.reduce((s, x) => s + x, 0));`, out: sum, wrong: [sum - a[0], a.join(''), fmt(a)]};
+                return {
+                    code: `const a = [${a.join(', ')}];\nconsole.log(a.reduce((s, x) => s + x, 0));`,
+                    out: sum,
+                    wrong: [sum - a[0], a.join(''), fmt(a)]
+                };
             },
             () => {
                 const a = shuffle(['html', 'css', 'js', 'php']).slice(0, 3);
-                return {code: `const a = ${fmt(a)};\nconsole.log(a.join('-'));`, out: a.join('-'), wrong: [a.join(','), fmt(a), a.join(' - ')]};
+                return {
+                    code: `const a = ${fmt(a)};\nconsole.log(a.join('-'));`,
+                    out: a.join('-'),
+                    wrong: [a.join(','), fmt(a), a.join(' - ')]
+                };
             },
         ],
         // 6: scope, logic and objects
         [
-            () => ({code: `let x = 1;\n{\n  let x = 2;\n}\nconsole.log(x);`, out: 1, wrong: [2, 'undefined', 'ReferenceError']}),
+            () => ({
+                code: `let x = 1;\n{\n  let x = 2;\n}\nconsole.log(x);`,
+                out: 1,
+                wrong: [2, 'undefined', 'ReferenceError']
+            }),
             () => {
                 const [code, out, wrong] = pickOne([
                     ["console.log(0 || 'b');", 'b', [0, 'false', 'true']],
@@ -832,9 +991,17 @@
             () => ({code: 'console.log(NaN === NaN);', out: 'false', wrong: ['true', 'NaN', 'undefined']}),
             () => {
                 const a = 1 + rand(5), b = 1 + rand(5);
-                return {code: `const a = ${a}, b = ${b};\nconsole.log(\`\${a}\${b} e \${a + b}\`);`, out: `${a}${b} e ${a + b}`, wrong: [`${a + b} e ${a + b}`, `${a}${b} e ${a}${b}`, '${a}${b} e ${a + b}']};
+                return {
+                    code: `const a = ${a}, b = ${b};\nconsole.log(\`\${a}\${b} e \${a + b}\`);`,
+                    out: `${a}${b} e ${a + b}`,
+                    wrong: [`${a + b} e ${a + b}`, `${a}${b} e ${a}${b}`, '${a}${b} e ${a + b}']
+                };
             },
-            () => ({code: 'const o = {a: 1};\no.a = 2;\nconsole.log(o.a);', out: 2, wrong: [1, 'TypeError', 'undefined']}),
+            () => ({
+                code: 'const o = {a: 1};\no.a = 2;\nconsole.log(o.a);',
+                out: 2,
+                wrong: [1, 'TypeError', 'undefined']
+            }),
         ],
     ];
 
@@ -882,7 +1049,12 @@
         const controls = h('div.flex-controls');
         const css = h('pre.out-code.flex-css');
 
-        const items = (wrap, sizes) => wrap.replaceChildren(...sizes.map((sz, i) => h('i.fi.fi' + (i % 5), {style: {width: sz[0] + 'px', height: sz[1] + 'px'}}, String(i + 1))));
+        const items = (wrap, sizes) => wrap.replaceChildren(...sizes.map((sz, i) => h('i.fi.fi' + (i % 5), {
+            style: {
+                width: sz[0] + 'px',
+                height: sz[1] + 'px'
+            }
+        }, String(i + 1))));
         const apply = (el, v) => props.forEach(p => el.style.setProperty(p, v[p]));
         // Same layout = every item at the same place in the two boxes (two values can give the same picture)
         const where = el => [...el.children].map(x => [x.offsetLeft, x.offsetTop, x.offsetWidth, x.offsetHeight]);
@@ -929,7 +1101,11 @@
                 box.classList.remove('matched');
                 if (round >= total) {
                     const extra = Math.max(0, changes - needed);
-                    return ctx.finish({won: true, stars: extra <= 2 ? 3 : extra <= 7 ? 2 : 1, score: Math.max(10, 100 - extra * 5) * level});
+                    return ctx.finish({
+                        won: true,
+                        stars: extra <= 2 ? 3 : extra <= 7 ? 2 : 1,
+                        score: Math.max(10, 100 - extra * 5) * level
+                    });
                 }
                 toast(t('Right!'), 'ok');
                 load();

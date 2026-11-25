@@ -1,7 +1,7 @@
 #!/bin/sh
 # PNG icons from icons/favicon.svg, drawn with Chrome.
 cd "$(dirname "$0")/.." || exit 1
-C="${CHROME:-/Applications/Google Chrome.app/Contents/MacOS/Google Chrome}"
+C="${CHROME:-/Applications/Brave Browser.app/Contents/MacOS/Brave Browser}"
 T=$(mktemp -d)
 shot() { # size of the image, padding, background, output
   i=$(($1 - 2 * $2))
@@ -10,7 +10,7 @@ shot() { # size of the image, padding, background, output
   cp "$T/o.png" "$4"
 }
 shot 512 0 transparent icons/icon-512.png
-shot 512 56 "#0b7f72" icons/icon-maskable-512.png
+shot 512 56 "#6d3bef" icons/icon-maskable-512.png
 sips -Z 192 icons/icon-512.png --out icons/icon-192.png >/dev/null
 sips -Z 32 icons/icon-512.png --out icons/favicon-32.png >/dev/null
 sips -Z 180 icons/icon-maskable-512.png --out icons/apple-touch-icon.png >/dev/null

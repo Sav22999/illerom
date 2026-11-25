@@ -39,10 +39,11 @@ if (!function_exists('fig_dp_observer')) {
     {
         $subs = '';
         foreach ([$t[0], $t[1], $t[2]] as $i => $name) {
-            $y = 30 + $i * 76; $cy = $y + 26;
+            $y = 30 + $i * 76;
+            $cy = $y + 26;
             $subs .= "<path id=\"l$i\" d=\"M262,128 C330,128 340,$cy 412,$cy\" fill=\"none\" stroke=\"#8A87B0\" stroke-width=\"2\"/>"
-                   . "<rect x=\"412\" y=\"$y\" width=\"210\" height=\"52\" rx=\"10\" fill=\"#D5F6EA\" stroke=\"#0B7F5C\" stroke-width=\"2\"/><text x=\"517\" y=\"" . ($cy + 5) . "\" text-anchor=\"middle\" font-weight=\"700\">$name</text>"
-                   . "<circle r=\"6\" fill=\"#E8590C\" class=\"dot\"><animateMotion dur=\"3s\" repeatCount=\"indefinite\" path=\"M262,128 C330,128 340,$cy 412,$cy\"/></circle>";
+                . "<rect x=\"412\" y=\"$y\" width=\"210\" height=\"52\" rx=\"10\" fill=\"#D5F6EA\" stroke=\"#0B7F5C\" stroke-width=\"2\"/><text x=\"517\" y=\"" . ($cy + 5) . "\" text-anchor=\"middle\" font-weight=\"700\">$name</text>"
+                . "<circle r=\"6\" fill=\"#E8590C\" class=\"dot\"><animateMotion dur=\"3s\" repeatCount=\"indefinite\" path=\"M262,128 C330,128 340,$cy 412,$cy\"/></circle>";
         }
         return <<<SVG
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
@@ -85,8 +86,10 @@ if (!function_exists('fig_dp_state')) {
     {
         $st = '';
         foreach (['carrello', 'pagato', 'spedito', 'consegnato'] as $i => $n) {
-            $x = 16 + $i * 158; $cx = $x + 65;
-            $fill = $i === 3 ? '#D5F6EA' : '#DCEBFF'; $str = $i === 3 ? '#0B7F5C' : '#2F8CF0';
+            $x = 16 + $i * 158;
+            $cx = $x + 65;
+            $fill = $i === 3 ? '#D5F6EA' : '#DCEBFF';
+            $str = $i === 3 ? '#0B7F5C' : '#2F8CF0';
             $st .= "<rect x=\"$x\" y=\"84\" width=\"130\" height=\"48\" rx=\"24\" fill=\"$fill\" stroke=\"$str\" stroke-width=\"2\"/><text x=\"$cx\" y=\"113\" text-anchor=\"middle\" font-weight=\"700\">$n</text>";
         }
         return <<<SVG

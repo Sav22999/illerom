@@ -4,12 +4,12 @@
  * The tables are created by the API at its first answer.
  */
 
-$localhost_db  = "localhost";
-$username_db   = "";
-$password_db   = "";
+$localhost_db = "localhost";
+$username_db = "";
+$password_db = "";
 $database_name = "";
 
-$table_prefix  = "sd_";
+$table_prefix = "sd_";
 
 // Master admins (account emails, once confirmed): they manage accounts, documents and reports
 $master_emails = [];

@@ -28,18 +28,18 @@ function credentials_php(string $host, string $user, string $pass, string $name,
 {
     $q = fn(string $v): string => '"' . addcslashes($v, "\\\"\$") . '"';
     return "<?php\n/**\n * OpenNewsletter — credentials. Created by install-db.php on " . gmdate('Y-m-d H:i') . " UTC.\n"
-        . " * NEVER commit this file (it is listed in .gitignore) and never publish it.\n */\n\n"
-        . '$localhost_db  = ' . $q($host) . ";\n" . '$username_db   = ' . $q($user) . ";\n"
-        . '$password_db   = ' . $q($pass) . ";\n" . '$database_name = ' . $q($name) . ";\n\n"
-        . '$table_prefix  = ' . $q($prefix) . ";\n\n"
-        . "// Encrypts the SMTP settings of the groups: NEVER change it, or their passwords can no longer be read\n"
-        . '$secret_key = ' . $q($secret) . ";\n\n"
-        . "// Master admins of the whole platform (account emails, once confirmed)\n"
-        . '$master_emails = [' . implode(', ', array_map($q, $masters)) . "];\n\n"
-        . "// Sign in with Google (optional): OAuth client ID of type \"Web application\"\n"
-        . '$google_client_id = ' . $q($google) . ";\n\n"
-        . "// null: the site's contact-form SMTP settings (/.mail-config.php) send the platform's emails\n\$mail_config = null;\n\n"
-        . "\$default_timezone = \"Europe/Rome\";\n\n\$debug = false;\n";
+            . " * NEVER commit this file (it is listed in .gitignore) and never publish it.\n */\n\n"
+            . '$localhost_db  = ' . $q($host) . ";\n" . '$username_db   = ' . $q($user) . ";\n"
+            . '$password_db   = ' . $q($pass) . ";\n" . '$database_name = ' . $q($name) . ";\n\n"
+            . '$table_prefix  = ' . $q($prefix) . ";\n\n"
+            . "// Encrypts the SMTP settings of the groups: NEVER change it, or their passwords can no longer be read\n"
+            . '$secret_key = ' . $q($secret) . ";\n\n"
+            . "// Master admins of the whole platform (account emails, once confirmed)\n"
+            . '$master_emails = [' . implode(', ', array_map($q, $masters)) . "];\n\n"
+            . "// Sign in with Google (optional): OAuth client ID of type \"Web application\"\n"
+            . '$google_client_id = ' . $q($google) . ";\n\n"
+            . "// null: the site's contact-form SMTP settings (/.mail-config.php) send the platform's emails\n\$mail_config = null;\n\n"
+            . "\$default_timezone = \"Europe/Rome\";\n\n\$debug = false;\n";
 }
 
 $existing = credentials();
@@ -100,11 +100,40 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="assets/app.css">
     <style>
-        main { max-width: 560px; margin: 0 auto; padding: 32px 16px; }
-        fieldset { border: 1px solid var(--line); border-radius: 14px; margin: 0 0 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; background: var(--surface); }
-        legend { font-weight: 700; padding: 0 6px; }
-        .err { color: var(--danger); font-weight: 700; }
-        pre { overflow: auto; padding: 12px; background: var(--surface-2); border-radius: 10px; font-size: 12px; }
+        main {
+            max-width: 560px;
+            margin: 0 auto;
+            padding: 32px 16px;
+        }
+
+        fieldset {
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            margin: 0 0 14px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: var(--surface);
+        }
+
+        legend {
+            font-weight: 700;
+            padding: 0 6px;
+        }
+
+        .err {
+            color: var(--danger);
+            font-weight: 700;
+        }
+
+        pre {
+            overflow: auto;
+            padding: 12px;
+            background: var(--surface-2);
+            border-radius: 10px;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
@@ -112,9 +141,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     <h1><img src="icons/favicon.svg" width="34" height="34" alt="" style="vertical-align:-6px"> OpenNewsletter</h1>
     <?php if ($done): ?>
         <p>Fatto: le tabelle sono pronte. Per sicurezza elimina <code>install-db.php</code> dal server.</p>
-        <p>Ricorda di programmare <code>cron/opennewsletter-schedule.php</code> e <code>opennewsletter-reminders.php</code> ogni 30 minuti (vedi il README di <code>projects/cron</code>).</p>
+        <p>Ricorda di programmare <code>cron/opennewsletter-schedule.php</code> e
+            <code>opennewsletter-reminders.php</code> ogni 30 minuti (vedi il README di <code>projects/cron</code>).</p>
         <?php if ($manualFile !== null): ?>
-            <p class="err">Non è stato possibile scrivere <code>credentials.php</code>: crealo a mano con questo contenuto.</p>
+            <p class="err">Non è stato possibile scrivere <code>credentials.php</code>: crealo a mano con questo
+                contenuto.</p>
             <pre><?= h($manualFile) ?></pre>
         <?php endif; ?>
         <p><a class="btn btn-primary" href="./">Apri OpenNewsletter</a></p>
@@ -125,21 +156,36 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             <fieldset>
                 <legend>Database</legend>
                 <?php if (!$locked): ?>
-                    <label class="field"><span class="field-label">Host</span><input class="input" name="localhost_db" value="<?= h($_POST['localhost_db'] ?? 'localhost') ?>" required></label>
-                    <label class="field"><span class="field-label">Utente</span><input class="input" name="username_db" value="<?= h($_POST['username_db'] ?? '') ?>" required></label>
-                    <label class="field"><span class="field-label">Nome del database</span><input class="input" name="database_name" value="<?= h($_POST['database_name'] ?? '') ?>" required></label>
-                    <label class="field"><span class="field-label">Prefisso tabelle</span><input class="input" name="table_prefix" value="<?= h($_POST['table_prefix'] ?? 'on_') ?>"></label>
+                    <label class="field"><span class="field-label">Host</span><input class="input" name="localhost_db"
+                                                                                     value="<?= h($_POST['localhost_db'] ?? 'localhost') ?>"
+                                                                                     required></label>
+                    <label class="field"><span class="field-label">Utente</span><input class="input" name="username_db"
+                                                                                       value="<?= h($_POST['username_db'] ?? '') ?>"
+                                                                                       required></label>
+                    <label class="field"><span class="field-label">Nome del database</span><input class="input"
+                                                                                                  name="database_name"
+                                                                                                  value="<?= h($_POST['database_name'] ?? '') ?>"
+                                                                                                  required></label>
+                    <label class="field"><span class="field-label">Prefisso tabelle</span><input class="input"
+                                                                                                 name="table_prefix"
+                                                                                                 value="<?= h($_POST['table_prefix'] ?? 'on_') ?>"></label>
                 <?php endif; ?>
-                <label class="field"><span class="field-label">Password del database</span><input class="input" type="password" name="password_db"></label>
+                <label class="field"><span class="field-label">Password del database</span><input class="input"
+                                                                                                  type="password"
+                                                                                                  name="password_db"></label>
             </fieldset>
             <fieldset>
                 <legend>Amministratori master</legend>
-                <label class="field"><span class="field-label">Email (separate da virgole)</span><input class="input" name="master_emails" value="<?= h($_POST['master_emails'] ?? implode(', ', $existing['master_emails'] ?? [])) ?>"></label>
+                <label class="field"><span class="field-label">Email (separate da virgole)</span><input class="input"
+                                                                                                        name="master_emails"
+                                                                                                        value="<?= h($_POST['master_emails'] ?? implode(', ', $existing['master_emails'] ?? [])) ?>"></label>
                 <span class="field-hint">Vedono tutti i gruppi (mai le impostazioni SMTP). Valgono quando l’account con quell’email è confermato.</span>
             </fieldset>
             <fieldset>
                 <legend>Accesso con Google (facoltativo)</legend>
-                <label class="field"><span class="field-label">Client ID «Applicazione web»</span><input class="input" name="google_client_id" value="<?= h($_POST['google_client_id'] ?? ($existing['google_client_id'] ?? '')) ?>"></label>
+                <label class="field"><span class="field-label">Client ID «Applicazione web»</span><input class="input"
+                                                                                                         name="google_client_id"
+                                                                                                         value="<?= h($_POST['google_client_id'] ?? ($existing['google_client_id'] ?? '')) ?>"></label>
             </fieldset>
             <button class="btn btn-primary" type="submit"><?= $locked ? 'Aggiorna' : 'Installa' ?></button>
         </form>

@@ -20,8 +20,7 @@ Available as a web app and as an Android app for the Google Play Store.
 The `android/` directory is an Android Studio project (Java) with a full-screen native WebView shell:
 
 - Edge-to-edge layout adapting to system bars;
-- Automatic Deep Links / App Links for instant opening of room codes
-  (`https://www.illerom.eu/chess/?code=ABC123`);
+- Automatic Deep Links / App Links for instant opening of room codes (`https://www.illerom.eu/chess/?code=ABC123`);
 - Back navigation handling with `OnBackInvokedDispatcher`;
 - Offline error screen with custom retry button;
 - Complete assets ready for the Google Play Store (`play-store-icon-512.png`, `store/en-GB/` with feature graphic and
@@ -31,7 +30,8 @@ The `android/` directory is an Android Studio project (Java) with a full-screen 
 
 1. Open the `chess/android` folder in Android Studio (File → Open).
 2. Wait for Gradle sync to complete.
-3. Copy `keystore.properties.sample` to `keystore.properties` (ignored by git) and enter your Google Play signing key details.
+3. Copy `keystore.properties.sample` to `keystore.properties` (ignored by git) and enter your Google Play signing key
+   details.
 4. Generate the Android App Bundle: **Build > Generate Signed App Bundle / APK > Android App Bundle**.
 5. Upload the generated `.aab` (in `app/release/app-release.aab`) to Google Play Console.
 6. Copy the store listing copy from `android/store/listing.md` and use the provided icon and feature graphic.

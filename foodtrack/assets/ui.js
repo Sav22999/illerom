@@ -501,7 +501,10 @@
         const opts = [...s.options].filter(o => !o.hidden && !o.disabled && (!q || norm(o.textContent).includes(q)));
         d.rows = opts.map(o => {
             const code = o.dataset.flag, picture = o.dataset.pic && o.dataset.pic.split('/');
-            const el = h('div.dd-item' + (o.selected ? '.selected' : ''), {role: 'option', 'aria-selected': String(o.selected)},
+            const el = h('div.dd-item' + (o.selected ? '.selected' : ''), {
+                    role: 'option',
+                    'aria-selected': String(o.selected)
+                },
                 code ? flag(code) : picture ? pic(picture[0], picture[1]) : null,
                 h('span.dd-label', o.textContent),
                 o.selected ? icon('check') : null);
@@ -591,7 +594,12 @@
             return;
         }
         const d = dropdown, page = 8;
-        const moves = {ArrowDown: d.active + 1, ArrowUp: d.active - 1, PageDown: d.active + page, PageUp: d.active - page};
+        const moves = {
+            ArrowDown: d.active + 1,
+            ArrowUp: d.active - 1,
+            PageDown: d.active + page,
+            PageUp: d.active - page
+        };
         if (!d.search) Object.assign(moves, {Home: 0, End: d.rows.length - 1});
         if (e.key in moves) setActive(moves[e.key]);
         else if (e.key === 'Enter') {

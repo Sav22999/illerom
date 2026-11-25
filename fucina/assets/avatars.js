@@ -501,13 +501,34 @@ ${line('M29 32h6M12 31l3 1M52 31l-3 1', INK, 2.4)}${line('M18 30l3 3M38 30l3 3',
         terminal: {name: {it: 'Terminale', en: 'Terminal'}, css: 'linear-gradient(160deg, #06281E, #12B886)'},
         cyber: {name: {it: 'Cyber', en: 'Cyber'}, css: 'linear-gradient(135deg, #00F5D4, #3A86FF 55%, #8338EC)'},
         magma: {name: {it: 'Magma', en: 'Magma'}, css: 'linear-gradient(160deg, #FF922B, #E03131 55%, #2B0909)'},
-        synthwave: {name: {it: 'Synthwave', en: 'Synthwave'}, css: 'linear-gradient(155deg, #240046, #9D4EDD 55%, #FF2A85)'},
-        sunset: {name: {it: 'Tramonto', en: 'Sunset'}, css: 'linear-gradient(135deg, #FFC53D, #FF5B2E 45%, #F03E82 75%, #7048E8)'},
-        nebula: {name: {it: 'Nebulosa', en: 'Nebula'}, css: 'radial-gradient(circle at 30% 30%, #F72585, #7209B7 55%, #10002B)'},
-        forge: {name: {it: 'Fucina ardente', en: 'Blazing forge'}, css: 'radial-gradient(circle at 50% 80%, #FFC53D, #FF5B2E 55%, #3B0D11)'},
-        matrix: {name: {it: 'Matrice', en: 'Matrix'}, css: 'repeating-linear-gradient(90deg, #041B11 0 6px, #0B4F30 6px 12px)'},
-        blueprint: {name: {it: 'Cianografia', en: 'Blueprint'}, css: 'repeating-linear-gradient(0deg, #1864AB 0 7px, #228BE6 7px 8px)'},
-        prism: {name: {it: 'Prisma', en: 'Prism'}, css: 'linear-gradient(135deg, #FF5B2E, #FFC53D 25%, #12B886 50%, #2F8CF0 75%, #7048E8)'},
+        synthwave: {
+            name: {it: 'Synthwave', en: 'Synthwave'},
+            css: 'linear-gradient(155deg, #240046, #9D4EDD 55%, #FF2A85)'
+        },
+        sunset: {
+            name: {it: 'Tramonto', en: 'Sunset'},
+            css: 'linear-gradient(135deg, #FFC53D, #FF5B2E 45%, #F03E82 75%, #7048E8)'
+        },
+        nebula: {
+            name: {it: 'Nebulosa', en: 'Nebula'},
+            css: 'radial-gradient(circle at 30% 30%, #F72585, #7209B7 55%, #10002B)'
+        },
+        forge: {
+            name: {it: 'Fucina ardente', en: 'Blazing forge'},
+            css: 'radial-gradient(circle at 50% 80%, #FFC53D, #FF5B2E 55%, #3B0D11)'
+        },
+        matrix: {
+            name: {it: 'Matrice', en: 'Matrix'},
+            css: 'repeating-linear-gradient(90deg, #041B11 0 6px, #0B4F30 6px 12px)'
+        },
+        blueprint: {
+            name: {it: 'Cianografia', en: 'Blueprint'},
+            css: 'repeating-linear-gradient(0deg, #1864AB 0 7px, #228BE6 7px 8px)'
+        },
+        prism: {
+            name: {it: 'Prisma', en: 'Prism'},
+            css: 'linear-gradient(135deg, #FF5B2E, #FFC53D 25%, #12B886 50%, #2F8CF0 75%, #7048E8)'
+        },
     };
 
     const name = item => item ? (item.name[I18N.lang] || item.name.en) : '';

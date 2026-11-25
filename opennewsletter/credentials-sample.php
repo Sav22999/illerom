@@ -5,12 +5,12 @@
  * Without credentials.php the app cannot start.
  */
 
-$localhost_db  = "localhost";
-$username_db   = "";
-$password_db   = "";
+$localhost_db = "localhost";
+$username_db = "";
+$password_db = "";
 $database_name = "";
 
-$table_prefix  = "on_";
+$table_prefix = "on_";
 
 // Encrypts the SMTP settings of every group (outgoing address). 64 hex characters:
 //   php -r 'echo bin2hex(random_bytes(32));'

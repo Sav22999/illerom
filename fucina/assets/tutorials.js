@@ -24,7 +24,11 @@
         let out = new Set();
         const cards = box => {
             const wrap = h('div.tag-cards.tut-cards');
-            tags.forEach((tag, i) => wrap.appendChild(h('button.tag-card.tut-pop' + (out.has(tag) ? '.out' : ''), {type: 'button', style: {animationDelay: i * 70 + 'ms'}, 'data-tag': tag}, `<${tag}>`)));
+            tags.forEach((tag, i) => wrap.appendChild(h('button.tag-card.tut-pop' + (out.has(tag) ? '.out' : ''), {
+                type: 'button',
+                style: {animationDelay: i * 70 + 'ms'},
+                'data-tag': tag
+            }, `<${tag}>`)));
             box.appendChild(wrap);
             return wrap;
         };
@@ -50,10 +54,20 @@
         };
         return [
             {text: t('A tag is hidden among these cards. You have to find out which one.'), build: box => cards(box)},
-            {text: t('Ask a question: tap it.'), ok: t('The answer knocks down the cards that do not match.'), build: (box, done) => question(box, t('Is it a block element?'), ['a', 'img', 'span'], done)},
-            {text: t('One more question.'), ok: t('Only one card is left standing.'), build: (box, done) => question(box, t('Is it used in lists?'), ['h1', 'p'], done)},
             {
-                text: t('Now you are sure: tap the hidden tag.'), ok: t('Found it! The fewer questions you use, the more stars you win.'), build: (box, done) => {
+                text: t('Ask a question: tap it.'),
+                ok: t('The answer knocks down the cards that do not match.'),
+                build: (box, done) => question(box, t('Is it a block element?'), ['a', 'img', 'span'], done)
+            },
+            {
+                text: t('One more question.'),
+                ok: t('Only one card is left standing.'),
+                build: (box, done) => question(box, t('Is it used in lists?'), ['h1', 'p'], done)
+            },
+            {
+                text: t('Now you are sure: tap the hidden tag.'),
+                ok: t('Found it! The fewer questions you use, the more stars you win.'),
+                build: (box, done) => {
                     const wrap = cards(box);
                     const ul = wrap.querySelector('[data-tag="ul"]');
                     hint(ul);
@@ -78,7 +92,10 @@
             const g = h('div.doku.tut-doku', {style: {gridTemplateColumns: 'repeat(4, 1fr)'}});
             grid.forEach((row, r) => row.forEach((v, c) => {
                 const hole = holes.some(([a, b]) => a === r && b === c) && !filled.has(r + ',' + c);
-                g.appendChild(h('button.dk' + (hole ? '' : '.given') + (c === 1 ? '.edge-r' : '') + (r === 1 ? '.edge-b' : ''), {type: 'button', 'data-rc': r + ',' + c}, hole ? '' : v));
+                g.appendChild(h('button.dk' + (hole ? '' : '.given') + (c === 1 ? '.edge-r' : '') + (r === 1 ? '.edge-b' : ''), {
+                    type: 'button',
+                    'data-rc': r + ',' + c
+                }, hole ? '' : v));
             }));
             box.appendChild(g);
             return g;
@@ -90,7 +107,8 @@
         };
         return [
             {
-                text: t('Each tag goes once in every row, once in every column and once in every box.'), build: async box => {
+                text: t('Each tag goes once in every row, once in every column and once in every box.'),
+                build: async box => {
                     const g = draw(box);
                     await wait(400);
                     await flash(g, [0, 1, 2, 3].map(c => [1, c]));
@@ -99,7 +117,9 @@
                 }
             },
             {
-                text: t('Tap the empty square of the first row.'), ok: t('Selected: now choose what goes in it.'), build: (box, done) => {
+                text: t('Tap the empty square of the first row.'),
+                ok: t('Selected: now choose what goes in it.'),
+                build: (box, done) => {
                     const g = draw(box);
                     const cell = g.querySelector('[data-rc="0,2"]');
                     hint(cell);
@@ -111,7 +131,9 @@
                 }
             },
             {
-                text: t('The first row already has h1, p and ul: tap the tag that is missing.'), ok: t('Right! A tag in the wrong place turns red and counts as a mistake.'), build: (box, done) => {
+                text: t('The first row already has h1, p and ul: tap the tag that is missing.'),
+                ok: t('Right! A tag in the wrong place turns red and counts as a mistake.'),
+                build: (box, done) => {
                     const g = draw(box);
                     const cell = g.querySelector('[data-rc="0,2"]');
                     cell.classList.add('sel');
@@ -135,7 +157,8 @@
                 }
             },
             {
-                text: t('Every two levels the grid grows: 4×4, then 9×9 with 3×3 boxes, then 16×16 with 4×4 boxes.'), build: box => growing(box, [4, 9, 16], dokuOf),
+                text: t('Every two levels the grid grows: 4×4, then 9×9 with 3×3 boxes, then 16×16 with 4×4 boxes.'),
+                build: box => growing(box, [4, 9, 16], dokuOf),
             },
         ];
     }
@@ -148,7 +171,10 @@
         let chosen = 3;
         const draw = box => {
             const view = h('div.four.tut-four');
-            cols.forEach((col, c) => view.appendChild(h('button.four-col', {type: 'button', 'data-c': c}, ...Array.from({length: 6}, (_, k) => {
+            cols.forEach((col, c) => view.appendChild(h('button.four-col', {
+                type: 'button',
+                'data-c': c
+            }, ...Array.from({length: 6}, (_, k) => {
                 const v = col[5 - k];
                 return h('i.disc-' + (['e', 'me', 'ai'][v || 0]));
             }))));
@@ -157,7 +183,9 @@
         };
         return [
             {
-                text: t('Your discs are green, the computer’s are red. Tap the column where you want to drop one.'), ok: t('Good choice: before it drops, you have to answer.'), build: (box, done) => {
+                text: t('Your discs are green, the computer’s are red. Tap the column where you want to drop one.'),
+                ok: t('Good choice: before it drops, you have to answer.'),
+                build: (box, done) => {
                     const view = draw(box);
                     const col = view.querySelector('[data-c="3"]');
                     hint(col);
@@ -170,7 +198,9 @@
                 }
             },
             {
-                text: t('Answer right and your green disc drops. Answer wrong and the computer drops a red one wherever it likes.'), ok: t('Right: your disc drops!'), build: (box, done) => {
+                text: t('Answer right and your green disc drops. Answer wrong and the computer drops a red one wherever it likes.'),
+                ok: t('Right: your disc drops!'),
+                build: (box, done) => {
                     let view = draw(box);
                     view.querySelector(`[data-c="${chosen}"]`).classList.add('tut-pick');
                     // Both answers really drop a disc: yours in your column when right, the computer's red one when wrong
@@ -202,7 +232,8 @@
                 }
             },
             {
-                text: t('The computer plays only when you get it wrong. Line up four green discs in a row, column or diagonal to win; four red ones and the computer wins.'), build: async box => {
+                text: t('The computer plays only when you get it wrong. Line up four green discs in a row, column or diagonal to win; four red ones and the computer wins.'),
+                build: async box => {
                     const four = [[1], [2, 1], [2, 2, 1], [2, 2, 2, 1], [2], [], []];
                     const view = h('div.four.tut-four');
                     four.forEach((col, c) => view.appendChild(h('button.four-col', {type: 'button'}, ...Array.from({length: 6}, (_, k) => {
@@ -221,13 +252,17 @@
         const board = () => {
             const b = h('div.chess.tut-chess');
             for (let r = 1; r <= 4; r++) for (let c = 1; c <= 4; c++) {
-                b.appendChild(h('button.sq.r' + r + '.c' + c + ((r + c) % 2 ? '.black' : '.white'), {type: 'button', 'data-rc': r + ',' + c}, h('small', `.r${r} .c${c}`)));
+                b.appendChild(h('button.sq.r' + r + '.c' + c + ((r + c) % 2 ? '.black' : '.white'), {
+                    type: 'button',
+                    'data-rc': r + ',' + c
+                }, h('small', `.r${r} .c${c}`)));
             }
             return b;
         };
         return [
             {
-                text: t('Every square is an element with classes: its row (.r1, .r2…), its column (.c1, .c2…) and its colour (.white or .black).'), build: async box => {
+                text: t('Every square is an element with classes: its row (.r1, .r2…), its column (.c1, .c2…) and its colour (.white or .black).'),
+                build: async box => {
                     const b = board();
                     box.append(b);
                     for (const r of [1, 2, 3, 4]) {
@@ -238,7 +273,9 @@
                 }
             },
             {
-                text: t('Tap every square the selector picks, then press Check.'), ok: t('Exactly! Each wrong check costs one of your 3 lives: the lives left are your stars.'), build: (box, done) => {
+                text: t('Tap every square the selector picks, then press Check.'),
+                ok: t('Exactly! Each wrong check costs one of your 3 lives: the lives left are your stars.'),
+                build: (box, done) => {
                     const sel = h('code.selector', '.c3');
                     const b = board();
                     const picked = new Set();
@@ -288,13 +325,18 @@
         const target = ['<ul>', '  <li>Uno</li>', '  <li>Due</li>', '</ul>'];
         return [
             {
-                text: t('These lines of code are mixed up. Drag a line by its handle to move it: put <ul> at the top.'), ok: t('Green lines are in the right place. The fewer moves you use, the more stars you win.'), build: (box, done) => {
+                text: t('These lines of code are mixed up. Drag a line by its handle to move it: put <ul> at the top.'),
+                ok: t('Green lines are in the right place. The fewer moves you use, the more stars you win.'),
+                build: (box, done) => {
                     let lines = ['  <li>Uno</li>', '<ul>', '  <li>Due</li>', '</ul>'];
                     let selected = null;
                     const list = h('div.lines.tut-lines');
                     const draw = () => {
                         list.replaceChildren(...lines.map((l, i) => {
-                            const b = h('button.line' + (selected === i ? '.sel' : '') + (l === target[i] ? '.fit' : ''), {type: 'button', 'data-i': i}, h('span.grip', {'aria-hidden': 'true'}, icon('menu')), h('code', l));
+                            const b = h('button.line' + (selected === i ? '.sel' : '') + (l === target[i] ? '.fit' : ''), {
+                                type: 'button',
+                                'data-i': i
+                            }, h('span.grip', {'aria-hidden': 'true'}, icon('menu')), h('code', l));
                             b.onclick = () => {
                                 if (list.dataset.dragged) return;
                                 if (selected === null) selected = i;
@@ -357,14 +399,20 @@
     function shade() {
         return [
             {
-                text: t('Every round shows a colour written in CSS. Tap the matching colour.'), ok: t('Right: #f00 is pure red, the short form of #ff0000.'), build: (box, done) => {
+                text: t('Every round shows a colour written in CSS. Tap the matching colour.'),
+                ok: t('Right: #f00 is pure red, the short form of #ff0000.'),
+                build: (box, done) => {
                     pickStep(box, h('div.qr-prompt', h('code.selector', '#f00')), [
-                        {swatch: '#00f', ok: false}, {swatch: '#f00', ok: true}, {swatch: '#0a0', ok: false}, {swatch: '#fc0', ok: false},
+                        {swatch: '#00f', ok: false}, {swatch: '#f00', ok: true}, {
+                            swatch: '#0a0',
+                            ok: false
+                        }, {swatch: '#fc0', ok: false},
                     ], done, true);
                 }
             },
             {
-                text: t('From level 2 a round in two goes the other way: you see the colour and pick its code. Then come rgb() and hsl(), with closer colours.'), build: box => {
+                text: t('From level 2 a round in two goes the other way: you see the colour and pick its code. Then come rgb() and hsl(), with closer colours.'),
+                build: box => {
                     box.append(h('div.qr.tut-qr', h('div.qr-prompt', h('i.swatch.big', {style: {background: 'hsl(200, 80%, 50%)'}})),
                         h('div.options', ['hsl(200, 80%, 50%)', 'rgb(26, 166, 230)', '#1aa6e6'].map(c => h('div.option', h('span', h('code', c)))))));
                 }
@@ -375,14 +423,20 @@
     function duel() {
         return [
             {
-                text: t('Two selectors point at the same element: the more specific one wins. Which one is it?'), ok: t('Yes: an id counts more than any number of classes and elements.'), build: (box, done) => {
+                text: t('Two selectors point at the same element: the more specific one wins. Which one is it?'),
+                ok: t('Yes: an id counts more than any number of classes and elements.'),
+                build: (box, done) => {
                     pickStep(box, h('div.qr-prompt', h('p', t('Which selector is more specific?'))), [
-                        {label: h('code', '.menu a'), ok: false}, {label: h('code', '#nav'), ok: true}, {label: t('Same specificity'), ok: false},
+                        {label: h('code', '.menu a'), ok: false}, {
+                            label: h('code', '#nav'),
+                            ok: true
+                        }, {label: t('Same specificity'), ok: false},
                     ], done);
                 }
             },
             {
-                text: t('Count in three columns: ids, then classes, attributes and pseudo-classes, then elements. The first column that differs decides.'), build: async box => {
+                text: t('Count in three columns: ids, then classes, attributes and pseudo-classes, then elements. The first column that differs decides.'),
+                build: async box => {
                     const rows = [['#nav', '(1, 0, 0)'], ['.menu a', '(0, 1, 1)'], ['a:hover', '(0, 1, 1)'], ['ul li a', '(0, 0, 3)']];
                     const list = h('div.options');
                     box.append(h('div.qr.tut-qr', list));
@@ -398,14 +452,20 @@
     function output() {
         return [
             {
-                text: t('Read the code and guess what appears in the console.'), ok: t('Right: a string plus a number joins them, so you get 22 and not 4.'), build: (box, done) => {
+                text: t('Read the code and guess what appears in the console.'),
+                ok: t('Right: a string plus a number joins them, so you get 22 and not 4.'),
+                build: (box, done) => {
                     pickStep(box, h('div.qr-prompt', h('pre.out-code', h('code', "console.log('2' + 2);"))), [
-                        {label: h('code', '4'), ok: false}, {label: h('code', '22'), ok: true}, {label: h('code', 'NaN'), ok: false},
+                        {label: h('code', '4'), ok: false}, {
+                            label: h('code', '22'),
+                            ok: true
+                        }, {label: h('code', 'NaN'), ok: false},
                     ], done);
                 }
             },
             {
-                text: t('Each level adds something: types, arrays, loops, array methods, scope. Three mistakes and the level is lost.'), build: async box => {
+                text: t('Each level adds something: types, arrays, loops, array methods, scope. Three mistakes and the level is lost.'),
+                build: async box => {
                     const lines = ['a + b', "typeof 'ciao'", 'a.length', 'for (…)', 'a.map(x => x * 2)', '{ let x = 2; }'];
                     const list = h('div.tut-row.tut-chips');
                     box.append(list);
@@ -421,8 +481,15 @@
     function flexlab() {
         return [
             {
-                text: t('The dashed boxes show where the items must go. Choose the value that puts them there.'), ok: t('They line up! Each level adds a property: align-items, flex-direction, flex-wrap and gap.'), build: (box, done) => {
-                    const items = () => [1, 2, 3].map(n => h('i.fi.fi' + (n - 1), {style: {width: '40px', height: '40px'}}, String(n)));
+                text: t('The dashed boxes show where the items must go. Choose the value that puts them there.'),
+                ok: t('They line up! Each level adds a property: align-items, flex-direction, flex-wrap and gap.'),
+                build: (box, done) => {
+                    const items = () => [1, 2, 3].map(n => h('i.fi.fi' + (n - 1), {
+                        style: {
+                            width: '40px',
+                            height: '40px'
+                        }
+                    }, String(n)));
                     const ghost = h('div.flex-box.ghost', {style: {justifyContent: 'center'}}, items());
                     const mine = h('div.flex-box.mine', items());
                     const values = ['flex-start', 'center', 'flex-end', 'space-between'];

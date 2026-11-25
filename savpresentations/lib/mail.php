@@ -116,7 +116,7 @@ function fill(string $text, array $vars): string
     return $text;
 }
 
-function mail_button(string $url, string $label, string $color = '#0B7F72'): string
+function mail_button(string $url, string $label, string $color = '#6D3BEF'): string
 {
     return '<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="border-radius:999px;background:' . e($color) . '">'
         . '<a href="' . e($url) . '" style="display:inline-block;padding:12px 26px;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px">' . e($label) . '</a></td></tr></table>';
@@ -128,15 +128,15 @@ function mail_layout(string $lang, string $title, array $blocks, string $footer 
     $T = mail_t($lang);
     $logo = app_url() . 'icons/icon-192.png';
     return '<!DOCTYPE html><html lang="' . e($lang) . '"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>' . e($title) . '</title></head>'
-        . '<body style="margin:0;padding:0;background:#EFF4F2;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,Helvetica,Arial,sans-serif;color:#12211F">'
-        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#EFF4F2"><tr><td align="center" style="padding:32px 16px">'
+        . '<body style="margin:0;padding:0;background:#F3F0FA;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,Helvetica,Arial,sans-serif;color:#1B1530">'
+        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F3F0FA"><tr><td align="center" style="padding:32px 16px">'
         . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px">'
         . '<tr><td style="padding:0 4px 18px"><img src="' . e($logo) . '" width="36" height="36" alt="" style="vertical-align:middle;border-radius:9px"> '
         . '<span style="font-size:19px;font-weight:800;vertical-align:middle;letter-spacing:-.02em">SavPresentations</span></td></tr>'
-        . '<tr><td style="background:#ffffff;border-radius:18px;padding:28px 28px 26px;border:1px solid #DDE7E4;font-size:15px;line-height:1.55">'
+        . '<tr><td style="background:#ffffff;border-radius:18px;padding:28px 28px 26px;border:1px solid #E4DDF2;font-size:15px;line-height:1.55">'
         . '<h1 style="margin:0 0 16px;font-size:22px;line-height:1.25;letter-spacing:-.02em">' . e($title) . '</h1>'
         . implode('', $blocks)
-        . '</td></tr><tr><td style="padding:16px 4px 0;font-size:12px;color:#5C6E6A">' . e($footer ?: $T['footer']) . '</td></tr>'
+        . '</td></tr><tr><td style="padding:16px 4px 0;font-size:12px;color:#645C7C">' . e($footer ?: $T['footer']) . '</td></tr>'
         . '</table></td></tr></table></body></html>';
 }
 

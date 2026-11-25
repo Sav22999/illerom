@@ -13,15 +13,18 @@ if (!function_exists('fig_cssint_combinators')) {
     {
         $panel = function (int $x, int $y, string $sel, array $on) {
             $chip = function (int $cx, int $cy, int $w, string $t, bool $hit) {
-                $f = $hit ? '#FFE8D6' : '#FFFFFF'; $k = $hit ? '#E8590C' : '#8A87B0'; $sw = $hit ? 3 : 2;
+                $f = $hit ? '#FFE8D6' : '#FFFFFF';
+                $k = $hit ? '#E8590C' : '#8A87B0';
+                $sw = $hit ? 3 : 2;
                 return "<rect x=\"$cx\" y=\"$cy\" width=\"$w\" height=\"30\" rx=\"7\" fill=\"$f\" stroke=\"$k\" stroke-width=\"$sw\"/><text x=\"" . ($cx + $w / 2) . "\" y=\"" . ($cy + 20) . "\" text-anchor=\"middle\"" . ($hit ? ' font-weight="700"' : '') . ">$t</text>"
                     . ($hit ? "<text x=\"" . ($cx + $w / 2) . "\" y=\"" . ($cy + 48) . "\" text-anchor=\"middle\" font-weight=\"700\" font-size=\"17\" fill=\"#B84508\">✓</text>" : '');
             };
             $o = "<rect x=\"$x\" y=\"$y\" width=\"302\" height=\"118\" rx=\"12\" fill=\"#F7F6FC\" stroke=\"#D9D7E8\" stroke-width=\"2\"/>"
-               . "<text x=\"" . ($x + 14) . "\" y=\"" . ($y + 24) . "\" font-weight=\"700\" font-size=\"15\" fill=\"#5B37D0\">$sel</text>"
-               . "<rect x=\"" . ($x + 12) . "\" y=\"" . ($y + 36) . "\" width=\"278\" height=\"52\" rx=\"9\" fill=\"none\" stroke=\"#2F8CF0\" stroke-width=\"2\" stroke-dasharray=\"5 4\"/>"
-               . "<text x=\"" . ($x + 284) . "\" y=\"" . ($y + 30) . "\" text-anchor=\"end\" font-size=\"12\" fill=\"#1B66BC\">section</text>";
-            $cy = $y + 47; $cx = $x + 22;
+                . "<text x=\"" . ($x + 14) . "\" y=\"" . ($y + 24) . "\" font-weight=\"700\" font-size=\"15\" fill=\"#5B37D0\">$sel</text>"
+                . "<rect x=\"" . ($x + 12) . "\" y=\"" . ($y + 36) . "\" width=\"278\" height=\"52\" rx=\"9\" fill=\"none\" stroke=\"#2F8CF0\" stroke-width=\"2\" stroke-dasharray=\"5 4\"/>"
+                . "<text x=\"" . ($x + 284) . "\" y=\"" . ($y + 30) . "\" text-anchor=\"end\" font-size=\"12\" fill=\"#1B66BC\">section</text>";
+            $cy = $y + 47;
+            $cx = $x + 22;
             $o .= $chip($cx, $cy, 40, 'h1', false);
             $o .= $chip($cx + 48, $cy, 40, 'p', $on[0]);
             $o .= "<rect x=\"" . ($cx + 96) . "\" y=\"" . ($cy - 4) . "\" width=\"100\" height=\"38\" rx=\"8\" fill=\"#F1F0F8\" stroke=\"#8A87B0\" stroke-width=\"2\"/><text x=\"" . ($cx + 112) . "\" y=\"" . ($cy + 20) . "\" font-size=\"12\" fill=\"#55527A\">div</text>";
@@ -51,7 +54,9 @@ if (!function_exists('fig_cssint_overflow')) {
             for ($i = 0; $i < $n; $i++) $o .= "<rect x=\"" . ($x + 12) . "\" y=\"" . ($y + 14 + $i * 18) . "\" width=\"{$w[$i]}\" height=\"9\" rx=\"4.5\" fill=\"#8A87B0\"/>";
             return $o;
         };
-        $v = $bars(14, 50, 8); $h = $bars(170, 50, 8); $a = $bars(326, 50, 8);
+        $v = $bars(14, 50, 8);
+        $h = $bars(170, 50, 8);
+        $a = $bars(326, 50, 8);
         return <<<SVG
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 244" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="14" fill="#1E1C52">
 <defs><clipPath id="c1"><rect x="170" y="50" width="140" height="100" rx="10"/></clipPath><clipPath id="c2"><rect x="326" y="50" width="140" height="100" rx="10"/></clipPath></defs>

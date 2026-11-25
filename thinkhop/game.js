@@ -38,7 +38,10 @@
 
     function themeTabs() {
         const th = store.get('theme', 'auto');
-        return h('div.seg.theme-tabs', {role: 'radiogroup', 'aria-label': t('theme')}, ['auto', 'light', 'dark'].map(k => h('button' + (k === th ? '.sel' : ''), {
+        return h('div.seg.theme-tabs', {
+            role: 'radiogroup',
+            'aria-label': t('theme')
+        }, ['auto', 'light', 'dark'].map(k => h('button' + (k === th ? '.sel' : ''), {
             type: 'button', role: 'radio', 'aria-checked': String(k === th), 'data-mode': k,
             onclick: () => {
                 store.set('theme', k);
@@ -63,7 +66,10 @@
     let worried = false;    // the mascot already warned about the time on this question
 
     // ---------- mascots ----------
-    const face = (id, mood, extra) => h('span.mascot' + (extra || ''), {html: M.svg(id, mood), title: id[0].toUpperCase() + id.slice(1)});
+    const face = (id, mood, extra) => h('span.mascot' + (extra || ''), {
+        html: M.svg(id, mood),
+        title: id[0].toUpperCase() + id.slice(1)
+    });
     const guide = (id, mood, text, extra) => h('div.guide' + (extra || ''), face(id, mood), h('p.bubble', h('b', id[0].toUpperCase() + id.slice(1)), text));
 
     /** Tips only while a type is new; then a word now and then, so that the mascots don't become routine. */
@@ -96,7 +102,10 @@
         store.set('worlds', [...seenWorlds, world]);
         const id = worldHost(world);
         const m = modal([h('div.intro', face(id, 'happy', '.big.hop'), h('h3', t('world_n', {n: world + 1})), h('p', M.say(id, 'world'))),
-            h('div.actions', h('button.btn.btn-primary.btn-block', {type: 'button', onclick: () => m.close()}, t('start'), icon('arrow')))], {persistent: true, onclose: go});
+            h('div.actions', h('button.btn.btn-primary.btn-block', {
+                type: 'button',
+                onclick: () => m.close()
+            }, t('start'), icon('arrow')))], {persistent: true, onclose: go});
     }
 
     const elapsed = () => G.clock + (performance.now() - startedAt) / 1000;
@@ -151,6 +160,7 @@
         save();
         renderGame();
     }
+
     const seen = () => store.get('seen', []);
 
     /** What was asked is not asked again: the engine skips it in every new game. */
@@ -217,9 +227,15 @@
         greeting = null;
         const q = G.questions[G.index];
         const mode = G.mode === 'level' ? t('level_n', {n: G.stage}) : (G.mode === 'difficulty' ? t('diff_mode_' + (G.diffKey || 'beginner')) : t('mode_' + G.mode));
-        const counter = G.mode === 'survival' ? t('question_n', {n: G.index + 1}) : t('question_of', {n: G.index + 1, m: G.questions.length});
+        const counter = G.mode === 'survival' ? t('question_n', {n: G.index + 1}) : t('question_of', {
+            n: G.index + 1,
+            m: G.questions.length
+        });
         const lives = G.mode === 'survival'
-            ? h('span.lives', {role: 'img', 'aria-label': t('lives_left', {n: G.lives})}, Array.from({length: E.LIVES}, (_, i) => h('span' + (i < G.lives ? '.on' : ''), icon('heart')))) : null;
+            ? h('span.lives', {
+                role: 'img',
+                'aria-label': t('lives_left', {n: G.lives})
+            }, Array.from({length: E.LIVES}, (_, i) => h('span' + (i < G.lives ? '.on' : ''), icon('heart')))) : null;
         const isLampsRow = q.cat === 'lamps' && typeof q.options[0] === 'string' && q.options[0].includes('💡');
         const options = h('div.options' + (isLampsRow ? '.lamps-opts' : '') + (q.options.length === 5 ? '.five' : '') + (q.view === 'riddle' || q.view === 'facts' ? '.long' : '') + (q.pics ? '.pics' : ''), q.options.map((o, i) => {
             const gone = G.removed.includes(i);
@@ -231,7 +247,12 @@
         const right = G.answered && G.picked === q.answer;
         app.replaceChildren(h('div.game',
             h('header.game-bar',
-                h('button.icon-btn', {type: 'button', title: t('exit_title'), 'aria-label': t('exit_title'), onclick: leave}, icon('back')),
+                h('button.icon-btn', {
+                    type: 'button',
+                    title: t('exit_title'),
+                    'aria-label': t('exit_title'),
+                    onclick: leave
+                }, icon('back')),
                 h('div.title', h('strong', mode), h('span', counter)),
                 lives,
                 h('div.score-pill', {title: t('balance')}, icon('star'), h('b', fmtNumber(balance())))),
@@ -240,10 +261,16 @@
                 h('div.tags', h('span.tag', t('cat_' + q.cat)), h('span.tag.level-' + q.level, t(q.level)),
                     G.streak > 1 ? h('span.tag.hot', icon('flame'), String(G.streak)) : null,
                     A.enabled() && window.ThinkHopReports ? h('button.report-btn', {
-                        type: 'button', title: t('report_btn'), 'aria-label': t('report_btn'), onclick: () => reportQuestion(q),
+                        type: 'button',
+                        title: t('report_btn'),
+                        'aria-label': t('report_btn'),
+                        onclick: () => reportQuestion(q),
                     }, icon('flag')) : null,
                     h('button.help-btn', {
-                        type: 'button', title: t('how_to_play'), 'aria-label': t('how_to_play'), onclick: () => showHelp(q),
+                        type: 'button',
+                        title: t('how_to_play'),
+                        'aria-label': t('how_to_play'),
+                        onclick: () => showHelp(q),
                     }, '?')),
                 G.answered ? null : questionGuide(q),
                 h('h1.prompt', promptText(q)),
@@ -254,9 +281,15 @@
                         h('h2', icon(right ? 'tick' : 'close'), G.picked < 0 ? t('time_up') : t(right ? 'right' : 'wrong'), right ? h('span.gain', t('plus_points', {n: G.gained})) : null),
                         reaction(q, right),
                         (window.ThinkHopSolution && window.ThinkHopSolution.render(q, right)) || whyLines(q),
-                        h('button.btn.btn-primary.btn-block', {type: 'button', onclick: advance}, E.isOver(G) ? t('see_result') : t('next'), icon('arrow')))
+                        h('button.btn.btn-primary.btn-block', {
+                            type: 'button',
+                            onclick: advance
+                        }, E.isOver(G) ? t('see_result') : t('next'), icon('arrow')))
                     : h('button.btn.btn-soft.hint-btn', {
-                        type: 'button', title: t('hint_title'), disabled: G.removed.length > 0 || undefined, onclick: useHint,
+                        type: 'button',
+                        title: t('hint_title'),
+                        disabled: G.removed.length > 0 || undefined,
+                        onclick: useHint,
                     }, icon('bulb'), t('hint_cost', {n: E.hintCost(G)})))));
         document.title = `${NAME} – ${counter}`;
         if (!G.answered) {
@@ -375,7 +408,10 @@
             h('div.win-box',
                 face(host, passed ? 'happy' : 'sad', '.big' + (passed ? '.hop' : '')),
                 h('h3', title),
-                h('div.stars', {role: 'img', 'aria-label': `${g.stars}/3`}, [0, 1, 2].map(i => h('span' + (i < g.stars ? '.on' : ''), icon('star')))),
+                h('div.stars', {
+                    role: 'img',
+                    'aria-label': `${g.stars}/3`
+                }, [0, 1, 2].map(i => h('span' + (i < g.stars ? '.on' : ''), icon('star')))),
                 h('div.score', h('b', '+' + fmtNumber(done.score)), h('span', t('stat_points'))),
                 done.mode !== 'level' && done.score > before && before > 0 ? h('p.record', '🏆 ' + t('new_record')) : null,
                 h('p.bubble.result-line', M.say(host, passed ? 'pass' : 'fail')),
@@ -383,7 +419,10 @@
                 passed ? h('p.muted', [t('result_streak', {n: done.bestStreak}), t('result_time', {t: fmtTime(done.seconds)})].join(' · ')) : h('p.muted', t('level_failed_text', {n: needed})),
                 done.mode === 'level' && passed && last ? h('p.muted', t('all_done')) : null),
             h('div.actions.win-actions',
-                done.mode === 'daily' ? h('button.btn.btn-soft', {type: 'button', onclick: () => share(g)}, icon('share'), t('share')) : null,
+                done.mode === 'daily' ? h('button.btn.btn-soft', {
+                    type: 'button',
+                    onclick: () => share(g)
+                }, icon('share'), t('share')) : null,
                 h('button.btn.btn-ghost', {type: 'button', onclick: () => m.close()}, t('home')),
                 done.mode === 'survival' ? again(t('play_again'), 0, true) : null,
                 done.mode === 'difficulty' ? again(t('play_again'), done.diffKey, true) : null,
@@ -409,7 +448,12 @@
 
     // ---------- home ----------
     function langButton() {
-        return h('button.lang-pill', {type: 'button', title: t('language'), 'aria-label': t('language'), onclick: showLanguages}, icon('globe'), I.getLang().toUpperCase());
+        return h('button.lang-pill', {
+            type: 'button',
+            title: t('language'),
+            'aria-label': t('language'),
+            onclick: showLanguages
+        }, icon('globe'), I.getLang().toUpperCase());
     }
 
     function showLanguages() {
@@ -449,7 +493,10 @@
                     h('span.tag.world-tier-tag.tier-' + currentTier, t(currentTier))),
                 h('span', t('worlds_done', {n: passed, m: E.STAGES}))),
             h('div.bar', {'aria-hidden': 'true'}, h('i', {style: `width:${passed / E.STAGES * 100}%`})),
-            h('button.btn.btn-primary.btn-block.play', {type: 'button', onclick: () => start('level', stage)}, icon('play'), t('continue_level', {n: stage})),
+            h('button.btn.btn-primary.btn-block.play', {
+                type: 'button',
+                onclick: () => start('level', stage)
+            }, icon('play'), t('continue_level', {n: stage})),
             h('button.btn.btn-soft.btn-block', {type: 'button', onclick: showMap}, icon('grid'), t('all_worlds')));
     }
 
@@ -467,9 +514,9 @@
             h('div.diff-modes-grid', diffs.map(d => {
                 const best = st.best['difficulty_' + d.key] || 0;
                 return h('button.diff-card.diff-' + d.key, {
-                    type: 'button',
-                    onclick: () => start('difficulty', d.key),
-                },
+                        type: 'button',
+                        onclick: () => start('difficulty', d.key),
+                    },
                     h('span.diff-card-badge', d.icon),
                     h('div.diff-card-body',
                         h('strong', d.title),
@@ -491,7 +538,10 @@
         if (done && played) {
             subtext = t('mode_daily_done', {n: fmtNumber(played.score)});
         } else if (inProgress && activeDaily) {
-            subtext = t('mode_daily_in_progress', {n: activeDaily.index + 1, total: activeDaily.questions.length || 10});
+            subtext = t('mode_daily_in_progress', {
+                n: activeDaily.index + 1,
+                total: activeDaily.questions.length || 10
+            });
         }
 
         const action = inProgress && activeDaily
@@ -502,10 +552,10 @@
             : () => start('daily');
 
         return h('button.daily' + (inProgress ? '.in-progress' : ''), {
-            type: 'button',
-            disabled: done || undefined,
-            onclick: action,
-        },
+                type: 'button',
+                disabled: done || undefined,
+                onclick: action,
+            },
             h('span.daily-icon', icon(inProgress ? 'play' : 'calendar')),
             h('span.daily-text', h('strong', t('mode_daily')), h('span', subtext)),
             st.streak ? h('span.tag.hot', icon('flame'), String(st.streak)) : null);
@@ -537,7 +587,10 @@
     let greeting = null;
 
     function homeGreeting() {
-        if (!greeting) greeting = {id: M.IDS[Math.floor(Math.random() * M.IDS.length)], n: Math.floor(Math.random() * 2)};
+        if (!greeting) greeting = {
+            id: M.IDS[Math.floor(Math.random() * M.IDS.length)],
+            n: Math.floor(Math.random() * 2)
+        };
         return guide(greeting.id, 'happy', M.pick(greeting.id, 'hello', greeting.n), '.home-guide');
     }
 
@@ -587,7 +640,8 @@
                 store.set('app_installed', true);
                 if (screen === 'home') showHome();
             }
-        }).catch(() => {});
+        }).catch(() => {
+        });
     }
 
     function areNotificationsActive() {
@@ -607,8 +661,10 @@
                     store.set('notify_device', hasSub);
                     if (screen === 'home') showHome();
                 }
-            }).catch(() => {});
-        }).catch(() => {});
+            }).catch(() => {
+            });
+        }).catch(() => {
+        });
     }
 
     function showInstallGuide() {
@@ -662,7 +718,12 @@
                 h('p.muted', t('tip_notify_signin_hint')),
                 h('div.actions',
                     h('button.btn.btn-ghost', {type: 'button', onclick: () => m.close()}, t('cancel')),
-                    h('button.btn.btn-primary', {type: 'button', onclick: () => { m.close(); A.open(); }}, t('sign_in')))
+                    h('button.btn.btn-primary', {
+                        type: 'button', onclick: () => {
+                            m.close();
+                            A.open();
+                        }
+                    }, t('sign_in')))
             ]);
         }
     }
@@ -686,10 +747,10 @@
         }, icon('close'));
 
         card = h('div.home-tip', {
-            role: 'region',
-            'aria-label': opts.title,
-            onclick: () => opts.onAction()
-        },
+                role: 'region',
+                'aria-label': opts.title,
+                onclick: () => opts.onAction()
+            },
             h('div.home-tip-icon', icon(opts.iconName)),
             h('div.home-tip-body',
                 h('div.home-tip-head',
@@ -741,7 +802,10 @@
         return h('div.home-tips', tips);
     }
 
-    const quickLink = (name, label, open) => h('button.quick-link', {type: 'button', onclick: open}, icon(name), h('span', label));
+    const quickLink = (name, label, open) => h('button.quick-link', {
+        type: 'button',
+        onclick: open
+    }, icon(name), h('span', label));
 
     function showHome() {
         screen = 'home';
@@ -762,7 +826,11 @@
                 type: 'button', title: t('theme'), 'aria-label': t('theme'), onclick: cycleTheme,
             }, icon('moon'))),
             h('section.hero', h('img.logo', {src: 'icons/favicon.svg', alt: ''}), h('h1', NAME), h('p', t('subtitle')),
-                h('button.total', {type: 'button', title: t('avatar_title'), onclick: () => A.openAvatarShop()}, icon('star'), t('total_points', {n: fmtNumber(st.balance)}))),
+                h('button.total', {
+                    type: 'button',
+                    title: t('avatar_title'),
+                    onclick: () => A.openAvatarShop()
+                }, icon('star'), t('total_points', {n: fmtNumber(st.balance)}))),
             homeGreeting(),
             h('main.home-main',
                 saved ? resumeCard(saved) : null,
@@ -781,12 +849,20 @@
             h('footer.footer',
                 // Same credit block as the other games
                 h('div.credit-block',
-                    h('a.credit', {href: 'https://www.saveriomorelli.com/', target: '_blank', rel: 'noopener'}, h('span', t('credit_by')), h('span.credit-name', 'Saverio Morelli')),
+                    h('a.credit', {
+                        href: 'https://www.saveriomorelli.com/',
+                        target: '_blank',
+                        rel: 'noopener'
+                    }, h('span', t('credit_by')), h('span.credit-name', 'Saverio Morelli')),
                     h('span.credit-ai', {html: '<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.2 6.6 6.8 2.4-6.8 2.4L12 20.5l-2.2-6.6L3 11.5l6.8-2.4z"/></svg>'}, h('span', t('credit_ai')))),
                 h('div.footer-actions',
                     h('a.version-btn.privacy-link', {href: 'privacy.html'}, 'Privacy'),
                     h('a.version-btn.privacy-link', {href: 'admin.html'}, t('admin_link')),
-                    h('button.donate-btn', {type: 'button', onclick: A.showDonate, title: t('donate_title')}, icon('heart'), h('span', t('donate'))),
+                    h('button.donate-btn', {
+                        type: 'button',
+                        onclick: A.showDonate,
+                        title: t('donate_title')
+                    }, icon('heart'), h('span', t('donate'))),
                     h('button.version-btn', {type: 'button', onclick: showReleases}, `${t('version')} ${VERSION}`)))));
         document.title = 'ThinkHop – Saverio Morelli';
     }
@@ -806,7 +882,9 @@
                 h('div.stage-grid', Array.from({length: E.WORLD}, (_, i) => {
                     const n = first + i, stars = st.stages[n] || 0, open = n <= st.unlocked;
                     return h('button.stage' + (open ? '' : '.locked') + (n === st.unlocked && !stars ? '.current' : ''), {
-                            type: 'button', title: open ? t('level_n', {n}) : t('locked'), 'aria-label': open ? t('level_n', {n}) : t('locked'),
+                            type: 'button',
+                            title: open ? t('level_n', {n}) : t('locked'),
+                            'aria-label': open ? t('level_n', {n}) : t('locked'),
                             onclick: () => (open ? start('level', n) : toast(t('locked'))),
                         }, open ? h('b', String(n)) : icon('lock'),
                         open ? h('span.mini-stars', [0, 1, 2].map(k => h('i' + (k < stars ? '.on' : '')))) : null);
@@ -814,8 +892,16 @@
         });
         app.replaceChildren(h('div.map',
             h('header.game-bar',
-                h('button.icon-btn', {type: 'button', title: t('home'), 'aria-label': t('home'), onclick: showHome}, icon('back')),
-                h('div.title', h('strong', t('mode_worlds')), h('span', t('worlds_done', {n: Object.keys(st.stages).length, m: E.STAGES}))),
+                h('button.icon-btn', {
+                    type: 'button',
+                    title: t('home'),
+                    'aria-label': t('home'),
+                    onclick: showHome
+                }, icon('back')),
+                h('div.title', h('strong', t('mode_worlds')), h('span', t('worlds_done', {
+                    n: Object.keys(st.stages).length,
+                    m: E.STAGES
+                }))),
                 h('div.score-pill', {title: t('balance')}, icon('star'), h('b', fmtNumber(st.balance)))),
             worlds));
         window.scrollTo(0, 0);

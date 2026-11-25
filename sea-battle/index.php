@@ -48,7 +48,8 @@ $bonusSwitch = fn($id) => '<label class="option-row compact"><span><span data-i1
     <meta property="og:image" content="https://www.illerom.eu/sea-battle/og-image.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="Sea Battle (Battaglia Navale) – free online naval battle game by Saverio Morelli">
+    <meta property="og:image:alt"
+          content="Sea Battle (Battaglia Navale) – free online naval battle game by Saverio Morelli">
     <meta property="og:site_name" content="Saverio Morelli">
     <meta property="og:locale" content="en_US">
     <meta name="twitter:card" content="summary_large_image">
@@ -95,12 +96,19 @@ $bonusSwitch = fn($id) => '<label class="option-row compact"><span><span data-i1
     <div id="screen-lobby" class="screen active">
         <div class="top-tools">
             <div class="theme-selector" id="theme-selector" role="radiogroup" data-i18n-title="theme_title">
-                <button type="button" class="theme-tab" data-theme-mode="auto" role="radio" data-i18n="theme_auto">Auto</button>
-                <button type="button" class="theme-tab" data-theme-mode="light" role="radio" data-i18n="theme_light">Light</button>
-                <button type="button" class="theme-tab" data-theme-mode="dark" role="radio" data-i18n="theme_dark">Dark</button>
+                <button type="button" class="theme-tab" data-theme-mode="auto" role="radio" data-i18n="theme_auto">
+                    Auto
+                </button>
+                <button type="button" class="theme-tab" data-theme-mode="light" role="radio" data-i18n="theme_light">
+                    Light
+                </button>
+                <button type="button" class="theme-tab" data-theme-mode="dark" role="radio" data-i18n="theme_dark">
+                    Dark
+                </button>
             </div>
             <button type="button" class="theme-toggle" id="btn-theme" data-i18n-title="theme_title">
-                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"
+                     aria-hidden="true">
                     <circle cx="12" cy="12" r="9"/>
                     <path d="M12 3a9 9 0 010 18z" fill="currentColor" stroke="none"/>
                 </svg>
@@ -113,7 +121,8 @@ $bonusSwitch = fn($id) => '<label class="option-row compact"><span><span data-i1
                     <button type="button" class="lang-btn" data-lang="<?= $code ?>"><?= strtoupper($code) ?></button>
                 <?php endforeach; ?>
             </div>
-            <button type="button" class="lang-toggle" id="btn-lang-menu" aria-haspopup="dialog" data-i18n-title="language_title">
+            <button type="button" class="lang-toggle" id="btn-lang-menu" aria-haspopup="dialog"
+                    data-i18n-title="language_title">
                 <?= $icon($ICON_GLOBE, 18, 2) ?>
                 <span id="lang-current">EN</span>
                 <?= $icon('<path d="M6 9l6 6 6-6"/>', 14, 2.6) ?>
@@ -132,7 +141,8 @@ $bonusSwitch = fn($id) => '<label class="option-row compact"><span><span data-i1
                     <img class="logo-mark" src="icons/favicon.svg" alt="" width="40" height="40">
                     <span data-i18n="app_title">Sea Battle</span>
                 </h1>
-                <p class="logo-subtitle" data-i18n="lobby_subtitle">Hide your fleet, hunt down theirs. Online or on your device.</p>
+                <p class="logo-subtitle" data-i18n="lobby_subtitle">Hide your fleet, hunt down theirs. Online or on your
+                    device.</p>
                 <div class="hero-links">
                     <button type="button" class="link-btn" id="btn-howto">
                         <?= $icon('<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 015.8 1c0 2-3 3-3 3M12 17h.01"/>', 16) ?>
@@ -151,11 +161,13 @@ $bonusSwitch = fn($id) => '<label class="option-row compact"><span><span data-i1
                 <ol class="howto-list" id="howto-list">
                     <li><span class="howto-num">1</span>
                         <div><strong data-i18n="howto1_title">Deploy your fleet</strong>
-                            <p data-i18n="howto1_text">Place 5 ships on your grid. They can't touch each other, not even at the corners.</p></div>
+                            <p data-i18n="howto1_text">Place 5 ships on your grid. They can't touch each other, not even
+                                at the corners.</p></div>
                     </li>
                     <li><span class="howto-num">2</span>
                         <div><strong data-i18n="howto2_title">Take turns firing</strong>
-                            <p data-i18n="howto2_text">Pick a cell on the enemy grid: it's a splash, a hit, or a ship sunk.</p></div>
+                            <p data-i18n="howto2_text">Pick a cell on the enemy grid: it's a splash, a hit, or a ship
+                                sunk.</p></div>
                     </li>
                     <li><span class="howto-num">3</span>
                         <div><strong data-i18n="howto3_title">Sink them all</strong>
@@ -166,9 +178,11 @@ $bonusSwitch = fn($id) => '<label class="option-row compact"><span><span data-i1
 
             <section class="lobby-panel">
                 <form id="step-name" class="lobby-step active" autocomplete="off">
-                    <label class="step-title" for="player-name" data-i18n="step1_title">What's your name, captain?</label>
+                    <label class="step-title" for="player-name" data-i18n="step1_title">What's your name,
+                        captain?</label>
                     <p class="step-hint" data-i18n="step1_hint">Your opponent will see it during the game.</p>
-                    <input type="text" id="player-name" maxlength="30" data-i18n-placeholder="name_placeholder" placeholder="e.g. Alex" required>
+                    <input type="text" id="player-name" maxlength="30" data-i18n-placeholder="name_placeholder"
+                           placeholder="e.g. Alex" required>
                     <button type="submit" class="btn btn-primary btn-block" id="btn-continue" disabled>
                         <span data-i18n="continue">Continue</span>
                         <?= $ICON_ARROW ?>
@@ -178,13 +192,20 @@ $bonusSwitch = fn($id) => '<label class="option-row compact"><span><span data-i1
                 <div id="step-mode" class="lobby-step">
                     <div class="greeting">
                         <span class="step-title" id="greeting-text"></span>
-                        <button type="button" class="link-btn" id="btn-change-name" data-i18n="change_name">Change name</button>
+                        <button type="button" class="link-btn" id="btn-change-name" data-i18n="change_name">Change
+                            name
+                        </button>
                     </div>
 
                     <div class="mode-tabs" role="tablist">
-                        <button type="button" class="mode-tab active" role="tab" data-tab="online"><?= $icon($ICON_GLOBE, 18, 2) ?><span data-i18n="tab_online">Online</span></button>
-                        <button type="button" class="mode-tab" role="tab" data-tab="local"><?= $icon($ICON_PHONE, 18, 2) ?><span data-i18n="tab_local">Same device</span></button>
-                        <button type="button" class="mode-tab" role="tab" data-tab="ai"><?= $icon($ICON_ROBOT, 18, 2) ?><span data-i18n="tab_ai">Computer</span></button>
+                        <button type="button" class="mode-tab active" role="tab"
+                                data-tab="online"><?= $icon($ICON_GLOBE, 18, 2) ?><span
+                                    data-i18n="tab_online">Online</span></button>
+                        <button type="button" class="mode-tab" role="tab"
+                                data-tab="local"><?= $icon($ICON_PHONE, 18, 2) ?><span
+                                    data-i18n="tab_local">Same device</span></button>
+                        <button type="button" class="mode-tab" role="tab" data-tab="ai"><?= $icon($ICON_ROBOT, 18, 2) ?>
+                            <span data-i18n="tab_ai">Computer</span></button>
                     </div>
 
                     <div class="mode-panel active" data-panel="online">
@@ -201,7 +222,9 @@ $bonusSwitch = fn($id) => '<label class="option-row compact"><span><span data-i1
                                 <?= $timeChips('time-online', 60) ?>
                             </div>
                             <?= $bonusSwitch('bonus-online') ?>
-                            <button type="button" class="btn btn-primary btn-block" id="btn-create" data-i18n="create_room">Create game</button>
+                            <button type="button" class="btn btn-primary btn-block" id="btn-create"
+                                    data-i18n="create_room">Create game
+                            </button>
                         </div>
 
                         <form class="mode-card" id="card-join" autocomplete="off">
@@ -212,8 +235,11 @@ $bonusSwitch = fn($id) => '<label class="option-row compact"><span><span data-i1
                                     <p data-i18n="join_desc">Enter the 6-character code your friend sent you.</p>
                                 </div>
                             </div>
-                            <input type="text" id="room-code" maxlength="6" placeholder="ABC123" class="code-input" autocapitalize="characters" spellcheck="false" data-i18n-aria="room_code">
-                            <button type="submit" class="btn btn-secondary btn-block" id="btn-join" disabled data-i18n="join_room">Join game</button>
+                            <input type="text" id="room-code" maxlength="6" placeholder="ABC123" class="code-input"
+                                   autocapitalize="characters" spellcheck="false" data-i18n-aria="room_code">
+                            <button type="submit" class="btn btn-secondary btn-block" id="btn-join" disabled
+                                    data-i18n="join_room">Join game
+                            </button>
                         </form>
 
                         <div class="mode-card" id="card-random">
@@ -224,7 +250,9 @@ $bonusSwitch = fn($id) => '<label class="option-row compact"><span><span data-i1
                                     <p id="random-desc">Play someone who speaks your language. 1 minute per shot.</p>
                                 </div>
                             </div>
-                            <button type="button" class="btn btn-secondary btn-block" id="btn-random" data-i18n="random_btn">Find a player</button>
+                            <button type="button" class="btn btn-secondary btn-block" id="btn-random"
+                                    data-i18n="random_btn">Find a player
+                            </button>
                         </div>
                     </div>
 
@@ -234,15 +262,19 @@ $bonusSwitch = fn($id) => '<label class="option-row compact"><span><span data-i1
                                 <div class="mode-icon alt"><?= $icon('<circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M2 20c0-3.3 2.7-6 6-6s6 2.7 6 6M12 20c0-3.3 1.8-6 4-6 3.3 0 6 2.7 6 6"/>', 22) ?></div>
                                 <div>
                                     <h3 data-i18n="local_title">Two captains, one device</h3>
-                                    <p data-i18n="local_desc">Pass the device between turns: a screen hides each fleet from the other player.</p>
+                                    <p data-i18n="local_desc">Pass the device between turns: a screen hides each fleet
+                                        from the other player.</p>
                                 </div>
                             </div>
                             <label class="field">
                                 <span class="field-label" data-i18n="opponent_name">Opponent's name</span>
-                                <input type="text" id="local-opponent" maxlength="30" data-i18n-placeholder="opponent_placeholder" placeholder="e.g. Sam">
+                                <input type="text" id="local-opponent" maxlength="30"
+                                       data-i18n-placeholder="opponent_placeholder" placeholder="e.g. Sam">
                             </label>
                             <?= $bonusSwitch('bonus-local') ?>
-                            <button type="button" class="btn btn-primary btn-block" id="btn-start-local" data-i18n="start_game">Start game</button>
+                            <button type="button" class="btn btn-primary btn-block" id="btn-start-local"
+                                    data-i18n="start_game">Start game
+                            </button>
                         </div>
                     </div>
 
@@ -258,21 +290,29 @@ $bonusSwitch = fn($id) => '<label class="option-row compact"><span><span data-i1
                             <div class="field">
                                 <span class="field-label" data-i18n="level_label">Level</span>
                                 <div class="chips" role="radiogroup">
-                                    <label class="chip"><input type="radio" name="ai-level" value="easy"><span data-i18n="level_easy">Easy</span></label>
-                                    <label class="chip"><input type="radio" name="ai-level" value="medium" checked><span data-i18n="level_medium">Medium</span></label>
-                                    <label class="chip"><input type="radio" name="ai-level" value="hard"><span data-i18n="level_hard">Hard</span></label>
+                                    <label class="chip"><input type="radio" name="ai-level" value="easy"><span
+                                                data-i18n="level_easy">Easy</span></label>
+                                    <label class="chip"><input type="radio" name="ai-level" value="medium" checked><span
+                                                data-i18n="level_medium">Medium</span></label>
+                                    <label class="chip"><input type="radio" name="ai-level" value="hard"><span
+                                                data-i18n="level_hard">Hard</span></label>
                                 </div>
                             </div>
                             <div class="field">
                                 <span class="field-label" data-i18n="first_label">Who fires first</span>
                                 <div class="chips" role="radiogroup">
-                                    <label class="chip"><input type="radio" name="ai-first" value="me" checked><span data-i18n="first_me">Me</span></label>
-                                    <label class="chip"><input type="radio" name="ai-first" value="ai"><span data-i18n="computer">Computer</span></label>
-                                    <label class="chip"><input type="radio" name="ai-first" value="r"><span data-i18n="random_first">Random</span></label>
+                                    <label class="chip"><input type="radio" name="ai-first" value="me" checked><span
+                                                data-i18n="first_me">Me</span></label>
+                                    <label class="chip"><input type="radio" name="ai-first" value="ai"><span
+                                                data-i18n="computer">Computer</span></label>
+                                    <label class="chip"><input type="radio" name="ai-first" value="r"><span
+                                                data-i18n="random_first">Random</span></label>
                                 </div>
                             </div>
                             <?= $bonusSwitch('bonus-ai') ?>
-                            <button type="button" class="btn btn-primary btn-block" id="btn-start-ai" data-i18n="start_game">Start game</button>
+                            <button type="button" class="btn btn-primary btn-block" id="btn-start-ai"
+                                    data-i18n="start_game">Start game
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -281,13 +321,21 @@ $bonusSwitch = fn($id) => '<label class="option-row compact"><span><span data-i1
 
         <footer class="site-footer">
             <div class="credit-block">
-                <a class="credit" href="https://www.saveriomorelli.com/" target="_blank" rel="noopener"><span data-i18n="credit_by">A project by</span> <span class="credit-name">Saverio Morelli</span></a>
-                <span class="credit-ai"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.2 6.6 6.8 2.4-6.8 2.4L12 20.5l-2.2-6.6L3 11.5l6.8-2.4z"/></svg><span data-i18n="credit_ai">Built with Claude AI</span></span>
+                <a class="credit" href="https://www.saveriomorelli.com/" target="_blank" rel="noopener"><span
+                            data-i18n="credit_by">A project by</span> <span
+                            class="credit-name">Saverio Morelli</span></a>
+                <span class="credit-ai"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"
+                                             aria-hidden="true"><path
+                                d="M12 2.5l2.2 6.6 6.8 2.4-6.8 2.4L12 20.5l-2.2-6.6L3 11.5l6.8-2.4z"/></svg><span
+                            data-i18n="credit_ai">Built with Claude AI</span></span>
             </div>
             <div class="footer-actions">
                 <a class="foot-btn" href="privacy.html">Privacy</a>
-                <button type="button" class="foot-btn donate-btn" id="btn-donate"><?= $icon($ICON_HEART, 13, 2.2) ?><span data-i18n="donate">Donate</span></button>
-                <button type="button" class="foot-btn" id="btn-version" data-i18n-title="release_notes"><span id="app-version"></span><?= $icon('<path d="M12 8v4M12 16h.01"/><circle cx="12" cy="12" r="10"/>', 13, 2.4) ?></button>
+                <button type="button" class="foot-btn donate-btn" id="btn-donate"><?= $icon($ICON_HEART, 13, 2.2) ?>
+                    <span data-i18n="donate">Donate</span></button>
+                <button type="button" class="foot-btn" id="btn-version" data-i18n-title="release_notes"><span
+                            id="app-version"></span><?= $icon('<path d="M12 8v4M12 16h.01"/><circle cx="12" cy="12" r="10"/>', 13, 2.4) ?>
+                </button>
             </div>
         </footer>
     </div>
@@ -295,7 +343,8 @@ $bonusSwitch = fn($id) => '<label class="option-row compact"><span><span data-i1
     <!-- Waiting for the second player -->
     <div id="screen-waiting" class="screen">
         <div class="waiting-container">
-            <div class="brand-mark"><img src="icons/favicon.svg" alt="" width="28" height="28"><span data-i18n="app_title">Sea Battle</span></div>
+            <div class="brand-mark"><img src="icons/favicon.svg" alt="" width="28" height="28"><span
+                        data-i18n="app_title">Sea Battle</span></div>
             <div class="radar small" aria-hidden="true">
                 <div class="radar-sweep"></div>
             </div>
@@ -327,10 +376,14 @@ $bonusSwitch = fn($id) => '<label class="option-row compact"><span><span data-i1
             </a>
             <div class="game-header-right">
                 <span class="mode-badge" id="mode-badge"></span>
-                <button type="button" class="btn-icon" id="btn-audio-toggle" data-i18n-title="sound"><?= $icon($ICON_SOUND, 20, 2) ?></button>
-                <button type="button" class="btn-icon" data-open-settings data-i18n-title="settings_title"><?= $icon($ICON_SETTINGS, 20, 2) ?></button>
-                <button type="button" class="btn-icon" data-open-rules data-i18n-title="rules_title"><?= $icon($ICON_BOOK, 20, 2) ?></button>
-                <button type="button" class="btn-icon" id="btn-leave-game" data-i18n-title="leave"><?= $icon($ICON_LEAVE, 20, 2) ?></button>
+                <button type="button" class="btn-icon" id="btn-audio-toggle"
+                        data-i18n-title="sound"><?= $icon($ICON_SOUND, 20, 2) ?></button>
+                <button type="button" class="btn-icon" data-open-settings
+                        data-i18n-title="settings_title"><?= $icon($ICON_SETTINGS, 20, 2) ?></button>
+                <button type="button" class="btn-icon" data-open-rules
+                        data-i18n-title="rules_title"><?= $icon($ICON_BOOK, 20, 2) ?></button>
+                <button type="button" class="btn-icon" id="btn-leave-game"
+                        data-i18n-title="leave"><?= $icon($ICON_LEAVE, 20, 2) ?></button>
             </div>
         </header>
 
@@ -339,7 +392,8 @@ $bonusSwitch = fn($id) => '<label class="option-row compact"><span><span data-i1
                 <span class="captain-dot"></span>
                 <div class="captain-info">
                     <span class="captain-name" id="name-me"></span>
-                    <span class="captain-sub"><span class="online-dot hidden" id="dot-me"></span><span id="wins-me"></span></span>
+                    <span class="captain-sub"><span class="online-dot hidden" id="dot-me"></span><span
+                                id="wins-me"></span></span>
                 </div>
                 <span class="captain-clock hidden" id="clock-me">0:00</span>
             </div>
@@ -348,7 +402,8 @@ $bonusSwitch = fn($id) => '<label class="option-row compact"><span><span data-i1
                 <span class="captain-clock hidden" id="clock-opp">0:00</span>
                 <div class="captain-info">
                     <span class="captain-name" id="name-opp"></span>
-                    <span class="captain-sub"><span class="online-dot hidden" id="dot-opp"></span><span id="wins-opp"></span></span>
+                    <span class="captain-sub"><span class="online-dot hidden" id="dot-opp"></span><span
+                                id="wins-opp"></span></span>
                 </div>
                 <span class="captain-dot"></span>
             </div>
@@ -360,7 +415,8 @@ $bonusSwitch = fn($id) => '<label class="option-row compact"><span><span data-i1
             <section class="placement hidden" id="placement">
                 <div class="placement-board">
                     <h2 class="board-title" data-i18n="place_title">Deploy your fleet</h2>
-                    <p class="board-hint" id="place-hint" data-i18n="place_hint">Pick a ship, then tap the grid to place it. Tap a placed ship to move it.</p>
+                    <p class="board-hint" id="place-hint" data-i18n="place_hint">Pick a ship, then tap the grid to place
+                        it. Tap a placed ship to move it.</p>
                     <div class="grid-wrap">
                         <div class="sea-grid" id="grid-place"></div>
                     </div>
@@ -368,12 +424,18 @@ $bonusSwitch = fn($id) => '<label class="option-row compact"><span><span data-i1
                 <div class="placement-side">
                     <ul class="dock" id="dock"></ul>
                     <div class="placement-tools">
-                        <button type="button" class="btn btn-secondary" id="btn-rotate"><?= $icon($ICON_ROTATE, 18, 2.2) ?><span data-i18n="rotate">Rotate</span></button>
-                        <button type="button" class="btn btn-secondary" id="btn-random-fleet"><?= $icon($ICON_SHUFFLE, 18, 2.2) ?><span data-i18n="random_fleet">Random</span></button>
-                        <button type="button" class="btn btn-ghost" id="btn-clear-fleet" data-i18n="clear_fleet">Clear</button>
+                        <button type="button" class="btn btn-secondary"
+                                id="btn-rotate"><?= $icon($ICON_ROTATE, 18, 2.2) ?><span
+                                    data-i18n="rotate">Rotate</span></button>
+                        <button type="button" class="btn btn-secondary"
+                                id="btn-random-fleet"><?= $icon($ICON_SHUFFLE, 18, 2.2) ?><span
+                                    data-i18n="random_fleet">Random</span></button>
+                        <button type="button" class="btn btn-ghost" id="btn-clear-fleet" data-i18n="clear_fleet">Clear
+                        </button>
                     </div>
                     <p class="place-timer muted" id="place-timer"></p>
-                    <button type="button" class="btn btn-primary btn-block" id="btn-ready" disabled><span data-i18n="ready">Ready to battle</span><?= $ICON_ARROW ?></button>
+                    <button type="button" class="btn btn-primary btn-block" id="btn-ready" disabled><span
+                                data-i18n="ready">Ready to battle</span><?= $ICON_ARROW ?></button>
                     <p class="muted center" id="place-waiting"></p>
                 </div>
             </section>
@@ -410,12 +472,15 @@ $bonusSwitch = fn($id) => '<label class="option-row compact"><span><span data-i1
                     <section class="chat hidden" id="chat">
                         <div class="chat-head">
                             <h3 class="side-title" data-i18n="chat_title">Chat</h3>
-                            <button type="button" class="btn-icon chat-close" id="btn-panel-close" data-i18n-title="close"><?= $ICON_CLOSE ?></button>
+                            <button type="button" class="btn-icon chat-close" id="btn-panel-close"
+                                    data-i18n-title="close"><?= $ICON_CLOSE ?></button>
                         </div>
                         <ol class="chat-list" id="chat-list"></ol>
                         <form class="chat-form" id="chat-form" autocomplete="off">
-                            <input type="text" id="chat-input" maxlength="200" data-i18n-placeholder="chat_placeholder" placeholder="Write a message…">
-                            <button type="submit" class="chat-send" data-i18n-title="chat_send"><?= $icon('<path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>', 16, 2) ?></button>
+                            <input type="text" id="chat-input" maxlength="200" data-i18n-placeholder="chat_placeholder"
+                                   placeholder="Write a message…">
+                            <button type="submit" class="chat-send"
+                                    data-i18n-title="chat_send"><?= $icon('<path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>', 16, 2) ?></button>
                         </form>
                     </section>
                 </div>
@@ -423,11 +488,17 @@ $bonusSwitch = fn($id) => '<label class="option-row compact"><span><span data-i1
         </div>
 
         <div class="game-actions" id="game-actions">
-            <button type="button" class="action-btn" id="btn-hint"><?= $icon($ICON_WAND, 18, 2) ?><span data-i18n="hint">Hint</span></button>
-            <button type="button" class="action-btn panel-toggle" id="btn-panel-toggle"><?= $icon($ICON_LIST, 18, 2) ?><span data-i18n="log_short">Log</span></button>
-            <button type="button" class="action-btn panel-toggle hidden" id="btn-chat-toggle"><?= $icon($ICON_CHAT, 18, 2) ?><span data-i18n="chat_title">Chat</span></button>
-            <button type="button" class="action-btn danger" id="btn-resign"><?= $icon($ICON_FLAG, 18, 2) ?><span data-i18n="resign">Resign</span></button>
-            <button type="button" class="action-btn primary hidden" id="btn-result"><?= $icon($ICON_TROPHY, 18, 2) ?><span data-i18n="game_over">Game over</span></button>
+            <button type="button" class="action-btn" id="btn-hint"><?= $icon($ICON_WAND, 18, 2) ?><span
+                        data-i18n="hint">Hint</span></button>
+            <button type="button" class="action-btn panel-toggle" id="btn-panel-toggle"><?= $icon($ICON_LIST, 18, 2) ?>
+                <span data-i18n="log_short">Log</span></button>
+            <button type="button" class="action-btn panel-toggle hidden"
+                    id="btn-chat-toggle"><?= $icon($ICON_CHAT, 18, 2) ?><span data-i18n="chat_title">Chat</span>
+            </button>
+            <button type="button" class="action-btn danger" id="btn-resign"><?= $icon($ICON_FLAG, 18, 2) ?><span
+                        data-i18n="resign">Resign</span></button>
+            <button type="button" class="action-btn primary hidden" id="btn-result"><?= $icon($ICON_TROPHY, 18, 2) ?>
+                <span data-i18n="game_over">Game over</span></button>
         </div>
 
         <!-- Same device: hides the fleets while the device changes hands -->
@@ -450,7 +521,9 @@ $bonusSwitch = fn($id) => '<label class="option-row compact"><span><span data-i1
             <h3 data-i18n="language_title">Language</h3>
             <div class="lang-options" role="listbox">
                 <?php foreach (['en' => 'English', 'it' => 'Italiano', 'es' => 'Español', 'fr' => 'Français', 'de' => 'Deutsch'] as $code => $label): ?>
-                    <button type="button" class="lang-option" data-lang="<?= $code ?>" lang="<?= $code ?>"><span class="lang-code"><?= strtoupper($code) ?></span><?= $label ?><span class="lang-check"><?= $ICON_CHECK ?></span></button>
+                    <button type="button" class="lang-option" data-lang="<?= $code ?>" lang="<?= $code ?>"><span
+                                class="lang-code"><?= strtoupper($code) ?></span><?= $label ?><span
+                                class="lang-check"><?= $ICON_CHECK ?></span></button>
                 <?php endforeach; ?>
             </div>
         </div>
@@ -484,9 +557,16 @@ $bonusSwitch = fn($id) => '<label class="option-row compact"><span><span data-i1
             <div class="custom-section">
                 <h4 class="custom-title" data-i18n="options_title">Options</h4>
                 <div class="option-list">
-                    <label class="option-row"><span data-i18n="opt_sound">Sounds</span><input type="checkbox" class="switch" id="opt-sound"></label>
-                    <label class="option-row"><span><span data-i18n="opt_automark">Mark the water around sunk ships</span><small data-i18n="opt_automark_hint">Ships never touch, so those cells must be empty</small></span><input type="checkbox" class="switch" id="opt-automark"></label>
-                    <label class="option-row"><span data-i18n="opt_coords">Show coordinates</span><input type="checkbox" class="switch" id="opt-coords"></label>
+                    <label class="option-row"><span data-i18n="opt_sound">Sounds</span><input type="checkbox"
+                                                                                              class="switch"
+                                                                                              id="opt-sound"></label>
+                    <label class="option-row"><span><span
+                                    data-i18n="opt_automark">Mark the water around sunk ships</span><small
+                                    data-i18n="opt_automark_hint">Ships never touch, so those cells must be empty</small></span><input
+                                type="checkbox" class="switch" id="opt-automark"></label>
+                    <label class="option-row"><span data-i18n="opt_coords">Show coordinates</span><input type="checkbox"
+                                                                                                         class="switch"
+                                                                                                         id="opt-coords"></label>
                 </div>
             </div>
         </div>
@@ -505,8 +585,10 @@ $bonusSwitch = fn($id) => '<label class="option-row compact"><span><span data-i1
             <button type="button" class="modal-close" data-close data-i18n-title="close"><?= $ICON_CLOSE ?></button>
             <div class="donate-icon"><?= $icon($ICON_HEART, 28, 2.2) ?></div>
             <h3 data-i18n="donate_modal_title">Support the project</h3>
-            <p class="muted" data-i18n="donate_modal_intro">All my projects are free and open-source — no ads, no tracking, no subscriptions. A small donation helps cover server and maintenance costs.</p>
-            <a class="btn btn-primary btn-block" href="https://www.saveriomorelli.com/donate/" target="_blank" rel="noopener">
+            <p class="muted" data-i18n="donate_modal_intro">All my projects are free and open-source — no ads, no
+                tracking, no subscriptions. A small donation helps cover server and maintenance costs.</p>
+            <a class="btn btn-primary btn-block" href="https://www.saveriomorelli.com/donate/" target="_blank"
+               rel="noopener">
                 <?= $icon($ICON_HEART, 18, 2.2) ?>
                 <span data-i18n="donate_cta">Make a donation</span>
             </a>
@@ -514,7 +596,8 @@ $bonusSwitch = fn($id) => '<label class="option-row compact"><span><span data-i1
     </div>
 
     <!-- The opponent lost the connection -->
-    <div id="offline-overlay" class="modal hidden" role="alertdialog" aria-labelledby="offline-title" aria-describedby="offline-text">
+    <div id="offline-overlay" class="modal hidden" role="alertdialog" aria-labelledby="offline-title"
+         aria-describedby="offline-text">
         <div class="modal-content offline-content">
             <div class="offline-clock">
                 <svg viewBox="0 0 100 100" aria-hidden="true">
@@ -548,9 +631,14 @@ $bonusSwitch = fn($id) => '<label class="option-row compact"><span><span data-i1
             <p class="score-line" id="score-line"></p>
             <p class="rematch-status muted" id="rematch-status"></p>
             <div class="gameover-actions">
-                <button type="button" class="btn btn-primary btn-block" id="btn-rematch" data-i18n="rematch">Rematch</button>
-                <button type="button" class="btn btn-secondary btn-block" id="btn-review" data-i18n="review_board">Look at the boards</button>
-                <button type="button" class="btn btn-ghost btn-block" id="btn-gameover-home" data-i18n="back_home">Back to start</button>
+                <button type="button" class="btn btn-primary btn-block" id="btn-rematch" data-i18n="rematch">Rematch
+                </button>
+                <button type="button" class="btn btn-secondary btn-block" id="btn-review" data-i18n="review_board">Look
+                    at the boards
+                </button>
+                <button type="button" class="btn btn-ghost btn-block" id="btn-gameover-home" data-i18n="back_home">Back
+                    to start
+                </button>
             </div>
         </div>
     </div>

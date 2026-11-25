@@ -205,6 +205,7 @@
         el.innerHTML = list.map((c, i) => `<span class="bulb-cell">${bulbSvg(c === '💡')}${numbers ? `<small>${i + 1}</small>` : ''}</span>`).join('');
         return el;
     }
+
     const isBulbRow = s => typeof s === 'string' && /^[💡⚫🌑\s]+$/u.test(s);
 
     window.ThinkHopUI = {store, h, icon, toast, modal, confirmBox, skeleton, mirrorSvg, bulbSvg, bulbs, isBulbRow};

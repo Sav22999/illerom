@@ -1,5 +1,5 @@
 /** Files: downloads (PDF, PPTX, ODP, SAVPRE, pictures) and opening of SAVPRE and PPTX files. */
-import { state, api, get, h, icon, btn, go, oops, ok, toast, dialog, saveBlob, fileName, uploadPicture, uid } from './core.js';
+import { state, api, get, h, icon, btn, tile, go, oops, ok, toast, dialog, saveBlob, fileName, uploadPicture, uploadVideo, uid } from './core.js';
 import { t } from './i18n.js';
 import { zip, unzip } from './zip.js';
 import { Deck, fixSlide } from './model.js';
@@ -25,8 +25,10 @@ async function loadMedia(deck, convert = true) {
 /** The app's own file: a ZIP with deck.json and the pictures, so it opens elsewhere and without a connection. */
 export async function makeSavpre(deck) {
   const media = await loadMedia(deck, false);
-  const json = { app: 'SavPresentations', version: 1, title: deck.title, meta: deck.meta, slides: deck.order().map((s) => ({ sid: s.sid, pos: s.pos, d: s.d })), media: Object.fromEntries([...media].map(([src, m]) => [src, m.name])) };
-  return zip([['mimetype', 'application/vnd.savpresentations', { store: true }], ['deck.json', JSON.stringify(json)], ...[...media.values()].map((m) => ['media/' + m.name, m.blob])], 'application/vnd.savpresentations');
+  const videos = new Map(), ext = { 'video/quicktime': 'mov', 'video/webm': 'webm', 'video/ogg': 'ogv' };
+  for (const sl of deck.order()) for (const el of Object.values(sl.d.els)) if (el.t === 'video' && el.vid?.startsWith('m:') && !videos.has(el.vid)) try { const r = await fetch(mediaUrl(el.vid)); if (!r.ok) continue; const blob = await r.blob(); videos.set(el.vid, { name: el.vid.slice(2) + '.' + (ext[blob.type] || 'mp4'), blob }); } catch { /* left out */ }
+  const json = { app: 'SavPresentations', version: 1, title: deck.title, meta: deck.meta, slides: deck.order().map((s) => ({ sid: s.sid, pos: s.pos, d: s.d })), media: Object.fromEntries([...media, ...videos].map(([src, m]) => [src, m.name])) };
+  return zip([['mimetype', 'application/vnd.savpresentations', { store: true }], ['deck.json', JSON.stringify(json)], ...[...media.values(), ...videos.values()].map((m) => ['media/' + m.name, m.blob])], 'application/vnd.savpresentations');
 }
 
 async function build(deck, ctx, kind, onProgress) {
@@ -38,13 +40,12 @@ async function build(deck, ctx, kind, onProgress) {
 
 export function downloadMenu(ed) {
   let dlg;
-  const card = (kind, ic, label) => h('button.dl', { type: 'button', onclick: async (e) => {
-    const b = e.currentTarget;
+  const card = (kind, ic, label) => { const b = tile(label, async () => {
     if (b.classList.contains('busy')) return;
     b.classList.add('busy');
     try { await saveBlob(await build(ed.deck, ed.ctx, kind, () => {}), fileName(ed.deck.title, kind)); ok(t('downloaded')); dlg.close(true); } catch (x) { oops(x); }
     b.classList.remove('busy');
-  } }, icon(ic), h('b', label), h('small', t('dl_' + kind)));
+  }, { class: 'dl' }, icon(ic), h('b', label), h('small', t('dl_' + kind))); return b; };
   return dialog(t('download'), h('div.dls', card('pdf', 'file-text', 'PDF'), card('pptx', 'presentation', 'PowerPoint (.pptx)'), card('odp', 'file-chart-column', 'OpenDocument (.odp)'), card('savpre', 'file-box', 'SavPresentations (.savpre)')), [], { width: '34rem', ref: (d) => (dlg = d) });
 }
 
@@ -76,9 +77,11 @@ async function readSavpre(z) {
   // the pictures become pictures of who opens the file
   const map = {};
   for (const [src, name] of Object.entries(j.media || {})) {
-    const b = /^[a-f0-9]{32}\.[a-z]{3,4}$/.test(name) && (await z.bytes('media/' + name));
-    if (b) map[src] = (await uploadPicture(new File([b], name, { type: 'image/' + name.split('.').pop().replace('jpg', 'jpeg') }))).src;
+    const b = /^[a-f0-9]{32}\.[a-z0-9]{3,4}$/.test(name) && (await z.bytes('media/' + name));
+    const vid = /\.(mp4|mov|webm|ogv)$/.test(name);
+    if (b && vid) try { map[src] = (await uploadVideo(new File([b], name, { type: 'video/mp4' }))).src; } catch (e) { oops(e); }
+    else if (b) map[src] = (await uploadPicture(new File([b], name, { type: 'image/' + name.split('.').pop().replace('jpg', 'jpeg') }))).src;
   }
-  const slides = j.slides.map((s) => { const d = fixSlide(s.d); if (d.bg?.src) d.bg.src = map[d.bg.src] || ''; for (const el of Object.values(d.els)) { if (el.src) el.src = map[el.src] || ''; if (el.poster) el.poster = map[el.poster] || ''; } return { sid: s.sid, pos: s.pos, d }; });
+  const slides = j.slides.map((s) => { const d = fixSlide(s.d); if (d.bg?.src) d.bg.src = map[d.bg.src] || ''; for (const el of Object.values(d.els)) { if (el.src) el.src = map[el.src] || ''; if (el.poster) el.poster = map[el.poster] || ''; if (el.vid?.startsWith('m:')) el.vid = map[el.vid] || ''; } return { sid: s.sid, pos: s.pos, d }; });
   return { title: j.title, meta: j.meta, slides };
 }

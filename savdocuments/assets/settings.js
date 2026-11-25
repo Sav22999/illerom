@@ -1,32 +1,82 @@
 /** Page sizes, typefaces and the settings a document starts with. Lengths in millimetres. */
-export const SIZES = { A3: [297, 420], A4: [210, 297], A5: [148, 210], A6: [105, 148], B5: [176, 250], Letter: [215.9, 279.4], Legal: [215.9, 355.6], Tabloid: [279.4, 431.8] };
+export const SIZES = {
+    A3: [297, 420],
+    A4: [210, 297],
+    A5: [148, 210],
+    A6: [105, 148],
+    B5: [176, 250],
+    Letter: [215.9, 279.4],
+    Legal: [215.9, 355.6],
+    Tabloid: [279.4, 431.8]
+};
 export const FONTS = ['Source Sans 3', 'Inter', 'Open Sans', 'Montserrat', 'Poppins', 'Lora', 'Playfair Display', 'Georgia', 'Garamond', 'Times New Roman', 'Arial', 'Helvetica', 'Verdana', 'Courier New'];
-const FALL = { Lora: 'serif', 'Playfair Display': 'serif', Georgia: 'serif', Garamond: "'EB Garamond', Georgia, serif", 'Times New Roman': 'Times, serif', 'Courier New': 'Courier, monospace' };
+const FALL = {
+    Lora: 'serif',
+    'Playfair Display': 'serif',
+    Georgia: 'serif',
+    Garamond: "'EB Garamond', Georgia, serif",
+    'Times New Roman': 'Times, serif',
+    'Courier New': 'Courier, monospace'
+};
 export const fontStack = (f) => `'${f}', ${FALL[f] || 'Arial, sans-serif'}`;
 
 export const DEFAULTS = {
-  size: 'A4', w: 210, h: 297, landscape: false, mt: 25, mr: 25, mb: 25, ml: 25,
-  header: { l: '', c: '', r: '' }, footer: { l: '', c: '', r: '' }, firstPage: true,
-  font: 'Source Sans 3', headFont: 'Source Sans 3', fontSize: 11, line: 1.5, gap: 8, color: '#1c1c1c', headColor: '#1c1c1c', numbered: false, justify: false, lang: 'en',
+    size: 'A4',
+    w: 210,
+    h: 297,
+    landscape: false,
+    mt: 25,
+    mr: 25,
+    mb: 25,
+    ml: 25,
+    header: {l: '', c: '', r: ''},
+    footer: {l: '', c: '', r: ''},
+    firstPage: true,
+    font: 'Source Sans 3',
+    headFont: 'Source Sans 3',
+    fontSize: 11,
+    line: 1.5,
+    gap: 8,
+    color: '#1c1c1c',
+    headColor: '#1c1c1c',
+    accent: '#0f6e56',
+    bg: '#ffffff',
+    border: '',
+    borderColor: '#0f6e56',
+    mark: '',
+    startPage: 1,
+    bandLine: false,
+    capNum: false,
+    numbered: false,
+    justify: false,
+    lang: 'en',
 };
 
 /** Ready-made looks: they only change typefaces, sizes and colours. */
+const look = (font, headFont, fontSize, line, gap, color, headColor, accent, justify = false, bg = '#ffffff') => ({font, headFont, fontSize, line, gap, color, headColor, accent, justify, bg});
 export const LOOKS = {
-  clean: { font: 'Source Sans 3', headFont: 'Source Sans 3', fontSize: 11, line: 1.5, gap: 8, color: '#1c1c1c', headColor: '#1c1c1c', justify: false },
-  modern: { font: 'Inter', headFont: 'Montserrat', fontSize: 10.5, line: 1.55, gap: 8, color: '#22262b', headColor: '#0f6e56', justify: false },
-  book: { font: 'Lora', headFont: 'Playfair Display', fontSize: 11, line: 1.6, gap: 4, color: '#211d1a', headColor: '#211d1a', justify: true },
-  thesis: { font: 'Times New Roman', headFont: 'Times New Roman', fontSize: 12, line: 1.5, gap: 6, color: '#000000', headColor: '#000000', justify: true },
-  office: { font: 'Open Sans', headFont: 'Open Sans', fontSize: 10.5, line: 1.45, gap: 7, color: '#1f2430', headColor: '#1d4e89', justify: false },
-  type: { font: 'Courier New', headFont: 'Courier New', fontSize: 12, line: 1.8, gap: 10, color: '#1c1c1c', headColor: '#1c1c1c', justify: false },
+    clean: look('Source Sans 3', 'Source Sans 3', 11, 1.5, 8, '#1c1c1c', '#1c1c1c', '#0f6e56'),
+    modern: look('Inter', 'Montserrat', 10.5, 1.55, 8, '#22262b', '#0f6e56', '#0f6e56'),
+    book: look('Lora', 'Playfair Display', 11, 1.6, 4, '#211d1a', '#211d1a', '#8a4b2f', true),
+    thesis: look('Times New Roman', 'Times New Roman', 12, 1.5, 6, '#000000', '#000000', '#1d4e89', true),
+    office: look('Open Sans', 'Open Sans', 10.5, 1.45, 7, '#1f2430', '#1d4e89', '#1d4e89'),
+    type: look('Courier New', 'Courier New', 12, 1.8, 10, '#1c1c1c', '#1c1c1c', '#5f6660'),
+    sunset: look('Poppins', 'Poppins', 10, 1.6, 8, '#2b2330', '#c2410c', '#ea7317'),
+    ocean: look('Open Sans', 'Montserrat', 10.5, 1.5, 8, '#1b2a3a', '#0b5394', '#0891b2'),
+    forest: look('Lora', 'Montserrat', 10.5, 1.6, 7, '#22301f', '#2f5d34', '#5a8f3c'),
+    berry: look('Inter', 'Playfair Display', 10.5, 1.6, 8, '#2a1f2d', '#8b1e5b', '#b83280'),
+    cream: look('Lora', 'Lora', 11, 1.65, 6, '#3b332a', '#5b3a21', '#a9744f', false, '#fdf8ef'),
+    mono: look('Inter', 'Inter', 10, 1.5, 8, '#111111', '#111111', '#111111'),
 };
 
 export const MM = 96 / 25.4;
+
 /** Page width and height in mm, orientation included. */
 export function pageMM(s) {
-  let [w, h] = s.size === 'custom' ? [s.w, s.h] : SIZES[s.size] || SIZES.A4;
-  if (s.landscape && h > w) [w, h] = [h, w];
-  else if (!s.landscape && s.size !== 'custom' && w > h) [w, h] = [h, w];
-  return [w, h];
+    let [w, h] = s.size === 'custom' ? [s.w, s.h] : SIZES[s.size] || SIZES.A4;
+    if (s.landscape && h > w) [w, h] = [h, w];
+    else if (!s.landscape && s.size !== 'custom' && w > h) [w, h] = [h, w];
+    return [w, h];
 }
 
 /** Header or footer text with its fields filled in. */

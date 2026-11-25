@@ -5,7 +5,11 @@
 (function (root) {
     'use strict';
 
-    const R = (id, d, o, en, it, es, fr, de) => root.ThinkHopRiddles.push(Object.assign({id, d, t: {en, it, es, fr, de}}, o ? {o} : {}));
+    const R = (id, d, o, en, it, es, fr, de) => root.ThinkHopRiddles.push(Object.assign({
+        id,
+        d,
+        t: {en, it, es, fr, de}
+    }, o ? {o} : {}));
 
     R('n01', .06, null,
         ['What gets wetter the more it dries?', 'A towel dries you by soaking up the water.', ['A towel', 'A sponge in the sun', 'Ice', 'Rain']],
