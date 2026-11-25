@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- The leaning square of saveriomorelli.com; the shape cut out of it is both a person and a keyhole.
+       The small lighter tile comes from SavComponents: here it is the key turned in the lock. -->
+  <defs>
+    <mask id="m">
+      <rect width="512" height="512" fill="#fff"/>
+      <circle cx="246" cy="222" r="60" fill="#000"/>
+      <path d="M246 262c50 0 82 38 92 104h-184c10-66 42-104 92-104z" fill="#000"/>
+    </mask>
+  </defs>
+  <rect x="71" y="91" width="350" height="350" transform="rotate(10 246 266)" fill="#66cbff" mask="url(#m)"/>
+  <rect x="352" y="52" width="104" height="104" transform="rotate(24 404 104)" fill="#9fdfff"/>
+</svg>

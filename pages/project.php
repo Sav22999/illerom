@@ -65,6 +65,7 @@ $rel = array_filter($projects, fn($x, $k) => $k !== $slug && $x['cat'] === $p['c
             <div><dt><?= e($t['r_account']) ?></dt><dd><?= e($t['account'][$p['account']]) ?></dd></div>
             <div><dt><?= e($t['r_offline']) ?></dt><dd><?= e($p['offline'] ? $t['yes_offline'] : $t['no_offline']) ?></dd></div>
             <div><dt><?= e($t['r_langs']) ?></dt><dd><?= e(ucfirst(implode(', ', array_map(fn($l) => $t['lang_names'][$l], $p['langs'])))) ?></dd></div>
+            <div><dt><?= e($t['r_status']) ?></dt><dd><a href="<?= $base ?>status/#<?= $slug ?>"><?= e($t['see_status']) ?></a></dd></div>
             <div><dt><?= e($t['r_license']) ?></dt><dd><?= e($t['open_source']) ?></dd></div>
 <?php endif; ?>
         </dl>

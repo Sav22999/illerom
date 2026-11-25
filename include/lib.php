@@ -10,10 +10,9 @@ function asset(string $path): string
     return '/assets/' . $path . (is_file($f) ? '?v=' . filemtime($f) : '');
 }
 
-/** Where a project opens: its own folder here if there is one, otherwise the address in the data. */
+/** Where a project opens ('' = not yet). */
 function app_url(string $slug, array $p): string
 {
-    if (preg_match('/^[a-z0-9-]+$/', $slug) && is_dir(ROOT . '/' . $slug)) return '/' . $slug . '/';
     return $p['url'];
 }
 
@@ -78,9 +77,10 @@ function wordmark(): string
     ];
     $w = 404 + 50;
     $b = '';
+    $n = 0;
     foreach ($g as [, $rects]) {
         foreach ($rects as [$x, $y, $rw, $rh]) {
-            $b .= sprintf('<rect class="bar" x="%s" y="%s" width="%s" height="%s"/>', $x, $y, $rw, $rh);
+            $b .= sprintf('<rect class="bar" style="--n:%d" x="%s" y="%s" width="%s" height="%s"/>', $n++, $x, $y, $rw, $rh);
         }
     }
     return '<svg class="wordmark" viewBox="0 0 ' . $w . ' 100" aria-hidden="true"><g class="wm-bars"><g class="wm-lean" transform="matrix(1 0 .5 1 0 0)">' . $b . '</g></g></svg>';

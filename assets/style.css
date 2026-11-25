@@ -103,12 +103,13 @@ a:hover { text-decoration-thickness: 2px; }
 .solo .plate-y { padding-block: clamp(2.2rem, 4.6vw, 3.6rem); }
 .solo .plate-y::after { content: ""; position: absolute; inset: 0; z-index: -2; background: var(--note-blue); rotate: 2.2deg; }
 .wordmark { display: block; width: 100%; overflow: visible; }
-.wordmark .bar { fill: var(--plum); }
-/* the bars start straight and lean over: they can be read at any moment of the animation */
-.wm-lean { animation: lean .7s .15s cubic-bezier(.5, 0, .1, 1) backwards; }
+.wordmark .bar { fill: var(--plum); transform-box: fill-box; transform-origin: 50% 0; animation: grow .5s calc(var(--n) * 45ms + .1s) var(--sav-easing) backwards; }
 .wm-bars { transition: transform .75s cubic-bezier(.65, 0, .25, 1); }
 .flipped .wm-bars { transform: translateX(454px) scaleX(-1); }
-.flipped @keyframes lean { from { transform: none; } }
+/* the bars grow upright, one after the other, then they lean */
+.wm-lean { animation: lean .65s .95s cubic-bezier(.5, 0, .1, 1) backwards; }
+@keyframes grow { from { transform: scaleY(0); } }
+@keyframes lean { from { transform: none; } }
 
 .askew { display: inline-block; rotate: -5deg; transform-origin: 0 70%; transition: rotate .4s var(--sav-easing); }
 h1:hover .askew { rotate: 0deg; }
@@ -225,6 +226,25 @@ tbody td:nth-child(2) { font-weight: 550; }
 .prose h1 { font-size: clamp(2rem, 1.4rem + 2.5vw, 3rem); margin-bottom: 1.5rem; }
 .prose h2 { font-size: 1.3rem; margin: 2rem 0 .5rem; } .prose p { line-height: 1.65; } .prose p + p { margin-top: 1.2rem; }
 .nf h1 { margin: 1.4rem 0 .8rem; }
+
+/* status */
+.sthead { padding-block: clamp(2rem, 5vw, 3.5rem) 1.5rem; } .sthead h1 { font-size: clamp(2.1rem, 1.4rem + 3vw, 3.4rem); margin-bottom: .8rem; }
+.stbody { padding-bottom: 5rem; }
+[data-status="up"] { --st: #16804f; } [data-status="degraded"] { --st: #b26a00; } [data-status="down"] { --st: #c22c40; } [data-status="unknown"] { --st: var(--sav-color-text-muted); }
+.sav-theme-dark { --st-mix: 45%; }
+@media (prefers-color-scheme: dark) { .sav-theme-auto { --st-mix: 45%; } }
+.dot { flex: none; width: .62rem; height: .95rem; background: color-mix(in oklab, var(--st), #fff var(--st-mix, 0%)); transform: skewX(26.57deg); }
+.stsum { position: relative; isolation: isolate; display: flex; flex-wrap: wrap; align-items: center; gap: .9rem 1.2rem; padding: 1.3rem 1.6rem; margin-bottom: 2.4rem; }
+.stsum::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--sav-color-surface-2); rotate: -.5deg; }
+.stsum .dot { width: 1rem; height: 1.6rem; } .stsum > div { flex: 1; min-width: 12rem; } .stsum h2 { font-size: 1.3rem; } .stsum p { color: var(--sav-color-text-muted); font-size: .92rem; min-height: 1.5em; }
+.stgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 21rem), 1fr)); gap: 2rem 2.2rem; }
+.stcard { scroll-margin-top: 6rem; } .stcard:target h3 { text-decoration: underline; text-decoration-thickness: 3px; text-decoration-color: var(--note-yellow); }
+.stcard header { display: flex; align-items: center; gap: .75rem; padding-bottom: .7rem; } .stcard header img { width: 2rem; height: 2rem; object-fit: contain; } .stcard h3 { font-size: 1.15rem; } .stcard h3 a { text-decoration: none; } .stcard h3 a:hover { text-decoration: underline; }
+.stcard li { display: flex; align-items: center; gap: .75rem; padding: .6rem .3rem; border-top: 1px solid var(--sav-color-border); font-size: .95rem; }
+.stn { flex: 1; min-width: 0; } .std { color: var(--sav-color-text-muted); font-size: .82rem; text-align: right; font-variant-numeric: tabular-nums; } .stl { font-weight: 600; font-size: .85rem; color: color-mix(in oklab, var(--st), #fff var(--st-mix, 0%)); white-space: nowrap; }
+.stapi { margin-top: 4rem; max-width: 48rem; } .stapi h2 { margin-bottom: .6rem; } .stapi > p { color: var(--sav-color-text-muted); }
+.codes { display: grid; gap: .5rem; margin: 1.2rem 0; } .codes li { display: flex; flex-wrap: wrap; gap: .3rem 1rem; align-items: baseline; } .codes span { color: var(--sav-color-text-muted); font-size: .92rem; }
+code { font: .88rem/1.55 var(--sav-font-mono); overflow-wrap: anywhere; } .stapi pre { margin: 0 0 1rem; padding: 1.1rem 1.3rem; overflow-x: auto; background: var(--sav-color-surface-2); } .stapi pre code { overflow-wrap: normal; }
 
 /* footer */
 .foot { border-top: 1px solid var(--sav-color-border); }

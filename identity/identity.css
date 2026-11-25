@@ -1,0 +1,35 @@
+/* The dialogs of identity.js and the SavAccount button: the same in every project, with its accent colour (--idl-accent). */
+.idl { --idl-accent: #6b3fd4; --b: #fff; --f: #1c1b22; --s: #62606e; --l: #d9d7e0; --h: #f3f2f6; --bad: #b3261e; --good: #14713f;
+  box-sizing: border-box; width: min(27rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); margin: auto; padding: 1.5rem; border: 0; border-radius: 18px; overflow: auto;
+  background: var(--b); color: var(--f); font-size: 1rem; line-height: 1.5; text-align: left; box-shadow: 0 24px 70px rgb(0 0 0 / .35); }
+.idl.idl-dark { --b: #221f2b; --f: #f2f0f7; --s: #b5b1c2; --l: #4a4658; --h: #322e3f; --bad: #ff8a80; --good: #6fe0a1; color-scheme: dark; }
+.idl::backdrop { background: rgb(12 10 20 / .55); }
+.idl *, .idl *::before { box-sizing: border-box; }
+.idl h2 { margin: 0 0 .7rem; font-size: 1.3rem; line-height: 1.25; font-weight: 700; color: inherit; text-align: left; }
+.idl p { margin: 0 0 1rem; font-size: 1rem; color: inherit; max-width: none; }
+.idl-body, .idl form { display: grid; gap: .2rem; }
+.idl form { gap: 0; }
+.idl-f { display: grid; gap: .35rem; margin: 0 0 1rem; font-size: .9rem; font-weight: 600; color: var(--f); }
+.idl-f small, .idl-m small { font-weight: 400; color: var(--s); font-size: .85rem; }
+.idl-f input { width: 100%; min-height: 48px; margin: 0; padding: 0 .9rem; border: 1.5px solid var(--l); border-radius: 12px; background: var(--b); color: var(--f); font: inherit; font-size: 1rem; font-weight: 400; }
+.idl-f input:focus-visible, .idl-b:focus-visible, .idl-sav:focus-visible, .idl a:focus-visible { outline: 3px solid var(--idl-accent, #6b3fd4); outline-offset: 2px; }
+.idl-c { display: flex; align-items: flex-start; gap: .6rem; margin: 0 0 1rem; font-size: .95rem; color: var(--f); cursor: pointer; }
+.idl-c input { flex: none; width: 20px; height: 20px; margin: .15rem 0 0; accent-color: var(--idl-accent); }
+.idl a { color: inherit; text-decoration: underline; }
+.idl-row { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .6rem; margin: .2rem 0 0; }
+.idl-b { min-height: 46px; margin: 0; padding: .5rem 1.15rem; border: 1.5px solid var(--l); border-radius: 12px; background: transparent; color: var(--f); font: inherit; font-size: .98rem; font-weight: 600; line-height: 1.25; cursor: pointer; box-shadow: none; text-transform: none; letter-spacing: normal; }
+.idl-b:hover { background: var(--h); }
+.idl-b.main { border-color: var(--idl-accent); background: var(--idl-accent); color: var(--idl-on-accent, #fff); }
+.idl-b.main:hover { filter: brightness(1.08); }
+.idl-b.plain { border-color: transparent; padding-inline: .2rem; justify-self: start; text-align: left; text-decoration: underline; text-underline-offset: .2em; font-weight: 500; }
+.idl-b:disabled, .idl-sav:disabled { opacity: .55; cursor: default; }
+.idl-msg { padding: .6rem .8rem; border-radius: 10px; background: var(--h); color: var(--bad) !important; font-size: .93rem !important; font-weight: 600; }
+.idl-msg.good { color: var(--good) !important; }
+.idl-msg[hidden] { display: none; }
+.idl-m { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 64px; padding: .5rem 0; border-top: 1px solid var(--l); }
+.idl-m > div { display: grid; } .idl-m b { font-weight: 650; }
+.idl-google { display: grid; justify-items: start; margin: .2rem 0 .6rem; }
+.idl-sav { box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: .65rem; width: 100%; max-width: 400px; min-height: 44px; margin: .65rem auto 0; padding: .4rem 1rem; border: 1px solid #cfcdd6; border-radius: 999px; background: #fff; color: #1c1b22; font: inherit; font-size: .95rem; font-weight: 600; cursor: pointer; box-shadow: none; text-transform: none; letter-spacing: normal; }
+.idl-sav:hover { background: #f5f4f8; }
+.idl-sav.idl-dark { background: #17151d; border-color: #55515f; color: #f2f0f7; } .idl-sav.idl-dark:hover { background: #24212c; }
+.idl-sav img { flex: none; width: 20px; height: 20px; }

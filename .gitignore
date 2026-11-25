@@ -1,3 +1,41 @@
-.idea/
-.DS_Store
+# Credentials and secrets
 credentials.php
+.mail-config.php
+.fcm-service-account.json
+/*/api/db.php
+.env
+.env.*
+
+# Dumps, logs and backups (may contain data or credentials)
+*.sql.gz
+*.log
+*.bak
+
+# IDE, tools and OS
+.idea/
+.vscode/
+.claude/
+.DS_Store
+*.swp
+*~
+__pycache__/
+node_modules/
+
+# Status cache
+/api/status/.cache.json
+
+# Android builds and keys
+android/keystore.properties
+/*/android/**/*.jks
+/*/android/**/*.keystore
+/*/android/local.properties
+/*/android/.gradle/
+/*/android/.idea/
+/*/android/build/
+/*/android/app/build/
+/*/android/app/release/
+/*/android/captures/
+*.apk
+*.aab
+# Firebase config (API key): kept only on the computer that builds the apps
+/*/android/app/google-services.json

@@ -36,6 +36,9 @@
     <link rel="stylesheet" href="<?= asset('style.css') ?>">
     <script src="<?= asset('sav/sav.js') ?>" defer></script>
     <script src="<?= asset('app.js') ?>" defer></script>
+<?php if ($page === 'status'): ?>
+    <script src="<?= asset('status.js') ?>" defer></script>
+<?php endif; ?>
 <?php if ($page === 'project' && ($p = $projects[$slug])['url'] !== ''): ?>
     <script type="application/ld+json"><?= json_encode([
         '@context' => 'https://schema.org', '@type' => $p['cat'] === 'games' ? 'VideoGame' : 'WebApplication',

@@ -1,0 +1,42 @@
+# SavPresentations
+Options -Indexes
+DirectoryIndex index.php
+
+# Block credentials, samples, docs and hidden files anywhere in this folder
+<FilesMatch "(^\.|^credentials.*\.php$|\.(md|sql|log|bak|bin|jks|keystore|properties|gradle|kts)$)">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+# PHP libraries, pictures of the users, tools and the Android project are not reachable from the browser
+RedirectMatch 404 ^/savpresentations/(lib|storage|tools|android)(/|$)
+
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+  <FilesMatch "\.(js|css|webmanifest)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+  <FilesMatch "\.(ttf|woff2)$">
+    Header set Cache-Control "public, max-age=31536000"
+  </FilesMatch>
+</IfModule>
+
+<IfModule mod_mime.c>
+  AddType application/manifest+json .webmanifest
+  AddType font/ttf .ttf
+  AddType font/woff2 .woff2
+</IfModule>
+
+# Force HTTPS (the session cookie is marked Secure)
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>

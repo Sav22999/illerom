@@ -1,0 +1,8 @@
+# The portal adds ?v= to its files: browsers can keep them for long
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType text/javascript "access plus 1 year"
+    ExpiresByType font/ttf "access plus 1 year"
+</IfModule>

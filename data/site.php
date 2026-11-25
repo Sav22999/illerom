@@ -5,7 +5,7 @@ return [
     'contact' => 'https://www.saveriomorelli.com/contact-me/',
     'repo' => 'https://github.com/Sav22999/illerom',
     // where the source of the projects lives: the folder name of each project is added at the end
-    'source' => 'https://github.com/Sav22999/personal-website/tree/new-projects/projects/',
+    'source' => 'https://github.com/Sav22999/illerom/tree/main/',
     // the "read it backwards" button next to the name: hidden for now
     'flip' => false,
     // the bigger projects, which have a home of their own

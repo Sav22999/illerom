@@ -1,0 +1,14 @@
+<FilesMatch "^db\.php$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+<FilesMatch "^characters\.php$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Not a page: keep it out of search results
+<IfModule mod_headers.c>
+    Header set X-Robots-Tag "noindex, nofollow"
+</IfModule>

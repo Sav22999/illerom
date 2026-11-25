@@ -1,0 +1,25 @@
+# Uploaded images only: never execute scripts here
+Options -Indexes -ExecCGI
+RemoveHandler .php .phtml .php3 .php4 .php5 .php7 .php8 .phar .pl .py .cgi .sh
+RemoveType .php .phtml .php3 .php4 .php5 .php7 .php8 .phar
+<FilesMatch "\.(?i:php\d*|phtml|phar|pl|py|cgi|sh|html?|svg|js)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+<IfModule mod_php.c>
+  php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+  php_flag engine off
+</IfModule>
+# Images uploaded before the move to illerom.eu are still on the old site
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^([A-Za-z0-9._-]+\.(?:jpe?g|png|webp|gif))$ https://www.saveriomorelli.com/projects/foodtrack/uploads/recipes/$1 [R=302,L]
+</IfModule>

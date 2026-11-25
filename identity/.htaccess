@@ -1,0 +1,10 @@
+# identity.php is a library of the projects' APIs: it is not called from the browser
+<FilesMatch "\.(php|md)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>

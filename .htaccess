@@ -1,7 +1,7 @@
 DirectoryIndex index.php index.html
 
-# Nothing to see in hidden files, data, notes and credentials
-<FilesMatch "^\.|^credentials.*\.php$|\.(sql|log|bak|old|swp|ini|env|md)$|~$">
+# Nothing to see in hidden files, data, notes and credentials (each project has its own rules too)
+<FilesMatch "^\.|^credentials([-.].*)?\.php$|\.(sql|sql\.gz|log|bak|old|swp|ini|env|md|jks|keystore|properties|gradle|kts)$|~$">
   <IfModule mod_authz_core.c>
     Require all denied
   </IfModule>
@@ -11,6 +11,7 @@ DirectoryIndex index.php index.html
   </IfModule>
 </FilesMatch>
 RedirectMatch 404 ^/(data|include|pages|tools)(/|$)
+RedirectMatch 404 ^/[a-z0-9-]+/(android|tools)(/|$)
 RedirectMatch 404 /\.(git|idea)(/|$)
 
 <IfModule mod_headers.c>
@@ -19,18 +20,20 @@ RedirectMatch 404 /\.(git|idea)(/|$)
     Header set Referrer-Policy "strict-origin-when-cross-origin"
     Header set Permissions-Policy "camera=(), microphone=(), geolocation=()"
 </IfModule>
+<IfModule mod_mime.c>
+    AddType application/manifest+json .webmanifest
+</IfModule>
 <IfModule mod_deflate.c>
-    AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript application/json image/svg+xml application/xml font/ttf application/x-font-ttf
+    AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript application/json image/svg+xml text/xml application/xml font/ttf application/x-font-ttf
 </IfModule>
 <IfModule mod_expires.c>
     ExpiresActive On
-    ExpiresByType text/css "access plus 1 year"
-    ExpiresByType application/javascript "access plus 1 year"
-    ExpiresByType text/javascript "access plus 1 year"
-    ExpiresByType image/png "access plus 1 year"
-    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType text/css "access plus 1 hour"
+    ExpiresByType application/javascript "access plus 1 hour"
+    ExpiresByType text/javascript "access plus 1 hour"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
     ExpiresByType font/woff2 "access plus 1 year"
-    ExpiresByType font/ttf "access plus 1 year"
 </IfModule>
 
 # Files and folders of the projects are served as they are; every other address goes to the portal

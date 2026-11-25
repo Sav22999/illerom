@@ -7,20 +7,18 @@
  *   account    none | optional | required
  *   offline    works without a connection after the first visit
  *   play       id on Google Play (or '')
- *   url        where the app lives today. If a folder /<slug>/ exists next to index.php, that one is used instead:
- *              to move a project here, copy its folder and nothing else changes
+ *   url        where the app lives: /<slug>/ here, or a full address elsewhere; '' = it cannot be opened yet
  *   source     folder in the repository of $site['source'], or a full address; '' = not published yet
  *   privacy    address of its privacy notice, relative to the app ('' = none)
  *   shots      how many screenshots in assets/projects/<slug>/ (1.jpg, 2.jpg…)
  */
-$old = 'https://www.saveriomorelli.com/projects/';
 $five = ['en', 'it', 'fr', 'de', 'es'];
 $two = ['en', 'it'];
 
 return [
     'opennewsletter' => [
         'name' => 'OpenNewsletter', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '',
-        'url' => $old . 'opennewsletter/', 'source' => 'opennewsletter', 'privacy' => 'terms.php', 'langs' => $two, 'shots' => 0,
+        'url' => '/opennewsletter/', 'source' => 'opennewsletter', 'privacy' => 'terms.php', 'langs' => $two, 'shots' => 0,
         'it' => ['Newsletter scritte, approvate e spedite in gruppo.',
             'Chi gestisce la newsletter di un’associazione raramente è una persona sola: qualcuno scrive, qualcun altro controlla, e nessuno vuole mandare per sbaglio un messaggio a centinaia di persone. OpenNewsletter dà a ogni gruppo i suoi ruoli e un passaggio di approvazione prima dell’invio.',
             ['Editor a trascinamento con modelli pronti o del gruppo', 'Proposta, approvazione e invio all’ora scelta', 'Iscritti in più lingue, pagina di iscrizione e widget per qualsiasi sito', 'Ogni gruppo spedisce dal proprio indirizzo email']],
@@ -38,7 +36,7 @@ return [
     ],
     'chess' => [
         'name' => 'Chess', 'cat' => 'games', 'level' => 3, 'account' => 'none', 'offline' => true, 'play' => 'com.saverio.chess',
-        'url' => $old . 'chess/', 'source' => 'chess', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 4,
+        'url' => '/chess/', 'source' => 'chess', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 4,
         'it' => ['Scacchi con un amico, uno sconosciuto o il computer.',
             'Crea una stanza e manda il codice a un amico, cerca un avversario a caso, gioca in due sullo stesso dispositivo o sfida il computer. I suggerimenti spiegano perché una mossa è buona, non solo quale fare.',
             ['Stanze con codice e avversari a caso', 'Suggerimenti spiegati', 'Orologio, chat e storico delle mosse']],
@@ -48,7 +46,7 @@ return [
     ],
     'thinkhop' => [
         'name' => 'ThinkHop', 'cat' => 'games', 'level' => 3, 'account' => 'optional', 'offline' => true, 'play' => 'com.saverio.thinkhop',
-        'url' => $old . 'thinkhop/', 'source' => 'thinkhop', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 4,
+        'url' => '/thinkhop/', 'source' => 'thinkhop', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 4,
         'it' => ['Mille livelli di logica, uno più infido dell’altro.',
             'Bugiardi e sinceri, forzieri, mini sudoku, ragionamenti assurdi e trappole per chi risponde di fretta. I livelli sono divisi in mondi e diventano sempre più difficili.',
             ['1.000 livelli', 'Sfida del giorno con classifica', 'Amici e username solo se li vuoi']],
@@ -57,8 +55,8 @@ return [
             ['1,000 levels', 'A daily challenge with a ranking', 'Friends and a username only if you want them']],
     ],
     'foodtrack' => [
-        'name' => 'FoodTrack', 'cat' => 'home', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '',
-        'url' => $old . 'foodtrack/', 'source' => 'foodtrack', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 4,
+        'name' => 'FoodTrack', 'cat' => 'home', 'level' => 3, 'account' => 'required', 'offline' => false, 'play' => 'com.saverio.foodtrack',
+        'url' => '/foodtrack/', 'source' => 'foodtrack', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 4,
         'it' => ['Cosa c’è in frigo, e per quanto ancora.',
             'Segna quello che hai in frigo, freezer e dispensa: FoodTrack ti avvisa prima che scada. Puoi condividere gli spazi con chi vive con te, così la lista della spesa è una sola per tutti.',
             ['Avvisi prima della scadenza', 'Spazi e liste della spesa condivisi', 'Piano dei pasti e ricette con quello che hai già']],
@@ -68,7 +66,7 @@ return [
     ],
     'sudoku' => [
         'name' => 'Sudoku', 'cat' => 'games', 'level' => 3, 'account' => 'none', 'offline' => true, 'play' => 'com.saverio.sudoku',
-        'url' => $old . 'sudoku/', 'source' => 'sudoku', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 4,
+        'url' => '/sudoku/', 'source' => 'sudoku', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 4,
         'it' => ['Il classico, con suggerimenti che insegnano.',
             'Quattro difficoltà, note a matita che diventano penna con un tocco e suggerimenti che spiegano la logica della prossima mossa. Schemi e soluzioni si generano sul tuo dispositivo.',
             ['Quattro difficoltà', 'Note a matita e a penna', 'Controllo di una sola cella, senza rovinare il resto']],
@@ -77,8 +75,8 @@ return [
             ['Four difficulty levels', 'Pencil notes and ink', 'Check a single cell without spoiling the rest']],
     ],
     'mycurriculum' => [
-        'name' => 'MyCurriculum', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '',
-        'url' => $old . 'mycurriculum/', 'source' => 'mycurriculum', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 4,
+        'name' => 'MyCurriculum', 'cat' => 'work', 'level' => 3, 'account' => 'required', 'offline' => false, 'play' => 'com.saverio.mycurriculum',
+        'url' => '/mycurriculum/', 'source' => 'mycurriculum', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 4,
         'it' => ['Un solo CV, in tutte le lingue che ti servono.',
             'Scrivi il curriculum una volta e tieni una versione per ogni lingua. Ognuna si scarica in PDF con testo selezionabile, oppure si pubblica come pagina web che mostra solo quello che hai deciso tu.',
             ['Quattro modelli', 'Importa il CV che hai già dal suo PDF', 'Decidi campo per campo cosa è pubblico']],
@@ -87,8 +85,8 @@ return [
             ['Four templates', 'Import the CV you already have from its PDF', 'Choose field by field what is public']],
     ],
     'forkville' => [
-        'name' => 'Forkville', 'cat' => 'games', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '',
-        'url' => $old . 'forkville/', 'source' => 'forkville', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 4,
+        'name' => 'Forkville', 'cat' => 'games', 'level' => 3, 'account' => 'required', 'offline' => false, 'play' => 'com.saverio.forkville',
+        'url' => '/forkville/', 'source' => 'forkville', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 4,
         'it' => ['Il tuo ristorante in 3D, dall’orto al conto.',
             'Parti da un lotto vuoto, costruisci e arreda il locale, assumi cuochi e camerieri, coltiva gli ingredienti e migliora i piatti. Poi vai a vedere come se la cavano i ristoranti degli amici.',
             ['Costruzione e arredamento in 3D', 'Personale, orto e ricette', 'Visite agli amici e classifica settimanale']],
@@ -97,8 +95,8 @@ return [
             ['Building and furnishing in 3D', 'Staff, garden and recipes', 'Visits to friends and a weekly ranking']],
     ],
     'prism-mine' => [
-        'name' => 'Prism Mine', 'cat' => 'games', 'level' => 2, 'account' => 'none', 'offline' => true, 'play' => '',
-        'url' => $old . 'prism-mine/', 'source' => 'prism-mine', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 4,
+        'name' => 'Prism Mine', 'cat' => 'games', 'level' => 3, 'account' => 'none', 'offline' => true, 'play' => 'com.saverio.prismmine',
+        'url' => '/prism-mine/', 'source' => 'prism-mine', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 4,
         'it' => ['Trova le gemme nascoste leggendo la luce.',
             'Spara raggi in una miniera buia, guarda da dove escono e di che colore, e deduci dove sono le gemme. Da solo, con la miniera del giorno o in duello online.',
             ['Miniere da solo a più livelli', 'Una miniera nuova ogni giorno', 'Duelli sulla stessa miniera']],
@@ -107,8 +105,8 @@ return [
             ['Solo mines on several levels', 'A new mine every day', 'Duels on the same mine']],
     ],
     'fucina' => [
-        'name' => 'Fucina', 'cat' => 'learn', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '',
-        'url' => $old . 'fucina/', 'source' => 'fucina', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 4,
+        'name' => 'Fucina', 'cat' => 'learn', 'level' => 3, 'account' => 'required', 'offline' => false, 'play' => 'com.saverio.fucina',
+        'url' => '/fucina/', 'source' => 'fucina', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 4,
         'it' => ['Imparare a programmare un livello alla volta.',
             'Da HTML, CSS e JavaScript a Python, Java, SQL, Kotlin, Swift e Rust: livelli sempre più difficili, esercizi veloci e piccoli giochi. Le Scintille che guadagni sbloccano i certificati.',
             ['Corsi su web, linguaggi e database', 'Sfida del giorno con classifica', 'Il codice che scrivi resta nel browser']],
@@ -118,7 +116,7 @@ return [
     ],
     'connect-four' => [
         'name' => 'Connect Four', 'cat' => 'games', 'level' => 3, 'account' => 'none', 'offline' => true, 'play' => 'com.saverio.connectfour',
-        'url' => $old . 'connect-four/', 'source' => 'connect-four', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 4,
+        'url' => '/connect-four/', 'source' => 'connect-four', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 4,
         'it' => ['Quattro in fila, con i colori che vuoi.',
             'Il classico Forza Quattro: con un amico tramite codice, con un avversario a caso, sullo stesso dispositivo o contro il computer.',
             ['Online, in due o contro il computer', 'Dischi personalizzabili', 'Orologio e chat facoltativi']],
@@ -128,7 +126,7 @@ return [
     ],
     'letterhop' => [
         'name' => 'LetterHop', 'cat' => 'games', 'level' => 3, 'account' => 'none', 'offline' => true, 'play' => 'com.saverio.letterhop',
-        'url' => $old . 'letterhop/', 'source' => 'letterhop', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 4,
+        'url' => '/letterhop/', 'source' => 'letterhop', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 4,
         'it' => ['Da una parola all’altra, una lettera per volta.',
             'Hai una parola di partenza e una di arrivo: cambia una lettera alla volta, e ogni passaggio deve essere una parola vera. Meno parole usi, più punti fai.',
             ['Tre livelli', 'Dizionari in cinque lingue', 'Le parole si controllano sul dispositivo']],
@@ -137,8 +135,8 @@ return [
             ['Three levels', 'Dictionaries in five languages', 'Words are checked on your device']],
     ],
     'giftwise' => [
-        'name' => 'Giftwise', 'cat' => 'home', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '',
-        'url' => $old . 'giftwise/', 'source' => 'giftwise', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 4,
+        'name' => 'Giftwise', 'cat' => 'home', 'level' => 3, 'account' => 'required', 'offline' => false, 'play' => 'com.saverio.giftwise',
+        'url' => '/giftwise/', 'source' => 'giftwise', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 4,
         'it' => ['Liste dei desideri che non rovinano la sorpresa.',
             'Crea una lista per ogni occasione. Chi ti segue si mette d’accordo su chi regala cosa e ne parla in una chat che tu non vedi mai.',
             ['Una lista per ogni occasione', '«Lo prendo io», visibile solo agli altri', 'Chat nascosta a chi riceve il regalo']],
@@ -147,8 +145,8 @@ return [
             ['A list for every occasion', '“I’m getting it”, seen only by the others', 'A chat hidden from the person receiving the gift']],
     ],
     'sea-battle' => [
-        'name' => 'Sea Battle', 'cat' => 'games', 'level' => 2, 'account' => 'none', 'offline' => true, 'play' => '',
-        'url' => $old . 'sea-battle/', 'source' => 'sea-battle', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 4,
+        'name' => 'Sea Battle', 'cat' => 'games', 'level' => 3, 'account' => 'none', 'offline' => true, 'play' => 'com.saverio.seabattle',
+        'url' => '/sea-battle/', 'source' => 'sea-battle', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 4,
         'it' => ['Nascondi la flotta, affonda l’altra.',
             'La battaglia navale di sempre: online con un amico o uno sconosciuto, sullo stesso dispositivo o contro il computer.',
             ['Online, in due o contro il computer', 'La tua flotta resta nascosta fino alla fine', 'Chat durante le partite online']],
@@ -158,22 +156,12 @@ return [
     ],
     'faceguess' => [
         'name' => 'FaceGuess', 'cat' => 'games', 'level' => 3, 'account' => 'none', 'offline' => false, 'play' => 'com.saverio.faceguess',
-        'url' => $old . 'faceguess/', 'source' => 'faceguess', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 3,
+        'url' => '/faceguess/', 'source' => 'faceguess', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 3,
         'it' => ['Chi è? Con facce nuove a ogni partita.',
             'Un gioco di deduzione per due: fai domande da sì o no finché non resta una faccia sola. I personaggi si generano da capo ogni volta.',
             ['Personaggi sempre diversi', 'Online con un codice o di persona', 'Chat per fare le domande']],
         'en' => ['Who is it? With new faces every match.',
             'A deduction game for two: ask yes-or-no questions until only one face is left. The characters are generated from scratch each time.',
             ['Always different characters', 'Online with a code or in person', 'A chat to ask the questions']],
-    ],
-    'fischietto' => [
-        'name' => 'Fischietto', 'cat' => 'learn', 'level' => 2, 'account' => 'required', 'offline' => true, 'play' => '',
-        'url' => $old . 'ripasso-fipav/', 'source' => 'ripasso-fipav', 'privacy' => 'privacy.html', 'langs' => ['it'], 'shots' => 0,
-        'it' => ['Il ripasso del regolamento per arbitri di pallavolo.',
-            'App personale e non ufficiale per studiare il regolamento FIPAV: quiz per argomento, riferimenti alle regole, documenti ufficiali, statistiche e una simulazione per arbitrare una partita in tempo reale.',
-            ['Quiz per argomento e difficoltà', 'Regole collegate alla fonte ufficiale', 'Simulazione di gara']],
-        'en' => ['Rulebook practice for volleyball referees.',
-            'A personal, unofficial app to study the Italian FIPAV rulebook: quizzes by topic, rule references, official documents, statistics and a simulation to referee a match in real time. The app is in Italian.',
-            ['Quizzes by topic and difficulty', 'Rules linked to the official source', 'Match simulation']],
     ],
 ];
