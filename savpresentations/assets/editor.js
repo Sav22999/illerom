@@ -1,5 +1,5 @@
 /** The screen of a presentation: editing for who can, looking (with comments and personal notes) for the others. */
-import { state, api, get, h, icon, btn, iconBtn, item, isApp, $, $$, clamp, uid, go, oops, ok, toast, errText, mobile, isMac, userSetting, dialog, confirmBox, promptBox, uploadPicture, copyText } from './core.js';
+import { state, api, get, h, icon, btn, iconBtn, item, tile, isApp, segmented, $, $$, clamp, uid, go, oops, ok, toast, errText, mobile, isMac, userSetting, dialog, confirmBox, promptBox, uploadPicture, copyText } from './core.js';
 import { t } from './i18n.js';
 import { brand, logo } from './auth.js';
 import { userMenu } from './home.js';
@@ -25,13 +25,26 @@ export async function deckScreen(app, deckId, q) {
   document.body.classList.add('ed');
   app.append(h('div.center', h('sav-spinner', { style: 'font-size:2rem' })));
   let data;
-  try { data = await get('deck.get', { d: deckId }); } catch (e) {
+  const localId = q.get('l') || '';
+  state.local = localId;
+  if (localId) { // a presentation of this browser
+    const L = await import('./local.js'), x = await L.local.get(localId);
+    if (!x) { app.replaceChildren(h('header.htop', brand(), h('div.spacer')), h('div.center', h('sav-empty-state', { heading: t('cant_open'), text: t('local_missing'), icon: 'hard-drive' }, btn(t('on_device'), () => go('?p=local'))))); return; }
+    await L.loadUrls(L.mediaOf(x));
+    data = { deck: { uid: 'l' + x.id, title: x.title, meta: x.meta, seq: 0, slides: x.slides, status: 'active', access: 'private', perms: {}, ruled: [] }, role: 'owner' };
+  } else try { data = await get('deck.get', { d: deckId }); (await import('./local.js')).cache.set('deck:' + deckId, data); } catch (e) {
+    // no connection: the copy of the last visit, changes leave when the connection comes back
+    const old = e.network && (await (await import('./local.js')).cache.get('deck:' + deckId));
+    if (old) { data = old; setTimeout(() => toast(t('offline_open'), 'warning'), 600); } else {
     const signIn = e.status === 401;
     app.replaceChildren(h('header.htop', brand(), h('div.spacer'), state.user && userMenu()), h('div.center', h('sav-empty-state', { heading: signIn ? t('need_sign_in') : t('cant_open'), text: e.network ? t('err_network') : errText(e), icon: signIn ? 'lock' : 'presentation' }, signIn ? btn(t('sign_in'), () => { sessionStorage.setItem('sp-back', location.pathname + location.search); go('?signin=login'); }) : btn(t('home'), () => go('./')))));
     return;
+    }
   }
   app.textContent = '';
   const deck = new Deck(data.deck, data.role);
+  deck.local = localId;
+  if (localId) deck.created = (await (await import('./local.js')).local.get(localId)).created;
   const ed = { deck, user: state.user, sel: new Set(), sid: deck.order()[0]?.sid || '', tab: '', editing: null, closeText() {}, root: app, editor: deck.canWrite, get edit() { return deck.canEditPage(this.sid); }, simple: userSetting('simple', false), relayout: false };
   ed.ctx = context(deck.meta);
   document.title = deck.title + ' — SavPresentations';
@@ -47,20 +60,21 @@ export async function deckScreen(app, deckId, q) {
   zoomEl.addEventListener('change', (e) => { if (!zoomSet) stage.setZoom((e.detail?.value ?? zoomEl.value) / 100); });
   ed.onZoom = (v) => { zoomSet = true; zoomEl.value = v; zoomSet = false; };
   const menu = h('sav-dropdown', { placement: 'bottom-end', 'sheet-on-mobile': true, label: deck.title }, h('sav-button', { slot: 'trigger', icon: 'ellipsis-vertical', appearance: 'ghost', variant: 'neutral', square: true, label: t('more') }));
-  const fillMenu = () => { const e = deck.canEdit; menu.querySelectorAll(':not([slot="trigger"])').forEach((x) => { if (x.parentElement === menu) x.remove(); }); menu.append(...[e && item('options', 'settings', t('deck_options')), e && !deck.limited && item('vers', 'history', t('versions')), e && h('sav-divider'), item('over', 'layout-grid', t('overview')), item('find', 'search', t('find_replace')), e && item('text', 'file-text', t('add_from_text')), e && item('credits', 'copyright', t('credits_slide')), h('sav-divider'), (e || deck.meta.opts.download !== false) && item('dl', 'download', t('download')), state.user && (e || deck.meta.opts.copy !== false) && item('copy', 'copy', t('make_copy')), item('link', 'link', t('copy_link')), h('sav-divider'), ed.editor && item('mode', ed.simple ? 'move' : 'grid-3x3', ed.simple ? t('to_adv') : t('to_simple')), ed.editor && !mobile() && item('tools', 'settings-2', t('toolbar_edit')), item('keys', 'keyboard', t('shortcuts')), deck.role !== 'owner' && item('report', 'flag', t('report'), { variant: 'danger' })].filter(Boolean)); };
+  const fillMenu = () => { const e = deck.canEdit; menu.querySelectorAll(':not([slot="trigger"])').forEach((x) => { if (x.parentElement === menu) x.remove(); }); menu.append(...[e && item('options', 'settings', t('deck_options')), e && !deck.limited && !deck.local && item('vers', 'history', t('versions')), e && h('sav-divider'), item('over', 'layout-grid', t('overview')), item('find', 'search', t('find_replace')), e && item('text', 'file-text', t('add_from_text')), e && item('credits', 'copyright', t('credits_slide')), h('sav-divider'), (e || deck.meta.opts.download !== false) && item('dl', 'download', t('download')), !deck.local && state.user && (e || deck.meta.opts.copy !== false) && item('copy', 'copy', t('make_copy')), !deck.local && item('link', 'link', t('copy_link')), deck.local && state.user && item('upload', 'cloud-upload', t('move_to_account')), h('sav-divider'), ed.editor && item('mode', 'arrow-left-right', t('mode_change')), ed.editor && !mobile() && item('tools', 'settings-2', t('toolbar_edit')), item('keys', 'keyboard', t('shortcuts')), deck.role !== 'owner' && item('report', 'flag', t('report'), { variant: 'danger' })].filter(Boolean)); };
   fillMenu();
   ed.options = () => dialog(t('deck_options'), optionsBody(ed), [[t('done'), true]], { width: '40rem' });
   ed.download = () => downloadMenu(ed);
   menu.addEventListener('sav-select', async (e) => {
     try {
       switch (e.detail.value) {
-        case 'mode': ed.setMode(!ed.simple); return fillMenu();
+        case 'mode': return void modeDialog();
         case 'options': return void ed.options();
         case 'over': return void ed.overview();
         case 'find': return void ed.findReplace();
         case 'text': return void ed.fromText();
         case 'vers': return void ed.versions();
         case 'tools': return void toolsDialog();
+        case 'upload': { const { moveToAccount } = await import('./home.js'); await deck.saveLocal(true); const r = await moveToAccount(deck.local); if (r) go('?d=' + r); return; }
         case 'dl': return void downloadMenu(ed);
         case 'copy': { const r = await api('deck.duplicate', { d: deck.uid, title: t('copy_of', { title: deck.title }) }); return go('?d=' + r.uid); }
         case 'credits': return ed.creditsSlide();
@@ -71,15 +85,28 @@ export async function deckScreen(app, deckId, q) {
     } catch (x) { oops(x); }
   });
   /** Simple mode: pages are grids, elements go into the cells. Advanced: everything moves freely. It is a choice of each person. */
+  /** The column of the pages can be hidden, for more room; it is remembered in this browser. */
+  const toggleStrip = () => { const off = !app.classList.contains('nostrip'); app.classList.toggle('nostrip', off); localStorage.setItem('sp-strip', off ? 'off' : ''); };
+  if (localStorage.getItem('sp-strip') === 'off' && !mobile()) app.classList.add('nostrip');
+  /** Choosing the mode: what each one is, side by side. */
+  function modeDialog() {
+    let dlg;
+    const card = (v, ic, title, text, points) => tile(title, () => { ed.setMode(v === 'simple'); dlg.close(); }, { class: 'modecard' + ((v === 'simple') === ed.simple ? ' on' : '') }, h('div.modec', icon(ic), h('b', title), h('p.muted', text), h('ul', ...points.map((p) => h('li', p))), (v === 'simple') === ed.simple && h('sav-badge', { appearance: 'soft', variant: 'primary' }, t('mode_now'))));
+    dialog(t('mode_change'), h('div.stack', h('p.muted', t('mode_change_t')), h('div.modes', card('simple', 'layout-grid', t('mode_simple'), t('mode_simple_long'), [t('mode_simple_1'), t('mode_simple_2'), t('mode_simple_3')]), card('adv', 'move', t('mode_adv'), t('mode_adv_long'), [t('mode_adv_1'), t('mode_adv_2'), t('mode_adv_3')]))), [], { width: '40rem', ref: (d) => (dlg = d) });
+  }
+  /** Simple or advanced, at the bottom right as in the settings: a choice of each person, it follows them everywhere. */
+  const modeSw = segmented(t('mode'), ed.simple ? 'simple' : 'adv', [['simple', 'layout-grid', t('mode_simple') + ' · ' + t('mode_simple_t')], ['adv', 'move', t('mode_adv') + ' · ' + t('mode_adv_t')]], (v) => ed.setMode(v === 'simple'));
+  modeSw.classList.add('modesw');
+  modeSw.setAttribute('title', t('mode'));
   ed.setMode = (simple) => {
     if (ed.simple === simple) return;
-    ed.closeText(); ed.simple = simple; fillMenu();
+    ed.closeText(); ed.simple = simple; fillMenu(); modeSw.value = simple ? 'simple' : 'adv';
     app.classList.toggle('simple', simple);
     // what was drawn freely becomes cells, without moving
     if (simple) { const n = readAll(ed); if (n) toast(t('grid_done', { n })); }
     ed.select([]); stage.draw(); drawRail();
     setTab(simple ? 'grid' : ed.tab === 'grid' ? 'elements' : ed.tab);
-    if (state.user) api('auth.settings', { settings: { simple } }).then((r) => { state.user = r.user; }).catch(() => {});
+    if (state.user && !state.offline) api('auth.settings', { settings: { simple } }).then((r) => { state.user = r.user; }).catch(() => {});
   };
   // ------------------------------------------------------------------ toolbar: every button adds something to the page
   const dropTool = (ic, label, items) => { const d = h('sav-dropdown', { label }, h('sav-button', { slot: 'trigger', icon: ic, caret: true, appearance: 'ghost', variant: 'neutral', size: 'sm', label }, h('span.insl', label)), ...items); d.addEventListener('sav-select', (e) => ed.insert(e.detail.value)); return d; };
@@ -113,7 +140,7 @@ export async function deckScreen(app, deckId, q) {
   presentM.addEventListener('sav-select', (e) => ({ here: () => show(ed.sid), start: () => show(deck.order()[0]?.sid), view: () => show(ed.sid, { presenter: true }) })[e.detail.value]());
   const paletteB = iconBtn('command', t('palette_l') + ' · ' + (isMac ? '⌘K' : 'Ctrl+K'), () => ed.palette());
   const shareB = h('sav-button', { icon: 'user-plus', appearance: 'soft', onclick: () => shareDialog(deck.uid, deck.title, ed) }, h('span.insl', t('share')));
-  const top = h('header.etop', h('a.ehome', { href: './', 'data-go': true, title: t('home'), 'aria-label': t('home') }, logo(30)), h('div.etitle', title, status), ed.editor && h('div.hist', undoB, redoB), ins, h('div.spacer'), people, (deck.role === 'owner' || deck.role === 'editor') && shareB, h('sav-button-group.pgroup', present, presentM), !mobile() && paletteB, menu, !mobile() && (state.user ? userMenu() : btn(t('sign_in'), () => { sessionStorage.setItem('sp-back', location.pathname + location.search); go('?signin=login'); }, { appearance: 'outline', variant: 'neutral' })));
+  const top = h('header.etop', h('a.ehome', { href: './', 'data-go': true, title: t('home'), 'aria-label': t('home') }, logo(30)), h('div.etitle', title, status), ed.editor && h('div.hist', undoB, redoB), ins, h('div.spacer'), people, !deck.local && (deck.role === 'owner' || deck.role === 'editor') && shareB, h('sav-button-group.pgroup', present, presentM), !mobile() && paletteB, menu, !mobile() && (state.user ? userMenu() : btn(t('sign_in'), () => { sessionStorage.setItem('sp-back', location.pathname + location.search); go('?signin=login'); }, { appearance: 'outline', variant: 'neutral' })));
   const strip = h('sav-sortable.strip', { 'aria-label': t('slides'), direction: mobile() ? 'horizontal' : null, handle: deck.canEdit && !mobile() ? null : '.never' }), addB = h('sav-button', { icon: 'plus', appearance: 'outline', variant: 'neutral', block: true, size: 'sm', onclick: () => ed.addSlide() }, t('new_slide'));
   const left = h('aside.eleft', strip, deck.canEdit && addB), panel = h('aside.epanel'), rail = h('sav-bottom-nav.rail', { label: t('panels') });
   // speaker notes of the page, under it
@@ -135,7 +162,7 @@ export async function deckScreen(app, deckId, q) {
     notesB.classList.toggle('has', !!s?.d.notes);
   }
   ed.saveNotes = saveNotes;
-  const center = h('section.ecenter', h('div.banner'), stage.scroller, ed.editor && notesBar, h('div.ebottom', h('span.sn'), ed.editor && notesB, h('div.spacer'), iconBtn('maximize', t('fit'), () => stage.setZoom(0), { size: 'sm', place: 'top' }), zoomEl));
+  const center = h('section.ecenter', h('div.banner'), stage.scroller, ed.editor && notesBar, h('div.ebottom', !mobile() && iconBtn('panel-left', t('toggle_pages'), () => toggleStrip(), { size: 'sm', place: 'top' }), h('span.sn'), ed.editor && notesB, h('div.spacer'), ed.editor && modeSw, iconBtn('fullscreen', t('fit'), () => stage.setZoom(0), { size: 'sm', place: 'top' }), zoomEl));
   app.append(top, h('div.emain', left, center, panel, rail));
 
   // ------------------------------------------------------------------ strip of slides
@@ -367,7 +394,7 @@ export async function deckScreen(app, deckId, q) {
   if (mobile() && ed.editor) { const b = iconBtn('ellipsis', t('slide'), (e) => { const r = e.currentTarget.getBoundingClientRect(); slideMenu(r.left, r.top - 260); }, { size: 'sm', place: 'top' }); $('.ebottom', center).prepend(b, iconBtn('plus', t('new_slide'), () => ed.addSlide(), { size: 'sm', place: 'top' })); }
 
   // ------------------------------------------------------------------ side panel
-  const ALLTABS = [...(ed.editor ? [['elements', 'shapes', 'elements'], ['props', 'sliders-horizontal', 'format_tab'], ['page', 'panel-top', 'page'], ['grid', 'grid-3x3', 'grids'], ['layouts', 'layout-template', 'layouts'], ...(deck.canEdit ? [['theme', 'palette', 'theme']] : []), ['media', 'images', 'media']] : []), ['comments', 'message-square', 'comments'], ['notes', 'sticky-note', 'notes']];
+  const ALLTABS = [...(ed.editor ? [['elements', 'shapes', 'elements'], ['props', 'sliders-horizontal', 'format_tab'], ['page', 'panel-top', 'page'], ['grid', 'grid-3x3', 'grids'], ['layouts', 'layout-template', 'layouts'], ...(deck.canEdit ? [['theme', 'palette', 'theme']] : []), ...(deck.local ? [] : [['media', 'images', 'media']])] : []), ...(deck.local ? [] : [['comments', 'message-square', 'comments'], ['notes', 'sticky-note', 'notes']])];
   const tabs = () => ALLTABS.filter(([k]) => k !== (ed.simple ? 'layouts' : 'grid'));
   function drawRail() { rail.replaceChildren(...tabs().map(([k, ic, l]) => { const n = k === 'comments' || k === 'notes' ? marks.count(k) : 0; return h('sav-bottom-nav-item', { label: t(l), icon: ic, value: k, badge: n || null, current: ed.tab === k }); })); }
   rail.addEventListener('sav-select', (e) => { e.stopPropagation(); setTab(ed.tab === e.detail.value ? '' : e.detail.value); });
@@ -416,7 +443,7 @@ export async function deckScreen(app, deckId, q) {
       if (op.k === 'page.rules') continue;
       if (op.k === 'deck.set') {
         if (op.p.title !== undefined) { title.value = deck.title; document.title = deck.title + ' — SavPresentations'; }
-        if (op.p.theme || op.p.format || op.p.opts) { ed.ctx = context(deck.meta); all = true; fillMenu(); }
+        if (op.p.theme || op.p.format || op.p.opts) { ed.ctx = context(deck.meta); all = true; fillMenu(); } else if (op.p.fonts) ed.ctx = context(deck.meta); // a new typeface only needs to be known: the text being written stays open
       } else if (op.k === 'slide.add' || op.k === 'slide.del' || op.k === 'slide.move') { stripAll = true; if (op.s === ed.sid) redraw = true; } else {
         touch(op.s);
         if (op.s !== ed.sid) continue;
@@ -435,7 +462,7 @@ export async function deckScreen(app, deckId, q) {
     buttons();
   });
   const buttons = () => { undoB.firstChild.disabled = !deck.undoStack.length; redoB.firstChild.disabled = !deck.redoStack.length; };
-  const setStatus = () => { const off = deck.failed, s = !ed.editor ? t('view_only') : off ? t('offline_saved') : deck.saved ? t('saved_all') : t('saving'); status.replaceChildren(icon(!ed.editor ? 'eye' : off ? 'cloud-off' : deck.saved ? 'cloud-check' : 'refresh-cw'), h('span', s)); status.classList.toggle('off', !!off); };
+  const setStatus = () => { const off = deck.failed, s = !ed.editor ? t('view_only') : deck.local ? t('saved_here') : off ? t('offline_saved') : deck.saved ? t('saved_all') : t('saving'); status.replaceChildren(icon(!ed.editor ? 'eye' : off ? 'cloud-off' : deck.saved ? 'cloud-check' : 'refresh-cw'), h('span', s)); status.classList.toggle('off', !!off); };
   deck.addEventListener('status', setStatus);
   deck.addEventListener('people', () => { drawPeople(); markStrip(); stage.overlayNow(); drawBanner(); });
   deck.addEventListener('comments', () => marks.load('comments'));
@@ -547,7 +574,7 @@ export async function deckScreen(app, deckId, q) {
   if (q.get('comments')) setTab('comments'); else if (q.get('notes')) setTab('notes'); else if (ed.editor && !mobile()) setTab(ed.simple ? 'grid' : deck.slides.size ? 'elements' : 'layouts');
   deck.state = { s: ed.sid };
   deck.start();
-  marks.load();
+  if (!deck.local) marks.load();
   if (data.deck.status === 'trashed') toast(t('deck_is_trashed'), 'warning');
   if (q.get('present')) show(ed.sid);
   // for automatic checks and the console

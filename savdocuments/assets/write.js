@@ -1,11 +1,12 @@
 /** The writing screen. */
 import { ask, btn, colorPop, confirm, copyText, dialog, drop, dropBtn, empty, errText, face, fail, h, icon, iconBtn, INKS, item, K, keepCaret, menuAt, mobile, num, PASTEL, primary, put, select, tile, toast, toggle } from './ui.js';
 import { getLang, t, when } from './i18n.js';
-import { S, api, keep, local, localStore, remoteStore, shrink } from './store.js';
+import { S, api, keep, local, localStore, offline, remoteStore, shrink } from './store.js';
 import { Editor } from './editor.js';
 import { Sync } from './sync.js';
 import { Rulers } from './ruler.js';
-import { FONTS, fontStack } from './settings.js';
+import { BUILTIN, FONTS, fontStack } from './settings.js';
+import { fontDialog, fontOptions, useFonts, withFont } from './fonts.js';
 import { download, fileName, imageIds, toEpub, toHtml, toMarkdown, toSavdoc, toText } from './files.js';
 import { CHARTS, CHART_ICONS, FLOWS, FLOW_ICONS, newObject, objectWidth, RULES } from './objects.js';
 import { elementsPanel, formatPanel, imagesPanel, pageForm, styleForm } from './panels.js';
@@ -21,6 +22,7 @@ const SIZES_PT = [8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 24, 28, 32, 40, 48, 60
 export async function openWriter(root, pid, opt = {}) {
   const isLocal = pid.startsWith('local-');
   let data, ldoc = null, store;
+  if (isLocal && !S.user) throw Object.assign(new Error(), { code: 'doc_signin' });
   if (isLocal) {
     ldoc = await local.get(pid);
     if (!ldoc) throw Object.assign(new Error(), { code: 'doc_not_found' });
@@ -28,12 +30,23 @@ export async function openWriter(root, pid, opt = {}) {
     await store.warm();
     data = { doc: { id: pid, title: ldoc.title, role: 'owner', mine: true, rev: 0 }, content: ldoc.content, comments: [], stamp: '' };
   } else {
-    data = await api('doc.get', undefined, { doc: pid, review: opt.review ? 1 : undefined });
+    try {
+      data = await api('doc.get', undefined, { doc: pid, review: opt.review ? 1 : undefined });
+      if (!opt.review && S.user) offline.put('doc:' + pid, data);
+    } catch (e) {
+      // without a connection the copy kept in this browser opens, and the changes wait for the network
+      const c = e.code === 'network' && S.user ? await offline.get('doc:' + pid) : null;
+      if (!c) throw e.code === 'network' && S.user ? Object.assign(new Error(), { code: 'offline_missing' }) : e;
+      data = c;
+      S.offline = true;
+    }
     store = remoteStore(pid);
   }
   const W = { root, pid, isLocal, store, doc: data.doc, comments: data.comments, tab: '', zoom: 1, lastCaret: null };
   const editable = (W.editable = !data.doc.review && !data.doc.deleted && can(data.doc.role, 'editor') && (isLocal || !!S.user));
-  W.canComment = !isLocal && !!S.user && !data.doc.review && !data.doc.deleted;
+  // what the owner lets who only reads (or comments) do
+  const lim = editable ? {} : data.content.settings || {};
+  W.canComment = !isLocal && !!S.user && !data.doc.review && !data.doc.deleted && !lim.noComments;
   const P = prefs();
   let ed;
 
@@ -49,10 +62,10 @@ export async function openWriter(root, pid, opt = {}) {
   const pageB = btn('', { size: 'sm', appearance: 'ghost' }), wordB = btn('', { size: 'sm', appearance: 'ghost' });
   const undoB = iconBtn('undo-2', t('undo'), () => ed.undo(), { kbd: 'Mod+Z', size: 'md' }), redoB = iconBtn('redo-2', t('redo'), () => ed.undo(true), { kbd: 'Mod+Shift+Z', size: 'md' });
   const shareB = !isLocal && data.doc.role === 'owner' ? btn(h('span.lbl', t('share')), { icon: 'user-plus', label: t('share'), variant: 'primary', appearance: 'soft', onclick: () => shareDialog(W) }) : isLocal && S.user?.verified ? btn(h('span.lbl', t('save_account')), { icon: 'cloud-upload', label: t('save_account'), variant: 'primary', appearance: 'soft', onclick: () => toAccount() }) : null;
-  const dlItems = () => [['file-text', t('dl_docx'), () => save('docx')], ['file-down', t('dl_savdoc'), () => save('savdoc')], ['printer', t('dl_pdf'), () => printDoc(true)], '-', ['globe', t('dl_html'), () => save('html')], ['book-open', t('dl_epub'), () => save('epub')], ['hash', t('dl_md'), () => save('md')], ['file', t('dl_txt'), () => save('txt')]];
+  const dlItems = () => lim.noDownload ? [] : [['file-text', t('dl_docx'), () => save('docx')], ['file-down', t('dl_savdoc'), () => save('savdoc')], ['printer', t('dl_pdf'), () => printDoc(true)], '-', ['globe', t('dl_html'), () => save('html')], ['book-open', t('dl_epub'), () => save('epub')], ['hash', t('dl_md'), () => save('md')], ['file', t('dl_txt'), () => save('txt')]];
   const downB = dropBtn('download', t('download'), dlItems, { text: true, variant: 'primary', appearance: 'solid', placement: 'bottom-end', size: 'md' });
   const menuB = drop(h('sav-button', { icon: 'ellipsis-vertical', appearance: 'ghost', variant: 'neutral', square: true, label: t('more') }), () => moreItems(), { placement: 'bottom-end', label: data.doc.title });
-  const top = h('header.etop', h('a.ehome', { href: '#/', title: t('home'), 'aria-label': t('home') }, h('img', { src: 'icons/favicon.svg', width: 30, height: 30, alt: '' })), h('div.etitle', title, status), editable ? h('div.hist', undoB, redoB) : null, editable ? ins : null, h('div.spacer'), people, shareB, mobile() ? null : downB, mobile() ? null : iconBtn('command', t('palette_l'), () => W.palette.show(), { kbd: 'Mod+J', size: 'md' }), menuB, S.user ? userMenu() : mobile() ? null : btn(t('sign_in'), { appearance: 'outline', variant: 'neutral', href: '#/signin' }));
+  const top = h('header.etop', h('a.ehome', { href: '#/', title: t('home'), 'aria-label': t('home') }, h('img', { src: 'icons/favicon.svg', width: 30, height: 30, alt: '' })), h('div.etitle', title, status), editable ? h('div.hist', undoB, redoB) : null, editable ? ins : null, h('div.spacer'), people, shareB, mobile() || lim.noDownload ? null : downB, mobile() ? null : iconBtn('command', t('palette_l'), () => W.palette.show(), { kbd: 'Mod+J', size: 'md' }), menuB, S.user ? userMenu() : mobile() ? null : btn(t('sign_in'), { appearance: 'outline', variant: 'neutral', href: '#/signin' }));
   const note = editable ? null : h('sav-alert.robar', { variant: data.doc.review ? 'warning' : 'neutral', noicon: true }, data.doc.review ? t('a_review_bar') : data.doc.role === 'commenter' ? t('can_comment') : t('read_only'));
   const bottom = h('div.ebottom', iconBtn('list-tree', t('outline'), () => toggleLeft(), { place: 'top' }), pageB, wordB, h('div.spacer'), editable ? iconBtn('maximize', t('focus'), () => focusMode(), { place: 'top' }) : null, iconBtn('fullscreen', t('fit'), () => setZoom('fit'), { place: 'top' }), zoomEl);
   desk.append(paper);
@@ -159,7 +172,7 @@ export async function openWriter(root, pid, opt = {}) {
 
   // settings: seen at once, saved (and undone) as one step
   let before = null, setT = 0;
-  function previewSettings(s) { before ||= structuredClone(ed.settings); ed.settings = structuredClone(s); ed.dress(); ed.quiet(() => ed.decorate()); ed.later(); }
+  function previewSettings(s) { useFonts(s); before ||= structuredClone(ed.settings); ed.settings = structuredClone(s); ed.dress(); ed.quiet(() => ed.decorate()); ed.later(); }
   function commitSettings(s) {
     clearTimeout(setT);
     const old = before || ed.settings;
@@ -169,6 +182,14 @@ export async function openWriter(root, pid, opt = {}) {
     ed.change({ t: 'settings', s });
     if (s.size !== old.size || s.landscape !== old.landscape || s.w !== old.w) firstZoom(); else if (W.fit) setZoom('fit', true);
   }
+  W.settings = () => ed.settings;
+  /** A typeface that is not included goes into the list of the document, so everybody sees it. */
+  W.addFont = (f) => { if (BUILTIN[f.n]) return; W.setSettings({ fonts: withFont(ed.settings.fonts, f) }); W.fontMenus(); };
+  W.fontMenus = () => { if (B.font) B.font.replaceChildren(...fontOptions(ed.settings.fonts).map(([v, l, st]) => h('option', { value: v, style: st }, l))); };
+  W.moreFonts = () => {
+    const sel = ed.caret() || W.lastCaret; // the text that was selected before the dialog took the focus
+    fontDialog({ current: W.st?.font || ed.settings.font, used: ed.settings.fonts, onpick: (f) => { W.addFont(f); ed.ed.focus({ preventScroll: true }); if (sel) { ed.setCaret(sel); W.lastCaret = sel; } act(() => ed.inline('fontName', f.n)); selection(ed.state()); } });
+  };
   W.setSettings = (p) => { const s = { ...ed.settings, ...p }; previewSettings(s); clearTimeout(setT); setT = setTimeout(() => commitSettings(ed.settings), 450); };
   const flushSettings = () => { if (before) commitSettings(ed.settings); };
 
@@ -268,7 +289,7 @@ export async function openWriter(root, pid, opt = {}) {
     if (!editable) return;
     drawTools();
     B.type = select(null, TYPES.map((k) => [k, t('s_' + k)]), 'p', (v) => { if (v) act(() => { if (ed.state().type !== v) ed.block(v); }); }, { 'aria-label': t('styles'), class: 'f-type', placeholder: t('styles') });
-    B.font = select(null, FONTS.map((f) => [f, f, `font-family:${fontStack(f)}`]), ed.settings?.font || FONTS[0], (v) => { if (v && v !== W.st?.font) act(() => ed.inline('fontName', v)); }, { 'aria-label': t('font'), class: 'f-font', searchable: true, 'search-placeholder': t('search') });
+    B.font = select(null, fontOptions(ed.settings?.fonts), ed.settings?.font || FONTS[0], (v) => { if (v === '__more') { B.font.value = W.st?.font || ed.settings.font; W.moreFonts(); return; } if (v && v !== W.st?.font) act(() => ed.inline('fontName', v)); }, { 'aria-label': t('font'), class: 'f-font', searchable: true, 'search-placeholder': t('search') });
     B.size = select(null, SIZES_PT.map((x) => [String(x), String(x)]), '11', (v) => { if (v && +v !== W.st?.size) act(() => ed.inline('size', +v)); }, { 'aria-label': t('size'), class: 'f-size' });
     const inl = (ic, cmd, key, kbd) => (B[key] = iconBtn(ic, t(key), () => act(() => ed.inline(cmd)), { kbd }));
     inl('bold', 'bold', 'bold', 'Mod+B'); inl('italic', 'italic', 'italic', 'Mod+I'); inl('underline', 'underline', 'underline', 'Mod+U'); inl('strikethrough', 'strikeThrough', 'strike', 'Mod+Shift+X');
@@ -343,7 +364,7 @@ export async function openWriter(root, pid, opt = {}) {
   }
   const globalKeys = (e) => {
     const mod = e.metaKey || e.ctrlKey, k = e.key.toLowerCase();
-    if (mod && k === 'f') { e.preventDefault(); setTab('find', true); } else if (mod && k === 'p') { e.preventDefault(); printDoc(); } else if (mod && k === 's') { e.preventDefault(); if (isLocal) saveLocal(); else W.sync?.flush(); } else if (mod && k === 'j') { e.preventDefault(); W.palette.show(); } else if (e.key === 'Escape') { if (frame.classList.contains('focusing')) focusMode(); if (W.clip && desk.classList.contains('painting')) B.paint.button.click(); }
+    if (mod && k === 'f') { e.preventDefault(); setTab('find', true); } else if (mod && k === 'p') { e.preventDefault(); if (!lim.noDownload) printDoc(); } else if (mod && k === 's') { e.preventDefault(); if (isLocal) saveLocal(); else W.sync?.flush(); } else if (mod && k === 'j') { e.preventDefault(); W.palette.show(); } else if (e.key === 'Escape') { if (frame.classList.contains('focusing')) focusMode(); if (W.clip && desk.classList.contains('painting')) B.paint.button.click(); }
   };
   addEventListener('keydown', globalKeys);
   desk.addEventListener('mouseup', () => { if (!W.clip || !desk.classList.contains('painting')) return; const r = ed.range(); if (!r || r.collapsed) return; const x = W.clip; W.clip = null; B.paint.on(false); desk.classList.remove('painting'); ed.pasteFormat(x); });
@@ -382,7 +403,7 @@ export async function openWriter(root, pid, opt = {}) {
       B.link.on(!!st.link);
       const ty = TYPES.includes(st.type) ? st.type : '';
       if (B.type.value !== ty) B.type.value = ty;
-      if (st.font && B.font.value !== st.font) B.font.value = FONTS.includes(st.font) ? st.font : '';
+      if (st.font && B.font.value !== st.font) B.font.value = FONTS.includes(st.font) || ed.settings.fonts?.some((f) => f.n === st.font) ? st.font : '';
       const sz = st.size ? String(st.size) : '';
       if (B.size.value !== sz) { if (!SIZES_PT.includes(st.size) && st.size) { B.size.querySelector('[data-x]')?.remove(); B.size.append(h('option', { value: sz, 'data-x': true }, sz)); } B.size.value = sz; }
       undoB.button.disabled = !st.canUndo;
@@ -626,7 +647,7 @@ export async function openWriter(root, pid, opt = {}) {
   const duplicate = async () => { await W.sync?.flush(); const r = await api('doc.duplicate', { doc: pid, title: `${t('copy_of')} ${ed.title}`.slice(0, 160) }); location.hash = '#/d/' + r.doc.id; };
   const owner = data.doc.role === 'owner';
   function moreItems() {
-    return [...(mobile() ? [{ head: t('download') }, ...dlItems(), '-', ...(S.user ? [] : [['user', t('sign_in'), () => { location.hash = '#/signin'; }], '-'])] : []), ['search', t('find'), () => setTab('find', true), { kbd: 'Mod+F' }], editable && !isLocal ? ['history', t('history'), () => setTab('history', true)] : null, ['volume-2', speaking() ? t('stop_reading') : t('read_aloud'), () => speak()], editable ? ['maximize', t('focus'), () => focusMode()] : null, ['tally-5', t('counts'), () => countsDialog()], '-', ['printer', t('print'), () => printDoc(), { kbd: 'Mod+P' }], ['upload', t('open_'), () => importFile()], !isLocal && S.user && !data.doc.review ? ['copy', t('duplicate'), () => duplicate()] : null, owner && !isLocal ? ['layout-template', t('as_template'), async () => { await setPrefs({ templates: [...new Set([...(prefs().templates || []), pid])].slice(-30) }); toast(t('as_template_done'), 'success'); }] : null, editable && !mobile() ? ['settings-2', t('toolbar_edit'), () => toolsDialog()] : null, ['keyboard', t('shortcuts'), () => shortcuts()], !isLocal ? ['link', t('copy_link'), () => copyText(location.href)] : null, !isLocal && !owner && !data.doc.review ? ['flag', t('report'), () => reportDialog(pid)] : null, owner && !isLocal && !data.doc.deleted ? '-' : null, owner && !isLocal && !data.doc.deleted ? ['trash', t('to_trash'), async () => { await W.sync?.flush(); await api('doc.trash', { doc: pid }); toast(t('moved_trash')); location.hash = '#/'; }, { danger: true }] : null];
+    return [...(mobile() ? [{ head: t('download') }, ...dlItems(), '-', ...(S.user ? [] : [['user', t('sign_in'), () => { location.hash = '#/signin'; }], '-'])] : []), ['search', t('find'), () => setTab('find', true), { kbd: 'Mod+F' }], editable && !isLocal ? ['history', t('history'), () => setTab('history', true)] : null, ['volume-2', speaking() ? t('stop_reading') : t('read_aloud'), () => speak()], editable ? ['maximize', t('focus'), () => focusMode()] : null, ['tally-5', t('counts'), () => countsDialog()], '-', lim.noDownload ? null : lim.noDownload ? null : ['printer', t('print'), () => printDoc(), { kbd: 'Mod+P' }], ['file-up', t('open_'), () => importFile()], !isLocal && S.user && !data.doc.review && !lim.noCopy ? ['copy', t('duplicate'), () => duplicate()] : null, owner && !isLocal ? ['layout-template', t('as_template'), async () => { await setPrefs({ templates: [...new Set([...(prefs().templates || []), pid])].slice(-30) }); toast(t('as_template_done'), 'success'); }] : null, editable && !mobile() ? ['settings-2', t('toolbar_edit'), () => toolsDialog()] : null, ['keyboard', t('shortcuts'), () => shortcuts()], !isLocal ? ['link', t('copy_link'), () => copyText(location.href)] : null, !isLocal && !owner && !data.doc.review ? ['flag', t('report'), () => reportDialog(pid)] : null, owner && !isLocal && !data.doc.deleted ? '-' : null, owner && !isLocal && !data.doc.deleted ? ['trash', t('to_trash'), async () => { await W.sync?.flush(); await api('doc.trash', { doc: pid }); toast(t('moved_trash')); location.hash = '#/'; }, { danger: true }] : null];
   }
 
   // command palette
@@ -645,6 +666,7 @@ export async function openWriter(root, pid, opt = {}) {
 
   buildToolbars();
   readerBubble();
+  useFonts(data.content.settings);
   ed.load(data.content, data.doc.title);
   firstZoom();
   showRulers();
@@ -666,6 +688,7 @@ export async function openWriter(root, pid, opt = {}) {
     flushSettings();
     ed.scan();
     if (saveT) saveLocal();
+    if (!isLocal && !data.doc.review && !data.doc.deleted && S.user) offline.put('doc:' + pid, { ...data, doc: { ...W.doc, title: ed.title, rev: W.sync?.rev ?? data.doc.rev }, content: ed.snapshot(), comments: W.comments || [] });
     W.sync?.flush().finally(() => W.sync.stop());
     ed.destroy();
     rulers?.destroy();

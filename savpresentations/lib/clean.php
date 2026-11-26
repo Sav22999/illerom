@@ -9,7 +9,14 @@
 declare(strict_types=1);
 
 const SHAPES = ['rect', 'round', 'ellipse', 'triangle', 'rtriangle', 'diamond', 'pentagon', 'hexagon', 'octagon', 'parallelogram', 'trapezoid', 'star', 'star4', 'burst', 'arrow', 'arrow2', 'chevron', 'homeplate', 'plus', 'heart', 'cloud', 'speech', 'ring', 'half', 'quarter', 'arch', 'drop', 'blob', 'blob2', 'wave', 'moon', 'frame', 'line'];
-const FONT_IDS = ['@head', '@body', 'inter', 'poppins', 'montserrat', 'opensans', 'sourcesans', 'fredoka', 'lora', 'merriweather', 'playfair', 'baskerville', 'garamond', 'ptserif', 'mono', 'niconne'];
+const FONT_IDS = ['@head', '@body', 'inter', 'poppins', 'montserrat', 'opensans', 'sourcesans', 'fredoka', 'lora', 'merriweather', 'playfair', 'baskerville', 'garamond', 'ptserif', 'mono', 'niconne',
+    'roboto', 'lato', 'nunito', 'raleway', 'worksans', 'dmsans', 'manrope', 'firasans', 'plexsans', 'notosans', 'rubik', 'oswald', 'bebas', 'crimson', 'sourceserif', 'plexserif', 'notoserif', 'plexmono', 'caveat', 'dancing'];
+
+/** A typeface: an included one, "b:slug" of Bunny Fonts or "f:id" of a file kept in an account (listed in meta.fonts). */
+function valid_font($v): bool
+{
+    return is_string($v) && (in_array($v, FONT_IDS, true) || preg_match('/^(b:[a-z0-9][a-z0-9-]{0,59}|f:[a-f0-9]{24})$/', $v));
+}
 const COLOR_TOKENS = ['@bg', '@fg', '@muted', '@accent', '@accent2', '@surface', '@onaccent'];
 const ANIMS = ['', 'fade', 'up', 'left', 'zoom'];
 const TRANSITIONS = ['', 'none', 'fade', 'slide', 'push', 'zoom'];
@@ -22,7 +29,7 @@ const ELEMENT_FIELDS = [
     'lock' => ['bool'], 'name' => ['text', 60], 'link' => ['url'], 'anim' => ['enum', ANIMS], 'ph' => ['text', 80],
     'role' => ['enum', ['title', 'subtitle', 'heading', 'body', 'caption', 'quote', 'big', 'label', '']],
     'html' => ['rich'],
-    'font' => ['enum', FONT_IDS], 'size' => ['num', 4, 800], 'color' => ['color'], 'align' => ['enum', ['left', 'center', 'right', 'justify']],
+    'font' => ['font'], 'size' => ['num', 4, 800], 'color' => ['color'], 'align' => ['enum', ['left', 'center', 'right', 'justify']],
     'va' => ['enum', ['top', 'middle', 'bottom']], 'lh' => ['num', 0.6, 4], 'ls' => ['num', -20, 100],
     'bold' => ['bool'], 'italic' => ['bool'], 'under' => ['bool'], 'caps' => ['bool'], 'pad' => ['num', 0, 400],
     'fill' => ['fill'], 'stroke' => ['color'], 'sw' => ['num', 0, 200], 'dash' => ['enum', ['', 'dash', 'dot']],
@@ -176,6 +183,9 @@ function clean_fields($src, array $fields): array
             case 'bool':
                 $v = $v ? 1 : 0;
                 break;
+            case 'font':
+                $v = valid_font($v) ? $v : null;
+                break;
             case 'enum':
                 $v = in_array($v, $f[1], true) ? $v : null;
                 break;
@@ -281,11 +291,19 @@ function clean_meta($src): array
     $th = is_array($src['theme'] ?? null) ? $src['theme'] : [];
     $o = is_array($src['opts'] ?? null) ? $src['opts'] : [];
     $fonts = [];
-    foreach (['head', 'body'] as $k) if (in_array($th['fonts'][$k] ?? null, FONT_IDS, true) && $th['fonts'][$k][0] !== '@') $fonts[$k] = $th['fonts'][$k];
+    foreach (['head', 'body'] as $k) if (valid_font($th['fonts'][$k] ?? null) && $th['fonts'][$k][0] !== '@') $fonts[$k] = $th['fonts'][$k];
+    // typefaces that are not included: where they come from, their name and kind
+    $extra = [];
+    foreach (array_slice(is_array($src['fonts'] ?? null) ? $src['fonts'] : [], 0, 24) as $x) {
+        if (!is_array($x) || !valid_font($x['id'] ?? null) || in_array($x['id'], FONT_IDS, true)) continue;
+        if (!is_string($x['n'] ?? null) || !preg_match('/^[A-Za-z0-9][A-Za-z0-9 \-]{0,59}$/', $x['n'])) continue;
+        $extra[] = ['id' => $x['id'], 'n' => $x['n'], 'c' => in_array($x['c'] ?? '', ['sans-serif', 'serif', 'monospace', 'cursive', 'display'], true) ? $x['c'] : 'sans-serif'];
+    }
     $colors = clean_hex_map($th['colors'] ?? null, ['bg', 'fg', 'muted', 'accent', 'accent2', 'surface', 'onaccent']);
     return [
         'format' => ['id' => preg_match('/^[a-z0-9-]{1,16}$/', (string)($f['id'] ?? '')) ? (string)$f['id'] : '16-9', 'w' => (int)(clean_num($f['w'] ?? 1280, 200, 4000) ?? 1280), 'h' => (int)(clean_num($f['h'] ?? 720, 200, 4000) ?? 720)],
         'theme' => ['id' => preg_match('/^[a-z0-9-]{1,24}$/', (string)($th['id'] ?? '')) ? (string)$th['id'] : 'paper', 'colors' => $colors ?: new stdClass(), 'fonts' => $fonts ?: new stdClass()],
+        'fonts' => $extra,
         'opts' => [
             'numbers' => !empty($o['numbers']), 'footer' => clean_text($o['footer'] ?? '', 120), 'tr' => in_array($o['tr'] ?? '', TRANSITIONS, true) ? ($o['tr'] ?? '') : '',
             'download' => !isset($o['download']) || !empty($o['download']), 'copy' => !isset($o['copy']) || !empty($o['copy']), 'comments' => !isset($o['comments']) || !empty($o['comments']),
@@ -339,7 +357,7 @@ function rich_children(DOMNode $node, int $depth = 0): string
             $size = clean_num($c->getAttribute('data-s'), 0.2, 5);
             if ($size) $attrs .= ' data-s="' . $size . '"';
             $font = $c->getAttribute('data-f');
-            if (in_array($font, FONT_IDS, true)) $attrs .= ' data-f="' . e($font) . '"';
+            if (valid_font($font) && $font[0] !== '@') $attrs .= ' data-f="' . e($font) . '"';
             $mark = clean_color($c->getAttribute('data-m'));
             if ($mark) $attrs .= ' data-m="' . e($mark) . '"';
             $out .= $attrs ? "<span$attrs>$inner</span>" : $inner;

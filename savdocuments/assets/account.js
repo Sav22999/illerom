@@ -1,10 +1,9 @@
 /** Accounts: preferences, signing in, settings. */
 import { btn, confirm, dialog, drop, errText, fail, h, icon, primary, put, segmented, select, toast, toggle, face, empty } from './ui.js';
 import { getLang, setLang, t } from './i18n.js';
-import { S, api } from './store.js';
+import { S, api, offline } from './store.js';
 import { DEFAULTS } from './settings.js';
-import { pageForm, styleForm } from './panels.js';
-import { importFile } from './actions.js';
+import { heroDeck } from './hero.js';
 
 export const go = (x) => { if (location.hash === x) dispatchEvent(new HashChangeEvent('hashchange')); else location.hash = x; };
 
@@ -23,20 +22,33 @@ export function setUser(u, csrf) {
   S.user = u;
   if (csrf) S.csrf = csrf;
   if (u) { if (Array.isArray(u.prefs) || !u.prefs) u.prefs = {}; setLang(u.lang); }
+  if (u?.verified) offline.rememberUser(u);
   applyTheme();
 }
 
 // ------------------------------------------------------------------ pieces of every page
 
 export const brand = (to = '#/') => h('a.brand', { href: to }, h('img', { src: 'icons/favicon.svg', width: 38, height: 38, alt: '' }), h('span', 'Sav', h('b', 'Documents')));
-export const langSwitch = () => segmented(t('language'), getLang(), [['it', '=Italiano', 'Italiano'], ['en', '=English', 'English']], (l) => { setLang(l); if (S.user) { S.user.lang = l; api('auth.profile', { lang: l }).catch(() => {}); } dispatchEvent(new HashChangeEvent('hashchange')); }, { class: 'langs' });
+/** Italian or English, kept in this browser and in the account. */
+export function useLang(l) { setLang(l); if (S.user) { S.user.lang = l; api('auth.profile', { lang: l }).catch(() => {}); } dispatchEvent(new HashChangeEvent('hashchange')); }
+/** The language of the footer: the SavComponents language choice, only the two languages of the app, with their own names. */
+export const langSwitch = () => { const c = h('sav-language-choice', { include: 'it-IT en-GB', value: getLang() === 'it' ? 'it-IT' : 'en-GB', 'native-names': '', 'no-code': '', size: 'sm', 'aria-label': t('language'), class: 'langs' }); c.addEventListener('change', () => { const l = String(c.value || '').slice(0, 2); if (l && l !== getLang()) useLang(l); }); return c; };
+/** The language in the bar of the first page: a button with the other language, as in SavPresentations. */
+export const langButton = () => btn(getLang() === 'it' ? 'English' : 'Italiano', { icon: 'languages', appearance: 'ghost', size: 'sm', onclick: () => useLang(getLang() === 'it' ? 'en' : 'it') });
 export const credit = () => h('footer.credit', h('a', { href: 'privacy.html' }, 'Privacy'), h('a', { href: 'terms.html' }, t('terms_c')), h('a', { href: 'https://www.illerom.eu/', rel: 'noopener' }, 'Illerom'), h('span', getLang() === 'it' ? 'di ' : 'by ', h('a.sig', { href: 'https://www.saveriomorelli.com', rel: 'noopener' }, 'Saverio Morelli')), h('span.grow'), langSwitch());
 export function userMenu() {
   const u = S.user, av = face(u.name, null, 34);
   av.setAttribute('button', '');
-  return drop(av, [{ head: u.name }, { head: u.email }, '-', ['settings', t('settings'), () => settings()], u.master ? ['shield', t('admin'), () => go('#/admin')] : null, '-', ['log-out', t('sign_out'), signOut]], { placement: 'bottom-end', label: u.name });
+  return drop(av, [{ head: u.name }, { head: u.email }, '-', ['settings', t('settings'), () => go('#/settings')], u.master ? ['shield', t('admin'), () => go('#/admin')] : null, '-', ['log-out', t('sign_out'), signOut]], { placement: 'bottom-end', label: u.name });
 }
-export async function signOut() { await api('auth.logout', {}); S.user = null; S.csrf = ''; go('#/welcome'); }
+export async function signOut() {
+  await api('auth.logout', {}).catch(() => {});
+  await offline.clear(); // the copies kept for working offline go away with the person
+  if (window.caches) for (const k of await caches.keys()) if (k.endsWith('-img')) await caches.delete(k);
+  offline.rememberUser(null);
+  S.user = null; S.csrf = ''; S.offline = false;
+  go('#/welcome');
+}
 
 // ------------------------------------------------------------------ signing in
 
@@ -96,13 +108,27 @@ function forgot() {
   dialog({ title: t('forgot'), body: h('div.form', h('p.muted', t('forgot_text')), email), actions: [{ label: t('cancel') }, { label: t('send_link'), primary: true, run: async () => { await api('auth.forgot', { email: email.value, lang: getLang() }); toast(t('link_sent'), 'success'); } }] });
 }
 
-const demo = () => h('div.demo', { 'aria-hidden': 'true' }, h('div.dsheet', h('b'), h('i'), h('i.s'), h('i'), h('i.m'), h('div.dtable', Array.from({ length: 9 }, () => h('span'))), h('i'), h('i.caret')), h('div.dsheet.two', h('i'), h('i.m'), h('div.dimg'), h('i'), h('i.s')));
-export function land(root, mode, note, create) {
+/**
+ * The first page, as in SavPresentations: a bar with the language and "Sign in", the title with the two buttons, a fan of
+ * real pages (made from the templates) that open up and come forward under the pointer, six features. Signing in and
+ * creating an account have a page of their own (#/signin, #/signup).
+ */
+export function land(root, mode, note, pages = []) {
   if (/^#\/(d|invite)\//.test(location.hash)) sessionStorage.setItem('savdocuments-next', location.hash);
-  const f = (ic, k) => h('sav-card.feat', h('div.stack', icon(ic), h('strong', t(k)), h('span.muted', t(k + '_t'))));
-  put(root, h('div.land', h('header.lhead', brand('#/welcome'), langSwitch()),
-    h('main.lmain', h('div.ltext', h('h1', t('land_title')), h('p.lead', t('land_text')), h('div.prow.wrap', primary(t('try_now'), { icon: 'pencil', size: 'lg', onclick: () => create('blank') }), btn(t('open_file'), { icon: 'upload', size: 'lg', onclick: () => importFile() })), h('p.muted.small', t('try_hint')), demo()), h('div.lside', note || null, authCard(mode === 'signup' ? 'signup' : 'signin'))),
-    h('section.feats', f('ruler', 'ft_page'), f('chart-column', 'ft_obj'), f('file-text', 'ft_word'), f('users', 'ft_team')), credit()));
+  const top = (...right) => h('header.ltop', brand('#/welcome'), h('div.spacer'), langButton(), ...right);
+  document.title = 'SavDocuments';
+  if (mode === 'signin' || mode === 'signup') {
+    put(root, h('div.authp', top(), h('main.amain', h('div.stack.aw', note || null, authCard(mode))), credit()));
+    return () => {};
+  }
+  const stage = h('div.l-stage', { 'aria-hidden': 'true' }), cards = pages.map((p, i) => h('div.l-card', { style: `--i:${i}` }, h('div.l-in', p)));
+  stage.append(...cards);
+  const feat = (ic, k) => h('div.feat', icon(ic), h('h3', t(k)), h('p', t(k + '_t')));
+  put(root, h('div.landing', top(btn(t('sign_in'), { appearance: 'outline', href: '#/signin' })),
+    h('main.lmain', h('section.hero', h('div.hero-t', h('h1', t('land_title')), h('p', t('land_text')), h('div.prow', primary(t('l_cta'), { size: 'lg', href: '#/signup' }), btn(t('sign_in'), { size: 'lg', appearance: 'ghost', href: '#/signin' })), h('small', t('l_small'))), stage),
+      h('section.feats', feat('ruler', 'ft_page'), feat('chart-column', 'ft_obj'), feat('layout-template', 'ft_tpl'), feat('users', 'ft_team'), feat('cloud-off', 'ft_off'), feat('file-text', 'ft_word'))), credit()));
+  const stop = heroDeck(stage, cards);
+  return stop;
 }
 const centered = (root, ...kids) => put(root, h('div.wait', h('sav-card.auth', h('div.stack', kids))));
 export const verify = (root, token) => centered(root, empty('mail', t('verify_title'), t('verify_text'), primary(t('verify_btn'), { onclick: async () => { signedIn(await api('auth.verify', { token })); } })));
@@ -111,17 +137,5 @@ export const unverified = (root) => centered(root, empty('mail', t('unverified')
 
 // ------------------------------------------------------------------ settings
 
-export function settings() {
-  const p = prefs(), u = S.user, opt = (k, def = true) => toggle(t('g_' + k), p[k] ?? def, (v) => setPrefs({ [k]: v }).catch(fail)), md = { size: 'md' };
-  const name = u ? h('sav-input', { label: t('your_name'), value: u.name, maxlength: 80 }) : null;
-  const pwBox = () => { const cur = h('sav-input', { label: t('current_pw'), type: 'password', 'password-toggle': true, autocomplete: 'current-password' }), pw = h('sav-input', { label: t('new_password'), type: 'password', 'password-toggle': true, autocomplete: 'new-password', help: t('pw_hint') }); dialog({ title: t(u.hasPassword ? 'change_pw' : 'set_pw'), body: h('div.form', u.hasPassword ? cur : null, pw), actions: [{ label: t('cancel') }, { label: t('save'), primary: true, run: async () => { const r = await api('auth.password', { current: cur.value, password: pw.value }); setUser({ ...r.user, prefs: prefs() }); toast(t('pw_changed'), 'success'); } }] }); };
-  const del = () => { const pw = h('sav-input', { label: t('password'), type: 'password', 'password-toggle': true, autocomplete: 'current-password' }); dialog({ title: t('delete_account'), body: h('div.form', h('p', t('delete_account_text')), u.hasPassword ? pw : null), actions: [{ label: t('cancel') }, { label: t('delete_account'), danger: true, run: async () => { await api('auth.delete', { password: pw.value }); S.user = null; go('#/welcome'); } }] }); };
-  const defs = () => {
-    const s = { ...structuredClone(DEFAULTS), lang: getLang(), ...(p.defaults || {}) }, up = (x) => Object.assign(s, x);
-    dialog({ title: t('g_defaults'), width: '34rem', body: h('sav-tabs', h('sav-tab', { label: t('tab_page') }, pageForm(s, up)), h('sav-tab', { label: t('tab_style') }, styleForm(s, up))), actions: [{ label: t('reset'), run: async () => { await setPrefs({ defaults: null }); toast(t('settings_saved'), 'success'); } }, { label: t('save'), primary: true, run: async () => { await setPrefs({ defaults: s }); toast(t('settings_saved'), 'success'); } }] });
-  };
-  dialog({ title: t('settings'), width: '36rem', body: h('sav-tabs',
-    h('sav-tab', { label: t('g_editor') }, h('div.form', h('div.grid2', select(t('theme'), ['auto', 'light', 'dark'].map((k) => [k, t('th_' + k)]), p.theme || 'auto', (v) => setPrefs({ theme: v }).catch(fail), md), select(t('language'), [['it', 'Italiano'], ['en', 'English']], getLang(), async (v) => { setLang(v); if (u) { u.lang = v; await api('auth.profile', { lang: v }).catch(fail); } document.querySelectorAll('sav-dialog').forEach((d) => d.hide()); dispatchEvent(new HashChangeEvent('hashchange')); }, md)), opt('spellcheck'), opt('autoformat'), opt('bubble'), opt('rulers'), opt('outline'))),
-    h('sav-tab', { label: t('g_defaults') }, h('div.form', h('p.muted', t('defaults_text')), btn(t('doc_options'), { icon: 'settings', onclick: () => { defs(); } }))),
-    u ? h('sav-tab', { label: t('g_account') }, h('div.form', h('div.prow.end', h('div.grow', name), btn(t('save'), { onclick: async () => { const r = await api('auth.profile', { name: name.value, lang: getLang() }); setUser({ ...r.user, prefs: prefs() }); toast(t('settings_saved'), 'success'); dispatchEvent(new HashChangeEvent('hashchange')); } })), h('p.muted', u.email), h('div.prow.wrap', btn(t(u.hasPassword ? 'change_pw' : 'set_pw'), { icon: 'lock', onclick: () => { pwBox(); } }), window.Identity ? btn(window.Identity.text('methods'), { icon: 'shield', onclick: () => { window.Identity.methods(); } }) : null), btn(t('delete_account'), { icon: 'trash', variant: 'danger', onclick: () => { del(); } }))) : null) });
-}
+/** The settings are a page of their own (options.js). */
+export const settings = () => go('#/settings');

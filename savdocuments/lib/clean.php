@@ -186,7 +186,6 @@ function clean_block($html): string
 }
 
 const PAGE_SIZES = ['A3', 'A4', 'A5', 'A6', 'B5', 'Letter', 'Legal', 'Tabloid', 'custom'];
-const FONTS = ['Inter', 'Lora', 'Montserrat', 'Open Sans', 'Playfair Display', 'Poppins', 'Source Sans 3', 'Arial', 'Helvetica', 'Times New Roman', 'Georgia', 'Garamond', 'Verdana', 'Courier New'];
 
 function clean_settings($s): array
 {
@@ -199,7 +198,17 @@ function clean_settings($s): array
         $z = is_array($z) ? $z : [];
         return ['l' => $line($z['l'] ?? ''), 'c' => $line($z['c'] ?? ''), 'r' => $line($z['r'] ?? '')];
     };
-    $font = fn($v, $def) => in_array($v, FONTS, true) ? $v : $def;
+    // any typeface by name (the included ones, Bunny Fonts, from file): the list "fonts" says where the others come from
+    $font = fn($v, $def) => is_string($v) && preg_match('/^[A-Za-z0-9][A-Za-z0-9 \-]{0,59}$/', $v) ? $v : $def;
+    $fonts = [];
+    foreach (array_slice(is_array($s['fonts'] ?? null) ? $s['fonts'] : [], 0, 24) as $f) {
+        if (!is_array($f) || !is_string($f['n'] ?? null) || !preg_match('/^[A-Za-z0-9][A-Za-z0-9 \-]{0,59}$/', $f['n'])) continue;
+        $o = ['n' => $f['n'], 'c' => in_array($f['c'] ?? '', ['sans-serif', 'serif', 'display', 'handwriting', 'monospace'], true) ? $f['c'] : 'sans-serif'];
+        if (is_string($f['b'] ?? null) && preg_match('/^[a-z0-9][a-z0-9\-]{0,59}$/', $f['b'])) $o['b'] = $f['b'];
+        elseif (is_string($f['f'] ?? null) && preg_match('/^[a-f0-9]{24}$/', $f['f'])) $o['f'] = $f['f'];
+        else continue;
+        $fonts[] = $o;
+    }
     $color = fn($v, $def) => is_string($v) && preg_match('/^#[0-9a-f]{6}$/i', $v) ? strtolower($v) : $def;
     return [
         'size' => in_array($s['size'] ?? '', PAGE_SIZES, true) ? $s['size'] : 'A4',
@@ -214,6 +223,9 @@ function clean_settings($s): array
         'border' => in_array($s['border'] ?? '', ['thin', 'thick', 'double', 'dashed'], true) ? $s['border'] : '', 'borderColor' => $color($s['borderColor'] ?? '', '#0f6e56'),
         'mark' => mb_substr($line($s['mark'] ?? ''), 0, 40), 'startPage' => (int)$num($s['startPage'] ?? null, 0, 9999, 1), 'bandLine' => !empty($s['bandLine']), 'capNum' => !empty($s['capNum']),
         'numbered' => !empty($s['numbered']), 'justify' => !empty($s['justify']),
+        'fonts' => $fonts,
+        // what who only reads (or comments) may do
+        'noComments' => !empty($s['noComments']), 'noDownload' => !empty($s['noDownload']), 'noCopy' => !empty($s['noCopy']),
         'lang' => is_string($s['lang'] ?? null) && preg_match('/^[a-z]{2}(-[A-Z]{2})?$/', $s['lang']) ? $s['lang'] : 'en',
     ];
 }

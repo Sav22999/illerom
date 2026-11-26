@@ -32,7 +32,8 @@ set_exception_handler(function (Throwable $e) {
 $r = (string)($_GET['r'] ?? '');
 if (!credentials()) fail('not_installed', 503);
 if ($r === 'media') serve_media((string)($_GET['id'] ?? ''));
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && !in_array($r, ['media.upload', 'media.video.piece'], true) && stripos((string)($_SERVER['CONTENT_TYPE'] ?? ''), 'application/json') !== 0) fail('bad_request', 415);
+if ($r === 'font') serve_font((string)($_GET['id'] ?? ''));
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !in_array($r, ['media.upload', 'media.video.piece', 'font.upload'], true) && stripos((string)($_SERVER['CONTENT_TYPE'] ?? ''), 'application/json') !== 0) fail('bad_request', 415);
 remember_app_url();
 
 function only(string $method): void
@@ -213,8 +214,12 @@ function delete_user(int $id): void
     $st = db()->prepare('SELECT id FROM ' . t('media') . ' WHERE user_id = ?');
     $st->execute([$id]);
     $files = $st->fetchAll(PDO::FETCH_COLUMN);
+    $st = db()->prepare('SELECT id FROM ' . t('fonts') . ' WHERE user_id = ?');
+    $st->execute([$id]);
+    $fonts = $st->fetchAll(PDO::FETCH_COLUMN);
     db()->prepare('DELETE FROM ' . t('users') . ' WHERE id = ?')->execute([$id]);
     delete_media_files($files);
+    foreach ($fonts as $f) @unlink(font_path($f));
 }
 
 // ---------- Google and SavAccount: signing in and joining an account that already exists (../identity/identity.php) ----------
@@ -899,6 +904,30 @@ switch ($r) {
         if (strlen($bytes) > MAX_UPLOAD_BYTES) fail('image_big', 413);
         if ($bytes === '') fail('image_type', 422);
         send_json(['ok' => true, 'media' => store_picture((int)$u['id'], $bytes, clean_text((string)($_GET['name'] ?? ''), 120))]);
+
+    // typefaces from file: the file is the body, the name comes in the address
+    case 'font.list':
+        $u = reader();
+        $st = db()->prepare('SELECT id, name, bytes FROM ' . t('fonts') . ' WHERE user_id = ? ORDER BY name');
+        $st->execute([$u['id']]);
+        send_json(['ok' => true, 'fonts' => array_map(fn($f) => ['id' => $f['id'], 'name' => $f['name'], 'bytes' => (int)$f['bytes']], $st->fetchAll())]);
+
+    case 'font.upload':
+        $u = writer();
+        if (too_many_attempts('font', 30, 60)) fail('rate_limited', 429);
+        record_attempt('font');
+        if ((int)($_SERVER['CONTENT_LENGTH'] ?? 0) > MAX_FONT_BYTES) fail('font_big', 413);
+        $bin = (string)file_get_contents('php://input', false, null, 0, MAX_FONT_BYTES + 1);
+        send_json(['ok' => true, 'font' => store_font((int)$u['id'], $bin, (string)($_GET['name'] ?? ''))]);
+
+    case 'font.delete':
+        // presentations that use it fall back to an included typeface of the same kind
+        $u = writer();
+        $id = (string)(body()['id'] ?? '');
+        $st = db()->prepare('DELETE FROM ' . t('fonts') . ' WHERE id = ? AND user_id = ?');
+        $st->execute([$id, $u['id']]);
+        if ($st->rowCount() && preg_match('/^[a-f0-9]{24}$/', $id)) @unlink(font_path($id));
+        send_json(['ok' => true]);
 
     case 'media.video.begin':
         $u = writer();

@@ -9,7 +9,8 @@ const DROP = new Set(['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'EMBED', 'HEAD', 'T
 const TOKEN = /^@(bg|fg|muted|accent|accent2|surface|onaccent)$/;
 export const okColor = (c) => TOKEN.test(c || '') || /^#[0-9a-f]{6}([0-9a-f]{2})?$/i.test(c || '');
 export const okLink = (h) => /^(https?:\/\/|mailto:)[^\s<>"']+$/i.test(h || '') || /^#s:[A-Za-z0-9_-]{4,16}$/.test(h || '');
-const okFont = (f) => /^(@head|@body|[a-z]{3,14})$/.test(f || '');
+// included typefaces, those of Bunny Fonts (b:slug) and from file (f:id), as the server checks them
+const okFont = (f) => /^(@head|@body|[a-z]{3,14}|b:[a-z0-9][a-z0-9-]{0,59}|f:[a-f0-9]{24})$/.test(f || '');
 
 export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
     '&': '&amp;',

@@ -1,5 +1,28 @@
 /** Texts of the app: one line each, key | English | Italian. {x} is replaced. */
 const RAW = `
+all|All|Tutti
+show_more|Show {n} more|Mostra altri {n}
+f_display|Display|Decorativo
+f_kind|Kind|Tipo
+more_fonts|More typefaces…|Altri caratteri…
+fonts_title|Typefaces|Caratteri
+fonts_inc|Included|Inclusi
+fonts_deck|In this presentation|In questa presentazione
+fonts_file|From file|Da file
+fonts_mine|Your typefaces|I tuoi caratteri
+fonts_search|Search among about 2000 typefaces|Cerca tra circa 2000 caratteri
+fonts_bunny_t|Open and free typefaces from Bunny Fonts (fonts.bunny.net), loaded from there when a presentation uses them.|Caratteri liberi e gratuiti di Bunny Fonts (fonts.bunny.net), caricati da lì quando una presentazione li usa.
+fonts_off|Bunny Fonts cannot be reached now.|Bunny Fonts non è raggiungibile adesso.
+fonts_file_t|A typeface of yours (TrueType, OpenType, WOFF or WOFF2, at most 5 MB): it is kept in your account and whoever opens your presentations sees it. Use only typefaces you may share.|Un tuo carattere (TrueType, OpenType, WOFF o WOFF2, al massimo 5 MB): resta nel tuo account e chi apre le tue presentazioni lo vede. Usa solo caratteri che puoi condividere.
+font_choose|Choose the file|Scegli il file
+font_name|Name|Nome
+font_name_ph|e.g. My Typeface|es. Il mio carattere
+font_add|Add and use|Aggiungi e usa
+fonts_none|No typeface from file yet.|Ancora nessun carattere da file.
+err_font_big|The file is larger than 5 MB.|Il file supera i 5 MB.
+err_font_invalid|This is not a TrueType, OpenType, WOFF or WOFF2 typeface.|Non è un carattere TrueType, OpenType, WOFF o WOFF2.
+err_font_name|Give the typeface a name (letters, digits, spaces).|Dai un nome al carattere (lettere, cifre, spazi).
+err_font_many|You have 30 typefaces from file: delete one first.|Hai 30 caratteri da file: prima eliminane uno.
 accept_1|I accept the|Accetto i
 accept_2|and I have read the|e ho letto l’
 accept_3|What I create and upload is my own responsibility.|Quello che creo e carico è sotto la mia responsabilità.
@@ -555,6 +578,7 @@ template|Template|Modello
 template_saved|It is now among your templates|Ora è tra i tuoi modelli
 templates|Templates|Modelli
 terms|Terms of use|Termini d’uso
+terms_short|Terms|Termini
 text|Text|Testo
 th_classic|Classic|Classici
 th_clean|Clean|Puliti
@@ -828,6 +852,68 @@ go_to_page|Go to page|Vai alla pagina
 page_rules_share_t|Decide who can see, comment or change each page.|Decidi chi può vedere, commentare o modificare ogni pagina.
 end_show_b|End|Termina
 search|Search|Cerca
+access_only_people|Only the people added|Solo le persone aggiunte
+access_only_people_t|Nobody else can open the presentation.|Nessun altro può aprire la presentazione.
+access_link_viewer|Anyone with the link can view|Chi ha il link può vedere
+access_link_commenter|Anyone with the link can comment|Chi ha il link può commentare
+access_link_editor|Anyone with the link can edit|Chi ha il link può modificare
+link_valid|Valid for|Valido per
+create_link|Create link|Crea link
+links_made|Links made ({n})|Link creati ({n})
+manage|Manage|Gestisci
+name_t|Shown to the people you work with.|La vedono le persone con cui lavori.
+password_t|To sign in with your email.|Per entrare con la tua email.
+password_none_t|You sign in with Google or SavAccount: you can add one.|Entri con Google o SavAccount: puoi aggiungerne una.
+sign_in_ways|Ways to sign in|Modi per entrare
+sign_in_ways_t|Google, SavAccount and password, joined to this account.|Google, SavAccount e password, collegati a questo account.
+sign_out_t|On this device.|Su questo dispositivo.
+new_decks_t|What a new presentation starts with. Each one can change it later.|Con cosa parte una presentazione nuova. Ognuna può cambiarlo dopo.
+editor_t|How the editor behaves: only for you, on every presentation.|Come si comporta l’editor: solo per te, in tutte le presentazioni.
+set_notes_bar|Speaker notes under the page|Note del relatore sotto la pagina
+sharing_t|What a new presentation starts with, and when to get an email.|Con cosa parte una presentazione nuova, e quando ricevere un’email.
+on_device|On this device|Su questo dispositivo
+on_device_t|Presentations kept only in this browser: they open without a connection and without an account.|Presentazioni salvate solo in questo browser: si aprono senza connessione e senza account.
+offline_decks|Offline presentations|Presentazioni offline
+offline_decks_t|You can move them into your account whenever you want.|Puoi spostarle nel tuo account quando vuoi.
+open_device|Open|Apri
+export_data_t|Everything stored about you, in one file.|Tutto quello che è salvato su di te, in un file.
+delete_account_short|Your presentations, pictures and comments go for good.|Le tue presentazioni, immagini e commenti spariscono per sempre.
+saved_here|Saved on this device|Salvata su questo dispositivo
+local_missing|It is not on this device any more.|Non è più su questo dispositivo.
+local_media_t|This presentation lives only on this device: pictures and videos come from your computer.|Questa presentazione vive solo su questo dispositivo: immagini e video arrivano dal tuo computer.
+offline_open|You are offline: this is the copy of your last visit. Changes leave when the connection comes back.|Sei offline: questa è la copia della tua ultima visita. Le modifiche partono quando torna la connessione.
+offline_list|You are offline: this is the list of your last visit.|Sei offline: questo è l’elenco della tua ultima visita.
+move_to_account|Move to my account|Sposta nel mio account
+moved_to_account|Now it is in your account|Ora è nel tuo account
+moving|Moving to your account…|Sposto nel tuo account…
+l_local|Or use it without an account, on this device.|Oppure usala senza account, su questo dispositivo.
+local_title|On this device|Su questo dispositivo
+local_intro|These presentations live only in this browser: they open without a connection and nobody else sees them. Clearing the browser data deletes them.|Queste presentazioni vivono solo in questo browser: si aprono senza connessione e nessun altro le vede. Cancellando i dati del browser spariscono.
+local_intro_guest|Sign in to share them, work on them with others and find them on other devices.|Entra per condividerle, lavorarci con altri e ritrovarle su altri dispositivi.
+local_none|No presentations on this device yet|Ancora nessuna presentazione su questo dispositivo
+local_none_t|Start from a template: it is saved here, as you go.|Parti da un modello: si salva qui, mentre lavori.
+local_delete_t|“{title}” is deleted from this device. This cannot be undone.|“{title}” viene eliminata da questo dispositivo. Non si può annullare.
+err_local_full|This device has no room left for the presentation|Su questo dispositivo non c’è più spazio per la presentazione
+angle|Angle|Angolo
+from|From|Da
+to|To|A
+mode_change|Change mode|Cambia modalità
+mode_change_t|It is your choice and applies to every presentation; the others keep theirs. Nothing on the pages moves when you switch.|È una tua scelta e vale per tutte le presentazioni; gli altri tengono la loro. Cambiando, niente si sposta nelle pagine.
+mode_now|In use|In uso
+mode_simple_long|Pages are grids: you fill boxes, the layout takes care of itself.|Le pagine sono griglie: riempi dei riquadri, l’impaginazione si fa da sola.
+mode_simple_1|Ready grids, or your own|Griglie pronte, o fatte da te
+mode_simple_2|Drag a block onto another to swap them|Trascina un blocco su un altro per scambiarli
+mode_simple_3|Text shrinks to fit its box|Il testo si rimpicciolisce per starci
+mode_adv_long|Everything moves freely, to the pixel.|Tutto si muove liberamente, al pixel.
+mode_adv_1|Move, resize and rotate anything|Sposta, ridimensiona e ruota qualsiasi cosa
+mode_adv_2|Guides, alignment, groups and layers|Guide, allineamento, gruppi e livelli
+mode_adv_3|Exact position and size in numbers|Posizione e dimensioni esatte in numeri
+toggle_pages|Show or hide the pages|Mostra o nascondi le pagine
+grid_own_t|Drag across the squares to join them into one box; squares left alone become boxes by themselves.|Trascina sui quadretti per unirli in un riquadro; quelli lasciati soli diventano riquadri da soli.
+grid_board|Board|Tavola
+grid_clear|Start again|Ricomincia
+grid_cols|Columns|Colonne
+grid_rows|Rows|Righe
 err_admin_private|Private presentation: it can only be looked at when it is public or reported|Presentazione privata: si può guardare solo se è pubblica o segnalata
 err_admin_protected|Admins cannot be changed from here|Gli admin non si possono modificare da qui
 err_bad_credentials|Wrong email or password|Email o password sbagliate

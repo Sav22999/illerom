@@ -234,6 +234,16 @@ function schema_statements(string $p): array
             KEY `ix_user` (`user_id`, `created_at`),
             " . $fk('med_user', 'user_id', 'users') . "
         ) $e",
+        "CREATE TABLE IF NOT EXISTS `{$p}fonts` (
+            `id` CHAR(24) CHARACTER SET ascii COLLATE ascii_bin NOT NULL PRIMARY KEY,
+            `user_id` INT UNSIGNED NOT NULL,
+            `name` VARCHAR(60) NOT NULL,
+            `mime` VARCHAR(20) NOT NULL,
+            `bytes` INT UNSIGNED NOT NULL,
+            `created_at` DATETIME NOT NULL,
+            KEY `ix_user` (`user_id`),
+            " . $fk('font_user', 'user_id', 'users') . "
+        ) $e",
         "CREATE TABLE IF NOT EXISTS `{$p}reports` (
             `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
             `deck_id` INT UNSIGNED NOT NULL,

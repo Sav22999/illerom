@@ -22,7 +22,9 @@ the documents are kept on the server; without one they stay in the browser. <htt
 | `assets/ruler.js`                      | Rulers: margins and indents dragged on the rulers or on the page                   |
 | `assets/write.js`                      | The writing screen (top bar and insert bar as in SavPresentations, panels, palette) |
 | `assets/panels.js`, `inserts.js`       | Side panels (Elements, Format, Page, Style, Images) and insert dialogs              |
-| `assets/home.js`, `templates.js`, `thumbs.js` | Home, the 43 templates in 6 groups, small pictures of pages                 |
+| `assets/home.js`, `templates.js`, `thumbs.js` | Home (as in SavPresentations), the 43 templates in 6 groups, small pictures of pages |
+| `assets/options.js`                    | The settings page                                                                  |
+| `assets/fonts.js`, `assets/fonts.css`, `hero.js` | Typefaces (included, Bunny Fonts, from file); the fan of pages of the first page |
 | `assets/app.js`, `account.js`, `share.js`, `admin.js`, `ui.js` | Routes, accounts, sharing, administration, SavComponents helpers |
 | `assets/docx.js`, `files.js`, `zip.js` | Word, .savdoc, HTML, EPUB, Markdown and text files                                 |
 | `sw.js`                                | Offline shell: bump `CACHE` when the list of files changes                         |
@@ -55,6 +57,20 @@ the documents are kept on the server; without one they stay in the browser. <htt
 - **Previews** in the home: `documents.preview` keeps the first blocks (schema 2), read in groups with `doc.previews`.
 - **Insert bar**: each person chooses and orders its buttons (`prefs.tools`), as in SavPresentations.
 - **Trash**: 30 days, or `doc.empty_trash` ("Empty now").
+- **Accounts only**, as SavPresentations: without one only the landing page (and documents shared by link, read only).
+- **Offline**: the last person signed in is remembered (localStorage); the home list and the 30 most recent documents are
+  copied into IndexedDB (`offline` in `store.js`, read with `doc.get&quiet=1` so "recent" does not change); changes wait
+  in localStorage (`sync.js`) and leave when the connection is back; documents created offline wait as `local-…` and go to
+  the account of the same person. Pictures are kept by `sw.js`. Everything is cleared at sign out.
+- **Sharing** as SavPresentations: people, general access, what readers can do (`noComments`, `noDownload`, `noCopy`
+  settings, checked by the API for comments and copies), many single-use links with an optional name and a duration;
+  used links stay listed (schema 3: `invites.label`, `used_by`, `used_at`).
+- **Settings** are a page (`#/settings`, `options.js`); `auth.export` downloads all the data of the account.
+- **Typefaces** (`fonts.js`): 39 included (`assets/fonts.css`, `fonts/`); the whole catalog of Bunny Fonts searched in the
+  app and loaded from fonts.bunny.net; typefaces from file (TTF, OTF, WOFF, WOFF2, 5 MB, 30 per account, schema 4
+  `sd_fonts`, read by id with `api/?r=font&id=`). `settings.fonts` lists the typefaces of a document that are not included.
+- **First page** as in SavPresentations: a fan of real template pages (`hero.js`, the same spring, pages slide out to the
+  left); signing in has its own page (`#/signin`, `#/signup`).
 - **Master admins** see owners and sizes, never texts; a document can be read only while a report on it is open.
 
 ## .savdoc

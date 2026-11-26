@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 const APP_NAME = 'SavPresentations';
 const AUTH_COOKIE = 'savpresentations_auth';
-const SCHEMA_VERSION = 4; // 2: versions, 3: page_rules, 4: videos (media.poster)
+const SCHEMA_VERSION = 5; // 2: versions, 3: page_rules, 4: videos (media.poster), 5: typefaces from file
 const LANGS = ['en', 'it'];
 // What a person can do on a presentation, from the weakest: each role can do everything the ones before it can
 const ROLES = ['viewer', 'commenter', 'editor', 'owner'];
@@ -21,6 +21,8 @@ const MAX_SLIDES = 400;
 const MAX_UPLOAD_BYTES = 15 * 1048576; // what can be sent, per picture
 const MAX_VIDEO_BYTES = 150 * 1048576; // a video is sent in pieces, kept as it is
 const VIDEO_PIECE = 4 * 1048576;
+const MAX_FONT_BYTES = 5242880; // one typeface from file (5 MB)
+const MAX_USER_FONTS = 30;
 const MAX_IMAGE_BYTES = 8000000; // what is kept of it, after it has been made smaller
 
 // ---------- Configuration ----------

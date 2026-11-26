@@ -124,12 +124,14 @@ export function colorPop(label, value, onpick, opt = {}) {
   show(value);
   const pop = h('sav-popover', { placement: opt.placement || 'bottom-start', 'sheet-on-mobile': true, heading: label, style: '--width:16rem' }, sw);
   const set = (v) => { show(v); onpick(v); pop.hide(); };
+  // the suggested colours are the picker's own swatches (SavComponents): a click on one picks it and closes
   pop.addEventListener('sav-show', () => {
     if (pop.dataset.built) return;
     pop.dataset.built = 1;
-    const cp = h('sav-color-picker', { value: value || '#0f6e56', picker: 'custom', size: 'sm', label: t('other_color') });
-    cp.addEventListener('change', (e) => { const v = e.detail?.value ?? cp.value; if (/^#[0-9a-f]{6}$/i.test(v)) { show(v); onpick(v.toLowerCase()); } });
-    pop.append(h('div.cpop', h('div.sws', (opt.list || INKS).map((c) => h('sav-button.sw', { circle: true, size: 'sm', label: c, title: c, style: `--c:${c}`, onclick: () => set(c) }))), cp, opt.none ? btn(opt.none, { size: 'sm', block: true, onclick: () => set('') }) : null));
+    const list = (opt.list || INKS).map((c) => c.toLowerCase());
+    const cp = h('sav-color-picker', { value: value || list[0], swatches: list.join(' '), picker: 'custom', size: 'sm', 'aria-label': label });
+    cp.addEventListener('change', (e) => { const v = String(e.detail?.value ?? cp.value).toLowerCase(); if (!/^#[0-9a-f]{6}$/.test(v)) return; if (list.includes(v)) set(v); else { show(v); onpick(v); } });
+    pop.append(h('div.cpop', cp, opt.none ? btn(opt.none, { size: 'sm', block: true, appearance: 'outline', onclick: () => set('') }) : null));
   });
   pop.show_ = show;
   return pop;

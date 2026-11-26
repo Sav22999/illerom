@@ -98,7 +98,7 @@ export function pickPicture() {
   return new Promise((resolve) => {
     let dlg, res = null;
     const pick = (m) => { res = m; dlg.close(m); };
-    const src = sourceFields(), tabs = h('div.stack', h('sav-tabs', { appearance: 'segmented' }, h('sav-tab', { label: t('search_web'), icon: 'search' }, searchPanel('image', pick)), h('sav-tab', { label: t('my_pictures'), icon: 'images' }, libraryPanel(pick, 'image'))), src.node);
+    const src = sourceFields(), tabs = h('div.stack', state.local ? h('p.muted', t('local_media_t')) : h('sav-tabs', { appearance: 'segmented' }, h('sav-tab', { label: t('search_web'), icon: 'search' }, searchPanel('image', pick)), h('sav-tab', { label: t('my_pictures'), icon: 'images' }, libraryPanel(pick, 'image'))), src.node);
     dialog(t('choose_picture'), tabs, [[t('from_computer'), async () => { const f = await pickFile('image/*'); if (!f.length) return false; res = await uploadPicture(f[0]); return res; }, { icon: 'upload' }]], { width: '46rem', ref: (d) => (dlg = d) }).then((v) => resolve(src.add(v && v !== true ? v : res)));
   });
 }
@@ -130,11 +130,11 @@ export function pickVideo() {
       const v = parseVideo(url.value);
       if (!v) { url.setAttribute('help', t('err_video_url')); url.focus(); return false; }
       let poster = '', w = 1280, hh = 720;
-      if (v.kind !== 'file') try { const r = await api('media.poster', v); poster = r.media.src; } catch { /* without a still */ }
+      if (v.kind !== 'file' && !state.local) try { const r = await api('media.poster', v); poster = r.media.src; } catch { /* without a still */ }
       res = { ...v, poster, w, h: hh }; dlg.close(res);
     };
     const src = sourceFields(), done = (v) => { res = v; dlg.close(v); };
-    const tabs = h('div.stack', h('sav-tabs', { appearance: 'segmented' }, h('sav-tab', { label: t('search_web'), icon: 'search' }, searchPanel('video', (m) => done({ kind: 'file', vid: m.video, poster: m.src, w: m.w, h: m.h, credit: m.credit, creditUrl: m.creditUrl, cite: m.cite }))), h('sav-tab', { label: t('my_videos'), icon: 'film' }, libraryPanel(done, 'video')), h('sav-tab', { label: t('by_url'), icon: 'link' }, h('div.stack.pad', url, btn(t('insert'), byUrl)))), src.node);
+    const tabs = state.local ? h('div.stack', h('p.muted', t('local_media_t')), h('div.stack.pad', url, btn(t('insert'), byUrl)), src.node) : h('div.stack', h('sav-tabs', { appearance: 'segmented' }, h('sav-tab', { label: t('search_web'), icon: 'search' }, searchPanel('video', (m) => done({ kind: 'file', vid: m.video, poster: m.src, w: m.w, h: m.h, credit: m.credit, creditUrl: m.creditUrl, cite: m.cite }))), h('sav-tab', { label: t('my_videos'), icon: 'film' }, libraryPanel(done, 'video')), h('sav-tab', { label: t('by_url'), icon: 'link' }, h('div.stack.pad', url, btn(t('insert'), byUrl)))), src.node);
     dialog(t('choose_video'), tabs, [[t('from_computer'), async () => { const [f] = await pickFile(VIDEO_TYPES); if (!f) return false; const m = await sendVideo(f); if (!m) return false; res = ofVideo(m); return res; }, { icon: 'upload' }]], { width: '46rem', ref: (d) => (dlg = d) }).then((v) => resolve(src.add(v && v !== true ? v : res)));
   });
 }

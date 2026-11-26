@@ -53,12 +53,15 @@ async function route() {
     }
     if (q.get('speaker')) return show(import('./speaker.js'), 'speakerScreen', q.get('speaker'));
     if (q.get('d')) return show(import('./editor.js'), 'deckScreen', q.get('d'), q);
+    // presentations kept only in this browser: no account needed
+    if (q.get('p') === 'local') return show(import('./home.js'), 'localHome');
+    if (q.get('l')) return show(import('./editor.js'), 'deckScreen', '', q);
     if (q.get('signin') || (!u && q.get('p'))) {
         if (u) return go('./');
         return show(import('./auth.js'), 'authScreen', {mode: q.get('signin')});
     }
     if (!u) return show(import('./auth.js'), 'landing');
-    if (q.get('p') === 'settings') return show(import('./settings.js'), 'settingsScreen');
+    if (q.get('p') === 'settings') return show(import('./settings.js'), 'settingsScreen', q);
     if (q.get('p') === 'admin' && u.master) return show(import('./admin.js'), 'adminScreen', q);
     return show(import('./home.js'), 'homeScreen', q);
 }
@@ -93,9 +96,15 @@ function failed(e) {
             setLang(me.user.lang);
             applyMode();
         }
+        // who was signed in, for when the next visit has no connection
+        if (me.user) localStorage.setItem('sp-me', JSON.stringify(me.user)); else localStorage.removeItem('sp-me');
     } catch (e) {
         if (!e.network) return failed(e);
+        try { state.user = JSON.parse(localStorage.getItem('sp-me') || 'null'); } catch { state.user = null; }
+        state.offline = true;
     }
+    // back online: the session key again, so the changes made meanwhile can leave
+    addEventListener('online', async () => { try { const m = await get('auth.me'); if (m.user) { state.user = m.user; state.csrf = m.csrf; } state.offline = false; } catch { /* still off */ } });
     // signing in with SavAccount, or joining it to an account: the shared library of the projects (../identity)
     window.Identity?.setup({
         name: 'SavPresentations',

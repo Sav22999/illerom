@@ -1,19 +1,30 @@
 /** Typefaces inside the PDF: reads a WOFF, keeps only the glyphs used, gives widths and glyph numbers. */
 import {inflate} from './zip.js';
-import {FONTS} from './themes.js';
+import {EXTRA, FONTS} from './themes.js';
 
 const cache = new Map();
 
 /** A face: family id + bold/italic, falling back to the styles the family has. */
 export function face(fam, bold, italic) {
+    // typefaces not included: those of Bunny Fonts are read from there (Latin, WOFF); the others give way to an included one of the same kind
+    if (!FONTS[fam]) {
+        const kind = EXTRA[fam]?.[1], slug = fam.startsWith('b:') && fam.slice(2), st = (bold ? '700' : '400') + '-' + (italic ? 'italic' : 'normal');
+        const near = {serif: 'lora', monospace: 'mono', cursive: 'caveat'}[kind] || 'inter';
+        const key = 'x:' + fam + st;
+        if (!cache.has(key)) cache.set(key, slug && /^[a-z0-9-]+$/.test(slug) ? load(key, `https://fonts.bunny.net/${slug}/files/${slug}-latin-${st}.woff`).catch(() => load(key, `https://fonts.bunny.net/${slug}/files/${slug}-latin-400-normal.woff`)).catch(() => face(near, bold, italic)) : face(near, bold, italic));
+        return cache.get(key);
+    }
     const n = FONTS[fam]?.[2] || 1,
         st = n < 4 ? 'regular' : (bold ? 'bold' : '') + (italic ? 'italic' : '') || 'regular', key = `${fam}-${st}`;
     if (!cache.has(key)) cache.set(key, load(key));
     return cache.get(key);
 }
 
-async function load(key) {
-    const w = new Uint8Array(await (await fetch(`fonts/${key}.woff`)).arrayBuffer()), v = new DataView(w.buffer);
+async function load(key, url = `fonts/${key}.woff`) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('font');
+    const w = new Uint8Array(await res.arrayBuffer()), v = new DataView(w.buffer);
+    if (String.fromCharCode(...w.subarray(0, 4)) !== 'wOFF') throw new Error('font');
     const t = {};
     for (let i = 0, p = 44; i < v.getUint16(12); i++, p += 20) {
         const tag = String.fromCharCode(...w.subarray(p, p + 4)), off = v.getUint32(p + 4), cl = v.getUint32(p + 8),

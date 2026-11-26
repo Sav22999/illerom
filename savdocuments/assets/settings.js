@@ -9,16 +9,24 @@ export const SIZES = {
     Legal: [215.9, 355.6],
     Tabloid: [279.4, 431.8]
 };
-export const FONTS = ['Source Sans 3', 'Inter', 'Open Sans', 'Montserrat', 'Poppins', 'Lora', 'Playfair Display', 'Georgia', 'Garamond', 'Times New Roman', 'Arial', 'Helvetica', 'Verdana', 'Courier New'];
-const FALL = {
-    Lora: 'serif',
-    'Playfair Display': 'serif',
-    Georgia: 'serif',
-    Garamond: "'EB Garamond', Georgia, serif",
-    'Times New Roman': 'Times, serif',
-    'Courier New': 'Courier, monospace'
+/** The typefaces included in SavDocuments (no download needed), with their kind; system ones last. */
+export const BUILTIN = {
+    'Source Sans 3': 'sans-serif', Inter: 'sans-serif', 'Open Sans': 'sans-serif', Roboto: 'sans-serif', Lato: 'sans-serif', Montserrat: 'sans-serif', Poppins: 'sans-serif',
+    Nunito: 'sans-serif', Raleway: 'sans-serif', 'Work Sans': 'sans-serif', 'DM Sans': 'sans-serif', Manrope: 'sans-serif', 'Fira Sans': 'sans-serif', 'IBM Plex Sans': 'sans-serif',
+    'Noto Sans': 'sans-serif', Rubik: 'sans-serif', Oswald: 'sans-serif',
+    Lora: 'serif', 'Playfair Display': 'serif', Merriweather: 'serif', 'EB Garamond': 'serif', 'Libre Baskerville': 'serif', 'Crimson Pro': 'serif', 'Source Serif 4': 'serif',
+    'IBM Plex Serif': 'serif', 'PT Serif': 'serif', 'Noto Serif': 'serif',
+    'JetBrains Mono': 'monospace', 'IBM Plex Mono': 'monospace', 'Bebas Neue': 'display', Caveat: 'handwriting', 'Dancing Script': 'handwriting',
+    Georgia: 'serif', Garamond: 'serif', 'Times New Roman': 'serif', Arial: 'sans-serif', Helvetica: 'sans-serif', Verdana: 'sans-serif', 'Courier New': 'monospace',
 };
-export const fontStack = (f) => `'${f}', ${FALL[f] || 'Arial, sans-serif'}`;
+export const FONTS = Object.keys(BUILTIN);
+/** The kind of the typefaces that come from Bunny Fonts or from a file (filled by fonts.js), for the fallback. */
+export const KINDS = {};
+const FALL = {
+    serif: 'Georgia, serif', monospace: "'Courier New', monospace", handwriting: 'cursive', display: 'Arial, sans-serif', 'sans-serif': 'Arial, sans-serif',
+    Garamond: "'EB Garamond', Georgia, serif", 'Times New Roman': 'Times, serif', 'Courier New': 'Courier, monospace',
+};
+export const fontStack = (f) => `'${f}', ${FALL[f] || FALL[BUILTIN[f] || KINDS[f]] || FALL['sans-serif']}`;
 
 export const DEFAULTS = {
     size: 'A4',
@@ -47,6 +55,10 @@ export const DEFAULTS = {
     startPage: 1,
     bandLine: false,
     capNum: false,
+    fonts: [], // the typefaces that are not included: {n: name, c: kind, b: Bunny Fonts slug | f: id of a file}
+    noComments: false,
+    noDownload: false,
+    noCopy: false,
     numbered: false,
     justify: false,
     lang: 'en',

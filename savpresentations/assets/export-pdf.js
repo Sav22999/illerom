@@ -3,7 +3,7 @@
  * written at its place with the real typeface: the text stays selectable and searchable, shapes stay vectors.
  */
 import {decorOf, mediaUrl, slideNode, sorted} from './render.js';
-import {FONTS, gradient, slideContext, styleOf} from './themes.js';
+import {EXTRA, FONTS, gradient, slideContext, styleOf} from './themes.js';
 import {lineHeads, pathOf, shapePath} from './shapes.js';
 import {expandSlide} from './parts.js';
 import {videoSrc } from './render.js';
@@ -123,7 +123,7 @@ export async function exportPdf(deck, ctx, { onProgress, onlyVisible = true } = 
         for (const tn of runs) {
             if (!tn.nodeValue.trim()) continue;
             const cs = getComputedStyle(tn.parentElement), size = parseFloat(cs.fontSize);
-            const fam = Object.keys(FAM()).find((id) => cs.fontFamily.includes('"' + FAM()[id] + '"') || cs.fontFamily.startsWith(FAM()[id])) || 'inter';
+            const fam = famOf(cs.fontFamily);
             const f = await face(fam, +cs.fontWeight >= 600, cs.fontStyle === 'italic');
             if (!fonts.has(f.key)) fonts.set(f.key, {name: 'F' + fonts.size, f});
             const fn = fonts.get(f.key).name, col = cs.color.match(/[\d.]+/g).map(Number),
@@ -194,7 +194,7 @@ export async function exportPdf(deck, ctx, { onProgress, onlyVisible = true } = 
             const first = [...r.getClientRects()].find((x) => x.width > 0) || li.getBoundingClientRect();
             const col = cs.color.match(/[\d.]+/g).map(Number),
                 hex = '#' + col.slice(0, 3).map((x) => Math.round(x).toString(16).padStart(2, '0')).join('');
-            const fam = Object.keys(FAM()).find((id) => cs.fontFamily.includes(FAM()[id])) || 'inter',
+            const fam = famOf(cs.fontFamily),
                 f = await face(fam, +cs.fontWeight >= 600, false);
             if (!fonts.has(f.key)) fonts.set(f.key, {name: 'F' + fonts.size, f});
             const ol = li.parentElement.tagName === 'OL',
@@ -373,6 +373,11 @@ export async function exportPdf(deck, ctx, { onProgress, onlyVisible = true } = 
     return new Blob(out, {type: 'application/pdf'});
 }
 
-let fam;
-const FAM = () => (fam ||= Object.fromEntries(Object.entries(FONTS).map(([id, f]) => [id, 'SP ' + f[0]])));
+/** The typeface of a computed font-family: its first name, with or without quotes ("SP Inter" for the included ones, the plain name for the others). */
+function famOf(list) {
+    const first = String(list).split(',')[0].trim().replace(/^["']|["']$/g, '');
+    for (const [id, f] of Object.entries(FONTS)) if ('SP ' + f[0] === first) return id;
+    for (const [id, f] of Object.entries(EXTRA)) if (f[0] === first) return id;
+    return 'inter';
+}
 void styleOf;

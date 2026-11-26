@@ -1,7 +1,7 @@
 /** ODP (LibreOffice Impress): native shapes, text boxes and pictures. */
 import { zip } from './zip.js';
 import { sorted, decorOf } from './render.js';
-import { slideContext, styleOf, gradient, FONTS } from './themes.js';
+import { slideContext, styleOf, gradient, fontName } from './themes.js';
 import { shapePath, toSvgPath } from './shapes.js';
 import { expandSlide } from './parts.js';
 import { videoSrc } from './render.js';
@@ -33,7 +33,7 @@ export async function exportOdp(deck, ctx, media) {
       const ps = style('paragraph', `<style:paragraph-properties fo:text-align="${al[p.align || st.align]}" fo:line-height="${Math.round(st.lh * 84)}%" fo:margin-top="0cm" fo:margin-bottom="0cm"${p.list ? '' : ' fo:margin-left="0cm" fo:text-indent="0cm"'}/><style:text-properties fo:font-size="${pt(st.size)}" fo:color="${hex(sc.color(st.color))}"/>`);
       const runs = p.runs.map((r) => {
         if (r.br) return '<text:line-break/>';
-        const ts = style('text', `<style:text-properties fo:font-family="${x(FONTS[sc.font(r.f || st.font)][0])}" fo:font-size="${pt(st.size * (r.k || 1))}" fo:font-weight="${r.b || st.bold ? 'bold' : 'normal'}" fo:font-style="${r.i || st.italic ? 'italic' : 'normal'}" fo:color="${hex(sc.color(r.c || st.color))}"${r.u || st.under ? ' style:text-underline-style="solid" style:text-underline-width="auto"' : ''}${r.s ? ' style:text-line-through-style="solid"' : ''}${r.m ? ` fo:background-color="${hex(sc.color(r.m))}"` : ''}${st.caps ? ' fo:text-transform="uppercase"' : ''}${st.ls ? ` fo:letter-spacing="${pt(st.ls)}"` : ''}${r.sup ? ' style:text-position="super 58%"' : r.sub ? ' style:text-position="sub 58%"' : ''}/>`);
+        const ts = style('text', `<style:text-properties fo:font-family="${x(fontName(sc.font(r.f || st.font)))}" fo:font-size="${pt(st.size * (r.k || 1))}" fo:font-weight="${r.b || st.bold ? 'bold' : 'normal'}" fo:font-style="${r.i || st.italic ? 'italic' : 'normal'}" fo:color="${hex(sc.color(r.c || st.color))}"${r.u || st.under ? ' style:text-underline-style="solid" style:text-underline-width="auto"' : ''}${r.s ? ' style:text-line-through-style="solid"' : ''}${r.m ? ` fo:background-color="${hex(sc.color(r.m))}"` : ''}${st.caps ? ' fo:text-transform="uppercase"' : ''}${st.ls ? ` fo:letter-spacing="${pt(st.ls)}"` : ''}${r.sup ? ' style:text-position="super 58%"' : r.sub ? ' style:text-position="sub 58%"' : ''}/>`);
         const s = `<text:span text:style-name="${ts}">${x(r.t).replace(/ {2,}/g, (m) => ' <text:s text:c="' + (m.length - 1) + '"/>')}</text:span>`;
         return r.href && okLink(r.href) && !r.href.startsWith('#') ? `<text:a xlink:type="simple" xlink:href="${x(r.href)}">${s}</text:a>` : s;
       }).join('');

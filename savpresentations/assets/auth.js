@@ -12,39 +12,35 @@ export const brand = () => h('a.brand', {
     href: './',
     'data-go': true
 }, logo(), h('span', 'Sav', h('b', 'Presentations')));
-export const credit = () => h('footer.credit', h('a', {
-    href: 'terms.php',
-    target: '_blank'
-}, t('terms')), h('a', {
-    href: 'privacy.php',
-    target: '_blank'
-}, t('privacy')), h('a', {
-    href: 'https://github.com/Sav22999/illerom/tree/main/savpresentations',
-    target: '_blank',
-    rel: 'noopener'
-}, t('source')), h('span', t('developed_by'), ' ', h('a.sign', {
-    href: 'https://www.saveriomorelli.com/',
-    target: '_blank',
-    rel: 'noopener'
-}, 'Saverio Morelli')));
+/** The footer, the same of SavDocuments: Privacy · Terms · Illerom · by Saverio Morelli, and the language on the right. */
+export const credit = () => h('footer.credit', h('a', {href: 'privacy.php'}, 'Privacy'), h('a', {href: 'terms.php'}, t('terms_short')),
+    h('a', {href: 'https://www.illerom.eu/', rel: 'noopener'}, 'Illerom'),
+    h('span', lang() === 'it' ? 'di ' : 'by ', h('a.sign', {href: 'https://www.saveriomorelli.com/', rel: 'noopener'}, 'Saverio Morelli')),
+    h('span.grow'), langSwitch());
+/** Italian or English: kept in this browser and, when signed in, in the account. */
+async function useLang(l) {
+    setLang(l);
+    localStorage.setItem('sp-lang', l);
+    if (state.user) {
+        try {
+            const r = await api('auth.profile', {lang: l});
+            state.user = r.user;
+        } catch { /* only the language */
+        }
+    }
+    dispatchEvent(new PopStateEvent('popstate'));
+}
+export const langSwitch = () => {
+    const c = h('sav-language-choice', {include: 'it-IT en-GB', value: lang() === 'it' ? 'it-IT' : 'en-GB', 'native-names': '', 'no-code': '', size: 'sm', 'aria-label': t('language'), class: 'langs'});
+    c.addEventListener('change', () => { const l = String(c.value || '').slice(0, 2); if (l && l !== lang()) useLang(l); });
+    return c;
+};
 export const langButton = () => h('sav-button', {
     appearance: 'ghost',
     variant: 'neutral',
     size: 'sm',
     icon: 'languages',
-    onclick: async () => {
-        const l = lang() === 'it' ? 'en' : 'it';
-        setLang(l);
-        localStorage.setItem('sp-lang', l);
-        if (state.user) {
-            try {
-                const r = await api('auth.profile', {lang: l});
-                state.user = r.user;
-            } catch { /* only the language */
-            }
-        }
-        dispatchEvent(new PopStateEvent('popstate'));
-    }
+    onclick: () => useLang(lang() === 'it' ? 'en' : 'it')
 }, lang() === 'it' ? 'English' : 'Italiano');
 
 const topBar = (...right) => h('header.ltop', brand(), h('div.spacer'), langButton(), ...right);
@@ -81,7 +77,7 @@ export function landing(app) {
                 size: 'lg',
                 appearance: 'ghost',
                 variant: 'neutral'
-            })), h('small', t('l_small'))), demo),
+            })), h('small', t('l_small'), ' ', h('a', {href: '?p=local', 'data-go': true}, t('l_local')))), demo),
             h('section.feats', feat('users', 'live'), feat('layout-template', 'themes'), feat('images', 'search'), feat('shield', 'share'), feat('sticky-note', 'notes'), feat('download', 'files'))), credit());
     const stopDeck = heroDeck(demo, slides);
     return {

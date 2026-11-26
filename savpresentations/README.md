@@ -67,7 +67,16 @@ Themes that already look good, live editing together, precise sharing, PDF, PPTX
   is written on the page (`citeOf()`, a part like the others, so the files have it too).
 - **Show** (`present.js`): the speaker view (`speaker.js`, `?speaker=`) is a second window that gets what to draw through a
   `BroadcastChannel`; the window of the audience never shows notes.
+- **On this device / offline** (`local.js`): presentations kept only in the browser (IndexedDB), opened with `?l=<id>`, no
+  account needed (`?p=local`); their media are blobs with addresses `l:<id>`. The deck saves itself there instead of syncing
+  and can be moved into an account. With an account, the last list and the presentations opened are kept too, so they open
+  without a connection; changes wait in `localStorage` and leave when it comes back (the service worker keeps the files).
 - **Personal notes** are only ever sent to their author; **speaker notes** only to editors.
+- **Typefaces** (the same as in SavDocuments): 34 included (`themes.js` FONTS, `fonts/`, WOFF so the PDF can embed them);
+  the catalog of Bunny Fonts searched in the app (`fonts.js`), ids `b:slug`, loaded from fonts.bunny.net; typefaces from
+  file (TTF, OTF, WOFF, WOFF2, 5 MB, 30 per account; schema 5 `fonts`, files in `storage/fonts`), ids `f:<24 hex>`.
+  The ones not included are listed in `meta.fonts` of the presentation. PDF: Bunny ones are read from there in WOFF,
+  those from file give way to an included one of the same kind.
 - **Themes.** Elements hold colour tokens (`@accent`…) and roles (title, body…), so changing theme restyles everything.
   Decorations, charts, tables and icons are ordinary shapes and texts, so PDF, PPTX and ODP show exactly what is on
   screen.

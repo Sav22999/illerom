@@ -1,7 +1,8 @@
 /** Writing inside an element, with a small toolbar over the selection. */
 import {$$, clamp, h, promptBox, toast} from './core.js';
 import {t} from './i18n.js';
-import {FONTS, slideContext, styleOf} from './themes.js';
+import {FONTS, fontName, slideContext, styleOf} from './themes.js';
+import {addDeckFont, fontDialog} from './fonts.js';
 import {fragment, okLink, serialize} from './richtext.js';
 import {fitText} from './grid.js';
 
@@ -242,7 +243,8 @@ export function openText(ed, st, id, caret) {
         const open = pop.dataset.k === 'f' && !pop.hidden;
         pop.hidden = open;
         pop.dataset.k = 'f';
-        pop.replaceChildren(...['', ...Object.keys(FONTS)].map((f) => h('sav-button', {
+        const extra = (deck.meta.fonts || []).map((x) => x.id);
+        const list = ['', ...extra, ...Object.keys(FONTS)].map((f) => h('sav-button', {
             size: 'sm',
             appearance: 'ghost',
             variant: 'neutral',
@@ -251,7 +253,23 @@ export function openText(ed, st, id, caret) {
                 wrap('f', f);
                 pop.hidden = true;
             }
-        }, f ? FONTS[f][0] : t('theme_font'))));
+        }, f ? fontName(f) : t('theme_font')));
+        // "More typefaces…" first, where it is seen without scrolling
+        pop.replaceChildren(deck.canEdit ? h('sav-button', {
+            size: 'sm', appearance: 'ghost', variant: 'neutral', icon: 'plus',
+            onclick: () => {
+                // the selection is kept while the dialog has the focus, and given back to the text afterwards
+                const s = getSelection(), rg = s.rangeCount && rt.contains(s.anchorNode) ? s.getRangeAt(0).cloneRange() : null;
+                pop.hidden = true;
+                fontDialog({current: '', used: deck.meta.fonts || []}).then((f) => {
+                    if (!f || ed.editing?.id !== id) return;
+                    addDeckFont(deck, f);
+                    rt.focus({preventScroll: true});
+                    if (rg) { const x = getSelection(); x.removeAllRanges(); x.addRange(rg); }
+                    wrap('f', f.id);
+                });
+            }
+        }, t('more_fonts')) : '', ...list);
     };
     const bar = h('div.ftb', {onmousedown: (e) => e.preventDefault(), onpointerdown: (e) => e.stopPropagation()},
         b('type', t('typeface'), fonts), b('a-large-small', t('size'), sizes), h('i'), b('bold', t('bold'), () => cmd('bold'), 'bold'), b('italic', t('italic'), () => cmd('italic'), 'italic'), b('underline', t('underline'), () => cmd('underline'), 'underline'), b('strikethrough', t('strike'), () => cmd('strikeThrough'), 'strikeThrough'),

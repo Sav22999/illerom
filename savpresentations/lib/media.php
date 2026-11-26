@@ -409,3 +409,51 @@ function search_item(string $key, int $n): ?array
     $items = json_decode((string)$st->fetchColumn(), true);
     return is_array($items) ? ($items[$n] ?? null) : null;
 }
+
+
+// ------------------------------------------------------------------ typefaces from file
+
+/** Kept as files next to the pictures (storage/fonts), served by id to whoever opens a presentation that uses them. */
+function font_path(string $id): string
+{
+    return config_value('storage') . '/fonts/' . $id . '.bin';
+}
+
+function serve_font(string $id): void
+{
+    $f = null;
+    if (preg_match('/^[a-f0-9]{24}$/', $id)) {
+        $st = db()->prepare('SELECT mime FROM ' . t('fonts') . ' WHERE id = ?');
+        $st->execute([$id]);
+        $f = $st->fetch();
+    }
+    if (!$f || !is_file(font_path($id))) {
+        http_response_code(404);
+        exit;
+    }
+    header('Content-Type: ' . $f['mime']);
+    header('X-Content-Type-Options: nosniff');
+    header('Cache-Control: public, max-age=31536000, immutable');
+    header("Content-Security-Policy: default-src 'none'");
+    readfile(font_path($id));
+    exit;
+}
+
+/** TrueType, OpenType, WOFF or WOFF2, 5 MB at most, 30 per account. */
+function store_font(int $userId, string $bin, string $name): array
+{
+    $name = mb_substr(trim((string)preg_replace('/\s+/', ' ', (string)preg_replace('/[^A-Za-z0-9 \-]/', '', $name))), 0, 60);
+    if ($name === '' || !preg_match('/^[A-Za-z0-9]/', $name)) fail('font_name', 422);
+    if (strlen($bin) > MAX_FONT_BYTES) fail('font_big', 413);
+    $mime = ["\x00\x01\x00\x00" => 'font/ttf', 'true' => 'font/ttf', 'OTTO' => 'font/otf', 'wOFF' => 'font/woff', 'wOF2' => 'font/woff2'][substr($bin, 0, 4)] ?? '';
+    if ($mime === '' || strlen($bin) < 1000) fail('font_invalid', 422);
+    $st = db()->prepare('SELECT COUNT(*) FROM ' . t('fonts') . ' WHERE user_id = ?');
+    $st->execute([$userId]);
+    if ((int)$st->fetchColumn() >= MAX_USER_FONTS) fail('font_many', 422);
+    $id = bin2hex(random_bytes(12));
+    $file = font_path($id);
+    if (!is_dir(dirname($file)) && !@mkdir(dirname($file), 0755, true) && !is_dir(dirname($file))) throw new RuntimeException('storage folder not writable');
+    if (file_put_contents($file, $bin) !== strlen($bin)) throw new RuntimeException('storage folder not writable');
+    db()->prepare('INSERT INTO ' . t('fonts') . ' (id, user_id, name, mime, bytes, created_at) VALUES (?,?,?,?,?,?)')->execute([$id, $userId, $name, $mime, strlen($bin), now_utc()]);
+    return ['id' => $id, 'name' => $name, 'bytes' => strlen($bin)];
+}

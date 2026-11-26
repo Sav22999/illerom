@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <defs>
+        <linearGradient id="a" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#5c9dff"/>
+            <stop offset="1" stop-color="#2a63e6"/>
+        </linearGradient>
+        <linearGradient id="b" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#1f53cf"/>
+            <stop offset="1" stop-color="#173c9c"/>
+        </linearGradient>
+    </defs>
+    <!-- an S made of two pieces: a calendar page with its rings and days, and a slot taken with a tick -->
+    <path d="M20.500 4H53a5 5 0 0 1 5 5v17.500a5 5 0 0 1-5 5H20.500A13.750 13.750 0 0 1 20.500 4z" fill="url(#a)"/>
+    <rect x="27.500" y="1" width="4.400" height="9" rx="2.200" fill="#dce9ff"/>
+    <rect x="43.500" y="1" width="4.400" height="9" rx="2.200" fill="#dce9ff"/>
+    <g fill="#fff">
+        <rect x="16" y="14.500" width="6.500" height="5.500" rx="1.600" fill-opacity=".55"/>
+        <rect x="25.500" y="14.500" width="6.500" height="5.500" rx="1.600" fill-opacity=".55"/>
+        <rect x="35" y="14.500" width="6.500" height="5.500" rx="1.600" fill-opacity=".95"/>
+        <rect x="44.500" y="14.500" width="6.500" height="5.500" rx="1.600" fill-opacity=".55"/>
+        <rect x="16" y="22.500" width="6.500" height="5.500" rx="1.600" fill-opacity=".55"/>
+        <rect x="25.500" y="22.500" width="6.500" height="5.500" rx="1.600" fill-opacity=".55"/>
+        <rect x="35" y="22.500" width="6.500" height="5.500" rx="1.600" fill-opacity=".55"/>
+    </g>
+    <path d="M43.500 60H11a5 5 0 0 1-5-5V37.500a5 5 0 0 1 5-5h32.500a13.750 13.750 0 0 1 0 27.500z" fill="url(#b)"/>
+    <path d="M14 41.500h17M14 50.500h11" stroke="#fff" stroke-opacity=".85" stroke-width="3.400" stroke-linecap="round"/>
+    <path d="M37.500 46.500l4.300 4.300 8.400-8.900" fill="none" stroke="#ffd166" stroke-width="4.400" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

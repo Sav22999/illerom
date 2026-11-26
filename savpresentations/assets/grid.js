@@ -249,56 +249,46 @@ export function settle(ed, els = ed.deck.slide(ed.sid).d.els) {
 const preview = (g) => h('div.gprev', ...g.c.map((c) => h('i', {style: `left:${c[0] / .12}%;top:${c[1] / .12}%;width:${c[2] / .12}%;height:${c[3] / .12}%`})));
 const same = (a, b) => a && b && JSON.stringify(a.c) === JSON.stringify(b.c);
 
+/**
+ * A grid of one's own: a board of squares (columns x rows); dragging across squares joins them into one box, so a box can
+ * span rows or columns. Squares not part of any box become boxes on their own.
+ */
+function ownGrid(ed) {
+    let cols = 3, rows = 2, boxes = [], from = null, over = null;
+    const board = h('div.gboard', {role: 'application', 'aria-label': t('grid_board')}), out = h('div.stack');
+    const cells = () => {
+        const used = new Set();
+        for (const [x, y, w, hh] of boxes) for (let a = x; a < x + w; a++) for (let b = y; b < y + hh; b++) used.add(a + ',' + b);
+        const all = [...boxes];
+        for (let b = 0; b < rows; b++) for (let a = 0; a < cols; a++) if (!used.has(a + ',' + b)) all.push([a, b, 1, 1]);
+        all.sort((p, q) => p[1] - q[1] || p[0] - q[0]);
+        return all.map(([x, y, w, hh]) => [x * 12 / cols, y * 12 / rows, w * 12 / cols, hh * 12 / rows].map((v) => Math.round(v * 1e4) / 1e4));
+    };
+    const rect = (a, b) => [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.abs(a[0] - b[0]) + 1, Math.abs(a[1] - b[1]) + 1];
+    const hits = (p, q) => p[0] < q[0] + q[2] && q[0] < p[0] + p[2] && p[1] < q[1] + q[3] && q[1] < p[1] + p[3];
+    const draw = () => {
+        board.style.setProperty('--c', cols); board.style.setProperty('--r', rows);
+        const sel = from && over ? rect(from, over) : null;
+        board.replaceChildren(...Array.from({length: cols * rows}, (_, n) => { const a = n % cols, b = n / cols | 0; return h('i.gsq', {'data-a': a, 'data-b': b, class: sel && hits([a, b, 1, 1], sel) ? 'on' : ''}); }),
+            ...cells().map((c, n) => h('span.gbox', {style: `left:${c[0] / .12}%;top:${c[1] / .12}%;width:${c[2] / .12}%;height:${c[3] / .12}%`}, String(n + 1))));
+    };
+    const at = (e) => { const r = board.getBoundingClientRect(); return [Math.max(0, Math.min(cols - 1, Math.floor((e.clientX - r.left) / r.width * cols))), Math.max(0, Math.min(rows - 1, Math.floor((e.clientY - r.top) / r.height * rows)))]; };
+    board.addEventListener('pointerdown', (e) => { e.preventDefault(); board.setPointerCapture(e.pointerId); from = over = at(e); draw(); });
+    board.addEventListener('pointermove', (e) => { if (!from) return; const p = at(e); if (p + '' !== over + '') { over = p; draw(); } });
+    board.addEventListener('pointerup', () => { if (!from) return; const r = rect(from, over); boxes = boxes.filter((x) => !hits(x, r)); if (r[2] * r[3] > 1) boxes.push(r); from = over = null; draw(); });
+    const size = (label, v, max, f) => { const n = h('sav-number-input', {size: 'sm', label, value: v, min: 1, max, limits: 'never', onchange: () => { f(clamp(+n.value || 1, 1, max)); boxes = boxes.filter(([x, y, w, hh]) => x + w <= cols && y + hh <= rows); draw(); }}); return n; };
+    draw();
+    out.append(h('p.muted.hint', t('grid_own_t')), h('div.prow', size(t('grid_cols'), cols, 6, (v) => { cols = v; }), size(t('grid_rows'), rows, 4, (v) => { rows = v; })), board,
+        h('div.prow', btn(t('grid_clear'), () => { boxes = []; draw(); }, {size: 'sm', appearance: 'ghost', variant: 'neutral', icon: 'rotate-ccw'}), h('div.spacer'), btn(t('use'), () => applyGrid(ed, {c: cells()}), {size: 'sm'})));
+    return out;
+}
+
 export function gridPanel(ed) {
     const cur = gridOf(ed);
-    // own grid: how many columns in each row, and how tall it is
-    const rows = [[2, 1], [1, 1]], box = h('div.stack');
-    const draw = () => {
-        box.replaceChildren(...rows.map((r, i) => h('div.prow', h('span.flabel', t('row') + ' ' + (i + 1)), (() => {
-                const n = h('sav-number-input', {
-                    size: 'sm',
-                    label: t('columns'),
-                    value: r[0],
-                    min: 1,
-                    max: 6,
-                    limits: 'never',
-                    onchange: () => {
-                        r[0] = clamp(+n.value || 1, 1, 6);
-                        draw();
-                    }
-                });
-                return n;
-            })(), h('sav-select', {
-                size: 'sm', label: t('height'), value: String(r[1]), onchange: (e) => {
-                    r[1] = +e.target.value;
-                    draw();
-                }
-            }, ...[[.5, 'low'], [1, 'normal'], [2, 'tall']].map(([v, k]) => h('option', {value: v}, t('hh_' + k)))), iconBtn('x', t('remove'), () => {
-                if (rows.length > 1) {
-                    rows.splice(i, 1);
-                    draw();
-                }
-            }, {size: 'sm', disabled: rows.length < 2}))),
-            h('div.prow', btn(t('row'), () => {
-                if (rows.length < 5) {
-                    rows.push([1, 1]);
-                    draw();
-                }
-            }, {
-                size: 'sm',
-                icon: 'plus',
-                appearance: 'outline',
-                variant: 'neutral'
-            }), h('div.spacer'), h('div.gmini', preview({c: fromRows(rows.map(([n, hh]) => [hh, Array(n).fill(1)]))})), btn(t('use'), () => applyGrid(ed, {c: fromRows(rows.map(([n, hh]) => [hh, Array(n).fill(1)]))}), {size: 'sm'})));
-    };
-    draw();
+    const box = ownGrid(ed);
     return h('div', !cur && h('sav-alert', {variant: 'primary'}, t('grid_pick')),
         h('div.grids', ...GRIDS.map((g) => tile(t('grid'), () => applyGrid(ed, g), {class: 'lay' + (same(cur, g) ? ' on' : '')}, preview(g)))),
-        h('section.psec', h('sav-label', {
-            appearance: 'plain',
-            case: 'normal',
-            variant: 'neutral'
-        }, t('grid_own')), box),
+        h('sav-details.psec2', {summary: t('grid_own'), appearance: 'plain', open: true}, box),
         cur && h('section.psec', cur.m === 0 ? h('p.muted.hint', t('grid_read_t')) : h('sav-range', {
                 label: t('grid_gap'),
                 value: cur.g ?? 24,
@@ -356,7 +346,7 @@ export function drawCells(ed, overlay, k) {
             icon: 'plus',
             circle: true,
             size: 'sm',
-            appearance: list.length ? 'solid' : 'soft',
+            appearance: 'solid',
             label: t('insert')
         }), ...THINGS.map(([v, ic, l]) => h('sav-menu-item', {value: v}, icon(ic, {slot: 'prefix'}), t(l))));
         d.addEventListener('sav-select', (e) => {

@@ -141,6 +141,11 @@ export async function uploadPicture(file) {
         }
     }
     if (!blob || blob.size > MAX_PICTURE) throw new ApiError('image_big', 413);
+    if (state.local) {
+        const bmp = await createImageBitmap(blob).catch(() => null);
+        if (!bmp) throw new ApiError('image_type', 422);
+        return (await import('./local.js')).local.putMedia(blob, {w: bmp.width, h: bmp.height, name: file.name || ''});
+    }
     let res;
     try {
         res = await fetch('api/?' + new URLSearchParams({r: 'media.upload', name: file.name || ''}), {
@@ -175,6 +180,7 @@ export async function uploadVideo(file, onprogress = () => {}, stop = {}) {
       c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
       poster = (await uploadPicture(new File([await new Promise((r) => c.toBlob(r, 'image/jpeg', .85))], 'poster.jpg', { type: 'image/jpeg' }))).src;
     } catch { /* without a still */ }
+    if (state.local) { const L = (await import('./local.js')).local, m = await L.putMedia(file, { w: v.videoWidth, h: v.videoHeight, name: file.name || 'video', video: true }); onprogress(1); return { ...m, poster, video: true }; }
     const b = await api('media.video.begin', { name: file.name || 'video', size: file.size });
     id = b.id;
     for (let at = 0, tries = 0; at < file.size;) {

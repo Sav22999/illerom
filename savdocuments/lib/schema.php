@@ -128,8 +128,11 @@ function schema_statements(string $p): array
             `doc_id` INT UNSIGNED NOT NULL,
             `token_hash` CHAR(64) NOT NULL,
             `role` ENUM('viewer','commenter','editor') NOT NULL DEFAULT 'viewer',
+            `label` VARCHAR(60) NULL,
             `created_at` DATETIME NOT NULL,
             `expires_at` DATETIME NOT NULL,
+            `used_by` INT UNSIGNED NULL,
+            `used_at` DATETIME NULL,
             UNIQUE KEY `uq_token` (`token_hash`),
             " . $fk('inv_doc', 'doc_id', 'documents') . "
         ) $e",
@@ -181,6 +184,17 @@ function schema_statements(string $p): array
             KEY `ix_doc` (`doc_id`),
             " . $fk('img_doc', 'doc_id', 'documents') . "
         ) $e",
+        "CREATE TABLE IF NOT EXISTS `{$p}fonts` (
+            `id` CHAR(24) NOT NULL PRIMARY KEY,
+            `user_id` INT UNSIGNED NOT NULL,
+            `name` VARCHAR(60) NOT NULL,
+            `mime` VARCHAR(20) NOT NULL,
+            `bytes` INT UNSIGNED NOT NULL,
+            `data` MEDIUMBLOB NOT NULL,
+            `created_at` DATETIME NOT NULL,
+            KEY `ix_user` (`user_id`),
+            " . $fk('font_user', 'user_id', 'users') . "
+        ) $e",
         "CREATE TABLE IF NOT EXISTS `{$p}presence` (
             `doc_id` INT UNSIGNED NOT NULL,
             `client` CHAR(12) NOT NULL,
@@ -209,6 +223,7 @@ function schema_statements(string $p): array
 function install_schema(PDO $pdo, string $prefix): void
 {
     foreach (schema_statements($prefix) as $sql) $pdo->exec($sql);
+    if (!$pdo->query("SHOW COLUMNS FROM `{$prefix}invites` LIKE 'label'")->fetch()) $pdo->exec("ALTER TABLE `{$prefix}invites` ADD COLUMN `label` VARCHAR(60) NULL AFTER `role`, ADD COLUMN `used_by` INT UNSIGNED NULL, ADD COLUMN `used_at` DATETIME NULL");
     if (!$pdo->query("SHOW COLUMNS FROM `{$prefix}documents` LIKE 'preview'")->fetch()) $pdo->exec("ALTER TABLE `{$prefix}documents` ADD COLUMN `preview` TEXT NULL AFTER `doc`");
     $pdo->prepare("INSERT INTO `{$prefix}meta` (k, v) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)")->execute([(string)SCHEMA_VERSION]);
 }

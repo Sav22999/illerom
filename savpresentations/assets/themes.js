@@ -18,7 +18,32 @@ export const FONTS = {
     ptserif: ['PT Serif', 'serif', 4],
     mono: ['JetBrains Mono', 'monospace', 1],
     niconne: ['Niconne', 'cursive', 1],
+    // more included typefaces (Bunny Fonts, OFL; Latin): [name, kind, styles kept: regular, bold, italic, bold italic]
+    roboto: ['Roboto', 'sans-serif', 4], lato: ['Lato', 'sans-serif', 4], nunito: ['Nunito', 'sans-serif', 4], raleway: ['Raleway', 'sans-serif', 4],
+    worksans: ['Work Sans', 'sans-serif', 4], dmsans: ['DM Sans', 'sans-serif', 4], manrope: ['Manrope', 'sans-serif', 2], firasans: ['Fira Sans', 'sans-serif', 4],
+    plexsans: ['IBM Plex Sans', 'sans-serif', 4], notosans: ['Noto Sans', 'sans-serif', 4], rubik: ['Rubik', 'sans-serif', 4], oswald: ['Oswald', 'sans-serif', 2],
+    bebas: ['Bebas Neue', 'sans-serif', 1], crimson: ['Crimson Pro', 'serif', 4], sourceserif: ['Source Serif 4', 'serif', 4], plexserif: ['IBM Plex Serif', 'serif', 4],
+    notoserif: ['Noto Serif', 'serif', 4], plexmono: ['IBM Plex Mono', 'monospace', 4], caveat: ['Caveat', 'cursive', 2], dancing: ['Dancing Script', 'cursive', 2],
 };
+/**
+ * Typefaces that are not included, listed in meta.fonts of a presentation: "b:slug" from Bunny Fonts (fonts.bunny.net),
+ * "f:id" from a file kept in the account. Filled by registerFonts(), read like FONTS: [name, kind, 0].
+ */
+export const EXTRA = {};
+export const fontInfo = (id) => FONTS[id] || EXTRA[id] || FONTS.inter;
+export const fontName = (id) => fontInfo(id)[0];
+const loadedFonts = new Set();
+/** Makes the typefaces of a presentation usable on the page (once each). */
+export function registerFonts(list) {
+    for (const f of Array.isArray(list) ? list : []) {
+        if (!f?.id || FONTS[f.id] || !/^(b:[a-z0-9-]{1,60}|f:[a-f0-9]{24})$/.test(f.id)) continue;
+        EXTRA[f.id] = [f.n, f.c || 'sans-serif', 0];
+        if (loadedFonts.has(f.id) || typeof document === 'undefined') continue;
+        loadedFonts.add(f.id);
+        if (f.id[0] === 'b') document.head.append(Object.assign(document.createElement('link'), {rel: 'stylesheet', href: `https://fonts.bunny.net/css?family=${f.id.slice(2)}:400,400i,700,700i&display=swap`}));
+        else if ('FontFace' in window) new FontFace(f.n, `url(api/?r=font&id=${f.id.slice(2)})`, {display: 'swap'}).load().then((x) => document.fonts.add(x)).catch(() => loadedFonts.delete(f.id));
+    }
+}
 export const FORMATS = {
     '16-9': [1280, 720],
     '16-10': [1280, 800],
@@ -555,6 +580,7 @@ export function context(meta) {
     const s = Math.min(Math.sqrt(W * H) / 960, W / 860);
     const def = THEMES[meta.theme.id] || THEMES.paper;
     const custom = meta.theme.colors || {};
+    registerFonts(meta.fonts);
     const fonts = {...def.fonts, ...(meta.theme.fonts || {})};
     const cache = {};
     const variant = (v) => cache[v] ||= (() => {
@@ -584,7 +610,9 @@ export function slideContext(ctx, d) {
     const color = (x) => (!x ? '' : x[0] === '@' ? v.colors[x.slice(1)] || '#000000' : x);
     const font = (f) => (f === '@head' ? ctx.fonts.head : f === '@body' ? ctx.fonts.body : f) || ctx.fonts.body;
     const family = (f) => {
-        const F = FONTS[font(f)] || FONTS.inter;
+        const id = font(f), E = !FONTS[id] && EXTRA[id];
+        if (E) return `"${E[0]}", ${E[1] === 'display' ? 'sans-serif' : E[1]}`;
+        const F = FONTS[id] || FONTS.inter;
         return `"SP ${F[0]}", ${F[1]}`;
     };
     return {...ctx, colors: v.colors, color, font, family, bg: d.bg || v.bg, variantId: d.variant || 'content'};

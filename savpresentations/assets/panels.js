@@ -1,7 +1,8 @@
 /** The side panel of the editor: elements to insert, properties, layouts, themes, pictures and videos. SavComponents only. */
-import { h, icon, btn, iconBtn, item, tile, segmented, $, $$, clamp, oops, ok, userSetting, mobile, pickFile } from './core.js';
+import { h, icon, btn, iconBtn, item, tile, segmented, dialog, $, $$, clamp, oops, ok, userSetting, mobile, pickFile } from './core.js';
 import { t } from './i18n.js';
 import { THEMES, FONTS, FORMATS, slideContext, styleOf, context, gradient } from './themes.js';
+import { addDeckFont, fontDialog } from './fonts.js';
 import { SHAPES, shapePath, toSvgPath } from './shapes.js';
 import { LAYOUTS, makeSlide, sampleFill } from './layouts.js';
 import { fluidThumb, cssFill } from './render.js';
@@ -31,28 +32,46 @@ export function colorField(label, value, sc, onpick, { none = false, grad = fals
   let cur = value;
   const set = (v, close) => { cur = v; show(v); onpick(v); if (close) pop.hide(); };
   const grid = (list) => h('div.sws', ...list.map((c) => h('sav-button.sw', { circle: true, size: 'sm', label: c[0] === '@' ? t('tok_' + c.slice(1)) : c, title: c[0] === '@' ? t('tok_' + c.slice(1)) : c, style: `--c:${sc.color(c)}`, onclick: () => set(c, true) })));
-  const mini = (lab, v, f) => { const c = h('sav-color-picker', { compact: true, size: 'sm', picker: 'custom', label: lab, value: (sc.color(v) || '#000000').slice(0, 7) }); c.addEventListener('change', (e) => { const x = e.detail?.value ?? c.value; if (/^#[0-9a-f]{6}$/i.test(x)) f(x.toLowerCase()); }); return c; };
-  const pop = h('sav-popover', { placement: 'bottom-end', 'sheet-on-mobile': true, heading: label, style: '--width:17rem' }, sw);
+  const mini = (lab, v, f) => { const c = h('sav-color-picker', { compact: true, size: 'sm', picker: 'custom', 'aria-label': lab, value: (sc.color(v) || '#000000').slice(0, 7) }); c.addEventListener('change', (e) => { const x = e.detail?.value ?? c.value; if (/^#[0-9a-f]{6}$/i.test(x)) f(x.toLowerCase()); }); return c; };
+  const pop = h('sav-popover', { placement: 'bottom-end', 'sheet-on-mobile': true, heading: label, style: '--width:18rem' }, sw);
+  const part = (title, ...kids) => h('div.cpart', h('span.flabel', title), ...kids);
   pop.addEventListener('sav-show', () => {
     if (pop.dataset.built) return;
     pop.dataset.built = 1;
     const hex = cur && cur[0] === '#' ? cur : cur && cur[0] === '@' ? sc.color(cur) : '#6d3bef';
-    const cp = h('sav-color-picker', { value: hex, alpha: true, picker: 'custom', size: 'sm', label: t('other_color') });
+    // the same look for every part: a small label, then the choices; "none" is the first of the colours of the theme
+    const cp = h('sav-color-picker', { value: hex, alpha: true, picker: 'custom', size: 'sm', 'aria-label': t('other_color') });
     cp.addEventListener('change', (e) => { const v = e.detail?.value ?? cp.value; if (/^#[0-9a-f]{6}([0-9a-f]{2})?$/i.test(v)) set(v.toLowerCase()); });
     const g = gradient(cur);
     let a = g?.a || '@accent', b = g?.b || '@accent2', ang = g?.ang ?? 135;
-    const gset = () => set(`g|${ang}|${a}|${b}`);
-    pop.append(h('div.cpop', h('span.flabel', t('theme_colors')), grid(TOKENS), h('span.flabel', t('palette')), grid(PALETTE), cp,
-      grad && h('div', h('span.flabel', t('gradient')), row(mini('A', a, (v) => { a = v; gset(); }), mini('B', b, (v) => { b = v; gset(); }), num('°', ang, (v) => { ang = clamp(v, 0, 360); gset(); }, { min: 0, max: 360, 'button-step': 15 }))),
-      none && btn(t('none'), () => set('', true), { ...small, block: true })));
+    const bar = h('div.gbar');
+    const paint = () => bar.style.setProperty('background', cssFill(`g|${ang}|${a}|${b}`, sc));
+    const gset = () => { paint(); set(`g|${ang}|${a}|${b}`); };
+    paint();
+    const angle = h('sav-range', { min: 0, max: 360, step: 15, value: ang, unit: '°', 'show-value': true, 'aria-label': t('angle'), oninput: (e) => { ang = +e.target.value; gset(); } });
+    const noneB = none && h('sav-button.sw.swnone', { circle: true, size: 'sm', label: t('none'), title: t('none'), onclick: () => set('', true) });
+    const themeRow = grid(TOKENS);
+    if (noneB) themeRow.prepend(noneB);
+    pop.append(h('div.cpop', part(t('theme_colors'), themeRow), part(t('palette'), grid(PALETTE)), part(t('other_color'), cp),
+      grad && part(t('gradient'), bar, h('div.grow2', h('label.gpick', mini(t('gradient') + ' A', a, (v) => { a = v; gset(); }), h('small', t('from'))), h('label.gpick', mini(t('gradient') + ' B', b, (v) => { b = v; gset(); }), h('small', t('to'))), angle))));
   });
   return h('div.cf', h('span.flabel', label), pop);
 }
 
-export function fontField(label, value, onpick, themeOpt = true) {
-  const s = h('sav-select', { label, value: value || '', placeholder: t('theme_font'), size: 'sm', searchable: true, 'search-placeholder': t('search'), clearable: !themeOpt, onchange: (e) => onpick(e.target.value) });
+/** A typeface: the included ones by kind; with the editor (ed) also those of the presentation and "More typefaces…" (Bunny Fonts, from file). */
+export function fontField(label, value, onpick, themeOpt = true, ed = null) {
+  let cur = value || '';
+  const s = h('sav-select', { label, value: cur, placeholder: t('theme_font'), size: 'sm', searchable: true, 'search-placeholder': t('search'), clearable: !themeOpt, onchange: (e) => {
+    const v = e.target.value;
+    if (v !== '__more') { cur = v; return onpick(v); }
+    s.value = cur;
+    fontDialog({ current: cur, used: ed.deck.meta.fonts || [] }).then((f) => { if (!f) return; addDeckFont(ed.deck, f); cur = f.id; onpick(f.id); });
+  } });
   if (themeOpt) s.append(h('option', { value: '@head' }, t('font_head')), h('option', { value: '@body' }, t('font_body')));
+  const extra = ed ? (ed.deck.meta.fonts || []) : [];
+  if (extra.length) s.append(h('optgroup', { label: t('fonts_deck') }, ...extra.map((f) => h('option', { value: f.id, style: `font-family:"${f.n}"` }, f.n))));
   for (const [k, label2] of [['sans-serif', 'f_sans'], ['serif', 'f_serif'], ['monospace', 'f_mono'], ['cursive', 'f_script']]) s.append(h('optgroup', { label: t(label2) }, ...Object.entries(FONTS).filter(([, f]) => f[1] === k).map(([id, f]) => h('option', { value: id, style: `font-family:"SP ${f[0]}"` }, f[0]))));
+  if (ed?.deck.canEdit) s.append(h('option', { value: '__more', style: 'font-weight:600' }, t('more_fonts')));
   return s;
 }
 
@@ -177,7 +196,7 @@ function elementProps(ed, els) {
 
   if (hasText) out.push(sec(f.t === 'text' ? t('style') : t('text'),
     f.t === 'text' && pick(t('role'), f.role || 'body', ['title', 'subtitle', 'heading', 'body', 'caption', 'label', 'quote', 'big'].map((r) => [r, t('r_' + r)]), (v) => again({ role: v, size: null, font: null, color: null, bold: null, lh: null, ls: null, align: null, italic: null, caps: null })),
-    fontField(t('typeface'), f.font || st.font, (v) => set({ font: v })),
+    fontField(t('typeface'), f.font || st.font, (v) => set({ font: v }), true, ed),
     row(num(t('size'), st.size, (v) => set({ size: clamp(v, 4, 800) }), { min: 4, max: 800, buttons: 'end' }), colorField(t('color'), st.color, sc, (c) => set({ color: c || null }))),
     row(toggle(st.bold, 'bold', t('bold'), (v) => set({ bold: v ? 1 : 0 })), toggle(st.italic, 'italic', t('italic'), (v) => set({ italic: v ? 1 : 0 })), toggle(st.under, 'underline', t('underline'), (v) => set({ under: v ? 1 : 0 })), toggle(st.caps, 'case-upper', t('caps'), (v) => set({ caps: v ? 1 : 0 }))),
     segmented(t('align'), st.align, [['left', 'text-align-start', t('al_left')], ['center', 'text-align-center', t('al_center')], ['right', 'text-align-end', t('al_right')], ['justify', 'text-align-justify', t('justify')]], (v) => set({ align: v })),
@@ -227,7 +246,7 @@ export function themePanel(ed) {
   const card = (id) => { const ctx = context({ ...m, theme: { id, colors: {}, fonts: {} } }); return tile(THEMES[id].name, () => { set({ id, colors: {}, fonts: {} }); ed.refreshPanel(); }, { class: 'lay' + (m.theme.id === id ? ' on' : ''), 'data-theme': id }, first && Object.keys(first.els).length < 14 ? fluidThumb({ ...first, bg: undefined }, ctx, { index: -1 }) : fluidThumb(makeSlide('cover', ctx, { title: THEMES[id].name, subtitle: 'Aa Bb Cc' }).d, ctx), h('span', THEMES[id].name)); };
   const base = THEMES[m.theme.id] || THEMES.paper;
   const colors = h('div.grid2', ...['bg', 'fg', 'muted', 'accent', 'accent2', 'surface'].map((k) => { const c = h('sav-color-picker', { compact: true, size: 'sm', picker: 'custom', label: t('tok_' + k), value: m.theme.colors[k] || base.colors[k] }); c.addEventListener('change', (e) => { const v = e.detail?.value ?? c.value; if (/^#[0-9a-f]{6}$/i.test(v)) set({ colors: { ...m.theme.colors, [k]: v.toLowerCase() } }); }); return c; }));
-  return h('div', fold(t('customize'), false, fontField(t('font_head'), m.theme.fonts.head || '', (v) => set({ fonts: tidy({ ...m.theme.fonts, head: v }) }), false), fontField(t('font_body'), m.theme.fonts.body || '', (v) => set({ fonts: tidy({ ...m.theme.fonts, body: v }) }), false), colors, btn(t('reset'), () => { set({ colors: {}, fonts: {} }); ed.refreshPanel(); }, { size: 'sm', appearance: 'ghost', icon: 'rotate-ccw' })),
+  return h('div', fold(t('customize'), false, fontField(t('font_head'), m.theme.fonts.head || '', (v) => set({ fonts: tidy({ ...m.theme.fonts, head: v }) }), false, ed), fontField(t('font_body'), m.theme.fonts.body || '', (v) => set({ fonts: tidy({ ...m.theme.fonts, body: v }) }), false, ed), colors, btn(t('reset'), () => { set({ colors: {}, fonts: {} }); ed.refreshPanel(); }, { size: 'sm', appearance: 'ghost', icon: 'rotate-ccw' })),
     ...['clean', 'classic', 'creative'].map((g) => sec(t('th_' + g), h('div.lays', ...Object.keys(THEMES).filter((k) => THEMES[k].group === g).map(card)))));
 }
 

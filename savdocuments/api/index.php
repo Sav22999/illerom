@@ -3,13 +3,14 @@
  * SavDocuments — JSON API.  api/index.php?r=<action>
  *
  * Accounts:     auth.config, auth.me, auth.register, auth.login, auth.google (and the routes of ../identity/identity.php), auth.resend, auth.verify, auth.logout,
- *               auth.password, auth.forgot, auth.reset, auth.prefs, auth.profile, auth.delete
+ *               auth.password, auth.forgot, auth.reset, auth.prefs, auth.profile, auth.export, auth.delete
  * Home:         doc.list, doc.previews, folder.create, folder.rename, folder.delete
  * Documents:    doc.create, doc.get, doc.sync, doc.duplicate, doc.move, doc.star, doc.trash, doc.restore, doc.delete, doc.empty_trash, doc.leave
- * Sharing:      share.get, share.visibility, share.add, share.role, share.remove, invite.create, invite.accept
+ * Sharing:      share.get, share.visibility, share.add, share.role, share.remove, invite.create, invite.remove, invite.accept
  * Comments:     comment.list, comment.add, comment.resolve, comment.delete  (private = personal notes)
  * Versions:     version.list, version.get, version.save, version.restore
  * Images:       img (GET), img.upload, img.search, img.import
+ * Typefaces:    font (GET), font.list, font.upload (the file is the body), font.delete
  * Abuse:        report.add
  * Master admin: master.overview, master.users, master.block, master.docs, master.suspend, master.reports, master.report
  *
@@ -33,6 +34,28 @@ $r = (string)($_GET['r'] ?? '');
 
 if ($r === 'auth.config' && !credentials()) send_json(['ok' => true, 'installed' => false, 'googleClientId' => '']);
 if (!credentials()) fail('not_installed', 503);
+
+// Typefaces from file: anyone with the id (24 random hex digits, written in the documents that use them) can read them,
+// so a shared document looks the same for everybody
+if ($r === 'font') {
+    $id = (string)($_GET['id'] ?? '');
+    $f = null;
+    if (preg_match('/^[a-f0-9]{24}$/', $id)) {
+        $st = db()->prepare('SELECT mime, data FROM ' . t('fonts') . ' WHERE id = ?');
+        $st->execute([$id]);
+        $f = $st->fetch() ?: null;
+    }
+    if (!$f) {
+        http_response_code(404);
+        exit;
+    }
+    header('Content-Type: ' . $f['mime']);
+    header('X-Content-Type-Options: nosniff');
+    header('Cache-Control: public, max-age=31536000, immutable');
+    header("Content-Security-Policy: default-src 'none'");
+    echo $f['data'];
+    exit;
+}
 
 // Pictures: only for who can open their document
 if ($r === 'img') {
@@ -60,7 +83,9 @@ if ($r === 'img') {
     exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && stripos((string)($_SERVER['CONTENT_TYPE'] ?? ''), 'application/json') !== 0) fail('bad_request', 415);
+// POST is JSON (a form of another site cannot send it); only a typeface travels as itself, and still needs the X-CSRF-Token header
+$ctype = (string)($_SERVER['CONTENT_TYPE'] ?? '');
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && stripos($ctype, 'application/json') !== 0 && !(($_GET['r'] ?? '') === 'font.upload' && stripos($ctype, 'application/octet-stream') === 0)) fail('bad_request', 415);
 remember_app_url();
 
 function only(string $method): void
@@ -157,7 +182,10 @@ function out_share(array $d): array
     $st->execute([$d['id']]);
     $people = array_map(fn($p) => ['id' => (int)$p['id'], 'email' => $p['email'], 'name' => $p['name'], 'role' => $p['role'], 'pending' => $p['user_id'] === null], $st->fetchAll());
     $o = user_row((int)$d['owner_id']);
-    return ['ok' => true, 'visibility' => $d['visibility'], 'linkRole' => $d['link_role'], 'owner' => ['name' => $o['name'], 'email' => $o['email']], 'people' => $people];
+    $st = db()->prepare('SELECT i.id, i.role, i.label, i.expires_at, i.used_at, u.name FROM ' . t('invites') . ' i LEFT JOIN ' . t('users') . ' u ON u.id = i.used_by WHERE i.doc_id = ? ORDER BY i.id DESC LIMIT 50');
+    $st->execute([$d['id']]);
+    $links = array_map(fn($l) => ['id' => (int)$l['id'], 'role' => $l['role'], 'label' => $l['label'] ?? '', 'expires' => iso($l['expires_at']), 'used' => $l['used_at'] ? iso($l['used_at']) : null, 'by' => $l['name']], $st->fetchAll());
+    return ['ok' => true, 'visibility' => $d['visibility'], 'linkRole' => $d['link_role'], 'owner' => ['name' => $o['name'], 'email' => $o['email']], 'people' => $people, 'links' => $links];
 }
 
 function out_comments(array $d, ?array $u): array
@@ -369,6 +397,18 @@ switch ($r) {
         db()->prepare('UPDATE ' . t('users') . ' SET name = IF(? = \'\', name, ?), ui_lang = ? WHERE id = ?')->execute([$name, $name, ui_lang($b), $u['id']]);
         send_json(['ok' => true, 'user' => public_user(user_row($u['id']))]);
 
+    case 'auth.export':
+        // Everything the account keeps, as one JSON file: profile, folders, own documents (text and settings), comments written
+        $u = reader();
+        $q = function (string $sql, array $p) { $st = db()->prepare($sql); $st->execute($p); return $st->fetchAll(); };
+        $docs = array_map(fn($d) => ['id' => $d['pid'], 'title' => $d['title'], 'created' => iso($d['created_at']), 'updated' => iso($d['updated_at']), 'trash' => $d['deleted_at'] !== null, 'content' => json_decode($d['doc'], true)],
+            $q('SELECT pid, title, doc, created_at, updated_at, deleted_at FROM ' . t('documents') . ' WHERE owner_id = ? ORDER BY id', [$u['id']]));
+        $out = ['app' => 'SavDocuments', 'exported' => gmdate('c'), 'account' => ['name' => $u['name'], 'email' => $u['email'], 'created' => iso($u['created_at']), 'prefs' => json_decode((string)($u['prefs'] ?? '{}'), true)],
+            'folders' => array_column($q('SELECT name FROM ' . t('folders') . ' WHERE user_id = ? ORDER BY name', [$u['id']]), 'name'), 'documents' => $docs,
+            'comments' => array_map(fn($c) => ['document' => $c['pid'], 'text' => $c['body'], 'private' => (bool)$c['private'], 'at' => iso($c['created_at'])], $q('SELECT d.pid, c.body, c.private, c.created_at FROM ' . t('comments') . ' c JOIN ' . t('documents') . ' d ON d.id = c.doc_id WHERE c.user_id = ? ORDER BY c.id', [$u['id']]))];
+        header('Content-Disposition: attachment; filename="savdocuments-data.json"');
+        send_json($out);
+
     case 'auth.delete':
         $u = writer(true);
         $b = body();
@@ -400,7 +440,10 @@ switch ($r) {
         }
         $st = db()->prepare('SELECT id, name FROM ' . t('folders') . ' WHERE user_id = ? ORDER BY name');
         $st->execute([$u['id']]);
-        send_json(['ok' => true, 'docs' => $out, 'folders' => array_map(fn($f) => ['id' => (int)$f['id'], 'name' => $f['name']], $st->fetchAll())]);
+        $folders = array_map(fn($f) => ['id' => (int)$f['id'], 'name' => $f['name']], $st->fetchAll());
+        $st = db()->prepare('SELECT COALESCE(SUM(i.bytes),0) FROM ' . t('images') . ' i JOIN ' . t('documents') . ' d ON d.id = i.doc_id WHERE d.owner_id = ?');
+        $st->execute([$u['id']]);
+        send_json(['ok' => true, 'docs' => $out, 'folders' => $folders, 'used' => (int)$st->fetchColumn(), 'quota' => MAX_USER_IMAGE_BYTES]);
 
     case 'doc.previews':
         // The beginning of the documents that are being looked at in the home (at most 24 at a time)
@@ -459,7 +502,7 @@ switch ($r) {
         // a master admin reads a document only while a report on it is open
         if ($d && $u && is_master($u) && isset($_GET['review']) && has_report((int)$d['id'])) send_json(['ok' => true, 'doc' => out_meta($d, 'viewer', ['owner' => names_of([$d['owner_id']])[(int)$d['owner_id']] ?? '', 'review' => true]), 'content' => doc_data($d), 'comments' => [], 'stamp' => '']);
         [$d, $role] = require_doc($u, pid(), 'viewer');
-        if ($u && !empty($u['email_verified_at'])) db()->prepare('INSERT INTO ' . t('visits') . ' (user_id, doc_id, opened_at) VALUES (?,?,?) ON DUPLICATE KEY UPDATE opened_at = VALUES(opened_at)')->execute([$u['id'], $d['id'], now_utc()]);
+        if ($u && !empty($u['email_verified_at']) && !isset($_GET['quiet'])) db()->prepare('INSERT INTO ' . t('visits') . ' (user_id, doc_id, opened_at) VALUES (?,?,?) ON DUPLICATE KEY UPDATE opened_at = VALUES(opened_at)')->execute([$u['id'], $d['id'], now_utc()]);
         $st = db()->prepare('SELECT starred FROM ' . t('visits') . ' WHERE user_id = ? AND doc_id = ?');
         $st->execute([$u ? $u['id'] : 0, $d['id']]);
         send_json(['ok' => true, 'doc' => out_meta($d, $role, ['owner' => names_of([$d['owner_id']])[(int)$d['owner_id']] ?? '', 'mine' => $role === 'owner', 'starred' => (bool)$st->fetchColumn()]),
@@ -506,8 +549,9 @@ switch ($r) {
 
     case 'doc.duplicate':
         $u = writer();
-        [$d] = require_doc($u, pid(), 'viewer');
+        [$d, $role] = require_doc($u, pid(), 'viewer');
         $doc = doc_data($d);
+        if (!empty($doc['settings']['noCopy']) && role_rank($role) < role_rank('editor')) fail('forbidden', 403);
         db()->beginTransaction();
         $n = create_doc($u['id'], clean_title(body()['title'] ?? '') ?: $d['title'], $doc, (int)$d['owner_id'] === (int)$u['id'] && $d['folder_id'] !== null ? (int)$d['folder_id'] : null);
         $doc = copy_images($doc, (int)$d['id'], (int)$n['id'], $u['id']);
@@ -605,7 +649,7 @@ switch ($r) {
         $st->execute([$d['id']]);
         if ((int)$st->fetchColumn() >= 200) fail('too_many_people', 422);
         record_attempt('share');
-        $st = db()->prepare('SELECT id, name, ui_lang FROM ' . t('users') . ' WHERE email = ? AND email_verified_at IS NOT NULL');
+        $st = db()->prepare('SELECT id, name, ui_lang, prefs FROM ' . t('users') . ' WHERE email = ? AND email_verified_at IS NOT NULL');
         $st->execute([$email]);
         $row = $st->fetch() ?: null;
         $st = db()->prepare('SELECT 1 FROM ' . t('shares') . ' WHERE doc_id = ? AND email = ?');
@@ -613,7 +657,8 @@ switch ($r) {
         $new = !$st->fetchColumn();
         db()->prepare('INSERT INTO ' . t('shares') . ' (doc_id, user_id, email, role, created_at) VALUES (?,?,?,?,?) ON DUPLICATE KEY UPDATE role = VALUES(role), user_id = COALESCE(user_id, VALUES(user_id))')
             ->execute([$d['id'], $row ? $row['id'] : null, $email, $role, now_utc()]);
-        if ($new && !empty($b['notify'])) {
+        // who already has an account may have asked not to be told by email (settings)
+        if ($new && !empty($b['notify']) && !($row && (json_decode((string)$row['prefs'], true)['mailShare'] ?? true) === false)) {
             $lang = $row ? (string)$row['ui_lang'] : (string)$u['ui_lang'];
             $T = mail_t($lang);
             $vars = ['by' => $u['name'], 'title' => $d['title'], 'role' => $T['roles'][$role]];
@@ -635,23 +680,33 @@ switch ($r) {
         send_json(out_share($d));
 
     case 'invite.create':
-        // A single-use link: whoever opens it first, signed in, gets access. It works 7 days.
+        // A single-use link: whoever opens it first, signed in, gets access. A name (who it is for) is optional;
+        // it lasts 1 hour, 1 day, 7 or 30 days. Used and expired links stay listed for 30 days.
         $u = writer();
         [$d] = require_doc($u, pid(), 'owner');
         if (too_many_attempts('share', 60, 60)) fail('rate_limited', 429);
         record_attempt('share');
+        $b = body();
+        $hours = (int)($b['hours'] ?? 168);
+        if (!in_array($hours, [1, 24, 168, 720], true)) $hours = 168;
         $token = bin2hex(random_bytes(20));
-        db()->prepare('DELETE FROM ' . t('invites') . ' WHERE expires_at < ?')->execute([now_utc()]);
-        db()->prepare('INSERT INTO ' . t('invites') . ' (doc_id, token_hash, role, created_at, expires_at) VALUES (?,?,?,?,?)')
-            ->execute([$d['id'], hash('sha256', $token), share_role(body()['role'] ?? ''), now_utc(), gmdate('Y-m-d H:i:s', time() + 7 * 86400)]);
-        send_json(['ok' => true, 'url' => app_url() . '#/invite/' . $token]);
+        db()->prepare('DELETE FROM ' . t('invites') . ' WHERE COALESCE(used_at, expires_at) < ?')->execute([gmdate('Y-m-d H:i:s', time() - 30 * 86400)]);
+        db()->prepare('INSERT INTO ' . t('invites') . ' (doc_id, token_hash, role, label, created_at, expires_at) VALUES (?,?,?,?,?,?)')
+            ->execute([$d['id'], hash('sha256', $token), share_role($b['role'] ?? ''), mb_substr(clean_title($b['label'] ?? ''), 0, 60) ?: null, now_utc(), gmdate('Y-m-d H:i:s', time() + $hours * 3600)]);
+        send_json(['ok' => true, 'url' => app_url() . '#/invite/' . $token] + out_share($d));
+
+    case 'invite.remove':
+        $u = writer();
+        [$d] = require_doc($u, pid(), 'owner');
+        db()->prepare('DELETE FROM ' . t('invites') . ' WHERE id = ? AND doc_id = ?')->execute([(int)(body()['id'] ?? 0), $d['id']]);
+        send_json(out_share($d));
 
     case 'invite.accept':
         $u = writer();
         if (too_many_attempts('invite', 30, 15)) fail('rate_limited', 429);
         $hash = hash('sha256', (string)(body()['token'] ?? ''));
         db()->beginTransaction();
-        $st = db()->prepare('SELECT i.*, d.pid, d.owner_id FROM ' . t('invites') . ' i JOIN ' . t('documents') . ' d ON d.id = i.doc_id WHERE i.token_hash = ? AND i.expires_at > ? FOR UPDATE');
+        $st = db()->prepare('SELECT i.*, d.pid, d.owner_id FROM ' . t('invites') . ' i JOIN ' . t('documents') . ' d ON d.id = i.doc_id WHERE i.token_hash = ? AND i.expires_at > ? AND i.used_at IS NULL FOR UPDATE');
         $st->execute([$hash, now_utc()]);
         $i = $st->fetch();
         if (!$i) {
@@ -665,7 +720,7 @@ switch ($r) {
             $old = $have->fetchColumn();
             if (!$old || role_rank($i['role']) > role_rank((string)$old))
                 db()->prepare('INSERT INTO ' . t('shares') . ' (doc_id, user_id, email, role, created_at) VALUES (?,?,?,?,?) ON DUPLICATE KEY UPDATE role = VALUES(role), user_id = VALUES(user_id)')->execute([$i['doc_id'], $u['id'], $u['email'], $i['role'], now_utc()]);
-            db()->prepare('DELETE FROM ' . t('invites') . ' WHERE id = ?')->execute([$i['id']]);
+            db()->prepare('UPDATE ' . t('invites') . ' SET used_by = ?, used_at = ? WHERE id = ?')->execute([$u['id'], now_utc(), $i['id']]);
         }
         db()->commit();
         send_json(['ok' => true, 'doc' => $i['pid']]);
@@ -682,7 +737,8 @@ switch ($r) {
         $u = writer();
         $b = body();
         $private = !empty($b['private']);
-        [$d] = require_doc($u, pid(), $private ? 'viewer' : 'commenter'); // personal notes are for everybody
+        [$d, $role] = require_doc($u, pid(), $private ? 'viewer' : 'commenter'); // personal notes are for everybody
+        if (!$private && role_rank($role) < role_rank('editor') && !empty(doc_data($d)['settings']['noComments'])) fail('forbidden', 403);
         if (too_many_attempts('comment', 300, 60)) fail('rate_limited', 429);
         record_attempt('comment');
         $text = multiline($b, 'body', 4000);
@@ -774,6 +830,40 @@ switch ($r) {
         if (!preg_match('#^data:image/[a-z]+;base64,#', $data, $m)) fail('image_invalid', 422);
         $bin = base64_decode(substr($data, strlen($m[0])), true);
         send_json(['ok' => true, 'id' => store_image($d, $bin === false ? '' : $bin)]);
+
+    // ================================================================ typefaces from file
+
+    case 'font.list':
+        $u = reader();
+        $st = db()->prepare('SELECT id, name, bytes FROM ' . t('fonts') . ' WHERE user_id = ? ORDER BY name');
+        $st->execute([$u['id']]);
+        send_json(['ok' => true, 'fonts' => array_map(fn($f) => ['id' => $f['id'], 'name' => $f['name'], 'bytes' => (int)$f['bytes']], $st->fetchAll())]);
+
+    case 'font.upload':
+        // The file itself is the body (not JSON); the name comes in the address. TrueType, OpenType, WOFF and WOFF2, 5 MB at most.
+        $u = writer();
+        if (too_many_attempts('font', 30, 60)) fail('rate_limited', 429);
+        record_attempt('font');
+        $name = trim(preg_replace('/[^A-Za-z0-9 \-]/', '', (string)($_GET['name'] ?? '')));
+        $name = mb_substr(preg_replace('/\s+/', ' ', $name), 0, 60);
+        if ($name === '' || !preg_match('/^[A-Za-z0-9]/', $name)) fail('font_name', 422);
+        $bin = (string)file_get_contents('php://input', false, null, 0, MAX_FONT_BYTES + 1);
+        if (strlen($bin) > MAX_FONT_BYTES) fail('font_big', 413);
+        $magic = substr($bin, 0, 4);
+        $mime = ["\x00\x01\x00\x00" => 'font/ttf', 'true' => 'font/ttf', 'OTTO' => 'font/otf', 'wOFF' => 'font/woff', 'wOF2' => 'font/woff2'][$magic] ?? '';
+        if ($mime === '' || strlen($bin) < 1000) fail('font_invalid', 422);
+        $st = db()->prepare('SELECT COUNT(*) FROM ' . t('fonts') . ' WHERE user_id = ?');
+        $st->execute([$u['id']]);
+        if ((int)$st->fetchColumn() >= MAX_USER_FONTS) fail('font_many', 422);
+        $id = bin2hex(random_bytes(12));
+        db()->prepare('INSERT INTO ' . t('fonts') . ' (id, user_id, name, mime, bytes, data, created_at) VALUES (?,?,?,?,?,?,?)')->execute([$id, $u['id'], $name, $mime, strlen($bin), $bin, now_utc()]);
+        send_json(['ok' => true, 'font' => ['id' => $id, 'name' => $name, 'bytes' => strlen($bin)]]);
+
+    case 'font.delete':
+        // Documents that use it fall back to a typeface of the same kind
+        $u = writer();
+        db()->prepare('DELETE FROM ' . t('fonts') . ' WHERE id = ? AND user_id = ?')->execute([(string)(body()['id'] ?? ''), $u['id']]);
+        send_json(['ok' => true]);
 
     case 'img.search':
         $u = reader();

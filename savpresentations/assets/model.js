@@ -4,7 +4,7 @@
  * numbers every op and all the browsers apply them in that order, then again their own ones not yet confirmed: everyone
  * ends up with the same presentation.
  */
-import {api, uid} from './core.js';
+import {api, state, uid} from './core.js';
 
 const round8 = (v) => Math.round(v * 1e8) / 1e8;
 const clone = (o) => (o === undefined ? undefined : structuredClone(o));
@@ -25,6 +25,7 @@ export class Deck extends EventTarget {
         this.limited = !!data.limited;
         this.meta.theme.colors ||= {};
         this.meta.theme.fonts ||= {};
+        if (!Array.isArray(this.meta.fonts)) this.meta.fonts = []; // typefaces not included (Bunny Fonts, from file)
         if (Array.isArray(this.meta.theme.colors)) this.meta.theme.colors = {};
         if (Array.isArray(this.meta.theme.fonts)) this.meta.theme.fonts = {};
         this.slides = new Map();
@@ -241,6 +242,7 @@ export class Deck extends EventTarget {
     }
 
     start() {
+        if (this.local) { this.alive = true; return; }
         this.restore();
         this.alive = true;
         this.onVis = () => this.schedule(document.hidden ? undefined : 50);
@@ -256,6 +258,7 @@ export class Deck extends EventTarget {
     }
 
     stop() {
+        if (this.local) { this.alive = false; this.saveLocal(true); return; }
         this.alive = false;
         clearTimeout(this.pollT);
         clearTimeout(this.flushT);
@@ -283,7 +286,17 @@ export class Deck extends EventTarget {
         }
     }
 
+    /** A presentation of this browser: written to IndexedDB a moment after the last change. */
+    saveLocal(now) {
+        clearTimeout(this.localT);
+        const go = () => import('./local.js').then(({local}) => local.save({id: this.local, title: this.title, meta: this.meta, created: this.created, slides: this.order().map((s) => ({sid: s.sid, pos: s.pos, d: s.d}))})).catch(() => this.emit('refused', 'local_full'));
+        if (now) return go();
+        this.localT = setTimeout(go, 300);
+    }
+
     async sync() {
+        if (this.local) { this.pending = []; this.inflight = []; this.saveLocal(); this.emit('status'); return; }
+        if (!state.csrf && state.user) { try { const m = await api('auth.me'); if (m.user) state.csrf = m.csrf; } catch { /* the call below fails too, and is tried again */ } }
         if (this.busy) {
             this.again = true;
             return;

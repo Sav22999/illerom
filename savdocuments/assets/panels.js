@@ -3,6 +3,7 @@ import { btn, colorField, fail, field, h, icon, iconBtn, mobile, num, PASTEL, pu
 import { t } from './i18n.js';
 import { api } from './store.js';
 import { FONTS, fontStack, LOOKS, SIZES } from './settings.js';
+import { fontDialog, fontOptions, withFont } from './fonts.js';
 import { cleanObject, CHARTS, CHART_ICONS, FLOWS, FLOW_ICONS, ICON_NAMES, RULES, SHAPES } from './objects.js';
 import { ICON_PATHS } from './icons-lib.js';
 import { shapePath, toSvgPath } from './shapes.js';
@@ -164,11 +165,12 @@ export function pageForm(s, up) {
 }
 
 export function styleForm(s, up) {
-  const fonts = FONTS.map((f) => [f, f, `font-family:${fontStack(f)}`]);
   const box = h('div');
+  // "More typefaces…" opens the typefaces (included, Bunny Fonts, from file); the chosen one goes into the list of the document
+  const fontSel = (label, k) => select(label, fontOptions(s.fonts), s[k], (v) => { if (v !== '__more') return up({ [k]: v }); paint(); fontDialog({ current: s[k], used: s.fonts, onpick: (f) => { up({ [k]: f.n, fonts: withFont(s.fonts, f) }); paint(); } }); }, { searchable: true });
   const paint = () => put(box,
     sec(t('look'), h('div.looks', Object.entries(LOOKS).map(([k, l]) => tile(t('look_' + k), () => { up({ ...l }); paint(); }, { class: 'lookt', style: `--lbg:${l.bg}` }, h('b', { style: `font-family:${fontStack(l.headFont)};color:${l.headColor}` }, 'Aa'), h('i', { style: `background:${l.accent}` }), h('span', { style: `font-family:${fontStack(l.font)};color:${l.color}` }, t('look_' + k)))))),
-    sec(t('fonts'), select(t('body_font'), fonts, s.font, (v) => up({ font: v })), select(t('head_font'), fonts, s.headFont, (v) => up({ headFont: v })), row(num(t('size'), s.fontSize, (v) => up({ fontSize: v }), { min: 6, max: 40, step: 0.5, unit: 'pt' }), num(t('line_height'), s.line, (v) => up({ line: v }), { min: 1, max: 3, step: 0.05 })), num(t('gap'), s.gap, (v) => up({ gap: v }), { min: 0, max: 40, unit: 'pt' })),
+    sec(t('fonts'), fontSel(t('body_font'), 'font'), fontSel(t('head_font'), 'headFont'), row(num(t('size'), s.fontSize, (v) => up({ fontSize: v }), { min: 6, max: 40, step: 0.5, unit: 'pt' }), num(t('line_height'), s.line, (v) => up({ line: v }), { min: 1, max: 3, step: 0.05 })), num(t('gap'), s.gap, (v) => up({ gap: v }), { min: 0, max: 40, unit: 'pt' })),
     sec(t('colors'), row(colorField(t('color'), s.color, (v) => up({ color: v || '#1c1c1c' })), colorField(t('head_color'), s.headColor, (v) => up({ headColor: v || '#1c1c1c' })), colorField(t('accent'), s.accent, (v) => up({ accent: v || '#0f6e56' }))), h('p.muted.hint', t('accent_hint'))),
     sec(t('text'), toggle(t('justify_all'), s.justify, (v) => up({ justify: v })), toggle(t('numbered'), s.numbered, (v) => up({ numbered: v })), toggle(t('cap_num'), s.capNum, (v) => up({ capNum: v })), select(t('doc_lang'), [['it', 'Italiano'], ['en', 'English'], ['fr', 'Français'], ['de', 'Deutsch'], ['es', 'Español'], ['pt', 'Português'], ['nl', 'Nederlands'], ['pl', 'Polski'], ['ro', 'Română']], s.lang, (v) => up({ lang: v }))));
   paint();

@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 const APP_NAME = 'SavDocuments';
 const AUTH_COOKIE = 'savdocuments_auth';
-const SCHEMA_VERSION = 2; // 2: documents.preview
+const SCHEMA_VERSION = 4; // 2: documents.preview · 3: names and history of single-use links · 4: typefaces from file
 const LANGS = ['en', 'it'];
 // What a person can do with a document, from the weakest: each role can do everything the ones before it can
 const ROLES = ['viewer', 'commenter', 'editor', 'owner'];
@@ -20,6 +20,8 @@ const MAX_DOC_BYTES = 3000000;        // text and settings of one document
 const MAX_BLOCK_BYTES = 400000;       // one paragraph, list or table
 const MAX_IMAGE_BYTES = 3000000;
 const MAX_USER_IMAGE_BYTES = 300000000; // all the images of one account
+const MAX_FONT_BYTES = 5242880; // one typeface from file (5 MB)
+const MAX_USER_FONTS = 30;
 const MAX_USER_DOCS = 2000;
 const KEEP_OPS = 600;                 // edits kept for the people who are online; older ones reload the document
 const KEEP_VERSIONS = 40;

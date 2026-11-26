@@ -5,6 +5,7 @@ import { applySettings, sheetHtml } from './page.js';
 import { cleanObject, drawObject } from './objects.js';
 import { mathml } from './math.js';
 import { DEFAULTS, fontStack, MM, pageMM } from './settings.js';
+import { useFonts } from './fonts.js';
 import { h } from './ui.js';
 
 /** Dresses blocks that are only looked at. */
@@ -31,6 +32,7 @@ export function dress(root, s, imageUrl) {
 
 /** The first page, w pixels wide. blocks: html. */
 export function miniPage({ settings, blocks }, w, imageUrl) {
+  useFonts(settings);
   const s = { ...DEFAULTS, ...settings }, [pw, ph] = pageMM(s), k = w / (pw * MM);
   const page = h('div.psheet', { html: sheetHtml(s, 1, 1, '') }), flow = h('div.flow'), body = h('div.ed.doc');
   for (const b of blocks) { const html = b.h || b; if (/class="pb"/.test(html)) break; body.append(blockEl(html)); if (body.children.length > 26) break; }

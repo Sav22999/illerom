@@ -3,7 +3,7 @@ import {
     ago,
     api,
     btn,
-    confirmBox,
+    confirmBox, copyText, saveBlob, fileName, toast,
     dialog,
     fmtBytes,
     get,
@@ -77,7 +77,15 @@ export async function homeScreen(app, q) {
     app.append(h('header.htop', brand(), h('div.hsearch', searchBox), h('div.spacer'), userMenu()), h('div.hbody', side, main), credit());
 
     const load = async () => {
-        data = await get('home.list');
+        const L = await import('./local.js');
+        try {
+            data = await get('home.list');
+            L.cache.set('home', data);
+        } catch (e) {
+            data = e.network && (await L.cache.get('home'));
+            if (!data) throw e;
+            toast(t('offline_list'), 'warning');
+        }
         draw();
     };
     const set = (v, f = 0) => {
@@ -127,8 +135,8 @@ export async function homeScreen(app, q) {
         const menu = h('sav-menu', {
             label: t('home'),
             selectable: true
-        }, it('recent', 'layout-grid', t('my_decks')), it('starred', 'star', t('starred'), stars().size), it('shared', 'users', t('shared'), data.shared.length), it('templates', 'layout-template', t('templates')), it('trash', 'trash', t('trash'), data.decks.filter((d) => d.status === 'trashed').length));
-        menu.addEventListener('sav-select', (e) => set(e.detail.value));
+        }, it('recent', 'layout-grid', t('my_decks')), it('starred', 'star', t('starred'), stars().size), it('shared', 'users', t('shared'), data.shared.length), it('templates', 'layout-template', t('templates')), it('local', 'hard-drive', t('local_title')), it('trash', 'trash', t('trash'), data.decks.filter((d) => d.status === 'trashed').length));
+        menu.addEventListener('sav-select', (e) => (e.detail.value === 'local' ? go('?p=local') : set(e.detail.value)));
         const tree = h('sav-tree', {label: t('folders'), selectable: true}, ...branch(null));
         tree.addEventListener('sav-select', (e) => set('folder', +e.detail.value));
         side.replaceChildren(h('sav-button', {
@@ -235,7 +243,7 @@ export async function homeScreen(app, q) {
             theme: userSetting('theme') || 'violet',
             format: userSetting('format', '16-9')
         }).meta)), {icon: 'sparkles', appearance: 'outline', variant: 'neutral', size: 'sm'});
-        const head = h('div.hhead', h('h1', title), view === 'folder' && folderMenu(f), h('div.spacer'), sortMenu, viewBtn, fromText, btn(t('open_file'), async () => {
+        const head = h('div.hhead', h('h1', title), view === 'folder' && folderMenu(f), h('div.spacer'), view !== 'templates' && sortMenu, view !== 'templates' && viewBtn, fromText, btn(t('open_file'), async () => {
             const [file] = await pickFile('.savpre,.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation');
             if (file) openFile(file, folder);
         }, {icon: 'file-up', appearance: 'outline', variant: 'neutral', size: 'sm'}));
@@ -569,4 +577,67 @@ export function formatPicker(value, onpick) {
     }));
     g.addEventListener('change', (e) => onpick(e.detail?.value || g.value));
     return g;
+}
+
+
+// ------------------------------------------------------------------ presentations of this device
+
+/** The list of the presentations kept in this browser: for whoever has no account, or no connection. */
+export async function localHome(app) {
+    document.body.classList.add('home');
+    const L = await import('./local.js');
+    const main = h('main.hmain.localmain');
+    app.append(h('header.htop', brand(), h('div.spacer'), state.user ? userMenu() : btn(t('sign_in'), () => go('?signin=login'), {appearance: 'outline', variant: 'neutral'})), main, credit());
+    const create = async (x) => { const {meta, slides} = fromTemplate(x, {theme: userSetting('theme') || undefined, format: userSetting('format') || undefined}), id = L.newId(); await L.local.save({id, title: x.id === 'blank' ? t('untitled') : tplName(x), meta, slides, created: new Date().toISOString()}); go('?l=' + id); };
+    async function draw() {
+        const list = await L.local.list();
+        for (const d of list) await L.loadUrls(L.mediaOf(d));
+        const card = (d) => {
+            const m = h('sav-dropdown', {placement: 'bottom-end', label: d.title}, h('sav-button', {slot: 'trigger', icon: 'ellipsis-vertical', appearance: 'ghost', variant: 'neutral', size: 'sm', square: true, label: t('more')}),
+                item('open', 'presentation', t('open')), item('rename', 'pencil', t('rename')), state.user && item('move', 'cloud-upload', t('move_to_account')), h('sav-divider'), item('del', 'trash', t('delete_forever'), {variant: 'danger'}));
+            m.addEventListener('sav-select', async (e) => {
+                try {
+                    if (e.detail.value === 'open') return go('?l=' + d.id);
+                    if (e.detail.value === 'rename') { const n = await promptBox(t('rename'), t('title'), d.title, t('save'), 150); if (n) { await L.local.save({...d, title: n}); draw(); } }
+                    if (e.detail.value === 'move') { const uid = await moveToAccount(d.id); if (uid) go('?d=' + uid); }
+                    if (e.detail.value === 'del' && (await confirmBox(t('delete_forever'), t('local_delete_t', {title: d.title}), t('delete_forever')))) { await L.local.remove(d.id); draw(); }
+                } catch (x) { oops(x); }
+            });
+            const first = [...(d.slides || [])].sort((a, b) => a.pos - b.pos)[0];
+            return tile(d.title, (e) => { if (!e.target.closest?.('sav-dropdown')) go('?l=' + d.id); }, {class: 'card'}, h('div.cthumb', first ? fluidThumb(fixSlide(structuredClone(first.d)), context(d.meta), {index: 0, count: d.slides.length}) : null),
+                h('div.cinfo', h('div', h('b', d.title), h('small', t('n_slides', {n: d.slides.length}), ' · ', ago(d.updated))), m));
+        };
+        main.replaceChildren(
+            h('div.hhead', state.user && h('sav-button', {icon: 'arrow-left', appearance: 'ghost', variant: 'neutral', onclick: () => go('./')}, t('home')), h('h1', t('local_title')), h('div.spacer'),
+                btn(t('open_file'), async () => { const [f] = await pickFile('.savpre,.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation'); if (f) openFile(f, 0, true); }, {icon: 'file-up', appearance: 'outline', variant: 'neutral', size: 'sm'})),
+            h('sav-alert', {variant: 'neutral', icon: 'hard-drive'}, t('local_intro'), state.user ? '' : ' ' + t('local_intro_guest')),
+            h('sav-card.quick', {appearance: 'elevated'}, h('div.qhead', h('h2', t('start_new'))), h('div.qrow', ...['blank', 'launch', 'talk', 'business', 'portfolio', 'lesson', 'event', 'cards'].map((id) => TEMPLATES.find((x) => x.id === id)).filter(Boolean).map((x) => tplCard(x, () => create(x).catch(oops))))),
+            list.length ? h('div', h('h2', t('recent')), h('div.grid', ...list.map(card))) : h('sav-empty-state', {heading: t('local_none'), text: t('local_none_t'), icon: 'hard-drive'}));
+    }
+    await draw();
+}
+
+/** A presentation of this device goes to the account (its pictures and videos too); here it is removed. Resolves with its uid. */
+export async function moveToAccount(id) {
+    const L = await import('./local.js'), d = await L.local.get(id);
+    if (!d) return null;
+    let dlg;
+    dialog('', h('div.center', h('sav-spinner'), h('p', t('moving'))), [], {persistent: true, width: '22rem', ref: (x) => (dlg = x)});
+    try {
+        const {uploadPicture, uploadVideo} = await import('./core.js'), was = state.local, map = {};
+        state.local = '';
+        try {
+            for (const m of L.mediaOf(d)) {
+                const x = await L.local.media(m);
+                if (!x) continue;
+                const f = new File([x.blob], x.name || 'media', {type: x.blob.type});
+                map['l:' + m] = x.video ? (await uploadVideo(f)).src : (await uploadPicture(f)).src;
+            }
+        } finally { state.local = was; }
+        const slides = JSON.parse(JSON.stringify(d.slides).replace(/"l:([a-z0-9]{12})"/g, (k) => JSON.stringify(map[k.slice(1, -1)] || '')));
+        const r = await api('deck.create', {title: d.title, meta: d.meta, slides});
+        await L.local.remove(id);
+        ok(t('moved_to_account'));
+        return r.uid;
+    } catch (e) { oops(e); return null; } finally { dlg.close(); }
 }

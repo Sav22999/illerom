@@ -1,7 +1,7 @@
 /** PPTX: every element becomes a native PowerPoint object (text boxes, shapes, pictures), so it can be edited there. */
 import { zip } from './zip.js';
 import { sorted, decorOf } from './render.js';
-import { slideContext, styleOf, gradient, FONTS } from './themes.js';
+import { slideContext, styleOf, gradient, fontName } from './themes.js';
 import { shapePath } from './shapes.js';
 import { expandSlide } from './parts.js';
 import { videoSrc } from './render.js';
@@ -30,14 +30,14 @@ function geomXml(shape, w, h, rad, cmds, open) {
   const p = (cmds || shapePath(shape, w, h, rad)).map(([c, ...v]) => (c === 'M' ? `<a:moveTo>${pt(v[0], v[1])}</a:moveTo>` : c === 'L' ? `<a:lnTo>${pt(v[0], v[1])}</a:lnTo>` : c === 'C' ? `<a:cubicBezTo>${pt(v[0], v[1])}${pt(v[2], v[3])}${pt(v[4], v[5])}</a:cubicBezTo>` : '<a:close/>')).join('');
   return `<a:custGeom><a:avLst/><a:gdLst/><a:ahLst/><a:cxnLst/><a:rect l="0" t="0" r="r" b="b"/><a:pathLst><a:path w="${emu(w)}" h="${emu(h)}"${open ? ' fill="none"' : ''}>${p}</a:path></a:pathLst></a:custGeom>`;
 }
-const xfrm = (el) => `<a:xfrm${el.r ? ` rot="${Math.round(((el.r + 360) % 360) * 60000)}"` : ''}${el.flip ? ' flipH="1"' : ''}><a:off x="${emu(el.x)}" y="${emu(el.y)}"/><a:ext cx="${emu(el.w)}" cy="${emu(el.h)}"/></a:xfrm>`;
+const xfrm = (el) => `<a:xfrm${el.flip && (el.t === 'image' || el.t === 'video') ? ' flipH="1"' : ''}${el.r ? ` rot="${Math.round(((el.r + 360) % 360) * 60000)}"` : ''}${el.flip ? ' flipH="1"' : ''}><a:off x="${emu(el.x)}" y="${emu(el.y)}"/><a:ext cx="${emu(el.w)}" cy="${emu(el.h)}"/></a:xfrm>`;
 const shadow = (n) => (n ? `<a:effectLst><a:outerShdw blurRad="${[0, 76200, 254000, 571500][n]}" dist="${[0, 19050, 76200, 190500][n]}" dir="5400000" algn="t" rotWithShape="0"><a:srgbClr val="000000"><a:alpha val="${[0, 16000, 20000, 28000][n]}"/></a:srgbClr></a:outerShdw></a:effectLst>` : '');
 
 function body(el, sc, rel, tag = 'p:txBody') {
   const st = styleOf(el, sc), al = { left: 'l', center: 'ctr', right: 'r', justify: 'just' }, pad = emu(st.pad), o = el.o ?? 1;
   const ps = paragraphs(isEmpty(el.html) ? '' : el.html, {}).map((p) => {
     const size = (r) => Math.max(100, Math.round(st.size * (r.k || 1) * 75));
-    const rpr = (r, name) => `<a:${name} lang="en-US" sz="${size(r)}"${r.b || st.bold ? ' b="1"' : ' b="0"'}${r.i || st.italic ? ' i="1"' : ''}${r.u || st.under ? ' u="sng"' : ''}${r.s ? ' strike="sngStrike"' : ''}${st.caps ? ' cap="all"' : ''}${st.ls ? ` spc="${Math.round(st.ls * 75)}"` : ''}${r.sup ? ' baseline="30000"' : r.sub ? ' baseline="-25000"' : ''} dirty="0"><a:solidFill>${clr(sc.color(r.c || st.color), o)}</a:solidFill>${r.m ? `<a:highlight>${clr(sc.color(r.m))}</a:highlight>` : ''}${['latin', 'ea', 'cs'].map((k) => `<a:${k} typeface="${x(FONTS[sc.font(r.f || st.font)][0])}"/>`).join('')}${r.href && okLink(r.href) && !r.href.startsWith('#') ? `<a:hlinkClick r:id="${rel(RT + 'hyperlink', r.href, true)}"/>` : ''}</a:${name}>`;
+    const rpr = (r, name) => `<a:${name} lang="en-US" sz="${size(r)}"${r.b || st.bold ? ' b="1"' : ' b="0"'}${r.i || st.italic ? ' i="1"' : ''}${r.u || st.under ? ' u="sng"' : ''}${r.s ? ' strike="sngStrike"' : ''}${st.caps ? ' cap="all"' : ''}${st.ls ? ` spc="${Math.round(st.ls * 75)}"` : ''}${r.sup ? ' baseline="30000"' : r.sub ? ' baseline="-25000"' : ''} dirty="0"><a:solidFill>${clr(sc.color(r.c || st.color), o)}</a:solidFill>${r.m ? `<a:highlight>${clr(sc.color(r.m))}</a:highlight>` : ''}${['latin', 'ea', 'cs'].map((k) => `<a:${k} typeface="${x(fontName(sc.font(r.f || st.font)))}"/>`).join('')}${r.href && okLink(r.href) && !r.href.startsWith('#') ? `<a:hlinkClick r:id="${rel(RT + 'hyperlink', r.href, true)}"/>` : ''}</a:${name}>`;
     const ind = p.list ? Math.round(st.size * 1.2) : 0, lev = p.level || 0;
     const ppr = `<a:pPr algn="${al[p.align || st.align] || 'l'}"${p.list ? ` marL="${emu(ind * (lev + 1))}" indent="${-emu(ind)}"` : ' marL="0" indent="0"'}><a:lnSpc><a:spcPct val="${Math.round(st.lh * 83000)}"/></a:lnSpc><a:spcBef><a:spcPts val="0"/></a:spcBef>${p.list === 'ol' ? '<a:buFont typeface="+mj-lt"/><a:buAutoNum type="arabicPeriod"/>' : p.list ? '<a:buFont typeface="Arial"/><a:buChar char="•"/>' : '<a:buNone/>'}</a:pPr>`;
     const runs = p.runs.map((r) => (r.br ? `<a:br>${rpr(r, 'rPr')}</a:br>` : r.t ? `<a:r>${rpr(r, 'rPr')}<a:t>${x(r.t)}</a:t></a:r>` : '')).join('');
@@ -103,7 +103,7 @@ export async function exportPptx(deck, ctx, media) {
     files.push([`ppt/slides/slide${i + 1}.xml`, r.xml], [`ppt/slides/_rels/slide${i + 1}.xml.rels`, relFile(r.rels)]);
   });
   for (const m of media.values()) { types.add(m.name.split('.').pop()); files.push(['ppt/media/' + m.name, m.blob]); }
-  const c = ctx.variant('content').colors, F = (k) => FONTS[ctx.fonts[k]][0], sys = (n, h) => `<a:${n}><a:srgbClr val="${h.slice(1, 7).toUpperCase()}"/></a:${n}>`;
+  const c = ctx.variant('content').colors, F = (k) => fontName(ctx.fonts[k]), sys = (n, h) => `<a:${n}><a:srgbClr val="${h.slice(1, 7).toUpperCase()}"/></a:${n}>`;
   const theme = `${XML}<a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="${x(ctx.def.name)}"><a:themeElements><a:clrScheme name="SavPresentations">${sys('dk1', c.fg)}${sys('lt1', c.bg)}${sys('dk2', c.muted)}${sys('lt2', c.surface)}${sys('accent1', c.accent)}${sys('accent2', c.accent2)}${sys('accent3', c.muted)}${sys('accent4', c.accent)}${sys('accent5', c.accent2)}${sys('accent6', c.fg)}${sys('hlink', c.accent)}${sys('folHlink', c.muted)}</a:clrScheme><a:fontScheme name="SavPresentations"><a:majorFont><a:latin typeface="${F('head')}"/><a:ea typeface=""/><a:cs typeface=""/></a:majorFont><a:minorFont><a:latin typeface="${F('body')}"/><a:ea typeface=""/><a:cs typeface=""/></a:minorFont></a:fontScheme><a:fmtScheme name="Office"><a:fillStyleLst>${'<a:solidFill><a:schemeClr val="phClr"/></a:solidFill>'.repeat(3)}</a:fillStyleLst><a:lnStyleLst>${'<a:ln w="9525"><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:ln>'.repeat(3)}</a:lnStyleLst><a:effectStyleLst>${'<a:effectStyle><a:effectLst/></a:effectStyle>'.repeat(3)}</a:effectStyleLst><a:bgFillStyleLst>${'<a:solidFill><a:schemeClr val="phClr"/></a:solidFill>'.repeat(3)}</a:bgFillStyleLst></a:fmtScheme></a:themeElements></a:theme>`;
   const tree = '<p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/></p:spTree>', map = '<p:clrMap bg1="lt1" tx1="dk1" bg2="lt2" tx2="dk2" accent1="accent1" accent2="accent2" accent3="accent3" accent4="accent4" accent5="accent5" accent6="accent6" hlink="hlink" folHlink="folHlink"/>';
   const bgx = '<p:bg><p:bgPr><a:solidFill><a:schemeClr val="bg1"/></a:solidFill><a:effectLst/></p:bgPr></p:bg>';

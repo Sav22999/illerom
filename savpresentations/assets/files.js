@@ -6,7 +6,7 @@ import { Deck, fixSlide } from './model.js';
 import { context } from './themes.js';
 import { mediaUrl } from './render.js';
 
-const usedMedia = (deck) => { const s = new Set(); for (const sl of deck.order()) { if (sl.d.bg?.t === 'i') s.add(sl.d.bg.src); for (const el of Object.values(sl.d.els)) { if (el.src) s.add(el.src); if (el.poster) s.add(el.poster); } } return [...s].filter((x) => x.startsWith('m:')); };
+const usedMedia = (deck) => { const s = new Set(); for (const sl of deck.order()) { if (sl.d.bg?.t === 'i') s.add(sl.d.bg.src); for (const el of Object.values(sl.d.els)) { if (el.src) s.add(el.src); if (el.poster) s.add(el.poster); } } return [...s].filter((x) => x.startsWith('m:') || x.startsWith('l:')); };
 
 /** The pictures of a presentation: src -> {name, blob, w, h, img}. WebP becomes PNG for the programs that do not read it. */
 async function loadMedia(deck, convert = true) {
@@ -54,16 +54,20 @@ export async function downloadAs(deckUid) {
   try { const r = await get('deck.get', { d: deckUid }), deck = new Deck(r.deck, r.role); downloadMenu({ deck, ctx: context(deck.meta) }); } catch (e) { oops(e); }
 }
 
-export async function openFile(file, folder = 0) {
+/** here: kept in this browser (a local presentation) instead of the account. */
+export async function openFile(file, folder = 0, here = false) {
+  if (here) state.local = 'new';
   const close = busyBox(t('opening', { name: file.name }));
   try {
     const z = await unzip(file);
     const data = z.names.includes('deck.json') ? await readSavpre(z) : z.names.includes('ppt/presentation.xml') ? await (await import('./import-pptx.js')).readPptx(z, file.name) : null;
     if (!data) throw new Error('unknown file');
-    const r = await api('deck.create', { title: data.title || file.name.replace(/\.[^.]+$/, ''), folder, meta: data.meta, slides: data.slides });
+    const title = data.title || file.name.replace(/\.[^.]+$/, '');
+    if (here) { const L = await import('./local.js'), id = L.newId(); await L.local.save({ id, title, meta: data.meta, slides: data.slides, created: new Date().toISOString() }); state.local = ''; close(); return go('?l=' + id); }
+    const r = await api('deck.create', { title, folder, meta: data.meta, slides: data.slides });
     close();
     go('?d=' + r.uid);
-  } catch (e) { close(); if (e.code) oops(e); else { console.error(e); toast(t('err_file'), 'danger'); } }
+  } catch (e) { state.local = ''; close(); if (e.code) oops(e); else { console.error(e); toast(t('err_file'), 'danger'); } }
 }
 function busyBox(text) {
   let dlg;

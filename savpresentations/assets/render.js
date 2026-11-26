@@ -3,10 +3,11 @@ import {lineHeads, pathOf, shapePath, toSvgPath} from './shapes.js';
 import {gradient, slideContext, styleOf} from './themes.js';
 import {esc, fragment, isEmpty } from './richtext.js';
 import { isCompound, partsOf, isCited, citeOf } from './parts.js';
+import { urls as localUrls } from './local.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 let gid = 0;
-export const mediaUrl = (src) => (src?.startsWith('m:') ? 'api/?r=media&id=' + src.slice(2) : src?.startsWith('blob:') || src?.startsWith('data:') ? src : '');
+export const mediaUrl = (src) => (src?.startsWith('m:') ? 'api/?r=media&id=' + src.slice(2) : src?.startsWith('l:') ? localUrls.get(src.slice(2)) || '' : src?.startsWith('blob:') || src?.startsWith('data:') ? src : '');
 /** Where a video is: for the players (in) and for the links of the exported files. */
 export const videoSrc = (el) => (el.kind === 'youtube' ? 'https://youtu.be/' + el.vid : el.kind === 'vimeo' ? 'https://vimeo.com/' + el.vid : el.vid?.startsWith('m:') ? new URL(mediaUrl(el.vid), document.baseURI).href : el.vid);
 export const cssFill = (f, sc) => {

@@ -203,7 +203,7 @@ function apply_ops(array $deck, array $u, string $client, array $ops, string $ro
                     $title = mb_substr(trim(clean_text($p['title'], 150)), 0, 150) ?: $title;
                     $out['title'] = $title;
                 }
-                foreach (['format', 'theme', 'opts'] as $key) {
+                foreach (['format', 'theme', 'opts', 'fonts'] as $key) {
                     if (!isset($p[$key]) || !is_array($p[$key])) continue;
                     // options are merged one by one, format and theme are replaced
                     $meta[$key] = $key === 'opts' ? array_merge((array)($meta['opts'] ?? []), $p[$key]) : $p[$key];

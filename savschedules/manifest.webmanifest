@@ -1,0 +1,23 @@
+{
+  "name": "SavSchedules",
+  "short_name": "SavSchedules",
+  "description": "Date polls and slot booking: find the date, hand out the slots. No account needed to answer.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f2f5fb",
+  "theme_color": "#1f56d1",
+  "lang": "en",
+  "categories": ["productivity", "business", "education"],
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ],
+  "file_handlers": [
+    {"action": "./", "accept": {"application/vnd.savschedules.schedule+zip": [".savsch"]}}
+  ],
+  "launch_handler": {"client_mode": "navigate-existing"}
+}

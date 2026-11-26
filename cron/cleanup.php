@@ -19,10 +19,10 @@
 
 const ROOM_RETENTION_HOURS = 24;
 const GAMES = ['c4' => 'connect-four', 'chess' => 'chess', 'fg' => 'faceguess', 'sb' => 'sea-battle', 'pm' => 'prism-mine']; // table prefix => project
-const APPS = ['foodtrack' => 'ft_', 'giftwise' => 'gw_', 'fucina' => 'fc_', 'thinkhop' => 'th_', 'forkville' => 'fv_', 'mycurriculum' => 'mc_', 'opennewsletter' => 'on_', 'savdocuments' => 'sd_', 'savpresentations' => 'sp_']; // project => default table prefix
-const NO_SESSION_DETAILS = ['thinkhop', 'forkville', 'mycurriculum', 'opennewsletter', 'savdocuments', 'savpresentations']; // these apps never stored the IP and browser on their sessions: no such columns
+const APPS = ['foodtrack' => 'ft_', 'giftwise' => 'gw_', 'fucina' => 'fc_', 'thinkhop' => 'th_', 'forkville' => 'fv_', 'mycurriculum' => 'mc_', 'opennewsletter' => 'on_', 'savdocuments' => 'sd_', 'savpresentations' => 'sp_', 'savschedules' => 'sch_']; // project => default table prefix
+const NO_SESSION_DETAILS = ['thinkhop', 'forkville', 'mycurriculum', 'opennewsletter', 'savdocuments', 'savpresentations', 'savschedules']; // these apps never stored the IP and browser on their sessions: no such columns
 const ATTEMPT_RETENTION_HOURS = 2; // the longest rate limit looks back 60 minutes: older IPs serve no purpose
-const TRASH_DAYS = 30; // SavDocuments and SavPresentations: what is in the trash
+const TRASH_DAYS = 30; // SavDocuments, SavPresentations and SavSchedules: what is in the trash
 const PENDING_SUBSCRIBER_DAYS = 7; // OpenNewsletter: a confirmation link works 7 days, then the address is forgotten
 
 header('Content-Type: application/json');
@@ -93,6 +93,13 @@ function cleanApp($project, $defaultPrefix)
         $result['old_reports'] = $db->exec("DELETE FROM `{$prefix}reports` WHERE created_at < UTC_TIMESTAMP() - INTERVAL 2 YEAR") + $db->exec("DELETE FROM `{$prefix}audit` WHERE created_at < UTC_TIMESTAMP() - INTERVAL 2 YEAR");
         $db->exec("DELETE FROM `{$prefix}presence` WHERE seen_at < UTC_TIMESTAMP() - INTERVAL 1 HOUR");
         $db->exec("DELETE FROM `{$prefix}cache` WHERE expires_at < UTC_TIMESTAMP()");
+        if ($db->query("SHOW TABLES LIKE " . $db->quote(addcslashes($prefix, '_%') . 'identity'))->fetchColumn()) $result['sign_in_requests'] = $db->exec("DELETE FROM `{$prefix}identity` WHERE expires_at < UTC_TIMESTAMP()"); // made at the first SavAccount or Google sign-in
+    }
+    if ($project === 'savschedules') {
+        // as its privacy notice promises: trash 30 days, accounts never confirmed 7 (the answers go with their schedule)
+        $result['trash'] = $db->exec("DELETE FROM `{$prefix}schedules` WHERE deleted_at < UTC_TIMESTAMP() - INTERVAL " . TRASH_DAYS . " DAY");
+        $result['unconfirmed'] = $db->exec("DELETE FROM `{$prefix}users` WHERE email_verified_at IS NULL AND status = 'active' AND created_at < UTC_TIMESTAMP() - INTERVAL 7 DAY");
+        $result['links'] = $db->exec("DELETE FROM `{$prefix}email_tokens` WHERE expires_at < UTC_TIMESTAMP()");
         if ($db->query("SHOW TABLES LIKE " . $db->quote(addcslashes($prefix, '_%') . 'identity'))->fetchColumn()) $result['sign_in_requests'] = $db->exec("DELETE FROM `{$prefix}identity` WHERE expires_at < UTC_TIMESTAMP()"); // made at the first SavAccount or Google sign-in
     }
     return $result;
