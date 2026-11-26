@@ -7,6 +7,19 @@
     font-display: swap;
 }
 
+/* the letters of the mark (tools/typeface.py): LEAN 0 upright, 100 leaned */
+@font-face {
+    font-family: "Illerom Bars";
+    src: url(fonts/illerom-bars.woff) format("woff");
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Illerom Bars Mono";
+    src: url(fonts/illerom-bars-mono.woff) format("woff");
+    font-display: swap;
+}
+
 @font-face {
     font-family: Inter;
     src: url(fonts/inter-latin-ext-wght-normal.woff2) format("woff2");
@@ -470,11 +483,19 @@ a:hover {
     overflow: visible;
 }
 
+/* the name is written letter by letter with upright bars; when the last one is down, everything leans.
+   The steps: --n bars, 70 ms apart, each drawn in .45 s; then the lean (and the notes) at --wm-lean */
+.plate-y {
+    --wm-lean: calc(13 * 70ms + .55s);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
 .wordmark .bar {
     fill: var(--plum);
     transform-box: fill-box;
     transform-origin: 50% 0;
-    animation: fall .5s calc(var(--n) * 60ms + .1s) var(--sav-easing) backwards;
+    animation: fall .45s calc(var(--n) * 70ms + .1s) var(--sav-easing) backwards;
 }
 
 .wordmark .bar.flat {
@@ -484,6 +505,25 @@ a:hover {
 
 .wm-bars {
     transition: transform .75s cubic-bezier(.65, 0, .25, 1);
+}
+
+/* the same lean as the attribute matrix(1 0 .5 1), around the middle: upright, the word stays centred */
+.wm-lean {
+    transform-origin: 0 50px;
+    transform: translateX(25px) skewX(26.565deg);
+    transition: transform .55s var(--sav-easing);
+    animation: lean .85s var(--wm-lean) cubic-bezier(.34, 1.5, .5, 1) backwards;
+}
+
+.plate-y::before, .solo .plate-y::after {
+    animation: tilt .85s var(--wm-lean) cubic-bezier(.34, 1.5, .5, 1) backwards;
+}
+
+/* the lede says it: some straighten up along the way */
+@media (hover: hover) {
+    .plate-y:hover .wm-lean {
+        transform: translateX(25px);
+    }
 }
 
 .flipped .wm-bars {
@@ -500,6 +540,18 @@ a:hover {
 @keyframes run {
     from {
         transform: scaleX(0);
+    }
+}
+
+@keyframes lean {
+    from {
+        transform: translateX(25px) skewX(0deg);
+    }
+}
+
+@keyframes tilt {
+    from {
+        rotate: 0deg;
     }
 }
 
@@ -2023,6 +2075,407 @@ a, button {
 
     .phero .actions {
         grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* Illerom Bars */
+.tf-text {
+    --lean: 100;
+    font-family: "Illerom Bars", var(--display);
+    font-variation-settings: "LEAN" var(--lean);
+    font-kerning: none;
+    letter-spacing: 0;
+    color: var(--tf-ink, var(--plum));
+}
+
+/* a note to write on: yellow, with the blue one leaning behind, as in the opening */
+.note-y {
+    position: relative;
+    isolation: isolate;
+}
+
+.note-y::before, .note-y::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--note-yellow);
+    rotate: -1.6deg;
+    box-shadow: 0 14px 34px -18px rgb(42 20 48 / .45);
+    z-index: -1;
+}
+
+.note-y::after {
+    background: var(--note-blue);
+    rotate: 1.8deg;
+    box-shadow: none;
+    z-index: -2;
+}
+
+.thero h1 {
+    max-width: 14em;
+}
+
+.ttry {
+    padding-block: .5rem clamp(3rem, 6vw, 4.5rem);
+}
+
+.try {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(16rem, 1fr);
+    gap: clamp(1.5rem, 4vw, 3.5rem);
+    align-items: center;
+}
+
+.try-note {
+    min-height: 13rem;
+    display: grid;
+    align-items: center;
+    padding: clamp(1.5rem, 4vw, 2.75rem) clamp(1.75rem, 5vw, 3.5rem);
+}
+
+.try-note .tf-text {
+    font-size: clamp(2.25rem, 1.4rem + 3.2vw, 4.25rem);
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+    /* the tops lean back past the start of the line */
+    padding-inline: .3em 0;
+    min-height: 1.3em;
+}
+
+.try-ctl {
+    display: grid;
+    gap: 1.25rem;
+    align-content: center;
+}
+
+.tf-text.mono {
+    font-family: "Illerom Bars Mono", var(--display);
+}
+
+.try-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.formats-h {
+    margin-top: 1.4rem;
+    font-size: 1rem;
+}
+
+.formats-h + .formats {
+    margin-top: .55rem;
+}
+
+/* written again: each letter comes in upright, then the whole line leans */
+.tf-text.writing .w {
+    white-space: nowrap;
+}
+
+.tf-text.writing .w > span {
+    display: inline-block;
+    animation: letter-in .35s calc(var(--i) * 45ms) var(--sav-easing) backwards;
+}
+
+.tf-text.writing {
+    animation: text-lean .8s var(--done) cubic-bezier(.34, 1.4, .5, 1) backwards;
+}
+
+@keyframes letter-in {
+    from {
+        opacity: 0;
+        transform: translateY(-.25em);
+    }
+}
+
+@keyframes text-lean {
+    from {
+        font-variation-settings: "LEAN" 0;
+    }
+}
+
+.talpha, .trules, .ttwins {
+    padding-bottom: clamp(3rem, 6vw, 4.5rem);
+}
+
+.talpha h2, .trules h2, .ttwins h2, .tget h2 {
+    margin-bottom: .6rem;
+}
+
+.alpha {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(6.25rem, 1fr));
+    gap: .5rem;
+    margin-top: 1.4rem;
+}
+
+.ch {
+    position: relative;
+    isolation: isolate;
+    width: 100%;
+    display: grid;
+    justify-items: center;
+    gap: .35rem;
+    padding: 1rem .5rem .7rem;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+.ch::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--sav-color-surface);
+    border: 1px solid var(--sav-color-border);
+    transition: rotate .3s var(--sav-easing), background .2s;
+}
+
+.ch-g {
+    --lean: 100;
+    font-size: 3.4rem;
+    line-height: 1;
+    height: 1em;
+    padding-left: .2em;
+    transition: font-variation-settings .45s var(--sav-easing);
+}
+
+.ch-l {
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--sav-color-text-muted);
+}
+
+.ch[aria-pressed="true"] .ch-g {
+    font-variation-settings: "LEAN" 0;
+}
+
+.ch[aria-pressed="true"]::before {
+    background: var(--note-yellow);
+    border-color: transparent;
+}
+
+.ch[aria-pressed="true"] .ch-l {
+    color: var(--ink);
+}
+
+@media (hover: hover) {
+    .ch:hover .ch-g {
+        font-variation-settings: "LEAN" 0;
+    }
+
+    .ch:hover::before {
+        rotate: -2deg;
+    }
+}
+
+.steps {
+    padding: 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+    gap: 1.5rem;
+    margin-top: 1.4rem;
+    counter-reset: step;
+}
+
+.steps sav-card {
+    --sav-card-padding: 1.5rem;
+    height: 100%;
+}
+
+.step {
+    display: grid;
+    gap: .6rem;
+}
+
+.step-g {
+    display: flex;
+    gap: .9rem;
+    height: 3.5rem;
+    margin-bottom: .4rem;
+}
+
+.step-g .glyph {
+    height: 100%;
+    width: auto;
+}
+
+.step h3 {
+    font-size: 1.2rem;
+}
+
+.step p, .ttwins > p, .tget p {
+    color: var(--sav-color-text-muted);
+    max-width: 42em;
+}
+
+.glyph {
+    display: block;
+    overflow: visible;
+    fill: var(--tf-ink, var(--plum));
+}
+
+.glyph .grid {
+    fill: none;
+    stroke: var(--sav-color-border-strong);
+    stroke-width: .6;
+    stroke-dasharray: 2 2;
+}
+
+/* plum on paper and on the notes, yellow on the dark background */
+:root.sav-theme-dark {
+    --tf-ink: var(--note-yellow);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root.sav-theme-auto {
+        --tf-ink: var(--note-yellow);
+    }
+}
+
+.note-y, .ch[aria-pressed="true"] {
+    --tf-ink: var(--plum);
+}
+
+.twins {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5rem), 1fr));
+    gap: 1rem;
+    margin-top: 1.4rem;
+}
+
+.twins sav-card {
+    --sav-card-padding: 1.1rem 1.25rem;
+    height: 100%;
+}
+
+.twin {
+    display: grid;
+    justify-items: start;
+    gap: .7rem;
+}
+
+.twin .glyph {
+    height: 2.75rem;
+    width: auto;
+}
+
+.twin b {
+    font: 600 1.15rem/1.2 var(--display);
+    word-spacing: .25em;
+}
+
+.tget {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    gap: 2rem clamp(2rem, 5vw, 4.5rem);
+    align-items: start;
+    padding-bottom: clamp(3.5rem, 7vw, 5.5rem);
+}
+
+.tget .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+    margin-top: 1.4rem;
+}
+
+.formats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin-top: .9rem;
+}
+
+.formats .kb {
+    color: var(--sav-color-text-muted);
+    font-weight: 400;
+    font-size: .8em;
+}
+
+.tget-code {
+    display: grid;
+    gap: .75rem;
+    justify-items: start;
+    min-width: 0;
+}
+
+.tget-code sav-code-block {
+    width: 100%;
+}
+
+/* home: the typeface, after the projects */
+.tfhome {
+    padding-bottom: clamp(3.5rem, 7vw, 5.5rem);
+}
+
+.tfhome-in {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 2rem clamp(2rem, 5vw, 4.5rem);
+    align-items: center;
+}
+
+.tfhome-note {
+    display: block;
+    text-decoration: none;
+    padding: clamp(1.4rem, 3.5vw, 2.4rem) clamp(1.6rem, 4vw, 3rem);
+}
+
+.tfhome-note .tf-text {
+    font-size: clamp(2rem, 1.2rem + 2.6vw, 3.4rem);
+    line-height: 1.35;
+    padding-left: .3em;
+    transition: font-variation-settings .9s var(--sav-easing);
+}
+
+.tfhome-note .tf-text.upright {
+    font-variation-settings: "LEAN" 0;
+}
+
+.tfhome h2 {
+    margin-bottom: .7rem;
+}
+
+.tfhome p {
+    color: var(--sav-color-text-muted);
+    max-width: 34em;
+    margin-bottom: 1.2rem;
+}
+
+@media (max-width: 56rem) {
+    .try, .tget, .tfhome-in {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 40rem) {
+    .try-note {
+        min-height: 9rem;
+        padding: 1.4rem 1.5rem;
+    }
+
+    .alpha {
+        grid-template-columns: repeat(auto-fill, minmax(4.5rem, 1fr));
+        gap: .4rem;
+    }
+
+    .ch {
+        padding: .8rem .25rem .55rem;
+    }
+
+    .ch-g {
+        font-size: 2.6rem;
+    }
+
+    .tfhome-note {
+        order: -1;
     }
 }
 

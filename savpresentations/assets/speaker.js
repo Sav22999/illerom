@@ -35,7 +35,7 @@ export function speakerScreen(app, room) {
   function draw() {
     if (gone) return;
     if (!st) return now.replaceChildren(h('div.center', h('sav-spinner'), h('p', t('speaker_wait'))));
-    document.title = t('speaker_view') + ' — ' + st.title;
+    document.title = st.title + ' – ' + t('speaker_view') + ' – SavPresentations';
     slide(now, st.cur, st.index); slide(nxt, st.next, st.nextIndex);
     now.classList.toggle('off', st.black); now.classList.toggle('pointing', st.tool === 'laser');
     if (last !== st.sid) notes.scrollTop = 0;

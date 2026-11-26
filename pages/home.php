@@ -53,6 +53,19 @@
     </div>
 </section>
 
+<section class="wrap tfhome" aria-labelledby="tfhome-h">
+    <div class="tfhome-in">
+        <a class="tfhome-note note-y" href="<?= $base ?>typeface/" tabindex="-1" aria-hidden="true">
+            <span class="tf-text" id="tfhome"><?= e($t['tf_home_sample']) ?></span>
+        </a>
+        <div>
+            <h2 id="tfhome-h"><?= e($t['tf_home_h']) ?></h2>
+            <p><?= e($t['tf_home_p']) ?></p>
+            <sav-button href="<?= $base ?>typeface/" appearance="outline"><?= e($t['tf_home_link']) ?></sav-button>
+        </div>
+    </div>
+</section>
+
 <section class="big">
     <div class="wrap big-in">
         <div>

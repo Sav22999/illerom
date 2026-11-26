@@ -305,6 +305,18 @@ line|Line|Linea
 line_height|Lines|Righe
 lines|Lines|Linee
 link|Link|Link
+link_add|Add a link|Aggiungi un link
+link_edit|Edit the link|Modifica il link
+link_remove|Remove the link|Rimuovi il link
+link_web|Web page|Pagina web
+link_to_slide|Slide|Slide
+link_url|Address|Indirizzo
+link_web_t|It opens in a new tab, after asking.|Si apre in una nuova scheda, dopo averlo chiesto.
+link_slide_t|In the show, a click goes to this slide.|Durante la presentazione, un clic porta a questa slide.
+link_bad|This address is not valid|Questo indirizzo non è valido
+link_out|Open an external link?|Aprire un link esterno?
+link_out_t|This link leaves the presentation and opens in a new tab. Open it only if you trust it.|Questo link esce dalla presentazione e si apre in una nuova scheda. Aprilo solo se ti fidi.
+link_open|Open link|Apri il link
 link_dead|expired|scaduto
 link_label|For whom (optional)|Per chi (facoltativo)
 link_once|It is shown only now: copy it and send it to one person.|Si vede solo adesso: copialo e mandalo a una sola persona.
@@ -634,6 +646,7 @@ verify_sent|We sent a link to {email}: open it to confirm the address. It works 
 verify_text|One press and your account is ready.|Un tocco e il tuo account è pronto.
 verify_title|Confirm your email|Conferma la tua email
 video|Video|Video
+video_replay|Watch again|Rivedi
 video_url|Address of the video|Indirizzo del video
 video_url_t|YouTube, Vimeo, or the https address of an MP4 or WebM file.|YouTube, Vimeo, o l’indirizzo https di un file MP4 o WebM.
 videos|Videos|Video
@@ -696,7 +709,8 @@ legend|Legend|Legenda
 match_case|Match upper and lower case|Distingui maiuscole e minuscole
 n_found|{n} found|{n} trovati
 n_replaced|{n} texts changed|{n} testi modificati
-no_versions|No versions yet: one is kept every half hour of work.|Ancora nessuna versione: se ne conserva una ogni mezz’ora di lavoro.
+no_versions_h|No versions yet|Ancora nessuna versione
+no_versions|They are kept while you work.|Si salvano mentre lavori.
 overview|All the slides|Tutte le slide
 palette_l|Commands|Comandi
 palette_ph|What do you want to do?|Che cosa vuoi fare?

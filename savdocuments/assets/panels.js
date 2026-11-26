@@ -1,5 +1,5 @@
 /** The side panel of the editor: elements to insert, format of what is selected, page, style, images. */
-import { btn, colorField, fail, field, h, icon, iconBtn, mobile, num, PASTEL, put, range, row, sec, segmented, select, tile, toggle } from './ui.js';
+import { btn, colorField, dialog, fail, field, h, icon, iconBtn, mobile, num, PASTEL, put, range, row, sec, segmented, select, tile, toggle } from './ui.js';
 import { t } from './i18n.js';
 import { api } from './store.js';
 import { FONTS, fontStack, LOOKS, SIZES } from './settings.js';
@@ -153,12 +153,12 @@ export function pageForm(s, up) {
   const m = { mt: num(t('top'), s.mt, (v) => up({ mt: v }), { min: 0, max: 100, unit: 'mm', step: 0.5 }), mb: num(t('bottom'), s.mb, (v) => up({ mb: v }), { min: 0, max: 100, unit: 'mm', step: 0.5 }), ml: num(t('left'), s.ml, (v) => up({ ml: v }), { min: 0, max: 100, unit: 'mm', step: 0.5 }), mr: num(t('right'), s.mr, (v) => up({ mr: v }), { min: 0, max: 100, unit: 'mm', step: 0.5 }) };
   const preset = (a, b) => { up({ mt: a, mb: a, ml: b, mr: b }); for (const k in m) m[k].value = k === 'mt' || k === 'mb' ? a : b; };
   let last = null;
-  const band = (kind) => h('div.stack', h('span.flabel', t('band_' + kind)), ['l', 'c', 'r'].map((z) => { const x = field(null, s[kind][z], (v) => { up({ [kind]: { ...s[kind], [z]: v } }); }, { live: true, maxlength: 120, placeholder: t({ l: 'left', c: 'center', r: 'right' }[z]), 'aria-label': `${t('band_' + kind)} ${t({ l: 'left', c: 'center', r: 'right' }[z])}` }); x.addEventListener('focusin', () => { last = [x, kind, z]; }); return x; }));
+  const band = (kind) => h('div.stack', h('span.flabel', t('band_' + kind)), ['l', 'c', 'r'].map((z) => { const x = field(null, s[kind][z], (v) => { up({ [kind]: { ...s[kind], [z]: v } }); }, { live: true, maxlength: 120, placeholder: t({ l: 'left', c: 'center', r: 'right' }[z]), 'aria-label': `${t('band_' + kind)} ${t({ l: 'left', c: 'center', r: 'right' }[z])}`, 'data-band': kind + '-' + z }); x.addEventListener('focusin', () => { last = [x, kind, z]; }); return x; }));
   const box = h('div', sec(t('o_page'), select(t('o_size'), [...Object.entries(SIZES).map(([k, [a, b]]) => [k, `${k} · ${a} × ${b} mm`]), ['custom', t('custom')]], s.size, (v) => { custom.hidden = v !== 'custom'; up({ size: v }); }), custom,
     segmented(t('o_orient'), s.landscape ? '1' : '0', [['0', '=' + t('portrait'), t('portrait')], ['1', '=' + t('landscape'), t('landscape')]], (v) => up({ landscape: v === '1' }), { show: true })),
   sec(t('margins'), h('div.prow.wrap', btn(t('m_normal'), { size: 'sm', onclick: () => preset(25, 25) }), btn(t('m_narrow'), { size: 'sm', onclick: () => preset(13, 13) }), btn(t('m_wide'), { size: 'sm', onclick: () => preset(25, 50) })), row(m.mt, m.mb), row(m.ml, m.mr), h('p.muted.hint', t('margins_hint'))),
   sec(t('background'), row(colorField(t('page_color'), s.bg === '#ffffff' ? '' : s.bg, (v) => up({ bg: v || '#ffffff' }), { list: ['#ffffff', '#fdf8ef', '#fffafc', '#f5f9ff', '#f3faf5', '#fffdf0', '#f4f4f4', '#f7f2ff'], none: t('white') }), colorField(t('border'), s.borderColor, (v) => up({ borderColor: v || s.accent }))), select(t('page_border'), [['', t('none')], ['thin', t('b_thin')], ['thick', t('b_thick')], ['double', t('b_double')], ['dashed', t('dashed')]], s.border, (v) => up({ border: v })), field(t('watermark'), s.mark, (v) => up({ mark: v }), { live: true, maxlength: 40, placeholder: t('watermark_ph') })),
-  sec(t('o_bands'), band('header'), band('footer'), h('div.prow.wrap', ['page', 'pages', 'title', 'date'].map((k) => btn(t('f_' + k), { size: 'sm', icon: 'plus', onclick: () => { const [x, kind, z] = last || [null, 'footer', 'c']; const v = (s[kind][z] + (s[kind][z] && !s[kind][z].endsWith(' ') ? ' ' : '') + `{${k}}`).slice(0, 120); up({ [kind]: { ...s[kind], [z]: v } }); if (x) x.value = v; } }))), toggle(t('first_page'), s.firstPage, (v) => up({ firstPage: v })), toggle(t('band_line'), s.bandLine, (v) => up({ bandLine: v })), num(t('start_page'), s.startPage, (v) => up({ startPage: Math.round(v) }), { min: 0, max: 9999 })));
+  Object.assign(sec(t('o_bands'), h('p.muted.hint', t('band_dbl')), band('header'), band('footer'), h('div.prow.wrap', ['page', 'pages', 'title', 'date'].map((k) => btn(t('f_' + k), { size: 'sm', icon: 'plus', onclick: () => { const [x, kind, z] = last || [null, 'footer', 'c']; const v = (s[kind][z] + (s[kind][z] && !s[kind][z].endsWith(' ') ? ' ' : '') + `{${k}}`).slice(0, 120); up({ [kind]: { ...s[kind], [z]: v } }); if (x) x.value = v; } }))), toggle(t('first_page'), s.firstPage, (v) => up({ firstPage: v })), toggle(t('band_line'), s.bandLine, (v) => up({ bandLine: v })), num(t('start_page'), s.startPage, (v) => up({ startPage: Math.round(v) }), { min: 0, max: 9999 })), { className: 'psec bands' }));
   // the rulers change the margins too
   box.refresh = (n) => { for (const k in m) if (+m[k].value !== n[k]) m[k].value = n[k]; };
   return box;
@@ -179,11 +179,9 @@ export function styleForm(s, up) {
 
 // ------------------------------------------------------------------ images
 
-export function imagesPanel(W) {
-  const drop = h('sav-dropzone', { label: t('img_drop'), accept: 'image/*', multiple: true });
-  drop.addEventListener('change', () => { const list = [...(drop.files || [])].filter((f) => f.type.startsWith('image/')); if (list.length) { W.addFiles(list); drop.clear?.(); } });
-  if (!W.store.remote) return h('div', sec(t('img_upload'), drop), h('p.muted.hint', t('img_account')), h('p.muted.hint', t('img_note')));
-  const q = h('sav-input', { placeholder: t('img_q'), type: 'search', size: 'sm', clearable: true }), res = h('div.imgs'), credit = h('sav-checkbox', { checked: true }, t('img_credit')), more = h('div');
+/** Search of free pictures: onpick(id of the picture, now in the document, title, credit). */
+function searchPictures(W, onpick) {
+  const q = h('sav-input', { placeholder: t('img_q'), type: 'search', size: 'sm', clearable: true, autofocus: true }, icon('search', { slot: 'prefix' })), res = h('div.imgs'), credit = h('sav-checkbox', { checked: true }, t('img_credit')), more = h('div');
   let page = 1, busy = false;
   const find = async (next) => {
     if (busy || q.value.trim().length < 2) return;
@@ -197,7 +195,7 @@ export function imagesPanel(W) {
         const card = tile(`${x.title} — ${x.author} (${x.license})`, async () => {
           if (card.classList.contains('busy')) return;
           card.classList.add('busy');
-          try { const id = await W.store.importImage(x.src); W.act(() => W.ed.insertImage(id, x.title, credit.checked ? `${x.title}${x.author ? ', ' + x.author : ''} (${x.license}, ${x.from})` : '')); } catch (e) { fail(e); } finally { card.classList.remove('busy'); }
+          try { onpick(await W.store.importImage(x.src), x.title, credit.checked ? `${x.title}${x.author ? ', ' + x.author : ''} (${x.license}, ${x.from})` : ''); } catch (e) { fail(e); } finally { card.classList.remove('busy'); }
         }, { class: 'imgt' }, h('img', { src: x.thumb, loading: 'lazy', alt: x.title, referrerpolicy: 'no-referrer', onerror: (e) => e.currentTarget.closest('sav-card').remove() }), h('small', x.license));
         res.append(card);
       }
@@ -205,5 +203,33 @@ export function imagesPanel(W) {
     } catch (e) { put(res, h('p.muted', t('err_network'))); fail(e); } finally { busy = false; }
   };
   q.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') find(); });
-  return h('div', sec(t('img_upload'), drop), sec(t('img_search'), h('div.prow', h('div.grow', q), iconBtn('search', t('search'), () => find(), { appearance: 'outline' })), credit, res, more, h('p.muted.hint', t('img_from'))), h('p.muted.hint', t('img_note')));
+  let deb = 0;
+  q.addEventListener('input', () => { clearTimeout(deb); deb = setTimeout(() => find(), 650); });
+  return h('div.stack', h('div.prow', h('div.grow', q), iconBtn('search', t('search'), () => find(), { appearance: 'outline' })), credit, res, more, h('p.muted.hint', t('img_from')));
+}
+
+/** The pictures of my documents, to use one again: onpick(id of the copy in this document). */
+function myPictures(W, onpick) {
+  const grid = h('div.imgs.mine', h('sav-spinner'));
+  api('img.mine').then((r) => {
+    put(grid, r.images.length ? r.images.map((x) => { const card = tile(x.doc, async () => { if (card.classList.contains('busy')) return; card.classList.add('busy'); try { onpick(await W.store.copyImage(x.id)); } catch (e) { fail(e); } finally { card.classList.remove('busy'); } }, { class: 'imgt', title: x.doc }, h('img', { src: W.store.imageUrl(x.id), loading: 'lazy', alt: '', onerror: (e) => e.currentTarget.closest('sav-card').remove() }), h('small', x.doc)); return card; }) : h('sav-empty-state', { icon: 'images', heading: t('img_mine_none'), text: t('img_mine_none_t') }));
+  }).catch((e) => { put(grid, h('p.muted', t('err_network'))); fail(e); });
+  return grid;
+}
+
+/** The picture shortcut, as in SavPresentations: search, my pictures, from this device. */
+export function imageDialog(W) {
+  let d = null;
+  const put1 = (id, alt = '', credit = '') => { d?.hide(); W.act(() => W.ed.insertImage(id, alt, credit)); };
+  const body = W.store.remote ? h('sav-tabs.imgtabs', { appearance: 'segmented' }, h('sav-tab', { label: t('img_web'), icon: 'search' }, searchPictures(W, put1)), h('sav-tab', { label: t('img_mine'), icon: 'images' }, myPictures(W, (id) => put1(id)))) : h('p.muted', t('img_account'));
+  d = dialog({ title: t('img_choose'), width: '46rem', body: [body, h('p.muted.hint', t('img_note'))], actions: [{ label: t('img_upload'), icon: 'upload', run: async () => { const f = await pickFile('image/*', true); if (!f?.length) return false; W.addFiles(f); return undefined; } }] });
+  return d;
+}
+
+export function imagesPanel(W) {
+  const drop = h('sav-dropzone', { label: t('img_drop'), accept: 'image/*', multiple: true });
+  drop.addEventListener('change', () => { const list = [...(drop.files || [])].filter((f) => f.type.startsWith('image/')); if (list.length) { W.addFiles(list); drop.clear?.(); } });
+  if (!W.store.remote) return h('div', sec(t('img_upload'), drop), h('p.muted.hint', t('img_account')), h('p.muted.hint', t('img_note')));
+  const at = (id, alt, credit) => W.act(() => W.ed.insertImage(id, alt, credit));
+  return h('div', sec(t('img_upload'), drop), sec(t('img_search'), searchPictures(W, at)), sec(t('img_mine'), myPictures(W, (id) => at(id, '', ''))), h('p.muted.hint', t('img_note')));
 }

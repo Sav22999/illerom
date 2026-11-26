@@ -164,12 +164,26 @@ function shapeNode(el, sc) {
     return root;
 }
 
+/**
+ * The corners (or the shape) of a picture or of a video belong to its frame: the clip holds also when what is inside is zoomed,
+ * moved, or drawn by the GPU (a playing video, an iframe), where border-radius with overflow alone lets the corners out.
+ */
+export function frameClip(box, el, playing = false) {
+    if (el.mask && el.mask !== 'rect') box.style.clipPath = `path(evenodd, "${toSvgPath(shapePath(el.mask, el.w, el.h, el.rad || 0))}")`;
+    else if (el.rad) {
+        const r = Math.min(el.rad, el.w / 2, el.h / 2) + 'px';
+        box.style.borderRadius = r;
+        // only what plays needs the hard clip (a still picture is cut well by the rounded corners and overflow)
+        if (playing) box.style.clipPath = `inset(0 round ${r})`;
+    }
+    return box;
+}
+
 function imageNode(el, sc, mode, isVideo) {
     const box = document.createElement('div');
     box.className = 'im';
     const src = mediaUrl(isVideo ? el.poster : el.src);
-    if (el.mask && el.mask !== 'rect') box.style.clipPath = `path(evenodd, "${toSvgPath(shapePath(el.mask, el.w, el.h, el.rad || 0))}")`;
-    else if (el.rad) box.style.borderRadius = Math.min(el.rad, el.w / 2, el.h / 2) + 'px';
+    frameClip(box, el);
     if (el.fill) box.style.background = cssFill(el.fill, sc);
     if (src) {
         const im = document.createElement('img');

@@ -771,3 +771,11 @@
 .mguides.on[data-k=ml] .g-ml::after, .mguides.on[data-k=mr] .g-mr::after, .mguides.on[data-k=mt] .g-mt::after, .mguides.on[data-k=mb] .g-mb::after { opacity: 1; }
 .rtip { position: fixed; z-index: 80; padding: 4px 9px; border-radius: 6px; background: #15221d; color: #fff; font: 600 12px/1.4 Inter, sans-serif; pointer-events: none; }
 @media print { .ruler, .mguides, .rtip { display: none !important; } }
+
+/* the pages being written as PDF: laid out, out of sight */
+.print-pages.pdfwork { display: block; position: absolute; left: -100000px; top: 0; pointer-events: none; }
+
+/* footnotes at the bottom of their page (the room is kept by the floats of page.js) */
+.pnotes { position: absolute; left: var(--ml); right: var(--mr); font-size: .85em; text-align: start; }
+.pnotes ol { margin: 0; padding: .6em 0 0 1.6em; border-top: 1px solid #b9bfba; }
+.pnotes li { margin: 0 0 .15em; }

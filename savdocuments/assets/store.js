@@ -160,6 +160,7 @@ export function remoteStore(pid) {
             return r.ok ? r.blob() : null;
         },
         importImage: async (src) => (await api('img.import', {doc: pid, src})).id,
+        copyImage: async (id) => (await api('img.copy', {doc: pid, id})).id,
     };
 }
 

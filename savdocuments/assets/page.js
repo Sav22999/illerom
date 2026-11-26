@@ -59,11 +59,20 @@ export function bandHtml(s, kind, page, pages, title) {
     return ['l', 'c', 'r'].map((k) => `<span>${esc(fields(z[k], ctx))}</span>`).join('');
 }
 
-function floats(box, n, g) {
+/** The chain of floats; a page with footnotes has a shorter writing area (h[i] px are kept for its notes at the bottom). */
+function floats(box, n, g, h = []) {
     while (box.children.length > n * 2) box.lastChild.remove();
     while (box.children.length < n * 2) box.append(el('fl-page'), el('fl-gap'));
     box.style.setProperty('--between', g.between + 'px');
+    for (let i = 0; i < n; i++) {
+        const k = h[i] || 0, page = box.children[i * 2], gap = box.children[i * 2 + 1];
+        page.style.height = k ? g.hc - k + 'px' : '';
+        gap.style.height = k ? g.between + k + 'px' : '';
+    }
 }
+
+/** Footnotes of one page: the number of each, its text. */
+const notesHtml = (list) => (list?.length ? `<ol start="${list[0].k}">${list.map((x) => `<li value="${x.k}">${esc(x.n)}</li>`).join('')}</ol>` : '');
 
 export class Pager {
     constructor(paper) {
@@ -79,11 +88,26 @@ export class Pager {
         paper.append(this.sheets, this.flow);
         this.pages = 1;
         this.zoom = 1;
+        this.noteH = [];
+        this.pageNotes = [];
     }
 
     /** Vertical position inside the flow, in unscaled px. */
     y(rect, edge = 'top') {
         return (rect[edge] - this.top) / this.zoom;
+    }
+
+    /** Height of the footnotes of a page, measured with the same typography as on the sheet. */
+    notesHeight(list) {
+        if (!list?.length) return 0;
+        if (!this.meter) {
+            this.meter = el('pnotes doc');
+            this.meter.style.cssText = 'position:absolute;visibility:hidden;left:0;top:0;pointer-events:none';
+            this.paper.append(this.meter);
+        }
+        this.meter.style.width = this.g.pw - parseFloat(getComputedStyle(this.flow).paddingLeft) - parseFloat(getComputedStyle(this.flow).paddingRight) + 'px';
+        this.meter.innerHTML = notesHtml(list);
+        return Math.ceil(this.meter.offsetHeight) + 6;
     }
 
     layout(s, title) {
@@ -96,11 +120,18 @@ export class Pager {
             const tall = b.offsetHeight > g.hc;
             if (tall !== b.classList.contains('tall')) b.classList.toggle('tall', tall);
         }
-        for (const b of ed.querySelectorAll('[data-push]')) {
-            b.removeAttribute('data-push');
-            b.style.removeProperty('padding-top');
-        }
+        const unpush = () => {
+            for (const b of ed.querySelectorAll('[data-push]')) {
+                b.removeAttribute('data-push');
+                b.style.removeProperty('padding-top');
+            }
+        };
+        unpush();
+        // footnotes: at the bottom of their page; in the continuous view (narrow screens) all at the end, as before
+        notes.style.display = this.fluid ? '' : 'none';
         if (this.fluid) { // one sheet as long as the text
+            this.noteH = [];
+            this.pageNotes = [];
             floats(gaps, 0, g);
             for (const b of blocks) if (b.classList.contains('pb')) b.style.height = '1.6em';
             this.pages = 1;
@@ -109,52 +140,85 @@ export class Pager {
             this.sheets.firstChild.style.height = '100%';
             return;
         }
-        let n = Math.max(1, this.pages);
+        let n = Math.max(1, this.pages), noteH = [...this.noteH];
         const measure = () => {
             this.top = this.flow.getBoundingClientRect().top;
-            const r = (notes.childElementCount ? notes : ed).getBoundingClientRect();
-            return this.y(r, 'bottom');
+            return this.y(ed.getBoundingClientRect(), 'bottom');
         };
         const settle = () => {
-            const max = Math.ceil((ed.scrollHeight + notes.scrollHeight) / g.hc) * 2 + blocks.length + 4;
+            const max = Math.ceil(ed.scrollHeight / g.hc) * 2 + blocks.length + 4;
             for (let i = 0; i < 40; i++) {
-                floats(gaps, n - 1, g);
-                const need = Math.max(1, Math.floor((measure() - 1) / g.pitch) + 1);
+                // the last page with notes has its chain too, so what does not fit above its notes goes on
+                floats(gaps, n - 1 + (noteH[n - 1] ? 1 : 0), g, noteH);
+                // counted on the writing area: what ends in the bottom margin of the last page needs one page more
+                const need = Math.max(1, Math.floor((measure() - g.mt - g.hc - 0.5) / g.pitch) + 2);
                 const want = Math.min(max, need);
                 if (want === n) break;
                 n = want > n ? want + (i < 3 ? Math.ceil((want - n) / 8) : 0) : want;
             }
         };
-        settle();
         const pageOf = (y) => Math.floor(y / g.pitch);
-        const room = (y) => g.mt + g.hc - (y - pageOf(y) * g.pitch); // space left on the page under y
-        let moved = false;
-        for (const b of blocks) {
-            if (!b.classList.contains('pb')) continue;
-            const left = room(this.y(b.getBoundingClientRect())), h = left > 0 ? Math.max(0, left) : 0;
-            if (Math.abs((parseFloat(b.style.height) || 0) - h) > 0.5) {
-                b.style.height = h + 'px';
-                moved = true;
-                settle();
+        const room = (y) => g.mt + g.hc - (noteH[pageOf(y)] || 0) - (y - pageOf(y) * g.pitch); // space left on the page under y
+        const pass = () => {
+            unpush();
+            settle();
+            let moved = false;
+            for (const b of blocks) {
+                if (!b.classList.contains('pb')) continue;
+                const left = room(this.y(b.getBoundingClientRect())), h = left > 0 ? Math.max(0, left) : 0;
+                if (Math.abs((parseFloat(b.style.height) || 0) - h) > 0.5) {
+                    b.style.height = h + 'px';
+                    moved = true;
+                    settle();
+                }
             }
-        }
-        // a heading never stays alone at the bottom of a page
-        for (let i = 0; i < blocks.length - 1; i++) {
-            const b = blocks[i];
-            if (!/^h[1-4]$/.test(b.localName)) continue;
-            const r = b.getBoundingClientRect(), next = blocks[i + 1];
-            if (next.classList.contains('pb')) continue;
-            const line = firstLine(next);
-            if (!line) continue;
-            const top = this.y(r), p = pageOf(top);
-            if (pageOf(this.y(line)) > p && top - p * g.pitch > g.mt + 4) {
-                b.dataset.push = '';
-                b.style.setProperty('padding-top', Math.max(0, room(top)) + 'px');
-                moved = true;
-                settle();
+            // a heading never stays alone at the bottom of a page
+            for (let i = 0; i < blocks.length - 1; i++) {
+                const b = blocks[i];
+                if (!/^h[1-4]$/.test(b.localName)) continue;
+                const r = b.getBoundingClientRect(), next = blocks[i + 1];
+                if (next.classList.contains('pb')) continue;
+                const line = firstLine(next);
+                if (!line) continue;
+                const top = this.y(r), p = pageOf(top);
+                if (pageOf(this.y(line)) > p && top - p * g.pitch > g.mt + 4) {
+                    b.dataset.push = '';
+                    b.style.setProperty('padding-top', Math.max(0, room(top)) + 'px');
+                    moved = true;
+                    settle();
+                }
             }
+            // an empty line (only a line break) is not moved by the floats: one that falls between two pages goes to the next
+            // (after a page break the caret is on the new page at once)
+            for (const b of blocks) {
+                if (!b.matches('p,h1,h2,h3,h4') || b.textContent || b.querySelector('img,sup,span.math')) continue;
+                const top = this.y(b.getBoundingClientRect()), p = pageOf(top);
+                if (room(top) < 2) {
+                    b.dataset.push = '';
+                    b.style.setProperty('padding-top', Math.max(0, (p + 1) * g.pitch + g.mt - top) + 'px');
+                    moved = true;
+                    settle();
+                }
+            }
+            if (moved) settle();
+        };
+        // which notes go on which page: the room they take changes where the text breaks, so it is asked again until it holds
+        const fns = [...ed.querySelectorAll('sup.fn')];
+        let per = [];
+        for (let k = 0; k < 5; k++) {
+            pass();
+            this.top = this.flow.getBoundingClientRect().top;
+            per = [];
+            fns.forEach((f, i) => { const r = f.getBoundingClientRect(); (per[pageOf(this.y(r) + r.height / this.zoom / 2)] ||= []).push({ k: i + 1, n: f.dataset.n || '' }); });
+            const h = Array.from({ length: Math.max(per.length, noteH.length) }, (_, i) => this.notesHeight(per[i]));
+            const same = h.every((x, i) => Math.abs(x - (noteH[i] || 0)) < 1) && noteH.slice(h.length).every((x) => !x);
+            noteH = h;
+            if (same) break;
+            // still moving after the last try: the room follows this assignment once more, and the notes stay where the room is
+            if (k === 4) pass();
         }
-        if (moved) settle();
+        this.noteH = noteH;
+        this.pageNotes = per;
         this.pages = n;
         this.flow.style.height = n * g.pitch - g.gap + 'px';
         this.drawSheets(s, title);
@@ -167,9 +231,16 @@ export class Pager {
         [...sheets.children].forEach((sh, i) => {
             sh.style.top = i * g.pitch + 'px';
             sh.style.height = '';
-            const t = sheetHtml(s, i + 1, pages, title);
+            const t = sheetHtml(s, i + 1, pages, title) + this.footHtml(i);
             if (sh._h !== t) sh.innerHTML = sh._h = t;
         });
+    }
+
+    /** The footnotes at the bottom of the writing area of page i (0-based), on screen and in print. */
+    footHtml(i) {
+        const list = this.pageNotes?.[i];
+        if (!list?.length || !this.g) return '';
+        return `<div class="pnotes doc" style="top:${this.g.mt + this.g.hc - (this.noteH[i] || 0) + 6}px">${notesHtml(list)}</div>`;
     }
 
     pageAt(y) {
@@ -196,7 +267,7 @@ export class Pager {
         applySettings(out, s);
         const bodies = [];
         for (let i = 0; i < pages; i++) {
-            const page = el('psheet', sheetHtml(s, i + 1, pages, title));
+            const page = el('psheet', sheetHtml(s, i + 1, pages, title) + this.footHtml(i));
             const flow = el('flow'), body = el('ed doc');
             flow.append(body);
             page.append(flow);
@@ -218,7 +289,7 @@ export class Pager {
             c.querySelectorAll('[data-ui=grip]').forEach((n) => n.remove());
             return c;
         };
-        const all = [...ed.children, ...(notes.childElementCount ? [notes] : [])];
+        const all = [...ed.children, ...(notes.childElementCount && this.fluid ? [notes] : [])];
         for (const b of all) {
             if (b.classList.contains('pb')) continue;
             const units = cuts(b, (r) => pageOf(mid(r)));

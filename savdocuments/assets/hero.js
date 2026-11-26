@@ -48,9 +48,11 @@ export function heroDeck(stage, cards) {
   const pick = (i) => { if (i === active) return; active = i; wake(); };
   // the places at rest decide, not the moving slides: nothing flickers when a slide moves away from the pointer
   const at = (e) => { const r = stage.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top; for (let i = n - 1; i >= 0; i--) { const g = geo[i]; if (x >= g.x && x <= g.x + g.w && y >= g.y && y <= g.y + g.h) return i; } return -1; };
-  const move = (e) => { const i = at(e); clearTimeout(intent); if (e.pointerType !== 'mouse') return pick(i); intent = setTimeout(() => pick(i), active < 0 ? 40 : 90); };
+  // only a real pointer that hovers moves the pages: on phones and tablets a touch (or a scroll that starts on them) leaves them still
+  const fine = matchMedia('(hover: hover) and (pointer: fine)');
+  const move = (e) => { if (e.pointerType !== 'mouse' || !fine.matches) return; const i = at(e); clearTimeout(intent); intent = setTimeout(() => pick(i), active < 0 ? 40 : 90); };
   const out = () => { clearTimeout(intent); intent = setTimeout(() => pick(-1), 120); };
-  stage.addEventListener('pointermove', move); stage.addEventListener('pointerdown', move); stage.addEventListener('pointerleave', out);
+  stage.addEventListener('pointermove', move); stage.addEventListener('pointerleave', out);
   const ro = new ResizeObserver(() => { measure(); paint(); });
   measure(); paint(); ro.observe(stage); wake();
   return () => { cancelAnimationFrame(raf); clearTimeout(intent); ro.disconnect(); };

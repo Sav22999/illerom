@@ -1,7 +1,7 @@
 /** The show: full screen, transitions, entrances, tools (laser, pen), speaker view in a second window (speaker.js). */
-import { h, icon, iconBtn, btn, toast, uid, clamp, $, $$ } from './core.js';
+import { h, icon, iconBtn, btn, toast, uid, clamp, openLink, $, $$ } from './core.js';
 import {t} from './i18n.js';
-import {fluidThumb, mediaUrl, slideNode} from './render.js';
+import {fluidThumb, frameClip, mediaUrl, slideNode} from './render.js';
 import {okLink} from './richtext.js';
 
 const EASE = 'cubic-bezier(.2,.7,.2,1)';
@@ -28,16 +28,18 @@ export function videoNode(el, autoplay) {
         }) + (start ? `#t=${start}s` : ''), allow: 'autoplay; fullscreen', allowfullscreen: true
     });
     if (!/^(https:\/\/|m:)/.test(el.vid || '')) return null;
-    const v = h('video', {
+    // a video file plays in the player of SavComponents: the same controls everywhere, filling the frame of the element like its still
+    const fx = (el.fx ?? .5) * 100 + '%', fy = (el.fy ?? .5) * 100 + '%';
+    return h('sav-video.spvideo', {
         src: (mediaUrl(el.vid) || el.vid) + (start ? '#t=' + start : ''),
-        controls: true,
-        playsinline: true,
-        loop: !!el.loop,
-        autoplay,
-        poster: mediaUrl(el.poster) || null
+        poster: mediaUrl(el.poster) || null,
+        label: el.alt || t('video'),
+        'replay-label': t('video_replay'),
+        loop: el.loop ? '' : null,
+        autoplay: autoplay ? '' : null,
+        muted: el.mute || (autoplay && el.auto) ? '' : null,
+        style: `--fit:${el.fit || 'cover'};--vpos:${fx} ${fy};--vz:${el.zoom || 1};--vflip:${el.flip ? -1 : 1}`
     });
-    v.muted = !!el.mute || autoplay && !!el.auto;
-    return v;
 }
 
 const PENS = ['#ff2d55', '#ffd60a', '#32d74b', '#0a84ff', '#ffffff', '#111111'];
@@ -106,7 +108,7 @@ export function startShow(ed, fromSid, { follow = '', presenter: withPresenter =
     reveal(false);
     const tr = s.d.tr || deck.meta.opts.tr || 'none';
     if (old) {
-      $$('iframe,video', old).forEach((v) => v.remove());
+      $$('iframe,video,sav-video', old).forEach((v) => v.remove());
       const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (!withAnim || tr === 'none' || reduce) old.remove();
       else {
@@ -126,7 +128,7 @@ export function startShow(ed, fromSid, { follow = '', presenter: withPresenter =
     deck.setState({ s: cur, sel: [], pr: follow ? 0 : 1, st: step });
   }
   /** The player takes the place of the still; a source written on it stays. */
-  const playIn = (n, el) => { const b = h('div.im', { style: el.rad ? `border-radius:${el.rad}px` : '' }), v = videoNode(el, true); if (v) b.append(v); n.querySelector('.im')?.replaceWith(b); };
+  const playIn = (n, el) => { const b = frameClip(h('div.im.playing'), el, true), v = videoNode(el, true); if (v) b.append(v); n.querySelector('.im')?.replaceWith(b); };
   function reveal(animate = true) {
     for (const n of anims()) {
       const on = +n.dataset.step <= step;
@@ -197,8 +199,8 @@ export function startShow(ed, fromSid, { follow = '', presenter: withPresenter =
     if (Math.abs(dx) > 50) return dx < 0 ? next() : prev();
     const n = e.target.closest('.el[data-id]'), el = n && deck.slide(cur)?.d.els[n.dataset.id], a = e.target.closest('a');
     const link = a ? a.getAttribute('href') : el?.link;
-    if (link && okLink(link)) { e.preventDefault(); if (link.startsWith('#s:')) to(link.slice(3)); else window.open(link, '_blank', 'noopener,noreferrer'); return; }
-    if (el?.t === 'video' && el.vid) { if (!n.querySelector('iframe,video')) playIn(n, el); return; }
+    if (link && okLink(link)) { e.preventDefault(); openLink(link, to); return; }
+    if (el?.t === 'video' && el.vid) { if (!n.querySelector('iframe,video,sav-video')) playIn(n, el); return; }
     if (e.button === 0) touch && e.clientX < innerWidth * .28 ? prev() : next();
     wake();
   });

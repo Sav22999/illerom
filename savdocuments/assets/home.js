@@ -163,7 +163,13 @@ export async function home(root, view = '', arg = '') {
   }
   const info = (d) => [d.mine === false ? d.owner : null, d.local ? null : when(d.updated), d.words !== null && d.words !== undefined ? `${d.words.toLocaleString(getLang())} ${t(d.words === 1 ? 'word' : 'words')}` : null, d.suspended ? t('suspended') : null, d.away ? t('not_offline') : null].filter(Boolean).join(' · ');
   const stop = (n) => { n.addEventListener('click', (e) => e.stopPropagation()); n.addEventListener('keydown', (e) => e.stopPropagation()); return n; };
-  const star = (d) => (d.local || d.deleted ? null : stop(h('sav-button.starb', { icon: 'star', appearance: 'ghost', variant: d.starred ? 'warning' : 'neutral', size: 'sm', square: true, label: t('starred'), 'aria-pressed': String(!!d.starred), class: d.starred ? 'on' : '', onclick: async () => { d.starred = !d.starred; draw(); try { await api('doc.star', { doc: d.id, on: d.starred }); } catch (e) { d.starred = !d.starred; draw(); fail(e); } } })));
+  // the favourite button of SavComponents, the same in SavPresentations and SavSchedules: the star fills when it is on
+  const star = (d) => {
+    if (d.local || d.deleted) return null;
+    const b = stop(h('sav-favourite-button.starb', { icon: 'star', appearance: 'ghost', size: 'sm', label: t('starred'), pressed: !!d.starred, class: d.starred ? 'on' : '' }));
+    b.addEventListener('change', async (e) => { const on = !!e.detail?.pressed; d.starred = on; b.classList.toggle('on', on); try { await api('doc.star', { doc: d.id, on }); } catch (x) { d.starred = !on; fail(x); } setTimeout(draw, 300); });
+    return b;
+  };
   const more = (d) => stop(drop(h('sav-button', { icon: 'ellipsis-vertical', label: t('more'), appearance: 'ghost', variant: 'neutral', size: 'sm', square: true }), () => cardMenu(d), { placement: 'bottom-end', label: d.title }));
   const open = async (d) => {
     if (d.deleted) { if (await confirm(t('in_trash'), t('in_trash_t'), t('restore'), false)) { await api('doc.restore', { doc: d.id }).catch(fail); reload(); } return; }
@@ -187,6 +193,7 @@ export async function home(root, view = '', arg = '') {
   }
   function moveDialog(d) { const s = select(t('folders'), [['', t('no_folder')], ...folders.map((f) => [String(f.id), f.name])], d.folder ? String(d.folder) : '', null, { size: 'md' }); dialog({ title: t('move_to'), width: '26rem', body: s, actions: [{ label: t('cancel') }, { label: t('apply'), primary: true, run: async () => { await api('doc.move', { doc: d.id, folder: s.value ? +s.value : null }); reload(); } }] }); }
   draw();
+  document.title = (folder ? folder.name : t(V[view][0])) + ' – SavDocuments';
   return () => { seen.disconnect(); removeEventListener('online', onLine); };
 }
 

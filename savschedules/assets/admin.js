@@ -5,7 +5,8 @@ import { api } from './store.js';
 import { brand, go, userMenu } from './account.js';
 
 export async function admin(root, tab) {
-  const main = h('main.hmain'), menu = h('sav-menu', { label: t('admin'), selectable: true }, [['overview', 'chart-column'], ['users', 'users'], ['schedules', 'calendar-days'], ['reports', 'flag']].map(([k, ic]) => { const x = item(k, ic, t('a_' + k)); x.toggleAttribute('current', k === tab); return x; }), h('sav-divider'), item('home', 'arrow-left', t('home')));
+  document.title = t('admin') + ' – SavSchedules';
+  const main = h('main.hmain'), menu = h('sav-menu', { label: t('admin'), selectable: true }, [['overview', 'layout-grid'], ['users', 'users'], ['schedules', 'calendar-days'], ['reports', 'flag']].map(([k, ic]) => { const x = item(k, ic, t('a_' + k)); x.toggleAttribute('current', k === tab); return x; }), h('sav-divider'), item('home', 'arrow-left', t('home')));
   menu.addEventListener('sav-select', (e) => go(e.detail.value === 'home' ? '#/' : '#/admin/' + e.detail.value));
   put(root, h('div.home', h('header.htop', brand(), h('sav-badge', { appearance: 'soft', variant: 'primary', pill: true }, t('admin')), h('div.spacer'), userMenu()), h('div.hbody', h('nav.hside', menu), main)));
   const table = (heads, rows) => h('sav-table', { hover: true }, h('table', h('thead', h('tr', heads.map((x) => h('th', x)))), h('tbody', rows.map((r) => h('tr', r.map((c) => h('td', c)))))));

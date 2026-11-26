@@ -5,6 +5,7 @@
         </p>
         <ul class="foot-links">
             <li><a href="<?= $base ?>about/"><?= e($t['nav_about']) ?></a></li>
+            <li><a href="<?= $base ?>typeface/"<?= $page === 'typeface' ? ' aria-current="page"' : '' ?>><?= e($t['tf_nav']) ?></a></li>
             <li><a href="<?= $base ?>status/"><?= e($t['st_title']) ?></a></li>
             <li><a href="<?= $base ?>privacy/"><?= e($t['privacy_title']) ?></a></li>
             <li><a href="<?= e($site['repo']) ?>"><?= e($t['foot_code']) ?></a></li>

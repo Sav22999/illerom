@@ -3,7 +3,7 @@
  * API calls always go to the network, except pictures (they never change). Files: network first, cache when offline.
  */
 'use strict';
-const CACHE = 'savpresentations-1';
+const CACHE = 'savpresentations-2';
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(caches.keys().then((k) => Promise.all(k.filter((x) => x.startsWith('savpresentations-') && x !== CACHE).map((x) => caches.delete(x)))).then(() => self.clients.claim())));
 self.addEventListener('fetch', (e) => {

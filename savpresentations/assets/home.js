@@ -209,6 +209,7 @@ export async function homeScreen(app, q) {
             templates: 'templates',
             trash: 'trash'
         }[view]);
+        document.title = title + ' – SavPresentations';
         const viewBtn = iconBtn(mode === 'grid' ? 'list' : 'layout-grid', mode === 'grid' ? t('view_list') : t('view_grid'), () => {
             mode = mode === 'grid' ? 'list' : 'grid';
             api('auth.settings', {settings: {view: mode}}).then((r) => (state.user = r.user)).catch(() => {
@@ -332,18 +333,19 @@ export async function homeScreen(app, q) {
         }, {
             class: 'card',
             draggable: d.role === 'owner'
-        }, th, h('div.cinfo', h('div', h('b', d.title), h('small', d.role === 'owner' ? '' : d.owner + ' · ', t('n_slides', {n: d.slides}), ' · ', ago(d.updated))), d.status === 'active' ? h('sav-button.starb', {
+        }, th, h('div.cinfo', h('div', h('b', d.title), h('small', d.role === 'owner' ? '' : d.owner + ' · ', t('n_slides', {n: d.slides}), ' · ', ago(d.updated))), d.status === 'active' ? h('sav-favourite-button.starb', {
+            // the favourite button of SavComponents, as in SavDocuments and SavSchedules: the star fills when it is on
             icon: 'star',
             appearance: 'ghost',
-            variant: fav ? 'warning' : 'neutral',
             size: 'sm',
-            square: true,
             label: t('starred'),
-            'aria-pressed': String(fav),
+            pressed: fav,
             class: fav ? 'on' : '',
-            onclick: (e) => {
-                e.stopPropagation();
-                star(d.uid);
+            onclick: (e) => e.stopPropagation(),
+            onkeydown: (e) => e.stopPropagation(),
+            onchange: (e) => {
+                e.currentTarget.classList.toggle('on', !!e.detail?.pressed);
+                setTimeout(() => star(d.uid), 300);
             }
         }) : '', menu));
         c.addEventListener('dragstart', (e) => {
@@ -586,6 +588,7 @@ export function formatPicker(value, onpick) {
 export async function localHome(app) {
     document.body.classList.add('home');
     const L = await import('./local.js');
+    document.title = t('local_title') + ' – SavPresentations';
     const main = h('main.hmain.localmain');
     app.append(h('header.htop', brand(), h('div.spacer'), state.user ? userMenu() : btn(t('sign_in'), () => go('?signin=login'), {appearance: 'outline', variant: 'neutral'})), main, credit());
     const create = async (x) => { const {meta, slides} = fromTemplate(x, {theme: userSetting('theme') || undefined, format: userSetting('format') || undefined}), id = L.newId(); await L.local.save({id, title: x.id === 'blank' ? t('untitled') : tplName(x), meta, slides, created: new Date().toISOString()}); go('?l=' + id); };

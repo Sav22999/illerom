@@ -11,6 +11,7 @@ const REASONS = ['spam', 'phishing', 'abuse', 'illegal', 'copyright', 'other'];
 
 export async function adminScreen(app, q) {
     document.body.classList.add('admin');
+    document.title = t('admin') + ' – SavPresentations';
     let tab = q.get('t') || 'overview';
     const body = h('div.abody'),
         tabs = h('sav-menu.atabs', {orientation: 'horizontal', selectable: true, label: t('admin')});

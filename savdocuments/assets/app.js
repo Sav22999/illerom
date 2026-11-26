@@ -57,7 +57,7 @@ async function route() {
     document.title = 'SavDocuments';
     if (a === 'signin' || a === 'signup') return S.user ? go('#/') : await landing(a);
     if (!S.user) return await landing(a === '' || a === 'welcome' ? '' : 'signin', a === '' || a === 'welcome' ? null : undefined); // SavDocuments works only with an account
-    if (a === 'settings') { const { settingsScreen } = await import('./options.js'); return settingsScreen(root); }
+    if (a === 'settings') { const { settingsScreen } = await import('./options.js'); return settingsScreen(root, b); }
     if (a === 'admin' && S.user?.master) { const { admin } = await import('./admin.js'); return await admin(root, b || 'overview'); }
     if (S.user && !S.user.verified) return unverified(root);
     const { home } = await import('./home.js');

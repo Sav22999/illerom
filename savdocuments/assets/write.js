@@ -9,7 +9,7 @@ import { BUILTIN, FONTS, fontStack } from './settings.js';
 import { fontDialog, fontOptions, useFonts, withFont } from './fonts.js';
 import { download, fileName, imageIds, toEpub, toHtml, toMarkdown, toSavdoc, toText } from './files.js';
 import { CHARTS, CHART_ICONS, FLOWS, FLOW_ICONS, newObject, objectWidth, RULES } from './objects.js';
-import { elementsPanel, formatPanel, imagesPanel, pageForm, styleForm } from './panels.js';
+import { elementsPanel, formatPanel, imageDialog, imagesPanel, pageForm, styleForm } from './panels.js';
 import { charsDialog, drawDialog, linkDialog, mathDialog, noteDialog, tableDialog } from './inserts.js';
 import { reportDialog, shareDialog } from './share.js';
 import { can, importFile, pickFile } from './actions.js';
@@ -62,8 +62,16 @@ export async function openWriter(root, pid, opt = {}) {
   const pageB = btn('', { size: 'sm', appearance: 'ghost' }), wordB = btn('', { size: 'sm', appearance: 'ghost' });
   const undoB = iconBtn('undo-2', t('undo'), () => ed.undo(), { kbd: 'Mod+Z', size: 'md' }), redoB = iconBtn('redo-2', t('redo'), () => ed.undo(true), { kbd: 'Mod+Shift+Z', size: 'md' });
   const shareB = !isLocal && data.doc.role === 'owner' ? btn(h('span.lbl', t('share')), { icon: 'user-plus', label: t('share'), variant: 'primary', appearance: 'soft', onclick: () => shareDialog(W) }) : isLocal && S.user?.verified ? btn(h('span.lbl', t('save_account')), { icon: 'cloud-upload', label: t('save_account'), variant: 'primary', appearance: 'soft', onclick: () => toAccount() }) : null;
-  const dlItems = () => lim.noDownload ? [] : [['file-text', t('dl_docx'), () => save('docx')], ['file-down', t('dl_savdoc'), () => save('savdoc')], ['printer', t('dl_pdf'), () => printDoc(true)], '-', ['globe', t('dl_html'), () => save('html')], ['book-open', t('dl_epub'), () => save('epub')], ['hash', t('dl_md'), () => save('md')], ['file', t('dl_txt'), () => save('txt')]];
-  const downB = dropBtn('download', t('download'), dlItems, { text: true, variant: 'primary', appearance: 'solid', placement: 'bottom-end', size: 'md' });
+  // downloading: a window of cards, one per format, the same as SavPresentations
+  const DL = [['pdf', 'file-text', 'PDF'], ['docx', 'file-type', t('dl_docx')], ['savdoc', 'file-box', t('dl_savdoc')], ['html', 'globe', t('dl_html')], ['epub', 'book-open', t('dl_epub')], ['md', 'hash', t('dl_md')], ['txt', 'file', t('dl_txt')]];
+  const dlItems = () => lim.noDownload ? [] : [['download', t('download'), () => downloadDialog()]];
+  function downloadDialog() {
+    let d = null;
+    const card = ([kind, ic, label]) => { const c = tile(label, async () => { if (c.classList.contains('busy')) return; c.classList.add('busy'); try { await save(kind); d.hide(); } catch (e) { fail(e); } finally { c.classList.remove('busy'); } }, { class: 'dl' }, icon(ic), h('b', label), h('small', t('dlt_' + kind))); return c; };
+    d = dialog({ title: t('download'), width: '40rem', body: h('div.dls', DL.map(card)) });
+  }
+  W.download = downloadDialog;
+  const downB = iconBtn('download', t('download'), () => downloadDialog(), { size: 'md' });
   const menuB = drop(h('sav-button', { icon: 'ellipsis-vertical', appearance: 'ghost', variant: 'neutral', square: true, label: t('more') }), () => moreItems(), { placement: 'bottom-end', label: data.doc.title });
   const top = h('header.etop', h('a.ehome', { href: '#/', title: t('home'), 'aria-label': t('home') }, h('img', { src: 'icons/favicon.svg', width: 30, height: 30, alt: '' })), h('div.etitle', title, status), editable ? h('div.hist', undoB, redoB) : null, editable ? ins : null, h('div.spacer'), people, shareB, mobile() || lim.noDownload ? null : downB, mobile() ? null : iconBtn('command', t('palette_l'), () => W.palette.show(), { kbd: 'Mod+J', size: 'md' }), menuB, S.user ? userMenu() : mobile() ? null : btn(t('sign_in'), { appearance: 'outline', variant: 'neutral', href: '#/signin' }));
   const note = editable ? null : h('sav-alert.robar', { variant: data.doc.review ? 'warning' : 'neutral', noicon: true }, data.doc.review ? t('a_review_bar') : data.doc.role === 'commenter' ? t('can_comment') : t('read_only'));
@@ -71,7 +79,7 @@ export async function openWriter(root, pid, opt = {}) {
   desk.append(paper);
   const center = h('section.ecenter', note, desk, bottom), frame = h('div.writer' + (editable ? '' : '.reading'), top, editable ? fmt : null, h('div.emain', left, center, panel, rail), bubble, objbar);
   put(root, frame);
-  document.title = data.doc.title + ' · SavDocuments';
+  document.title = data.doc.title + ' – SavDocuments';
 
   // ------------------------------------------------------------------ editor
 
@@ -104,7 +112,7 @@ export async function openWriter(root, pid, opt = {}) {
     ldoc.content = ed.snapshot();
     try { await local.put(ldoc); setState('saved'); } catch (e) { fail(e); }
   }
-  function setState(s) { status.dataset.s = s; put(status, icon(isLocal ? (s === 'saved' ? 'hard-drive' : 'cloud-upload') : { saved: 'cloud', saving: 'cloud-upload', offline: 'cloud-off' }[s]), isLocal && s === 'saved' ? t('local_note') : t(s)); }
+  function setState(s) { status.dataset.s = s; put(status, icon(isLocal ? (s === 'saved' ? 'hard-drive' : 'cloud-upload') : { saved: 'cloud-check', saving: 'refresh-cw', offline: 'cloud-off' }[s]), isLocal && s === 'saved' ? t('local_note') : t(s)); }
   function setPeople(list) {
     const seen = new Set();
     put(people, list.filter((p) => !seen.has(p.name) && seen.add(p.name)).slice(0, 4).map((p) => face(p.name, p.hue, 28)));
@@ -112,7 +120,7 @@ export async function openWriter(root, pid, opt = {}) {
     drawPresence();
   }
   function drawPresence() { put(marks, (W.people || []).map((p) => { const b = p.block && document.getElementById('b-' + p.block); if (!b) return null; const r = b.getBoundingClientRect(); return h('div.pmark', { style: `top:${ed.pager.y(r)}px;height:${r.height / W.zoom}px;--h:${p.hue}`, title: t('writing_here', { name: p.name }) }, h('span', p.name)); })); }
-  title.addEventListener('change', () => { const v = title.value.trim() || t('untitled'); title.value = v; if (v === ed.title) return; ed.change({ t: 'title', title: v }); document.title = v + ' · SavDocuments'; });
+  title.addEventListener('change', () => { const v = title.value.trim() || t('untitled'); title.value = v; if (v === ed.title) return; ed.change({ t: 'title', title: v }); document.title = v + ' – SavDocuments'; });
   title.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); ed.ed.focus(); } });
 
   // ------------------------------------------------------------------ zoom, view
@@ -200,12 +208,13 @@ export async function openWriter(root, pid, opt = {}) {
     if (!editable) return;
     focusText();
     const [k, a] = what.split(/:(.*)/s), L = { quarter: t('quarter'), series: t('series'), step: t('step'), signature: t('signature') };
-    if (k === 'image') return void pickFile('image/*', true).then((f) => W.addFiles(f));
+    if (k === 'image') return void imageDialog(W);
     if (k === 'search') return void setTab('images');
     if (k === 'table') return void tableDialog(W);
     if (k === 'cols') return void ed.insertColumns(+a);
     if (k === 'hr') return void ed.insertHr(a);
     if (k === 'pb') return void ed.insertBreak();
+    if (k === 'bands') return void W.bands();
     if (k === 'toc') return void ed.insertToc();
     if (k === 'tocf') return void ed.insertToc('f');
     if (k === 'note') return void noteDialog(W);
@@ -243,7 +252,7 @@ export async function openWriter(root, pid, opt = {}) {
   }
   const chartItems = () => CHARTS.map((c) => [CHART_ICONS[c], t('ct_' + c), () => W.insert('chart:' + c)]), flowItems = () => FLOWS.map((c) => [FLOW_ICONS[c], t('fl_' + c), () => W.insert('flow:' + c)]);
   const shapeItems = () => [['square', t('sh_rect'), 'rect'], ['rectangle-horizontal', t('sh_round'), 'round'], ['circle', t('sh_ellipse'), 'ellipse'], ['triangle', t('sh_triangle'), 'triangle'], ['star', t('sh_star'), 'star'], ['arrow-right', t('sh_arrow'), 'arrow'], ['message-square', t('sh_speech'), 'speech'], ['minus', t('sh_line'), 'line'], ['move-right', t('sh_line-end'), 'line-end']].map(([i, l, s]) => [i, l, () => W.insert('shape:' + s)]);
-  const listOf = () => [['image', t('i_image'), 'image'], ['images', t('img_free'), 'search'], ['table', t('i_table'), 'table'], ['columns-2', t('i_cols2'), 'cols:2'], ['sigma', t('i_math'), 'math'], ['list-tree', t('i_toc'), 'toc'], ['captions', t('i_tocf'), 'tocf'], ['footprints', t('i_note'), 'note'], ['link', t('i_link'), 'link'], ['minus', t('hr_thin'), 'hr:'], ['separator-horizontal', t('i_pb'), 'pb'], ['info', t('s_callout'), 'callout:info'], ['quote', t('s_blockquote'), 'quote'], ['square-code', t('s_pre'), 'code'], ['calendar', t('i_date'), 'date'], ['qr-code', t('i_qr'), 'qr'], ['signature', t('i_sign'), 'sign'], ['pen-line', t('i_drawing'), 'drawing'], ['omega', t('i_chars'), 'chars']];
+  const listOf = () => [['image', t('i_image'), 'image'], ['images', t('img_free'), 'search'], ['table', t('i_table'), 'table'], ['columns-2', t('i_cols2'), 'cols:2'], ['sigma', t('i_math'), 'math'], ['list-tree', t('i_toc'), 'toc'], ['captions', t('i_tocf'), 'tocf'], ['footprints', t('i_note'), 'note'], ['link', t('i_link'), 'link'], ['minus', t('hr_thin'), 'hr:'], ['separator-horizontal', t('i_pb'), 'pb'], ['panel-top', t('o_bands'), 'bands'], ['info', t('s_callout'), 'callout:info'], ['quote', t('s_blockquote'), 'quote'], ['square-code', t('s_pre'), 'code'], ['calendar', t('i_date'), 'date'], ['qr-code', t('i_qr'), 'qr'], ['signature', t('i_sign'), 'sign'], ['pen-line', t('i_drawing'), 'drawing'], ['omega', t('i_chars'), 'chars']];
 
   // ------------------------------------------------------------------ toolbars
 
@@ -263,6 +272,7 @@ export async function openWriter(root, pid, opt = {}) {
     note: ['footprints', 'i_note', () => addTool('footprints', t('i_note'), 'note')],
     link: ['link', 'i_link', () => addTool('link', t('i_link'), 'link')],
     pb: ['separator-horizontal', 'i_pb', () => addTool('separator-horizontal', t('i_pb'), 'pb')],
+    bands: ['panel-top', 'o_bands', () => addTool('panel-top', t('o_bands'), 'bands')],
     callout: ['info', 's_callout', () => addTool('info', t('s_callout'), 'callout:info')],
     icon: ['smile', 'icon', () => addTool('smile', t('icon'), 'icon')],
     qr: ['qr-code', 'i_qr', () => addTool('qr-code', t('i_qr'), 'qr')],
@@ -273,8 +283,8 @@ export async function openWriter(root, pid, opt = {}) {
   const TOOLS_DEF = ['image', 'table', 'chart', 'shape', 'diagram', 'math', 'toc'];
   function drawTools() {
     const on = (prefs().tools || TOOLS_DEF).filter((k) => TOOLS[k]), shown = new Set(on);
-    const rest = listOf().filter(([, , w]) => !Object.keys(TOOLS).some((k) => shown.has(k) && TOOLS[k][2] && w === { image: 'image', table: 'table', math: 'math', toc: 'toc', cols: 'cols:2', note: 'note', link: 'link', pb: 'pb', callout: 'callout:info', qr: 'qr', sign: 'sign', drawing: 'drawing', chars: 'chars' }[k]));
-    put(ins, h('span.inst', t('insert')), on.map((k) => TOOLS[k][2]()), dropTool('plus', t('more'), () => [...rest.map(([i, l, w]) => [i, l, () => W.insert(w)]), '-', ['settings-2', t('toolbar_edit'), () => toolsDialog()]]), iconBtn('settings-2', t('toolbar_edit'), () => toolsDialog()));
+    const rest = listOf().filter(([, , w]) => !Object.keys(TOOLS).some((k) => shown.has(k) && TOOLS[k][2] && w === { image: 'image', table: 'table', math: 'math', toc: 'toc', cols: 'cols:2', note: 'note', link: 'link', pb: 'pb', bands: 'bands', callout: 'callout:info', qr: 'qr', sign: 'sign', drawing: 'drawing', chars: 'chars' }[k]));
+    put(ins, h('span.inst', t('insert')), on.map((k) => TOOLS[k][2]()), dropTool('plus', t('more'), () => rest.map(([i, l, w]) => [i, l, () => W.insert(w)]))); // customising the bar: in the ⋮ menu
   }
   /** Which buttons the insert bar has, and in what order. */
   async function toolsDialog() {
@@ -377,7 +387,7 @@ export async function openWriter(root, pid, opt = {}) {
     if (v) ed.select(v);
     W.lastCaret = ed.caret() || W.lastCaret;
     const T = (k, ic, danger) => [ic, t('t_' + k), () => act(() => ed.table(k)), { danger }];
-    menuAt(e.clientX, e.clientY, v ? [fig ? ['sliders-horizontal', t('format_tab'), () => setTab('format', true)] : null, fig ? ['copy', t('duplicate_l'), () => ed.do(() => { const c = ed.topOf(v).cloneNode(true); c.removeAttribute('id'); c.classList.remove('sel'); ed.topOf(v).after(c); ed.quiet(() => ed.decorate()); })] : null, ['trash', t('delete'), () => ed.removeSelected(), { danger: true }]] : [mark ? ['scissors', t('cut'), () => act(() => document.execCommand('cut')), { kbd: 'Mod+X' }] : null, mark ? ['copy', t('copy'), () => act(() => document.execCommand('copy')), { kbd: 'Mod+C' }] : null, mark ? ['link', t('link'), () => linkDialog(W)] : null, mark && W.canComment ? ['message-square', t('c_add'), () => startComment()] : null, mark ? ['volume-2', t('read_aloud'), () => speak(mark)] : null, mark && cell ? '-' : null, ...(cell ? [T('rowAbove', 'arrow-up'), T('rowBelow', 'arrow-down'), T('colLeft', 'arrow-left'), T('colRight', 'arrow-right'), '-', ed.cells().length > 1 ? T('merge', 'merge') : null, T('split', 'split'), ['arrow-down-a-z', t('sort_az'), () => act(() => ed.sort(1))], ['sigma', t('t_sum'), () => act(() => ed.sumColumn())], '-', T('delRow', 'trash', true), T('delCol', 'trash', true), T('drop', 'trash', true)] : [])]);
+    menuAt(e.clientX, e.clientY, v ? [fig ? ['sliders-horizontal', t('format_tab'), () => setTab('format', true)] : null, fig ? ['copy-plus', t('duplicate_l'), () => ed.do(() => { const c = ed.topOf(v).cloneNode(true); c.removeAttribute('id'); c.classList.remove('sel'); ed.topOf(v).after(c); ed.quiet(() => ed.decorate()); })] : null, ['trash', t('delete'), () => ed.removeSelected(), { danger: true }]] : [mark ? ['scissors', t('cut'), () => act(() => document.execCommand('cut')), { kbd: 'Mod+X' }] : null, mark ? ['copy', t('copy'), () => act(() => document.execCommand('copy')), { kbd: 'Mod+C' }] : null, mark ? ['link', t('link'), () => linkDialog(W)] : null, mark && W.canComment ? ['message-square', t('c_add'), () => startComment()] : null, mark ? ['volume-2', t('read_aloud'), () => speak(mark)] : null, mark && cell ? '-' : null, ...(cell ? [T('rowAbove', 'arrow-up'), T('rowBelow', 'arrow-down'), T('colLeft', 'arrow-left'), T('colRight', 'arrow-right'), '-', ed.cells().length > 1 ? T('merge', 'merge') : null, T('split', 'split'), ['arrow-down-a-z', t('sort_az'), () => act(() => ed.sort(1))], ['sigma', t('t_sum'), () => act(() => ed.sumColumn())], '-', T('delRow', 'trash', true), T('delCol', 'trash', true), T('drop', 'trash', true)] : [])]);
   });
   // a click on the margins or under the text puts the caret where a person expects it
   if (editable) desk.addEventListener('mousedown', (e) => {
@@ -387,9 +397,43 @@ export async function openWriter(root, pid, opt = {}) {
     ed.ed.focus({ preventScroll: true });
     const last = ed.ed.lastElementChild, r = last.getBoundingClientRect(), box = ed.ed.getBoundingClientRect();
     if (e.clientY > r.bottom) { if (last.matches('table,figure,hr,.pb,.toc,.beside,.callout,pre')) { const p = document.createElement('p'); p.append(document.createElement('br')); ed.ed.append(p); ed.collapse(p); ed.scan(); } else ed.collapse(last, true); return; }
+    // the empty space after a page break is not a place to write: the caret goes to the end of the text before it, as in Word
+    const pb = [...ed.ed.querySelectorAll(':scope > .pb')].find((b) => { const q = b.getBoundingClientRect(); return e.clientY >= q.top - 2 && e.clientY <= q.bottom; });
+    if (pb) { const prev = pb.previousElementSibling, next = pb.nextElementSibling; if (prev && !prev.matches('hr,.pb,.toc,figure')) ed.collapse(prev, true); else if (next) ed.collapse(next); return; }
     const x = Math.max(box.left + 2, Math.min(box.right - 2, e.clientX)), c = document.caretPositionFromPoint?.(x, e.clientY), k = c ? [c.offsetNode, c.offset] : ((q) => q && [q.startContainer, q.startOffset])(document.caretRangeFromPoint?.(x, e.clientY));
+    // never between two blocks: inside the nearest one
+    if (k && k[0] === ed.ed) { const b = ed.ed.children[Math.min(k[1], ed.ed.children.length - 1)]; if (b && !b.matches('hr,.pb,.toc,figure')) ed.collapse(b, k[1] >= ed.ed.children.length); return; }
     if (k && ed.ed.contains(k[0])) getSelection().collapse(...k);
   });
+
+  // header and footer: shown on the margins of every page; a double click there writes them (they live in the Page panel)
+  W.bands = (kind = 'header', z = 'c') => {
+    if (!editable) return;
+    setTab('page', true);
+    setTimeout(() => { const box = panel.querySelector('.bands'); box?.scrollIntoView({ block: 'start', behavior: 'smooth' }); panel.querySelector(`[data-band="${kind}-${z}"]`)?.focus?.(); }, 90);
+  };
+  const bandAt = (e) => {
+    const g = ed.pager.g;
+    if (!editable || W.fluid || !g) return null;
+    for (const [i, sh] of [...ed.pager.sheets.children].entries()) {
+      const r = sh.getBoundingClientRect();
+      if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) continue;
+      const top = g.mt * W.zoom, low = (g.ph - g.mt - g.hc) * W.zoom, kind = e.clientY < r.top + top ? 'header' : e.clientY > r.bottom - low ? 'footer' : null;
+      if (!kind) return null;
+      const x = (e.clientX - r.left) / r.width;
+      return { kind, page: i + 1, z: x < 1 / 3 ? 'l' : x > 2 / 3 ? 'r' : 'c', left: r.left, width: r.width, top: kind === 'header' ? r.top : r.bottom - low, height: kind === 'header' ? top : low };
+    }
+    return null;
+  };
+  const bandHint = h('div.bandhint', { hidden: true, 'aria-hidden': 'true' }, h('span'));
+  if (editable) {
+    document.body.append(bandHint);
+    let hintF = 0;
+    desk.addEventListener('mousemove', (e) => { cancelAnimationFrame(hintF); hintF = requestAnimationFrame(() => { const b = e.buttons ? null : bandAt(e); bandHint.hidden = !b; if (!b) return; Object.assign(bandHint.style, { left: b.left + 'px', top: b.top + 'px', width: b.width + 'px', height: b.height + 'px' }); bandHint.firstChild.textContent = t('band_dbl_' + b.kind); }); });
+    desk.addEventListener('mouseleave', () => { bandHint.hidden = true; });
+    desk.addEventListener('scroll', () => { bandHint.hidden = true; }, { passive: true });
+    desk.addEventListener('dblclick', (e) => { const b = bandAt(e); if (!b) return; e.preventDefault(); getSelection().removeAllRanges(); bandHint.hidden = true; if (b.page === 1 && !ed.settings.firstPage) W.setSettings({ firstPage: true }); W.bands(b.kind, b.z); });
+  }
 
   // ------------------------------------------------------------------ selection: what is on, floating bars
 
@@ -412,7 +456,14 @@ export async function openWriter(root, pid, opt = {}) {
       objectBar(st);
       rulers?.draw();
       const key = st.sel ? 's' + [...ed.ed.querySelectorAll('figure,hr,.toc,.pb')].indexOf(st.sel) : st.cell ? 't' : 'p' + (st.block?.id || '') + st.type;
-      if (key !== lastKey) { const obj = key[0] === 's'; lastKey = key; if (W.tab === 'format' && !panel.contains(document.activeElement)) drawPanel(); else if (obj && W.tab && !mobile() && ['elements', 'page', 'style', 'images'].includes(W.tab) && st.sel.matches('figure')) setTab('format', true); }
+      // as in SavPresentations: choosing an object (picture, chart, table, line…) opens its Format panel; leaving it goes back to the panel that was open
+      if (key !== lastKey) {
+        const obj = (key[0] === 's' && !st.sel.matches('.pb')) || key[0] === 't', was = lastKey[0] === 's' || lastKey[0] === 't';
+        lastKey = key;
+        if (obj && !mobile() && !['comments', 'notes', 'history', 'find'].includes(W.tab)) { if (W.tab !== 'format') { W.backTab = W.tab; setTab('format', true); } else if (!panel.contains(document.activeElement)) drawPanel(); }
+        else if (!obj && was && W.tab === 'format' && W.backTab !== undefined) { const k = W.backTab; W.backTab = undefined; if (k) setTab(k, true); else setTab('format'); }
+        else if (W.tab === 'format' && !panel.contains(document.activeElement)) drawPanel();
+      }
     }
     floatBars();
   }
@@ -466,7 +517,7 @@ export async function openWriter(root, pid, opt = {}) {
 
   const TABS = [...(editable ? [['elements', 'shapes'], ['format', 'sliders-horizontal'], ['page', 'panel-top'], ['style', 'palette'], ['images', 'images']] : []), ...(isLocal ? [] : [['comments', 'message-square'], ['notes', 'sticky-note']]), ...(editable && !isLocal ? [['history', 'history']] : [])];
   function drawRail() { put(rail, TABS.map(([k, ic]) => h('sav-bottom-nav-item', { label: t('tab_' + k), icon: ic, value: k, badge: k === 'comments' ? W.comments.filter((c) => !c.parent && !c.resolved && !c.private).length || null : null, current: W.tab === k }))); rail.hidden = !TABS.length; }
-  rail.addEventListener('sav-select', (e) => { e.stopPropagation(); setTab(e.detail.value); });
+  rail.addEventListener('sav-select', (e) => { e.stopPropagation(); W.backTab = undefined; setTab(e.detail.value); });
   keepCaret(rail);
   function setTab(name, force) {
     flushSettings();
@@ -585,15 +636,17 @@ export async function openWriter(root, pid, opt = {}) {
     const n = toast(t('preparing'), 'neutral', { duration: 0 });
     try {
       const b = await bundle();
-      const make = { savdoc: () => toSavdoc(b), docx: async () => (await import('./docx.js')).toDocx(b), html: () => toHtml(b), epub: () => toEpub(b), md: () => toMarkdown(b), txt: () => toText(b) };
-      download(await make[kind](), fileName(b.title, kind));
+      // PDF: the file itself; where the browser does not allow drawing the pages (some Safari), the print window as before
+      const make = { pdf: () => pdfFile().catch((e) => { console.warn(e); n.remove(); toast(t('pdf_hint'), 'neutral'); printDoc(); return null; }), savdoc: () => toSavdoc(b), docx: async () => (await import('./docx.js')).toDocx(b), html: () => toHtml(b), epub: () => toEpub(b), md: () => toMarkdown(b), txt: () => toText(b) };
+      const out = await make[kind]();
+      if (out) download(out, fileName(b.title, kind));
     } finally { n.remove(); }
   }
-  async function printDoc(pdf) {
+  /** The pages exactly as on screen, ready to be printed or written as PDF; end() takes them away. */
+  async function printable() {
     flushSettings();
     ed.scan();
     ed.select(null);
-    if (pdf) toast(t('pdf_hint'), 'neutral');
     const z = W.zoom, fluid = W.fluid;
     W.fluid = false;
     ed.dress();
@@ -612,12 +665,22 @@ export async function openWriter(root, pid, opt = {}) {
     st.textContent = `@page { size: ${parseFloat(w) / 96}in ${parseFloat(hh) / 96}in; margin: 0; }`;
     document.head.append(st);
     document.body.append(pages);
-    document.body.classList.add('printing');
-    const end = () => { pages.remove(); st.remove(); document.body.classList.remove('printing'); removeEventListener('afterprint', end); };
-    addEventListener('afterprint', end);
     await Promise.all([...pages.querySelectorAll('img')].map((i) => i.decode?.().catch(() => {})));
+    return { pages, end: () => { pages.remove(); st.remove(); document.body.classList.remove('printing'); } };
+  }
+  async function printDoc() {
+    const { pages, end } = await printable();
+    document.body.classList.add('printing');
+    const done = () => { end(); removeEventListener('afterprint', done); };
+    addEventListener('afterprint', done);
     W.printing = pages;
     if (!W.noPrint) window.print();
+  }
+  /** Save as PDF: the file itself, without the print window (as in SavPresentations). */
+  async function pdfFile() {
+    const { pages, end } = await printable();
+    pages.classList.add('pdfwork');
+    try { return await (await import('./pdf.js')).toPdf(pages, ed.title, ed.settings); } finally { end(); }
   }
   W.printDoc = printDoc;
   async function toAccount() { const b = await bundle(), id = await keep(b); await local.remove(pid); toast(t('saved_account'), 'success'); W.close(); location.hash = '#/d/' + id; }
@@ -647,7 +710,7 @@ export async function openWriter(root, pid, opt = {}) {
   const duplicate = async () => { await W.sync?.flush(); const r = await api('doc.duplicate', { doc: pid, title: `${t('copy_of')} ${ed.title}`.slice(0, 160) }); location.hash = '#/d/' + r.doc.id; };
   const owner = data.doc.role === 'owner';
   function moreItems() {
-    return [...(mobile() ? [{ head: t('download') }, ...dlItems(), '-', ...(S.user ? [] : [['user', t('sign_in'), () => { location.hash = '#/signin'; }], '-'])] : []), ['search', t('find'), () => setTab('find', true), { kbd: 'Mod+F' }], editable && !isLocal ? ['history', t('history'), () => setTab('history', true)] : null, ['volume-2', speaking() ? t('stop_reading') : t('read_aloud'), () => speak()], editable ? ['maximize', t('focus'), () => focusMode()] : null, ['tally-5', t('counts'), () => countsDialog()], '-', lim.noDownload ? null : lim.noDownload ? null : ['printer', t('print'), () => printDoc(), { kbd: 'Mod+P' }], ['file-up', t('open_'), () => importFile()], !isLocal && S.user && !data.doc.review && !lim.noCopy ? ['copy', t('duplicate'), () => duplicate()] : null, owner && !isLocal ? ['layout-template', t('as_template'), async () => { await setPrefs({ templates: [...new Set([...(prefs().templates || []), pid])].slice(-30) }); toast(t('as_template_done'), 'success'); }] : null, editable && !mobile() ? ['settings-2', t('toolbar_edit'), () => toolsDialog()] : null, ['keyboard', t('shortcuts'), () => shortcuts()], !isLocal ? ['link', t('copy_link'), () => copyText(location.href)] : null, !isLocal && !owner && !data.doc.review ? ['flag', t('report'), () => reportDialog(pid)] : null, owner && !isLocal && !data.doc.deleted ? '-' : null, owner && !isLocal && !data.doc.deleted ? ['trash', t('to_trash'), async () => { await W.sync?.flush(); await api('doc.trash', { doc: pid }); toast(t('moved_trash')); location.hash = '#/'; }, { danger: true }] : null];
+    return [...(mobile() && !S.user ? [['log-in', t('sign_in'), () => { location.hash = '#/signin'; }], '-'] : []), ['search', t('find'), () => setTab('find', true), { kbd: 'Mod+F' }], editable && !isLocal ? ['history', t('history'), () => setTab('history', true)] : null, ['volume-2', speaking() ? t('stop_reading') : t('read_aloud'), () => speak()], editable ? ['maximize', t('focus'), () => focusMode()] : null, ['tally-5', t('counts'), () => countsDialog()], '-', ...dlItems(), lim.noDownload ? null : ['printer', t('print'), () => printDoc(), { kbd: 'Mod+P' }], ['file-up', t('open_'), () => importFile()], !isLocal && S.user && !data.doc.review && !lim.noCopy ? ['copy', t('duplicate'), () => duplicate()] : null, owner && !isLocal ? ['layout-template', t('as_template'), async () => { await setPrefs({ templates: [...new Set([...(prefs().templates || []), pid])].slice(-30) }); toast(t('as_template_done'), 'success'); }] : null, editable && !mobile() ? ['settings-2', t('toolbar_edit'), () => toolsDialog()] : null, ['keyboard', t('shortcuts'), () => shortcuts()], !isLocal ? ['link', t('copy_link'), () => copyText(location.href)] : null, !isLocal && !owner && !data.doc.review ? ['flag', t('report'), () => reportDialog(pid)] : null, owner && !isLocal && !data.doc.deleted ? '-' : null, owner && !isLocal && !data.doc.deleted ? ['trash', t('to_trash'), async () => { await W.sync?.flush(); await api('doc.trash', { doc: pid }); toast(t('moved_trash')); location.hash = '#/'; }, { danger: true }] : null];
   }
 
   // command palette
@@ -658,7 +721,7 @@ export async function openWriter(root, pid, opt = {}) {
     group(t('styles'), [...TYPES.map((k) => [TYPE_ICONS[k], t('s_' + k), () => act(() => ed.block(k))]), ['list', t('s_ul'), () => act(() => ed.list('ul'))], ['list-ordered', t('s_ol'), () => act(() => ed.list('ol'))], ['list-checks', t('s_check'), () => act(() => ed.list('check'))]]);
     group(t('panels'), TABS.map(([k, ic]) => [ic, t('tab_' + k), () => setTab(k, true)]));
   }
-  group(t('tools'), [...moreItems().filter((x) => Array.isArray(x) && !(mobile() && dlItems().some((d) => d[1] === x[1]))), ['list-tree', t('outline'), () => toggleLeft()], ...dlItems().filter((x) => Array.isArray(x))]);
+  group(t('tools'), [...moreItems().filter((x) => Array.isArray(x)), ['list-tree', t('outline'), () => toggleLeft()]]);
   pal.addEventListener('sav-select', (e) => { const fn = cmds[e.detail.value]; if (fn) setTimeout(() => { const r = fn(); if (r?.catch) r.catch(fail); }, 80); });
   document.body.append(pal);
 
@@ -672,7 +735,7 @@ export async function openWriter(root, pid, opt = {}) {
   showRulers();
   if (!isLocal && !data.doc.review && !data.doc.deleted) {
     W.sync = new Sync({ pid, rev: data.doc.rev, role: data.doc.role, editor: ed, stamp: data.stamp, on: {
-      state: (s) => setState(s), people: (p) => setPeople(p), title: (x) => { title.value = x; document.title = x + ' · SavDocuments'; }, comments: () => refreshComments(),
+      state: (s) => setState(s), people: (p) => setPeople(p), title: (x) => { title.value = x; document.title = x + ' – SavDocuments'; }, comments: () => refreshComments(),
       role: () => { toast(t('role_changed'), 'warning'); reload(); }, reload: () => { toast(t('reloaded')); reload(); }, error: (e) => { toast(errText(e), 'danger', { duration: 0 }); setState('offline'); },
     } });
     if (editable && W.sync.recover()) toast(t('recovered'), 'success');
@@ -694,6 +757,7 @@ export async function openWriter(root, pid, opt = {}) {
     rulers?.destroy();
     ro.disconnect();
     slashMenu?.remove();
+    bandHint.remove();
     pal.remove();
     window.speechSynthesis?.cancel();
     clearTimeout(W.outT);

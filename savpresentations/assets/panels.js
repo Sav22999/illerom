@@ -224,9 +224,12 @@ function elementProps(ed, els) {
   look.push(range(t('opacity'), Math.round((f.o ?? 1) * 100), 0, 100, 5, (v) => set({ o: v / 100 }), '%'));
   out.push(sec(t('look'), ...look));
   if (one && !ed.simple) out.push(fold(t('position'), false, h('div.grid3', num('X', f.x, (v) => set({ x: v, cell: null, cr: null })), num('Y', f.y, (v) => set({ y: v, cell: null, cr: null })), num('°', f.r || 0, (v) => set({ r: ((v + 180) % 360 + 360) % 360 - 180 })), num(t('w'), f.w, (v) => set({ w: Math.max(1, v) })), num(t('hh'), f.h, (v) => set({ h: Math.max(1, v) })))));
-  out.push(fold(t('behaviour'), !!(f.anim || f.link), pick(t('appears'), f.anim || '', ['', 'fade', 'up', 'left', 'zoom'].map((v) => [v, t('an_' + (v || 'none'))]), (v) => set({ anim: v })),
-    one && h('sav-input', { size: 'sm', label: t('link'), placeholder: 'https://…', value: f.link?.startsWith('#') ? '' : f.link || '', onchange: (e) => { let v = e.target.value.trim(); if (v && !/^(https?:|mailto:|#s:)/i.test(v)) v = 'https://' + v; set({ link: v }); } }),
-    one && pick(t('link_slide'), f.link?.startsWith('#s:') ? f.link : '', [['', t('none')], ...deck.order().map((s, i) => ['#s:' + s.sid, t('slide') + ' ' + (i + 1)])], (v) => set({ link: v }))));
+  // the link: a slide of the presentation or a page outside; in the show (and for who looks) a click follows it
+  if (one) {
+    const to = f.link?.startsWith('#s:') && deck.slide(f.link.slice(3)), where = !f.link ? '' : to ? `${t('slide')} ${deck.index(to.sid) + 1}${to.d.name ? ' · ' + to.d.name : ''}` : f.link.replace(/^(https?:\/\/|mailto:)/, '');
+    out.push(sec(t('link'), f.link ? h('div.linkrow', icon(to ? 'presentation' : 'globe'), h('span.grow', { title: f.link }, where), iconBtn('pencil', t('link_edit'), () => ed.linkDialog(), { size: 'sm' }), iconBtn('unlink', t('link_remove'), () => set({ link: null }), { size: 'sm' })) : btn(t('link_add'), () => ed.linkDialog(), { size: 'sm', icon: 'link', appearance: 'outline', variant: 'neutral', block: true })));
+  }
+  out.push(fold(t('behaviour'), !!f.anim, pick(t('appears'), f.anim || '', ['', 'fade', 'up', 'left', 'zoom'].map((v) => [v, t('an_' + (v || 'none'))]), (v) => set({ anim: v }))));
   return h('div', ...out);
 }
 

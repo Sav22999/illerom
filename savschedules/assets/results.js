@@ -89,7 +89,7 @@ export async function results(root, pid) {
       ['table-properties', t('download_csv'), csv], ['calendar-plus', t('download_ics'), () => { const list = slots() ? s.options.filter((o) => o.yes) : s.final ? s.options.filter((o) => o.id === s.final) : s.options; download(toIcs(list.map((o) => ({ option: o, title: s.title, descr: s.descr, place: s.place, url, uid: s.id }))), fileName(s.title, 'ics')); }],
       ['download', t('download_savsch'), async () => download(await toSavsch(s), fileName(s.title, 'savsch'))], ['download', t('download_savsch_all'), async () => download(await toSavsch(s, true), fileName(s.title, 'savsch'))], ['printer', t('print'), () => print()], '-',
       [s.status === 'open' ? 'lock' : 'lock-open', t(s.status === 'open' ? 'close_sch' : 'reopen'), async () => { s = (await api('sch.status', { id: s.id, open: s.status !== 'open' })).schedule; draw(); }, { disabled: s.status === 'suspended' }],
-      ['copy-plus', t('duplicate'), async () => { const r = await api('sch.duplicate', { id: s.id, title: t('copy_of', { t: s.title }) }); go('#/e/' + r.id); }],
+      ['copy', t('duplicate'), async () => { const r = await api('sch.duplicate', { id: s.id, title: t('copy_of', { t: s.title }) }); go('#/e/' + r.id); }],
       ['trash', t('to_trash'), async () => { await api('sch.trash', { id: s.id }); toast(t('trashed'), 'neutral'); go('#/'); }, { danger: true }]], { placement: 'bottom-end' });
     page.style.setProperty('--c', COLORS[s.settings.color] || COLORS.blue);
     put(page, h('header.htop', brand(), h('div.spacer'), userMenu()),
@@ -98,7 +98,7 @@ export async function results(root, pid) {
         s.status === 'suspended' ? h('sav-alert', { variant: 'danger' }, t('sch_suspended_t')) : null,
         stats(), h('div.rbody' + (slots() ? '.slots' : ''), slots() ? [slotsView(), s.responses.length ? null : h('sav-card.tablec', empty('inbox', t('no_answers'), t('no_answers_t'), primary(t('share'), { icon: 'share-2', onclick: () => shareDialog(s) })))] : pollView())),
       credit());
-    document.title = s.title + ' · SavSchedules';
+    document.title = s.title + ' – SavSchedules';
   }
   draw();
   // new answers arrive while the page is open

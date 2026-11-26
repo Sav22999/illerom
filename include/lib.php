@@ -92,3 +92,19 @@ function wordmark(): string
     }
     return '<svg class="wordmark" viewBox="0 0 ' . $w . ' 100" aria-hidden="true"><g class="wm-bars"><g class="wm-lean" transform="matrix(1 0 .5 1 0 0)">' . $b . '</g></g></svg>';
 }
+
+/** Illerom Bars: the letters as bars (data/typeface.json, the same data that builds the font). */
+function typeface(): array
+{
+    static $tf = null;
+    return $tf ??= json_decode(file_get_contents(ROOT . '/data/typeface.json'), true);
+}
+
+/** One letter drawn from its bars, leaned like the wordmark (used where the font cannot be: the first sketch). */
+function glyph_svg(array $rects): string
+{
+    $w = max(array_map(fn($r) => $r[0] + $r[2], $rects)) + 50;
+    $b = '';
+    foreach ($rects as [$x, $y, $rw, $rh]) $b .= sprintf('<rect x="%s" y="%s" width="%s" height="%s"/>', $x, $y, $rw, $rh);
+    return '<svg class="glyph" viewBox="-4 -4 ' . ($w + 8) . ' 108" aria-hidden="true"><g transform="matrix(1 0 .5 1 0 0)">' . $b . '</g></svg>';
+}

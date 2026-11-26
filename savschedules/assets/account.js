@@ -32,12 +32,12 @@ export function useLang(l) { setLang(l); if (S.user) { S.user.lang = l; api('aut
 /** The language of the footer: the SavComponents language choice, only the two languages of the app, with their own names. */
 export const langSwitch = () => { const c = h('sav-language-choice', { include: 'it-IT en-GB', value: getLang() === 'it' ? 'it-IT' : 'en-GB', 'native-names': '', 'no-code': '', size: 'sm', 'aria-label': t('language'), class: 'langs' }); c.addEventListener('change', () => { const l = String(c.value || '').slice(0, 2); if (l && l !== getLang()) useLang(l); }); return c; };
 /** The language in the bar of the first page: a button with the other language, as in SavDocuments. */
-export const langButton = () => btn(getLang() === 'it' ? 'English' : 'Italiano', { icon: 'globe', appearance: 'ghost', size: 'sm', onclick: () => useLang(getLang() === 'it' ? 'en' : 'it') });
+export const langButton = () => btn(h('span.lbl', getLang() === 'it' ? 'English' : 'Italiano'), { icon: 'languages', label: getLang() === 'it' ? 'English' : 'Italiano', class: 'langb', appearance: 'ghost', size: 'sm', onclick: () => useLang(getLang() === 'it' ? 'en' : 'it') });
 export const credit = () => h('footer.credit', h('a', { href: 'privacy.html' }, 'Privacy'), h('a', { href: 'terms.html' }, t('terms_c')), h('a', { href: 'https://www.illerom.eu/', rel: 'noopener' }, 'Illerom'), h('span', getLang() === 'it' ? 'di ' : 'by ', h('a.sig', { href: 'https://www.saveriomorelli.com', rel: 'noopener' }, 'Saverio Morelli')), h('span.grow'), langSwitch());
 export function userMenu() {
-  const u = S.user, av = face(u.name, null, 34);
+  const u = S.user, av = face(u.name, null, 36);
   av.setAttribute('button', '');
-  return drop(av, [{ head: u.name }, { head: u.email }, '-', ['settings', t('settings'), () => go('#/settings')], u.master ? ['shield', t('admin'), () => go('#/admin')] : null, '-', ['log-out', t('sign_out'), signOut]], { placement: 'bottom-end', label: u.name });
+  return drop(av, [{ head: u.email }, ['settings', t('settings'), () => go('#/settings')], u.master ? ['shield', t('admin'), () => go('#/admin')] : null, '-', ['log-out', t('sign_out'), signOut]], { placement: 'bottom-end', label: u.name });
 }
 export async function signOut() {
   await api('auth.logout', {}).catch(() => {});

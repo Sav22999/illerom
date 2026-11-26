@@ -254,7 +254,8 @@ export function dialog(title, body, buttons = [], opt = {}) {
             d.remove();
             resolve(value);
         });
-        document.body.append(d);
+        // over a presentation in full screen, the window must be inside it to be seen
+        (opt.parent || document.fullscreenElement || document.body).append(d);
         d.close = (v) => {
             value = v;
             d.hide();
@@ -268,6 +269,16 @@ export const confirmBox = (title, text, yes, danger = true) => dialog(title, h('
     appearance: 'outline',
     variant: 'neutral'
 }], [yes, true, danger ? {variant: 'danger'} : {}]], {width: '27rem'});
+
+/** A link of an element or of a word: a slide of the presentation, or a page outside, opened in a new tab after asking. */
+export async function openLink(link, toSlide) {
+    if (link.startsWith('#s:')) return toSlide?.(link.slice(3));
+    const yes = await dialog(t('link_out'), h('div.stack', h('p.dlg-text', t('link_out_t')), h('code.linkurl', link)), [[t('cancel'), null, {
+        appearance: 'outline',
+        variant: 'neutral'
+    }], [t('link_open'), true, {icon: 'external-link'}]], {width: '28rem'});
+    if (yes) window.open(link, '_blank', 'noopener,noreferrer');
+}
 
 /** Asks for one line of text. Resolves with it, or null. */
 export async function promptBox(title, label, value = '', yes = t('save'), max = 150, empty = false) {

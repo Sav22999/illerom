@@ -622,7 +622,20 @@ code {
     padding: .6rem clamp(.8rem, 2vw, 1.6rem) 2rem;
     max-width: 1680px;
     margin: 0 auto;
-    min-height: calc(100dvh - 10rem);
+    align-content: start;
+}
+
+/* the pages that scroll (home, settings, first page…): the footer stays at the bottom, as in SavDocuments */
+body:not(.ed):not(.spk) > #app {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+}
+
+body:not(.ed):not(.spk) > #app > :is(main, .hbody) {
+    width: 100%;
+    box-sizing: border-box;
+    flex: 1 0 auto;
 }
 
 .hside {
@@ -782,8 +795,6 @@ sav-menu-item.over, sav-tree-item.over, .folders sav-button.over {
 }
 
 .card {
-    content-visibility: auto;
-    contain-intrinsic-size: 15rem 13rem;
     --sav-radius-lg: 16px;
 }
 
@@ -2841,3 +2852,37 @@ body.spk { overflow: hidden; } body.spk #app { height: 100dvh; }
 .fontdlg sav-tab > .stack { padding-top: .6rem; }
 .fontdlg .flist { max-height: 46vh; }
 .fontdlg h4 { font-size: .85rem; color: var(--sav-color-text-muted); margin-top: .4rem; }
+
+/* versions: a side panel, as in SavDocuments */
+.versions { gap: .5rem; } .tile.version { --sav-card-padding: .6rem .8rem; } .tile.version::part(body) { display: grid; gap: .1rem; } .versions .small { font-size: .84rem; }
+
+/* links of the elements */
+.linkrow { display: flex; align-items: center; gap: .4rem; padding: .35rem .3rem .35rem .6rem; border: 1px solid var(--sav-color-border); border-radius: var(--sav-radius); font-size: .86rem; } .linkrow > sav-icon { color: var(--sav-color-primary); flex: none; } .linkrow .grow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.linkurl { display: block; padding: .5rem .7rem; border-radius: var(--sav-radius); background: var(--sav-color-surface-2); font-size: .84rem; overflow-wrap: anywhere; }
+.linktabs sav-tab > .stack { padding-top: .9rem; }
+
+/* videos: the player of SavComponents fills the frame of the element; the frame (.im) keeps the corners or the shape */
+.spvideo { position: absolute; inset: 0; height: 100%; --sav-shadow-sm: none; }
+.spvideo::part(base) { height: 100%; gap: 0; }
+.spvideo::part(frame) { height: 100%; aspect-ratio: auto; border-radius: var(--vr, 0); box-shadow: none; }
+.spvideo::part(video) { object-position: var(--vpos, 50% 50%); transform: scaleX(var(--vflip, 1)) scale(var(--vz, 1)); transform-origin: var(--vpos, 50% 50%); }
+.im.playing { isolation: isolate; }
+.vbox { position: relative; } .vbox > .spvideo { --vr: 10px; background: none; }
+
+/* first page on phones: the top bar fits (the language as an icon), the features close together, nothing moves on touch */
+@media (max-width: 600px) {
+  .ltop { gap: .3rem; padding-left: 1rem; padding-right: 1rem; }
+  .langb .lbl { display: none; }
+  .hero { gap: 1.4rem; padding-top: 1.2rem; padding-bottom: 2rem; }
+  .hero-t > p { margin: .9rem 0 1.2rem; font-size: 1.02rem; }
+  .hero-t .prow sav-button, .hero-t .row sav-button { flex: 1 1 auto; }
+  .feats { grid-template-columns: minmax(0, 1fr); gap: 1.1rem; padding: 1.4rem 0 2rem; }
+  .feat { display: grid; grid-template-columns: 2.2rem minmax(0, 1fr); column-gap: .7rem; align-items: start; }
+  .feat sav-icon { grid-row: span 2; font-size: 1.35rem; margin-top: .1rem; }
+  .feat h3 { margin: 0 0 .1rem; font-size: 1rem; }
+  .feat p { font-size: .92rem; }
+  .landing > .credit, .authp > .credit { padding-left: 1rem; padding-right: 1rem; }
+}
+@media (max-width: 360px) { .ltop .brand span, .ltop .brand b { display: none; } }
+
+.ssub { margin: 0 0 .2rem; }

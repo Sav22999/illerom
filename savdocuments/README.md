@@ -27,6 +27,7 @@ the documents are kept on the server; without one they stay in the browser. <htt
 | `assets/fonts.js`, `assets/fonts.css`, `hero.js` | Typefaces (included, Bunny Fonts, from file); the fan of pages of the first page |
 | `assets/app.js`, `account.js`, `share.js`, `admin.js`, `ui.js` | Routes, accounts, sharing, administration, SavComponents helpers |
 | `assets/docx.js`, `files.js`, `zip.js` | Word, .savdoc, HTML, EPUB, Markdown and text files                                 |
+| `assets/pdf.js`                        | PDF without the print window: each page drawn as it prints, the text invisible over it (selectable), links, bookmarks |
 | `sw.js`                                | Offline shell: bump `CACHE` when the list of files changes                         |
 
 ## Install

@@ -1,4 +1,4 @@
-// Theme, the backwards reading of the name, search and filters. Everything else works without scripts.
+// Theme, the name written again, search and filters, the typeface tester. Everything else works without scripts.
 const $ = (s) => document.querySelector(s), $$ = (s) => [...document.querySelectorAll(s)];
 const root = document.documentElement;
 
@@ -21,6 +21,68 @@ flip?.addEventListener('click', () => {
     flip.setAttribute('aria-pressed', on);
     flip.querySelector('span').textContent = on ? flip.dataset.on : flip.dataset.off;
 });
+
+// the name on the note: a click (or a tap) writes it again, upright first and then leaning
+const still = matchMedia('(prefers-reduced-motion: reduce)');
+for (const p of $$('.plate-y')) p.addEventListener('click', () => {
+    if (!still.matches) p.getAnimations({subtree: true}).forEach((a) => {
+        a.cancel();
+        a.play();
+    });
+});
+
+/** Writes a text letter by letter, upright, then leans it (Illerom Bars). */
+const write = (el, text) => {
+    el.classList.toggle('writing', false);
+    if (still.matches) {
+        el.textContent = text;
+        return;
+    }
+    // letters in words, so the lines still break between words only
+    let i = 0;
+    el.replaceChildren(...text.split(/(\s+)/).filter(Boolean).map((w) => {
+        if (/^\s/.test(w)) return document.createTextNode(w);
+        const word = Object.assign(document.createElement('span'), {className: 'w'});
+        word.append(...[...w].map((c) => Object.assign(document.createElement('span'), {textContent: c, style: `--i:${i++}`})));
+        return word;
+    }));
+    el.style.setProperty('--done', Math.min(text.length, 40) * 45 + 300 + 'ms');
+    void el.offsetWidth;
+    el.classList.toggle('writing', true);
+};
+
+// the typeface: what you write, how much it leans; the letters of the alphabet straighten when touched
+const preview = $('#preview');
+if (preview) {
+    const tt = $('#tt'), lean = $('#lean');
+    const text = () => (tt.value || '').trim() || tt.getAttribute('value');
+    tt.addEventListener('input', () => {
+        preview.classList.toggle('writing', false);
+        preview.textContent = text();
+    });
+    lean.addEventListener('input', () => preview.style.setProperty('--lean', lean.value));
+    $('#mono').addEventListener('change', (e) => preview.classList.toggle('mono', e.target.checked));
+    $('#replay').addEventListener('click', () => write(preview, text()));
+    new IntersectionObserver((e, o) => {
+        if (e[0].isIntersecting) {
+            o.disconnect();
+            write(preview, text());
+        }
+    }, {threshold: .6}).observe(preview);
+    for (const b of $$('.ch')) b.addEventListener('click', () => b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true'));
+}
+
+// home: the words of the typeface stand upright until they are seen, then lean
+const tfhome = $('#tfhome');
+if (tfhome && !still.matches) {
+    tfhome.classList.toggle('upright', true);
+    new IntersectionObserver((e, o) => {
+        if (e[0].isIntersecting) {
+            o.disconnect();
+            setTimeout(() => tfhome.classList.toggle('upright', false), 350);
+        }
+    }, {threshold: .8}).observe(tfhome);
+}
 
 const form = $('#filters');
 if (form) {

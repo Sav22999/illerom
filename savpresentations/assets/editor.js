@@ -1,5 +1,5 @@
 /** The screen of a presentation: editing for who can, looking (with comments and personal notes) for the others. */
-import { state, api, get, h, icon, btn, iconBtn, item, tile, isApp, segmented, $, $$, clamp, uid, go, oops, ok, toast, errText, mobile, isMac, userSetting, dialog, confirmBox, promptBox, uploadPicture, copyText } from './core.js';
+import { state, api, get, h, icon, btn, iconBtn, item, tile, isApp, openLink, segmented, $, $$, clamp, uid, go, oops, ok, toast, errText, mobile, isMac, userSetting, dialog, confirmBox, promptBox, uploadPicture, copyText } from './core.js';
 import { t } from './i18n.js';
 import { brand, logo } from './auth.js';
 import { userMenu } from './home.js';
@@ -47,7 +47,7 @@ export async function deckScreen(app, deckId, q) {
   if (localId) deck.created = (await (await import('./local.js')).local.get(localId)).created;
   const ed = { deck, user: state.user, sel: new Set(), sid: deck.order()[0]?.sid || '', tab: '', editing: null, closeText() {}, root: app, editor: deck.canWrite, get edit() { return deck.canEditPage(this.sid); }, simple: userSetting('simple', false), relayout: false };
   ed.ctx = context(deck.meta);
-  document.title = deck.title + ' — SavPresentations';
+  document.title = deck.title + ' – SavPresentations';
   if (q.get('slide') && deck.slide(q.get('slide'))) ed.sid = q.get('slide');
 
   // ------------------------------------------------------------------ frame
@@ -123,7 +123,7 @@ export async function deckScreen(app, deckId, q) {
   const ins = h('div.ins', { role: 'toolbar', 'aria-label': t('insert') });
   function drawTools() {
     const on = userSetting('tools', TOOLS_DEF).filter((k) => TOOLS[k]);
-    ins.replaceChildren(h('span.inst', t('insert')), ...on.map((k) => TOOLS[k][2]()), iconBtn('settings-2', t('toolbar_edit'), () => toolsDialog(), { size: 'sm' }));
+    ins.replaceChildren(h('span.inst', t('insert')), ...on.map((k) => TOOLS[k][2]())); // customising the bar: in the ⋮ menu
   }
   drawTools();
   /** Which buttons the toolbar has, and in what order. */
@@ -138,9 +138,9 @@ export async function deckScreen(app, deckId, q) {
   const present = h('sav-button', { icon: 'play', onclick: () => show() , class: 'presentb' }, h('span.insl', t('present')));
   const presentM = h('sav-dropdown', { placement: 'bottom-end' }, h('sav-button.presentm', { slot: 'trigger', icon: 'chevron-down', label: t('more'), square: true }), item('here', 'play', t('present_here'), { kbd: '⇧F5' }), item('start', 'play', t('present_start'), { kbd: 'F5' }), !isApp && h('sav-divider'), !isApp && item('view', 'presentation', t('present_speaker')));
   presentM.addEventListener('sav-select', (e) => ({ here: () => show(ed.sid), start: () => show(deck.order()[0]?.sid), view: () => show(ed.sid, { presenter: true }) })[e.detail.value]());
-  const paletteB = iconBtn('command', t('palette_l') + ' · ' + (isMac ? '⌘K' : 'Ctrl+K'), () => ed.palette());
+  const paletteB = iconBtn('command', t('palette_l') + ' · ' + (isMac ? '⌘J' : 'Ctrl+J'), () => ed.palette());
   const shareB = h('sav-button', { icon: 'user-plus', appearance: 'soft', onclick: () => shareDialog(deck.uid, deck.title, ed) }, h('span.insl', t('share')));
-  const top = h('header.etop', h('a.ehome', { href: './', 'data-go': true, title: t('home'), 'aria-label': t('home') }, logo(30)), h('div.etitle', title, status), ed.editor && h('div.hist', undoB, redoB), ins, h('div.spacer'), people, !deck.local && (deck.role === 'owner' || deck.role === 'editor') && shareB, h('sav-button-group.pgroup', present, presentM), !mobile() && paletteB, menu, !mobile() && (state.user ? userMenu() : btn(t('sign_in'), () => { sessionStorage.setItem('sp-back', location.pathname + location.search); go('?signin=login'); }, { appearance: 'outline', variant: 'neutral' })));
+  const top = h('header.etop', h('a.ehome', { href: './', 'data-go': true, title: t('home'), 'aria-label': t('home') }, logo(30)), h('div.etitle', title, status), ed.editor && h('div.hist', undoB, redoB), ins, h('div.spacer'), people, !deck.local && (deck.role === 'owner' || deck.role === 'editor') && shareB, h('sav-button-group.pgroup', present, presentM), !mobile() && (deck.canEdit || deck.meta.opts.download !== false) && iconBtn('download', t('download'), () => downloadMenu(ed)), !mobile() && paletteB, menu, !mobile() && (state.user ? userMenu() : btn(t('sign_in'), () => { sessionStorage.setItem('sp-back', location.pathname + location.search); go('?signin=login'); }, { appearance: 'outline', variant: 'neutral' })));
   const strip = h('sav-sortable.strip', { 'aria-label': t('slides'), direction: mobile() ? 'horizontal' : null, handle: deck.canEdit && !mobile() ? null : '.never' }), addB = h('sav-button', { icon: 'plus', appearance: 'outline', variant: 'neutral', block: true, size: 'sm', onclick: () => ed.addSlide() }, t('new_slide'));
   const left = h('aside.eleft', strip, deck.canEdit && addB), panel = h('aside.epanel'), rail = h('sav-bottom-nav.rail', { label: t('panels') });
   // speaker notes of the page, under it
@@ -162,7 +162,7 @@ export async function deckScreen(app, deckId, q) {
     notesB.classList.toggle('has', !!s?.d.notes);
   }
   ed.saveNotes = saveNotes;
-  const center = h('section.ecenter', h('div.banner'), stage.scroller, ed.editor && notesBar, h('div.ebottom', !mobile() && iconBtn('panel-left', t('toggle_pages'), () => toggleStrip(), { size: 'sm', place: 'top' }), h('span.sn'), ed.editor && notesB, h('div.spacer'), ed.editor && modeSw, iconBtn('fullscreen', t('fit'), () => stage.setZoom(0), { size: 'sm', place: 'top' }), zoomEl));
+  const center = h('section.ecenter', h('div.banner'), stage.scroller, ed.editor && notesBar, h('div.ebottom', !mobile() && iconBtn('panel-left', t('toggle_pages'), () => toggleStrip(), { size: 'sm', place: 'top' }), h('span.sn'), ed.editor && notesB, h('div.spacer'), iconBtn('fullscreen', t('fit'), () => stage.setZoom(0), { size: 'sm', place: 'top' }), zoomEl));
   app.append(top, h('div.emain', left, center, panel, rail));
 
   // ------------------------------------------------------------------ strip of slides
@@ -303,7 +303,29 @@ export async function deckScreen(app, deckId, q) {
     else if (el.t === 'video') { if (el.vid) ed.playVideo(id); else pickVideo().then((v) => v && deck.do({ k: 'el.set', s: ed.sid, e: id, p: { kind: v.kind, vid: v.vid, poster: v.poster || '', credit: v.credit || '', creditUrl: okLink(v.creditUrl) ? v.creditUrl : '', cite: v.cite || null } })); }
   };
   ed.playVideo = (id) => { const el = deck.el(ed.sid, id), v = el?.vid && videoNode(el, true); if (v) dialog(t('video'), h('div.vbox', v), [], { width: '60rem' }); };
-  ed.follow = (link) => { if (link.startsWith('#s:')) ed.goto(link.slice(3)); else window.open(link, '_blank', 'noopener,noreferrer'); };
+  ed.follow = (link) => openLink(link, (sid) => ed.goto(sid));
+  /** A link on an element: a slide of the presentation or a page outside (opened in a new tab, after asking). */
+  ed.linkDialog = async (id = [...ed.sel][0]) => {
+    const el = deck.el(ed.sid, id);
+    if (!el || !ed.edit) return;
+    const cur = el.link || '';
+    let kind = cur.startsWith('#s:') ? 'slide' : 'web';
+    const url = h('sav-input', { label: t('link_url'), placeholder: 'https://…', value: cur.startsWith('#') ? '' : cur, autofocus: kind === 'web', help: t('link_web_t') });
+    url.addEventListener('keydown', (e) => e.stopPropagation());
+    const list = deck.order(), slide = h('sav-select', { label: t('link_slide'), value: cur.startsWith('#s:') && deck.slide(cur.slice(3)) ? cur : '#s:' + (list[deck.index(ed.sid) + 1] || list[0])?.sid, help: t('link_slide_t') }, ...list.map((s, i) => h('option', { value: '#s:' + s.sid }, `${i + 1} · ${pageName(deck, s)}`)));
+    const tabs = h('sav-tabs.linktabs', { appearance: 'segmented', active: kind }, h('sav-tab', { name: 'web', label: t('link_web'), icon: 'globe' }, h('div.stack.pad', url)), h('sav-tab', { name: 'slide', label: t('link_to_slide'), icon: 'presentation' }, h('div.stack.pad', slide)));
+    tabs.addEventListener('sav-tab-show', (e) => { kind = e.detail.name; });
+    const set = (v) => deck.do({ k: 'el.set', s: ed.sid, e: id, p: { link: v || null } });
+    await dialog(t(cur ? 'link_edit' : 'link_add'), tabs, [...(cur ? [[t('link_remove'), () => { set(''); return true; }, { appearance: 'ghost', variant: 'danger', icon: 'unlink' }]] : []), [t('cancel'), null, { appearance: 'outline', variant: 'neutral' }], [t('save'), () => {
+      if (kind === 'slide') { set(slide.value); return true; }
+      let v = url.value.trim();
+      if (!v) { set(''); return true; }
+      if (!/^(https?:|mailto:)/i.test(v)) v = (v.includes('@') && !v.includes('/') ? 'mailto:' : 'https://') + v;
+      if (!okLink(v)) { url.setAttribute('help', t('link_bad')); url.focus(); return false; }
+      set(v);
+      return true;
+    }]], { width: '30rem' });
+  };
   const selEls = () => [...ed.sel].map((id) => ({ id, el: deck.el(ed.sid, id) })).filter((x) => x.el);
   ed.deleteSel = () => { const ops = selEls().filter((x) => !x.el.lock).map((x) => ({ k: 'el.del', s: ed.sid, e: x.id })); const g = ed.simple && gridOf(ed), left = structuredClone(deck.slide(ed.sid).d.els); for (const o of ops) delete left[o.e]; ed.sel.clear(); deck.do([...ops, ...(g ? arrange(ed.sid, g, left, ed.ctx) : [])]); ed.select([]); ed.refreshPanel(); };
   const cloneInto = (list, dx, dy) => { const top = Math.max(0, ...Object.values(deck.slide(ed.sid).d.els).map((e) => e.z || 0)), ids = [], gs = {}; deck.do(list.map((el, i) => { const id = uid(); ids.push(id); return { k: 'el.add', s: ed.sid, e: id, el: { ...structuredClone(el), x: el.x + dx, y: el.y + dy, z: top + 1 + i, ...(el.g ? { g: (gs[el.g] ||= uid()) } : {}) } }; })); ed.select(ids); };
@@ -389,12 +411,12 @@ export async function deckScreen(app, deckId, q) {
     requestAnimationFrame(() => d.show());
   }
   const C = isMac ? '⌘' : 'Ctrl+';
-  ed.contextMenu = (x, y) => { const s = ed.sel.size, one = s === 1 && deck.el(ed.sid, [...ed.sel][0]); menuAt(x, y, s ? [['copy', t('copy'), () => document.execCommand('copy'), '', C + 'C'], ['copy-plus', t('duplicate'), ed.duplicateSel, '', C + 'D'], ['paintbrush', t('copy_style'), ed.copyStyle], ed.styleClip && ['paint-roller', t('paste_style'), ed.pasteStyle], s > 1 && ['group', t('group'), ed.group, '', C + 'G'], selEls().some((z) => z.el.g) && ['ungroup', t('ungroup'), ed.ungroup], '-', ['bring-to-front', t('to_front'), () => ed.zorder('front')], ['send-to-back', t('to_back'), () => ed.zorder('back')], one?.t === 'image' && one.src && ['image', t('as_background'), () => ed.asBackground([...ed.sel][0])], ['message-square', t('comment'), () => setTab('comments')], ['sticky-note', t('my_note'), () => setTab('notes')], '-', ['trash', t('delete'), ed.deleteSel, 'danger']] : [['type', t('text'), () => ed.insert('text:body')], ['image', t('image'), () => ed.insert('image')], ['shapes', t('shapes'), () => setTab('elements')], '-', ['palette', t('theme'), () => setTab('theme')], ['panel-top', t('page'), () => setTab('page')]]); };
+  ed.contextMenu = (x, y) => { const s = ed.sel.size, one = s === 1 && deck.el(ed.sid, [...ed.sel][0]); menuAt(x, y, s ? [['copy', t('copy'), () => document.execCommand('copy'), '', C + 'C'], ['copy-plus', t('duplicate'), ed.duplicateSel, '', C + 'D'], one && ['link', one.link ? t('link_edit') : t('link_add'), () => ed.linkDialog(), '', C + 'K'], ['paintbrush', t('copy_style'), ed.copyStyle], ed.styleClip && ['paint-roller', t('paste_style'), ed.pasteStyle], s > 1 && ['group', t('group'), ed.group, '', C + 'G'], selEls().some((z) => z.el.g) && ['ungroup', t('ungroup'), ed.ungroup], '-', ['bring-to-front', t('to_front'), () => ed.zorder('front')], ['send-to-back', t('to_back'), () => ed.zorder('back')], one?.t === 'image' && one.src && ['image', t('as_background'), () => ed.asBackground([...ed.sel][0])], ['message-square', t('comment'), () => setTab('comments')], ['sticky-note', t('my_note'), () => setTab('notes')], '-', ['trash', t('delete'), ed.deleteSel, 'danger']] : [['type', t('text'), () => ed.insert('text:body')], ['image', t('image'), () => ed.insert('image')], ['shapes', t('shapes'), () => setTab('elements')], '-', ['palette', t('theme'), () => setTab('theme')], ['panel-top', t('page'), () => setTab('page')]]); };
   const slideMenu = (x, y) => menuAt(x, y, [deck.canEdit && ['plus', t('new_slide'), () => ed.addSlide(), '', 'Ctrl+M'], deck.canEdit && ['copy-plus', t('duplicate'), ed.duplicateSlide], ed.edit && ['pencil', t('rename_page'), () => ed.renamePage()], ed.edit && [deck.slide(ed.sid)?.d.hide ? 'eye' : 'eye-off', deck.slide(ed.sid)?.d.hide ? t('show_slide') : t('hide_slide'), () => ed.toggleHide()], deck.role === 'owner' && ['key-round', t('page_rules'), () => pageRulesDialog(ed, [ed.sid])], deck.canEdit && ed.edit && ['arrow-up', t('move_up'), () => moveTo(ed.sid, deck.index(ed.sid) - 1)], deck.canEdit && ed.edit && ['arrow-down', t('move_down'), () => moveTo(ed.sid, deck.index(ed.sid) + 1)], deck.canEdit && ed.edit && '-', deck.canEdit && ed.edit && ['trash', t('delete'), ed.deleteSlide, 'danger']]);
   if (mobile() && ed.editor) { const b = iconBtn('ellipsis', t('slide'), (e) => { const r = e.currentTarget.getBoundingClientRect(); slideMenu(r.left, r.top - 260); }, { size: 'sm', place: 'top' }); $('.ebottom', center).prepend(b, iconBtn('plus', t('new_slide'), () => ed.addSlide(), { size: 'sm', place: 'top' })); }
 
   // ------------------------------------------------------------------ side panel
-  const ALLTABS = [...(ed.editor ? [['elements', 'shapes', 'elements'], ['props', 'sliders-horizontal', 'format_tab'], ['page', 'panel-top', 'page'], ['grid', 'grid-3x3', 'grids'], ['layouts', 'layout-template', 'layouts'], ...(deck.canEdit ? [['theme', 'palette', 'theme']] : []), ...(deck.local ? [] : [['media', 'images', 'media']])] : []), ...(deck.local ? [] : [['comments', 'message-square', 'comments'], ['notes', 'sticky-note', 'notes']])];
+  const ALLTABS = [...(ed.editor ? [['elements', 'shapes', 'elements'], ['props', 'sliders-horizontal', 'format_tab'], ['page', 'panel-top', 'page'], ['grid', 'grid-3x3', 'grids'], ['layouts', 'layout-template', 'layouts'], ...(deck.canEdit ? [['theme', 'palette', 'theme']] : []), ...(deck.local ? [] : [['media', 'images', 'media']])] : []), ...(deck.local ? [] : [['comments', 'message-square', 'comments'], ['notes', 'sticky-note', 'notes']]), ...(deck.canEdit && !deck.limited && !deck.local ? [['history', 'history', 'versions']] : [])];
   const tabs = () => ALLTABS.filter(([k]) => k !== (ed.simple ? 'layouts' : 'grid'));
   function drawRail() { rail.replaceChildren(...tabs().map(([k, ic, l]) => { const n = k === 'comments' || k === 'notes' ? marks.count(k) : 0; return h('sav-bottom-nav-item', { label: t(l), icon: ic, value: k, badge: n || null, current: ed.tab === k }); })); }
   rail.addEventListener('sav-select', (e) => { e.stopPropagation(); setTab(ed.tab === e.detail.value ? '' : e.detail.value); });
@@ -408,7 +430,7 @@ export async function deckScreen(app, deckId, q) {
   function drawPanel(fresh) {
     if (!ed.tab) { panel.replaceChildren(); return; }
     const y = fresh ? 0 : panel.querySelector('.pbody')?.scrollTop || 0;
-    const body = !ed.edit && !['comments', 'notes'].includes(ed.tab) ? () => h('sav-empty-state', { icon: 'lock', heading: t('page_locked'), text: t('page_locked_t') }) : { grid: gridPanel, elements: elementsPanel, props: propsPanel, page: pagePanel, layouts: layoutsPanel, theme: themePanel, media: mediaPanel, comments: marks.commentsPanel, notes: marks.notesPanel }[ed.tab];
+    const body = !ed.edit && !['comments', 'notes'].includes(ed.tab) ? () => h('sav-empty-state', { icon: 'lock', heading: t('page_locked'), text: t('page_locked_t') }) : { grid: gridPanel, elements: elementsPanel, props: propsPanel, page: pagePanel, layouts: layoutsPanel, theme: themePanel, media: mediaPanel, comments: marks.commentsPanel, notes: marks.notesPanel, history: () => ed.versionsPanel() }[ed.tab];
     panel.replaceChildren(h('div.phead', h('h2', t(ALLTABS.find((x) => x[0] === ed.tab)[2])), iconBtn('x', t('close'), () => setTab(''), { size: 'sm' })), h('div.pbody', body(ed)));
     panel.querySelector('.pbody').scrollTop = y;
   }
@@ -442,7 +464,7 @@ export async function deckScreen(app, deckId, q) {
     for (const op of ops) {
       if (op.k === 'page.rules') continue;
       if (op.k === 'deck.set') {
-        if (op.p.title !== undefined) { title.value = deck.title; document.title = deck.title + ' — SavPresentations'; }
+        if (op.p.title !== undefined) { title.value = deck.title; document.title = deck.title + ' – SavPresentations'; }
         if (op.p.theme || op.p.format || op.p.opts) { ed.ctx = context(deck.meta); all = true; fillMenu(); } else if (op.p.fonts) ed.ctx = context(deck.meta); // a new typeface only needs to be known: the text being written stays open
       } else if (op.k === 'slide.add' || op.k === 'slide.del' || op.k === 'slide.move') { stripAll = true; if (op.s === ed.sid) redraw = true; } else {
         touch(op.s);
@@ -496,6 +518,7 @@ export async function deckScreen(app, deckId, q) {
     if (!ed.editor) return;
     if (m && k === 'z') return act(() => (e.shiftKey ? deck.redo() : deck.undo()));
     if (m && k === 'y') return act(() => deck.redo());
+    if (m && k === 'k' && ed.sel.size === 1) return act(() => ed.linkDialog());
     if (m && k === 'd') return act(() => (ed.sel.size ? ed.duplicateSel() : ed.duplicateSlide()));
     if (m && k === 'g') return act(() => (e.shiftKey ? ed.ungroup() : ed.group()));
     if (m && e.altKey && k === 'c') return act(() => ed.copyStyle());
@@ -563,7 +586,7 @@ export async function deckScreen(app, deckId, q) {
     box.dataset.c = p.c;
     box.replaceChildren(h('sav-alert', { variant: 'primary' }, h('div.prow', h('span', t('is_presenting', { name: p.name || t('guest') })), h('div.spacer'), btn(t('follow'), () => show(p.st.s, { follow: p.c }), { size: 'sm', icon: 'play' }))));
   }
-  function shortcuts() { const r = (k, v) => h('div.kr', h('span', t(v)), h('kbd', k)); dialog(t('shortcuts'), h('div.keys', r('F5', 'present'), r(C + 'Z', 'undo'), r(isMac ? '⇧⌘Z' : 'Ctrl+Y', 'redo'), r('T', 'text'), r('Ctrl+M', 'new_slide'), r(C + 'D', 'duplicate'), r(C + 'K', 'palette_l'), r(C + 'F', 'find_replace'), r(C + 'G', 'group'), r(C + (isMac ? '⌥C' : 'Alt+C'), 'copy_style'), r('Enter', 'k_write'), r('Esc', 'k_esc'), r('↑ ↓ ← →', 'k_nudge'), r('Shift', 'k_shift'), r('Alt', 'k_alt'), r(C + '[  ]', 'k_order'), r(C + t('k_wheel_n'), 'k_wheel'), r('PgUp / PgDn', 'k_pages'), r(t('k_show_n'), 'k_show')), [], { width: '30rem' }); }
+  function shortcuts() { const r = (k, v) => h('div.kr', h('span', t(v)), h('kbd', k)); dialog(t('shortcuts'), h('div.keys', r('F5', 'present'), r(C + 'Z', 'undo'), r(isMac ? '⇧⌘Z' : 'Ctrl+Y', 'redo'), r('T', 'text'), r('Ctrl+M', 'new_slide'), r(C + 'D', 'duplicate'), r(C + 'J', 'palette_l'), r(C + 'K', 'link'), r(C + 'F', 'find_replace'), r(C + 'G', 'group'), r(C + (isMac ? '⌥C' : 'Alt+C'), 'copy_style'), r('Enter', 'k_write'), r('Esc', 'k_esc'), r('↑ ↓ ← →', 'k_nudge'), r('Shift', 'k_shift'), r('Alt', 'k_alt'), r(C + '[  ]', 'k_order'), r(C + t('k_wheel_n'), 'k_wheel'), r('PgUp / PgDn', 'k_pages'), r(t('k_show_n'), 'k_show')), [], { width: '30rem' }); }
 
   const dropFeatures = addFeatures(ed);
 

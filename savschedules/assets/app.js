@@ -45,7 +45,7 @@ async function route() {
     if (a === 'signin' || a === 'signup') { if (S.user) return go('#/'); leave = land(root, a); return; }
     if (!S.user) { leave = land(root, a === 'welcome' || a === '' ? '' : 'signin'); return; }
     if (!S.user.verified) return unverified(root);
-    if (a === 'settings') { const { settingsScreen } = await import('./options.js'); return settingsScreen(root); }
+    if (a === 'settings') { const { settingsScreen } = await import('./options.js'); return settingsScreen(root, b); }
     if (a === 'admin' && S.user.master) { const { admin } = await import('./admin.js'); return await admin(root, b || 'overview'); }
     if (a === 'new' || a === 'e') { const { editor } = await import('./editor.js'); const x = await editor(root, a === 'new' ? null : b, a === 'new' ? b : null); if (n === turn) leave = x; return; }
     if (a === 'r' && b) { const { results } = await import('./results.js'); const x = await results(root, b); if (n === turn) leave = x; return; }

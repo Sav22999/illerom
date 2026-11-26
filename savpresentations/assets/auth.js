@@ -40,8 +40,10 @@ export const langButton = () => h('sav-button', {
     variant: 'neutral',
     size: 'sm',
     icon: 'languages',
+    label: lang() === 'it' ? 'English' : 'Italiano',
+    class: 'langb',
     onclick: () => useLang(lang() === 'it' ? 'en' : 'it')
-}, lang() === 'it' ? 'English' : 'Italiano');
+}, h('span.lbl', lang() === 'it' ? 'English' : 'Italiano'));
 
 const topBar = (...right) => h('header.ltop', brand(), h('div.spacer'), langButton(), ...right);
 

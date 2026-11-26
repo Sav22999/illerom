@@ -36,7 +36,7 @@ const T = {
 
   // home
   new_l: ['New', 'Nuovo'], new_schedule: ['New schedule', 'Nuova pianificazione'], search_sch: ['Search schedules', 'Cerca pianificazioni'], ready_made: ['Ready-made starts', 'Partenze pronte'],
-  open_file: ['Open a .savsch file', 'Apri un file .savsch'], imported: ['Schedule opened from the file', 'Pianificazione aperta dal file'], start_new: ['Start a new one', 'Iniziane una nuova'],
+  open_file: ['Open a file', 'Apri un file'], imported: ['Schedule opened from the file', 'Pianificazione aperta dal file'], start_new: ['Start a new one', 'Iniziane una nuova'],
   k_poll: ['Date poll', 'Sondaggio date'], k_slots: ['Slot booking', 'Prenotazione posti'],
   k_poll_t: ['Propose some dates and times: everyone says which ones suit them, and you pick the best.', 'Proponi alcune date e orari: ognuno dice quali gli vanno bene e tu scegli la migliore.'],
   k_slots_t: ['Offer times with a number of places: each person takes one, and a full slot is locked for the others.', 'Offri orari con un certo numero di posti: ognuno ne prende uno e un posto pieno si blocca per gli altri.'],
@@ -150,6 +150,15 @@ const T = {
   err_too_few_dates: ['Say yes to more dates: the organiser asks for a minimum.', 'Di’ sì a più date: chi organizza chiede un minimo.'], err_too_many_answers: ['This schedule is full of answers.', 'Questa pianificazione ha raggiunto il massimo di risposte.'],
   err_slot_taken: ['Someone took that slot a moment ago: choose another one.', 'Qualcuno ha appena preso quel posto: scegline un altro.'], err_file_big: ['The file is too big.', 'Il file è troppo grande.'], err_file_invalid: ['This is not a .savsch file.', 'Questo non è un file .savsch.'],
   err_bad_request: ['Something in the request is not right.', 'Qualcosa nella richiesta non va.'], err_google_token: ['Google did not confirm the sign-in.', 'Google non ha confermato l’accesso.'], err_google_disabled: ['Google sign-in is not available.', 'L’accesso con Google non è disponibile.'], err_google_email: ['The Google address is not confirmed.', 'L’indirizzo Google non è confermato.'],
+  // settings, as in SavPresentations and SavDocuments
+  name_t: ['Shown to the people who answer.', 'La vedono le persone che rispondono.'],
+  password_t: ['To sign in with your email.', 'Per entrare con la tua email.'],
+  password_none_t: ['You sign in with Google or SavAccount: you can add one.', 'Entri con Google o SavAccount: puoi aggiungerne una.'],
+  sign_in_ways: ['Ways to sign in', 'Modi per entrare'], sign_in_ways_t: ['Google, SavAccount and password, joined to this account.', 'Google, SavAccount e password, collegati a questo account.'],
+  sign_out_t: ['On this device.', 'Su questo dispositivo.'],
+  export_data_t: ['Everything stored about you, in one file.', 'Tutto quello che è salvato su di te, in un file.'],
+  delete_account_short: ['Your polls, slots and answers go for good.', 'I tuoi sondaggi, turni e risposte spariscono per sempre.'],
+  recent: ['Recent', 'Recenti'],
 };
 T.places_taken_l = T.places_taken_l || T.places_taken;
 

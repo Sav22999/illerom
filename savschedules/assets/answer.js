@@ -185,7 +185,7 @@ export async function answerPage(root, pid, urlKey) {
     put(page, header(), h('main.pmain', hero(), finalBox(), notices(), mineBox(), optionsBox, formBox, table(), h('p.preport', h('button.linkish', { type: 'button', onclick: report }, icon('flag'), ' ', t('report')))), credit());
     drawOptions();
     drawForm();
-    document.title = s.title + ' · SavSchedules';
+    document.title = s.title + ' – SavSchedules';
   }
   function report() {
     const reason = h('sav-radio-group', { label: t('report_why'), value: 'spam' }, ['spam', 'scam', 'offensive', 'other'].map((k) => h('sav-radio', { value: k }, t('rep_' + k))));

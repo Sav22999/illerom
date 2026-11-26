@@ -140,28 +140,20 @@ export function addFeatures(ed) {
         }, {}]] : [])], {width: '36rem'});
     };
 
-    // ---------------------------------------------------------------- versions
-    ed.versions = async () => {
-        let dlg;
-        const body = h('div.stack', h('sav-spinner'));
-        const p = dialog(t('versions'), body, [[t('save_version'), async () => {
-            const name = await promptBox(t('save_version'), t('name'), '', t('save'), 80);
-            if (name) {
-                await api('version.save', {d: deck.uid, label: name});
-                await load();
-            }
-            return false;
-        }, {icon: 'save', appearance: 'outline'}]], {width: '40rem', ref: (d) => (dlg = d)});
+    // ---------------------------------------------------------------- versions: a side panel, as in SavDocuments
+    ed.versions = () => ed.setTab('history');
+    ed.versionsPanel = () => {
+        const body = h('div.stack.versions', h('sav-spinner'));
         const look = async (v) => {
             try {
                 const r = await get('version.get', {d: deck.uid, id: v.id});
                 r.meta.theme.colors ||= {};
                 r.meta.theme.fonts ||= {};
                 const ctx = context(r.meta);
-                await dialog(v.label || new Date(v.at).toLocaleString(), h('div.grid.aview', ...r.slides.map((s, i) => fluidThumb(fixSlide(s.d), ctx, {index: i}))), [[t('close'), null, {
+                await dialog(v.label && v.label !== '—' ? v.label : new Date(v.at).toLocaleString(), h('div.grid.aview', ...r.slides.map((s, i) => fluidThumb(fixSlide(s.d), ctx, {index: i}))), [[t('close'), null, {
                     appearance: 'outline',
                     variant: 'neutral'
-                }], [t('restore'), () => restore(v)]], {width: '64rem'});
+                }], [t('restore'), () => restore(v), {icon: 'rotate-ccw'}]], {width: '64rem'});
             } catch (e) {
                 oops(e);
             }
@@ -170,33 +162,39 @@ export function addFeatures(ed) {
             if (!(await confirmBox(t('restore'), t('restore_t'), t('restore'), false))) return false;
             await deck.sync();
             await api('version.restore', {d: deck.uid, id: v.id});
-            dlg.close();
             dispatchEvent(new PopStateEvent('popstate'));
+            return true;
+        };
+        const saveOne = async () => {
+            const name = await promptBox(t('save_version'), t('name'), '', t('save'), 80);
+            if (!name) return;
+            try {
+                await deck.sync();
+                await api('version.save', {d: deck.uid, label: name});
+                await load();
+            } catch (e) {
+                oops(e);
+            }
         };
 
         async function load() {
             try {
                 const r = await get('version.list', {d: deck.uid});
-                body.replaceChildren(h('p.muted', t('versions_t')), r.versions.length ? h('sav-timeline', ...r.versions.map((v) => h('sav-timeline-item', {
-                    heading: v.label && v.label !== '—' ? v.label : t('auto_version'),
-                    time: new Date(v.at).toLocaleString(),
-                    variant: v.label ? 'primary' : 'neutral'
-                }, h('div.prow', h('small.muted', [v.by, ago(v.at)].filter(Boolean).join(' · ')), h('div.spacer'), btn(t('look_at'), () => look(v), {
-                    size: 'sm',
-                    appearance: 'outline',
-                    variant: 'neutral',
-                    icon: 'eye'
-                }), btn(t('restore'), () => restore(v).catch(oops), {
-                    size: 'sm',
-                    appearance: 'soft'
-                }))))) : h('p.muted', t('no_versions')));
+                if (!body.isConnected && body.dataset.done) return;
+                body.dataset.done = 1;
+                body.replaceChildren(btn(t('save_version'), saveOne, {icon: 'history', size: 'sm', block: true, appearance: 'outline', variant: 'neutral'}), h('p.muted.small', t('versions_t')),
+                    ...(r.versions.length ? r.versions.map((v) => {
+                        const named = v.label && v.label !== '—', when = new Date(v.at).toLocaleString(undefined, {dateStyle: 'medium', timeStyle: 'short'});
+                        return tile(named ? v.label : when, () => look(v), {class: 'version'}, h('strong', named ? v.label : when), h('small.muted', [named ? ago(v.at) : t('auto_version'), v.by].filter(Boolean).join(' · ')));
+                    }) : [h('sav-empty-state', {icon: 'history', heading: t('no_versions_h'), text: t('no_versions')})]));
             } catch (e) {
+                body.replaceChildren(h('p.muted', e.message || t('err_server')));
                 oops(e);
             }
         }
 
         load();
-        return p;
+        return body;
     };
 
     // ---------------------------------------------------------------- overview of all the slides
@@ -224,10 +222,10 @@ export function addFeatures(ed) {
         ed.goto(ops[0].s);
     }, () => ed.ctx);
 
-    // ---------------------------------------------------------------- command palette (Ctrl or Cmd + K)
+    // ---------------------------------------------------------------- command palette (Ctrl or Cmd + J, as in SavDocuments)
     const C = isMac ? '⌘' : 'Ctrl+';
     const pal = h('sav-command', {
-        hotkey: 'mod+k',
+        hotkey: 'mod+j',
         placeholder: t('palette_ph'),
         'empty-label': t('no_results'),
         label: t('palette_l')

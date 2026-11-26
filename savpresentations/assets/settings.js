@@ -9,6 +9,7 @@ import {fontField} from './panels.js';
 
 export function settingsScreen(app, q) {
     document.body.classList.add('setp');
+    document.title = t('settings') + ' – SavPresentations';
     const u = state.user;
     const save = async (p, quiet) => {
         try {
@@ -103,7 +104,7 @@ export function settingsScreen(app, q) {
     tabs.addEventListener('sav-tab-show', (e) => history.replaceState(null, '', '?p=settings&s=' + e.detail.name));
 
     app.append(h('header.htop', brand(), h('div.spacer'), userMenu()),
-        h('main.smain', h('div.hhead', h('sav-button', {icon: 'arrow-left', appearance: 'ghost', variant: 'neutral', onclick: () => go('./')}, t('home')), h('h1', t('settings'))), tabs), credit());
+        h('main.smain', h('div.hhead', h('sav-button', {icon: 'arrow-left', appearance: 'ghost', variant: 'neutral', onclick: () => go('./')}, t('home')), h('h1', t('settings'))), h('p.muted.ssub', t('settings_t')), tabs), credit());
 
     async function deleteAccount() {
         const f = u.hasPassword ? h('sav-input', {label: t('password'), type: 'password', 'password-toggle': true, autocomplete: 'current-password'}) : h('sav-input', {label: t('type_email', {email: u.email}), type: 'email'});

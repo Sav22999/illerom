@@ -32,8 +32,10 @@ export async function editor(root, pid, start) {
   let edits = 0, saving = null, timer = 0, gone = false;
 
   // ------------------------------------------------------------------ saving
-  const status = h('span.status', { 'data-s': s.id ? 'saved' : 'new' }, s.id ? t('saved') : t('not_saved'));
-  const setStatus = (k) => { status.dataset.s = k; status.textContent = t({ saved: 'saved', saving: 'saving', new: 'not_saved', error: 'not_saved_err' }[k]); };
+  // as in SavDocuments and SavPresentations: an icon and a word
+  const status = h('span.status', { role: 'status' });
+  const setStatus = (k) => { status.dataset.s = k; put(status, icon({ saved: 'cloud-check', saving: 'refresh-cw', new: 'cloud-upload', error: 'cloud-off' }[k]), h('span', t({ saved: 'saved', saving: 'saving', new: 'not_saved', error: 'not_saved_err' }[k]))); };
+  setStatus(s.id ? 'saved' : 'new');
   const payload = () => ({ id: s.id, kind: s.kind, title: s.title.trim() || t(slots ? 'untitled_slots' : 'untitled_poll'), descr: s.descr, place: s.place, settings: set, options: s.options.map(({ id, start, end, day, label, cap }) => ({ id, start, end, day, label, cap })) });
   function changed() { edits++; setStatus('saving'); clearTimeout(timer); timer = setTimeout(save, 900); }
   async function save() {
@@ -288,7 +290,7 @@ export async function editor(root, pid, start) {
 
   drawCal();
   drawSide();
-  document.title = (s.title || t('k_' + s.kind)) + ' · SavSchedules';
+  document.title = (s.title || t('k_' + s.kind)) + ' – SavSchedules';
   let lastMobile = mobile();
   const onResize = () => { if (mobile() !== lastMobile) { lastMobile = mobile(); drawCal(); } };
   addEventListener('resize', onResize);

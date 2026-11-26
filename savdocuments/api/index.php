@@ -9,7 +9,7 @@
  * Sharing:      share.get, share.visibility, share.add, share.role, share.remove, invite.create, invite.remove, invite.accept
  * Comments:     comment.list, comment.add, comment.resolve, comment.delete  (private = personal notes)
  * Versions:     version.list, version.get, version.save, version.restore
- * Images:       img (GET), img.upload, img.search, img.import
+ * Images:       img (GET), img.upload, img.search, img.import, img.mine, img.copy
  * Typefaces:    font (GET), font.list, font.upload (the file is the body), font.delete
  * Abuse:        report.add
  * Master admin: master.overview, master.users, master.block, master.docs, master.suspend, master.reports, master.report
@@ -830,6 +830,25 @@ switch ($r) {
         if (!preg_match('#^data:image/[a-z]+;base64,#', $data, $m)) fail('image_invalid', 422);
         $bin = base64_decode(substr($data, strlen($m[0])), true);
         send_json(['ok' => true, 'id' => store_image($d, $bin === false ? '' : $bin)]);
+
+    case 'img.mine':
+        // The pictures of one's own documents, newest first: to use one again (as "My pictures" in SavPresentations)
+        $u = reader();
+        $st = db()->prepare('SELECT i.id, i.bytes, i.created_at, d.title FROM ' . t('images') . ' i JOIN ' . t('documents') . ' d ON d.id = i.doc_id WHERE d.owner_id = ? ORDER BY i.created_at DESC LIMIT 240');
+        $st->execute([$u['id']]);
+        send_json(['ok' => true, 'images' => array_map(fn($x) => ['id' => $x['id'], 'bytes' => (int)$x['bytes'], 'doc' => $x['title'], 'at' => $x['created_at']], $st->fetchAll())]);
+
+    case 'img.copy':
+        // One of my pictures into this document (each document keeps its own copy: sharing it never shows the others)
+        $u = writer();
+        [$d] = require_doc($u, pid(), 'editor');
+        if (too_many_attempts('img', 300, 60)) fail('rate_limited', 429);
+        record_attempt('img');
+        $st = db()->prepare('SELECT i.data FROM ' . t('images') . ' i JOIN ' . t('documents') . ' d ON d.id = i.doc_id WHERE i.id = ? AND d.owner_id = ?');
+        $st->execute([(string)(body()['id'] ?? ''), $u['id']]);
+        $bin = $st->fetchColumn();
+        if ($bin === false) fail('doc_not_found', 404);
+        send_json(['ok' => true, 'id' => store_image($d, (string)$bin)]);
 
     // ================================================================ typefaces from file
 
