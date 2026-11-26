@@ -11,6 +11,7 @@ for f in glob.glob(root + '/assets/*.js'):
         if os.path.exists(f'{src}/{al.get(m, m)}.svg'):
             names.add(m)
 names.add('pipette')  # asked by the colour picker of SavComponents
+names.update(['volume-2', 'volume-x', 'repeat', 'captions', 'picture-in-picture-2'])  # asked by the video player of SavComponents (sav-video)
 out = {}
 for x in sorted(names):
     m = re.search(r'<svg[^>]*>(.*)</svg>', open(f'{src}/{al.get(x, x)}.svg').read(), re.S)

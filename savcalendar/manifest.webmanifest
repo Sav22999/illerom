@@ -1,0 +1,23 @@
+{
+  "name": "SavCalendar",
+  "short_name": "SavCalendar",
+  "description": "A free, open calendar, together with SavSchedules. Part of SavOffice.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#fbf4f2",
+  "theme_color": "#c93a2f",
+  "lang": "en",
+  "categories": ["productivity", "business", "utilities"],
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ],
+  "file_handlers": [
+    {"action": "./", "accept": {"application/vnd.savcalendar.calendar+zip": [".savcal"], "text/calendar": [".ics"]}}
+  ],
+  "launch_handler": {"client_mode": "navigate-existing"}
+}

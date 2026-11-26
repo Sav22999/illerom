@@ -205,17 +205,24 @@ export class Pager {
         // which notes go on which page: the room they take changes where the text breaks, so it is asked again until it holds
         const fns = [...ed.querySelectorAll('sup.fn')];
         let per = [];
-        for (let k = 0; k < 5; k++) {
+        for (let k = 0; k < 8; k++) {
             pass();
             this.top = this.flow.getBoundingClientRect().top;
             per = [];
             fns.forEach((f, i) => { const r = f.getBoundingClientRect(); (per[pageOf(this.y(r) + r.height / this.zoom / 2)] ||= []).push({ k: i + 1, n: f.dataset.n || '' }); });
-            const h = Array.from({ length: Math.max(per.length, noteH.length) }, (_, i) => this.notesHeight(per[i]));
+            // the room only grows after the first try: a reference at the bottom of a page that its own note pushes to the next one
+            // goes there with its note (as word processors do), instead of jumping back and forth
+            const h = Array.from({ length: Math.max(per.length, noteH.length) }, (_, i) => (k ? Math.max(this.notesHeight(per[i]), per[i]?.length ? noteH[i] || 0 : 0) : this.notesHeight(per[i])));
             const same = h.every((x, i) => Math.abs(x - (noteH[i] || 0)) < 1) && noteH.slice(h.length).every((x) => !x);
             noteH = h;
             if (same) break;
             // still moving after the last try: the room follows this assignment once more, and the notes stay where the room is
-            if (k === 4) pass();
+            if (k === 7) {
+                pass();
+                this.top = this.flow.getBoundingClientRect().top;
+                per = [];
+                fns.forEach((f, i) => { const r = f.getBoundingClientRect(); (per[pageOf(this.y(r) + r.height / this.zoom / 2)] ||= []).push({ k: i + 1, n: f.dataset.n || '' }); });
+            }
         }
         this.noteH = noteH;
         this.pageNotes = per;

@@ -1802,7 +1802,8 @@ a, button {
         grid-column: 2;
         grid-row: 2;
         align-self: start;
-        font-size: clamp(1.7rem, 8vw, 2.2rem);
+        /* the longest word of the name (--w letters) stays on one line beside the icon: no "SavPresentatio / ns" */
+        font-size: max(1.2rem, min(clamp(1.7rem, 8vw, 2.2rem), (100vw - 10.5rem) / (var(--w, 10) * .55)));
         overflow-wrap: anywhere;
     }
 
@@ -2500,3 +2501,6 @@ a, button {
         animation: none !important;
     }
 }
+
+/* the "Sav" of the Sav apps is never bold, as in the apps themselves */
+.sav { font-weight: 400 !important; }

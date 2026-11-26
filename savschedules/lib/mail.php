@@ -81,6 +81,10 @@ const MAIL_TEXT = [
         'mine_keep' => 'Keep this email: the button opens your answer, so you can change or withdraw it.', 'mine_button' => 'Open my answer',
         'final_subject' => '“{title}”: the date is set', 'final_title' => 'The date is set', 'final_body' => '{by} chose the date of “{title}”:',
         'final_button' => 'Open the schedule',
+        'mine_assign' => 'Slots you can take:', 'mine_maybe' => 'could free myself',
+        'assign_subject' => '“{title}”: your slot', 'assign_title' => 'Your slot is set', 'assign_body' => '{by} gave out the slots of “{title}”. Yours is:',
+        'allin_subject' => '“{title}”: everyone has answered', 'allin_title' => 'Everyone has answered',
+        'allin_body' => 'All {n} people expected have answered “{title}”: you can now see the possible solutions and give each one a slot.', 'allin_button' => 'Give out the slots',
     ],
     'it' => [
         'footer' => 'Email automatica inviata da SavSchedules. Non rispondere a questo messaggio.',
@@ -100,6 +104,10 @@ const MAIL_TEXT = [
         'mine_keep' => 'Conserva questa email: il pulsante apre la tua risposta, così puoi cambiarla o ritirarla.', 'mine_button' => 'Apri la mia risposta',
         'final_subject' => '«{title}»: la data è decisa', 'final_title' => 'La data è decisa', 'final_body' => '{by} ha scelto la data di «{title}»:',
         'final_button' => 'Apri la pianificazione',
+        'mine_assign' => 'Slot che puoi prendere:', 'mine_maybe' => 'posso liberarmi',
+        'assign_subject' => '«{title}»: il tuo slot', 'assign_title' => 'Il tuo slot è deciso', 'assign_body' => '{by} ha assegnato gli slot di «{title}». Il tuo è:',
+        'allin_subject' => '«{title}»: hanno risposto tutti', 'allin_title' => 'Hanno risposto tutti',
+        'allin_body' => 'Tutte le {n} persone attese hanno risposto a «{title}»: ora puoi vedere le soluzioni possibili e dare a ognuno uno slot.', 'allin_button' => 'Assegna gli slot',
     ],
 ];
 

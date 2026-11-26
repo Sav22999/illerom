@@ -1,0 +1,198 @@
+/**
+ * Geometry of the board, without the screen: the outline of a line drawn by hand (its width follows the pressure), the
+ * path of the highlighter, texts cut into lines, the box of each item and what a point or a box touches.
+ */
+import { FONTS, r2 } from './model.js';
+
+const pts = (p) => { const o = []; for (let i = 0; i + 2 < p.length; i += 3) o.push([p[i], p[i + 1], p[i + 2]]); return o; };
+const f = (n) => Math.round(n * 100) / 100;
+
+/** How wide a pen is at a pressure (0–1): from 40% to 160% of its size. */
+export const widthAt = (tool, s, pr) => (tool === 'pencil' ? s * (.55 + pr * .9) : s * (.4 + pr * 1.2));
+
+/**
+ * The outline of a stroke of pen or pencil, as a filled SVG path: the two sides of the line, with round ends. Short
+ * curves join the points (the middle of each pair is on the curve), so the edge stays smooth.
+ */
+export function outline(item) {
+  const P = pts(item.p);
+  if (!P.length) return '';
+  const w = P.map((q) => widthAt(item.tool, item.s, q[2]) / 2);
+  if (P.length === 1 || P.every((q) => Math.abs(q[0] - P[0][0]) < .01 && Math.abs(q[1] - P[0][1]) < .01)) {
+    const r = Math.max(.3, w[0]), [x, y] = P[0];
+    return `M${f(x - r)} ${f(y)}a${f(r)} ${f(r)} 0 1 0 ${f(2 * r)} 0a${f(r)} ${f(r)} 0 1 0 ${f(-2 * r)} 0Z`;
+  }
+  // the ends get thinner a little, as a real pen that lands and leaves
+  const n = P.length, L = [], R = [];
+  for (let i = 0; i < n; i++) {
+    const a = P[Math.max(0, i - 1)], b = P[Math.min(n - 1, i + 1)];
+    let dx = b[0] - a[0], dy = b[1] - a[1];
+    const len = Math.hypot(dx, dy) || 1;
+    dx /= len; dy /= len;
+    const taper = item.tool === 'pencil' ? 1 : Math.min(1, .55 + .45 * Math.min(i, n - 1 - i) / 3);
+    const r = w[i] * taper;
+    L.push([P[i][0] - dy * r, P[i][1] + dx * r]);
+    R.push([P[i][0] + dy * r, P[i][1] - dx * r]);
+  }
+  const curve = (side) => { let d = ''; for (let i = 1; i < side.length - 1; i++) { const m = [(side[i][0] + side[i + 1][0]) / 2, (side[i][1] + side[i + 1][1]) / 2]; d += `Q${f(side[i][0])} ${f(side[i][1])} ${f(m[0])} ${f(m[1])}`; } const e = side[side.length - 1]; return d + `L${f(e[0])} ${f(e[1])}`; };
+  const rEnd = Math.max(.3, w[n - 1] * (item.tool === 'pencil' ? 1 : .55)), rStart = Math.max(.3, w[0] * (item.tool === 'pencil' ? 1 : .55));
+  const Rr = R.slice().reverse();
+  return `M${f(L[0][0])} ${f(L[0][1])}${curve(L)}A${f(rEnd)} ${f(rEnd)} 0 0 1 ${f(Rr[0][0])} ${f(Rr[0][1])}${curve(Rr)}A${f(rStart)} ${f(rStart)} 0 0 1 ${f(L[0][0])} ${f(L[0][1])}Z`;
+}
+
+/** The middle line of a stroke (the highlighter is a wide line of the same width all along). */
+export function centerline(item) {
+  const P = pts(item.p);
+  if (!P.length) return '';
+  if (P.length === 1) return `M${f(P[0][0])} ${f(P[0][1])}l.01 0`;
+  let d = `M${f(P[0][0])} ${f(P[0][1])}`;
+  for (let i = 1; i < P.length - 1; i++) d += `Q${f(P[i][0])} ${f(P[i][1])} ${f((P[i][0] + P[i + 1][0]) / 2)} ${f((P[i][1] + P[i + 1][1]) / 2)}`;
+  const e = P[P.length - 1];
+  return d + `L${f(e[0])} ${f(e[1])}`;
+}
+
+// ------------------------------------------------------------------ texts
+
+const ctx = document.createElement('canvas').getContext('2d');
+export const fontOf = (i) => `${i.b ? 700 : 400} ${i.fs}px ${FONTS[i.ff] || FONTS.sans}`;
+export const LINE = 1.25;
+/** The lines of a text: its own line breaks, and wrapped at width w (0 = only its own breaks). */
+export function wrap(text, font, width) {
+  ctx.font = font;
+  const out = [];
+  for (const para of String(text).split('\n')) {
+    if (!width) { out.push(para); continue; }
+    let line = '';
+    for (const word of para.split(/(\s+)/)) {
+      const next = line + word;
+      if (line && ctx.measureText(next).width > width && word.trim()) { out.push(line.replace(/\s+$/, '')); line = word.replace(/^\s+/, ''); }
+      else line = next;
+      // a single word longer than the width is cut
+      while (ctx.measureText(line).width > width && line.length > 1) { let k = line.length - 1; while (k > 1 && ctx.measureText(line.slice(0, k)).width > width) k--; out.push(line.slice(0, k)); line = line.slice(k); }
+    }
+    out.push(line);
+  }
+  return out;
+}
+export const measure = (s, font) => { ctx.font = font; return ctx.measureText(s).width; };
+
+const textCache = new WeakMap();
+/** A text item laid out: its lines and its size. */
+export function layoutText(i) {
+  let m = textCache.get(i);
+  if (m) return m;
+  const font = fontOf(i), lines = wrap(i.text || ' ', font, i.w);
+  const width = i.w || Math.max(i.fs * .5, ...lines.map((l) => measure(l, font)));
+  m = { lines, w: width, h: Math.max(1, lines.length) * i.fs * LINE, font };
+  textCache.set(i, m);
+  return m;
+}
+export const NOTE_PAD = .09;
+const noteCache = new WeakMap();
+export function layoutNote(i) {
+  let m = noteCache.get(i);
+  if (m) return m;
+  const pad = Math.min(i.w, i.h) * NOTE_PAD, font = `400 ${i.fs}px ${FONTS.sans}`;
+  m = { pad, font, lines: wrap(i.text || '', font, Math.max(4, i.w - 2 * pad)) };
+  noteCache.set(i, m);
+  return m;
+}
+
+// ------------------------------------------------------------------ boxes and touches
+
+const boxCache = new WeakMap();
+/** The box of an item on the board: {x, y, w, h}. */
+export function bounds(i) {
+  let b = boxCache.get(i);
+  if (b) return b;
+  if (i.t === 'stroke') {
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (let k = 0; k < i.p.length; k += 3) { const x = i.p[k], y = i.p[k + 1]; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    const r = widthAt(i.tool, i.s, 1) / 2;
+    b = { x: x0 - r, y: y0 - r, w: x1 - x0 + 2 * r, h: y1 - y0 + 2 * r };
+  } else if (i.t === 'text') {
+    const m = layoutText(i);
+    b = { x: i.x, y: i.y, w: m.w, h: m.h }; // x, y: the top left corner; the lines are aligned inside the box
+  } else if (i.t === 'shape') {
+    const x = Math.min(i.x, i.x + i.w), y = Math.min(i.y, i.y + i.h), pad = i.s / 2 + (i.k === 'arrow' ? i.s * 2.5 : 0);
+    b = { x: x - pad, y: y - pad, w: Math.abs(i.w) + 2 * pad, h: Math.abs(i.h) + 2 * pad };
+  } else b = { x: i.x, y: i.y, w: i.w, h: i.h };
+  boxCache.set(i, b);
+  return b;
+}
+export function union(list) {
+  if (!list.length) return null;
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const i of list) { const b = bounds(i); x0 = Math.min(x0, b.x); y0 = Math.min(y0, b.y); x1 = Math.max(x1, b.x + b.w); y1 = Math.max(y1, b.y + b.h); }
+  return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+}
+export const overlaps = (a, b) => a.x <= b.x + b.w && b.x <= a.x + a.w && a.y <= b.y + b.h && b.y <= a.y + a.h;
+
+export function segDist(px, py, ax, ay, bx, by) {
+  const dx = bx - ax, dy = by - ay, l = dx * dx + dy * dy;
+  const t = l ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / l)) : 0;
+  return Math.hypot(px - ax - t * dx, py - ay - t * dy);
+}
+const polyDist = (x, y, P, closed) => { let d = Infinity; for (let k = 0; k < P.length - (closed ? 0 : 1); k++) { const a = P[k], b = P[(k + 1) % P.length]; d = Math.min(d, segDist(x, y, a[0], a[1], b[0], b[1])); } return d; };
+const inside = (x, y, P) => { let c = false; for (let a = 0, b = P.length - 1; a < P.length; b = a++) if ((P[a][1] > y) !== (P[b][1] > y) && x < ((P[b][0] - P[a][0]) * (y - P[a][1])) / (P[b][1] - P[a][1]) + P[a][0]) c = !c; return c; };
+export function shapePoints(i) {
+  const { x, y, w, h } = i;
+  if (i.k === 'diamond') return [[x + w / 2, y], [x + w, y + h / 2], [x + w / 2, y + h], [x, y + h / 2]];
+  if (i.k === 'triangle') return [[x + w / 2, y], [x + w, y + h], [x, y + h]];
+  return [[x, y], [x + w, y], [x + w, y + h], [x, y + h]];
+}
+
+/** Does the point (x, y) touch the item, within tol units of the board? */
+export function hits(i, x, y, tol) {
+  const b = bounds(i);
+  if (x < b.x - tol || x > b.x + b.w + tol || y < b.y - tol || y > b.y + b.h + tol) return false;
+  if (i.t === 'stroke') {
+    const p = i.p, half = (i.tool === 'marker' ? i.s : widthAt(i.tool, i.s, .7)) / 2 + tol;
+    if (p.length === 3) return Math.hypot(x - p[0], y - p[1]) <= half;
+    for (let k = 3; k < p.length; k += 3) if (segDist(x, y, p[k - 3], p[k - 2], p[k], p[k + 1]) <= half) return true;
+    return false;
+  }
+  if (i.t === 'shape') {
+    const half = i.s / 2 + tol;
+    if (i.k === 'line' || i.k === 'arrow') return segDist(x, y, i.x, i.y, i.x + i.w, i.y + i.h) <= half;
+    if (i.k === 'ellipse') {
+      const rx = i.w / 2, ry = i.h / 2, cx = i.x + rx, cy = i.y + ry, nx = (x - cx) / (rx || 1), ny = (y - cy) / (ry || 1), r = Math.hypot(nx, ny);
+      return (i.f && r <= 1) || Math.abs(r - 1) * Math.min(rx, ry) <= half;
+    }
+    const P = shapePoints(i);
+    return (i.f && inside(x, y, P)) || polyDist(x, y, P, true) <= half;
+  }
+  return true; // texts, notes and pictures: their whole box
+}
+
+/** Does the circle (x, y, r) touch the item? (the eraser) */
+export const touches = (i, x, y, r) => hits(i, x, y, r);
+
+/** The stroke without the points inside the circle: the pieces that are left (none when all of it is gone). */
+export function cut(i, x, y, r) {
+  const p = i.p, runs = [];
+  let cur = [], changed = false;
+  for (let k = 0; k < p.length; k += 3) {
+    if (Math.hypot(p[k] - x, p[k + 1] - y) <= r + (i.tool === 'marker' ? i.s / 2 : widthAt(i.tool, i.s, p[k + 2]) / 2) * .5) { changed = true; if (cur.length) runs.push(cur); cur = []; }
+    else cur.push(p[k], p[k + 1], p[k + 2]);
+  }
+  if (cur.length) runs.push(cur);
+  return changed ? runs : null;
+}
+
+/** An item moved by (dx, dy). */
+export function moved(i, dx, dy) {
+  if (i.t === 'stroke') return { ...i, p: i.p.map((v, n) => (n % 3 === 0 ? r2(v + dx) : n % 3 === 1 ? r2(v + dy) : v)) };
+  return { ...i, x: r2(i.x + dx), y: r2(i.y + dy) };
+}
+
+/** An item scaled around (ox, oy) by (sx, sy), as it was at the start of the drag. */
+export function scaled(i, ox, oy, sx, sy) {
+  const X = (v) => r2(ox + (v - ox) * sx), Y = (v) => r2(oy + (v - oy) * sy), k = Math.sqrt(Math.abs(sx * sy)) || 1;
+  if (i.t === 'stroke') return { ...i, s: r2(Math.max(.5, i.s * k)), p: i.p.map((v, n) => (n % 3 === 0 ? X(v) : n % 3 === 1 ? Y(v) : v)) };
+  if (i.t === 'text') return { ...i, x: X(i.x), y: Y(i.y), fs: r2(Math.max(4, i.fs * Math.abs(sy))), w: i.w ? r2(Math.max(10, i.w * Math.abs(sx))) : 0 };
+  if (i.t === 'shape' && (i.k === 'line' || i.k === 'arrow')) { const x2 = X(i.x + i.w), y2 = Y(i.y + i.h), x = X(i.x), y = Y(i.y); return { ...i, x, y, w: r2(x2 - x), h: r2(y2 - y) }; }
+  const x = X(i.x), y = Y(i.y), x2 = X(i.x + i.w), y2 = Y(i.y + i.h);
+  const o = { ...i, x: Math.min(x, x2), y: Math.min(y, y2), w: r2(Math.max(i.t === 'note' ? 20 : 1, Math.abs(x2 - x))), h: r2(Math.max(i.t === 'note' ? 20 : 1, Math.abs(y2 - y))) };
+  return o;
+}

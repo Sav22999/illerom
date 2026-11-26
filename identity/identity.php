@@ -175,6 +175,9 @@ function ident_resolve(string $provider, array $who): array
     $u = ident_user('email = ?', [$who['email']]);
     if (!$u) return ['signup', null];
     if ($u['status'] !== 'active') return ['disabled', null];
+    // Linked to another SavAccount id: with pairwise ids the id of a person changes when the app moves to another service
+    // of SavAccount (the apps of SavOffice now share one), so it is joined again, after the usual proof (never in silence)
+    if (!empty($u[$col]) && $provider === 'savaccount' && !empty($u['email_verified_at'])) return ['link', $u];
     if (!empty($u[$col])) return ['other', null];
     if (empty($u['email_verified_at'])) {
         // nobody ever confirmed this address: it goes to who proves it, without the password someone else may have chosen
@@ -219,8 +222,9 @@ function ident_link_info(string $provider, array $u): array
 {
     return ['provider' => $provider, 'email' => $u['email'], 'methods' => [
         'password' => ($u['password_hash'] ?? '') !== '',
-        'google' => !empty($u['google_sub']) && (string)config_value('google_client_id', '') !== '',
-        'savaccount' => !empty($u['sav_sub']) && sav_enabled(),
+        'google' => !empty($u['google_sub']) && (string)config_value('google_client_id', '') !== '' && $provider !== 'google',
+        // never the same provider that is being joined (an old SavAccount id cannot prove the new one)
+        'savaccount' => !empty($u['sav_sub']) && sav_enabled() && $provider !== 'savaccount',
         'code' => mail_settings() !== null,
     ]];
 }
@@ -230,7 +234,8 @@ function ident_join(array $row, array $u): void
 {
     $col = IDENT_COLUMNS[$row['provider']];
     if (ident_user("$col = ? AND id <> ?", [$row['sub'], $u['id']])) ident_fail('identity_taken', 409);
-    $st = ident_q('UPDATE ' . t('users') . " SET $col = ? WHERE id = ? AND ($col IS NULL OR $col = ?)", [$row['sub'], $u['id'], $row['sub']]);
+    // a SavAccount id left by an older service of SavAccount is replaced (the account has just been proved)
+    $st = ident_q('UPDATE ' . t('users') . " SET $col = ? WHERE id = ? AND ($col IS NULL OR $col = ? OR ? = 'savaccount')", [$row['sub'], $u['id'], $row['sub'], $row['provider']]);
     if (!ident_user("id = ? AND $col = ?", [$u['id'], $row['sub']])) ident_fail('identity_other', 409);
     ident_forget('ident');
     ident_notice($u, $row['provider'], true);
@@ -383,9 +388,9 @@ function sav_callback(): void
         if (!$u || (int)$u['id'] !== (int)$flow['user_id']) sav_back('expired');
         if (ident_user('sav_sub = ? AND id <> ?', [$who['sub'], $u['id']])) sav_back('taken');
         $full = ident_user('id = ?', [$u['id']]);
-        if (!empty($full['sav_sub']) && $full['sav_sub'] !== $who['sub']) sav_back('other');
+        // signed in already: a SavAccount id of an older service is replaced (and the account is told, as for a new link)
         ident_q('UPDATE ' . t('users') . ' SET sav_sub = ? WHERE id = ?', [$who['sub'], $u['id']]);
-        if (empty($full['sav_sub'])) ident_notice($full, 'savaccount', true);
+        if ($full['sav_sub'] !== $who['sub']) ident_notice($full, 'savaccount', true);
         sav_back('connected');
     }
 

@@ -35,17 +35,17 @@ const T = {
   unverified: ['Confirm your email to go on', 'Conferma la tua email per continuare'], resend: ['Send the link again', 'Invia di nuovo il link'], resent: ['Link sent', 'Link inviato'], language: ['Language', 'Lingua'],
 
   // home
-  new_l: ['New', 'Nuovo'], new_schedule: ['New schedule', 'Nuova pianificazione'], search_sch: ['Search schedules', 'Cerca pianificazioni'], ready_made: ['Ready-made starts', 'Partenze pronte'],
-  open_file: ['Open a file', 'Apri un file'], imported: ['Schedule opened from the file', 'Pianificazione aperta dal file'], start_new: ['Start a new one', 'Iniziane una nuova'],
+  new_l: ['New', 'Nuovo'], new_schedule: ['New schedule', 'Nuova pianificazione'], search_sch: ['Search your schedules', 'Cerca nelle tue pianificazioni'], ready_made: ['Templates', 'Modelli'],
+  open_file: ['Open a file', 'Apri un file'], imported: ['Schedule opened from the file', 'Pianificazione aperta dal file'], start_new: ['Start a schedule', 'Inizia una pianificazione'],
   k_poll: ['Date poll', 'Sondaggio date'], k_slots: ['Slot booking', 'Prenotazione posti'],
   k_poll_t: ['Propose some dates and times: everyone says which ones suit them, and you pick the best.', 'Proponi alcune date e orari: ognuno dice quali gli vanno bene e tu scegli la migliore.'],
   k_slots_t: ['Offer times with a number of places: each person takes one, and a full slot is locked for the others.', 'Offri orari con un certo numero di posti: ognuno ne prende uno e un posto pieno si blocca per gli altri.'],
   k_poll_s: ['Find a date together', 'Trovate una data insieme'], k_slots_s: ['People book a place', 'Le persone prenotano un posto'],
   p_meeting: ['Team meeting', 'Riunione di gruppo'], p_dinner: ['Dinner with friends', 'Cena tra amici'], p_office: ['Office hours', 'Ricevimento'], p_interviews: ['Parent-teacher interviews', 'Colloqui con i genitori'], p_shifts: ['Volunteer shifts', 'Turni dei volontari'], p_visits: ['Guided visits', 'Visite guidate'],
-  all_sch: ['All schedules', 'Tutte le pianificazioni'], polls: ['Polls', 'Sondaggi'], slot_sheets: ['Bookings', 'Prenotazioni'], starred: ['Starred', 'Speciali'], answered: ['Answered by me', 'Le mie risposte'], trash: ['Trash', 'Cestino'],
+  all_sch: ['My schedules', 'Le mie pianificazioni'], polls: ['Polls', 'Sondaggi'], slot_sheets: ['Bookings', 'Prenotazioni'], starred: ['Starred', 'Preferiti'], answered: ['Answered by me', 'Le mie risposte'], trash: ['Trash', 'Cestino'],
   open_now: ['open now', 'aperte ora'], new_answers: ['new answers', 'nuove risposte'], places_taken: ['places taken', 'posti presi'], answer_1: ['answer', 'risposta'], answers_n: ['answers', 'risposte'],
   see_answers: ['See the answers', 'Vedi le risposte'], open_as_guest: ['Open as a guest', 'Apri come ospite'], copy_link: ['Copy the link', 'Copia il link'], link_copied: ['Link copied', 'Link copiato'],
-  star: ['Star', 'Aggiungi agli speciali'], unstar: ['Remove the star', 'Togli dagli speciali'], duplicate: ['Duplicate', 'Duplica'], copy_of: ['Copy of {t}', 'Copia di {t}'], title_l: ['Title', 'Titolo'],
+  star: ['Star', 'Aggiungi ai preferiti'], unstar: ['Unstar', 'Togli dai preferiti'], duplicate: ['Duplicate', 'Duplica'], copy_of: ['Copy of {t}', 'Copia di {t}'], title_l: ['Title', 'Titolo'],
   close_sch: ['Stop the answers', 'Chiudi le risposte'], reopen: ['Open the answers again', 'Riapri le risposte'], download_savsch: ['Download (.savsch)', 'Scarica (.savsch)'], download_savsch_all: ['Download with the answers (.savsch)', 'Scarica con le risposte (.savsch)'],
   to_trash: ['Move to the trash', 'Sposta nel cestino'], trashed: ['Moved to the trash', 'Spostata nel cestino'], delete_forever: ['Delete forever', 'Elimina per sempre'], delete_forever_t: ['The schedules and all their answers will be gone for good.', 'Le pianificazioni e tutte le loro risposte spariranno per sempre.'],
   n_new: ['{n} new', '{n} nuove'], date_set: ['Date chosen', 'Data scelta'], suspended: ['Suspended', 'Sospesa'], closed: ['Closed', 'Chiusa'], open_l: ['Open', 'Aperta'],
@@ -67,7 +67,7 @@ const T = {
   label_ph: ['e.g. Online', 'es. Online'], label_ph_slots: ['e.g. Room 2', 'es. Aula 2'], option_has: ['{n} people already chose it.', '{n} persone l’hanno già scelto.'],
   from_day: ['From', 'Dal'], to_day: ['To', 'Al'], weekdays: ['Days of the week', 'Giorni della settimana'], gap: ['Break between', 'Pausa tra uno e l’altro'], no_gap: ['No break', 'Nessuna pausa'],
   series_days: ['Whole days instead of times', 'Giornate intere invece di orari'], will_add: ['{n} will be added.', 'Ne verranno aggiunti {n}.'], will_add_0: ['Nothing to add with these choices.', 'Niente da aggiungere con queste scelte.'],
-  tab_dates: ['Dates', 'Date'], tab_slots: ['Slots', 'Posti'], tab_details: ['Details', 'Dettagli'], tab_rules: ['Rules', 'Regole'],
+  all_templates: ['All templates', 'Tutti i modelli'], sch_name: ['Name of the schedule', 'Nome della pianificazione'], panels: ['Panels', 'Pannelli'], download: ['Download', 'Scarica'], tab_dates: ['Dates', 'Date'], tab_slots: ['Slots', 'Posti'], tab_details: ['Details', 'Dettagli'], tab_rules: ['Rules', 'Regole'],
   no_dates: ['No dates yet', 'Ancora nessuna data'], no_dates_t: ['Click the calendar to propose a time, or switch to the month for whole days.', 'Clicca il calendario per proporre un orario, o passa al mese per le giornate intere.'],
   no_slots: ['No slots yet', 'Ancora nessun posto'], no_slots_t: ['Click the week to add a slot, drag to cut a longer time into slots, or add a series.', 'Clicca la settimana per aggiungere un posto, trascina per dividere un periodo in più posti, o aggiungi una serie.'],
   slots_total: ['{n} slots · {p} places', '{n} orari · {p} posti'], copy_next_day: ['Copy to the next day', 'Copia nel giorno dopo'], copy_next_week: ['Copy to the next week', 'Copia nella settimana dopo'], remove_day: ['Remove the day', 'Rimuovi il giorno'],
@@ -159,6 +159,47 @@ const T = {
   export_data_t: ['Everything stored about you, in one file.', 'Tutto quello che è salvato su di te, in un file.'],
   delete_account_short: ['Your polls, slots and answers go for good.', 'I tuoi sondaggi, turni e risposte spariscono per sempre.'],
   recent: ['Recent', 'Recenti'],
+  // versions
+  changelog: ['What’s new', 'Novità'],
+  changelog_t: ['The versions of SavSchedules and what changed in each. This is version {v}.', 'Le versioni di SavSchedules e cosa è cambiato in ognuna. Questa è la versione {v}.'],
+  current_v: ['current version', 'versione attuale'],
+  google_continue: ['Continue with Google', 'Continua con Google'],
+  // assignment (one slot each)
+  k_assign: ['Slot assignment', 'Assegnazione slot'], k_assign_s: ['One slot each', 'Uno slot a testa'],
+  k_assign_t: ['Everyone says when they are available; then each person gets a slot of their own, chosen with you.', 'Ognuno dice quando è disponibile; poi ciascuno riceve uno slot tutto suo, scelto con te.'],
+  p_rota: ['One day each', 'Un giorno a testa'], assign_sheets: ['Assignments', 'Assegnazioni'], untitled_assign: ['Untitled assignment', 'Assegnazione senza titolo'],
+  r_assign: ['The assignment', 'L’assegnazione'], assign_rule_t: ['For every slot each person answers available, I can free myself or not available; then each one gets a single slot.', 'Per ogni slot ognuno risponde disponibile, posso liberarmi o non disponibile; poi ciascuno riceve un solo slot.'],
+  expected: ['People expected', 'Persone attese'], expected_t: ['When this many have answered you get an email, and the solutions are ready.', 'Quando avranno risposto tutte ricevi un’email, e le soluzioni sono pronte.'],
+  hide_answers_assign: ['Only you see who is available when.', 'Solo tu vedi chi è disponibile e quando.'],
+  assign_total: ['{n} slots for {p} people', '{n} slot per {p} persone'], assign_total0: ['{n} slots, one person each', '{n} slot, una persona ciascuno'], assign_short: ['Add {n} more slots, or someone will stay without one.', 'Aggiungi altri {n} slot, o qualcuno resterà senza.'],
+  invite_assign: ['{n} asks for your availability', '{n} chiede la tua disponibilità'], assign_hint: ['Say for every slot if you can: you will get one', 'Indica per ogni slot se puoi: te ne verrà assegnato uno'],
+  choose_assign: ['Your availability', 'La tua disponibilità'], av_yes: ['Available', 'Disponibile'], av_maybe: ['I can free myself', 'Posso liberarmi'], av_no: ['Not available', 'Non disponibile'],
+  answer_all: ['{n} slots still without an answer', 'Ancora {n} slot senza risposta'], all_answered: ['Every slot has an answer', 'Tutti gli slot hanno una risposta'],
+  your_slot: ['Your slot', 'Il tuo slot'], slots_given: ['The slots are given out', 'Gli slot sono stati assegnati'], no_slot_for_you: ['There was no slot for you this time', 'Questa volta non c’era uno slot per te'], slots_given_t: ['The organiser gave each person a slot', 'Chi organizza ha dato uno slot a ognuno'],
+  sol_rec: ['Recommended solution', 'Soluzione consigliata'], sol_n: ['Solution {n}', 'Soluzione {n}'], sol_custom: ['Your solution', 'La tua soluzione'], sol_saved: ['Assignment confirmed', 'Assegnazione confermata'], recommended: ['Recommended', 'Consigliata'],
+  sol_why: ['As many people as possible in a slot where they are available; “I can free myself” only when needed, and then preferably for whoever answered last.', 'Più persone possibili in uno slot in cui sono disponibili; «Posso liberarmi» solo se serve, e allora preferibilmente per chi ha risposto per ultimo.'],
+  sol_saved_t: ['Everybody sees their slot on the page of the schedule.', 'Ognuno vede il suo slot nella pagina della pianificazione.'],
+  placed_n: ['{a} of {b} placed', '{a} su {b} sistemati'], av_n: ['{n} available', '{n} disponibili'], maybe_free_n: ['{n} freeing themselves', '{n} si liberano'], forced_n: ['{n} forced', '{n} forzati'], all_av: ['all available', 'tutti disponibili'],
+  st_forced: ['Forced', 'Forzato'], without_slot: ['Without a slot', 'Senza slot'],
+  out_title: ['People left without a slot: {n}', 'Persone rimaste senza slot: {n}'], out_t: ['With the answers given there is no way to fit {names}.', 'Con le risposte date non c’è modo di sistemare {names}.'],
+  force_l: ['Place them anyway, even where they said they are not available', 'Sistemale comunque, anche dove hanno detto di non essere disponibili'], force_t: ['Or choose a slot for each one by hand below.', 'Oppure scegli a mano uno slot per ciascuna qui sotto.'],
+  fewer_slots: ['There are {n} slots for {p} people: not everyone can have one.', 'Ci sono {n} slot per {p} persone: non tutti possono averne uno.'],
+  waiting_n: ['Still {n} answers to come: the solutions may change.', 'Mancano ancora {n} risposte: le soluzioni potrebbero cambiare.'], all_in: ['Everyone has answered', 'Hanno risposto tutti'],
+  put_in: ['Choose a slot', 'Scegli uno slot'], change_person: ['Change person', 'Cambia persona'], leave_free: ['Leave it free', 'Lascia libero'], swap_with: ['swaps with {n}', 'scambio con {n}'], instead_of: ['instead of {n}', 'al posto di {n}'],
+  confirm_asg: ['Confirm the assignment', 'Conferma l’assegnazione'], confirm_asg_t: ['The answers close and everybody sees their slot on the page of the schedule.', 'Le risposte si chiudono e ognuno vede il suo slot nella pagina della pianificazione.'],
+  asg_mail: ['Email each person their slot', 'Manda a ognuno il suo slot per email'], asg_mail_t: ['Only to people who left an email or answered with an account.', 'Solo a chi ha lasciato un’email o ha risposto con un account.'],
+  asg_forced_warn: ['{n} people get a slot they said they are not available for.', '{n} persone ricevono uno slot per cui hanno detto di non essere disponibili.'], asg_out_warn: ['Without a slot: {names}.', 'Senza slot: {names}.'],
+  asg_done: ['Slots given', 'Slot assegnati'], asg_change: ['Change the assignment', 'Modifica l’assegnazione'], asg_reset: ['Back to the recommended one', 'Torna alla consigliata'],
+  asg_undo: ['Cancel the assignment', 'Annulla l’assegnazione'], asg_undo_t: ['Nobody will have a slot any more; the answers stay closed until you open them again.', 'Nessuno avrà più uno slot; le risposte restano chiuse finché non le riapri.'],
+  other_sols: ['Other possible solutions', 'Le altre possibili soluzioni'], other_sols_t: ['Just as complete as the recommended one, in order of preference.', 'Complete quanto quella consigliata, in ordine di preferenza.'],
+  no_other: ['No other solution is as good.', 'Nessun’altra soluzione è altrettanto buona.'], no_more: ['There are no others.', 'Non ce ne sono altre.'], show_more: ['Show more', 'Mostra altre'], see: ['See', 'Vedi'], shown: ['Shown', 'Mostrata'], changes_n: ['{n} changes', '{n} cambi'],
+  assigned_col: ['Assigned slot', 'Slot assegnato'], placed_l: ['Placed', 'Sistemati'], placed_best: ['Can be placed', 'Sistemabili'], who_when: ['Who is available when', 'Chi è disponibile e quando'],
+  err_slot_twice: ['Two people in the same slot.', 'Due persone nello stesso slot.'],
+  av_n1: ['{n} available', '{n} disponibile'], maybe_free_n1: ['{n} freeing themselves', '{n} si libera'], forced_n1: ['{n} forced', '{n} forzato'], changes_n1: ['{n} change', '{n} cambio'],
+  asg_forced_warn1: ['{n} person gets a slot they said they are not available for.', '{n} persona riceve uno slot per cui ha detto di non essere disponibile.'],
+  waiting_n1: ['Still one answer to come: the solutions may change.', 'Manca ancora una risposta: le soluzioni potrebbero cambiare.'],
+  answer_all1: ['One slot still without an answer', 'Ancora uno slot senza risposta'], assign_short1: ['Add one more slot, or someone will stay without one.', 'Aggiungi un altro slot, o qualcuno resterà senza.'],
+  slots_l: ['Slots', 'Slot'], all_in_s: ['Complete', 'Completo'],
 };
 T.places_taken_l = T.places_taken_l || T.places_taken;
 
@@ -172,6 +213,8 @@ export function setLang(l) {
 const DEV = /^(localhost|127\.)/.test(location.hostname);
 export const t = (k, v = {}) => { if (!T[k] && DEV) console.warn('i18n missing:', k); return (T[k] ? T[k][lang === 'it' ? 1 : 0] : k).replace(/\{(\w+)\}/g, (m, x) => v[x] ?? m); };
 export const has = (k) => !!T[k];
+/** t with a number: the key ending in 1 when there is one of them (if the texts have it). */
+export const tn = (k, n, v = {}) => t(n === 1 && T[k + '1'] ? k + '1' : k, { n, ...v });
 export function when(iso) {
   if (!iso) return '';
   const d = new Date(iso), s = (Date.now() - d) / 1000, rtf = new Intl.RelativeTimeFormat(lang, { numeric: 'auto' });

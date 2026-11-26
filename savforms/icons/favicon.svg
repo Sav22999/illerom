@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <defs>
+        <linearGradient id="a" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#b968d6"/>
+            <stop offset="1" stop-color="#86329e"/>
+        </linearGradient>
+        <linearGradient id="b" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#6e2486"/>
+            <stop offset="1" stop-color="#47155a"/>
+        </linearGradient>
+    </defs>
+    <!-- an S made of two pieces, as in the other apps of SavOffice: a question with its choices, one of them chosen, and
+         the bars of the answers below, the tallest in the yellow of the suite -->
+    <path d="M20.500 4H53a5 5 0 0 1 5 5v17.500a5 5 0 0 1-5 5H20.500A13.750 13.750 0 0 1 20.500 4z" fill="url(#a)"/>
+    <circle cx="20.500" cy="17.750" r="7.200" fill="#fff"/>
+    <circle cx="20.500" cy="17.750" r="3.400" fill="#86329e"/>
+    <rect x="32" y="12.200" width="20" height="3.600" rx="1.800" fill="#fff"/>
+    <rect x="32" y="19.800" width="13" height="3.600" rx="1.800" fill="#fff" fill-opacity=".55"/>
+    <path d="M43.500 60H11a5 5 0 0 1-5-5V37.500a5 5 0 0 1 5-5h32.500a13.750 13.750 0 0 1 0 27.500z" fill="url(#b)"/>
+    <rect x="12" y="45" width="6.500" height="9" rx="2" fill="#fff" fill-opacity=".55"/>
+    <rect x="21.500" y="37.500" width="6.500" height="16.500" rx="2" fill="#ffd166"/>
+    <rect x="31" y="42" width="6.500" height="12" rx="2" fill="#fff" fill-opacity=".8"/>
+    <rect x="40.500" y="47.500" width="6.500" height="6.500" rx="2" fill="#fff" fill-opacity=".4"/>
+</svg>

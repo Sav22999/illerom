@@ -33,6 +33,9 @@ async function boot() {
   addEventListener('hashchange', route);
   // a .savdoc or .docx opened from the files of the device
   window.launchQueue?.setConsumer(async (p) => { for (const f of p.files || []) await openFile(await f.getFile()); });
+  // … or with the Android app: {name, data} in base64
+  const pend = S.user?.verified && window.SavDocumentsAndroid?.pendingFile?.();
+  if (pend) { const f = JSON.parse(pend); openFile(new File([Uint8Array.from(atob(f.data), (x) => x.charCodeAt(0))], f.name)).catch(() => {}); }
   route();
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 }
@@ -55,6 +58,7 @@ async function route() {
       return;
     }
     document.title = 'SavDocuments';
+    if (a === 'changelog') { const { changelogScreen } = await import('./changelog.js'); return changelogScreen(root, 'SavDocuments'); }
     if (a === 'signin' || a === 'signup') return S.user ? go('#/') : await landing(a);
     if (!S.user) return await landing(a === '' || a === 'welcome' ? '' : 'signin', a === '' || a === 'welcome' ? null : undefined); // SavDocuments works only with an account
     if (a === 'settings') { const { settingsScreen } = await import('./options.js'); return settingsScreen(root, b); }

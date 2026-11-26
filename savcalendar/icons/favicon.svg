@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <defs>
+        <linearGradient id="a" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#f06a5c"/>
+            <stop offset="1" stop-color="#c93a2f"/>
+        </linearGradient>
+        <linearGradient id="b" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#b2302a"/>
+            <stop offset="1" stop-color="#8a1f1b"/>
+        </linearGradient>
+    </defs>
+    <!-- an S made of two pieces, as in the other apps of SavOffice: the page of the month with its rings and its days,
+         today in the yellow of the suite; below, the agenda of the day with its hours and two events -->
+    <path d="M20.500 4H53a5 5 0 0 1 5 5v17.500a5 5 0 0 1-5 5H20.500A13.750 13.750 0 0 1 20.500 4z" fill="url(#a)"/>
+    <rect x="22.600" y="1" width="4.400" height="9" rx="2.200" fill="#ffe1dc"/>
+    <rect x="43" y="1" width="4.400" height="9" rx="2.200" fill="#ffe1dc"/>
+    <g fill="#fff" fill-opacity=".6">
+        <rect x="14" y="13.500" width="6" height="5" rx="1.500"/>
+        <rect x="23" y="13.500" width="6" height="5" rx="1.500"/>
+        <rect x="32" y="13.500" width="6" height="5" rx="1.500"/>
+        <rect x="41" y="13.500" width="6" height="5" rx="1.500"/>
+        <rect x="50" y="13.500" width="6" height="5" rx="1.500"/>
+        <rect x="14" y="21.500" width="6" height="5" rx="1.500"/>
+        <rect x="32" y="21.500" width="6" height="5" rx="1.500"/>
+        <rect x="41" y="21.500" width="6" height="5" rx="1.500"/>
+    </g>
+    <rect x="22" y="20.500" width="8" height="7" rx="2" fill="#ffd166"/>
+    <path d="M43.500 60H11a5 5 0 0 1-5-5V37.500a5 5 0 0 1 5-5h32.500a13.750 13.750 0 0 1 0 27.500z" fill="url(#b)"/>
+    <path d="M13 41.300h4M13 51.200h4" stroke="#fff" stroke-opacity=".55" stroke-width="2.800" stroke-linecap="round"/>
+    <path d="M21 37.200v18.200" stroke="#fff" stroke-opacity=".3" stroke-width="1.600" stroke-linecap="round"/>
+    <rect x="24" y="37.800" width="20" height="7" rx="2.200" fill="#fff"/>
+    <rect x="24" y="47.700" width="13" height="7" rx="2.200" fill="#fff" fill-opacity=".55"/>
+</svg>

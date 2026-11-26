@@ -4,7 +4,7 @@
  *
  * Accounts:     auth.config, auth.me, auth.register, auth.login, auth.google (and the routes of ../identity/identity.php), auth.resend, auth.verify, auth.logout,
  *               auth.password, auth.forgot, auth.reset, auth.prefs, auth.profile, auth.export, auth.delete
- * Owner:        sch.list, sch.create, sch.get, sch.save, sch.status, sch.final, sch.star, sch.seen, sch.duplicate, sch.trash, sch.restore, sch.delete, sch.empty_trash,
+ * Owner:        sch.list, sch.create, sch.get, sch.save, sch.status, sch.final, sch.assign, sch.star, sch.seen, sch.duplicate, sch.trash, sch.restore, sch.delete, sch.empty_trash,
  *               resp.delete
  * Answering:    pub.get, pub.answer, pub.withdraw  (no account needed, unless the owner asks for one)
  * Abuse:        report.add
@@ -132,6 +132,7 @@ switch ($r) {
         only('GET');
         $u = current_user();
         if (!$u || $u['status'] !== 'active') send_json(['ok' => true, 'user' => null]);
+        share_session(); // SavCalendar uses the same session
         send_json(['ok' => true, 'user' => public_user(user_row($u['id'])), 'csrf' => $u['csrf_token']]);
 
     case 'auth.register':
@@ -312,13 +313,14 @@ switch ($r) {
                 (SELECT COUNT(*) FROM ' . t('options') . ' o WHERE o.schedule_id = s.id) n_options,
                 (SELECT COALESCE(SUM(o.capacity),0) FROM ' . t('options') . ' o WHERE o.schedule_id = s.id) places,
                 (SELECT COUNT(*) FROM ' . t('choices') . ' c JOIN ' . t('options') . ' o ON o.id = c.option_id WHERE o.schedule_id = s.id AND c.value = 2) taken,
+                (SELECT COUNT(*) FROM ' . t('assignments') . ' a WHERE a.schedule_id = s.id) assigned,
                 (SELECT MIN(COALESCE(o.starts_at, o.day)) FROM ' . t('options') . ' o WHERE o.schedule_id = s.id) first_at,
                 (SELECT MAX(COALESCE(o.ends_at, o.starts_at, o.day)) FROM ' . t('options') . ' o WHERE o.schedule_id = s.id) last_at
             FROM ' . t('schedules') . ' s WHERE s.owner_id = ? ORDER BY s.updated_at DESC LIMIT ' . MAX_USER_SCHEDULES, [$u['id']])->fetchAll();
         $out = array_map(function ($s) {
             $set = settings_of($s);
             return ['id' => $s['pid'], 'kind' => $s['kind'], 'title' => $s['title'], 'place' => $s['place'], 'color' => $set['color'], 'access' => $set['access'], 'hidden' => $set['hidden'], 'deadline' => $set['deadline'],
-                'status' => $s['status'], 'closed' => is_closed($s), 'final' => $s['final_option_id'] !== null, 'starred' => (bool)$s['starred'], 'deleted' => $s['deleted_at'] !== null,
+                'status' => $s['status'], 'closed' => is_closed($s), 'final' => $s['final_option_id'] !== null || (int)$s['assigned'] > 0, 'expected' => $set['expected'], 'starred' => (bool)$s['starred'], 'deleted' => $s['deleted_at'] !== null,
                 'answers' => (int)$s['answers'], 'fresh' => (int)$s['fresh'], 'lastAnswer' => iso($s['last_answer']), 'options' => (int)$s['n_options'], 'places' => (int)$s['places'], 'taken' => (int)$s['taken'],
                 'first' => $s['first_at'] ? iso(strlen($s['first_at']) === 10 ? $s['first_at'] . ' 00:00:00' : $s['first_at']) : null,
                 'last' => $s['last_at'] ? iso(strlen($s['last_at']) === 10 ? $s['last_at'] . ' 23:59:59' : $s['last_at']) : null,
@@ -371,6 +373,7 @@ switch ($r) {
 
     case 'sch.status':
     case 'sch.final':
+    case 'sch.assign':
     case 'sch.star':
     case 'sch.seen':
     case 'sch.trash':
@@ -408,6 +411,47 @@ switch ($r) {
                     $T = mail_t($p['lang']);
                     send_notice($p['email'], $p['name'], $p['lang'], fill($T['final_subject'], ['title' => $s['title']]), $T['final_title'],
                         [fill($T['hello'], ['name' => $p['name']]), fill($T['final_body'], ['by' => $u['name'], 'title' => $s['title']]), option_text($row, $set['tz'], $p['lang']) . ($s['place'] !== '' ? "\n" . $s['place'] : '')],
+                        app_url() . '#/s/' . $s['pid'], $T['final_button']);
+                }
+            }
+        }
+        if ($r === 'sch.assign') {
+            // Kind "assign": the slot of each person ({response id: option id}; null takes it back). One person per slot;
+            // a slot the person had not said they could take is kept as forced. Giving the slots closes the answers.
+            if ($s['kind'] !== 'assign') fail('bad_request', 422);
+            $map = is_array($b['assign'] ?? null) ? $b['assign'] : [];
+            $opts = array_map('intval', q('SELECT id FROM ' . t('options') . ' WHERE schedule_id = ?', [$sid])->fetchAll(PDO::FETCH_COLUMN));
+            $resp = array_map('intval', q('SELECT id FROM ' . t('responses') . ' WHERE schedule_id = ?', [$sid])->fetchAll(PDO::FETCH_COLUMN));
+            $said = [];
+            foreach (q('SELECT c.response_id, c.option_id, c.value FROM ' . t('choices') . ' c JOIN ' . t('responses') . ' x ON x.id = c.response_id WHERE x.schedule_id = ?', [$sid])->fetchAll() as $c) $said[(int)$c['response_id']][(int)$c['option_id']] = (int)$c['value'];
+            $rows = [];
+            $used = [];
+            foreach ($map as $rid => $oid) {
+                $rid = (int)$rid;
+                $oid = (int)$oid;
+                if (!in_array($rid, $resp, true) || !in_array($oid, $opts, true)) fail('not_found', 404);
+                if (isset($used[$oid])) fail('slot_twice', 422);
+                $used[$oid] = true;
+                $rows[] = [$rid, $sid, $oid, empty($said[$rid][$oid]) ? 1 : 0, now_utc()];
+            }
+            db()->beginTransaction();
+            q('DELETE FROM ' . t('assignments') . ' WHERE schedule_id = ?', [$sid]);
+            $ins = db()->prepare('INSERT INTO ' . t('assignments') . ' (response_id, schedule_id, option_id, forced, created_at) VALUES (?,?,?,?,?)');
+            foreach ($rows as $x) $ins->execute($x);
+            q('UPDATE ' . t('schedules') . ' SET status = IF(?, \'closed\', status), updated_at = ? WHERE id = ?', [$rows ? 1 : 0, now_utc(), $sid]);
+            db()->commit();
+            if ($rows && !empty($b['notify'])) {
+                // each person who left an email (or answered with an account) is told their slot
+                $set = settings_of($s);
+                $byId = [];
+                foreach (q('SELECT * FROM ' . t('options') . ' WHERE schedule_id = ?', [$sid])->fetchAll() as $o) $byId[(int)$o['id']] = $o;
+                $people = q('SELECT r.id, COALESCE(NULLIF(r.email, \'\'), us.email) email, r.name, COALESCE(us.ui_lang, ?) lang FROM ' . t('responses') . ' r LEFT JOIN ' . t('users') . ' us ON us.id = r.user_id WHERE r.schedule_id = ?', [$u['ui_lang'] ?: 'en', $sid])->fetchAll();
+                foreach ($people as $p) {
+                    $oid = (int)($map[$p['id']] ?? $map[(string)$p['id']] ?? 0);
+                    if (!$p['email'] || !$oid || !isset($byId[$oid])) continue;
+                    $T = mail_t($p['lang']);
+                    send_notice($p['email'], $p['name'], $p['lang'], fill($T['assign_subject'], ['title' => $s['title']]), $T['assign_title'],
+                        [fill($T['hello'], ['name' => $p['name']]), fill($T['assign_body'], ['by' => $u['name'], 'title' => $s['title']]), option_text($byId[$oid], $set['tz'], $p['lang']) . ($s['place'] !== '' ? "\n" . $s['place'] : '')],
                         app_url() . '#/s/' . $s['pid'], $T['final_button']);
                 }
             }
@@ -484,7 +528,7 @@ switch ($r) {
             if ($v === 1 && ($s['kind'] === 'slots' || !$set['maybe'])) continue;
             $choices[$k] = $v;
         }
-        if (!$choices) fail('nothing_chosen', 422);
+        if (!$choices && $s['kind'] !== 'assign') fail('nothing_chosen', 422); // assign: "not available" for every slot is an answer too
         if ($s['kind'] === 'slots' && $set['maxPer'] > 0 && count($choices) > $set['maxPer']) fail('too_many_places', 422);
         if ($s['kind'] === 'poll' && $set['minPer'] > 0 && count(array_filter($choices, fn($v) => $v === 2)) < min($set['minPer'], count($valid))) fail('too_few_dates', 422);
         if (!$mine && (int)q('SELECT COUNT(*) FROM ' . t('responses') . ' WHERE schedule_id = ?', [$s['id']])->fetchColumn() >= MAX_RESPONSES) fail('too_many_answers', 422);
@@ -517,7 +561,13 @@ switch ($r) {
         // emails: the owner (if they want them) and the person who answered (with the link to change the answer)
         $owner = user_row((int)$s['owner_id']);
         $lang = ui_lang($b);
-        if ($set['notify'] && (!$u || $u['id'] !== (int)$owner['id'])) {
+        // assign: the answer that completes the people expected tells the owner that the slots can be given (always)
+        $allIn = $key && $s['kind'] === 'assign' && $set['expected'] > 0 && (int)q('SELECT COUNT(*) FROM ' . t('responses') . ' WHERE schedule_id = ?', [$s['id']])->fetchColumn() === $set['expected'];
+        if ($allIn) {
+            $T = mail_t($owner['ui_lang'] ?: 'en');
+            send_notice($owner['email'], $owner['name'], $owner['ui_lang'] ?: 'en', fill($T['allin_subject'], ['title' => $s['title']]), $T['allin_title'],
+                [fill($T['hello'], ['name' => $owner['name']]), fill($T['allin_body'], ['n' => $set['expected'], 'title' => $s['title']])], app_url() . '#/r/' . $s['pid'], $T['allin_button']);
+        } elseif ($set['notify'] && (!$u || $u['id'] !== (int)$owner['id'])) {
             $T = mail_t($owner['ui_lang'] ?: 'en');
             send_notice($owner['email'], $owner['name'], $owner['ui_lang'] ?: 'en', fill($T['answer_subject'], ['name' => $name, 'title' => $s['title']]), $T['answer_title'],
                 [fill($T['hello'], ['name' => $owner['name']]), fill($T[$key ? 'answer_body' : 'answer_changed'], ['name' => $name, 'title' => $s['title']]), $T['answer_off']], app_url() . '#/r/' . $s['pid'], $T['answer_button']);
@@ -525,10 +575,10 @@ switch ($r) {
         $to = $email !== '' ? $email : ($u ? $u['email'] : '');
         if ($to !== '' && $key) {
             $T = mail_t($lang);
-            $list = q('SELECT o.* FROM ' . t('options') . ' o JOIN ' . t('choices') . ' c ON c.option_id = o.id WHERE c.response_id = ? AND c.value = 2 ORDER BY COALESCE(o.day, DATE(o.starts_at)), o.starts_at', [$rid])->fetchAll();
-            $lines = implode("\n", array_map(fn($o) => '• ' . option_text($o, $set['tz'], $lang), $list));
+            $list = q('SELECT o.*, c.value FROM ' . t('options') . ' o JOIN ' . t('choices') . ' c ON c.option_id = o.id WHERE c.response_id = ? AND c.value >= ? ORDER BY COALESCE(o.day, DATE(o.starts_at)), o.starts_at', [$rid, $s['kind'] === 'assign' ? 1 : 2])->fetchAll();
+            $lines = implode("\n", array_map(fn($o) => '• ' . option_text($o, $set['tz'], $lang) . ((int)$o['value'] === 1 ? ' (' . $T['mine_maybe'] . ')' : ''), $list));
             send_notice($to, $name, $lang, fill($T['mine_subject'], ['title' => $s['title']]), $T['mine_title'],
-                [fill($T['hello'], ['name' => $name]), fill($T['mine_body'], ['title' => $s['title']]), $lines !== '' ? $T[$s['kind'] === 'slots' ? 'mine_slots' : 'mine_poll'] . "\n" . $lines : '', $T['mine_keep']],
+                [fill($T['hello'], ['name' => $name]), fill($T['mine_body'], ['title' => $s['title']]), $lines !== '' ? $T[['slots' => 'mine_slots', 'assign' => 'mine_assign'][$s['kind']] ?? 'mine_poll'] . "\n" . $lines : '', $T['mine_keep']],
                 app_url() . '#/s/' . $s['pid'] . '/' . $key, $T['mine_button']);
         }
         $s = sch_by_pid($s['pid']);

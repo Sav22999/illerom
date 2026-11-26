@@ -86,6 +86,9 @@ by_url|From an address|Da un indirizzo
 cancel|Cancel|Annulla
 cant_open|This presentation cannot be opened|Questa presentazione non si può aprire
 caps|All caps|Tutto maiuscolo
+changelog|What’s new|Novità
+changelog_t|The versions of SavPresentations and what changed in each. This is version {v}.|Le versioni di SavPresentations e cosa è cambiato in ognuna. Questa è la versione {v}.
+current_v|current version|versione attuale
 change_password|Change password|Cambia password
 check_mail|Check your email|Controlla la tua email
 choose_picture|Choose a picture|Scegli un’immagine
@@ -896,6 +899,9 @@ saved_here|Saved on this device|Salvata su questo dispositivo
 local_missing|It is not on this device any more.|Non è più su questo dispositivo.
 local_media_t|This presentation lives only on this device: pictures and videos come from your computer.|Questa presentazione vive solo su questo dispositivo: immagini e video arrivano dal tuo computer.
 offline_open|You are offline: this is the copy of your last visit. Changes leave when the connection comes back.|Sei offline: questa è la copia della tua ultima visita. Le modifiche partono quando torna la connessione.
+offline_missing|Not on this device: it opens when the connection comes back.|Non è su questo dispositivo: si apre quando torna la connessione.
+offline_title_s|You are offline|Sei offline
+offline_bar|These are the presentations of your last visit: the ones kept on this device open, and the changes leave when the connection comes back.|Queste sono le presentazioni della tua ultima visita: quelle salvate su questo dispositivo si aprono, e le modifiche partono quando torna la connessione.
 offline_list|You are offline: this is the list of your last visit.|Sei offline: questo è l’elenco della tua ultima visita.
 move_to_account|Move to my account|Sposta nel mio account
 moved_to_account|Now it is in your account|Ora è nel tuo account

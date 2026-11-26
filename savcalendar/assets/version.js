@@ -1,0 +1,21 @@
+/** The version of SavCalendar (in the footer) and what changed in each one (the page #/changelog). Newest first. */
+export const VERSION = '1.1.0';
+
+export const CHANGES = [
+  {
+    v: '1.1.0', date: '2026-11-26', items: [
+      ['Your week: any first day, and the days shown by the week and month views, in one panel that stays open', 'La tua settimana: qualsiasi primo giorno e i giorni mostrati dalle viste settimana e mese, in un pannello che resta aperto'],
+      ['.savcal files (the format of SavCalendar), .ics and .csv downloads', 'File .savcal (il formato di SavCalendar), download in .ics e .csv'],
+      ['The planned newsletters of SavNewsletters in the calendar; the SavOffice button in every app', 'Le newsletter programmate di SavNewsletters nel calendario; il pulsante SavOffice in ogni app'],
+      ['What’s new and the version in the footer, as in the other Sav apps; an Android app', 'Novità e versione nel piè di pagina, come nelle altre app Sav; un’app per Android'],
+    ],
+  },
+  {
+    v: '1.0.0', date: '2026-11-26', items: [
+      ['First version: day, week, month and agenda, several calendars, repetitions and time zones', 'Prima versione: giorno, settimana, mese e agenda, più calendari, ripetizioni e fusi orari'],
+      ['The same account and session as SavSchedules: dates chosen and places booked in the calendar, polls made from the calendar', 'Lo stesso account e la stessa sessione di SavSchedules: date scelte e posti prenotati nel calendario, sondaggi creati dal calendario'],
+      ['A private link for Google, Outlook and Apple; subscriptions to .ics calendars and import of files', 'Un link privato per Google, Outlook e Apple; iscrizioni a calendari .ics e importazione di file'],
+      ['Read-only events say why, and where they can be changed', 'Gli eventi in sola lettura dicono perché, e dove si possono modificare'],
+    ],
+  },
+];

@@ -1,6 +1,7 @@
 /** Accounts: preferences, signing in, settings. */
 import { btn, confirm, dialog, drop, errText, fail, h, icon, primary, put, segmented, select, toast, toggle, face, empty } from './ui.js';
 import { getLang, setLang, t } from './i18n.js';
+import { VERSION } from './version.js';
 import { S, api, offline } from './store.js';
 import { DEFAULTS } from './settings.js';
 import { heroDeck } from './hero.js';
@@ -35,11 +36,12 @@ export function useLang(l) { setLang(l); if (S.user) { S.user.lang = l; api('aut
 export const langSwitch = () => { const c = h('sav-language-choice', { include: 'it-IT en-GB', value: getLang() === 'it' ? 'it-IT' : 'en-GB', 'native-names': '', 'no-code': '', size: 'sm', 'aria-label': t('language'), class: 'langs' }); c.addEventListener('change', () => { const l = String(c.value || '').slice(0, 2); if (l && l !== getLang()) useLang(l); }); return c; };
 /** The language in the bar of the first page: a button with the other language, as in SavPresentations. */
 export const langButton = () => btn(h('span.lbl', getLang() === 'it' ? 'English' : 'Italiano'), { icon: 'languages', label: getLang() === 'it' ? 'English' : 'Italiano', class: 'langb', appearance: 'ghost', size: 'sm', onclick: () => useLang(getLang() === 'it' ? 'en' : 'it') });
-export const credit = () => h('footer.credit', h('a', { href: 'privacy.html' }, 'Privacy'), h('a', { href: 'terms.html' }, t('terms_c')), h('a', { href: 'https://www.illerom.eu/', rel: 'noopener' }, 'Illerom'), h('span', getLang() === 'it' ? 'di ' : 'by ', h('a.sig', { href: 'https://www.saveriomorelli.com', rel: 'noopener' }, 'Saverio Morelli')), h('span.grow'), langSwitch());
+export const credit = () => h('footer.credit', h('a', { href: 'privacy.html' }, 'Privacy'), h('a', { href: 'terms.html' }, t('terms_c')), h('a', { href: 'https://www.illerom.eu/', rel: 'noopener' }, 'Illerom'), h('span', getLang() === 'it' ? 'di ' : 'by ', h('a.sig', { href: 'https://www.saveriomorelli.com', rel: 'noopener' }, 'Saverio Morelli')), h('a.vlink', { href: '#/changelog', title: t('changelog') }, 'v' + VERSION), h('span.grow'), langSwitch());
 export function userMenu() {
   const u = S.user, av = face(u.name, null, 36);
   av.setAttribute('button', '');
-  return drop(av, [{ head: u.email }, ['settings', t('settings'), () => go('#/settings')], u.master ? ['shield', t('admin'), () => go('#/admin')] : null, '-', ['log-out', t('sign_out'), signOut]], { placement: 'bottom-end', label: u.name });
+  // the apps of SavOffice next to the avatar
+  return h('span.umenu', h('savoffice-apps', { current: 'savdocuments' }), drop(av, [{ head: u.email }, ['settings', t('settings'), () => go('#/settings')], u.master ? ['shield', t('admin'), () => go('#/admin')] : null, '-', ['log-out', t('sign_out'), signOut]], { placement: 'bottom-end', label: u.name }));
 }
 export async function signOut() {
   await api('auth.logout', {}).catch(() => {});
@@ -55,6 +57,11 @@ export async function signOut() {
 let gis = null;
 export function googleButton(slot, cb) {
   if (!S.config.googleClientId) return;
+  if (/SavDocumentsApp\/Android/.test(navigator.userAgent) && window.SavDocumentsAndroid?.googleSignIn) {
+    window.SavDocumentsNative = { ...window.SavDocumentsNative, result: (kind, value, err) => { if (kind !== 'google') return; if (value) cb(value); else if (err !== 'cancelled') fail({ code: 'google_token' }); } };
+    slot.replaceChildren(btn(t('google_continue'), { block: true, appearance: 'outline', onclick: () => window.SavDocumentsAndroid.googleSignIn(S.config.googleClientId) }));
+    return;
+  }
   gis ||= new Promise((ok, no) => { const s = h('script', { src: 'https://accounts.google.com/gsi/client', async: true }); s.onload = ok; s.onerror = no; document.head.append(s); });
   gis.then(() => {
     google.accounts.id.initialize({ client_id: S.config.googleClientId, callback: (r) => cb(r.credential) });
@@ -115,7 +122,8 @@ function forgot() {
  */
 export function land(root, mode, note, pages = []) {
   if (/^#\/(d|invite)\//.test(location.hash)) sessionStorage.setItem('savdocuments-next', location.hash);
-  const top = (...right) => h('header.ltop', brand('#/welcome'), h('div.spacer'), langButton(), ...right);
+  // the other apps of SavOffice are a button away on the first page too, as in every app of the suite
+  const top = (...right) => h('header.ltop', brand('#/welcome'), h('div.spacer'), langButton(), h('savoffice-apps', { current: 'savdocuments' }), ...right);
   document.title = 'SavDocuments';
   if (mode === 'signin' || mode === 'signup') {
     put(root, h('div.authp', top(), h('main.amain', h('div.stack.aw', note || null, authCard(mode))), credit()));

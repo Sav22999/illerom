@@ -106,3 +106,21 @@ with `$debug = true` and `$mail_config = false` (links are written to the PHP lo
 ## Licence
 
 MIT © 2026 Saverio Morelli. SavComponents: MIT. Lucide: ISC. Typefaces: SIL OFL 1.1.
+
+## Versions
+
+The number in the footer and the page of the changes (`?p=changelog`, open to everybody) come from `assets/version.js`: at every
+release raise `VERSION`, add an entry at the top of `CHANGES` (English and Italian) and bump `CACHE` in `sw.js`.
+
+## Android
+
+`android/` is the Android app: the web app in a WebView (`MainActivity.java`), with files to open and save, Google sign-in
+(system account picker) and full-screen videos made native; the page talks to it through `window.SavPresentationsAndroid` and gets
+answers on `window.SavPresentationsNative`. Offline it opens from the copy of the service worker, with the items kept on the device.
+
+- Build: open `android/` in Android Studio, or `gradle assembleDebug` (Gradle 8.13, JDK 17+).
+- Release: copy `keystore.properties.sample` to `keystore.properties` (git-ignored) with your upload key, then
+  `gradle bundleRelease`. The `applicationId` (`com.saverio.savpresentations`) can never change after the first upload.
+- Links that open in the app: publish `assetlinks.sample.json` (with the SHA-256 from Play Console) as
+  `https://www.illerom.eu/.well-known/assetlinks.json` (one entry per app).
+- Store graphics and screenshots: `store/`.

@@ -1,0 +1,10 @@
+SavSchedules finds the date of a meeting and hands out slots that nobody else can take.
+
+• Date polls: everyone says yes, if need be or no for each date; the best date at a glance
+• Slot booking: every slot can be taken only once, with a limit per person
+• No account needed to answer: a link is enough
+• Results, choice of the final date, an email at each answer, calendar files
+• Share with a link or a QR code; .savsch files and CSV of the answers
+
+Free, open source, no ads, no trackers.
+Developed by Saverio Morelli, published under Illerom.

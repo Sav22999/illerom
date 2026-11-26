@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <defs>
+        <linearGradient id="a" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#2fb6c3"/>
+            <stop offset="1" stop-color="#0b7a87"/>
+        </linearGradient>
+        <linearGradient id="b" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#086672"/>
+            <stop offset="1" stop-color="#04434b"/>
+        </linearGradient>
+    </defs>
+    <!-- an S made of two pieces, as in the other apps of SavOffice: a to-do ticked with its lines, and a board whose
+         columns hold cards, one of them moving in the yellow of the suite -->
+    <path d="M20.500 4H53a5 5 0 0 1 5 5v17.500a5 5 0 0 1-5 5H20.500A13.750 13.750 0 0 1 20.500 4z" fill="url(#a)"/>
+    <circle cx="20.500" cy="17.750" r="7.200" fill="#fff"/>
+    <path d="M16.900 17.900l2.600 2.600 5-5.200" fill="none" stroke="#0b7a87" stroke-width="2.800" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="32" y="12.200" width="20" height="3.600" rx="1.800" fill="#fff"/>
+    <rect x="32" y="19.800" width="13" height="3.600" rx="1.800" fill="#fff" fill-opacity=".55"/>
+    <path d="M43.500 60H11a5 5 0 0 1-5-5V37.500a5 5 0 0 1 5-5h32.500a13.750 13.750 0 0 1 0 27.500z" fill="url(#b)"/>
+    <rect x="12" y="38" width="9" height="6" rx="2" fill="#fff" fill-opacity=".75"/>
+    <rect x="12" y="46.500" width="9" height="6" rx="2" fill="#fff" fill-opacity=".4"/>
+    <rect x="25" y="46.500" width="9" height="6" rx="2" fill="#fff" fill-opacity=".4"/>
+    <rect x="38" y="38" width="9" height="6" rx="2" fill="#fff" fill-opacity=".75"/>
+    <rect x="25.500" y="36.200" width="10" height="7" rx="2.200" fill="#ffd166" transform="rotate(-8 30.500 39.700)"/>
+</svg>

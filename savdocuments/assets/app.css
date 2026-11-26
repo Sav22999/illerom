@@ -204,3 +204,18 @@ sav-tab > * { padding-top: 1rem; }
   .landing > .credit, .authp > .credit { padding-left: 1rem; padding-right: 1rem; }
 }
 @media (max-width: 360px) { .ltop .brand span, .ltop .brand b { display: none; } }
+
+/* the version in the footer and the page of the changes (the same in every Sav app) */
+.credit .vlink { font-variant-numeric: tabular-nums; text-decoration: none; padding: .05rem .5rem; border-radius: 99px; border: 1px solid var(--sav-color-border); }
+.credit .vlink:hover { border-color: currentColor; }
+.chlog .vlist { display: grid; gap: 1rem; margin-top: 1.2rem; max-width: 46rem; }
+.vcard { background: var(--sav-color-surface); border: 1px solid var(--sav-color-border); border-radius: 16px; padding: 1rem 1.2rem 1.1rem; }
+.vhead { display: flex; align-items: center; gap: .6rem; } .vhead .grow { flex: 1; } .vhead time { color: var(--sav-color-text-muted); font-size: .85rem; }
+.vnow { color: var(--sav-color-primary); font-weight: 600; }
+.vcard ul { margin: .75rem 0 0; padding-left: 1.2rem; display: grid; gap: .4rem; } .vcard li { line-height: 1.45; }
+
+/* the language in the footer: as wide as its name (never cut) */
+.langs { width: max-content; max-width: 100%; }
+
+/* the menu of the person: the apps of SavOffice, then the avatar */
+.umenu { display: inline-flex; align-items: center; gap: .35rem; flex: none; }

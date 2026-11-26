@@ -2,9 +2,9 @@
 import { addDays, LOCAL_TZ, mondayOf, todayKey, zoned, keyParts } from './time.js';
 
 export const COLORS = { blue: '#1f56d1', violet: '#6a2cf0', green: '#0f8a63', coral: '#e0532f', amber: '#c27a06', pink: '#c2307a', teal: '#0b8494', slate: '#4a5875' };
-export const KINDS = { poll: { icon: 'vote' }, slots: { icon: 'ticket' } };
+export const KINDS = { poll: { icon: 'vote' }, slots: { icon: 'ticket' }, assign: { icon: 'shuffle' } };
 
-export const BASE = { access: 'open', hidden: false, maybe: true, maxPer: 1, minPer: 0, deadline: null, notify: true, askEmail: 'optional', note: true, tz: LOCAL_TZ, color: 'blue', duration: 60, cap: 1 };
+export const BASE = { access: 'open', hidden: false, maybe: true, maxPer: 1, minPer: 0, deadline: null, notify: true, askEmail: 'optional', note: true, tz: LOCAL_TZ, color: 'blue', duration: 60, cap: 1, expected: 0 };
 
 /** Slots in a range of days: every `len` minutes (plus `gap`) from `start` to `end`, on the chosen weekdays (0 = Monday). */
 export function genSlots({ from, to, weekdays, start, end, len, gap = 0, cap = 1, label = '', tz }) {
@@ -29,5 +29,7 @@ export const PRESETS = {
   office: { kind: 'slots', icon: 'clock', build(tz) { const mon = addDays(mondayOf(todayKey(tz)), 7); return { settings: { maxPer: 1, duration: 15 }, options: genSlots({ from: mon, to: addDays(mon, 4), weekdays: [1, 3], start: 840, end: 960, len: 15, tz }) }; } },
   interviews: { kind: 'slots', icon: 'message-square-text', build(tz) { const mon = addDays(mondayOf(todayKey(tz)), 7); return { settings: { maxPer: 1, askEmail: 'required', duration: 10 }, options: genSlots({ from: addDays(mon, 2), to: addDays(mon, 2), start: 900, end: 1080, len: 10, gap: 0, tz }) }; } },
   shifts: { kind: 'slots', icon: 'hand', build(tz) { const mon = addDays(mondayOf(todayKey(tz)), 7); return { settings: { maxPer: 0, duration: 240 }, options: genSlots({ from: addDays(mon, 5), to: addDays(mon, 6), start: 540, end: 1020, len: 240, cap: 3, tz }) }; } },
+  // one day each for twelve people: twelve working days from next Monday, then each one gets a day of their own
+  rota: { kind: 'assign', icon: 'user-round-check', build(tz) { const mon = addDays(mondayOf(todayKey(tz)), 7), days = []; for (let k = mon; days.length < 12; k = addDays(k, 1)) { const [y, m, d] = keyParts(k); if ((new Date(Date.UTC(y, m - 1, d)).getUTCDay() + 6) % 7 < 5) days.push({ day: k }); } return { settings: { expected: 12, maybe: true }, options: days }; } },
   visits: { kind: 'slots', icon: 'door-open', build(tz) { const mon = addDays(mondayOf(todayKey(tz)), 7); return { settings: { maxPer: 1, duration: 60 }, options: genSlots({ from: addDays(mon, 5), to: addDays(mon, 5), start: 600, end: 1080, len: 60, gap: 0, cap: 10, tz }) }; } },
 };

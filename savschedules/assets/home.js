@@ -24,12 +24,22 @@ export function pickFile() {
   i.click();
 }
 
-/** New: a poll or a sheet of slots, or one of the ready-made starts. */
-export function newDialog() {
-  const big = (k) => tile(t('k_' + k), () => { d.hide(); go('#/new/' + k); }, { class: 'kindt k-' + k }, h('div.kpic', icon(KINDS[k].icon)), h('div.ktext', h('strong', t('k_' + k)), h('span.muted', t('k_' + k + '_t'))));
-  const pre = (k) => tile(t('p_' + k), () => { d.hide(); go('#/new/' + k); }, { class: 'pret' }, icon(PRESETS[k].icon), h('div', h('strong', t('p_' + k)), h('small.muted', t('k_' + PRESETS[k].kind))));
-  const d = dialog({ title: t('new_schedule'), width: '44rem', body: h('div.form', h('div.kinds', big('poll'), big('slots')), h('sav-label', { appearance: 'plain', case: 'normal', variant: 'neutral' }, t('ready_made')), h('div.presets', Object.keys(PRESETS).map(pre)),
-    h('div', btn(t('open_file'), { icon: 'file-up', size: 'sm', appearance: 'ghost', onclick: () => { d.hide(); pickFile(); } }))), actions: [{ label: t('cancel') }] });
+/** New: a name, then a poll, a sheet of slots, an assignment or one of the templates; "Create". As in SavDocuments and SavPresentations. */
+export function newDialog(start = 'poll') {
+  let chosen = start;
+  const kindOf = (k) => (PRESETS[k] ? PRESETS[k].kind : k);
+  const name = h('sav-input', { label: t('sch_name'), placeholder: t('untitled_' + kindOf(chosen)), maxlength: 160, autofocus: true });
+  const cards = {};
+  const mark = () => { Object.entries(cards).forEach(([k, c]) => c.classList.toggle('on', k === chosen)); name.placeholder = PRESETS[chosen] ? t('p_' + chosen) : t('untitled_' + chosen); };
+  const pick = (k) => () => { chosen = k; mark(); };
+  const big = (k) => (cards[k] = tile(t('k_' + k), pick(k), { class: 'kindt k-' + k }, h('div.kpic', icon(KINDS[k].icon)), h('div.ktext', h('strong', t('k_' + k)), h('span.muted', t('k_' + k + '_t')))));
+  const pre = (k) => (cards[k] = tile(t('p_' + k), pick(k), { class: 'pret' }, icon(PRESETS[k].icon), h('div', h('strong', t('p_' + k)), h('small.muted', t('k_' + PRESETS[k].kind)))));
+  const run = () => { S.newTitle = name.value.trim(); go('#/new/' + chosen); };
+  const body = h('div.form', name, h('div.kinds', big('poll'), big('slots'), big('assign')), h('sav-label', { appearance: 'plain', case: 'normal', variant: 'neutral' }, t('ready_made')), h('div.presets', Object.keys(PRESETS).map(pre)),
+    h('div', btn(t('open_file'), { icon: 'file-up', size: 'sm', appearance: 'ghost', onclick: () => { d.hide(); pickFile(); } })));
+  mark();
+  const d = dialog({ title: t('new_schedule'), width: '44rem', body, actions: [{ label: t('cancel') }, { label: t('create'), icon: 'plus', primary: true, run }] });
+  body.addEventListener('dblclick', (e) => { if (e.target.closest('.kindt, .pret')) d.primary?.click(); });
 }
 
 const shortDate = (iso) => new Date(iso).toLocaleDateString(getLang(), { day: 'numeric', month: 'short' });
@@ -38,6 +48,7 @@ function thumb(s) {
   const tear = h('div.tear', h('b', first ? first.toLocaleDateString(getLang(), { month: 'short' }) : '—'), h('span', first ? String(first.getDate()) : '?'));
   let stat;
   if (s.kind === 'slots' && s.places) stat = h('div.tstat', h('strong', `${s.taken}/${s.places}`), h('small', t('places_taken')), h('sav-progress-bar', { value: Math.round((s.taken / s.places) * 100), style: `--height:6px;--sav-color-primary:${c}`, 'aria-label': t('places_taken') }));
+  else if (s.kind === 'assign' && s.expected) stat = h('div.tstat', h('strong', `${s.answers}/${s.expected}`), h('small', t('answers_n')), h('sav-progress-bar', { value: Math.min(100, Math.round((s.answers / s.expected) * 100)), style: `--height:6px;--sav-color-primary:${c}`, 'aria-label': t('answers_n') }));
   else stat = h('div.tstat', h('strong', String(s.answers ?? 0)), h('small', t(s.answers === 1 ? 'answer_1' : 'answers_n')));
   return h('div.cthumb', { style: `--c:${c}` }, tear, stat, h('span.ckind', icon(KINDS[s.kind].icon)));
 }
@@ -59,6 +70,7 @@ export async function home(root, view = '') {
     '': ['all_sch', 'layout-grid', () => list.filter((s) => !s.deleted)],
     polls: ['polls', 'vote', () => list.filter((s) => !s.deleted && s.kind === 'poll')],
     slots: ['slot_sheets', 'ticket', () => list.filter((s) => !s.deleted && s.kind === 'slots')],
+    assign: ['assign_sheets', 'shuffle', () => list.filter((s) => !s.deleted && s.kind === 'assign')],
     starred: ['starred', 'star', () => list.filter((s) => !s.deleted && s.starred)],
     answered: ['answered', 'user-check', () => answered],
     trash: ['trash', 'trash', () => list.filter((s) => s.deleted)],
@@ -68,7 +80,7 @@ export async function home(root, view = '') {
   function drawSide() {
     const count = { starred: V.starred[2]().length, answered: answered.length, trash: V.trash[2]().length };
     const it = (v) => { const x = item(v, V[v][1], t(V[v][0])); x.toggleAttribute('current', view === v); if (count[v]) x.append(h('sav-badge', { slot: 'suffix', appearance: 'soft', variant: 'neutral', pill: true }, String(count[v]))); return x; };
-    const menu = h('sav-menu', { label: t('home'), selectable: true }, it(''), it('polls'), it('slots'), it('starred'), it('answered'), it('trash'));
+    const menu = h('sav-menu', { label: t('home'), selectable: true }, it(''), it('polls'), it('slots'), it('assign'), it('starred'), it('answered'), it('trash'));
     menu.addEventListener('sav-select', (e) => go('#/' + e.detail.value));
     const open = list.filter((s) => !s.deleted && !s.closed).length, fresh = list.reduce((a, s) => a + (s.deleted ? 0 : s.fresh), 0);
     put(side, primary(t('new_l'), { icon: 'plus', size: 'lg', block: true, class: 'newbtn', onclick: () => newDialog() }), menu,
@@ -87,7 +99,7 @@ export async function home(root, view = '') {
   function badges(s) {
     const b = [];
     if (s.fresh && !s.deleted) b.push(h('sav-badge', { variant: 'primary', pill: true }, t('n_new', { n: s.fresh })));
-    if (s.final) b.push(h('sav-badge', { variant: 'success', appearance: 'soft', pill: true }, icon('calendar-check'), ' ', t('date_set')));
+    if (s.final) b.push(h('sav-badge', { variant: 'success', appearance: 'soft', pill: true }, icon('calendar-check'), ' ', t(s.kind === 'assign' ? 'asg_done' : 'date_set')));
     else if (s.status === 'suspended') b.push(h('sav-badge', { variant: 'danger', appearance: 'soft', pill: true }, t('suspended')));
     else if (s.closed) b.push(h('sav-badge', { variant: 'neutral', appearance: 'soft', pill: true }, icon('lock'), ' ', t('closed')));
     return b.length ? h('div.cbadges', b) : null;
@@ -104,8 +116,8 @@ export async function home(root, view = '') {
 
   function quick() {
     const tl = (k, ic, label, sub) => tile(label, () => go('#/new/' + k), { class: 'qt' }, h('div.qpic', icon(ic)), h('div', h('strong', label), h('small.muted', sub)));
-    return h('sav-card.quick', h('div.qhead', h('h2', t('start_new'))),
-      h('div.qrow', tl('poll', 'vote', t('k_poll'), t('k_poll_s')), tl('slots', 'ticket', t('k_slots'), t('k_slots_s')), Object.keys(PRESETS).slice(0, 4).map((k) => tl(k, PRESETS[k].icon, t('p_' + k), t('k_' + PRESETS[k].kind)))));
+    return h('sav-card.quick', h('div.qhead', h('h2', t('start_new')), btn(t('all_templates'), { size: 'sm', appearance: 'ghost', 'icon-end': 'arrow-right', onclick: () => newDialog() })),
+      h('div.qrow', tl('poll', 'vote', t('k_poll'), t('k_poll_s')), tl('slots', 'ticket', t('k_slots'), t('k_slots_s')), tl('assign', 'shuffle', t('k_assign'), t('k_assign_s')), Object.keys(PRESETS).slice(0, 3).map((k) => tl(k, PRESETS[k].icon, t('p_' + k), t('k_' + PRESETS[k].kind)))));
   }
 
   function draw() {

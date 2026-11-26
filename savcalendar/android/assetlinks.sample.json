@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.saverio.savcalendar",
+      "sha256_cert_fingerprints": [
+        "SHA-256 of the signing key, from Google Play Console > App integrity"
+      ]
+    }
+  }
+]

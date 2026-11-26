@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- the favicon of the app (icons/favicon.svg), as a vector inside the safe zone of the adaptive icon -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt"
+        android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <group android:translateX="28.4" android:translateY="28.4" android:scaleX="0.8" android:scaleY="0.8">
+        <path android:pathData="M20.500 4H53a5 5 0 0 1 5 5v17.500a5 5 0 0 1-5 5H20.500A13.750 13.750 0 0 1 20.500 4z">
+            <aapt:attr name="android:fillColor">
+                <gradient android:startX="7" android:startY="4" android:endX="58" android:endY="31.5" android:startColor="#FFF06A5C" android:endColor="#FFC93A2F" android:type="linear"/>
+            </aapt:attr>
+        </path>
+        <path android:fillColor="#FFFFE1DC" android:pathData="M24.8,1h0a2.2,2.2 0,0 1,2.2,2.2v4.6a2.2,2.2 0,0 1,-2.2,2.2h-0a2.2,2.2 0,0 1,-2.2,-2.2v-4.6a2.2,2.2 0,0 1,2.2,-2.2z"/>
+        <path android:fillColor="#FFFFE1DC" android:pathData="M45.2,1h0a2.2,2.2 0,0 1,2.2,2.2v4.6a2.2,2.2 0,0 1,-2.2,2.2h-0a2.2,2.2 0,0 1,-2.2,-2.2v-4.6a2.2,2.2 0,0 1,2.2,-2.2z"/>
+        <path android:fillColor="#99FFFFFF" android:pathData="M15.5,13.5h3a1.5,1.5 0,0 1,1.5,1.5v2a1.5,1.5 0,0 1,-1.5,1.5h-3a1.5,1.5 0,0 1,-1.5,-1.5v-2a1.5,1.5 0,0 1,1.5,-1.5z"/>
+        <path android:fillColor="#99FFFFFF" android:pathData="M24.5,13.5h3a1.5,1.5 0,0 1,1.5,1.5v2a1.5,1.5 0,0 1,-1.5,1.5h-3a1.5,1.5 0,0 1,-1.5,-1.5v-2a1.5,1.5 0,0 1,1.5,-1.5z"/>
+        <path android:fillColor="#99FFFFFF" android:pathData="M33.5,13.5h3a1.5,1.5 0,0 1,1.5,1.5v2a1.5,1.5 0,0 1,-1.5,1.5h-3a1.5,1.5 0,0 1,-1.5,-1.5v-2a1.5,1.5 0,0 1,1.5,-1.5z"/>
+        <path android:fillColor="#99FFFFFF" android:pathData="M42.5,13.5h3a1.5,1.5 0,0 1,1.5,1.5v2a1.5,1.5 0,0 1,-1.5,1.5h-3a1.5,1.5 0,0 1,-1.5,-1.5v-2a1.5,1.5 0,0 1,1.5,-1.5z"/>
+        <path android:fillColor="#99FFFFFF" android:pathData="M51.5,13.5h3a1.5,1.5 0,0 1,1.5,1.5v2a1.5,1.5 0,0 1,-1.5,1.5h-3a1.5,1.5 0,0 1,-1.5,-1.5v-2a1.5,1.5 0,0 1,1.5,-1.5z"/>
+        <path android:fillColor="#99FFFFFF" android:pathData="M15.5,21.5h3a1.5,1.5 0,0 1,1.5,1.5v2a1.5,1.5 0,0 1,-1.5,1.5h-3a1.5,1.5 0,0 1,-1.5,-1.5v-2a1.5,1.5 0,0 1,1.5,-1.5z"/>
+        <path android:fillColor="#99FFFFFF" android:pathData="M33.5,21.5h3a1.5,1.5 0,0 1,1.5,1.5v2a1.5,1.5 0,0 1,-1.5,1.5h-3a1.5,1.5 0,0 1,-1.5,-1.5v-2a1.5,1.5 0,0 1,1.5,-1.5z"/>
+        <path android:fillColor="#99FFFFFF" android:pathData="M42.5,21.5h3a1.5,1.5 0,0 1,1.5,1.5v2a1.5,1.5 0,0 1,-1.5,1.5h-3a1.5,1.5 0,0 1,-1.5,-1.5v-2a1.5,1.5 0,0 1,1.5,-1.5z"/>
+        <path android:fillColor="#FFFFD166" android:pathData="M24,20.5h4a2,2 0,0 1,2,2v3a2,2 0,0 1,-2,2h-4a2,2 0,0 1,-2,-2v-3a2,2 0,0 1,2,-2z"/>
+        <path android:pathData="M43.500 60H11a5 5 0 0 1-5-5V37.500a5 5 0 0 1 5-5h32.500a13.750 13.750 0 0 1 0 27.500z">
+            <aapt:attr name="android:fillColor">
+                <gradient android:startX="6" android:startY="32.5" android:endX="57" android:endY="60" android:startColor="#FFB2302A" android:endColor="#FF8A1F1B" android:type="linear"/>
+            </aapt:attr>
+        </path>
+        <path android:fillColor="#FF000000" android:strokeColor="#8CFFFFFF" android:strokeWidth="2.800" android:strokeLineCap="round" android:pathData="M13 41.300h4M13 51.200h4"/>
+        <path android:fillColor="#FF000000" android:strokeColor="#4CFFFFFF" android:strokeWidth="1.600" android:strokeLineCap="round" android:pathData="M21 37.200v18.200"/>
+        <path android:fillColor="#FFFFFFFF" android:pathData="M26.2,37.8h15.6a2.2,2.2 0,0 1,2.2,2.2v2.6a2.2,2.2 0,0 1,-2.2,2.2h-15.6a2.2,2.2 0,0 1,-2.2,-2.2v-2.6a2.2,2.2 0,0 1,2.2,-2.2z"/>
+        <path android:fillColor="#8CFFFFFF" android:pathData="M26.2,47.7h8.6a2.2,2.2 0,0 1,2.2,2.2v2.6a2.2,2.2 0,0 1,-2.2,2.2h-8.6a2.2,2.2 0,0 1,-2.2,-2.2v-2.6a2.2,2.2 0,0 1,2.2,-2.2z"/>
+    </group>
+</vector>

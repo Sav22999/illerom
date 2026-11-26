@@ -1,0 +1,27 @@
+{
+  "name": "SavTasks",
+  "short_name": "SavTasks",
+  "description": "Free, open tasks: to-dos, lists, reminders and boards, together with SavCalendar and SavSchedules. Part of SavOffice.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f2f8f8",
+  "theme_color": "#0b7a87",
+  "lang": "en",
+  "categories": ["productivity", "business", "utilities"],
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ],
+  "shortcuts": [
+    {"name": "Today", "short_name": "Today", "url": "./#/today"},
+    {"name": "Upcoming", "short_name": "Upcoming", "url": "./#/upcoming"}
+  ],
+  "file_handlers": [
+    {"action": "./", "accept": {"application/vnd.savtasks.list+zip": [".savtas"]}}
+  ],
+  "launch_handler": {"client_mode": "navigate-existing"}
+}

@@ -1,0 +1,11 @@
+SavDocuments è un editor di documenti libero e gratuito, dove la pagina viene prima di tutto.
+
+• Pagine vere: righelli, margini, intestazione e piè di pagina, note in fondo alla loro pagina
+• 43 modelli: lettere, relazioni, CV, fatture, ricette, inviti e altro
+• Più che testo: tabelle, grafici, schemi, forme, formule, codici QR e firme
+• Scrivere insieme: condivisione con le persone, commenti, note personali e versioni
+• File: apri e salva Word (.docx) e file SavDocuments; salva in PDF, EPUB, pagina web, Markdown o testo
+• Anche offline: i documenti recenti restano sul tuo telefono, e le modifiche si salvano quando torna la connessione
+
+Gratis, open source, senza pubblicità né tracciamenti.
+Sviluppata da Saverio Morelli, pubblicata da Illerom.

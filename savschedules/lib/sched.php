@@ -2,8 +2,9 @@
 /**
  * SavSchedules — what a schedule is and who can do what with it.
  *
- * A schedule is a poll (everyone says which dates suit them: yes, if need be) or a sheet of slots (each slot holds
- * `capacity` people; when it is full nobody else can take it). Its owner chooses who may answer: anyone with the link
+ * A schedule is a poll (everyone says which dates suit them: yes, if need be), a sheet of slots (each slot holds
+ * `capacity` people; when it is full nobody else can take it) or an assignment (everyone says for each slot whether they
+ * are available, could free themselves or are not available; then the owner gives each person a slot of their own). Its owner chooses who may answer: anyone with the link
  * (a name is enough) or only people signed in to SavSchedules.
  *
  * Unique slots: every answer locks the row of its schedule (SELECT … FOR UPDATE) before counting the places, so two people
@@ -26,6 +27,7 @@ const SETTINGS_DEFAULT = [
     'color' => 'blue',
     'duration' => 60,        // minutes: length of a new slot in the editor
     'cap' => 1,              // slots: places of a new slot in the editor
+    'expected' => 0,         // assign: people expected to answer (0 = not said); when they have all answered the owner is told
 ];
 const COLORS = ['blue', 'violet', 'green', 'coral', 'amber', 'pink', 'teal', 'slate'];
 
@@ -89,8 +91,11 @@ function clean_settings($in, string $kind): array
     $o['color'] = in_array($in['color'] ?? '', COLORS, true) ? $in['color'] : 'blue';
     $o['duration'] = max(5, min(1440, (int)($in['duration'] ?? 60)));
     $o['cap'] = max(1, min(MAX_CAPACITY, (int)($in['cap'] ?? 1)));
+    $o['expected'] = max(0, min(MAX_RESPONSES, (int)($in['expected'] ?? 0)));
     if ($kind === 'poll') $o['maxPer'] = 0;
     if ($kind === 'slots') { $o['maybe'] = false; $o['minPer'] = 0; }
+    if ($kind === 'assign') { $o['maybe'] = true; $o['maxPer'] = 0; $o['minPer'] = 0; $o['cap'] = 1; }
+    if ($kind !== 'assign') $o['expected'] = 0;
     return $o;
 }
 
@@ -198,7 +203,7 @@ function out_schedule(array $s, ?array $u, bool $owner, ?array $mine = null): ar
         'options' => options_of((int)$s['id']),
     ];
     // a poll with hidden answers shows no numbers either: only the owner sees how it is going (a slot must still look full)
-    if (!$owner && $set['hidden'] && $s['kind'] === 'poll') $out['options'] = array_map(fn($x) => array_merge($x, ['yes' => 0, 'maybe' => 0]), $out['options']);
+    if (!$owner && $set['hidden'] && $s['kind'] !== 'slots') $out['options'] = array_map(fn($x) => array_merge($x, ['yes' => 0, 'maybe' => 0]), $out['options']);
     $mineId = $mine ? (int)$mine['id'] : null;
     if ($owner || !$set['hidden']) {
         $out['responses'] = responses_of((int)$s['id'], $owner, $mineId);
@@ -206,9 +211,23 @@ function out_schedule(array $s, ?array $u, bool $owner, ?array $mine = null): ar
         $out['responses'] = $mine ? array_values(array_filter(responses_of((int)$s['id'], false, $mineId), fn($r) => $r['mine'])) : [];
         $out['count'] = (int)q('SELECT COUNT(*) FROM ' . t('responses') . ' WHERE schedule_id = ?', [$s['id']])->fetchColumn();
     }
+    if ($s['kind'] === 'assign') {
+        // the slot of each person: the owner sees them all; the others see their own, and everybody's when answers are not hidden
+        $all = assignment_of((int)$s['id']);
+        $out['assignment'] = $owner || !$set['hidden'] ? $all : array_values(array_filter($all, fn($a) => $mineId !== null && $a['response'] === $mineId));
+        $out['assigned'] = count($all) > 0;
+    }
     if ($owner) $out['starred'] = (bool)$s['starred'];
     if ($mine) $out['mine'] = ['id' => (int)$mine['id'], 'name' => $mine['name'], 'email' => $mine['email'], 'note' => $mine['note']];
     return $out;
+}
+
+/** Kind "assign": [{response, option, forced}] in the order of the slots. */
+function assignment_of(int $sid): array
+{
+    $rows = q('SELECT a.response_id, a.option_id, a.forced FROM ' . t('assignments') . ' a JOIN ' . t('options') . ' o ON o.id = a.option_id
+        WHERE a.schedule_id = ? ORDER BY COALESCE(o.day, DATE(o.starts_at)), o.starts_at, o.id', [$sid])->fetchAll();
+    return array_map(fn($a) => ['response' => (int)$a['response_id'], 'option' => (int)$a['option_id'], 'forced' => (bool)$a['forced']], $rows);
 }
 
 /** A short text of an option for the emails, in the time zone of the schedule. */

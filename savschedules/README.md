@@ -17,6 +17,7 @@ needs no account (unless the organiser asks for one). Part of the same family as
 | `assets/editor.js` | The editor: week (click adds a slot, drag draws one or cuts a range into slots), month (whole days), series, details, rules |
 | `assets/answer.js` | The page for the people who answer: slots to take or dates to vote, the answer to change or withdraw |
 | `assets/results.js` | The answers for the owner: ranking and choice of the date, who took which slot, CSV / .ics / .savsch, print |
+| `assets/assign.js`, `assign-view.js` | Kind *assign*: the solver (Hungarian method, other solutions with Murty's method) and the owner's panel |
 | `assets/home.js`, `plan.js` | Home (as in SavDocuments), kinds, colours, ready-made starts, the slot generator |
 | `assets/time.js` | Time zones without libraries: options in UTC, planned in the zone of the schedule, shown in the zone of the viewer |
 | `assets/files.js`, `zip.js`, `qr.js`, `share.js` | .savsch, CSV, .ics; sharing with link and QR code |
@@ -31,8 +32,16 @@ needs no account (unless the organiser asks for one). Part of the same family as
 
 ## How it works
 
-- **Kinds**: a *poll* (each person says yes, if need be or no for each option; the owner chooses the final date, which
+- **Kinds**: an *assignment* (see below), a *poll* (each person says yes, if need be or no for each option; the owner chooses the final date, which
   closes the answers and can be emailed) or *slots* (each option has `capacity` places; `maxPer` places per person).
+- **Assignment** (`assign`): for each slot every person answers *available* (2), *I can free myself* (1) or *not
+  available* (nothing stored); all slots must be answered. `settings.expected` people are expected: the answer that
+  completes them emails the owner. The owner's page proposes the recommended solution (as many people placed as
+  possible, then as few forced, then as few "I can free myself", and the sacrifices go to whoever answered last) and
+  the other solutions just as complete, computed in the browser (`assign.js`). People who cannot be placed are shown; a
+  switch forces them into free slots, or each slot can be changed by hand. `sch.assign` keeps the choice in
+  `sch_assignments` (one slot per person, `forced` when they were not available), closes the answers and can email each
+  person their slot; the page of the schedule shows each one their slot (everyone's when the answers are not hidden).
 - **Unique slots**: `pub.answer` locks the row of the schedule (`SELECT … FOR UPDATE`) and counts the places inside the
   transaction, so two people pressing at once are served in turn; the second one gets `slot_taken` and the fresh state.
 - **Answers without an account**: each answer has a private key (48 hex characters, only its SHA-256 on the server),
@@ -48,3 +57,21 @@ needs no account (unless the organiser asks for one). Part of the same family as
 A ZIP: `mimetype` (`application/vnd.savschedules.schedule+zip`) and `schedule.json`
 (`{format: "savsch", version: 1, kind, title, descr, place, settings, options, answers?}`). Opening one creates a new
 schedule without its answers.
+
+## Versions
+
+The number in the footer and the page of the changes (`#/changelog`, open to everybody) come from `assets/version.js`: at every
+release raise `VERSION`, add an entry at the top of `CHANGES` (English and Italian) and bump `CACHE` in `sw.js`.
+
+## Android
+
+`android/` is the Android app: the web app in a WebView (`MainActivity.java`), with files to open and save, Google sign-in
+(system account picker) and full-screen videos made native; the page talks to it through `window.SavSchedulesAndroid` and gets
+answers on `window.SavSchedulesNative`. Offline it opens from the copy of the service worker, with the items kept on the device.
+
+- Build: open `android/` in Android Studio, or `gradle assembleDebug` (Gradle 8.13, JDK 17+).
+- Release: copy `keystore.properties.sample` to `keystore.properties` (git-ignored) with your upload key, then
+  `gradle bundleRelease`. The `applicationId` (`com.saverio.savschedules`) can never change after the first upload.
+- Links that open in the app: publish `assetlinks.sample.json` (with the SHA-256 from Play Console) as
+  `https://www.illerom.eu/.well-known/assetlinks.json` (one entry per app).
+- Store graphics and screenshots: `store/`.

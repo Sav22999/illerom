@@ -133,7 +133,7 @@ const T = {
     importing: ['Opening the file…', 'Apertura del file…'],
     save_account: ['Save to my account', 'Salva nel mio account'],
     saved_account: ['Saved to your account', 'Salvato nel tuo account'],
-    local_note: ['Only in this browser', 'Solo in questo browser'],
+    local_note: ['Only on this device', 'Solo su questo dispositivo'],
     // writing
     hint: ['Write, or type / to insert something', 'Scrivi, o digita / per inserire qualcosa'],
     page_break: ['Page break', 'Interruzione di pagina'],
@@ -142,7 +142,7 @@ const T = {
     doc_text: ['Text of the document', 'Testo del documento'],
     saved: ['Saved', 'Salvato'],
     saving: ['Saving…', 'Salvataggio…'],
-    offline: ['Offline: kept in this browser', 'Offline: conservato in questo browser'],
+    offline: ['Offline: saved on this device', 'Offline: salvato su questo dispositivo'],
     read_only: ['Read only', 'Sola lettura'],
     can_comment: ['You can comment', 'Puoi commentare'],
     page: ['Page', 'Pagina'],
@@ -531,6 +531,15 @@ const T = {
     img_mine: ['My pictures', 'Le mie immagini'],
     img_mine_none: ['No pictures yet', 'Ancora nessuna immagine'],
     img_mine_none_t: ['The pictures of your documents appear here, to use them again.', 'Qui compaiono le immagini dei tuoi documenti, per usarle di nuovo.'],
+    // versions
+    changelog: ['What’s new', 'Novità'],
+    changelog_t: ['The versions of SavDocuments and what changed in each. This is version {v}.', 'Le versioni di SavDocuments e cosa è cambiato in ognuna. Questa è la versione {v}.'],
+    current_v: ['current version', 'versione attuale'],
+    google_continue: ['Continue with Google', 'Continua con Google'],
+    dl_odt: ['OpenDocument (.odt)', 'OpenDocument (.odt)'],
+    dl_doc: ['Word 97-2003 (.doc)', 'Word 97-2003 (.doc)'],
+    dlt_odt: ['For LibreOffice Writer and other open programs', 'Per LibreOffice Writer e altri programmi aperti'],
+    dlt_doc: ['For old versions of Word', 'Per le vecchie versioni di Word'],
 };
 
 let lang = localStorage.getItem('savdocuments-lang') || (navigator.language.startsWith('it') ? 'it' : 'en');

@@ -1,0 +1,11 @@
+SavDocuments is a free, open word processor where the page comes first.
+
+• Real pages: rulers, margins, header and footer, footnotes at the bottom of their page
+• 43 templates: letters, reports, CVs, invoices, recipes, invitations and more
+• More than text: tables, charts, diagrams, shapes, formulas, QR codes and signatures
+• Write together: share with people, comments, personal notes and versions
+• Files: open and save Word (.docx) and SavDocuments files; save as PDF, EPUB, web page, Markdown or text
+• Works offline: your recent documents stay on your phone, and the changes are saved when the connection is back
+
+Free, open source, no ads, no trackers.
+Developed by Saverio Morelli, published under Illerom.

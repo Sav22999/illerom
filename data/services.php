@@ -7,7 +7,7 @@
  * Projects that are not here only have their page checked.
  */
 return [
-    'opennewsletter' => ['app' => ['on_', 'Account, gruppi e iscritti', 'Accounts, groups and subscribers'], 'web' => ['widget' => ['widget.js', 'Widget di iscrizione', 'Subscription widget']]],
+    'savnewsletters' => ['app' => ['on_', 'Account, gruppi e iscritti', 'Accounts, groups and subscribers'], 'web' => ['widget' => ['widget.js', 'Widget di iscrizione', 'Subscription widget']]],
     'savdocuments' => ['app' => ['sd_', 'Account e documenti', 'Accounts and documents']],
     'savpresentations' => ['app' => ['sp_', 'Account e presentazioni', 'Accounts and presentations']],
     'savschedules' => ['app' => ['sch_', 'Account e pianificazioni', 'Accounts and schedules']],

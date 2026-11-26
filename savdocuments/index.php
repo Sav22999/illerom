@@ -34,6 +34,7 @@ $v = static fn(string $f): string => $f . '?v=' . (@filemtime(__DIR__ . '/' . $f
     <noscript>SavDocuments needs JavaScript.</noscript>
 </div>
 <script defer src="<?= $v('../assets/sav/sav.js') ?>"></script>
+<script defer src="<?= $v('../assets/savoffice/savoffice.js') ?>"></script>
 <script defer src="../identity/identity.js?v=3"></script>
 <script type="module" src="assets/app.js"></script>
 </body>

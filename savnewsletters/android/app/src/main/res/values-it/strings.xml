@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="offline_title">Nessuna connessione</string>
+    <string name="offline_text">La prima volta SavNewsletters ha bisogno di internet.</string>
+    <string name="offline_retry">Riprova</string>
+</resources>

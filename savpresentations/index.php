@@ -31,6 +31,7 @@ $v = static fn(string $f): string => $f . '?v=' . (@filemtime(__DIR__ . '/' . $f
     <link rel="stylesheet" href="../identity/identity.css?v=2">
     <link rel="stylesheet" href="<?= $v('assets/app.css') ?>">
     <script src="<?= $v('../assets/sav/sav.js') ?>" defer></script>
+    <script src="<?= $v('../assets/savoffice/savoffice.js') ?>" defer></script>
     <script src="<?= $v('assets/icons.js') ?>" defer></script>
     <script src="../identity/identity.js?v=3" defer></script>
     <?php foreach (['core', 'i18n', 'themes', 'render', 'shapes', 'richtext'] as $m): ?>

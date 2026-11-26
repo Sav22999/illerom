@@ -17,7 +17,7 @@ $facts = array_filter(['noaccount' => in_array($p['account'], ['none', 'optional
             </span>
             <span class="plevel"
                   title="<?= e($t['level_text'][$p['level']]) ?>"><?= bars($p['level']) ?><?= e($t['levels'][$p['level']]) ?></span>
-            <h3><a class="stretch" href="<?= $base ?>projects/<?= $s ?>/"><?= e($p['name']) ?></a></h3>
+            <h3><a class="stretch" href="<?= $base ?>projects/<?= $s ?>/"><?= pname($p['name']) ?></a></h3>
             <p><?= e($p[$lang][0]) ?></p>
             <div class="pfoot">
                 <ul class="pfacts">

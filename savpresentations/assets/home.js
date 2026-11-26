@@ -23,7 +23,7 @@ import {
 } from './core.js';
 import {t} from './i18n.js';
 import {brand, credit, logout} from './auth.js';
-import {fluidThumb} from './render.js';
+import {fluidThumb, mediaUrl} from './render.js';
 import {context, FORMATS} from './themes.js';
 import {fixSlide} from './model.js';
 import {fromTemplate, TEMPLATES, TPL_CATS, tplName} from './templates.js';
@@ -50,7 +50,8 @@ export function userMenu() {
         admin: () => go('?p=admin'),
         out: logout
     })[e.detail.value]?.());
-    return d;
+    // the apps of SavOffice next to the avatar
+    return h('span.umenu', h('savoffice-apps', {current: 'savpresentations'}), d);
 }
 
 const metaCtx = (c) => context({format: c.format, theme: {colors: {}, fonts: {}, ...c.theme}, opts: {}});
@@ -76,18 +77,26 @@ export async function homeScreen(app, q) {
     }, icon('search', {slot: 'prefix'}));
     app.append(h('header.htop', brand(), h('div.hsearch', searchBox), h('div.spacer'), userMenu()), h('div.hbody', side, main), credit());
 
+    let kept = null; // offline: the presentations with a copy on this device
     const load = async () => {
         const L = await import('./local.js');
         try {
             data = await get('home.list');
             L.cache.set('home', data);
+            kept = null;
+            state.offline = false;
+            // the recent ones are copied ahead, so they open also without a connection
+            setTimeout(() => L.warm([...data.decks, ...data.shared].filter((d) => d.status === 'active').sort((a, b) => (a.updated < b.updated ? 1 : -1)), get, mediaUrl), 1500);
         } catch (e) {
             data = e.network && (await L.cache.get('home'));
             if (!data) throw e;
-            toast(t('offline_list'), 'warning');
+            state.offline = true;
+            kept = await L.cache.decks();
         }
         draw();
     };
+    const onLine = () => load().catch(() => {});
+    addEventListener('online', onLine);
     const set = (v, f = 0) => {
         view = v;
         folder = f;
@@ -245,10 +254,11 @@ export async function homeScreen(app, q) {
             format: userSetting('format', '16-9')
         }).meta)), {icon: 'sparkles', appearance: 'outline', variant: 'neutral', size: 'sm'});
         const head = h('div.hhead', h('h1', title), view === 'folder' && folderMenu(f), h('div.spacer'), view !== 'templates' && sortMenu, view !== 'templates' && viewBtn, fromText, btn(t('open_file'), async () => {
-            const [file] = await pickFile('.savpre,.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation');
+            const [file] = await pickFile('.savpre,.pptx,.ppt,.odp,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-powerpoint,application/vnd.oasis.opendocument.presentation');
             if (file) openFile(file, folder);
         }, {icon: 'file-up', appearance: 'outline', variant: 'neutral', size: 'sm'}));
         const body = [];
+        if (state.offline) body.push(h('sav-alert.offbar', {variant: 'warning', heading: t('offline_title_s')}, t('offline_bar')));
         if (view === 'recent' && !search) body.push(h('sav-card.quick', {appearance: 'elevated'}, h('div.qhead', h('h2', t('start_new')), btn(t('all_templates'), () => set('templates'), {
             size: 'sm',
             appearance: 'ghost',
@@ -317,7 +327,7 @@ export async function homeScreen(app, q) {
     }
 
     function card(d) {
-        const open = () => (d.status === 'trashed' ? toastTrash(d) : go('?d=' + d.uid));
+        const open = () => (d.status === 'trashed' ? toastTrash(d) : kept && !kept.has(d.uid) ? toast(t('offline_missing'), 'warning') : go('?d=' + d.uid));
         const menu = cardMenu(d);
         const th = h('div.cthumb', d.first ? fluidThumb(fixSlide(d.first), metaCtx(d), {
             index: 0,
@@ -331,7 +341,8 @@ export async function homeScreen(app, q) {
         const c = tile(d.title, (e) => {
             if (!e.target.closest?.('sav-dropdown, .starb')) open();
         }, {
-            class: 'card',
+            class: 'card' + (kept && !kept.has(d.uid) ? ' away' : ''),
+            title: kept && !kept.has(d.uid) ? t('offline_missing') : null,
             draggable: d.role === 'owner'
         }, th, h('div.cinfo', h('div', h('b', d.title), h('small', d.role === 'owner' ? '' : d.owner + ' · ', t('n_slides', {n: d.slides}), ' · ', ago(d.updated))), d.status === 'active' ? h('sav-favourite-button.starb', {
             // the favourite button of SavComponents, as in SavDocuments and SavSchedules: the star fills when it is on
@@ -467,6 +478,7 @@ export async function homeScreen(app, q) {
         leave: () => {
             removeEventListener('dragover', over);
             removeEventListener('drop', dropped);
+            removeEventListener('online', onLine);
         }
     };
 }
@@ -612,7 +624,7 @@ export async function localHome(app) {
         };
         main.replaceChildren(
             h('div.hhead', state.user && h('sav-button', {icon: 'arrow-left', appearance: 'ghost', variant: 'neutral', onclick: () => go('./')}, t('home')), h('h1', t('local_title')), h('div.spacer'),
-                btn(t('open_file'), async () => { const [f] = await pickFile('.savpre,.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation'); if (f) openFile(f, 0, true); }, {icon: 'file-up', appearance: 'outline', variant: 'neutral', size: 'sm'})),
+                btn(t('open_file'), async () => { const [f] = await pickFile('.savpre,.pptx,.ppt,.odp,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-powerpoint,application/vnd.oasis.opendocument.presentation'); if (f) openFile(f, 0, true); }, {icon: 'file-up', appearance: 'outline', variant: 'neutral', size: 'sm'})),
             h('sav-alert', {variant: 'neutral', icon: 'hard-drive'}, t('local_intro'), state.user ? '' : ' ' + t('local_intro_guest')),
             h('sav-card.quick', {appearance: 'elevated'}, h('div.qhead', h('h2', t('start_new'))), h('div.qrow', ...['blank', 'launch', 'talk', 'business', 'portfolio', 'lesson', 'event', 'cards'].map((id) => TEMPLATES.find((x) => x.id === id)).filter(Boolean).map((x) => tplCard(x, () => create(x).catch(oops))))),
             list.length ? h('div', h('h2', t('recent')), h('div.grid', ...list.map(card))) : h('sav-empty-state', {heading: t('local_none'), text: t('local_none_t'), icon: 'hard-drive'}));

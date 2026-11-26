@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">SavDocuments</string>
+    <string name="host_name" translatable="false">www.illerom.eu</string>
+    <string name="offline_title">No connection</string>
+    <string name="offline_text">SavDocuments needs the internet the first time.</string>
+    <string name="offline_retry">Try again</string>
+</resources>

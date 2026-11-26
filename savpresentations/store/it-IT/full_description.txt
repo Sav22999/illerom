@@ -1,0 +1,12 @@
+SavPresentations è un editor di presentazioni libero e gratuito, che si apre subito e non si mette in mezzo.
+
+• Temi e layout che stanno già bene, da una slide vuota o da un modello
+• Modalità semplice (una griglia) o avanzata (tutto si muove liberamente)
+• Testi, immagini, video, grafici, tabelle, forme, icone e link
+• Presenta ovunque: schermo intero, vista relatore, puntatore laser e penna
+• Lavora insieme dal vivo, con commenti, note personali e versioni
+• File: PDF, PowerPoint (.pptx), OpenDocument (.odp) e file SavPresentations
+• Anche offline: le presentazioni recenti restano sul tuo telefono
+
+Gratis, open source, senza pubblicità.
+Sviluppata da Saverio Morelli, pubblicata da Illerom.

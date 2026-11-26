@@ -56,6 +56,8 @@ async function route() {
     // presentations kept only in this browser: no account needed
     if (q.get('p') === 'local') return show(import('./home.js'), 'localHome');
     if (q.get('l')) return show(import('./editor.js'), 'deckScreen', '', q);
+    // the page of the changes is open to everybody
+    if (q.get('p') === 'changelog') return show(import('./changelog.js'), 'changelogScreen');
     if (q.get('signin') || (!u && q.get('p'))) {
         if (u) return go('./');
         return show(import('./auth.js'), 'authScreen', {mode: q.get('signin')});

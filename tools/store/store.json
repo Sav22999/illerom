@@ -1,0 +1,40 @@
+{
+  "savdocuments": {
+    "name": "SavDocuments", "url": "illerom.eu/savdocuments",
+    "colors": { "bg": "#f3f7f4", "ink": "#0b5a46", "ink2": "#0f6e56", "muted": "#55645d", "brush": "#bfe7d7" },
+    "shots": [
+      { "raw": "1-editor", "icon": "file-text", "en": ["Real pages", "Documents that look right, on every device."], "it": ["Pagine vere", "Documenti che stanno bene, su ogni dispositivo."] },
+      { "raw": "2-home", "icon": "layout-template", "en": ["43 templates", "Letters, reports, CVs and invoices: start with a tap."], "it": ["43 modelli", "Lettere, relazioni, CV e fatture: parti con un tocco."] },
+      { "raw": "3-objects", "icon": "chart-column", "en": ["More than text", "Charts, tables, diagrams and formulas."], "it": ["Più che testo", "Grafici, tabelle, schemi e formule."] },
+      { "raw": "4-offline", "icon": "cloud-off", "en": ["Works offline", "Your recent documents stay on your phone."], "it": ["Anche offline", "I documenti recenti restano sul tuo telefono."] },
+      { "raw": "5-download", "icon": "download", "en": ["PDF, Word and more", "Save as PDF, Word, EPUB, web page or Markdown."], "it": ["PDF, Word e altro", "Salva in PDF, Word, EPUB, pagina web o Markdown."] }
+    ],
+    "credit": { "en": ["Free.", "Open.", "No ads."], "it": ["Gratis.", "Aperto.", "Senza pubblicità."] },
+    "tagline": { "en": "Documents, without the clutter.", "it": "Documenti, senza ingombri." }
+  },
+  "savpresentations": {
+    "name": "SavPresentations", "url": "illerom.eu/savpresentations",
+    "colors": { "bg": "#f7f5fc", "ink": "#4a1fc0", "ink2": "#6d3bef", "muted": "#5f5878", "brush": "#ddd0ff" },
+    "shots": [
+      { "raw": "1-editor", "icon": "presentation", "en": ["Presentations, light", "Write, drag and share, also from your phone."], "it": ["Presentazioni leggere", "Scrivi, trascina e condividi, anche dal telefono."] },
+      { "raw": "2-home", "icon": "palette", "en": ["Ready-made themes", "Templates and layouts that already look good."], "it": ["Temi già pronti", "Modelli e layout che stanno già bene."] },
+      { "raw": "3-present", "icon": "play", "en": ["Present anywhere", "Full screen, presenter view, laser pointer."], "it": ["Presenta ovunque", "Schermo intero, vista relatore, puntatore laser."] },
+      { "raw": "4-download", "icon": "download", "en": ["PowerPoint and PDF", "PDF, PowerPoint and OpenDocument files."], "it": ["PowerPoint e PDF", "File PDF, PowerPoint e OpenDocument."] },
+      { "raw": "5-offline", "icon": "cloud-off", "en": ["Works offline", "Your recent presentations stay on your phone."], "it": ["Anche offline", "Le presentazioni recenti restano sul tuo telefono."] }
+    ],
+    "credit": { "en": ["Free.", "Open.", "No ads."], "it": ["Gratis.", "Aperto.", "Senza pubblicità."] },
+    "tagline": { "en": "Presentations, without the weight.", "it": "Presentazioni, senza il peso." }
+  },
+  "savschedules": {
+    "name": "SavSchedules", "url": "illerom.eu/savschedules",
+    "colors": { "bg": "#f2f5fb", "ink": "#163fa0", "ink2": "#1f56d1", "muted": "#566178", "brush": "#cfdcff" },
+    "shots": [
+      { "raw": "1-answer", "icon": "vote", "en": ["Find the date", "Everyone says when they can. No account needed."], "it": ["Trova la data", "Ognuno dice quando può. Senza account."] },
+      { "raw": "2-book", "icon": "ticket", "en": ["Hand out the slots", "Every slot can be taken only once."], "it": ["Distribuisci i posti", "Ogni posto si prende una volta sola."] },
+      { "raw": "3-results", "icon": "chart-column", "en": ["The best date", "Results at a glance: choose with a tap."], "it": ["La data migliore", "Risultati a colpo d’occhio: scegli con un tocco."] },
+      { "raw": "4-home", "icon": "layout-grid", "en": ["All in one place", "Polls and bookings, in order."], "it": ["Tutto in un posto", "Sondaggi e prenotazioni, in ordine."] }
+    ],
+    "credit": { "en": ["Free.", "Open.", "No ads."], "it": ["Gratis.", "Aperto.", "Senza pubblicità."] },
+    "tagline": { "en": "Find the date. Hand out the slots.", "it": "Trova la data. Distribuisci i posti." }
+  }
+}

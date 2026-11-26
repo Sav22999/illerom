@@ -26,6 +26,9 @@ async function boot() {
   addEventListener('hashchange', route);
   // a .savsch opened from the files of the device
   window.launchQueue?.setConsumer(async (p) => { const f = p.files?.[0]; if (f && S.user?.verified) { const { importFile } = await import('./home.js'); importFile(await f.getFile()); } });
+  // … or with the Android app: {name, data} in base64
+  const pend = S.user?.verified && window.SavSchedulesAndroid?.pendingFile?.();
+  if (pend) { const f = JSON.parse(pend); import('./home.js').then(({ importFile }) => importFile(new File([Uint8Array.from(atob(f.data), (x) => x.charCodeAt(0))], f.name))).catch(() => {}); }
   route();
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 }
@@ -42,6 +45,7 @@ async function route() {
     if (a === 'reset') return reset(root, b);
     // answering needs no account (unless the owner asks for one: the page says so)
     if (a === 's' && b) { const { answerPage } = await import('./answer.js'); leave = await answerPage(root, b, c); return; }
+    if (a === 'changelog') { const { changelogScreen } = await import('./changelog.js'); return changelogScreen(root, 'SavSchedules'); }
     if (a === 'signin' || a === 'signup') { if (S.user) return go('#/'); leave = land(root, a); return; }
     if (!S.user) { leave = land(root, a === 'welcome' || a === '' ? '' : 'signin'); return; }
     if (!S.user.verified) return unverified(root);

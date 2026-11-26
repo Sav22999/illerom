@@ -3,13 +3,14 @@
  * drag draws a longer one; the month adds whole days. On the side: the list of what was added, the details, the rules.
  * Changes are saved by themselves (a new schedule is created at its first change).
  */
-import { btn, confirm, dialog, drop, fail, h, icon, iconBtn, mobile, primary, put, select, segmented, toast, toggle } from './ui.js';
-import { t } from './i18n.js';
+import { ask, btn, confirm, copyText, dialog, drop, fail, h, icon, iconBtn, mobile, put, select, segmented, toast, toggle } from './ui.js';
+import { t, tn } from './i18n.js';
 import { S, api } from './store.js';
 import { go, prefs, userMenu } from './account.js';
 import { BASE, COLORS, KINDS, PRESETS, genSlots } from './plan.js';
+import { download, fileName, toSavsch } from './files.js';
 import { addDays, byDay, byTime, dayKey, dayLabel, hm, keyParts, LOCAL_TZ, longDay, mondayOf, monthLabel, parts, place, span, todayKey, weekday, zoned, ZONES, zoneName } from './time.js';
-import { shareDialog } from './share.js';
+import { publicUrl, shareDialog } from './share.js';
 
 let HOUR = 44; // pixels of one hour in the week: taller when the slots are short, so that each one can be read
 const isoZ = (ms) => new Date(ms).toISOString().replace('.000Z', 'Z');
@@ -19,13 +20,18 @@ export async function editor(root, pid, start) {
   let s;
   if (pid) s = (await api('sch.get', undefined, { id: pid })).schedule;
   else {
-    const preset = PRESETS[start], kind = preset ? preset.kind : start === 'slots' ? 'slots' : 'poll';
+    const preset = PRESETS[start], kind = preset ? preset.kind : ['slots', 'assign'].includes(start) ? start : 'poll';
     const tz = prefs().defaults?.tz || LOCAL_TZ;
     const built = preset ? preset.build(tz) : { settings: {}, options: [] };
     s = { id: null, kind, title: preset ? t('p_' + start) : '', descr: '', place: '', settings: { ...BASE, tz, ...(prefs().defaults || {}), ...built.settings, tz }, options: built.options.map((o) => ({ ...o, start: o.start && isoZ(Date.parse(o.start)), end: o.end && isoZ(Date.parse(o.end)) })), status: 'open', responses: [] };
     if (kind === 'slots' && !built.settings.maxPer && built.settings.maxPer !== 0) s.settings.maxPer = 1;
+    if (S.newTitle) s.title = S.newTitle;
   }
-  const set = s.settings, slots = s.kind === 'slots';
+  // a name given in the New window: the schedule is made at once, as a document or a presentation
+  const named = !pid && !!S.newTitle;
+  S.newTitle = '';
+  const set = s.settings, slots = s.kind === 'slots', assign = s.kind === 'assign';
+  const untitled = slots ? 'untitled_slots' : assign ? 'untitled_assign' : 'untitled_poll';
   const tz = () => set.tz;
   let anchor = s.options.length ? (s.options[0].day || dayKey(Date.parse([...s.options].sort(byTime)[0].start), tz())) : todayKey(tz());
   let view = !slots && s.options.length && s.options.every((o) => o.day) ? 'month' : 'week';
@@ -36,7 +42,7 @@ export async function editor(root, pid, start) {
   const status = h('span.status', { role: 'status' });
   const setStatus = (k) => { status.dataset.s = k; put(status, icon({ saved: 'cloud-check', saving: 'refresh-cw', new: 'cloud-upload', error: 'cloud-off' }[k]), h('span', t({ saved: 'saved', saving: 'saving', new: 'not_saved', error: 'not_saved_err' }[k]))); };
   setStatus(s.id ? 'saved' : 'new');
-  const payload = () => ({ id: s.id, kind: s.kind, title: s.title.trim() || t(slots ? 'untitled_slots' : 'untitled_poll'), descr: s.descr, place: s.place, settings: set, options: s.options.map(({ id, start, end, day, label, cap }) => ({ id, start, end, day, label, cap })) });
+  const payload = () => ({ id: s.id, kind: s.kind, title: s.title.trim() || t(untitled), descr: s.descr, place: s.place, settings: set, options: s.options.map(({ id, start, end, day, label, cap }) => ({ id, start, end, day, label, cap })) });
   function changed() { edits++; setStatus('saving'); clearTimeout(timer); timer = setTimeout(save, 900); }
   async function save() {
     if (saving) { await saving; if (!edits) return; }
@@ -63,16 +69,30 @@ export async function editor(root, pid, start) {
   const flush = async () => { clearTimeout(timer); if (edits || !s.id) await save(); };
 
   // ------------------------------------------------------------------ frame
-  const title = h('sav-input.dtitle', { value: s.title, placeholder: t(slots ? 'untitled_slots' : 'untitled_poll'), maxlength: 160, 'aria-label': t('title_l') });
+  const title = h('sav-input.dtitle', { value: s.title, placeholder: t(untitled), maxlength: 160, size: 'sm', 'aria-label': t('title_l'), spellcheck: 'false' });
   title.addEventListener('input', () => { s.title = title.value; changed(); });
-  const top = h('header.etop'), cal = h('div.cal'), side = h('aside.eside'), toolbar = h('div.ctools');
-  put(root, h('div.edit', { style: `--c:${COLORS[set.color] || COLORS.blue}` }, top, h('div.ebody', h('section.emain', toolbar, cal), side)));
+  // as in SavDocuments and SavPresentations: the top bar, the work in the middle, a panel and the rail of panels on the right
+  const top = h('header.etop'), cal = h('div.cal'), panel = h('aside.epanel'), rail = h('sav-bottom-nav.rail', { label: t('panels') }), toolbar = h('div.ctools');
+  const frame = h('div.edit', { style: `--c:${COLORS[set.color] || COLORS.blue}` }, top, h('div.ebody', h('section.emain', toolbar, cal), panel, rail));
+  put(root, frame);
+  const download_ = async () => { await flush(); const x = (await api('sch.get', undefined, { id: s.id })).schedule; download(await toSavsch(x), fileName(x.title, 'savsch')); };
+  function moreItems() {
+    if (!s.id) return [['download', t('download_savsch'), () => download_(), { disabled: true }]];
+    const url = publicUrl(s.id);
+    return [['chart-column', t('see_answers'), async () => { await flush(); go('#/r/' + s.id); }], ['external-link', t('open_as_guest'), async () => { await flush(); window.open(url, '_blank', 'noopener'); }], ['link', t('copy_link'), () => copyText(url, t('link_copied'))], '-',
+      ['copy', t('duplicate'), async () => { await flush(); const n = await ask(t('duplicate'), t('title_l'), t('copy_of', { t: s.title.trim() || t(untitled) }), t('create')); if (n) { const r = await api('sch.duplicate', { id: s.id, title: n }); go('#/e/' + r.id); } }],
+      ['download', t('download_savsch'), () => download_().catch(fail)], '-',
+      ['trash', t('to_trash'), async () => { await flush(); await api('sch.trash', { id: s.id }); toast(t('trashed'), 'neutral'); go('#/'); }, { danger: true }]];
+  }
   function drawTop() {
-    const answers = iconBtn('chart-column', t('see_answers'), async () => { await flush(); go('#/r/' + s.id); }, { disabled: !s.id || null });
-    const preview = iconBtn('eye', t('preview'), async () => { await flush(); window.open('#/s/' + s.id, '_blank', 'noopener'); }, { disabled: !s.id || null });
-    put(top, h('a.ehome', { href: '#/', title: t('home'), onclick: async (e) => { e.preventDefault(); await flush(); go('#/'); } }, h('img', { src: 'icons/favicon.svg', width: 34, height: 34, alt: t('home') })),
-      h('div.etitle', title), h('sav-badge.kchip', { appearance: 'soft', variant: 'neutral', pill: true }, icon(KINDS[s.kind].icon), ' ', t('k_' + s.kind)), status, h('span.spacer'),
-      preview, answers, primary(t('share'), { icon: 'share-2', size: 'sm', onclick: async () => { await flush(); if (!s.options.length) toast(t('add_first'), 'warning'); shareDialog({ ...s, settings: set }); } }), userMenu());
+    const answers = iconBtn('chart-column', t('see_answers'), async () => { await flush(); go('#/r/' + s.id); }, { disabled: !s.id || null, size: 'md' });
+    const preview = iconBtn('eye', t('preview'), async () => { await flush(); window.open('#/s/' + s.id, '_blank', 'noopener'); }, { disabled: !s.id || null, size: 'md' });
+    const shareB = btn(h('span.lbl', t('share')), { icon: 'user-plus', label: t('share'), variant: 'primary', appearance: 'soft', onclick: async () => { await flush(); if (!s.options.length) toast(t('add_first'), 'warning'); shareDialog({ ...s, settings: set }); } });
+    const downB = iconBtn('download', t('download_savsch'), () => download_(), { disabled: !s.id || null, size: 'md' });
+    const menuB = drop(h('sav-button', { icon: 'ellipsis-vertical', appearance: 'ghost', variant: 'neutral', square: true, label: t('more') }), () => moreItems(), { placement: 'bottom-end' });
+    put(top, h('a.ehome', { href: '#/', title: t('home'), 'aria-label': t('home'), onclick: async (e) => { e.preventDefault(); await flush(); go('#/'); } }, h('img', { src: 'icons/favicon.svg', width: 30, height: 30, alt: '' })),
+      h('div.etitle', title, status), h('sav-badge.kchip', { appearance: 'soft', variant: 'neutral', pill: true }, icon(KINDS[s.kind].icon), ' ', t('k_' + s.kind)), h('span.spacer'),
+      preview, answers, shareB, mobile() ? null : downB, menuB, userMenu());
   }
   drawTop();
 
@@ -135,7 +155,7 @@ export async function editor(root, pid, start) {
         if (moved) { lo = Math.min(a, b); hi = Math.max(a, b, lo + 15); }
         const [y, m, d] = keyParts(k);
         // a long drag on a sheet of slots cuts the time into slots of the chosen length
-        if (moved && slots && hi - lo > set.duration * 1.5) { addMany(genSlots({ from: k, to: k, start: lo, end: hi, len: set.duration, cap: set.cap, tz: tz() })); return; }
+        if (moved && (slots || assign) && hi - lo > set.duration * 1.5) { addMany(genSlots({ from: k, to: k, start: lo, end: hi, len: set.duration, cap: set.cap, tz: tz() })); return; }
         addOption({ start: isoZ(zoned(y, m, d, Math.floor(lo / 60), lo % 60, tz())), end: isoZ(zoned(y, m, d, Math.floor(hi / 60), hi % 60, tz())) });
       };
       col.addEventListener('pointermove', mv);
@@ -235,24 +255,41 @@ export async function editor(root, pid, start) {
   }
 
   // ------------------------------------------------------------------ side: options, details, rules
-  let tab = 'list';
+  // the panels open from the rail, as in SavDocuments and SavPresentations; a second press on the open one closes it
+  let tab = mobile() ? '' : 'list';
+  const listName = () => t(slots ? 'tab_slots' : assign ? 'slots_l' : 'tab_dates');
+  const TABS = [['list', slots ? 'ticket' : assign ? 'shuffle' : 'calendar-check', listName], ['details', 'sliders-horizontal', () => t('tab_details')], ['rules', 'list-checks', () => t('tab_rules')]];
+  function drawRail() { put(rail, TABS.map(([k, ic, label]) => h('sav-bottom-nav-item', { label: label(), icon: ic, value: k, badge: k === 'list' && s.options.length ? s.options.length : null, current: tab === k }))); }
+  rail.addEventListener('sav-select', (e) => { e.stopPropagation(); setTab(e.detail.value); });
+  function setTab(name) { tab = tab === name ? '' : name; drawSide(); }
   function drawSide() {
-    const tabs = h('sav-tabs.stabs', { value: tab }, h('sav-tab', { label: t(slots ? 'tab_slots' : 'tab_dates') + ` (${s.options.length})`, value: 'list' }, listPane()), h('sav-tab', { label: t('tab_details'), value: 'details' }, detailsPane()), h('sav-tab', { label: t('tab_rules'), value: 'rules' }, rulesPane()));
-    tabs.addEventListener('sav-tab-show', (e) => { tab = e.detail?.value || e.detail?.name || tab; });
-    put(side, tabs);
+    frame.classList.toggle('has-panel', !!tab);
+    drawRail();
+    if (!tab) return put(panel);
+    const row = TABS.find((x) => x[0] === tab);
+    const body = h('div.pbody', tab === 'list' ? listPane() : tab === 'details' ? detailsPane() : rulesPane());
+    put(panel, h('div.phead', h('h2', row[2]()), iconBtn('x', t('close'), () => setTab(tab))), body);
+    return undefined;
   }
   function listPane() {
     if (!s.options.length) return h('div.stack.pane', h('sav-empty-state', { icon: slots ? 'ticket' : 'calendar-plus', heading: t(slots ? 'no_slots' : 'no_dates'), text: t(slots ? 'no_slots_t' : 'no_dates_t') }), btn(t('series'), { icon: 'wand-sparkles', onclick: seriesDialog }));
     const groups = byDay(s.options, tz());
     const copyDay = (k, list, n) => addMany(list.map((o) => (o.day ? { day: addDays(o.day, n), label: o.label } : { start: isoZ(Date.parse(o.start) + n * 864e5), end: o.end && isoZ(Date.parse(o.end) + n * 864e5), label: o.label, cap: o.cap })));
     const total = slots ? s.options.reduce((a, o) => a + o.cap, 0) : 0;
-    return h('div.pane.olist', slots ? h('p.muted.small', t('slots_total', { n: s.options.length, p: total })) : null, groups.map(([k, list]) => h('div.oday',
+    // assign: one person per slot, so fewer slots than people means someone stays out
+    const head = slots ? h('p.muted.small', t('slots_total', { n: s.options.length, p: total })) : assign ? h('div.assignhead', assignHead()) : null;
+    return h('div.pane.olist', head, groups.map(([k, list]) => h('div.oday',
       h('div.odhead', h('button.odlabel', { type: 'button', onclick: () => { anchor = k; if (!list[0].day || slots) view = 'week'; drawCal(); } }, h('b', dayLabel(k, { weekday: 'long', day: 'numeric', month: 'long' }))), h('span.spacer'),
         drop(h('sav-button', { icon: 'ellipsis-vertical', label: t('more'), appearance: 'ghost', size: 'sm', square: true }), [['copy-plus', t('copy_next_day'), () => copyDay(k, list, 1)], ['copy-plus', t('copy_next_week'), () => copyDay(k, list, 7)], '-', ['trash', t('remove_day'), async () => { const n = list.reduce((a, o) => a + (o.yes || 0) + (o.maybe || 0), 0); if (n && !(await confirm(t('remove_day'), t('remove_option_t', { n }), t('remove')))) return; s.options = s.options.filter((x) => !list.includes(x)); changed(); drawCal(); drawSide(); }, { danger: true }]], { placement: 'bottom-end' })),
-      list.map((o) => h('div.orow', h('button.otime', { type: 'button', onclick: () => optionDialog(o) }, h('b', span(o, tz(), t('all_day'))), o.label ? h('small', o.label) : null),
+      list.map((o) => h('div.optrow', h('button.otime', { type: 'button', onclick: () => optionDialog(o) }, h('b', span(o, tz(), t('all_day'))), o.label ? h('small', o.label) : null),
         slots ? h('sav-badge', { appearance: 'soft', variant: o.yes >= o.cap ? 'warning' : 'neutral', pill: true, title: t('places') }, `${o.yes || 0}/${o.cap}`) : (o.yes || o.maybe) ? h('sav-badge', { appearance: 'soft', variant: 'success', pill: true }, String(o.yes || 0)) : null,
         h('sav-button', { icon: 'x', label: t('remove'), appearance: 'ghost', size: 'sm', square: true, onclick: () => removeOption(o) })))
     )));
+  }
+  /** Assign: slots and people expected; fewer slots than people means someone stays out. */
+  function assignHead() {
+    const short = set.expected > s.options.length;
+    return [h('p.muted.small', set.expected ? t('assign_total', { n: s.options.length, p: set.expected }) : t('assign_total0', { n: s.options.length })), short ? h('sav-alert', { variant: 'warning' }, icon('triangle-alert', { slot: 'icon' }), tn('assign_short', set.expected - s.options.length)) : null];
   }
   function detailsPane() {
     const d = h('sav-textarea', { label: t('description'), value: s.descr, rows: 5, maxlength: 4000, resize: 'auto', placeholder: t('descr_ph') });
@@ -269,6 +306,7 @@ export async function editor(root, pid, start) {
     const askEmail = select(t('ask_email'), [['no', t('email_no')], ['optional', t('email_optional')], ['required', t('email_required')]], set.askEmail, (v) => { set.askEmail = v; changed(); }, { size: 'md' });
     askEmail.hidden = set.access === 'account';
     access.addEventListener('change', () => { set.access = access.value; askEmail.hidden = set.access === 'account'; changed(); });
+    const expected = () => { const n = h('sav-number-input', { label: t('expected'), help: t('expected_t'), value: set.expected || '', min: 0, max: 2000, size: 'md', placeholder: '—' }); n.addEventListener('change', () => { set.expected = Math.max(0, Math.min(2000, parseInt(n.value, 10) || 0)); changed(); const box = panel.querySelector('.assignhead'); if (box) put(box, assignHead()); }); return n; };
     const num = (k, label, help, min = 0) => { const n = h('sav-number-input', { label, help, value: set[k], min, max: 400, size: 'md' }); n.addEventListener('change', () => { set[k] = Math.max(min, Math.min(400, parseInt(n.value, 10) || 0)); changed(); }); return n; };
     // deadline: a day and a time in the zone of the schedule
     const dl = set.deadline ? parts(Date.parse(set.deadline), tz()) : null;
@@ -283,13 +321,16 @@ export async function editor(root, pid, start) {
     const open = h('sav-switch', { checked: s.status === 'open' || null, disabled: !s.id || s.status === 'suspended' || null, help: t('accepting_t') }, t('accepting'));
     open.addEventListener('change', async () => { try { const r = await api('sch.status', { id: s.id, open: open.checked }); s.status = r.schedule.status; s.closed = r.schedule.closed; } catch (e) { fail(e); open.checked = !open.checked; } });
     return h('div.pane.form', h('section.rsec', h('h3', icon('users'), t('r_who')), access, askEmail, sw('note', t('allow_note'))),
-      h('section.rsec', h('h3', icon(KINDS[s.kind].icon), t(slots ? 'r_slots' : 'r_poll')), slots ? [num('maxPer', t('max_per'), t('max_per_t')), num('cap', t('cap_default'), t('cap_default_t'), 1)] : [sw('maybe', t('allow_maybe'), t('allow_maybe_t')), num('minPer', t('min_per'), t('min_per_t'))], sw('hidden', t('hide_answers'), t(slots ? 'hide_answers_slots' : 'hide_answers_t'))),
+      h('section.rsec', h('h3', icon(KINDS[s.kind].icon), t(slots ? 'r_slots' : assign ? 'r_assign' : 'r_poll')),
+        slots ? [num('maxPer', t('max_per'), t('max_per_t')), num('cap', t('cap_default'), t('cap_default_t'), 1)] : assign ? [h('p.muted.small', t('assign_rule_t')), expected()] : [sw('maybe', t('allow_maybe'), t('allow_maybe_t')), num('minPer', t('min_per'), t('min_per_t'))],
+        sw('hidden', t('hide_answers'), t(slots ? 'hide_answers_slots' : assign ? 'hide_answers_assign' : 'hide_answers_t'))),
       h('section.rsec', h('h3', icon('clock'), t('r_time')), open, dlOn, dlRow, zone),
       h('section.rsec', h('h3', icon('bell'), t('r_mail')), sw('notify', t('notify'), S.config.mailReady ? t('notify_t') : t('mail_off'))));
   }
 
   drawCal();
   drawSide();
+  if (named) changed();
   document.title = (s.title || t('k_' + s.kind)) + ' – SavSchedules';
   let lastMobile = mobile();
   const onResize = () => { if (mobile() !== lastMobile) { lastMobile = mobile(); drawCal(); } };

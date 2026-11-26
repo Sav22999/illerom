@@ -12,9 +12,9 @@ declare(strict_types=1);
 
 const APP_NAME = 'SavSchedules';
 const AUTH_COOKIE = 'savschedules_auth';
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 const LANGS = ['en', 'it'];
-const KINDS = ['poll', 'slots'];       // poll: everyone says when they can · slots: each place is taken by one person
+const KINDS = ['poll', 'slots', 'assign']; // poll: everyone says when they can · slots: each place is taken by one person · assign: everyone says when they can, then the owner gives each one a slot of their own
 const MAX_OPTIONS = 400;              // dates or slots of one schedule
 const MAX_RESPONSES = 2000;           // answers of one schedule
 const MAX_USER_SCHEDULES = 1000;
@@ -234,9 +234,31 @@ function e(string $s): string
 
 // ---------- Sessions (HttpOnly cookie, only the SHA-256 of the token is stored) ----------
 
+/**
+ * The session cookie, also on the paths of SavCalendar and SavWhiteboard: the apps share accounts and session (sign in or
+ * out in one, it is done in all). They set the same cookie on every path too (savcalendar/lib/bootstrap.php, savwhiteboard/…, savtasks/…).
+ */
+const SHARED_WITH = ['savcalendar', 'savwhiteboard', 'savtasks', 'savnotes', 'savforms'];
+
 function set_auth_cookie(string $value, int $expires): void
 {
-    setcookie(AUTH_COOKIE, $value, ['expires' => $expires, 'path' => app_base_path(), 'secure' => is_https(), 'httponly' => true, 'samesite' => 'Lax']);
+    $parent = rtrim(dirname(rtrim(app_base_path(), '/')), '/');
+    foreach (array_merge([app_base_path()], array_map(fn($a) => $parent . '/' . $a . '/', SHARED_WITH)) as $path) {
+        setcookie(AUTH_COOKIE, $value, ['expires' => $expires, 'path' => $path, 'secure' => is_https(), 'httponly' => true, 'samesite' => 'Lax']);
+    }
+}
+
+/** A session opened before the cookie was shared: its cookie is given to the paths of the other apps too (called by auth.me). */
+function share_session(): void
+{
+    $token = $_COOKIE[AUTH_COOKIE] ?? '';
+    if (!is_string($token) || !preg_match('/^[a-f0-9]{64}$/', $token)) return;
+    $exp = db()->prepare('SELECT expires_at FROM ' . t('auth_tokens') . ' WHERE token_hash = ?');
+    $exp->execute([hash('sha256', $token)]);
+    $at = $exp->fetchColumn();
+    if (!$at) return;
+    $parent = rtrim(dirname(rtrim(app_base_path(), '/')), '/');
+    foreach (SHARED_WITH as $a) setcookie(AUTH_COOKIE, $token, ['expires' => strtotime($at . ' UTC'), 'path' => $parent . '/' . $a . '/', 'secure' => is_https(), 'httponly' => true, 'samesite' => 'Lax']);
 }
 
 function create_auth_session(int $userId): string

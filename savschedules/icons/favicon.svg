@@ -9,20 +9,20 @@
             <stop offset="1" stop-color="#173c9c"/>
         </linearGradient>
     </defs>
-    <!-- an S made of two pieces: a calendar page with its rings and days, and a slot taken with a tick -->
+    <!-- an S made of two pieces, as in the other apps of SavOffice: a clock and the times proposed, one of them taken;
+         below, the people who answered the poll and the tick of the time that suits everyone, in the yellow of the suite -->
     <path d="M20.500 4H53a5 5 0 0 1 5 5v17.500a5 5 0 0 1-5 5H20.500A13.750 13.750 0 0 1 20.500 4z" fill="url(#a)"/>
-    <rect x="27.500" y="1" width="4.400" height="9" rx="2.200" fill="#dce9ff"/>
-    <rect x="43.500" y="1" width="4.400" height="9" rx="2.200" fill="#dce9ff"/>
-    <g fill="#fff">
-        <rect x="16" y="14.500" width="6.500" height="5.500" rx="1.600" fill-opacity=".55"/>
-        <rect x="25.500" y="14.500" width="6.500" height="5.500" rx="1.600" fill-opacity=".55"/>
-        <rect x="35" y="14.500" width="6.500" height="5.500" rx="1.600" fill-opacity=".95"/>
-        <rect x="44.500" y="14.500" width="6.500" height="5.500" rx="1.600" fill-opacity=".55"/>
-        <rect x="16" y="22.500" width="6.500" height="5.500" rx="1.600" fill-opacity=".55"/>
-        <rect x="25.500" y="22.500" width="6.500" height="5.500" rx="1.600" fill-opacity=".55"/>
-        <rect x="35" y="22.500" width="6.500" height="5.500" rx="1.600" fill-opacity=".55"/>
-    </g>
+    <circle cx="20.500" cy="17.750" r="7.200" fill="#fff"/>
+    <path d="M20.500 13.600v4.400l2.900 1.900" fill="none" stroke="#2a63e6" stroke-width="2.200" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="32" y="10.800" width="9" height="5.400" rx="2.200" fill="#fff" fill-opacity=".55"/>
+    <rect x="43.500" y="10.800" width="9" height="5.400" rx="2.200" fill="#fff"/>
+    <rect x="32" y="19.300" width="9" height="5.400" rx="2.200" fill="#fff" fill-opacity=".55"/>
+    <rect x="43.500" y="19.300" width="9" height="5.400" rx="2.200" fill="#fff" fill-opacity=".55"/>
     <path d="M43.500 60H11a5 5 0 0 1-5-5V37.500a5 5 0 0 1 5-5h32.500a13.750 13.750 0 0 1 0 27.500z" fill="url(#b)"/>
-    <path d="M14 41.500h17M14 50.500h11" stroke="#fff" stroke-opacity=".85" stroke-width="3.400" stroke-linecap="round"/>
-    <path d="M37.500 46.500l4.300 4.300 8.400-8.900" fill="none" stroke="#ffd166" stroke-width="4.400" stroke-linecap="round" stroke-linejoin="round"/>
+    <g stroke="#173c9c" stroke-width="1.800">
+        <circle cx="15.500" cy="46.250" r="5.200" fill="#9cc2ff"/>
+        <circle cx="23" cy="46.250" r="5.200" fill="#cfe0ff"/>
+        <circle cx="30.500" cy="46.250" r="5.200" fill="#fff"/>
+    </g>
+    <path d="M38.800 46.300l3.800 3.800 7.200-7.700" fill="none" stroke="#ffd166" stroke-width="4.400" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

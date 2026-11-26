@@ -25,7 +25,7 @@ $rel = array_filter($projects, fn($x, $k) => $k !== $slug && $x['cat'] === $p['c
                 <div class="phero-text">
                     <span class="plevel"
                           title="<?= e($t['level_text'][$p['level']]) ?>"><?= bars($p['level']) ?><?= e($t['levels'][$p['level']]) ?></span>
-                    <h1><?= e($p['name']) ?></h1>
+                    <h1 style="--w:<?= max(array_map('mb_strlen', explode(' ', $p['name']))) ?>"><?= pname($p['name']) ?></h1>
                     <p class="lede"><?= e($p[$lang][0]) ?></p>
                     <?php if ($url !== ''): ?>
                         <div class="actions">

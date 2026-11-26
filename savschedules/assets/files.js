@@ -3,7 +3,17 @@ import { zip, unzip, text } from './zip.js';
 
 export const SAVSCH = 'application/vnd.savschedules.schedule+zip';
 export const fileName = (title, ext) => (String(title || '').replace(/[\\/:*?"<>|\u0000-\u001f]+/g, ' ').trim().slice(0, 100) || 'schedule') + '.' + ext;
+/** Inside the Android app: the file goes to the app in pieces, then the system asks where to keep it. */
+export const inApp = () => /SavSchedulesApp\/Android/.test(navigator.userAgent) && !!window.SavSchedulesAndroid?.saveFile;
+async function saveInApp(blob, name) {
+  // the pieces end at a multiple of 4 characters, so each one can be decoded alone
+  const b64 = await new Promise((r) => { const fr = new FileReader(); fr.onload = () => r(String(fr.result).split(',')[1]); fr.readAsDataURL(blob); });
+  window.SavSchedulesAndroid.saveBegin(name, blob.type || 'application/octet-stream');
+  for (let i = 0; i < b64.length; i += 524288) window.SavSchedulesAndroid.saveFile(b64.slice(i, i + 524288));
+  window.SavSchedulesAndroid.saveEnd();
+}
 export function download(blob, name) {
+  if (inApp()) return void saveInApp(blob, name);
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = name;
@@ -28,7 +38,7 @@ export async function readSavsch(file) {
     if (head[0] === 0x50 && head[1] === 0x4b) { const files = await unzip(buf, { maxFiles: 20, maxBytes: 10e6 }); const f = files.get('schedule.json'); if (!f) throw 0; json = JSON.parse(text(await f())); } else json = JSON.parse(text(new Uint8Array(buf)));
   } catch { throw Object.assign(new Error('file_invalid'), { code: 'file_invalid' }); }
   if (json?.format !== 'savsch' || !Array.isArray(json.options)) throw Object.assign(new Error('file_invalid'), { code: 'file_invalid' });
-  return { kind: json.kind === 'slots' ? 'slots' : 'poll', title: String(json.title || '').slice(0, 160), descr: String(json.descr || ''), place: String(json.place || ''), settings: json.settings || {}, options: json.options.map(({ start, end, day, label, cap }) => ({ start, end, day, label, cap })) };
+  return { kind: ['slots', 'assign'].includes(json.kind) ? json.kind : 'poll', title: String(json.title || '').slice(0, 160), descr: String(json.descr || ''), place: String(json.place || ''), settings: json.settings || {}, options: json.options.map(({ start, end, day, label, cap }) => ({ start, end, day, label, cap })) };
 }
 
 const csvCell = (v) => { const s = String(v ?? ''); return /[",;\n\r]/.test(s) || /^[=+\-@]/.test(s) ? '"' + (/^[=+\-@]/.test(s) ? "'" : '') + s.replace(/"/g, '""') + '"' : s; };

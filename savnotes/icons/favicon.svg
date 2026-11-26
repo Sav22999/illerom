@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <defs>
+        <linearGradient id="a" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#a98463"/>
+            <stop offset="1" stop-color="#6b4a2f"/>
+        </linearGradient>
+        <linearGradient id="b" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#4f3523"/>
+            <stop offset="1" stop-color="#2e1f14"/>
+        </linearGradient>
+        <clipPath id="c"><path d="M20.500 4H53a5 5 0 0 1 5 5v17.500a5 5 0 0 1-5 5H20.500A13.750 13.750 0 0 1 20.500 4z"/></clipPath>
+        <clipPath id="d"><path d="M43.500 60H11a5 5 0 0 1-5-5V37.500a5 5 0 0 1 5-5h32.500a13.750 13.750 0 0 1 0 27.500z"/></clipPath>
+    </defs>
+    <!-- an S made of two pieces, as in the other apps of SavOffice: above, an open sheet of squares with a figure drawn on
+         it; below, the closed notebook with its label, its elastic band and a bookmark in the yellow of the suite -->
+    <path d="M20.500 4H53a5 5 0 0 1 5 5v17.500a5 5 0 0 1-5 5H20.500A13.750 13.750 0 0 1 20.500 4z" fill="url(#a)"/>
+    <g clip-path="url(#c)" stroke="#fff" stroke-opacity=".26" stroke-width=".8">
+        <path d="M0 9.500h64M0 15h64M0 20.500h64M0 26h64M12.500 0v32M18 0v32M23.500 0v32M29 0v32M34.500 0v32M40 0v32M45.500 0v32M51 0v32"/>
+    </g>
+    <path d="M29 26V9.500l16.500 16.500z" fill="#fff" fill-opacity=".22" stroke="#fff" stroke-width="2.400" stroke-linejoin="round"/>
+    <path d="M29 21.200h4.800V26" fill="none" stroke="#fff" stroke-width="1.600"/>
+    <path d="M43.500 60H11a5 5 0 0 1-5-5V37.500a5 5 0 0 1 5-5h32.500a13.750 13.750 0 0 1 0 27.500z" fill="url(#b)"/>
+    <path d="M6 37.500a5 5 0 0 1 5-5h3V60h-3a5 5 0 0 1-5-5z" fill="#000" fill-opacity=".25"/>
+    <rect x="19" y="38" width="20" height="11" rx="2.400" fill="#fffaf1"/>
+    <path d="M22.500 42h13M22.500 45.500h8" stroke="#6b4a2f" stroke-width="1.800" stroke-linecap="round"/>
+    <rect x="45" y="32" width="4.200" height="29" fill="#000" fill-opacity=".38" clip-path="url(#d)"/>
+    <path d="M23 55h6v9l-3-2.600-3 2.600z" fill="#ffd166"/>
+</svg>

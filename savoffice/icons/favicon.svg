@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <!-- SavOffice: the three bars of the mark of Illerom (illerom/favicon.svg: same shape and lean), coloured with three apps
+         of the suite. Violet of SavPresentations, green of SavDocuments, pink of SavNewsletters: green in the middle keeps
+         violet and pink apart, so three colours are seen even at 20 px. The hues are the ones of the icons of the apps, with
+         the lightness evened out (none sinks on a dark background) -->
+    <path d="M5.5 10h9l17 44h-9z" fill="#7845f4"/>
+    <path d="M19.5 10h9l17 44h-9z" fill="#13a079"/>
+    <path d="M33.5 10h9l17 44h-9z" fill="#d6378a"/>
+</svg>

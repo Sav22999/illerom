@@ -63,7 +63,7 @@ export async function openWriter(root, pid, opt = {}) {
   const undoB = iconBtn('undo-2', t('undo'), () => ed.undo(), { kbd: 'Mod+Z', size: 'md' }), redoB = iconBtn('redo-2', t('redo'), () => ed.undo(true), { kbd: 'Mod+Shift+Z', size: 'md' });
   const shareB = !isLocal && data.doc.role === 'owner' ? btn(h('span.lbl', t('share')), { icon: 'user-plus', label: t('share'), variant: 'primary', appearance: 'soft', onclick: () => shareDialog(W) }) : isLocal && S.user?.verified ? btn(h('span.lbl', t('save_account')), { icon: 'cloud-upload', label: t('save_account'), variant: 'primary', appearance: 'soft', onclick: () => toAccount() }) : null;
   // downloading: a window of cards, one per format, the same as SavPresentations
-  const DL = [['pdf', 'file-text', 'PDF'], ['docx', 'file-type', t('dl_docx')], ['savdoc', 'file-box', t('dl_savdoc')], ['html', 'globe', t('dl_html')], ['epub', 'book-open', t('dl_epub')], ['md', 'hash', t('dl_md')], ['txt', 'file', t('dl_txt')]];
+  const DL = [['pdf', 'file-text', 'PDF'], ['docx', 'file-type', t('dl_docx')], ['odt', 'file-text', t('dl_odt')], ['doc', 'file-type', t('dl_doc')], ['savdoc', 'file-box', t('dl_savdoc')], ['html', 'globe', t('dl_html')], ['epub', 'book-open', t('dl_epub')], ['md', 'hash', t('dl_md')], ['txt', 'file', t('dl_txt')]];
   const dlItems = () => lim.noDownload ? [] : [['download', t('download'), () => downloadDialog()]];
   function downloadDialog() {
     let d = null;
@@ -637,7 +637,7 @@ export async function openWriter(root, pid, opt = {}) {
     try {
       const b = await bundle();
       // PDF: the file itself; where the browser does not allow drawing the pages (some Safari), the print window as before
-      const make = { pdf: () => pdfFile().catch((e) => { console.warn(e); n.remove(); toast(t('pdf_hint'), 'neutral'); printDoc(); return null; }), savdoc: () => toSavdoc(b), docx: async () => (await import('./docx.js')).toDocx(b), html: () => toHtml(b), epub: () => toEpub(b), md: () => toMarkdown(b), txt: () => toText(b) };
+      const make = { pdf: () => pdfFile().catch((e) => { console.warn(e); n.remove(); toast(t('pdf_hint'), 'neutral'); printDoc(); return null; }), savdoc: () => toSavdoc(b), docx: async () => (await import('./docx.js')).toDocx(b), odt: async () => (await import('./odf.js')).toOdt(b), doc: async () => (await import('./odf.js')).toDoc(b), html: () => toHtml(b), epub: () => toEpub(b), md: () => toMarkdown(b), txt: () => toText(b) };
       const out = await make[kind]();
       if (out) download(out, fileName(b.title, kind));
     } finally { n.remove(); }

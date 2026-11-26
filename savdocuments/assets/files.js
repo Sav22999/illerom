@@ -16,7 +16,17 @@ const MIME = {png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'im
 
 export const fileName = (title, ext) => (title.replace(/[\\/:*?"<>|\u0000-\u001f]+/g, ' ').trim().slice(0, 100) || 'document') + '.' + ext;
 
+/** Inside the Android app: the file goes to the app in pieces, then the system asks where to keep it. */
+export const inApp = () => /SavDocumentsApp\/Android/.test(navigator.userAgent) && !!window.SavDocumentsAndroid?.saveFile;
+async function saveInApp(blob, name) {
+  // the pieces end at a multiple of 4 characters, so each one can be decoded alone
+  const b64 = await new Promise((r) => { const fr = new FileReader(); fr.onload = () => r(String(fr.result).split(',')[1]); fr.readAsDataURL(blob); });
+  window.SavDocumentsAndroid.saveBegin(name, blob.type || 'application/octet-stream');
+  for (let i = 0; i < b64.length; i += 524288) window.SavDocumentsAndroid.saveFile(b64.slice(i, i + 524288));
+  window.SavDocumentsAndroid.saveEnd();
+}
 export function download(blob, name) {
+  if (inApp()) return void saveInApp(blob, name);
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = name;
@@ -200,7 +210,7 @@ function fromMarkdown(src) {
     return out;
 }
 
-/** Reads .savdoc, .docx, .html, .md and .txt. */
+/** Reads .savdoc, .docx, .odt, .doc, .rtf, .html, .md and .txt. */
 export async function readFile(file) {
     if (file.size > 60e6) throw new Error('file_too_big');
     const ext = (file.name.match(/\.(\w+)$/) || [])[1]?.toLowerCase() || '', title = file.name.replace(/\.\w+$/, '');
@@ -208,6 +218,8 @@ export async function readFile(file) {
     let d;
     if (ext === 'savdoc') d = await fromSavdoc(await file.arrayBuffer());
     else if (ext === 'docx') d = await (await import('./docx.js')).fromDocx(await file.arrayBuffer());
+    else if (ext === 'odt') d = await (await import('./odf.js')).fromOdt(await file.arrayBuffer());
+    else if (ext === 'doc' || ext === 'rtf') d = await (await import('./odf.js')).fromDoc(await file.arrayBuffer());
     else if (ext === 'html' || ext === 'htm') d = wrap(cleanBlocks(await file.text()));
     else if (ext === 'md') d = wrap(fromMarkdown(await file.text()));
     else if (ext === 'txt') d = wrap((await file.text()).replace(/\r/g, '').split('\n').filter((l, i, a) => l.trim() || (i && a[i - 1].trim())).map((l) => `<p>${esc(l) || '<br>'}</p>`));

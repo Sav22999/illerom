@@ -1,0 +1,115 @@
+<!doctype html>
+<!--
+  Store graphics of the Sav apps (drawn by compose.mjs): a phone screenshot in a generic phone (no notch), a brush stroke,
+  an icon and a title; the last picture says who made the app; the feature graphic of Google Play. window.render(config).
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Store graphics</title>
+<style>
+  @font-face { font-family: Bebas; src: url(../../savpresentations/fonts/bebas-regular.woff) format('woff'); }
+  @font-face { font-family: Inter; src: url(../../assets/fonts/inter-latin-wght-normal.woff2) format('woff2'); font-weight: 100 900; }
+  @font-face { font-family: Inter; src: url(../../assets/fonts/inter-latin-ext-wght-normal.woff2) format('woff2'); font-weight: 100 900; unicode-range: U+0100-024F, U+1E00-1EFF; }
+  @font-face { font-family: Notch; src: url(../../assets/fonts/stack-sans-notch.ttf); }
+  @font-face { font-family: Bars; src: url(../../assets/fonts/illerom-bars.woff) format('woff'); }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #fff; }
+  #c { position: relative; overflow: hidden; background: var(--bg); font-family: Inter, sans-serif; }
+  /* ---------------------------------------------------------------- a screenshot */
+  .shot { width: 1080px; height: 1920px; }
+  .phone { position: absolute; left: 50%; top: -230px; width: 700px; height: 1560px; margin-left: -350px; border-radius: 96px; padding: 24px; background: linear-gradient(145deg, #2a2d33, #0d0f12 55%, #24272c);
+           box-shadow: 0 60px 110px rgb(0 0 0 / .28), 0 18px 40px rgb(0 0 0 / .18), inset 0 0 0 3px rgb(255 255 255 / .06); transform: rotate(var(--tilt)); transform-origin: 50% 0; }
+  .phone::before, .phone::after { content: ""; position: absolute; right: -9px; width: 9px; border-radius: 0 6px 6px 0; background: #1b1d21; }
+  .phone::before { top: 360px; height: 150px; } .phone::after { top: 560px; height: 90px; }
+  .screen { width: 100%; height: 100%; border-radius: 74px; overflow: hidden; background: #fff; }
+  .screen img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+  .words { position: absolute; left: 0; right: 0; bottom: 0; height: 520px; display: grid; justify-items: center; align-content: end; padding: 0 60px 96px; text-align: center; }
+  .brush { position: absolute; left: 50%; bottom: 210px; width: 900px; height: 330px; margin-left: -450px; }
+  .ic { position: relative; width: 120px; height: 120px; display: grid; place-items: center; margin-bottom: 18px; }
+  .ic svg { width: 112px; height: 112px; stroke: var(--ink); stroke-width: 1.6; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .title { position: relative; margin: 0; font: 400 168px/0.92 Bebas, sans-serif; color: var(--ink); letter-spacing: .01em; white-space: nowrap; }
+  .sub { position: relative; margin: 26px 0 0; font: 500 40px/1.3 Inter, sans-serif; color: var(--muted); max-width: 900px; text-wrap: balance; }
+  /* ---------------------------------------------------------------- who made it */
+  .credit { display: grid; align-content: center; padding: 0 90px; }
+  .credit .big { position: relative; font: 400 190px/0.9 Bebas, sans-serif; color: var(--ink); margin: 0; }
+  .credit .big span { display: block; }
+  .credit .big .hl { position: relative; color: var(--ink2); }
+  .credit .brush { bottom: auto; top: 0; left: -40px; margin: 0; width: 1000px; height: 300px; }
+  .credit .lines { position: relative; }
+  .credit .who { display: grid; gap: 44px; margin-top: 190px; }
+  .credit .me { display: flex; align-items: center; gap: 36px; }
+  .credit .me img { width: 150px; height: 150px; border-radius: 50%; box-shadow: 0 0 0 6px var(--bg), 0 0 0 8px var(--brush); }
+  .credit .me div { display: grid; gap: 10px; }
+  .credit .me small { font: 500 32px/1 Inter, sans-serif; color: var(--muted); }
+  .credit .me b { font: 400 88px/1 Notch, Inter, sans-serif; color: var(--ink); }
+  /* the Illerom logo alone, in the middle */
+  .credit .pub { justify-self: center; margin: 70px 0 0 -90px; width: 1080px; display: grid; place-items: center; }
+  .credit .pub svg { width: 380px; height: auto; fill: #7b2156; overflow: visible; }
+  .credit .app { position: absolute; left: 90px; bottom: 90px; display: flex; align-items: center; gap: 24px; font: 700 46px/1 Inter, sans-serif; color: var(--ink); }
+  .credit .app img { width: 92px; height: 92px; border-radius: 22px; }
+  .credit .app small { display: block; font: 500 30px/1.3 Inter, sans-serif; color: var(--muted); margin-top: 6px; }
+  /* ---------------------------------------------------------------- feature graphic */
+  #c.feature { width: 1024px; height: 500px; background: var(--ink2); display: grid; place-items: center; align-content: center; text-align: center; }
+  .feature .ghost { position: absolute; inset: -30px -20px; font: 400 290px/0.84 Bebas, sans-serif; color: rgb(0 0 0 / .13); word-break: break-all; text-align: left; letter-spacing: .02em; }
+  .feature img { position: relative; width: 132px; height: 132px; border-radius: 30px; box-shadow: 0 16px 40px rgb(0 0 0 / .25); }
+  .feature h1 { position: relative; margin: 22px 0 0; font: 400 150px/0.9 Bebas, sans-serif; color: #fff; letter-spacing: .02em; }
+  .feature p { position: relative; margin: 14px 0 0; font: 500 30px/1.2 Inter, sans-serif; color: rgb(255 255 255 / .86); }
+  .feature .by { position: relative; margin-top: 16px; font: 400 30px/1 Notch, Inter, sans-serif; color: #fff; }
+</style>
+</head>
+<body>
+<div id="c"></div>
+<script>
+  /** A brush stroke: a soft band with torn edges (turbulence), in the colour of the app. */
+  const brush = (color, seed) => `<svg class="brush" viewBox="0 0 900 330" aria-hidden="true"><defs><filter id="r${seed}" x="-10%" y="-20%" width="120%" height="140%"><feTurbulence type="fractalNoise" baseFrequency="0.018 0.09" numOctaves="3" seed="${seed}"/><feDisplacementMap in="SourceGraphic" scale="46"/></filter></defs>
+    <g filter="url(#r${seed})" fill="${color}"><path d="M40 120 C 200 70, 520 60, 860 95 L 875 205 C 640 245, 330 262, 30 236 Z"/><path d="M90 90 L 820 70 L 830 110 L 80 128 Z" opacity=".7"/><path d="M60 230 L 780 220 L 790 262 L 70 270 Z" opacity=".65"/></g></svg>`;
+  const ICONS = {
+    'file-text': '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8M16 13H8M16 17H8"/>',
+    'layout-template': '<rect width="18" height="7" x="3" y="3" rx="1"/><rect width="9" height="7" x="3" y="14" rx="1"/><rect width="5" height="7" x="16" y="14" rx="1"/>',
+    'chart-column': '<path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9M13 17V5M8 17v-3"/>',
+    'cloud-off': '<path d="M10.94 5.274A7 7 0 0 1 15.71 10h1.79a4.5 4.5 0 0 1 4.222 6.057"/><path d="M18.796 18.81A4.5 4.5 0 0 1 17.5 19H9A7 7 0 0 1 5.79 5.78"/><path d="m2 2 20 20"/>',
+    'download': '<path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/>',
+    'presentation': '<path d="M2 3h20"/><path d="M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3"/><path d="m7 21 5-5 5 5"/>',
+    'palette': '<path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z"/><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/>',
+    'play': '<path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/>',
+    'vote': '<path d="m9 12 2 2 4-4"/><path d="M5 7c0-1.1.9-2 2-2h10a2 2 0 0 1 2 2v12H5V7Z"/><path d="M22 19H2"/>',
+    'ticket': '<path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2M13 17v2M13 11v2"/>',
+    'layout-grid': '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
+  };
+  /** The wordmark of Illerom, as the site draws it (include/lib.php, wordmark()): bars on an upright grid, then slanted. */
+  const WORDMARK = (() => {
+    const g = [[[0, 0, 15, 100]], [[31, 0, 15, 100]], [[62, 0, 15, 100]], [[104, 0, 48, 15], [104, 42.5, 48, 15], [104, 85, 48, 15]], [[179, 0, 15, 100], [210, 50, 15, 50]], [[252, 0, 48, 15], [252, 85, 48, 15]], [[327, 0, 15, 100], [358, 0, 15, 100], [389, 0, 15, 100]]];
+    return `<svg viewBox="0 0 454 100"><g transform="matrix(1 0 .5 1 0 0)">${g.flat().map(([x, y, w, h]) => `<rect x="${x}" y="${y}" width="${w}" height="${h}"/>`).join('')}</g></svg>`;
+  })();
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  window.render = async (o) => {
+    const c = document.getElementById('c');
+    for (const [k, v] of Object.entries(o.colors)) c.style.setProperty('--' + k, v);
+    c.style.setProperty('--tilt', (o.tilt ?? -4) + 'deg');
+    document.documentElement.lang = o.lang || 'en';
+    if (o.kind === 'shot') {
+      c.className = 'shot';
+      c.innerHTML = `<div class="phone"><div class="screen"><img src="${o.image}" alt=""></div></div>
+        <div class="words">${brush(o.colors.brush, o.seed || 3)}<div class="ic"><svg viewBox="0 0 24 24">${ICONS[o.icon] || ''}</svg></div><h1 class="title">${esc(o.title)}</h1><p class="sub">${esc(o.sub)}</p></div>`;
+    } else if (o.kind === 'credit') {
+      c.className = 'shot credit';
+      c.innerHTML = `<div class="lines"><h1 class="big">${o.big.map((x, i) => `<span class="${i === o.hl ? 'hl' : ''}">${i === o.hl ? brush(o.colors.brush, 7) : ''}<span style="position:relative">${esc(x)}</span></span>`).join('')}</h1></div>
+        <div class="who"><div class="me"><img src="${o.photo}" alt=""><div><small>${esc(o.by)}</small><b>Saverio Morelli</b></div></div>
+        <div class="pub" aria-label="Illerom">${WORDMARK}</div></div>
+        <div class="app"><img src="${o.icon}" alt=""><div>${esc(o.name)}<small>${esc(o.url)}</small></div></div>`;
+    } else {
+      c.className = 'feature';
+      c.innerHTML = `<div class="ghost">${esc(o.ghost)}</div><img src="${o.icon}" alt=""><h1>${esc(o.name)}</h1><p>${esc(o.tagline)}</p><div class="by">Saverio Morelli</div>`;
+    }
+    await document.fonts.ready;
+    // the title stays on one line: smaller when it is long
+    const ti = c.querySelector('.title');
+    if (ti) for (let f = 168; f > 96 && ti.scrollWidth > c.offsetWidth - 110; f -= 4) ti.style.fontSize = f + 'px';
+    await Promise.all([...c.querySelectorAll('img')].map((i) => i.decode().catch(() => {})));
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    return [c.offsetWidth, c.offsetHeight];
+  };
+</script>
+</body>
+</html>

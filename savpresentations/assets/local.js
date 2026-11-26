@@ -65,4 +65,28 @@ export async function loadUrls(ids) {
 export const cache = {
   get: (k) => get('cache', k).catch(() => null),
   set: (k, v) => put('cache', k, v).catch(() => {}),
+  keys: () => run('cache', 'readonly', (st) => st.getAllKeys()).catch(() => []),
+  /** The presentations of the account kept for working offline (deck:<uid>). */
+  decks: async () => new Set((await run('cache', 'readonly', (st) => st.getAllKeys()).catch(() => [])).filter((k) => String(k).startsWith('deck:')).map((k) => String(k).slice(5))),
 };
+
+/**
+ * The most recent presentations of the account are copied here ahead (as SavDocuments does), with their pictures, so they open
+ * without a connection even if they were never opened on this device. A few at a time, in the background.
+ */
+export async function warm(list, get, mediaUrl) {
+  const have = await cache.decks();
+  for (const d of list.slice(0, 20)) {
+    if (!navigator.onLine) return;
+    try {
+      const data = await get('deck.get', { d: d.uid, quiet: 1 });
+      if (!have.has(d.uid) || (await cache.get('deck:' + d.uid))?.deck?.seq !== data.deck?.seq) await cache.set('deck:' + d.uid, data);
+      // the pictures go into the cache of the service worker (videos stay online: they are big)
+      const srcs = new Set();
+      JSON.stringify(data.deck.slides || []).replace(/"(?:src|poster)":"(m:[a-f0-9]{32})"/g, (_, s) => srcs.add(s));
+      JSON.stringify(data.deck.slides || []).replace(/"src":"(m:[a-f0-9]{32})"/g, (_, s) => srcs.add(s));
+      for (const s of srcs) await fetch(mediaUrl(s), { credentials: 'same-origin' }).catch(() => {});
+    } catch { /* the next time */ }
+    await new Promise((r) => setTimeout(r, 400));
+  }
+}

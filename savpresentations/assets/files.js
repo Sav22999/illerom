@@ -1,4 +1,4 @@
-/** Files: downloads (PDF, PPTX, ODP, SAVPRE, pictures) and opening of SAVPRE and PPTX files. */
+/** Files: downloads (PDF, PPTX, ODP, SAVPRE, pictures) and opening of SAVPRE, PPTX, ODP and PPT files. */
 import { state, api, get, h, icon, btn, tile, go, oops, ok, toast, dialog, saveBlob, fileName, uploadPicture, uploadVideo, uid } from './core.js';
 import { t } from './i18n.js';
 import { zip, unzip } from './zip.js';
@@ -59,8 +59,12 @@ export async function openFile(file, folder = 0, here = false) {
   if (here) state.local = 'new';
   const close = busyBox(t('opening', { name: file.name }));
   try {
-    const z = await unzip(file);
-    const data = z.names.includes('deck.json') ? await readSavpre(z) : z.names.includes('ppt/presentation.xml') ? await (await import('./import-pptx.js')).readPptx(z, file.name) : null;
+    // PowerPoint 97-2003 is not a ZIP: its container comes first
+    const head = new Uint8Array(await file.slice(0, 8).arrayBuffer());
+    const z = head[0] === 0xd0 && head[1] === 0xcf ? null : await unzip(file);
+    const data = !z ? (await import('./import-ppt.js')).readPpt(new Uint8Array(await file.arrayBuffer()), file.name)
+      : z.names.includes('deck.json') ? await readSavpre(z) : z.names.includes('ppt/presentation.xml') ? await (await import('./import-pptx.js')).readPptx(z, file.name)
+      : z.names.includes('content.xml') ? await (await import('./import-odp.js')).readOdp(z, file.name) : null;
     if (!data) throw new Error('unknown file');
     const title = data.title || file.name.replace(/\.[^.]+$/, '');
     if (here) { const L = await import('./local.js'), id = L.newId(); await L.local.save({ id, title, meta: data.meta, slides: data.slides, created: new Date().toISOString() }); state.local = ''; close(); return go('?l=' + id); }

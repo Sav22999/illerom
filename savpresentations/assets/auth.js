@@ -2,6 +2,7 @@
 import { heroDeck } from './hero.js';
 import {$, api, btn, errText, go, h, icon, isApp, ok, oops, state} from './core.js';
 import {lang, setLang, t} from './i18n.js';
+import {VERSION} from './version.js';
 import {signedIn} from './main.js';
 import {slideNode} from './render.js';
 import {context} from './themes.js';
@@ -16,6 +17,8 @@ export const brand = () => h('a.brand', {
 export const credit = () => h('footer.credit', h('a', {href: 'privacy.php'}, 'Privacy'), h('a', {href: 'terms.php'}, t('terms_short')),
     h('a', {href: 'https://www.illerom.eu/', rel: 'noopener'}, 'Illerom'),
     h('span', lang() === 'it' ? 'di ' : 'by ', h('a.sign', {href: 'https://www.saveriomorelli.com/', rel: 'noopener'}, 'Saverio Morelli')),
+    // the version: it leads to the page of the changes
+    h('a.vlink', {href: '?p=changelog', 'data-go': true, title: t('changelog')}, 'v' + VERSION),
     h('span.grow'), langSwitch());
 /** Italian or English: kept in this browser and, when signed in, in the account. */
 async function useLang(l) {
@@ -45,7 +48,8 @@ export const langButton = () => h('sav-button', {
     onclick: () => useLang(lang() === 'it' ? 'en' : 'it')
 }, h('span.lbl', lang() === 'it' ? 'English' : 'Italiano'));
 
-const topBar = (...right) => h('header.ltop', brand(), h('div.spacer'), langButton(), ...right);
+// the other apps of SavOffice are a button away on the first page too, as in every app of the suite
+const topBar = (...right) => h('header.ltop', brand(), h('div.spacer'), langButton(), h('savoffice-apps', {current: 'savpresentations'}), ...right);
 
 export function landing(app) {
     document.body.classList.add('landing');

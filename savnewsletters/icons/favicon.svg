@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <defs>
+        <linearGradient id="a" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#f0619f"/>
+            <stop offset="1" stop-color="#c2307a"/>
+        </linearGradient>
+        <linearGradient id="b" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#a3205f"/>
+            <stop offset="1" stop-color="#7d1648"/>
+        </linearGradient>
+    </defs>
+    <!-- an S made of two pieces: an envelope with its flap, and the newsletter flying away as a paper plane -->
+    <path d="M20.500 4H53a5 5 0 0 1 5 5v17.500a5 5 0 0 1-5 5H20.500A13.750 13.750 0 0 1 20.500 4z" fill="url(#a)"/>
+    <path d="M17.500 10l17.250 10.250L52 10" fill="none" stroke="#fff" stroke-opacity=".92" stroke-width="3.400" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M43.500 60H11a5 5 0 0 1-5-5V37.500a5 5 0 0 1 5-5h32.500a13.750 13.750 0 0 1 0 27.500z" fill="url(#b)"/>
+    <path d="M14 41.500h14M14 50.500h9" stroke="#fff" stroke-opacity=".85" stroke-width="3.400" stroke-linecap="round"/>
+    <path d="M32.600 46.400l19.400-8.600-6.800 18.400-4.300-6.400z" fill="#ffd166" stroke="#ffd166" stroke-width="1.600" stroke-linejoin="round"/>
+    <path d="M52 37.800L40.900 49.800" stroke="#7d1648" stroke-width="1.700" stroke-linecap="round"/>
+</svg>

@@ -26,6 +26,6 @@ export async function openFile(file, folder) {
 }
 
 export async function importFile(folder) {
-    const [f] = await pickFile('.savdoc,.docx,.html,.htm,.md,.txt');
+    const [f] = await pickFile('.savdoc,.docx,.doc,.odt,.rtf,.html,.htm,.md,.txt');
     if (f) await openFile(f, folder);
 }

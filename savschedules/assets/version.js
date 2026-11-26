@@ -1,0 +1,37 @@
+/** The version of SavSchedules (in the footer) and what changed in each one (the page #/changelog). Newest first. */
+export const VERSION = '1.3.0';
+
+export const CHANGES = [
+  {
+    v: '1.3.0', date: '2026-11-26', items: [
+      ['The editor is arranged as SavDocuments and SavPresentations: the panels open from a rail of icons on the right (at the bottom on phones), and close with a second press', 'L’editor è disposto come SavDocuments e SavPresentations: i pannelli si aprono da una barra di icone a destra (in basso sui telefoni) e si chiudono con una seconda pressione'],
+      ['Top bar of the editor as in the other apps: whether it is saved under the title, Share, Download and a menu with the other actions', 'Barra in alto dell’editor come nelle altre app: sotto il titolo se è salvato, Condividi, Scarica e un menu con le altre azioni'],
+      ['New: a name and a choice, then Create; the ready-made starts are now called templates', 'Nuovo: un nome e una scelta, poi Crea; le partenze pronte ora si chiamano modelli'],
+      ['Same words as the other apps: My schedules, Favourites, Start a schedule, All templates', 'Le stesse parole delle altre app: Le mie pianificazioni, Preferiti, Inizia una pianificazione, Tutti i modelli'],
+    ],
+  },
+  {
+    v: '1.2.0', date: '2026-11-26', items: [
+      ['New kind: slot assignment. Everyone answers available, I can free myself or not available for every slot; then each person gets a slot of their own', 'Nuovo tipo: assegnazione slot. Ognuno risponde disponibile, posso liberarmi o non disponibile per ogni slot; poi ogni persona riceve uno slot tutto suo'],
+      ['The recommended solution and the other possible ones; whoever answers first has priority', 'La soluzione consigliata e le altre possibili; chi risponde per primo ha la precedenza'],
+      ['People who cannot be placed are pointed out and can be forced into a free slot, or moved by hand', 'Chi non si riesce a sistemare viene segnalato e può essere forzato in uno slot libero, o spostato a mano'],
+      ['An email when all the people expected have answered, and to each one with their slot', 'Un’email quando hanno risposto tutte le persone attese, e a ognuno con il suo slot'],
+    ],
+  },
+  {
+    v: '1.1.0', date: '2026-11-26', items: [
+      ['Settings in sections, as in SavDocuments and SavPresentations', 'Impostazioni a sezioni, come in SavDocuments e SavPresentations'],
+      ['The star of favourites fills when it is on; the editor shows whether the changes are saved with an icon', 'La stella dei preferiti si riempie quando è attiva; l’editor mostra con un’icona se le modifiche sono salvate'],
+      ['Home: the title first, then the box to start a new one and the recent ones; "Open a file" next to the title', 'Home: prima il titolo, poi il riquadro per iniziarne una nuova e le recenti; «Apri un file» accanto al titolo'],
+      ['The same icons, menus and page names as the other Sav apps', 'Le stesse icone, gli stessi menu e nomi delle pagine delle altre app Sav'],
+      ['First page on phones: no animations on touch, a tidier top bar and list of features', 'Prima pagina sui telefoni: niente animazioni al tocco, barra in alto ed elenco delle funzioni più ordinati'],
+    ],
+  },
+  {
+    v: '1.0.0', date: '2026-11-26', items: [
+      ['First version: date polls and slot booking, with unique places and a limit per person', 'Prima versione: sondaggi sulle date e prenotazione di posti, con posti unici e un limite a persona'],
+      ['No account needed to answer; results, choice of the date, an email at each answer, calendar files', 'Nessun account per rispondere; risultati, scelta della data, un’email a ogni risposta, file per il calendario'],
+      ['.savsch files, CSV of the answers, QR codes and links to share', 'File .savsch, CSV delle risposte, codici QR e link da condividere'],
+    ],
+  },
+];

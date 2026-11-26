@@ -3,10 +3,10 @@
  * Daily clean-up: see README.md.
  * Games (Connect Four, Chess, FaceGuess, Sea Battle, Prism Mine): deletes the rooms with no changes and no connected player
  * for ROOM_RETENTION_HOURS; players, chat and cards go with them through the foreign keys.
- * Apps (FoodTrack, Giftwise, Fucina, ThinkHop, Forkville, MyCurriculum, OpenNewsletter):
+ * Apps (FoodTrack, Giftwise, Fucina, ThinkHop, Forkville, MyCurriculum, SavNewsletters):
  * deletes expired sessions and old sign-in attempts and blanks the IP and browser still stored on
  * sessions from older versions. It never touches the users' own data.
- * OpenNewsletter also deletes the subscriptions never confirmed within PENDING_SUBSCRIBER_DAYS (as its terms promise)
+ * SavNewsletters also deletes the subscriptions never confirmed within PENDING_SUBSCRIBER_DAYS (as its terms promise)
  * and the expired email-confirmation links of accounts.
  * SavDocuments also deletes the documents left in the trash for TRASH_DAYS, the accounts never confirmed within 7 days (as
  * its privacy notice promises), expired links and who was present in a document.
@@ -19,11 +19,11 @@
 
 const ROOM_RETENTION_HOURS = 24;
 const GAMES = ['c4' => 'connect-four', 'chess' => 'chess', 'fg' => 'faceguess', 'sb' => 'sea-battle', 'pm' => 'prism-mine']; // table prefix => project
-const APPS = ['foodtrack' => 'ft_', 'giftwise' => 'gw_', 'fucina' => 'fc_', 'thinkhop' => 'th_', 'forkville' => 'fv_', 'mycurriculum' => 'mc_', 'opennewsletter' => 'on_', 'savdocuments' => 'sd_', 'savpresentations' => 'sp_', 'savschedules' => 'sch_']; // project => default table prefix
-const NO_SESSION_DETAILS = ['thinkhop', 'forkville', 'mycurriculum', 'opennewsletter', 'savdocuments', 'savpresentations', 'savschedules']; // these apps never stored the IP and browser on their sessions: no such columns
+const APPS = ['foodtrack' => 'ft_', 'giftwise' => 'gw_', 'fucina' => 'fc_', 'thinkhop' => 'th_', 'forkville' => 'fv_', 'mycurriculum' => 'mc_', 'savnewsletters' => 'on_', 'savdocuments' => 'sd_', 'savpresentations' => 'sp_', 'savschedules' => 'sch_']; // project => default table prefix
+const NO_SESSION_DETAILS = ['thinkhop', 'forkville', 'mycurriculum', 'savnewsletters', 'savdocuments', 'savpresentations', 'savschedules']; // these apps never stored the IP and browser on their sessions: no such columns
 const ATTEMPT_RETENTION_HOURS = 2; // the longest rate limit looks back 60 minutes: older IPs serve no purpose
 const TRASH_DAYS = 30; // SavDocuments, SavPresentations and SavSchedules: what is in the trash
-const PENDING_SUBSCRIBER_DAYS = 7; // OpenNewsletter: a confirmation link works 7 days, then the address is forgotten
+const PENDING_SUBSCRIBER_DAYS = 7; // SavNewsletters: a confirmation link works 7 days, then the address is forgotten
 
 header('Content-Type: application/json');
 header('X-Robots-Tag: noindex, nofollow');
@@ -73,7 +73,7 @@ function cleanApp($project, $defaultPrefix)
     $prefix = validPrefix($table_prefix ?: $defaultPrefix, $defaultPrefix);
     $db = connectTo($host, $port, $database_name, $username_db, $password_db);
     $result = cleanTables($db, $prefix, 'attempts', !in_array($project, NO_SESSION_DETAILS, true));
-    if ($project === 'opennewsletter') {
+    if ($project === 'savnewsletters') {
         $result['pending_subscribers'] = $db->exec("DELETE FROM `{$prefix}subscribers` WHERE status = 'pending' AND COALESCE(confirm_sent_at, created_at) < UTC_TIMESTAMP() - INTERVAL " . PENDING_SUBSCRIBER_DAYS . " DAY");
         $result['email_links'] = $db->exec("DELETE FROM `{$prefix}email_tokens` WHERE expires_at < UTC_TIMESTAMP()");
     }
@@ -98,6 +98,10 @@ function cleanApp($project, $defaultPrefix)
     if ($project === 'savschedules') {
         // as its privacy notice promises: trash 30 days, accounts never confirmed 7 (the answers go with their schedule)
         $result['trash'] = $db->exec("DELETE FROM `{$prefix}schedules` WHERE deleted_at < UTC_TIMESTAMP() - INTERVAL " . TRASH_DAYS . " DAY");
+        // SavWhiteboard keeps its boards next to them (same accounts): the trash after 30 days too
+        if ($db->query("SHOW TABLES LIKE " . $db->quote(addcslashes($prefix, '_%') . 'wb_boards'))->fetchColumn()) $result['boards_trash'] = $db->exec("DELETE FROM `{$prefix}wb_boards` WHERE trashed_at < UTC_TIMESTAMP() - INTERVAL " . TRASH_DAYS . " DAY");
+        // SavNotes too: its notebooks in the trash after 30 days
+        if ($db->query("SHOW TABLES LIKE " . $db->quote(addcslashes($prefix, '_%') . 'nb_notebooks'))->fetchColumn()) $result['notebooks_trash'] = $db->exec("DELETE FROM `{$prefix}nb_notebooks` WHERE trashed_at < UTC_TIMESTAMP() - INTERVAL " . TRASH_DAYS . " DAY");
         $result['unconfirmed'] = $db->exec("DELETE FROM `{$prefix}users` WHERE email_verified_at IS NULL AND status = 'active' AND created_at < UTC_TIMESTAMP() - INTERVAL 7 DAY");
         $result['links'] = $db->exec("DELETE FROM `{$prefix}email_tokens` WHERE expires_at < UTC_TIMESTAMP()");
         if ($db->query("SHOW TABLES LIKE " . $db->quote(addcslashes($prefix, '_%') . 'identity'))->fetchColumn()) $result['sign_in_requests'] = $db->exec("DELETE FROM `{$prefix}identity` WHERE expires_at < UTC_TIMESTAMP()"); // made at the first SavAccount or Google sign-in

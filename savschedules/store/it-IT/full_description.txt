@@ -1,0 +1,10 @@
+SavSchedules trova la data di un incontro e distribuisce posti che nessun altro può prendere.
+
+• Sondaggi sulle date: ognuno risponde sì, se serve o no per ogni data; la data migliore a colpo d’occhio
+• Prenotazione di posti: ogni posto si prende una volta sola, con un limite a persona
+• Nessun account per rispondere: basta un link
+• Risultati, scelta della data finale, un’email a ogni risposta, file per il calendario
+• Condividi con un link o un codice QR; file .savsch e CSV delle risposte
+
+Gratis, open source, senza pubblicità né tracciamenti.
+Sviluppata da Saverio Morelli, pubblicata da Illerom.

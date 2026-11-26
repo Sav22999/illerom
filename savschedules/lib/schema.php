@@ -9,6 +9,7 @@
  * responses   one per person who answered: an account, or a name (and an email) without an account; edit_hash is the
  *             SHA-256 of the private key that lets that person change or withdraw the answer
  * choices     what each answer says of each option: 2 yes (or a place taken), 1 if need be
+ * assignments kind "assign": the slot the owner gave to each answer (forced: the person had not said they were free)
  * reports     abuse reports, read by the master admins
  */
 
@@ -68,7 +69,7 @@ function schema_statements(string $p): array
             `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
             `pid` CHAR(12) NOT NULL,
             `owner_id` INT UNSIGNED NOT NULL,
-            `kind` ENUM('poll','slots') NOT NULL DEFAULT 'poll',
+            `kind` ENUM('poll','slots','assign') NOT NULL DEFAULT 'poll',
             `title` VARCHAR(160) NOT NULL,
             `descr` TEXT NULL,
             `place` VARCHAR(200) NOT NULL DEFAULT '',
@@ -119,6 +120,20 @@ function schema_statements(string $p): array
             KEY `ix_option` (`option_id`, `value`),
             " . $fk('cho_res', 'response_id', 'responses') . ",
             " . $fk('cho_opt', 'option_id', 'options') . "
+        ) $e",
+        // version 2: the kind "assign" and the slots given to each person
+        "ALTER TABLE `{$p}schedules` MODIFY `kind` ENUM('poll','slots','assign') NOT NULL DEFAULT 'poll'",
+        "CREATE TABLE IF NOT EXISTS `{$p}assignments` (
+            `response_id` INT UNSIGNED NOT NULL PRIMARY KEY,
+            `schedule_id` INT UNSIGNED NOT NULL,
+            `option_id` INT UNSIGNED NOT NULL,
+            `forced` TINYINT(1) NOT NULL DEFAULT 0,
+            `created_at` DATETIME NOT NULL,
+            KEY `ix_schedule` (`schedule_id`),
+            KEY `ix_option` (`option_id`),
+            " . $fk('asg_res', 'response_id', 'responses') . ",
+            " . $fk('asg_sch', 'schedule_id', 'schedules') . ",
+            " . $fk('asg_opt', 'option_id', 'options') . "
         ) $e",
         "CREATE TABLE IF NOT EXISTS `{$p}reports` (
             `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,

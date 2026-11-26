@@ -6,6 +6,12 @@ function e(?string $s): string
     return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
 }
 
+/** A project name, escaped: the "Sav" of the Sav apps never bold (SavDocuments → Sav + Documents), as in the apps. */
+function pname(string $name): string
+{
+    return preg_match('/^Sav(?=\p{Lu})/u', $name) ? '<span class="sav">Sav</span>' . e(substr($name, 3)) : e($name);
+}
+
 /** An asset with its version, so browsers can keep it for a long time. */
 function asset(string $path): string
 {
