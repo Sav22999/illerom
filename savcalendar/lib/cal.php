@@ -405,6 +405,47 @@ function form_items(array $u, string $from, string $to, array $prefs): array
     return $out;
 }
 
+// ------------------------------------------------------------------ SavContacts
+
+/**
+ * The birthdays of the contacts of the account in SavContacts (the same database: its table sch_con_contacts) in
+ * [from, to): whole days, every year, with the age they turn when the year of birth is known (a 29 February falls on the
+ * 28th in the other years). Read-only here, never in the feed. [] when SavContacts never ran on this database.
+ */
+function birthday_items(array $u, string $from, string $to, array $prefs): array
+{
+    if (($prefs['birthdays'] ?? true) === false) return [];
+    $contacts = rtrim(dirname(rtrim(app_url(), '/')), '/') . '/savcontacts/';
+    try {
+        $rows = q('SELECT cid, prefix, first, middle, last, suffix, nickname, company, birthday FROM ' . t('con_contacts') . " WHERE user_id = ? AND deleted_at IS NULL AND birthday <> '' LIMIT 20000", [$u['id']])->fetchAll();
+    } catch (PDOException $e) {
+        return [];
+    }
+    $f = strtotime(substr($from, 0, 10) . ' UTC');
+    $l = strtotime(substr($to, 0, 10) . ' UTC');
+    $out = [];
+    for ($y = (int)gmdate('Y', $f); $y <= (int)gmdate('Y', $l); $y++) {
+        foreach ($rows as $r) {
+            $b = (string)$r['birthday'];
+            $m = (int)substr($b, -5, 2);
+            $d = (int)substr($b, -2);
+            if ($m < 1 || $m > 12 || $d < 1) continue;
+            if (!checkdate($m, $d, $y)) $d = 28;
+            $day = sprintf('%04d-%02d-%02d', $y, $m, $d);
+            $t = strtotime($day . ' UTC');
+            if ($t < $f || $t > $l) continue;
+            $name = trim(preg_replace('/\s+/u', ' ', implode(' ', [$r['prefix'], $r['first'], $r['middle'], $r['last'], $r['suffix']])) ?? '') ?: ($r['nickname'] ?: $r['company']);
+            $born = $b[0] === '-' ? null : (int)substr($b, 0, 4);
+            $out[] = [
+                'id' => 'bday-' . $r['cid'] . '-' . $y, 'source' => 'birthdays', 'cid' => $r['cid'], 'title' => $name, 'name' => $name, 'age' => $born ? $y - $born : null, 'descr' => '', 'place' => '',
+                'allDay' => true, 'start' => $day, 'end' => gmdate('Y-m-d', $t + 86400), 'color' => '#4338ca', 'readOnly' => true, 'why' => 'birthday',
+                'status' => 'confirmed', 'busy' => false, 'link' => $contacts . '#/c/' . $r['cid'],
+            ];
+        }
+    }
+    return $out;
+}
+
 /** For the feed: the same items as rows of cal_events (only what keeps one busy: dates chosen, places taken). */
 function schedule_rows(array $u): array
 {

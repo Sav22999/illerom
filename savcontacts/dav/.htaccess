@@ -1,0 +1,16 @@
+# SavContacts — CardDAV: every address under dav/ goes to index.php, with the Authorization header passed on to PHP
+# (under FastCGI/CGI Apache does not hand it over by itself)
+Options -Indexes
+DirectoryIndex index.php
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+  RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^ index.php [L]
+</IfModule>
+<IfModule mod_headers.c>
+  Header set Cache-Control "no-store"
+</IfModule>

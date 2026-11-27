@@ -1,0 +1,23 @@
+{
+  "name": "SavContacts",
+  "short_name": "SavContacts",
+  "description": "Free, open address book: contacts, groups, birthdays, vCard and CSV files. Part of SavOffice.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f5f5fc",
+  "theme_color": "#4338ca",
+  "lang": "en",
+  "categories": ["productivity", "utilities", "social"],
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ],
+  "file_handlers": [
+    {"action": "./", "accept": {"application/vnd.savcontacts.contacts+json": [".savcon"], "text/vcard": [".vcf", ".vcard"], "text/x-vcard": [".vcf"]}}
+  ],
+  "launch_handler": {"client_mode": "navigate-existing"}
+}

@@ -14,7 +14,7 @@ declare(strict_types=1);
 
 const APP_NAME = 'SavWhiteboard';
 const AUTH_COOKIE = 'savschedules_auth';     // the same cookie of SavSchedules: one session for all
-const SHARED_APPS = ['savschedules', 'savcalendar', 'savwhiteboard', 'savtasks', 'savnotes', 'savforms', 'savsplits', 'savpodcasts', 'savmail', 'savdiagrams']; // folders next to each other that share the session
+const SHARED_APPS = ['savschedules', 'savcalendar', 'savwhiteboard', 'savtasks', 'savnotes', 'savforms', 'savsplits', 'savpodcasts', 'savmail', 'savdiagrams', 'savcontacts']; // folders next to each other that share the session
 const SCHEMA_VERSION = 1;              // of the tables of SavSchedules (created here only if SavSchedules never ran)
 const WB_SCHEMA_VERSION = 2;           // of the tables of the boards (2: pictures and the cache of searches)
 const LANGS = ['en', 'it'];

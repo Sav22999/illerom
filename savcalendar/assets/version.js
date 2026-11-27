@@ -1,7 +1,12 @@
 /** The version of SavCalendar (in the footer) and what changed in each one (the page #/changelog). Newest first. */
-export const VERSION = '1.1.0';
+export const VERSION = '1.2.0';
 
 export const CHANGES = [
+  {
+    v: '1.2.0', date: '2026-11-27', items: [
+      ['The birthdays of your contacts of SavContacts in the calendar, with the age they turn (they can be hidden, as the other apps of SavOffice)', 'I compleanni dei tuoi contatti di SavContacts nel calendario, con gli anni che compiono (si possono nascondere, come le altre app di SavOffice)'],
+    ],
+  },
   {
     v: '1.1.0', date: '2026-11-26', items: [
       ['Your week: any first day, and the days shown by the week and month views, in one panel that stays open', 'La tua settimana: qualsiasi primo giorno e i giorni mostrati dalle viste settimana e mese, in un pannello che resta aperto'],

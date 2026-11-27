@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <defs>
+        <linearGradient id="a" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#8b8ff5"/>
+            <stop offset="1" stop-color="#4338ca"/>
+        </linearGradient>
+        <linearGradient id="b" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#3730a3"/>
+            <stop offset="1" stop-color="#1b1760"/>
+        </linearGradient>
+    </defs>
+    <!-- an S made of two pieces, as in the other apps of SavOffice: above, the page of an address book, a person drawn
+         in its round end, the lines of the name and the number, and the index tabs of the letters on its edge (one in
+         the yellow of the suite); below, where to find them: the pin of an address and the phone handset -->
+    <path d="M20.500 4H53a5 5 0 0 1 5 5v17.500a5 5 0 0 1-5 5H20.500A13.750 13.750 0 0 1 20.500 4z" fill="url(#a)"/>
+    <circle cx="20.500" cy="13.400" r="4.600" fill="#fff"/>
+    <path d="M11.300 27.300a9.200 8.300 0 0 1 18.400 0z" fill="#fff"/>
+    <path d="M34 13h11" stroke="#fff" stroke-width="3.200" stroke-linecap="round"/>
+    <path d="M34 20.300h7" stroke="#fff" stroke-opacity=".6" stroke-width="2.600" stroke-linecap="round"/>
+    <rect x="49" y="7.600" width="6.400" height="5.200" rx="1.600" fill="#fff" fill-opacity=".45"/>
+    <rect x="49" y="15.150" width="6.400" height="5.200" rx="1.600" fill="#ffd166"/>
+    <rect x="49" y="22.700" width="6.400" height="5.200" rx="1.600" fill="#fff" fill-opacity=".45"/>
+    <path d="M43.500 60H11a5 5 0 0 1-5-5V37.500a5 5 0 0 1 5-5h32.500a13.750 13.750 0 0 1 0 27.500z" fill="url(#b)"/>
+    <path d="M16 38.300a6.200 6.200 0 0 1 6.200 6.200c0 4.300-6.200 10.400-6.200 10.400s-6.200-6.100-6.200-10.400a6.200 6.200 0 0 1 6.200-6.200z" fill="#fff"/>
+    <circle cx="16" cy="44.500" r="2.300" fill="#2b2588"/>
+    <path d="M26 43h7.500M26 49.400h5" stroke="#fff" stroke-opacity=".55" stroke-width="2.400" stroke-linecap="round"/>
+    <g transform="translate(36.300 39.050) scale(.6)">
+        <path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.600l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384z" fill="#ffd166" stroke="#ffd166" stroke-width="1.600" stroke-linejoin="round"/>
+    </g>
+</svg>

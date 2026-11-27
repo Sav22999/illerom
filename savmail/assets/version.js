@@ -1,7 +1,12 @@
 /** The version of SavMail (in the footer) and what changed in each one (the page #/changelog). Newest first. */
-export const VERSION = '0.9.0';
+export const VERSION = '0.9.1';
 
 export const CHANGES = [
+  {
+    v: '0.9.1', date: '2026-11-27', items: [
+      ['The recipients suggested from SavContacts while you type a name or an address', 'I destinatari suggeriti da SavContacts mentre scrivi un nome o un indirizzo'],
+    ],
+  },
   {
     v: '0.9.0', date: '2026-11-27', items: [
       ['First version, for testing: your mailboxes of Gmail, Outlook, Yahoo, iCloud, Aruba, Libero or any IMAP provider in one place', 'Prima versione, in prova: le tue caselle di Gmail, Outlook, Yahoo, iCloud, Aruba, Libero o di qualsiasi provider IMAP in un solo posto'],

@@ -1,0 +1,240 @@
+/* SavContacts — look of the app. Same arrangement of the other apps of SavOffice (they belong together): the header,
+   the side menu with the big "New" and the settings of SavDrive, the list and the card side by side as in SavMail. Colours
+   come from the SavComponents tokens with its own primary: the deep indigo of SavContacts, and the yellow of the suite. */
+@font-face { font-family: "Stack Sans Notch"; src: url(../../assets/fonts/stack-sans-notch.ttf); font-display: swap; }
+
+:root, .sav-theme-light { --sav-color-primary: #4338ca; --sav-color-on-primary: #fff; --sav-color-bg: #f5f5fc; --sav-color-surface: #fff; --sav-color-surface-2: #ebebf8; --sav-color-text: #17172e; --sav-color-text-muted: #5f5f80; --sav-color-border: #e1e1f0; --sav-indicator-l: .5; --sav-font: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; --sun: #ffd166; --sun-ink: #5b3f00; --row-hover: #f2f2fb; --row-active: #e7e7fa; --card: var(--sav-color-surface); }
+.sav-theme-dark { --sav-color-primary: #a9acff; --sav-color-on-primary: #15124a; --sav-color-bg: #0f0f1d; --sav-color-surface: #171728; --sav-color-surface-2: #212137; --sav-color-text: #e9e9f8; --sav-color-text-muted: #a7a7c8; --sav-color-border: #2f2f4c; --sav-color-input-bg: #131324; --sun: #f5c451; --sun-ink: #2a1d00; --row-hover: #1d1d33; --row-active: #28284a; }
+@media (prefers-color-scheme: dark) { .sav-theme-auto { --sav-color-primary: #a9acff; --sav-color-on-primary: #15124a; --sav-color-bg: #0f0f1d; --sav-color-surface: #171728; --sav-color-surface-2: #212137; --sav-color-text: #e9e9f8; --sav-color-text-muted: #a7a7c8; --sav-color-border: #2f2f4c; --sav-color-input-bg: #131324; --sun: #f5c451; --sun-ink: #2a1d00; --row-hover: #1d1d33; --row-active: #28284a; } }
+*, ::before, ::after { box-sizing: border-box; }
+html { height: 100%; -webkit-text-size-adjust: 100%; }
+body { margin: 0; min-height: 100%; background: var(--sav-color-bg); color: var(--sav-color-text); font: 400 15px/1.5 var(--sav-font); -webkit-tap-highlight-color: transparent; -webkit-font-smoothing: antialiased; }
+[hidden] { display: none !important; }
+h1, h2, h3, p { margin: 0; }
+a { color: color-mix(in oklab, var(--sav-color-primary) 85%, var(--sav-color-text)); }
+:focus-visible { outline: 2px solid var(--sav-color-focus); outline-offset: 2px; }
+/* these SavComponents draw their own focus ring inside: a second outline around them made two loose lines across menus */
+sav-menu-item:focus-visible, sav-tree-item:focus-visible, sav-radio:focus-visible { outline: none; }
+kbd { font: 500 .74rem/1 var(--sav-font); color: var(--sav-color-text-muted); }
+.muted { color: var(--sav-color-text-muted); } .small { font-size: .82rem; } .hint { font-size: .8rem; } .center { text-align: center; } .grow { flex: 1; min-width: 0; } .spacer { flex: 1; }
+.stack { display: grid; gap: .6rem; grid-template-columns: minmax(0, 1fr); } .form { display: grid; gap: .95rem; grid-template-columns: minmax(0, 1fr); }
+.prow { display: flex; align-items: center; gap: .5rem; min-width: 0; } .prow.wrap { flex-wrap: wrap; } .prow.end { align-items: flex-end; } .prow0 { display: flex; align-items: center; } .prow > sav-number-input, .prow > sav-select, .prow > .cf { flex: 1; min-width: 0; }
+.grid2 { display: grid; gap: .9rem; grid-template-columns: repeat(2, minmax(0, 1fr)); } .grid3 { display: grid; gap: .9rem; grid-template-columns: repeat(3, minmax(0, 1fr)); } .w9 { width: 10.5rem; }
+.flabel { font-size: .76rem; color: var(--sav-color-text-muted); display: block; margin-bottom: .2rem; }
+.wait { min-height: 60dvh; display: grid; place-items: center; padding: 1rem; }
+sav-dialog h3 { font-size: .98rem; } .dlg-err { margin-top: .8rem; } .segm.wide { display: block; } .ctxm { position: fixed; z-index: 70; }
+.stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: .8rem; }
+
+
+/* first page, as in SavPresentations: bar, title and a fan of pages, six features */
+.landing, .authp { min-height: 100dvh; display: flex; flex-direction: column; }
+.ltop { display: flex; align-items: center; gap: .6rem; padding: 1rem clamp(1rem, 4vw, 3rem); padding-top: max(1rem, env(safe-area-inset-top)); } .ltop .spacer { flex: 1; }
+.brand { display: inline-flex; align-items: center; gap: .65rem; font-size: 1.18rem; letter-spacing: -.015em; color: inherit; text-decoration: none; } .brand b { font-weight: 700; } .brand img { border-radius: 9px; }
+.lmain { width: 100%; max-width: 1240px; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 3rem); }
+.hero { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: clamp(1.5rem, 4vw, 4rem); align-items: center; padding: clamp(1.5rem, 6vh, 5rem) 0 5rem; }
+.hero h1 { font-size: clamp(2.3rem, 5vw, 4rem); line-height: 1.02; letter-spacing: -.045em; font-weight: 700; text-wrap: balance; }
+.hero-t > p { margin: 1.2rem 0 1.6rem; font-size: 1.12rem; color: var(--sav-color-text-muted); max-width: 34rem; text-wrap: pretty; } .hero-t small { display: block; margin-top: 1rem; color: var(--sav-color-text-muted); }
+/* the pages go down to the right: the upper part of each one (its title) is what shows above the next */
+.l-stage { position: relative; aspect-ratio: 1 / .94; }
+.l-card { position: absolute; width: 42%; aspect-ratio: 3 / 4; left: calc(2% + var(--i) * 9.4%); top: calc(1% + var(--i) * 5.2%); border-radius: 6px; background: #fff; box-shadow: 0 14px 40px rgb(12 60 24 / .2); will-change: transform, opacity; backface-visibility: hidden; pointer-events: none; }
+.l-card::before { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: 0 34px 80px rgb(30 25 90 / .30); opacity: var(--lift, 0); }
+.feats { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 2rem 2.5rem; padding: 2rem 0 3rem; border-top: 1px solid var(--sav-color-border); }
+.feat sav-icon { font-size: 1.5rem; color: var(--sav-color-primary); } .feat h3 { margin: .5rem 0 .2rem; font-size: 1.05rem; } .feat p { color: var(--sav-color-text-muted); }
+.amain { flex: 1; display: grid; place-items: center; padding: 1rem; } .aw { width: min(26rem, 100%); } .auth { --sav-card-padding: 1.8rem; display: block; }
+.gbox { display: grid; justify-content: center; min-height: 44px; } .auth .idl-savbtn, .auth .idl-sav { margin-top: 0; }
+.landing > .credit, .authp > .credit { width: 100%; max-width: 1680px; margin: auto auto 0; padding: 1rem clamp(1rem, 4vw, 3rem); }
+@media (max-width: 900px) { .hero { grid-template-columns: minmax(0, 1fr); padding-bottom: 3rem; } .l-stage { max-width: 34rem; width: 100%; justify-self: center; } }
+.credit { display: flex; flex-wrap: wrap; gap: .4rem 1.1rem; align-items: center; padding: 1.1rem 0; color: var(--sav-color-text-muted); font-size: .85rem; margin-top: auto; } .credit a { color: inherit; } .sig { font-family: "Stack Sans Notch", sans-serif; }
+/* settings */
+.smain { width: 100%; max-width: 1080px; margin: 0 auto; padding: 1rem clamp(.8rem, 3vw, 2rem) 2rem; } .shd { display: flex; align-items: center; gap: .6rem; margin-bottom: .4rem; flex-wrap: wrap; } .shd h1 { font-size: 1.5rem; letter-spacing: -.025em; }
+/* how it works: a section of its own between the features and the footer (as in SavSchedules) */
+.how { padding: 1rem 0 3.5rem; } .how h2 { font-size: 1.4rem; letter-spacing: -.02em; margin-bottom: 1.2rem; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1.4rem; } .steps li { display: flex; gap: .9rem; align-items: start; } .steps li > div { display: grid; gap: .15rem; }
+.num { flex: none; width: 2.2rem; height: 2.2rem; border-radius: 50%; display: grid; place-items: center; font-weight: 700; background: var(--sun); color: var(--sun-ink); }
+.feat sav-icon { color: var(--sav-color-primary); }
+
+/* settings: sections on the side, rows "what it is | control" (as in SavPresentations) */
+.otabs { margin-top: 1rem; --sav-tab-vertical-rail: transparent; } .otabs[placement="start"] { min-height: 60vh; }
+.osec { display: grid; gap: .5rem; max-width: 46rem; } .osec h2 { font-size: 1.25rem; letter-spacing: -.015em; margin: 0; } .osec > .muted { margin: 0 0 .4rem; }
+.ocard { --sav-card-padding: 0; margin: 0; } .orows { display: grid; }
+.orow { display: flex; align-items: center; gap: 1rem 1.6rem; padding: .95rem 1.2rem; border-bottom: 1px solid var(--sav-color-border); } .orow:last-child { border-bottom: 0; }
+.orow-t { flex: 1; min-width: 0; display: grid; gap: .15rem; } .orow-t small { color: var(--sav-color-text-muted); font-size: .84rem; } .orow-c { flex: none; max-width: 55%; display: flex; justify-content: flex-end; } .orow-c > sav-select, .orow-c > sav-input { width: 15rem; max-width: 100%; }
+@media (max-width: 700px) { .orow { flex-wrap: wrap; } .orow-c { max-width: 100%; width: 100%; justify-content: flex-start; } .orow-c > sav-select, .orow-c > sav-input { width: 100%; } }
+
+/* first page on phones: the top bar fits (the language as an icon), the features close together, nothing moves on touch */
+@media (max-width: 600px) {
+  .ltop { gap: .3rem; padding-left: 1rem; padding-right: 1rem; }
+  .langb .lbl { display: none; }
+  .hero { gap: 1.4rem; padding-top: 1.2rem; padding-bottom: 2rem; }
+  .hero-t > p { margin: .9rem 0 1.2rem; font-size: 1.02rem; }
+  .hero-t .prow sav-button, .hero-t .row sav-button { flex: 1 1 auto; }
+  .feats { grid-template-columns: minmax(0, 1fr); gap: 1.1rem; padding: 1.4rem 0 2rem; }
+  .how { padding: .4rem 0 2.2rem; } .how h2 { font-size: 1.25rem; margin-bottom: 1rem; } .steps { gap: 1.1rem; }
+  .feat { display: grid; grid-template-columns: 2.2rem minmax(0, 1fr); column-gap: .7rem; align-items: start; }
+  .feat sav-icon { grid-row: span 2; font-size: 1.35rem; margin-top: .1rem; }
+  .feat h3 { margin: 0 0 .1rem; font-size: 1rem; }
+  .feat p { font-size: .92rem; }
+  .landing > .credit, .authp > .credit { padding-left: 1rem; padding-right: 1rem; }
+}
+@media (max-width: 360px) { .ltop .brand span, .ltop .brand b { display: none; } }
+
+
+.umenu { display: flex; align-items: center; gap: .35rem; }
+.kicker { display: inline-flex; align-items: center; gap: .35rem; margin-bottom: 1rem; padding: .25rem .7rem; border-radius: 999px; background: color-mix(in oklab, var(--sav-color-primary) 11%, transparent); color: var(--sav-color-primary); font-size: .82rem; font-weight: 600; }
+/* ------------------------------------------------------------------ first page: the small pages of the fan (drawn, the same in both themes) */
+.lp { position: absolute; inset: 0; padding: 9% 8%; display: flex; flex-direction: column; gap: 4%; color: #17172e; font: 500 11px/1.2 var(--sav-font); }
+.lp-bar { display: flex; align-items: center; gap: 7px; margin-bottom: 3%; } .lp-bar b { font-size: 12.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lp-dot { width: 22px; height: 22px; border-radius: 7px; flex: none; display: grid; place-items: center; color: #fff; font-size: 12px; }
+.lp-sec { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #5f5f80; }
+.lp-av { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: 9px; font-weight: 700; flex: none; background: #4a7a56; } .lp-av.sm { width: 22px; height: 22px; } .lp-av.to { background: #1a7f37; }
+.lp-chips { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; } .lp-chips i { font-style: normal; font-weight: 700; color: #5f5f80; } .lp-chips b { padding: 3px 7px; border-radius: 99px; background: #e4f2e7; color: #13803f; font-size: 10px; }
+
+/* ------------------------------------------------------------------ first page: the small pages of the address book */
+.lp-row { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: 7px; align-items: center; padding: 4px 0; border-bottom: 1px solid #ececf6; }
+.lp-row > div { display: grid; min-width: 0; } .lp-row b { font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .lp-row small { font-size: 8.5px; color: #6b6b8a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lp-star { color: #e0a800; font-size: 11px; } .lp-age { font-style: normal; font-weight: 700; font-size: 10px; padding: 2px 6px; border-radius: 99px; background: #ffd166; color: #5b3f00; }
+.lp-card { gap: 3%; } .lp-hero { display: grid; justify-items: center; gap: 3px; padding-bottom: 6%; border-bottom: 1px solid #ececf6; text-align: center; }
+.lp-hero .lp-av { width: 42px; height: 42px; font-size: 15px; } .lp-hero b { font-size: 12.5px; } .lp-hero small { font-size: 8.5px; color: #6b6b8a; }
+.lp-line { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 7px; align-items: center; } .lp-line sav-icon { color: #4338ca; font-size: 12px; }
+.lp-line > div { display: grid; min-width: 0; } .lp-line small { font-size: 7.5px; color: #6b6b8a; text-transform: uppercase; letter-spacing: .04em; } .lp-line b { font-size: 9.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lp-merge { margin-top: auto; display: flex; gap: 6px; align-items: center; justify-content: center; padding: 7px; border-radius: 9px; background: #4338ca; color: #fff; font-size: 10px; }
+.lp-vcf { justify-content: space-between; } .lp-vcf code { white-space: pre; font: 600 8.5px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; color: #3730a3; background: #f0f0fb; border-radius: 10px; padding: 9px; overflow: hidden; }
+
+/* ------------------------------------------------------------------ the frame: header, side menu, page (as SavDrive) */
+.home { min-height: 100dvh; display: flex; flex-direction: column; }
+.htop { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 1rem; padding: .7rem clamp(.8rem, 2vw, 1.6rem); padding-top: max(.7rem, env(safe-area-inset-top)); background: color-mix(in oklab, var(--sav-color-bg) 88%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.hsearch { flex: 0 1 34rem; min-width: 0; } .htop .hsearch + .spacer { flex: 1; } .spacer { flex: 1; }
+.umenu { display: inline-flex; align-items: center; gap: .3rem; flex: none; } .umenu sav-avatar { --size: 30px !important; }
+.hbody { flex: 1; display: grid; grid-template-columns: 15rem minmax(0, 1fr); gap: 1.6rem; width: 100%; max-width: 1680px; margin: 0 auto; padding: .6rem clamp(.8rem, 2vw, 1.6rem) 2rem; align-content: start; }
+.hside { display: flex; flex-direction: column; gap: .15rem; align-self: start; position: sticky; top: 4.6rem; max-height: calc(100dvh - 5.4rem); overflow-y: auto; scrollbar-width: thin; }
+.newd { display: block; width: 100%; margin-bottom: .8rem; } .newb { width: 100%; }
+.hside sav-menu-item[current] { font-weight: 650; } .mlab { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.navh { display: flex; align-items: center; justify-content: space-between; padding: 1rem .1rem .2rem .8rem; font-size: .78rem; font-weight: 650; color: var(--sav-color-text-muted); text-transform: uppercase; letter-spacing: .05em; }
+.gdot { display: inline-block; width: .7rem; height: .7rem; border-radius: 50%; background: var(--g, var(--sav-color-primary)); flex: none; }
+.sidecount { display: grid; gap: .15rem; padding: 1.1rem .8rem; margin-top: .6rem; border-top: 1px solid var(--sav-color-border); color: var(--sav-color-text-muted); font-size: .82rem; }
+.sidecount b { color: var(--sav-color-text); font-size: 1.25rem; letter-spacing: -.02em; }
+.hmain { min-width: 0; }
+.home > .credit { width: 100%; max-width: 1680px; margin: auto auto 0; padding: 1rem clamp(.8rem, 2vw, 1.6rem); }
+
+/* ------------------------------------------------------------------ the list and the card, side by side (as SavMail) */
+.cpanes { display: grid; grid-template-columns: minmax(18rem, 26rem) minmax(0, 1fr); align-items: start; min-height: 70dvh; }
+.clist { min-height: min(70dvh, calc(100dvh - 5.4rem)); background: var(--sav-color-surface); border: 1px solid var(--sav-color-border); border-radius: 16px 0 0 16px; min-width: 0; display: flex; flex-direction: column; position: sticky; top: 4.6rem; max-height: calc(100dvh - 5.4rem); }
+.cread { background: var(--sav-color-surface); border: 1px solid var(--sav-color-border); border-left: 0; border-radius: 0 16px 16px 0; min-width: 0; min-height: 70dvh; }
+.cpanes.single { grid-template-columns: minmax(0, 1fr); } .cpanes.single .clist { border-radius: 16px; position: static; max-height: none; } .cpanes.single .cread { display: none; }
+.dhead { display: flex; align-items: center; gap: .4rem; padding: .6rem .6rem .6rem 1rem; min-height: 3.4rem; border-bottom: 1px solid var(--sav-color-border); }
+.dhead .ttl { flex: 1; min-width: 0; display: grid; } .dhead h1 { font-size: 1.05rem; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; } .dhead small { color: var(--sav-color-text-muted); font-size: .78rem; }
+.dhead.sel { background: color-mix(in oklab, var(--sav-color-primary) 10%, var(--sav-color-surface)); border-radius: 15px 0 0 0; }
+.cpanes.single .dhead.sel { border-radius: 15px 15px 0 0; }
+.crows { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-bottom: .4rem; }
+.cpanes.single .crows { overflow: visible; }
+.letter { position: sticky; top: 0; z-index: 1; padding: .45rem 1rem .25rem; font-size: .74rem; font-weight: 700; letter-spacing: .06em; color: var(--sav-color-primary); background: var(--sav-color-surface); }
+.crow { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: .75rem; padding: .5rem .55rem .5rem .9rem; cursor: pointer; border-radius: 0; outline: none; }
+.crow:hover { background: var(--row-hover); } .crow.active { background: var(--row-active); } .crow.sel { background: color-mix(in oklab, var(--sav-color-primary) 12%, var(--sav-color-surface)); }
+.crow:focus-visible { box-shadow: inset 0 0 0 2px var(--sav-color-focus); }
+.cpick { position: relative; width: 38px; height: 38px; display: grid; place-items: center; }
+.cpick .csel { position: absolute; inset: 0; display: grid; place-items: center; opacity: 0; }
+.crow:hover .csel, .crow.sel .csel, .selecting .csel { opacity: 1; } .crow:hover .cpick sav-avatar, .crow.sel .cpick sav-avatar, .selecting .cpick sav-avatar { opacity: 0; }
+.cbody { min-width: 0; display: grid; } .cname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .94rem; } .cname b { font-weight: 650; }
+.csub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .8rem; color: var(--sav-color-text-muted); }
+.cstar { color: #d99a00; font-size: .95rem; } .cside { display: flex; align-items: center; gap: .3rem; } .cdays { font-size: .74rem; font-weight: 700; padding: .1rem .5rem; border-radius: 99px; background: var(--sun); color: var(--sun-ink); white-space: nowrap; }
+.cdays.soon { background: var(--sav-color-primary); color: var(--sav-color-on-primary); }
+.crows sav-empty-state, .cread sav-empty-state { margin: 3rem auto; }
+sav-avatar.cav { flex: none; color: #fff; }
+@media (max-width: 1180px) and (min-width: 901px) { .cpanes { grid-template-columns: minmax(16rem, 21rem) minmax(0, 1fr); } }
+/* the card of a contact */
+.card { display: flex; flex-direction: column; min-height: 70dvh; }
+.ctool { display: flex; align-items: center; gap: .1rem; padding: .5rem .6rem; border-bottom: 1px solid var(--sav-color-border); min-height: 3.4rem; }
+.ctool .spacer { flex: 1; } .cback { display: none; }
+.cscroll { padding: 1.6rem clamp(1rem, 3vw, 2.4rem) 2rem; display: grid; gap: 1.4rem; align-content: start; }
+.chero { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
+.chero sav-avatar { --size: 6rem !important; font-size: 2.2rem; } .chero h2 { font-size: 1.6rem; letter-spacing: -.025em; line-height: 1.15; margin: 0; overflow-wrap: anywhere; }
+.chero .muted { margin-top: .2rem; } .chero > div { flex: 1; min-width: 12rem; display: grid; gap: .15rem; }
+.cnick { font-size: .9rem; color: var(--sav-color-text-muted); }
+.cchips { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .5rem; }
+.gchip { display: inline-flex; align-items: center; gap: .35rem; padding: .12rem .6rem .12rem .45rem; border-radius: 99px; font-size: .78rem; font-weight: 600; background: color-mix(in oklab, var(--g) 14%, var(--sav-color-surface)); color: color-mix(in oklab, var(--g) 70%, var(--sav-color-text)); text-decoration: none; }
+.cact { display: flex; flex-wrap: wrap; gap: .5rem; }
+.cact sav-button::part(base) { min-width: 6.5rem; }
+.csec { display: grid; gap: .1rem; } .csec > h3 { font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--sav-color-text-muted); margin: 0 0 .3rem; }
+.cfield { display: grid; grid-template-columns: 2.2rem minmax(0, 1fr); align-items: center; gap: .4rem .7rem; padding: .5rem .5rem .5rem .3rem; border-radius: 12px; }
+.cfield:hover { background: var(--row-hover); } .cfield > sav-icon { color: var(--sav-color-primary); font-size: 1.1rem; justify-self: center; }
+.cfield .fv { min-width: 0; display: grid; } .cfield .fv a, .cfield .fv span { overflow-wrap: break-word; word-break: break-word; color: inherit; text-decoration: none; font-weight: 550; white-space: pre-line; } .cfield .fv a:hover { color: var(--sav-color-primary); text-decoration: underline; }
+.cfield .fv small { font-size: .76rem; color: var(--sav-color-text-muted); }
+.cfield { position: relative; } .cfield .fa { position: absolute; right: .3rem; top: 50%; transform: translateY(-50%); display: flex; gap: .1rem; opacity: 0; padding-left: .6rem; background: linear-gradient(90deg, transparent, var(--row-hover) .6rem); border-radius: 0 12px 12px 0; }
+.cfield:hover .fa, .cfield:focus-within .fa { opacity: 1; }
+.cnotes { white-space: pre-wrap; overflow-wrap: anywhere; padding: .8rem 1rem; border-radius: 12px; background: var(--sav-color-surface-2); }
+.cmeta { font-size: .78rem; color: var(--sav-color-text-muted); border-top: 1px solid var(--sav-color-border); padding-top: .9rem; }
+.cother { font: .78rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; padding: .7rem .9rem; border-radius: 10px; background: var(--sav-color-surface-2); }
+/* duplicates and trash: cards in the place of the card */
+.dupl { display: grid; gap: 1rem; padding: 1rem; } .dset { --sav-card-padding: .8rem 1rem 1rem; display: block; }
+.dset .drow { display: grid; grid-template-columns: auto auto minmax(0, 1fr); gap: .7rem; align-items: center; padding: .45rem 0; border-bottom: 1px solid var(--sav-color-border); }
+.dset .drow:last-of-type { border-bottom: 0; } .dset .drow > div { display: grid; min-width: 0; } .dset .drow small { color: var(--sav-color-text-muted); font-size: .8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dset .prow { margin-top: .6rem; justify-content: flex-end; }
+
+/* ------------------------------------------------------------------ the editor */
+.edlg::part(body) { padding-top: .2rem; }
+.ed { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); }
+.edtop { display: flex; gap: 1rem; align-items: center; }
+.edpic { position: relative; flex: none; } .edpic sav-avatar { --size: 5.2rem !important; font-size: 1.8rem; cursor: pointer; }
+.edpic .edcam { position: absolute; right: -.3rem; bottom: -.3rem; }
+.edname { flex: 1; display: grid; gap: .6rem; min-width: 0; }
+.grid2 { display: grid; gap: .6rem; grid-template-columns: repeat(2, minmax(0, 1fr)); } .grid3 { display: grid; gap: .6rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.edsec { display: grid; gap: .45rem; } .edsec > .flabel { display: flex; align-items: center; gap: .4rem; font-size: .8rem; font-weight: 650; color: var(--sav-color-text-muted); margin: 0; }
+.edrow { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr) auto; gap: .4rem; align-items: end; }
+.edaddr { display: grid; gap: .4rem; padding: .7rem; border: 1px solid var(--sav-color-border); border-radius: 12px; }
+.edhead { display: flex; justify-content: space-between; align-items: center; gap: .4rem; } .edhead sav-select { width: 10rem; }
+.edbday { display: grid; grid-template-columns: 5rem minmax(0, 1fr) 6.5rem; gap: .4rem; }
+.edgroups { display: flex; flex-wrap: wrap; gap: .35rem; }
+.edmore { justify-self: start; }
+.flabel { font-size: .76rem; color: var(--sav-color-text-muted); display: block; margin-bottom: .2rem; }
+.drop-over .clist { outline: 2px dashed var(--sav-color-primary); outline-offset: -4px; }
+.impres { display: grid; gap: .3rem; }
+
+/* tablets and phones: the rows of SavDrive (search on its own line, "New" and the places in a row that scrolls) */
+@media (max-width: 900px) {
+  .hbody { grid-template-columns: minmax(0, 1fr); gap: .8rem; } .htop { flex-wrap: wrap; gap: .6rem; } .hsearch { order: 3; flex: 1 0 100%; margin: 0; }
+  .hside { position: static; flex-direction: row; flex-wrap: wrap; align-items: center; gap: .4rem; max-height: none; overflow: visible; }
+  .hside .newd { margin: 0; flex: none; width: auto; } .hside .newb { width: auto; }
+  .hside > sav-menu { flex: 1 1 100%; min-width: 0; order: 3; overflow-x: auto; scrollbar-width: none; } .hside > sav-menu::-webkit-scrollbar { display: none; } .hside > sav-menu::part(base) { display: flex; flex-direction: row; width: max-content; } .hside sav-menu-item { white-space: nowrap; } .hside sav-divider { display: none; }
+  .hside .navh { display: none; } .sidecount { order: 2; flex: 1 1 8rem; border: 0; margin: 0; padding: 0 .2rem; display: flex; align-items: baseline; gap: .3rem; } .sidecount b { font-size: .95rem; }
+  .cpanes { grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr); }
+  .clist, .hside { top: auto; }
+}
+/* phones: one pane at a time; the card has a way back */
+@media (max-width: 760px) {
+  .hbody { padding-left: 0; padding-right: 0; } .hside { padding: 0 .8rem; }
+  .cpanes { grid-template-columns: minmax(0, 1fr); }
+  .clist, .cread { border-radius: 0; border-left: 0; border-right: 0; position: static; max-height: none; }
+  .dhead.sel { border-radius: 0; } .crows { overflow: visible; }
+  .chero sav-avatar { --size: 4.6rem !important; } .chero h2 { font-size: 1.35rem; }
+  .cfield { grid-template-columns: 2.2rem minmax(0, 1fr) auto; } .cfield .fa { opacity: 1; position: static; transform: none; background: none; padding: 0; }
+  .cpick .csel { display: none; } .selecting .cpick .csel { display: grid; } .selecting .cpick sav-avatar { opacity: 0; } .crow:hover .cpick sav-avatar { opacity: 1; }
+  .htop .brand span { display: none; }
+  .grid2, .grid3 { grid-template-columns: minmax(0, 1fr); } .edrow { grid-template-columns: 7rem minmax(0, 1fr) auto; } .edtop { align-items: flex-start; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+/* settings: phone and other apps (CardDAV) */
+.dcode, .dpw { font: 600 .85rem/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; padding: .3rem .55rem; border-radius: 8px; background: var(--sav-color-surface-2); overflow-wrap: anywhere; }
+.dpw { font-size: 1.25rem; letter-spacing: .06em; padding: .6rem .9rem; flex: 1; text-align: center; }
+.dsum .orow { padding: .5rem 0; } .dtest:empty { display: none; }
+.osec .prow h2 { margin: 0; } .osec + .osec { margin-top: 1.4rem; }
+
+/* the contact in a dialog in the middle (a sheet from the bottom on phones), as "New" */
+.cdlg .card { min-height: 0; } .cdlg .cscroll { padding: .3rem 0 .6rem; gap: 1.2rem; }
+.cdlg .ctool { border: 0; min-height: 0; padding: 0; gap: 0; }
+.cdlg .chero sav-avatar { --size: 5.5rem !important; }
+.cpanes.single .crow { grid-template-columns: auto minmax(0, 1fr) auto auto; }
+.cmore { display: none; }
+@media (min-width: 1100px) {
+  .cpanes.single .crow { grid-template-columns: auto minmax(0, 1.1fr) minmax(0, 1.4fr) auto; }
+  .cmore { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 1rem; font-size: .86rem; color: var(--sav-color-text-muted); }
+  .cmore span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .csub.plain { display: none; }
+}
+/* phones and tablets: the bar at the bottom (as SavTasks), the places live there; never on a computer */
+.cbottom { display: none; }
+@media (max-width: 900px) {
+  .cbottom { display: block; }
+  .home.cont { padding-bottom: calc(4.4rem + env(safe-area-inset-bottom)); }
+  .hside > sav-menu.dnav { display: none; }
+  .cdrawer sav-menu { width: 100%; }
+}

@@ -40,6 +40,7 @@ export function readOnlyWhy(o) {
   if (o.source === 'newsletters') return { text: t('ro_nl_' + (e.why || 'scheduled'), { group: e.descr || e.group || '' }), link: e.link, label: t('open_in_nl'), icon: 'mail' };
   if (o.source === 'tasks') return { text: t('ro_task', { list: e.list || '' }), link: e.link, label: t('open_in_tasks'), icon: 'list-checks' };
   if (o.source === 'forms') return { text: t('ro_form'), link: e.link, label: t('open_in_forms'), icon: 'chart-column' };
+  if (o.source === 'birthdays') return { text: t('ro_bday'), link: e.link, label: t('open_in_contacts'), icon: 'cake' };
   return { text: t('read_only'), icon: 'lock' };
 }
 
@@ -49,7 +50,7 @@ const linkify = (s) => h('p.edescr', String(s).split(/(https?:\/\/[^\s<>"]+)/g).
 export function openItem(o, ctx) {
   const tz = ctx.tz(), e = o.e, why = readOnlyWhy(o);
   const rule = e.rrule ? describe(e.rrule, t, getLang()) : e.recurId ? t('changed_occurrence') : '';
-  const srcName = o.source === 'schedules' ? 'SavSchedules' : o.source === 'newsletters' ? 'SavNewsletters' : o.source === 'tasks' ? 'SavTasks · ' + (e.list || '') : o.source === 'forms' ? 'SavForms' : o.cal?.name || '';
+  const srcName = o.source === 'schedules' ? 'SavSchedules' : o.source === 'newsletters' ? 'SavNewsletters' : o.source === 'tasks' ? 'SavTasks · ' + (e.list || '') : o.source === 'forms' ? 'SavForms' : o.source === 'birthdays' ? 'SavContacts' : o.cal?.name || '';
   const otherTz = !o.allDay && e.tz && e.tz !== tz ? `${clock(o.s, e.tz)} – ${clock(o.en, e.tz)} ${t('in_zone', { z: e.tz.replace(/_/g, ' ') })}` : '';
   const line = (ic, ...kids) => h('div.eline', icon(ic), h('div', ...kids));
   const extra = [];
@@ -69,7 +70,7 @@ export function openItem(o, ctx) {
     ...extra,
     tentativeText(o) ? line('circle-alert', tentativeText(o)) : null,
     e.descr ? line('text', linkify(e.descr)) : null,
-    line(o.source === 'cal' ? (o.cal?.kind === 'sub' ? 'rss' : 'calendar') : o.source === 'schedules' ? 'vote' : o.source === 'tasks' ? 'list-checks' : o.source === 'forms' ? 'hourglass' : 'mail', srcName, o.source === 'cal' && e.busy === false ? h('small.muted', ' · ' + t('shown_free')) : null));
+    line(o.source === 'cal' ? (o.cal?.kind === 'sub' ? 'rss' : 'calendar') : o.source === 'schedules' ? 'vote' : o.source === 'tasks' ? 'list-checks' : o.source === 'forms' ? 'hourglass' : o.source === 'birthdays' ? 'cake' : 'mail', srcName, o.source === 'cal' && e.busy === false ? h('small.muted', ' · ' + t('shown_free')) : null));
   const actions = [];
   if (!o.readOnly) {
     actions.push({ label: t('delete'), icon: 'trash', run: async () => { if (await deleteItem(o, ctx)) return; return false; } });
@@ -80,7 +81,7 @@ export function openItem(o, ctx) {
     actions.push({ label: t('close') });
     actions.push({ label: t(e.done ? 'task_reopen' : 'task_done'), icon: 'circle-check', primary: true, run: async () => { const r = await taskDone(e.tid, !e.done); toast(t(e.done ? 'task_reopened' : r.next ? 'task_done_next' : 'task_done_ok'), 'success'); ctx.changed(); } });
   } else actions.push({ label: t('close'), primary: true });
-  const d = dialog({ title: t(o.source === 'tasks' ? 'task' : o.source === 'forms' ? 'form_deadline' : 'event'), width: '30rem', body, actions, cls: 'edlg' });
+  const d = dialog({ title: t(o.source === 'tasks' ? 'task' : o.source === 'forms' ? 'form_deadline' : o.source === 'birthdays' ? 'birthday' : 'event'), width: '30rem', body, actions, cls: 'edlg' });
 }
 function tentativeText(o) {
   if (o.source === 'cal' && o.e.status === 'tentative') return t('tentative');
