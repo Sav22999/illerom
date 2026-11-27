@@ -1,6 +1,6 @@
 /** Settings: a page of its own, one section at a time chosen on the side, as in the other apps of SavOffice. */
-import { btn, dialog, fail, h, mobile, put, select, toast } from './ui.js';
-import { getLang, setLang, t } from './i18n.js';
+import { btn, confirm, copyText, dialog, empty, fail, h, iconBtn, mobile, primary, put, select, toast } from './ui.js';
+import { getLang, setLang, t, when } from './i18n.js';
 import { S, api } from './store.js';
 import { brand, credit, go, prefs, setPrefs, setUser, signOut, userMenu } from './account.js';
 
@@ -50,10 +50,54 @@ export function settingsScreen(root, want = '') {
     row(t('export_data'), t('export_data_t'), small(t('export_data'), { icon: 'download', onclick: async () => { try { const r = await fetch('api/?r=auth.export', { cache: 'no-store' }); if (!r.ok) throw Object.assign(new Error(), { code: 'server' }); download(await r.blob(), 'savcontacts-data.json'); } catch (e) { fail(Object.assign(e, { code: e.code || 'network' })); } } })),
     row(t('export'), t('import_t'), small(t('export'), { icon: 'download', onclick: () => import('./files.js').then((m) => m.exportDialog({})) })),
     row(t('import_file'), t('import_t'), small(t('import_file'), { icon: 'file-up', onclick: () => import('./files.js').then((m) => m.importDialog()) })),
-    row(t('sync_phone'), t('sync_phone_t'), null),
     row(t('delete_account'), t('delete_account_short'), btn(t('delete_account'), { icon: 'trash', variant: 'danger', appearance: 'soft', size: 'sm', onclick: del })));
 
-  const SECTIONS = [['account', 'user', t('g_account'), account], ['contacts', 'contact', t('g_contacts'), contacts], ['look', 'palette', t('look_app'), look], ['data', 'shield', t('your_data'), data]];
+  // ---------------------------------------------------------------- phones and other apps (CardDAV, dav/index.php)
+  const devices = () => {
+    const box = h('div.stack', h('div.wait', h('sav-spinner')));
+    const draw = (d) => {
+      const list = d.passwords.length
+        ? d.passwords.map((p) => row(p.name, p.used ? t('dav_used', { w: when(p.used) }) : t('dav_never'), btn(t('dav_revoke'), { size: 'sm', appearance: 'outline', icon: 'trash', onclick: async () => {
+          if (!(await confirm(t('dav_revoke_q', { n: p.name }), t('dav_revoke_t'), t('dav_revoke')))) return;
+          draw({ ...d, passwords: (await api('con.dav.revoke', { id: p.id })).passwords });
+        } })))
+        : [h('div.orow', h('div.orow-t', h('small', t('dav_none'))))];
+      put(box, section(t('g_devices'), t('g_devices_t'),
+        row(t('dav_server'), t('dav_server_t'), h('div.prow', h('code.dcode', d.url), iconBtn('copy', t('copy'), () => copyText(d.url)))),
+        row(t('dav_user'), t('dav_user_t'), h('div.prow', h('code.dcode', d.user), iconBtn('copy', t('copy'), () => copyText(d.user))))),
+      h('div.osec', h('div.prow.wrap', h('h2', t('dav_passwords')), h('span.grow'), primary(t('dav_new'), { size: 'sm', icon: 'plus', onclick: () => newPassword(d) })),
+        h('p.muted', t('dav_passwords_t')), h('sav-card.ocard', { appearance: 'outlined' }, h('div.orows', list))),
+      h('div.osec', h('h2', t('dav_how')), h('sav-card.ocard', { appearance: 'outlined' }, h('div.orows',
+        row('iPhone · iPad · Mac', t('dav_ios'), null), row('Android', t('dav_android'), null), row('Thunderbird', t('dav_tb'), null)))));
+    };
+    /** A new password: shown once, with a button that tries it on this server (the hosting must let WebDAV through). */
+    const newPassword = (d) => {
+      const name = h('sav-input', { label: t('dav_device'), placeholder: t('dav_device_ph'), maxlength: 60, autofocus: true });
+      dialog({ title: t('dav_new'), width: '28rem', body: h('div.form', h('p.muted', t('dav_new_t')), name), actions: [{ label: t('cancel') }, { label: t('create'), primary: true, run: async () => {
+        const r = await api('con.dav.password', { name: name.value });
+        draw({ ...d, passwords: r.passwords });
+        showPassword(d, r.password);
+      } }] });
+    };
+    const showPassword = (d, pw) => {
+      const out = h('div.dtest');
+      const test = async () => {
+        put(out, h('sav-spinner'));
+        const auth = 'Basic ' + btoa(String.fromCharCode(...new TextEncoder().encode(d.user + ':' + pw)));
+        let code = 0;
+        try { code = (await fetch('dav/', { method: 'PROPFIND', headers: { Authorization: auth, Depth: '0', 'Content-Type': 'application/xml', 'X-SavContacts-Test': '1' }, body: '<?xml version="1.0"?><d:propfind xmlns:d="DAV:"><d:prop><d:current-user-principal/></d:prop></d:propfind>', cache: 'no-store', credentials: 'omit' })).status; } catch { code = -1; }
+        const ok = code === 207;
+        put(out, h('sav-alert', { variant: ok ? 'success' : 'danger', appearance: 'soft' }, ok ? t('dav_test_ok') : code === 401 ? t('dav_test_auth') : [405, 501, 403, 400].includes(code) ? t('dav_test_method', { c: code }) : t('dav_test_other', { c: code })));
+      };
+      dialog({ title: t('dav_ready'), width: '30rem', body: h('div.form', h('p', t('dav_ready_t')), h('div.prow', h('code.dpw', pw), iconBtn('copy', t('copy'), () => copyText(pw))),
+        h('div.orows.dsum', row(t('dav_server'), null, h('code.dcode', d.url)), row(t('dav_user'), null, h('code.dcode', d.user))), btn(t('dav_test'), { icon: 'refresh', size: 'sm', onclick: test }), out),
+        actions: [{ label: t('done'), primary: true }] });
+    };
+    api('con.dav').then(draw).catch((e) => { fail(e); put(box, empty('circle-alert', t('err_server'), '')); });
+    return box;
+  };
+
+  const SECTIONS = [['account', 'user', t('g_account'), account], ['contacts', 'contact', t('g_contacts'), contacts], ['devices', 'smartphone', t('g_devices'), devices], ['look', 'palette', t('look_app'), look], ['data', 'shield', t('your_data'), data]];
   const tabs = h('sav-tabs.otabs', { placement: mobile() ? null : 'start', active: SECTIONS.some((s) => s[0] === want) ? want : 'account' }, SECTIONS.map(([k, ic, label, body]) => h('sav-tab', { name: k, label, icon: ic }, body())));
   tabs.addEventListener('sav-tab-show', (e) => history.replaceState(null, '', '#/settings/' + e.detail.name));
 

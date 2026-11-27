@@ -12,7 +12,14 @@
  *               came in). uid is the UID of its vCard (the same one goes back out: phones and other apps recognise it);
  *               rev grows at every change (the ETag of a future CardDAV); search holds the words to find it (lowercase,
  *               without accents) for the API the other apps of SavOffice use. Deleted ones stay 30 days (deleted_at).
- *               The photo is kept here, already small (a JPEG of 512 px at most, without its metadata).
+ *               The photo is kept here, already small (a JPEG of 512 px at most, without its metadata). dav_name: the
+ *               name a CardDAV client gave the card when it made it ("<something>.vcf"); null for the others, whose name
+ *               is their UID (see dav/index.php).
+ * con_app_passwords  the passwords of the devices that sync through CardDAV (phones, Thunderbird): a name, the hash of
+ *               the password (shown once, when it is made), when it was last used. A device signs in with the email of
+ *               the account and one of them; deleting it cuts that device off.
+ * con_tombstones the contacts gone for good (deleted from the trash, or after 30 days), so that a phone that syncs
+ *               learns they went away (sync-collection). Kept 90 days: an older sync token means syncing everything again.
  */
 
 declare(strict_types=1);
@@ -74,11 +81,33 @@ function con_schema_statements(string $p): array
             KEY `ix_uid` (`user_id`, `uid`),
             CONSTRAINT `fk_{$p}conc_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
         ) $e",
+        "CREATE TABLE IF NOT EXISTS `{$p}con_app_passwords` (
+            `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `user_id` INT UNSIGNED NOT NULL,
+            `name` VARCHAR(60) NOT NULL,
+            `hash` VARCHAR(255) NOT NULL,
+            `created_at` DATETIME NOT NULL,
+            `last_used_at` DATETIME NULL,
+            KEY `ix_user` (`user_id`),
+            CONSTRAINT `fk_{$p}conap_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
+        ) $e",
+        "CREATE TABLE IF NOT EXISTS `{$p}con_tombstones` (
+            `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `user_id` INT UNSIGNED NOT NULL,
+            `uid` VARCHAR(190) NOT NULL,
+            `dav_name` VARCHAR(190) NULL,
+            `deleted_at` DATETIME NOT NULL,
+            KEY `ix_user` (`user_id`, `deleted_at`),
+            CONSTRAINT `fk_{$p}conts_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
+        ) $e",
     ];
 }
 
 function install_con_schema(PDO $pdo, string $prefix): void
 {
     foreach (con_schema_statements($prefix) as $sql) $pdo->exec($sql);
+    // version 2: the name a CardDAV client gave a card (added only when missing: MySQL 5.7 has no ADD COLUMN IF NOT EXISTS)
+    $has = $pdo->query("SHOW COLUMNS FROM `{$prefix}con_contacts` LIKE 'dav_name'")->fetch();
+    if (!$has) $pdo->exec("ALTER TABLE `{$prefix}con_contacts` ADD COLUMN `dav_name` VARCHAR(190) NULL AFTER `uid`, ADD KEY `ix_dav` (`user_id`, `dav_name`)");
     $pdo->prepare("INSERT INTO `{$prefix}meta` (k, v) VALUES ('con_schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)")->execute([(string)CON_SCHEMA_VERSION]);
 }

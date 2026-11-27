@@ -16,10 +16,11 @@ of SavOffice (the space of SavDrive).
 | `index.php` | the page: the app is all in `assets/app.js` |
 | `api/index.php` | the JSON API, `api/?r=<action>` |
 | `lib/bootstrap.php` | database, session (the cookie of SavSchedules, set on the paths of every app that shares it), helpers |
-| `lib/schema.php` | the tables: `con_profiles`, `con_groups`, `con_contacts` |
+| `lib/schema.php` | the tables: `con_profiles`, `con_groups`, `con_contacts`, `con_app_passwords`, `con_tombstones` |
 | `lib/contacts.php` | checking, keeping, searching, duplicates and merge, files in and out, what the other apps read |
 | `lib/vcard.php` | vCard 2.1/3.0/4.0 and CSV (Google, Outlook — also in Italian), without the database |
 | `lib/mail.php` | the emails of the account (confirming the address, a new password) |
+| `dav/index.php` | CardDAV, for phones and Thunderbird (see below) |
 | `assets/` | `app.js` (addresses), `contacts.js` (the address book), `editor.js`, `files.js`, `people.js`, `options.js` (settings), `account.js`, `store.js`, `i18n.js`, `ui.js`, `icons.js`, `office.js`, `app.css` |
 | `icons/` | `favicon.svg` and the PNGs made from it by `tools/make_icons.sh` |
 
@@ -61,20 +62,31 @@ Used today by **SavMail** (recipients suggested as you type, `savmail/assets/com
 (birthdays as a calendar of their own, `savcalendar/assets/birthdays.js`). Ready for: invitees in SavSchedules, members
 in SavSplits (`need=…`, `group=…`), lists of subscribers in SavNewsletters (`group=<id>&need=email&limit=50`).
 
-## CardDAV (syncing with phones) — not yet
+## CardDAV (syncing with phones)
 
-Evaluated, left for a next step on purpose rather than half done. What a minimal endpoint needs:
+`dav/index.php` is a CardDAV server (RFC 6352) with the minimum that iOS/macOS Contacts, DAVx⁵ on Android and
+Thunderbird need: one address book per account, read and write.
 
-1. **Authentication without the session cookie**: phones speak HTTP Basic. Accounts made with SavAccount have no
-   password, so SavContacts would need *app passwords* (made in the settings, kept as hashes, one per device, revocable).
-2. **WebDAV methods**: `OPTIONS`, `PROPFIND` (principal, address-book home, the address book with `getctag` /
-   `sync-token`), `REPORT` (`addressbook-multiget`, `addressbook-query`, `sync-collection`), `GET`/`PUT`/`DELETE` of
-   `<uid>.vcf` with `ETag` and `If-Match` — plus `/.well-known/carddav` at the root of the site. The shared hosting must
-   let these methods and the `Authorization` header through to PHP (on Aruba this has to be checked first: some plans
-   drop `Authorization` or refuse `PROPFIND`/`REPORT`).
-3. **Sync state**: the `rev` column already grows at every change (it is the ETag); deletions need a tombstone table
-   (or the trash kept longer) so that `sync-collection` can tell the phone what went away.
+| Address | |
+|---|---|
+| `dav/` | the root: `current-user-principal` |
+| `dav/principals/<id>/` | the account: `addressbook-home-set` |
+| `dav/addressbooks/<id>/contacts/` | the address book: `PROPFIND` (`getctag`, `sync-token`), `REPORT` (`addressbook-multiget`, `addressbook-query`, `sync-collection`) |
+| `dav/addressbooks/<id>/contacts/<name>.vcf` | a contact: `GET` (vCard 3.0, or 4.0 when asked), `PUT` (`If-Match` / `If-None-Match`), `DELETE` (to the trash, 30 days) |
+| `/.well-known/carddav` | redirected to `dav/` by the `.htaccess` of the site root (RFC 6764) |
 
-The data side is ready (`lib/vcard.php` reads and writes the cards with no database, every contact has a UID and a
-`rev`); the protocol, the app passwords and a test on the real hosting with iOS, DAVx⁵ and Thunderbird are the work
-left. Until then: export a `.vcf` and open it on the phone, or import the phone's `.vcf` here.
+- **Signing in**: HTTP Basic, the email of the account and a **password for the device**, made in Settings → Phone and
+  other apps (`con.dav.password`; only its hash is kept, `con_app_passwords`; deleting it cuts the device off). Never the
+  password of the account: accounts made with SavAccount have none. Failed attempts are limited by address.
+- **ETag** = the cid and the `rev` of the contact (it grows at every change, also when a group is renamed). **sync-token**
+  = the moment of the last sync; contacts sent to the trash and the tombstones of the ones deleted for good
+  (`con_tombstones`, kept 90 days) tell the device what went away. A token older than 80 days asks for a full sync.
+- **What a device writes**: a new card keeps the name the device gave it (`dav_name`) and its UID; its CATEGORIES become
+  groups (made when missing). A card without CATEGORIES, or without the favourite mark of SavContacts, keeps the groups and
+  the favourite it had (some phones drop those fields). Fields SavContacts does not show are kept and written back.
+- **Not supported**: more address books, renaming the address book from a device (`PROPPATCH` is refused), the filters
+  of `addressbook-query` (every card is sent), sharing.
+- **Hosting**: `dav/.htaccess` passes the `Authorization` header to PHP (needed under FastCGI/CGI) and sends every address
+  to `index.php`. The server must let `PROPFIND`, `PROPPATCH` and `REPORT` reach PHP. **Settings → Phone and other apps →
+  New password → Try the connection** checks exactly this on the real server: it says whether the password arrives and
+  whether the methods are allowed.

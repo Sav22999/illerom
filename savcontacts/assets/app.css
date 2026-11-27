@@ -216,3 +216,8 @@ sav-avatar.cav { flex: none; color: #fff; }
   .grid2, .grid3 { grid-template-columns: minmax(0, 1fr); } .edrow { grid-template-columns: 7rem minmax(0, 1fr) auto; } .edtop { align-items: flex-start; }
 }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+/* settings: phone and other apps (CardDAV) */
+.dcode, .dpw { font: 600 .85rem/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; padding: .3rem .55rem; border-radius: 8px; background: var(--sav-color-surface-2); overflow-wrap: anywhere; }
+.dpw { font-size: 1.25rem; letter-spacing: .06em; padding: .6rem .9rem; flex: 1; text-align: center; }
+.dsum .orow { padding: .5rem 0; } .dtest:empty { display: none; }
+.osec .prow h2 { margin: 0; } .osec + .osec { margin-top: 1.4rem; }

@@ -523,3 +523,32 @@ function birthdays_between(int $uid, string $from, string $to): array
     usort($out, fn($a, $b) => strcmp($a['day'], $b['day']) ?: strcmp($a['name'], $b['name']));
     return $out;
 }
+
+// ---------------------------------------------------------------- gone for good, and the devices that sync (CardDAV)
+
+/**
+ * Deletes contacts of the trash for good, leaving a tombstone for each (a phone that syncs learns they went away).
+ * $where: an SQL condition on the rows of the account in the trash, with its arguments.
+ */
+function purge_contacts(int $uid, string $where = '1', array $args = []): void
+{
+    $sql = ' FROM ' . t('con_contacts') . " WHERE user_id = ? AND deleted_at IS NOT NULL AND ($where)";
+    q('INSERT INTO ' . t('con_tombstones') . ' (user_id, uid, dav_name, deleted_at) SELECT user_id, uid, dav_name, ?' . $sql, [now_utc(), $uid, ...$args]);
+    q('DELETE' . $sql, [$uid, ...$args]);
+    if (random_int(1, 20) === 1) q('DELETE FROM ' . t('con_tombstones') . ' WHERE deleted_at < ?', [gmdate('Y-m-d H:i:s', time() - 90 * 86400)]);
+}
+
+/** A new password for a device: four groups of four letters and digits, easy to type on a phone. */
+function new_app_password(): string
+{
+    $abc = 'abcdefghjkmnpqrstuvwxyz23456789';
+    $g = [];
+    for ($i = 0; $i < 4; $i++) { $w = ''; for ($j = 0; $j < 4; $j++) $w .= $abc[random_int(0, strlen($abc) - 1)]; $g[] = $w; }
+    return implode('-', $g);
+}
+
+function app_passwords_of(int $uid): array
+{
+    return array_map(fn($r) => ['id' => (int)$r['id'], 'name' => $r['name'], 'created' => iso($r['created_at']), 'used' => iso($r['last_used_at'])],
+        q('SELECT id, name, created_at, last_used_at FROM ' . t('con_app_passwords') . ' WHERE user_id = ? ORDER BY id', [$uid])->fetchAll());
+}

@@ -9,6 +9,7 @@
  *            con.contact.purge, con.trash.empty, con.bulk, con.photo, con.duplicates, con.merge
  * Groups:    con.group.save, con.group.delete, con.group.order
  * Files:     con.import (vCard 2.1/3.0/4.0, CSV of Google or Outlook, .savcon), con.export (vcf3, vcf4, csv, outlook, savcon)
+ * Devices:   con.dav, con.dav.password, con.dav.revoke (the passwords of the devices that sync through dav/, CardDAV)
  * SavOffice: con.search, con.birthdays — read by the other apps of the suite (SavMail, SavCalendar, SavSchedules,
  *            SavSplits, SavNewsletters…): they share the session, so a GET from their pages to ../savcontacts/api/ is
  *            made by the same signed-in person. See README.md.
@@ -328,7 +329,7 @@ switch ($r) {
         // themselves, con.photo). The trash is emptied of what is older than 30 days, now and then
         $u = reader();
         $p = profile($u);
-        if (random_int(1, 10) === 1) q('DELETE FROM ' . t('con_contacts') . ' WHERE user_id = ? AND deleted_at IS NOT NULL AND deleted_at < ?', [$u['id'], gmdate('Y-m-d H:i:s', time() - 30 * 86400)]);
+        if (random_int(1, 10) === 1) purge_contacts((int)$u['id'], 'deleted_at < ?', [gmdate('Y-m-d H:i:s', time() - 30 * 86400)]);
         send_json(['ok' => true, 'prefs' => (object)profile_prefs($p), 'groups' => groups_of((int)$u['id']),
             'contacts' => array_map('contact_api', contacts_of((int)$u['id'])), 'trash' => (int)q('SELECT COUNT(*) FROM ' . t('con_contacts') . ' WHERE user_id = ? AND deleted_at IS NOT NULL', [$u['id']])->fetchColumn(),
             'max' => MAX_CONTACTS]);
@@ -387,11 +388,11 @@ switch ($r) {
         // Gone for good: some contacts of the trash, or the whole trash
         $u = writer();
         $b = body();
-        if ($r === 'con.trash.empty') q('DELETE FROM ' . t('con_contacts') . ' WHERE user_id = ? AND deleted_at IS NOT NULL', [$u['id']]);
+        if ($r === 'con.trash.empty') purge_contacts((int)$u['id']);
         else {
             $ids = array_values(array_filter(array_map('valid_code', is_array($b['ids'] ?? null) ? $b['ids'] : [])));
             if (!$ids) fail('bad_request', 422);
-            q('DELETE FROM ' . t('con_contacts') . ' WHERE user_id = ? AND deleted_at IS NOT NULL AND cid IN (' . implode(',', array_fill(0, count($ids), '?')) . ')', [$u['id'], ...$ids]);
+            purge_contacts((int)$u['id'], 'cid IN (' . implode(',', array_fill(0, count($ids), '?')) . ')', $ids);
         }
         send_json(['ok' => true]);
 
@@ -455,6 +456,8 @@ switch ($r) {
         if ($gid) {
             if (!in_array($gid, array_column($groups, 'gid'), true)) fail('not_found', 404);
             q('UPDATE ' . t('con_groups') . ' SET name = ?, color = COALESCE(?, color) WHERE gid = ? AND user_id = ?', [$name, $color, $gid, $u['id']]);
+            // its contacts change too for the devices that sync (their cards carry the names of their groups)
+            q('UPDATE ' . t('con_contacts') . ' SET rev = rev + 1, updated_at = ? WHERE user_id = ? AND `groups` LIKE ?', [now_utc(), $u['id'], '%"' . $gid . '"%']);
         } else {
             if (count($groups) >= MAX_GROUPS) fail('too_many_groups', 409);
             $gid = new_code('con_groups', 'gid');
@@ -528,6 +531,29 @@ switch ($r) {
         if ($fmt === 'csv' || $fmt === 'outlook') $send(csv_write(array_map(fn($r) => row_contact($r, $names), $rows), $fmt === 'outlook' ? 'outlook' : 'google'), 'text/csv; charset=utf-8', 'csv');
         if ($fmt === 'savcon') $send(json_out(savcon_of((int)$u['id'], $rows)), 'application/vnd.savcontacts.contacts+json', 'savcon');
         fail('bad_request', 422);
+
+
+    // ================================================================ devices that sync (CardDAV, dav/index.php)
+
+    case 'con.dav':
+        // What a device needs: the address of the server, the user name, the passwords of the devices (never the passwords)
+        $u = reader();
+        send_json(['ok' => true, 'url' => rtrim(app_url(), '/') . '/dav/', 'user' => $u['email'], 'passwords' => app_passwords_of((int)$u['id'])]);
+
+    case 'con.dav.password':
+        // A new password for a device, shown only now (only its hash is kept)
+        $u = writer();
+        $name = clean_str(body()['name'] ?? '', 60);
+        if ($name === '') fail('name_required', 422);
+        if (count(app_passwords_of((int)$u['id'])) >= 20) fail('too_many_devices', 409);
+        $pw = new_app_password();
+        q('INSERT INTO ' . t('con_app_passwords') . ' (user_id, name, hash, created_at) VALUES (?,?,?,?)', [$u['id'], $name, password_hash($pw, PASSWORD_DEFAULT), now_utc()]);
+        send_json(['ok' => true, 'password' => $pw, 'passwords' => app_passwords_of((int)$u['id'])]);
+
+    case 'con.dav.revoke':
+        $u = writer();
+        q('DELETE FROM ' . t('con_app_passwords') . ' WHERE id = ? AND user_id = ?', [(int)(body()['id'] ?? 0), $u['id']]);
+        send_json(['ok' => true, 'passwords' => app_passwords_of((int)$u['id'])]);
 
 
     // ================================================================ for the other apps of SavOffice

@@ -56,8 +56,24 @@ const T = {
   show_as: ['Names shown as', 'Nomi mostrati come'], show_as_t: ['“Mario Rossi” or “Rossi Mario”.', '«Mario Rossi» oppure «Rossi Mario».'], first_last: ['First Last', 'Nome Cognome'], last_first: ['Last First', 'Cognome Nome'],
   your_data_t: ['Download everything SavContacts keeps, or delete the account.', 'Scarica tutto quello che SavContacts conserva, oppure elimina l’account.'],
   export_data: ['Download my data', 'Scarica i miei dati'], export_data_t: ['Every contact and group, with the photos, in one JSON file.', 'Ogni contatto e gruppo, con le foto, in un file JSON.'],
-  sync_phone: ['Your phone', 'Il telefono'], sync_phone_t: ['Automatic syncing (CardDAV) is not there yet: export a .vcf and open it on the phone, or import the one of the phone here.', 'La sincronizzazione automatica (CardDAV) non c’è ancora: esporta un .vcf e aprilo sul telefono, o importa qui quello del telefono.'],
   delete_account_short: ['It goes in all the apps that share it.', 'Sparisce in tutte le app che lo condividono.'], delete_forever: ['Delete forever', 'Elimina per sempre'],
+
+  // phones and other apps (CardDAV)
+  g_devices: ['Phone and other apps', 'Telefono e altre app'], g_devices_t: ['Your phone, your computer and Thunderbird keep the contacts in sync with SavContacts (CardDAV): a change on one side shows on the other.', 'Il telefono, il computer e Thunderbird tengono i contatti in sincronia con SavContacts (CardDAV): una modifica da una parte compare dall’altra.'],
+  dav_server: ['Server', 'Server'], dav_server_t: ['The address to write in the app that syncs.', 'L’indirizzo da scrivere nell’app che sincronizza.'], dav_user: ['User name', 'Nome utente'], dav_user_t: ['The email of your account.', 'L’email del tuo account.'],
+  dav_passwords: ['Passwords of the devices', 'Password dei dispositivi'], dav_passwords_t: ['One for each device: never the password of your account. Deleting one cuts that device off.', 'Una per ogni dispositivo: mai la password del tuo account. Eliminandone una, quel dispositivo resta fuori.'],
+  dav_none: ['No device yet.', 'Ancora nessun dispositivo.'], dav_used: ['Last synced {w}', 'Ultima sincronizzazione {w}'], dav_never: ['Not used yet', 'Non ancora usata'],
+  dav_new: ['New password for a device', 'Nuova password per un dispositivo'], dav_new_t: ['Give it the name of the device, to recognise it later.', 'Dalle il nome del dispositivo, per riconoscerla dopo.'], dav_device: ['Device', 'Dispositivo'], dav_device_ph: ['My iPhone', 'Il mio iPhone'],
+  dav_ready: ['The password of the device', 'La password del dispositivo'], dav_ready_t: ['Write it in the device now: it is shown only this once.', 'Scrivila ora nel dispositivo: si vede solo questa volta.'], done: ['Done', 'Fatto'],
+  dav_revoke: ['Delete', 'Elimina'], dav_revoke_q: ['Delete the password of “{n}”?', 'Eliminare la password di «{n}»?'], dav_revoke_t: ['That device stops syncing; the contacts already on it stay there.', 'Quel dispositivo smette di sincronizzare; i contatti che ha già restano lì.'],
+  dav_test: ['Try the connection', 'Prova la connessione'], dav_test_ok: ['It works: this server answers as CardDAV.', 'Funziona: questo server risponde come CardDAV.'],
+  dav_test_auth: ['The server does not receive the password (the Authorization header is dropped before PHP): the hosting has to let it through.', 'Il server non riceve la password (l’header Authorization si perde prima di PHP): l’hosting deve lasciarlo passare.'],
+  dav_test_method: ['The server refuses the methods of WebDAV (error {c}): the hosting has to allow PROPFIND and REPORT.', 'Il server rifiuta i metodi di WebDAV (errore {c}): l’hosting deve permettere PROPFIND e REPORT.'], dav_test_other: ['The server answered {c} instead of 207.', 'Il server ha risposto {c} invece di 207.'],
+  dav_how: ['How to add it', 'Come aggiungerlo'],
+  dav_ios: ['Settings → Contacts → Accounts → Add account → Other → Add CardDAV account: the server (without https://), your email and the password of the device.', 'Impostazioni → Contatti → Account → Aggiungi account → Altro → Aggiungi account CardDAV: il server (senza https://), la tua email e la password del dispositivo.'],
+  dav_android: ['Install DAVx⁵ (free, also on F-Droid) → “Login with URL and user name”: the server, your email and the password of the device; then choose the address book SavContacts.', 'Installa DAVx⁵ (gratuita, anche su F-Droid) → «Accedi con URL e nome utente»: il server, la tua email e la password del dispositivo; poi scegli la rubrica SavContacts.'],
+  dav_tb: ['Address book → New address book → Add CardDAV address book: your email and the server, then the password of the device.', 'Rubrica → Nuova rubrica → Aggiungi rubrica CardDAV: la tua email e il server, poi la password del dispositivo.'],
+  err_too_many_devices: ['20 devices at most: delete one you no longer use.', 'Al massimo 20 dispositivi: eliminane uno che non usi più.'],
 
   // the address book
   search_contacts: ['Search the contacts', 'Cerca nei contatti'], new: ['New', 'Nuovo'], new_contact: ['New contact', 'Nuovo contatto'], new_group: ['New group', 'Nuovo gruppo'],

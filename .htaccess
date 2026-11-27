@@ -39,6 +39,8 @@ RedirectMatch 404 /\.(git|idea)(/|$)
 # Files and folders of the projects are served as they are; every other address goes to the portal
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    # CardDAV discovery (RFC 6764): phones that are given only the name of the site find SavContacts
+    RewriteRule ^\.well-known/carddav/?$ /savcontacts/dav/ [R=301,L]
     # no listings of the assets folders
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^assets(/|$) index.php [L]

@@ -1,7 +1,13 @@
 /** The version of SavContacts (in the footer) and what changed in each one (the page #/changelog). Newest first. */
-export const VERSION = '1.0.0';
+export const VERSION = '1.1.0';
 
 export const CHANGES = [
+  {
+    v: '1.1.0', date: '2026-11-27', items: [
+      ['Your contacts in sync with the phone, the computer and Thunderbird (CardDAV): iPhone, Android with DAVx⁵, Mac', 'I contatti in sincronia con il telefono, il computer e Thunderbird (CardDAV): iPhone, Android con DAVx⁵, Mac'],
+      ['A password for each device, never the one of the account, and a button to try the connection', 'Una password per ogni dispositivo, mai quella dell’account, e un pulsante per provare la connessione'],
+    ],
+  },
   {
     v: '1.0.0', date: '2026-11-27', items: [
       ['First version: the address book of SavOffice, with the same account as SavCalendar, SavTasks and SavMail', 'Prima versione: la rubrica di SavOffice, con lo stesso account di SavCalendar, SavTasks e SavMail'],
