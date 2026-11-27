@@ -89,8 +89,25 @@ export function newDiagram(start) {
   grid.addEventListener('dblclick', () => d.primary?.click());
 }
 
+/**
+ * On phones and tablets, the bar at the bottom (as in SavTasks): the diagrams, the templates, the trash, the settings.
+ * Never in the editor, which needs the whole screen.
+ */
+export function bottomNav(current) {
+  const it = (v, ic, label) => h('sav-bottom-nav-item', { icon: ic, label, href: '#/' + v, value: v || 'all', current: current === v || null });
+  return h('sav-bottom-nav.hbottom', { label: t('my_diagrams'), fixed: true }, it('', 'layout-grid', t('nav_diagrams')), it('templates', 'shapes', t('nav_templates')), it('trash', 'trash', t('trash')), it('settings', 'settings', t('settings')));
+}
+
+/** All the templates, as a page of their own (the bottom bar leads here). */
+function templatesView(pickFile) {
+  return [h('div.hhead', h('h1', t('nav_templates')), h('span.spacer'), btn(t('open_file'), { size: 'sm', icon: 'file-up', appearance: 'outline', variant: 'neutral', onclick: pickFile, title: t('open_file_t') })),
+    h('p.muted.tnote', t('templates_t')),
+    h('div.grid.tpls', TEMPLATES.map(([k]) => tile(t('t_' + k), () => fromTpl(k).catch(fail), { class: 'tpl' }, preview(k), h('span.tname', t('t_' + k)))),
+      tile(t('from_board'), () => fromBoardScreen().catch(fail), { class: 'tpl' }, h('div.paper.tplp.wbp', h('img', { src: '../savwhiteboard/icons/favicon.svg', alt: '', width: 40, height: 40 })), h('span.tname', t('from_board'))))];
+}
+
 export function homeScreen(root, view = '') {
-  const p = prefs(), trash = view === 'trash';
+  const p = prefs(), trash = view === 'trash', tpls = view === 'templates';
   let q = '', sort = p.sort || 'updated', asList = !!p.list;
   const list = h('div');
   const search = h('sav-input', { type: 'search', placeholder: t('search_diagrams'), clearable: true, pill: true, 'aria-label': t('search_diagrams') }, icon('search', { slot: 'prefix' }));
@@ -119,6 +136,7 @@ export function homeScreen(root, view = '') {
   };
 
   function draw() {
+    if (tpls) return void put(list, templatesView(pickFile));
     let ds = S.diagrams.filter((b) => !!b.trashed === trash && (!q || b.title.toLowerCase().includes(q)));
     ds = ds.sort(sort === 'title' ? (a, b) => a.title.localeCompare(b.title, getLang()) : sort === 'opened' ? (a, b) => String(b.opened || '').localeCompare(String(a.opened || '')) : (a, b) => String(b.updated).localeCompare(String(a.updated)));
     const head = h('div.hhead', h('h1', trash ? t('trash') : q ? t('results_for', { q }) : t('my_diagrams')), h('span.spacer'),
@@ -134,13 +152,13 @@ export function homeScreen(root, view = '') {
         : trash ? empty('trash', t('trash_empty'), '') : q ? empty('search', t('nothing_found'), '') : empty('workflow', t('none_yet'), t('none_yet_t')));
   }
 
-  const it = (v, ic, label) => { const x = item(v, ic, label); x.toggleAttribute('current', (v === 'trash') === trash); return x; };
-  const menu = h('sav-menu', { label: t('my_diagrams'), selectable: true }, it('all', 'layout-grid', t('my_diagrams')), it('trash', 'trash', t('trash')));
-  menu.addEventListener('sav-select', (e) => go(e.detail.value === 'trash' ? '#/trash' : '#/'));
+  const it = (v, ic, label) => { const x = item(v, ic, label); x.toggleAttribute('current', v === (view || 'all')); return x; };
+  const menu = h('sav-menu', { label: t('my_diagrams'), selectable: true }, it('all', 'layout-grid', t('my_diagrams')), it('templates', 'shapes', t('nav_templates')), it('trash', 'trash', t('trash')));
+  menu.addEventListener('sav-select', (e) => go(e.detail.value === 'all' ? '#/' : '#/' + e.detail.value));
   const nav = h('nav.hside', { 'aria-label': t('my_diagrams') }, primary(t('new_l'), { icon: 'plus', size: 'lg', block: true, class: 'newbtn', onclick: () => newDiagram() }), menu);
   put(root, h('div.home', h('header.htop', brand(), h('div.hsearch', search), h('div.spacer'), userMenu()),
-    h('div.hbody', nav, h('main.hmain', list)), credit()));
-  document.title = (trash ? t('trash') + ' – ' : '') + 'SavDiagrams';
+    h('div.hbody', nav, h('main.hmain', list)), credit(), bottomNav(view)));
+  document.title = (trash ? t('trash') + ' – ' : tpls ? t('nav_templates') + ' – ' : '') + 'SavDiagrams';
   draw();
   void mobile;
 }

@@ -249,3 +249,11 @@ body.onboard { overflow: hidden; overscroll-behavior: none; position: fixed; ins
   .dg .props sav-select.shsel { width: 8.5rem; }
   .dg .tools sav-tooltip:nth-of-type(2) { display: none; } /* the hand: two fingers move the diagram */
 }
+
+/* the bar at the bottom of phones and tablets (as in SavTasks): only on the home and the settings, never in the editor */
+.hbottom { display: none; }
+@media (max-width: 900px) {
+  .hbottom { display: block; }
+  .home:has(> .hbottom) { padding-bottom: calc(4.4rem + env(safe-area-inset-bottom)); }
+  .home:has(> .hbottom) .hside sav-menu { display: none; } /* the bar takes its place */
+}

@@ -75,7 +75,7 @@ async function route() {
     if (a === 'from-board' && b) { const { convertBoard } = await import('./home.js'); return await convertBoard(b); }
     if (a === 'd' && b) { const { editorScreen } = await import('./editor.js'); const x = await editorScreen(root, b); if (n === turn) leave = x; else x?.(); return; }
     const { homeScreen } = await import('./home.js');
-    homeScreen(root, a === 'trash' ? 'trash' : '');
+    homeScreen(root, a === 'trash' || a === 'templates' ? a : '');
   } catch (e) {
     if (n !== turn) return;
     if (!e.code) console.error(e);

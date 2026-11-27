@@ -5,6 +5,7 @@ import { S, api } from './store.js';
 import { brand, credit, go, prefs, setPrefs, setUser, signOut, userMenu } from './account.js';
 import { BACKS, isDark } from './model.js';
 import { download } from './files.js';
+import { bottomNav } from './home.js';
 
 
 export function settingsScreen(root, want = '') {
@@ -58,6 +59,6 @@ export function settingsScreen(root, want = '') {
   tabs.addEventListener('sav-tab-show', (e) => history.replaceState(null, '', '#/settings/' + e.detail.name));
 
   put(root, h('div.home.setp', h('header.htop', brand(), h('div.spacer'), userMenu()),
-    h('main.smain', h('div.shd', btn(t('back_home'), { icon: 'arrow-left', appearance: 'ghost', onclick: () => go('#/') }), h('h1', t('settings'))), h('p.muted', t('settings_t')), tabs), credit()));
+    h('main.smain', h('div.shd', btn(t('back_home'), { icon: 'arrow-left', appearance: 'ghost', onclick: () => go('#/') }), h('h1', t('settings'))), h('p.muted', t('settings_t')), tabs), credit(), bottomNav('settings')));
   document.title = t('settings') + ' – SavDiagrams';
 }

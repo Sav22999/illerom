@@ -146,6 +146,8 @@ const T = {
   from_board: ['From a SavWhiteboard sketch', 'Da uno schizzo di SavWhiteboard'], from_board_t: ['Pick a board: its shapes, texts and arrows become a diagram (the board stays as it is).', 'Scegli una lavagna: forme, testi e frecce diventano un diagramma (la lavagna resta com’è).'],
   no_boards: ['No boards in SavWhiteboard yet', 'Ancora nessuna lavagna in SavWhiteboard'], boards_off: ['SavWhiteboard does not answer: sign in there and try again.', 'SavWhiteboard non risponde: accedi lì e riprova.'], sketch_done: ['The sketch is now a diagram', 'Lo schizzo ora è un diagramma'],
 
+  nav_diagrams: ['Diagrams', 'Diagrammi'], nav_templates: ['Templates', 'Modelli'], templates_t: ['Press one to start a new diagram from it.', 'Premine uno per iniziare un nuovo diagramma da lì.'],
+
   // the editor
   back_home: ['All diagrams', 'Tutti i diagrammi'], saved: ['Saved', 'Salvato'], saving: ['Saving…', 'Salvataggio…'], not_saved: ['Not saved: trying again', 'Non salvato: riprovo'], offline_wait: ['Offline: it will be saved when the connection is back', 'Senza connessione: verrà salvato quando torna'],
   tool_select: ['Select', 'Seleziona'], tool_hand: ['Move the diagram', 'Sposta il diagramma'], tool_connect: ['Connector', 'Connettore'], tool_text: ['Text', 'Testo'], shapes: ['Shapes', 'Forme'], shape: ['Shape', 'Forma'],

@@ -17,7 +17,8 @@ Free, open diagrams on a page without edges: flowcharts, org charts, mind maps a
   ⌘/Ctrl+Enter a sibling.
 - **Moving around** — zoom, pan (space, middle button, hand, wheel), minimap, show everything, full screen.
   Touch and stylus: one finger on empty space moves the page, two fingers pinch to zoom, double tap edits the text,
-  long press opens the menu. No bottom navigation bar on phones: the tools float as in SavWhiteboard.
+  long press opens the menu. On phones and tablets the home and the settings have a bottom bar (Diagrams,
+  Templates, Trash, Settings) as in SavTasks; the editor has none, its tools float as in SavWhiteboard.
 - **Editing** — undo/redo (300 steps), copy/cut/paste (also between tabs; plain text pasted becomes one shape per line,
   connected), duplicate, keyboard shortcuts (listed in the ⋮ menu), typing on a selected shape starts writing in it.
 - **Templates** — blank, flowchart, org chart, mind map, process, network.
