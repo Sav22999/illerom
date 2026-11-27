@@ -112,22 +112,29 @@ async function embeddedFonts(items) {
   for (const k of used) for (const [fam, file, weight] of FACES[k] || []) {
     if (!faceCache.has(file)) faceCache.set(file, fetch(`fonts/${file}.woff2`).then((r) => (r.ok ? r.blob() : null)).then((b) => b && new Promise((res) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(b); })).catch(() => null));
     const url = await faceCache.get(file);
-    if (url) css += `@font-face{font-family:"${fam}";src:url(${url}) format("woff2");font-weight:${weight};}`;
+    if (url) css += `@font-face{font-family:"${fam}";src:url(${url}) format("woff2");font-weight:${weight};font-display:swap;}`;
   }
   return css;
 }
 
+/**
+ * The first time a typeface is used inside a picture drawn from SVG, the browser draws its text invisible while it
+ * "loads" the font (even from a data: address): a first picture warms it up, then the one drawn has its text.
+ */
+const warm = new Set();
+async function loadSvg(url, key) {
+  const load = async () => { const i = new Image(); i.decoding = 'async'; i.src = url; await i.decode(); return i; };
+  if (!warm.has(key)) { await load(); await new Promise((r) => setTimeout(r, 180)); warm.add(key); }
+  return load();
+}
 /** The board drawn on a canvas: scale chosen so that the longest side is at most max pixels. */
 export async function rasterize(items, settings, { max = 4096, scale = 2, pad = 48, box } = {}) {
   items = await inlineMedia(items);
   const svg = boardSVG(items, settings, { pad, box, fonts: await embeddedFonts(items) });
   const m = /width="(\d+)" height="(\d+)"/.exec(svg), w = +m[1], h = +m[2], k = Math.min(scale, max / Math.max(w, h));
-  const img = new Image();
-  img.decoding = 'async';
   const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
   try {
-    img.src = url;
-    await img.decode();
+    const img = await loadSvg(url, [...new Set(items.flatMap((i) => (i.t === 'text' ? [i.ff] : i.t === 'note' ? ['sans'] : [])))].sort().join());
     const c = document.createElement('canvas');
     c.width = Math.max(1, Math.round(w * k));
     c.height = Math.max(1, Math.round(h * k));
