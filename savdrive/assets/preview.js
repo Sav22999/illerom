@@ -392,10 +392,15 @@ async function appView(x) {
     const src = /^(data:image\/|blob:)/.test(b.thumb) ? b.thumb : '../savwhiteboard/' + String(b.thumb).replace(/^\.?\//, '');
     return h('div.oview.oboard', { style: `background:${/^#[0-9a-f]{3,8}$/i.test(b.bg || '') ? b.bg : '#fff'}` }, h('img', { src, alt: '', loading: 'lazy' }));
   }
+  if (app === 'savdiagrams') {
+    const home = await appHome(app, 'dg.init'), b = (home?.diagrams || []).find((y) => y.id === id);
+    if (!b?.thumb || !/^data:image\//.test(b.thumb)) return null;
+    return h('div.oview.oboard', { style: `background:${/^#[0-9a-f]{3,8}$/i.test(b.bg || '') ? b.bg : '#fff'}` }, h('img', { src: b.thumb, alt: '', loading: 'lazy' }));
+  }
   return null;
 }
 /** The small picture of an item of an app, when it comes into view. */
-export const APP_PREVIEW = ['savdocuments', 'savbooks', 'savspreadsheets', 'savpresentations', 'savwhiteboard'];
+export const APP_PREVIEW = ['savdocuments', 'savbooks', 'savspreadsheets', 'savpresentations', 'savwhiteboard', 'savdiagrams'];
 export function lazyApp(holder, x) {
   holder.__fill = async () => { try { const v = await appView(x); if (v) { holder.replaceChildren(v); holder.classList.add('filled'); } } catch (e) { console.warn('SavDrive: no picture from', x.office.app, e); } };
   if (io) io.observe(holder); else holder.__fill();

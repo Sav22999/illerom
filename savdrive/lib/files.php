@@ -17,6 +17,7 @@ const SAVOFFICE = [
     'savboo' => ['savbooks', 'application/vnd.savbooks.book+zip'],
     'savwhi' => ['savwhiteboard', 'application/vnd.savwhiteboard.board+zip'],
     'savnot' => ['savnotes', 'application/vnd.savnotes.notebook+zip'],
+    'savdia' => ['savdiagrams', 'application/vnd.savdiagrams.diagram+zip'],
     'savfor' => ['savforms', 'application/vnd.savforms.form+json'],
     'savtas' => ['savtasks', 'application/vnd.savtasks.list+json'],
     'savcal' => ['savcalendar', 'application/vnd.savcalendar.calendar+json'],
@@ -183,7 +184,7 @@ function out_node(array $n, array $extra = []): array
 /** The uids of the files of SavOffice among these node ids (a list of ints, already safe): still there, or in the trash. */
 function office_uids(int $uid, string $ids, bool $alive): array
 {
-    $ext = implode(' OR ', array_map(fn($x) => "name LIKE '%.$x'", ['savdoc', 'savspr', 'savpre', 'savboo', 'savwhi', 'savnot']));
+    $ext = implode(' OR ', array_map(fn($x) => "name LIKE '%.$x'", ['savdoc', 'savspr', 'savpre', 'savboo', 'savwhi', 'savnot', 'savdia']));
     $st = db()->prepare('SELECT uid FROM ' . t('nodes') . " WHERE user_id = ? AND id IN ($ids) AND kind = 'file' AND trashed_at IS " . ($alive ? 'NULL' : 'NOT NULL') . " AND ($ext) LIMIT 2000");
     $st->execute([$uid]);
     return $st->fetchAll(PDO::FETCH_COLUMN);

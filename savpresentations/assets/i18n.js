@@ -359,6 +359,8 @@ moved|Moved|Spostata
 my_decks|My presentations|Le mie presentazioni
 my_note|Personal note|Nota personale
 my_pictures|My pictures|Le mie immagini
+sav_diagrams|SavDiagrams|SavDiagrams
+sav_diagrams_off|SavDiagrams is not reachable from here.|SavDiagrams non è raggiungibile da qui.
 my_templates|My templates|I miei modelli
 my_templates_hint|Any presentation can become a template, from its menu.|Ogni presentazione può diventare un modello, dal suo menu.
 n_people|{n} people|{n} persone

@@ -15,7 +15,7 @@ declare(strict_types=1);
 
 const APP_NAME = 'SavPodcasts';
 const AUTH_COOKIE = 'savschedules_auth';     // the same cookie of SavSchedules: one session for all
-const SHARED_APPS = ['savschedules', 'savcalendar', 'savwhiteboard', 'savtasks', 'savnotes', 'savforms', 'savsplits', 'savpodcasts', 'savmail']; // folders next to each other that share the session
+const SHARED_APPS = ['savschedules', 'savcalendar', 'savwhiteboard', 'savtasks', 'savnotes', 'savforms', 'savsplits', 'savpodcasts', 'savmail', 'savdiagrams']; // folders next to each other that share the session
 const SCHEMA_VERSION = 1;              // of the tables of SavSchedules (created here only if SavSchedules never ran)
 const POD_SCHEMA_VERSION = 2;          // of the tables of the podcasts (2: episodes left "not played" at their very end are played)
 const LANGS = ['en', 'it'];

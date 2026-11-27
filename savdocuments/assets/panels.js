@@ -27,7 +27,7 @@ export function elementsPanel(W) {
   search.addEventListener('sav-clear', drawIcons);
   drawIcons();
   return h('div', h('p.muted.hint', t(mobile() ? 'tap_insert' : 'drag_insert')),
-    sec(t('p_media'), h('div.pmedia', big('image', 'image', t('i_image')), big('search', 'images', t('img_free')), big('drawing', 'pen-line', t('i_drawing')))),
+    sec(t('p_media'), h('div.pmedia', big('image', 'image', t('i_image')), big('search', 'images', t('img_free')), big('drawing', 'pen-line', t('i_drawing')), big('diagram', 'workflow', t('i_diagram')))),
     sec(t('p_tables'), h('div.pmedia', big('table', 'table', t('i_table')), big('cols:2', 'columns-2', t('i_cols2')), big('cols:3', 'columns-3', t('i_cols3')))),
     sec(t('p_charts'), h('div.pmedia', CHARTS.map((c) => big('chart:' + c, CHART_ICONS[c], t('ct_' + c))))),
     sec(t('p_flows'), h('div.pmedia', FLOWS.map((c) => big('flow:' + c, FLOW_ICONS[c], t('fl_' + c))))),

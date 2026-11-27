@@ -380,7 +380,7 @@ function other_apps(int $uid): array
  * address]], 'updated' => …], …], only the apps with something in them.
  */
 /** The apps whose documents have a folder in My drive (the others keep things that live only in their app: calendars, polls…). */
-const OFFICE_FOLDERS = ['savdocuments', 'savspreadsheets', 'savpresentations', 'savbooks', 'savwhiteboard', 'savnotes', 'savforms'];
+const OFFICE_FOLDERS = ['savdocuments', 'savspreadsheets', 'savpresentations', 'savbooks', 'savwhiteboard', 'savnotes', 'savforms', 'savdiagrams'];
 
 function office_catalogs(array $u): array
 {
