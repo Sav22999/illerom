@@ -39,14 +39,14 @@ export function rangeOf(view, k) {
 
 // ------------------------------------------------------------------ data
 
-const D = { from: 0, to: 0, events: [], schedules: [], newsletters: [], tasks: [], forms: [], turn: 0 };
+const D = { from: 0, to: 0, events: [], schedules: [], newsletters: [], tasks: [], forms: [], birthdays: [], turn: 0 };
 /** Asks the server for what may touch [a, b) (a margin of two days on each side). */
 export async function load(a, b, force) {
   if (!force && a >= D.from && b <= D.to) return false;
   const n = ++D.turn, from = a - 2 * 864e5, to = b + 2 * 864e5;
   const r = await api('cal.events', undefined, { from: iso(from), to: iso(to) });
   if (n !== D.turn) return false;
-  Object.assign(D, { from, to, events: r.events, schedules: r.schedules || [], newsletters: r.newsletters || [], tasks: r.tasks || [], forms: r.forms || [] });
+  Object.assign(D, { from, to, events: r.events, schedules: r.schedules || [], newsletters: r.newsletters || [], tasks: r.tasks || [], forms: r.forms || [], birthdays: r.birthdays || [] });
   return true;
 }
 export const forget = () => { D.from = D.to = 0; };
@@ -81,6 +81,7 @@ export function occurrences(a, b) {
   if (prefs().newsletters !== false) for (const s of D.newsletters) add({ ...s, color: '#c2307a' }, null, s.start, s.end, null, 'newsletters'); // the colour of SavNewsletters
   if (prefs().tasks !== false) for (const s of D.tasks) add({ ...s, title: (s.done ? '✓ ' : '') + s.title }, null, s.start, s.end, null, 'tasks'); // the tasks of SavTasks, in the colour of their list
   if (prefs().forms !== false) for (const s of D.forms) add(s, null, s.start, s.end, null, 'forms'); // the deadlines of SavForms, in the colour of the form
+  if (prefs().birthdays !== false) for (const s of D.birthdays) add({ ...s, title: s.age ? t('bday_title_age', { name: s.name, n: s.age }) : t('bday_title', { name: s.name }) }, null, s.start, s.end, null, 'birthdays'); // the birthdays of SavContacts
   return out.sort((x, y) => x.s - y.s || (y.en - y.s) - (x.en - x.s));
 }
 
@@ -206,7 +207,7 @@ function weekTitle(a, b) {
 // ------------------------------------------------------------------ pieces
 
 const lockOf = (o) => (o.readOnly ? h('sav-icon.lk', { name: 'lock', label: t('read_only') }) : null);
-const srcIcon = (o) => (o.source === 'schedules' ? h('sav-icon.lk', { name: o.e.kind === 'slots' ? 'ticket' : 'vote' }) : o.source === 'newsletters' ? h('sav-icon.lk', { name: 'mail' }) : o.source === 'tasks' ? h('sav-icon.lk', { name: o.e.done ? 'circle-check' : 'list-checks' }) : o.source === 'forms' ? h('sav-icon.lk', { name: 'hourglass' }) : o.e.rrule || o.e.recurId ? h('sav-icon.lk', { name: 'repeat' }) : null);
+const srcIcon = (o) => (o.source === 'schedules' ? h('sav-icon.lk', { name: o.e.kind === 'slots' ? 'ticket' : 'vote' }) : o.source === 'newsletters' ? h('sav-icon.lk', { name: 'mail' }) : o.source === 'tasks' ? h('sav-icon.lk', { name: o.e.done ? 'circle-check' : 'list-checks' }) : o.source === 'forms' ? h('sav-icon.lk', { name: 'hourglass' }) : o.source === 'birthdays' ? h('sav-icon.lk', { name: 'cake' }) : o.e.rrule || o.e.recurId ? h('sav-icon.lk', { name: 'repeat' }) : null);
 const timeText = (o, tz) => (o.allDay ? t('all_day') : clock(o.s, tz));
 function chip(o, ctx, opts = {}) {
   const tz = ctx.tz(), full = o.allDay || opts.bar;

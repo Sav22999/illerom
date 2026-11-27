@@ -16,6 +16,21 @@ const fmtAddr = (p) => p.name ? `${p.name} <${p.email}>` : p.email;
 const parseAddr = (s) => { const m = String(s).trim().match(/^(.*?)\s*<([^<>]+)>$/); return m ? { name: m[1].replace(/^"|"$/g, '').trim(), email: m[2].trim() } : { name: '', email: String(s).trim() }; };
 const prefix = (p, s) => (new RegExp('^\\s*' + p + '\\s*:', 'i').test(s || '') ? s : `${p === 'fwd' ? 'Fwd' : 'Re'}: ${s || ''}`).trim();
 
+/**
+ * The recipients suggested from SavContacts while an address is typed: the same account and session, so its API answers
+ * from here (../savcontacts/api/, see savcontacts/README.md). A session older than SavContacts gets its cookie there from
+ * SavSchedules once. One suggestion per email; nothing at all when SavContacts is not there.
+ */
+let contactsShared = false;
+async function contactsLike(q) {
+  const ask = () => fetch('../savcontacts/api/?r=con.search&need=email&limit=8&q=' + encodeURIComponent(q), { cache: 'no-store', credentials: 'same-origin' }).catch(() => null);
+  let r = await ask();
+  if (r?.status === 401 && !contactsShared) { contactsShared = true; await fetch('../savschedules/api/?r=auth.me', { cache: 'no-store' }).catch(() => null); r = await ask(); }
+  if (!r?.ok) return [];
+  const d = await r.json().catch(() => null);
+  return (d?.contacts || []).flatMap((c) => c.emails.map((e) => ({ label: fmtAddr({ name: c.name, email: e.value }), value: e.value, description: [c.company, e.label].filter(Boolean).join(' · ') }))).slice(0, 8);
+}
+
 function readFile(f) {
   return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1] || ''); r.onerror = () => rej(r.error); r.readAsDataURL(f); });
 }
@@ -56,7 +71,15 @@ export function composeDialog(o) {
   else body = `<p><br></p>${sig(a)}`;
 
   // ---------------------------------------------------------------- the fields
-  const chips = (label, list) => { const c = h('sav-chip-input.addr', { label, size: 'sm', separators: ', ; enter', placeholder: t('addr_hint') }); c.value = list.map(fmtAddr); c.addEventListener('change', () => { dirty = true; }); c.addEventListener('keydown', (e) => e.stopPropagation()); return c; };
+  const chips = (label, list) => {
+    // no-filter: SavContacts already chose the contacts that match (names without accents too)
+    const c = h('sav-chip-input.addr', { label, size: 'sm', separators: ', ; enter', placeholder: t('addr_hint'), 'no-filter': true });
+    c.value = list.map(fmtAddr);
+    c.addEventListener('change', () => { dirty = true; });
+    c.addEventListener('keydown', (e) => e.stopPropagation());
+    c.addEventListener('sav-query', async (e) => { const q = e.detail.query; const found = await contactsLike(q); if (c.text?.trim() === q) c.suggestions = found; });
+    return c;
+  };
   const fromSel = select(t('from'), S.accounts.map((x) => [x.id, x.name ? `${x.name} <${x.email}>` : x.email]), a.id, (v) => { const old = a; a = S.accounts.find((x) => x.id === v) || a; swapSig(old, a); dirty = true; }, { class: 'cfrom' });
   const toF = chips(t('to'), to), ccF = chips(t('cc'), cc), bccF = chips(t('bcc'), []);
   const subj = h('sav-input.csubj', { label: t('subject'), size: 'sm', value: subject, maxlength: 900 });

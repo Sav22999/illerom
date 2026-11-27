@@ -77,6 +77,7 @@ export function sidebar(screen) {
     layer('newsletters', 'SavNewsletters', 'mail', '#c2307a', t('nl_layer_t'), null),
     layer('tasks', 'SavTasks', 'list-checks', '#0b7a87', t('task_layer_t'), S.tasksUrl),
     layer('forms', 'SavForms', 'hourglass', '#86329e', t('form_layer_t'), S.formsUrl),
+    layer('birthdays', 'SavContacts', 'cake', '#4338ca', t('bday_layer_t'), '../savcontacts/'),
     h('div.sfoot', btn(t('sync'), { icon: 'refresh-cw', size: 'sm', appearance: 'outline', onclick: () => syncDialog(screen) })));
 }
 

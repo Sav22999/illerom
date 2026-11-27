@@ -348,7 +348,7 @@ switch ($r) {
         if (!$from || !$to || $to <= $from || strtotime($to) - strtotime($from) > 120 * 86400) fail('bad_request', 422);
         $prefs = profile_prefs(profile($u));
         $sch = ($prefs['schedules'] ?? true) !== false ? schedule_items($u, $from, $to, ($prefs['proposals'] ?? true) !== false) : [];
-        send_json(['ok' => true, 'events' => events_between(calendars_of($u['id']), $from, $to), 'schedules' => $sch, 'newsletters' => newsletter_items($u, $from, $to, $prefs), 'tasks' => task_items($u, $from, $to, $prefs), 'forms' => form_items($u, $from, $to, $prefs)]);
+        send_json(['ok' => true, 'events' => events_between(calendars_of($u['id']), $from, $to), 'schedules' => $sch, 'newsletters' => newsletter_items($u, $from, $to, $prefs), 'tasks' => task_items($u, $from, $to, $prefs), 'forms' => form_items($u, $from, $to, $prefs), 'birthdays' => birthday_items($u, $from, $to, $prefs)]);
 
     case 'cal.search':
         // Titles, places and descriptions of the own events (and of the subscriptions)

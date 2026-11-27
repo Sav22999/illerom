@@ -14,7 +14,7 @@ declare(strict_types=1);
 
 const APP_NAME = 'SavTasks';
 const AUTH_COOKIE = 'savschedules_auth';     // the same cookie of SavSchedules: one session for all
-const SHARED_APPS = ['savschedules', 'savcalendar', 'savwhiteboard', 'savtasks', 'savnotes', 'savforms', 'savsplits', 'savpodcasts', 'savmail']; // folders next to each other that share the session
+const SHARED_APPS = ['savschedules', 'savcalendar', 'savwhiteboard', 'savtasks', 'savnotes', 'savforms', 'savsplits', 'savpodcasts', 'savmail', 'savcontacts']; // folders next to each other that share the session
 const SCHEMA_VERSION = 1;              // of the tables of SavSchedules (created here only if SavSchedules never ran)
 const TASK_SCHEMA_VERSION = 3;         // of the tables of the tasks (2: start day, the Gantt view · 3: table, habits)
 const LANGS = ['en', 'it'];

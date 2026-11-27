@@ -182,6 +182,16 @@ return [
             'Trips, flatmates, couples, clubs and condominiums: write who paid and for whom, SavSplits works out the balances and the fewest payments to settle up. The others join with a link, no account needed. It shares the account with the other apps of SavOffice.',
             ['Equally, by shares, by percentages, by amounts or by thousandths', 'Balances and payments to settle up, marked as done with one press', 'A link to look or to add expenses, no account needed', 'Any currency with ECB rates, repeated expenses, .savspl and CSV files']],
     ],
+    'savcontacts' => [
+        'name' => 'SavContacts', 'suite' => 'savoffice', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => true, 'play' => '',
+        'url' => '/savcontacts/', 'source' => 'savcontacts', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 0, 'tablet' => 0, 'desk' => 0,
+        'it' => ['I tuoi contatti, in ordine e tuoi.',
+            'Email, telefoni, indirizzi e compleanni delle persone che conosci, in gruppi e senza doppioni. Entrano ed escono come vCard e CSV di Google e Outlook, e le altre app di SavOffice li trovano: SavMail suggerisce i destinatari, SavCalendar ricorda i compleanni. Ha lo stesso account delle altre app di SavOffice.',
+            ['Tutte le email, i telefoni e gli indirizzi che servono, con le loro etichette', 'Gruppi, preferiti, ricerca veloce, ordine per nome o cognome', 'I doppioni trovati per nome, email o numero e uniti con un tocco', 'vCard 3.0 e 4.0, CSV di Google e Outlook, file .savcon']],
+        'en' => ['Your contacts, tidy and yours.',
+            'Emails, phones, addresses and birthdays of the people you know, in groups and without copies. They come in and out as vCard and as CSV of Google and Outlook, and the other apps of SavOffice find them: SavMail suggests recipients, SavCalendar remembers birthdays. It shares the account with the other apps of SavOffice.',
+            ['As many emails, phones and addresses as needed, with their labels', 'Groups, favourites, quick search, sorting by first or last name', 'Duplicates found by name, email or number and merged with one press', 'vCard 3.0 and 4.0, CSV of Google and Outlook, .savcon files']],
+    ],
     'chess' => [
         'name' => 'Chess', 'cat' => 'games', 'level' => 3, 'account' => 'none', 'offline' => true, 'play' => 'com.saverio.chess',
         'url' => '/chess/', 'source' => 'chess', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 4, 'tablet' => 3, 'desk' => 3,

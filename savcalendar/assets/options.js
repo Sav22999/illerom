@@ -47,6 +47,7 @@ export function settingsScreen(root, want = '') {
     sw('newsletters', 'SavNewsletters', t('nl_layer_long')),
     sw('tasks', 'SavTasks', t('task_layer_long')), sw('tasksDone', t('show_tasks_done'), t('show_tasks_done_t')),
     sw('forms', 'SavForms', t('form_layer_long')),
+    sw('birthdays', 'SavContacts', t('bday_layer_long')),
     row(t('open_schedules'), null, small(t('open'), { icon: 'external-link', href: S.schedulesUrl })));
 
   // ---------------------------------------------------------------- look and language

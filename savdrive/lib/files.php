@@ -23,6 +23,7 @@ const SAVOFFICE = [
     'savsch' => ['savschedules', 'application/vnd.savschedules.schedule+json'],
     'savnew' => ['savnewsletters', 'application/vnd.savnewsletters.newsletter+json'],
     'savspl' => ['savsplits', 'application/vnd.savsplits.group+json'],
+    'savcon' => ['savcontacts', 'application/vnd.savcontacts.contacts+json'],
 ];
 
 /** Types a browser may show inside the page (everything else is always downloaded). */
