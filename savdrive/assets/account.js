@@ -1,5 +1,5 @@
 /** Accounts: preferences, the first page, signing in, the pages of an account that cannot use the drive yet. */
-import { btn, dialog, drop, empty, errText, face, h, icon, primary, put, segmented, toast } from './ui.js';
+import { btn, bytes, dialog, drop, empty, errText, face, h, icon, primary, put, segmented, toast } from './ui.js';
 import { getLang, setLang, t } from './i18n.js';
 import { VERSION } from './version.js';
 import { S, api, forgetThumbs } from './store.js';
@@ -103,6 +103,9 @@ function forgot() {
   dialog({ title: t('forgot'), body: h('div.form', h('p.muted', t('forgot_text')), email), actions: [{ label: t('cancel') }, { label: t('send_link'), primary: true, run: async () => { await api('auth.forgot', { email: email.value, lang: getLang() }); toast(t('link_sent'), 'success'); } }] });
 }
 
+/** The space a new account gets, as the admins chose it (auth.config); 500 MB if the server did not say. */
+const newSpace = () => +S.config?.space || 500 * 1048576;
+
 /** A small picture of the drive for the first page: folders and the files of the apps of SavOffice, with the space used. */
 function heroArt() {
   const apps = [['savdocuments', t('ex_doc')], ['savspreadsheets', t('ex_spr')], ['savpresentations', t('ex_pre')], ['savwhiteboard', t('ex_whi')]];
@@ -112,7 +115,7 @@ function heroArt() {
     h('div.hwin', h('div.hwbar', h('i'), h('i'), h('i'), h('span', t('my_drive'))),
       h('div.hfolders', folder(t('ex_f1'), '#0a6fb0', 12), folder(t('ex_f2'), '#d85a30', 7), folder(t('ex_f3'), '#13a079', 24)),
       h('div.hfiles', apps.map(([a, n]) => file(a, n))),
-      h('div.hquota', h('div.hqbar', h('i', { style: 'width:34%' })), h('small', t('ex_quota')))));
+      h('div.hquota', h('div.hqbar', h('i', { style: 'width:34%' })), h('small', t('ex_quota', { used: bytes(newSpace() * .34), q: bytes(newSpace()) })))));
 }
 
 /** The first page: a bar with the language and "Sign in", the title with the two buttons, a picture of the drive, six features. */
@@ -124,9 +127,10 @@ export function land(root, mode, note) {
     put(root, h('div.authp', top(), h('main.amain', h('div.stack.aw', note || null, authCard(mode))), credit()));
     return;
   }
-  const feat = (ic, k) => h('div.feat', icon(ic), h('h3', t(k)), h('p', t(k + '_t')));
+  const Q = { q: bytes(newSpace()) }; // the words that say how much space: the one the admins chose
+  const feat = (ic, k) => h('div.feat', icon(ic), h('h3', t(k, Q)), h('p', t(k + '_t', Q)));
   put(root, h('div.landing', top(btn(t('sign_in'), { appearance: 'outline', href: '#/signin' })),
-    h('main.lmain', h('section.hero', h('div.hero-t', h('h1', t('land_title')), h('p', t('land_text')), h('div.prow.wrap', primary(t('l_cta'), { size: 'lg', href: '#/signup' }), btn(t('sign_in'), { size: 'lg', appearance: 'ghost', href: '#/signin' })), h('small', t('l_small'))), heroArt()),
+    h('main.lmain', h('section.hero', h('div.hero-t', h('h1', t('land_title')), h('p', t('land_text')), h('div.prow.wrap', primary(t('l_cta', Q), { size: 'lg', href: '#/signup' }), btn(t('sign_in'), { size: 'lg', appearance: 'ghost', href: '#/signin' })), h('small', t('l_small'))), heroArt()),
       h('section.feats', feat('hard-drive', 'ft_space'), feat('file-plus', 'ft_office'), feat('upload', 'ft_upload'), feat('eye', 'ft_preview'), feat('link', 'ft_share'), feat('shield', 'ft_eu'))), credit()));
 }
 const centered = (root, ...kids) => put(root, h('div.wait', h('sav-card.auth', h('div.stack', kids))));

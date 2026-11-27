@@ -2211,8 +2211,8 @@ a, button {
 
 .feat-apps {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: .55rem;
+    grid-template-columns: repeat(auto-fill, minmax(6.4rem, 1fr)); /* as many as fit: the suite keeps growing */
+    gap: .4rem;
 }
 
 .feat-apps a {
@@ -2221,10 +2221,10 @@ a, button {
     display: grid;
     justify-items: center;
     gap: .4rem;
-    padding: .8rem .25rem .65rem;
+    padding: .55rem .2rem .5rem;
     text-decoration: none;
     text-align: center;
-    font-size: .8rem;
+    font-size: .74rem;
     font-weight: 600;
 }
 
@@ -2252,8 +2252,8 @@ a, button {
 }
 
 .feat-apps img {
-    width: 3.25rem;
-    height: 3.25rem;
+    width: 2.5rem;
+    height: 2.5rem;
     transition: transform .3s var(--sav-easing);
 }
 
@@ -2402,16 +2402,16 @@ a, button {
 
 /* the apps of a suite: little icons side by side, each whole (they used to overlap, which hid half of each) */
 .pj-apps {
-    display: grid;
-    grid-template-columns: repeat(6, 1.6rem); /* 12 apps: two even rows */
-    gap: .35rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem;
     margin-top: .55rem;
 }
 
 .pj-apps img {
     display: block;
-    width: 1.6rem;
-    height: 1.6rem;
+    width: 1.3rem;
+    height: 1.3rem;
 }
 
 .pj-foot {
@@ -2671,7 +2671,8 @@ a, button {
     }
 
     .feat-apps {
-        gap: .4rem;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: .35rem;
     }
 
     .feat-apps a {
@@ -2679,8 +2680,8 @@ a, button {
     }
 
     .feat-apps img {
-        width: 2.6rem;
-        height: 2.6rem;
+        width: 2.3rem;
+        height: 2.3rem;
     }
 
     /* the names are still read by screen readers */

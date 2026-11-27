@@ -138,14 +138,16 @@ export function land(root, mode, note) {
     return () => {};
   }
   const stage = h('div.l-stage', { 'aria-hidden': 'true' }), cards = pages().map((p, i) => h('div.l-card', { style: `--i:${i}` }, h('div.l-in', p)));
-  stage.append(...cards);
+  // not pages: a small window of SavTasks at work (../assets/savoffice/savoffice.js), the fan of pages only if that script is missing
+  const scene = window.SavOffice?.scene?.('tasks');
+  if (scene) stage.replaceChildren(scene); else stage.append(...cards);
   const feat = (ic, k) => h('div.feat', icon(ic), h('h3', t(k)), h('p', t(k + '_t')));
   const step = (n, k) => h('li', h('span.num', String(n)), h('div', h('strong', t(k)), h('span.muted', t(k + '_t'))));
   put(root, h('div.landing', top(btn(t('sign_in'), { appearance: 'outline', href: '#/signin' })),
     h('main.lmain', h('section.hero', h('div.hero-t', h('span.kicker', icon('grip'), ' ', t('land_kicker')), h('h1', t('land_title')), h('p', t('land_text')), h('div.prow', primary(t('l_cta'), { size: 'lg', href: '#/signup' }), btn(t('sign_in'), { size: 'lg', appearance: 'ghost', href: '#/signin' })), h('small', t('l_small'))), stage),
       h('section.feats', feat('list-todo', 'ft_lists'), feat('square-kanban', 'ft_board'), feat('bell', 'ft_remind'), feat('calendar', 'ft_cal'), feat('vote', 'ft_sch'), feat('shield', 'ft_free')),
       h('section.how', h('h2', t('how_title')), h('ol.steps', step(1, 'how_1'), step(2, 'how_2'), step(3, 'how_3')))), credit()));
-  return heroDeck(stage, cards);
+  return scene ? () => {} : heroDeck(stage, cards);
 }
 const centered = (root, ...kids) => put(root, h('div.wait', h('sav-card.auth', h('div.stack', kids))));
 export const verify = (root, token) => centered(root, empty('mail', t('verify_title'), t('verify_text'), primary(t('verify_btn'), { onclick: async () => { signedIn(await api('auth.verify', { token })); } })));

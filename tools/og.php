@@ -73,9 +73,9 @@ $fonts = '@font-face{font-family:Notch;src:url(' . $f('assets/fonts/stack-sans-n
     .pills { position: absolute; left: 76px; bottom: 62px; display: flex; flex-wrap: wrap; gap: 10px; width: 640px; }
     .pills li { display: inline-flex; align-items: center; gap: 8px; padding: 7px 13px; border-radius: 99px; background: #fff; border: 1px solid #e4e2de; font-size: 17px; font-weight: 600; }
     .pills li::before { content: ""; width: 10px; height: 10px; border-radius: 3px; background: #ffd166; }
-    .grid { position: absolute; right: 64px; top: 92px; display: grid; grid-template-columns: repeat(4, 104px); gap: 22px; rotate: -4deg; }
-    .grid li { width: 104px; height: 104px; display: grid; place-items: center; border-radius: 26px; background: #fff; box-shadow: 0 12px 28px rgb(30 20 40 / .10), 0 0 0 1px rgb(30 20 40 / .05); }
-    .grid img { width: 72px; height: 72px; }
+    .grid { position: absolute; right: 60px; top: 70px; display: grid; grid-template-columns: repeat(<?= count($suite) > 16 ? 5 : 4 ?>, <?= count($suite) > 16 ? 82 : 104 ?>px); gap: <?= count($suite) > 16 ? 16 : 22 ?>px; rotate: -4deg; }
+    .grid li { width: <?= count($suite) > 16 ? 82 : 104 ?>px; height: <?= count($suite) > 16 ? 82 : 104 ?>px; display: grid; place-items: center; border-radius: <?= count($suite) > 16 ? 21 : 26 ?>px; background: #fff; box-shadow: 0 12px 28px rgb(30 20 40 / .10), 0 0 0 1px rgb(30 20 40 / .05); }
+    .grid img { width: <?= count($suite) > 16 ? 58 : 72 ?>px; height: <?= count($suite) > 16 ? 58 : 72 ?>px; }
     .url { position: absolute; right: 70px; bottom: 50px; font-size: 21px; font-weight: 650; display: flex; align-items: center; gap: 10px; }
     .url i { width: 12px; height: 12px; border-radius: 4px; background: #7845f4; }
 </style>

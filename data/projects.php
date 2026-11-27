@@ -20,6 +20,9 @@
  */
 $five = ['en', 'it', 'fr', 'de', 'es'];
 $two = ['en', 'it'];
+// the space of a new account of SavDrive, as its admins chose it (savdrive/lib/space.php: kept five minutes, 500 MB if unreachable)
+require_once dirname(__DIR__) . '/savdrive/lib/space.php';
+$space = ['it' => savspace_size(savspace_default(), 'it'), 'en' => savspace_size(savspace_default(), 'en')];
 
 return [
     'savnewsletters' => [
@@ -36,11 +39,11 @@ return [
         'name' => 'SavDrive', 'suite' => 'savoffice', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '', 'invite' => true,
         'url' => '/savdrive/', 'source' => 'savdrive', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 2, 'tablet' => 2, 'desk' => 2,
         'it' => ['I tuoi file, in un drive tutto tuo.',
-            'Un posto per foto, documenti e cartelle, da ritrovare su qualsiasi dispositivo: carichi file di ogni dimensione, anche intere cartelle trascinandole, li guardi senza scaricarli e li condividi con un link. Ogni account ha 500 MB gratis. Fa parte di SavOffice: documenti, fogli di calcolo e presentazioni si creano nel drive e si aprono nella loro app.',
-            ['500 MB per account, scelti dagli amministratori, che attivano anche i nuovi account', 'Cartelle, speciali, recenti, ricerca e cestino per 30 giorni', 'Anteprime di immagini, PDF, video, musica e testo; link di condivisione', 'Nuovi file .savdoc, .savspr, .savpre, .savboo, .savwhi, .savnot e .savdia aperti nella loro app']],
+            'Un posto per foto, documenti e cartelle, da ritrovare su qualsiasi dispositivo: carichi file di ogni dimensione, anche intere cartelle trascinandole, li guardi senza scaricarli e li condividi con un link. Ogni account ha ' . $space['it'] . ' gratis. Fa parte di SavOffice: documenti, fogli di calcolo e presentazioni si creano nel drive e si aprono nella loro app.',
+            ['' . $space['it'] . ' per account, scelti dagli amministratori, che attivano anche i nuovi account', 'Cartelle, speciali, recenti, ricerca e cestino per 30 giorni', 'Anteprime di immagini, PDF, video, musica e testo; link di condivisione', 'Nuovi file .savdoc, .savspr, .savpre, .savboo, .savwhi, .savnot e .savdia aperti nella loro app']],
         'en' => ['Your files, in a drive of your own.',
-            'A place for photos, documents and folders, to reach from any device: upload files of any size, whole folders too by dragging them in, look at them without downloading and share them with a link. Every account has 500 MB free. Part of SavOffice: documents, spreadsheets and presentations are created in the drive and open in their app.',
-            ['500 MB per account, chosen by the administrators, who also activate new accounts', 'Folders, starred, recent, search and a trash for 30 days', 'Previews of pictures, PDF, videos, music and text; share links', 'New .savdoc, .savspr, .savpre, .savboo, .savwhi, .savnot and .savdia files opened in their app']],
+            'A place for photos, documents and folders, to reach from any device: upload files of any size, whole folders too by dragging them in, look at them without downloading and share them with a link. Every account has ' . $space['en'] . ' free. Part of SavOffice: documents, spreadsheets and presentations are created in the drive and open in their app.',
+            ['' . $space['en'] . ' per account, chosen by the administrators, who also activate new accounts', 'Folders, starred, recent, search and a trash for 30 days', 'Previews of pictures, PDF, videos, music and text; share links', 'New .savdoc, .savspr, .savpre, .savboo, .savwhi, .savnot and .savdia files opened in their app']],
     ],
     'savdocuments' => [
         'name' => 'SavDocuments', 'suite' => 'savoffice', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => true, 'play' => '',

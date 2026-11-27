@@ -38,71 +38,14 @@ $shot = function (string $slug, string $file): string {
     return "/assets/projects/$slug/$file" . (is_file($f) ? '?v=' . filemtime($f) : '');
 };
 
-// slug => [colour, screenshot of a computer, of a phone, what sets it apart (it, en)]
-$apps = [
-    'savdrive' => ['#0a6fb0', 'd1.jpg', '1.jpg', 'Ogni account ha 500 MB, e i documenti, i fogli di calcolo e le presentazioni di SavOffice nascono qui e si aprono nella loro app con un tocco. E per i file grandi, un link temporaneo che scade da solo, anche con password.', 'Every account has 500 MB, and the documents, spreadsheets and presentations of SavOffice are born here and open in their app with one press. And for big files, a temporary link that expires by itself, with a password too.'],
-    'savdocuments' => ['#0f6e56', 'd2.jpg', '2.jpg', 'Si scrive anche senza connessione: le modifiche partono appena torna la rete. E apre e salva i file Word.', 'You can write with no connection: changes go out as soon as the network is back. And it opens and saves Word files.'],
-    'savspreadsheets' => ['#4d7c0f', 'd2.jpg', '2.jpg', 'Le formule si scrivono come in ogni foglio di calcolo, e i file di Excel e LibreOffice si aprono con le loro formule e il loro aspetto. Chi lavora con te vede su quale cella sei.', 'Formulas are written as in every spreadsheet, and Excel and LibreOffice files open with their formulas and their look. Whoever works with you sees which cell you are on.'],
-    'savbooks' => ['#8a2346', 'd1.jpg', '2.jpg', 'Parte da un documento di SavDocuments o da un file .savdoc e lo trasforma in libro; la copertina si disegna da sola, e l’EPUB è pronto per i negozi.', 'Starts from a SavDocuments document or a .savdoc file and turns it into a book; the cover draws itself, and the EPUB is ready for the shops.'],
-    'savpresentations' => ['#6d3bef', 'd1.jpg', '2.jpg', 'Più persone sulla stessa slide nello stesso momento, link usa e getta per chi deve solo guardare, e funziona anche offline.', 'Several people on the same slide at once, single-use links for those who only need to look, and it works offline too.'],
-    'savschedules' => ['#1f56d1', 'd2.jpg', '2.jpg', 'Chi risponde non deve registrarsi; i posti presi non li può prendere nessun altro, e la data scelta finisce nel tuo calendario.', 'Whoever answers needs no account; a slot once taken cannot be taken by anyone else, and the chosen date lands in your calendar.'],
-    'savcalendar' => ['#c93a2f', 'd2.jpg', '1.jpg', 'Un link privato lo mostra in Google, Outlook e Apple; e ci trovi da soli sondaggi, posti prenotati, scadenze e newsletter.', 'A private link shows it in Google, Outlook and Apple; and polls, booked slots, due days and newsletters show up in it by themselves.'],
-    'savtasks' => ['#0b7a87', 'd2.jpg', '2.jpg', 'Scrivi «domani 15:00 !alta #lavoro» e capisce da solo scadenza, priorità ed etichetta. Ogni lista diventa una bacheca, e con il timer tracci il tempo e le ore da fatturare.', 'Type “tomorrow 3pm !high #work” and it understands the due time, priority and label. Any list becomes a board, and the timer tracks your time and billable hours.'],
-    'savforms' => ['#86329e', 'd3.jpg', '2.jpg', 'Quattordici tipi di domande, un grafico per ognuna, e il modulo si chiude da solo alla scadenza, segnata in SavCalendar.', 'Fourteen kinds of questions, a chart for each, and the form closes by itself at its deadline, marked in SavCalendar.'],
-    'savwhiteboard' => ['#c45a0c', 'd2.jpg', '2.jpg', 'La penna sente la pressione e, con il pennino, il palmo non disegna: come scrivere su una lavagna vera, ma senza bordi.', 'The pen feels the pressure and, with a stylus, the palm does not draw: like writing on a real board, but without edges.'],
-    'savdiagrams' => ['#4352d6', 'd1.jpg', '1.jpg', 'I connettori restano attaccati quando sposti le forme, e organigrammi e mappe mentali si dispongono da soli; uno schizzo di SavWhiteboard diventa un diagramma pulito.', 'Connectors stay attached when you move the shapes, and org charts and mind maps lay themselves out; a sketch in SavWhiteboard becomes a clean diagram.'],
-    'savnotes' => ['#7b5434', 'd1.jpg', '2.jpg', 'Fogli veri, di formato fisso: sullo stesso foglio scrivi a mano e digiti, e il testo continua sul foglio successivo.', 'Real sheets of a fixed size: on the same sheet you write by hand and type, and the text carries on to the next sheet.'],
-    'savmail' => ['#2563eb', 'd1.jpg', '1.jpg', 'Gmail, Outlook, Aruba o qualsiasi casella IMAP nella stessa posta in arrivo, e le password delle caselle restano cifrate sui tuoi dispositivi.', 'Gmail, Outlook, Aruba or any IMAP mailbox in the same inbox, and the passwords of the mailboxes stay encrypted on your devices.'],
-    'savphotos' => ['#b7791f', 'd1.jpg', '1.jpg', 'Il backup salta le foto che hai già e tiene la data di scatto; una cartella intera diventa un album con il suo nome.', 'The backup skips the photos you already have and keeps the date they were taken; a whole folder becomes an album with its name.'],
-    'savpodcasts' => ['#3b4b63', 'd1.jpg', '1.jpg', 'I podcast arrivano dai loro feed e dai cataloghi aperti, mai dalle grandi piattaforme; il punto di ascolto ti segue su ogni dispositivo.', 'Podcasts come from their own feeds and open catalogues, never from the big platforms; where you stopped follows you on every device.'],
-    'savreads' => ['#3d40a0', 'd1.jpg', '1.jpg', 'Salvi un articolo e lo leggi pulito, senza pubblicità né tracker, con le tue evidenziazioni; la lista di Pocket entra con i suoi tag, e accanto ci sono i tuoi feed.', 'Save an article and read it clean, without ads or trackers, with your highlights; your Pocket list comes in with its tags, and your feeds sit next to it.'],
-    'savsplits' => ['#1a7f37', 'd1.jpg', '1.jpg', 'Chi ha il link entra senza account; i saldi si pareggiano con il minor numero di pagamenti, anche per i millesimi di un condominio. E in «Le mie spese» la tua quota di ogni gruppo, con le spese personali e l’estratto conto della banca.', 'Whoever has the link joins without an account; balances are settled with the fewest payments, even by the thousandths of a condominium. And in “My spending”, your share of every group, with your personal expenses and your bank statement.'],
-    'savcontacts' => ['#4338ca', 'd1.jpg', '1.jpg', 'Lo stesso contatto scritto due volte viene trovato e unito; vCard e CSV di Google e Outlook entrano ed escono senza perdere niente.', 'The same contact written twice is found and merged; vCard and CSV of Google and Outlook come in and go out without losing anything.'],
-    'savnewsletters' => ['#c2307a', 'd3.jpg', '3.jpg', 'Ogni gruppo ha i suoi ruoli: qualcuno scrive, qualcun altro approva, e niente parte per sbaglio a centinaia di persone.', 'Each group has its roles: someone writes, someone else approves, and nothing goes out by mistake to hundreds of people.'],
-];
-ksort($apps); // alphabetical: the same order as the SavOffice button in the apps
-$n = count($apps);
-$words = ['it' => [9 => 'nove', 'dieci', 'undici', 'dodici', 'tredici', 'quattordici', 'quindici', 'sedici', 'diciassette', 'diciotto', 'diciannove', 'venti'], 'en' => [9 => 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty']];
-$nw = fn(string $l): string => $words[$l][$n] ?? (string)$n; // the number of the apps in words
-// what each app is, for the small screens where the whole names do not fit (the same words as the SavOffice button)
-$short = ['savdrive' => ['File e cartelle', 'Files and folders'], 'savdocuments' => ['Documenti', 'Documents'], 'savspreadsheets' => ['Fogli di calcolo', 'Spreadsheets'], 'savbooks' => ['Libri', 'Books'], 'savpresentations' => ['Presentazioni', 'Presentations'], 'savschedules' => ['Sondaggi e posti', 'Polls and slots'],
-    'savcalendar' => ['Calendario', 'Calendar'], 'savtasks' => ['Attività', 'Tasks'], 'savforms' => ['Moduli', 'Forms'], 'savwhiteboard' => ['Lavagna', 'Whiteboard'], 'savdiagrams' => ['Diagrammi', 'Diagrams'],
-    'savnotes' => ['Quaderni', 'Notebooks'], 'savnewsletters' => ['Newsletter', 'Newsletters'], 'savmail' => ['Posta', 'Email'], 'savphotos' => ['Foto e video', 'Photos and videos'],
-    'savpodcasts' => ['Podcast', 'Podcasts'], 'savsplits' => ['Spese condivise', 'Shared expenses'], 'savcontacts' => ['Contatti', 'Contacts'], 'savreads' => ['Da leggere', 'Read later']];
-// what each app reads and writes
-$files = ['savdrive' => ['Ogni file', '.savdoc', '.savspr', '.savpre', '.savwhi', '.savnot', '.savdia', '.savrea'], 'savdocuments' => ['.savdoc', '.docx', 'PDF', 'EPUB', 'Markdown', 'HTML'], 'savspreadsheets' => ['.savspr', '.xlsx', '.xls', '.ods', 'CSV', 'PDF'], 'savbooks' => ['.savboo', '.savdoc', 'EPUB', 'PDF', '.docx', 'FB2'], 'savpresentations' => ['.pptx', '.odp', 'PDF'], 'savschedules' => ['.savsch', '.ics', 'CSV'],
-    'savcalendar' => ['.savcal', '.ics', 'CSV'], 'savtasks' => ['.savtas', 'CSV', 'Markdown'], 'savforms' => ['.savfor', 'CSV'], 'savwhiteboard' => ['.savwhi', 'PNG', 'SVG', 'PDF'], 'savdiagrams' => ['.savdia', '.drawio', 'PNG', 'SVG', 'PDF'],
-    'savnotes' => ['.savnot', 'PDF', 'PNG'], 'savnewsletters' => ['.savnew'], 'savmail' => ['EML', 'Allegati'], 'savphotos' => ['JPEG', 'PNG', 'HEIC', 'MP4', 'ZIP'],
-    'savpodcasts' => ['RSS', 'OPML'], 'savsplits' => ['.savspl', 'CSV'], 'savcontacts' => ['.savcon', 'vCard', 'CSV'], 'savreads' => ['.savrea', 'RSS', 'OPML', 'Pocket', 'Instapaper']];
-// what each app does with the others: [other app, it, en]
-$works = [
-    'savdrive' => [['savdocuments', 'Nuovi documenti creati nel drive, aperti in SavDocuments con un tocco.', 'New documents created in the drive, opened in SavDocuments with one press.'], ['savspreadsheets', 'Fogli di calcolo nuovi accanto ai file che contano.', 'New spreadsheets next to the files that matter.'], ['savpresentations', 'Le presentazioni nella stessa cartella delle immagini che usano.', 'Presentations in the same folder as the pictures they use.']],
-    'savdocuments' => [['savbooks', 'Dal menu ⋮ il documento diventa un e-book, con le sue immagini.', 'From the ⋮ menu the document becomes an e-book, with its pictures.'], ['savdiagrams', 'Inserisci → Diagramma mette nel testo un diagramma di SavDiagrams.', 'Insert → Diagram puts a SavDiagrams diagram into the text.'], ['savpresentations', 'Lo stesso modo di lavorare in più persone, con commenti e versioni.', 'The same way of working together, with comments and versions.'], ['savnotes', 'Gli appunti a mano in SavNotes, il testo da consegnare qui.', 'Handwritten notes in SavNotes, the text to hand in here.']],
-    'savspreadsheets' => [['savdocuments', 'I numeri qui, la relazione che li racconta in SavDocuments: lo stesso modo di condividere, commentare e tornare alle versioni.', 'The figures here, the report that tells them in SavDocuments: the same way of sharing, commenting and going back to versions.'], ['savpresentations', 'I grafici dei tuoi dati, poi le slide che li presentano.', 'The charts of your data, then the slides that present them.']],
-    'savbooks' => [['savdocuments', 'Scrivi in SavDocuments, poi apri il documento qui: titoli, immagini e note diventano capitoli.', 'Write in SavDocuments, then open the document here: headings, pictures and notes become chapters.'], ['savnotes', 'Gli appunti e la scaletta a mano, prima di scrivere il libro.', 'Handwritten notes and the outline, before writing the book.']],
-    'savpresentations' => [['savdocuments', 'Il documento da cui nasce la presentazione, con gli stessi grafici e tabelle.', 'The document the presentation comes from, with the same charts and tables.'], ['savwhiteboard', 'L’idea abbozzata alla lavagna, poi messa in ordine nelle slide.', 'The idea sketched on the board, then put in order on the slides.'], ['savdiagrams', 'Un diagramma di SavDiagrams sulla slide, dal pannello delle immagini.', 'A SavDiagrams diagram on the slide, from the pictures panel.']],
-    'savschedules' => [['savcalendar', 'La data scelta e i posti prenotati entrano nel calendario; dal calendario nasce un sondaggio.', 'The chosen date and booked slots go into the calendar; a poll can start from the calendar.'], ['savtasks', 'I sondaggi ancora da decidere compaiono tra le cose da fare.', 'Polls still to decide show among the things to do.']],
-    'savcalendar' => [['savschedules', 'Date scelte e posti prenotati compaiono da soli.', 'Chosen dates and booked slots show up by themselves.'], ['savtasks', 'Le attività con scadenza sono nel giorno giusto.', 'Tasks with a due day sit on the right day.'], ['savforms', 'Le scadenze dei moduli, che si chiudono da soli.', 'The deadlines of forms, which close by themselves.'], ['savnewsletters', 'Le newsletter programmate, nel giorno in cui partiranno.', 'Planned newsletters, on the day they will go out.']],
-    'savtasks' => [['savcalendar', 'Le attività con scadenza compaiono nel calendario.', 'Tasks with a due day show in the calendar.'], ['savschedules', 'Un’attività può diventare un sondaggio; i sondaggi da decidere arrivano qui.', 'A task can become a poll; polls to decide arrive here.'], ['savspreadsheets', 'Il tempo tracciato, con ore e importi, si apre come foglio di calcolo.', 'The time tracked, with hours and amounts, opens as a spreadsheet.']],
-    'savforms' => [['savcalendar', 'La scadenza del modulo è nel calendario, e a quell’ora il modulo si chiude.', 'The deadline of the form is in the calendar, and at that time the form closes.'], ['savschedules', 'Per scegliere una data meglio un sondaggio di SavSchedules: stesso account.', 'To pick a date, a SavSchedules poll is better: same account.']],
-    'savwhiteboard' => [['savnotes', 'Stessi strumenti di scrittura a mano, ma su fogli di quaderno.', 'The same handwriting tools, but on notebook sheets.'], ['savpresentations', 'Dallo schizzo alla slide.', 'From the sketch to the slide.'], ['savdiagrams', 'Dallo schizzo al diagramma: il menu ⋮ trasforma la lavagna in un diagramma pulito.', 'From the sketch to the diagram: the ⋮ menu turns the board into a clean diagram.']],
-    'savdiagrams' => [['savwhiteboard', 'Lo schizzo fatto alla lavagna diventa un diagramma, con le sue forme, i testi e le frecce.', 'The sketch made on the board becomes a diagram, with its shapes, texts and arrows.'], ['savdocuments', 'Inserisci un diagramma in un documento, come immagine nitida.', 'Insert a diagram into a document, as a sharp picture.'], ['savpresentations', 'Lo schema giusto sulla slide giusta.', 'The right scheme on the right slide.']],
-    'savnotes' => [['savwhiteboard', 'Quando un foglio non basta, una lavagna senza bordi.', 'When a sheet is not enough, a board without edges.'], ['savdocuments', 'Il testo che diventa un documento vero.', 'The text that becomes a real document.']],
-    'savnewsletters' => [['savcalendar', 'Gli invii programmati compaiono nel calendario.', 'Planned sendings show in the calendar.'], ['savforms', 'Un modulo per raccogliere iscrizioni o opinioni dai lettori.', 'A form to gather sign-ups or opinions from readers.']],
-    'savmail' => [['savcalendar', 'Lo stesso account di calendario, attività e sondaggi: un accesso per tutti.', 'The same account as the calendar, tasks and polls: one sign-in for all.'], ['savdrive', 'Gli allegati da conservare trovano posto nel drive.', 'The attachments worth keeping find a place in the drive.']],
-    'savphotos' => [['savdrive', 'Le foto sono file del drive, nella cartella SavPhotos: stesso account, stesso spazio.', 'The photos are files of the drive, in the SavPhotos folder: same account, same space.'], ['savpresentations', 'Le foto migliori finiscono nelle slide.', 'The best photos end up in the slides.']],
-    'savpodcasts' => [['savnotes', 'Gli appunti di un episodio, scritti a mano su un quaderno.', 'Notes on an episode, handwritten in a notebook.'], ['savtasks', 'Un episodio da ascoltare dopo diventa un’attività.', 'An episode to listen to later becomes a task.'], ['savreads', 'La stessa idea per gli articoli: i feed dei siti e quello che salvi da leggere dopo.', 'The same idea for articles: the feeds of sites and what you save to read later.']],
-    'savcontacts' => [['savmail', 'Mentre scrivi a qualcuno, SavMail ti suggerisce i destinatari dalla rubrica.', 'As you write to someone, SavMail suggests the recipients from the address book.'], ['savcalendar', 'I compleanni dei contatti compaiono nel calendario, con gli anni che compiono.', 'The birthdays of the contacts show in the calendar, with the age they turn.'], ['savschedules', 'Gli invitati di un sondaggio si scelgono dalla rubrica.', 'The invitees of a poll are chosen from the address book.'], ['savsplits', 'Le persone di un gruppo di spese arrivano dai contatti.', 'The people of a group of expenses come from the contacts.'], ['savnewsletters', 'Un gruppo di contatti diventa una lista di iscritti.', 'A group of contacts becomes a list of subscribers.']],
-    'savreads' => [['savpodcasts', 'La stessa idea, testo invece di audio: i feed, il punto in cui eri rimasto, lo stesso account.', 'The same idea, text instead of audio: the feeds, where you stopped, the same account.'], ['savnotes', 'Gli appunti su un articolo, con le sue evidenziazioni, in un quaderno.', 'Notes on an article, with its highlights, in a notebook.'], ['savtasks', 'Un articolo da leggere diventa un’attività.', 'An article to read becomes a task.']],
-    'savsplits' => [['savcalendar', 'Lo stesso account del calendario: il viaggio è lì, le sue spese qui.', 'The same account as the calendar: the trip is there, its expenses here.'], ['savforms', 'Un modulo per raccogliere le quote di un evento.', 'A form to collect the shares of an event.']],
-];
+require __DIR__ . '/data.php'; // the apps: colours, what sets each apart, files, how they work together
 $app = (string)($_GET['app'] ?? '');
 if (!isset($apps[$app])) $app = '';
 $pageUrl = 'https://www.illerom.eu/savoffice/' . ($app ? "$app/" : '');
 $name = fn(string $slug): string => '<span class="sav">Sav</span>' . $h(substr($projects[$slug]['name'], 3));
 $ico = fn(string $slug, int $size = 48): string => '<img src="/' . $slug . '/icons/favicon.svg" alt="" width="' . $size . '" height="' . $size . '">';
 ?><!doctype html>
-<html lang="<?= $lang ?>">
+<html lang="<?= $lang ?>" class="sav-theme-auto">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -164,6 +107,7 @@ $graph = $app
 <?php $v = fn(string $f) => '/assets/sav/' . $f . '?v=' . @filemtime(dirname(__DIR__) . '/assets/sav/' . $f); ?>
     <link rel="stylesheet" href="<?= $v('sav.css') ?>">
     <script src="<?= $v('sav.js') ?>" defer></script>
+    <script src="/savoffice/page.js?v=<?= @filemtime(__DIR__ . '/page.js') ?>" defer></script>
     <style>
         @font-face { font-family: Inter; src: url('/assets/fonts/inter-latin-wght-normal.woff2') format('woff2'); font-weight: 100 900; font-display: swap; unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2190-2199, U+2212, U+2215; }
         @font-face { font-family: Inter; src: url('/assets/fonts/inter-latin-ext-wght-normal.woff2') format('woff2'); font-weight: 100 900; font-display: swap; unicode-range: U+0100-024F, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF; }
@@ -195,7 +139,7 @@ $graph = $app
         .btn.main { background: var(--text); color: var(--bg); } .btn.main:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgb(20 10 30 / .22); }
         .btn.ghost { border: 1px solid var(--line); background: var(--card); } .btn.ghost:hover { border-color: var(--muted); }
         .btn svg { width: 18px; height: 18px; }
-        .pills { display: flex; flex-wrap: wrap; gap: .5rem; padding: 0; margin: 0; list-style: none; }
+        .pills { display: flex; flex-wrap: wrap; gap: .5rem; }
         .pills li { display: inline-flex; align-items: center; gap: .4rem; padding: .35rem .8rem; border-radius: 99px; background: var(--card); border: 1px solid var(--line); font-size: .86rem; font-weight: 550; }
         .pills li::before { content: ""; width: .5rem; height: .5rem; border-radius: 2px; background: var(--sun); }
 
@@ -238,7 +182,7 @@ $graph = $app
 
         /* why */
         .why { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
-        .why div { padding: 1.5rem; border-radius: var(--r); background: var(--card); border: 1px solid var(--line); }
+        .why > sav-card { display: block; height: 100%; --sav-card-padding: 1.5rem; }
         .why .i { width: 44px; height: 44px; border-radius: 13px; display: grid; place-items: center; margin-bottom: 1rem; color: #fff; }
         .why .i svg { width: 22px; height: 22px; }
         .why h3 { margin: 0 0 .4rem; font-size: 1.08rem; letter-spacing: -.02em; } .why p { margin: 0; color: var(--muted); font-size: .95rem; }
@@ -291,6 +235,14 @@ $graph = $app
         .flows li { display: grid; grid-template-columns: auto 1fr; gap: .8rem; align-items: start; padding: .9rem 1rem; border-radius: 16px; background: var(--card); border: 1px solid var(--line); font-size: .96rem; }
         .flows .ic { display: flex; align-items: center; gap: .25rem; } .flows .ic img { width: 26px; height: 26px; } .flows .ic span { color: var(--muted); font-size: .9rem; }
         @media (max-width: 900px) { .together { grid-template-columns: 1fr; } }
+        .flows-grid { margin-top: clamp(1.8rem, 4vw, 2.6rem); }
+        .flow { display: block; height: 100%; --sav-card-padding: .9rem 1rem; }
+        .flow-in { display: grid; grid-template-columns: auto auto auto 1fr; gap: .45rem; align-items: start; }
+        .flow-in .ic { display: flex; } .flow-in .ic img { width: 28px; height: 28px; }
+        .flow-in .arr { color: var(--muted); font-size: .9rem; line-height: 28px; }
+        .flow-in p { margin: 0 0 0 .4rem; font-size: .92rem; line-height: 1.45; color: var(--muted); }
+        .flow-in p b { display: block; color: var(--text); font-size: .86rem; margin-bottom: .1rem; }
+        @media (max-width: 560px) { .flows-grid { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 84%; overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; margin: 1.6rem -1.25rem 0; padding: 0 1.25rem .5rem; scrollbar-width: none; } .flow { scroll-snap-align: start; } } /* on a phone the links scroll sideways */
 
         /* privacy */
         .privacy { background: #17151d; color: #f2f0f7; border-radius: 36px; padding: clamp(2rem, 5vw, 4rem); position: relative; overflow: hidden; color-scheme: dark; }
@@ -304,15 +256,13 @@ $graph = $app
         @media (max-width: 900px) { .promises { grid-template-columns: repeat(2, minmax(0, 1fr)); } } @media (max-width: 560px) { .promises { grid-template-columns: 1fr; } }
 
         /* open */
-        .open { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.2rem; }
-        .open > div { padding: 1.8rem; border-radius: var(--r); background: var(--card); border: 1px solid var(--line); }
+        .open { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.2rem; } @media (max-width: 1000px) { .open { grid-template-columns: minmax(0, 1fr); } }
+        .open > sav-card { display: block; height: 100%; --sav-card-padding: 1.8rem; }
         .open h3 { margin: 0 0 .5rem; font-size: 1.25rem; letter-spacing: -.02em; }
         .open .built { order: 3; grid-column: 1 / -1; background: linear-gradient(120deg, color-mix(in oklab, #66cbff 14%, var(--card)), var(--card) 60%); }
         .open .built h3 { display: flex; align-items: center; gap: .7rem; } .open .built h3 img { width: 40px; height: 40px; }
         .open .built p { max-width: 52rem; } .open p { margin: 0 0 1.1rem; color: var(--muted); }
         .fmt { display: flex; flex-wrap: wrap; gap: .4rem; padding: 0; margin: 0; list-style: none; }
-        .fmt li { font: 600 .8rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; padding: .45rem .6rem; border-radius: 8px; background: var(--bg2); border: 1px solid var(--line); }
-        .fmt li.own { background: color-mix(in oklab, var(--sun) 30%, var(--card)); border-color: color-mix(in oklab, var(--sun) 60%, transparent); }
         @media (max-width: 800px) { .open { grid-template-columns: 1fr; } }
 
         /* end */
@@ -369,6 +319,35 @@ $graph = $app
         @media (max-width: 760px) { .support { grid-template-columns: minmax(0, 1fr); } .support .btn { justify-self: start; } }
         footer .wrap { display: flex; flex-wrap: wrap; gap: .5rem 1.4rem; padding: 1.4rem 0 2rem; color: var(--muted); font-size: .88rem; }
         footer .wrap span:last-child { margin-left: auto; }
+
+        /* the catalogue: sav-chip-group to filter (page.js), every app a sav-card */
+        :root { --sav-color-primary: #7845f4; --sav-font: Inter, system-ui, sans-serif; }
+        .kinds { display: block; margin-bottom: 1.4rem; }
+        .kinds small { opacity: .65; font-variant-numeric: tabular-nums; margin-left: .2rem; }
+        .card { position: relative; display: block; height: 100%; scroll-margin-top: 6rem; --sav-card-padding: 1.1rem; }
+        .card[hidden] { display: none; }
+        .card::part(base) { border-top: 4px solid var(--c); }
+        .card-main { display: flex; align-items: center; gap: .8rem; text-decoration: none; color: inherit; font-weight: inherit; font-size: 1rem; }
+        .card-ico { flex: none; } .card-ico img { display: block; width: 48px; height: 48px; }
+        .card-text { min-width: 0; display: grid; gap: .1rem; }
+        .card-text b { font-size: 1.08rem; letter-spacing: -.02em; line-height: 1.15; }
+        .card-text small { color: var(--c); font-weight: 650; font-size: .86rem; line-height: 1.3; filter: brightness(1.05); }
+        .card-edge { margin: 0; color: var(--muted); font-size: .9rem; line-height: 1.5; max-height: 4.5em; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .card-acts { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
+        .card-tag { position: absolute; top: .9rem; right: .9rem; z-index: 1; }
+        /* together: the apps on a circle around SavAccount; any number of apps fits */
+        .orbit { position: relative; width: min(100%, 32rem); aspect-ratio: 1; margin: 0 auto; container-type: inline-size; }
+        .orbit::before { content: ""; position: absolute; inset: 11%; border-radius: 50%; border: 1.5px dashed color-mix(in oklab, #3a9fd6 40%, var(--line)); }
+        .orbit-core { position: absolute; inset: 27%; display: grid; place-content: center; justify-items: center; gap: .2rem; text-align: center; border-radius: 50%; background: color-mix(in oklab, #66cbff 13%, var(--card)); border: 1px solid color-mix(in oklab, #3a9fd6 30%, var(--line)); padding: 1rem; }
+        .orbit-core img { width: 27cqi; height: auto; max-width: 84px; }
+        .orbit-core b { font-size: clamp(.9rem, 4cqi, 1.15rem); } .orbit-core small { color: var(--muted); font-size: clamp(.72rem, 3cqi, .88rem); line-height: 1.3; }
+        .orbit-app { position: absolute; left: 50%; top: 50%; width: 12cqi; height: 12cqi; margin: -6cqi 0 0 -6cqi; display: grid; place-items: center; border-radius: 28%; background: var(--card); box-shadow: 0 6px 18px -10px rgb(20 10 30 / .35), 0 0 0 1px var(--line);
+            transform: rotate(calc(var(--i) * 360deg / var(--n))) translateY(-39cqi) rotate(calc(var(--i) * -360deg / var(--n))); transition: box-shadow .15s; }
+        .orbit-app img { width: 72%; height: 72%; }
+        .orbit-app:hover, .orbit-app:focus-visible { box-shadow: 0 10px 24px -10px rgb(20 10 30 / .45), 0 0 0 2px var(--violet); z-index: 1; }
+        @media (max-width: 560px) { .card { --sav-card-padding: .85rem; } .card-edge { -webkit-line-clamp: 2; max-height: 3em; font-size: .86rem; } .card-ico img { width: 40px; height: 40px; } }
+        .h3ico { width: 28px; height: 28px; vertical-align: -6px; margin-right: .5rem; }
+        footer .ai { flex-basis: 100%; order: 9; font-size: .82rem; }
     </style>
 </head>
 <body>
@@ -394,12 +373,12 @@ $graph = $app
                 <h1><?= $it ? 'Un ufficio <em>libero</em>, aperto, tuo.' : 'A <em>free</em>, open office of your own.' ?></h1>
                 <p class="lead"><?= $L('File e cartelle, foto, documenti, fogli di calcolo, libri, presentazioni, calendario, sondaggi, attività, moduli, lavagna, diagrammi, quaderni, posta, contatti, podcast, articoli da leggere, spese condivise e newsletter. Non ' . $nw('it') . ' programmi separati: app pensate per lavorare insieme, gratuite, open source e rispettose dei tuoi dati.', 'Files and folders, photos, documents, spreadsheets, books, presentations, calendar, polls, tasks, forms, whiteboard, diagrams, notebooks, email, contacts, podcasts, articles to read later, shared expenses and newsletters. Not ' . $nw('en') . ' separate programs: apps made to work together, free, open source and respectful of your data.') ?></p>
                 <div class="ctas">
-                    <a class="btn main" href="#apps"><?= $L('Scopri le app', 'Discover the apps') ?> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12l7 7 7-7"/></svg></a>
-                    <a class="btn ghost" href="https://github.com/Sav22999/illerom"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.71 1.26 3.37.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.4-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5z"/></svg><?= $L('Codice sorgente', 'Source code') ?></a>
+                    <sav-button size="lg" href="#apps"><?= $L('Scopri le app', 'Discover the apps') ?></sav-button>
+                    <sav-button size="lg" appearance="outline" variant="neutral" href="https://github.com/Sav22999/illerom" icon="code"><?= $L('Codice sorgente', 'Source code') ?></sav-button>
                 </div>
-                <ul class="pills">
-                    <li><?= $L('Gratis', 'Free') ?></li><li>Open source</li><li><?= $L('Niente pubblicità', 'No ads') ?></li><li><?= $L('Dati nell’UE', 'Data in the EU') ?></li>
-                </ul>
+                <div class="pills">
+                    <sav-tag pill><?= $L('Gratis', 'Free') ?></sav-tag><sav-tag pill>Open source</sav-tag><sav-tag pill><?= $L('Niente pubblicità', 'No ads') ?></sav-tag><sav-tag pill><?= $L('Dati nell’UE', 'Data in the EU') ?></sav-tag>
+                </div>
             </div>
             <div class="collage" aria-hidden="true">
                 <span class="dot d1"></span><span class="dot d2"></span>
@@ -409,11 +388,43 @@ $graph = $app
             </div>
         </section>
 
-        <nav class="strip" aria-label="<?= $L('Le app di SavOffice', 'The apps of SavOffice') ?>">
-            <?php foreach ($apps as $slug => $a): ?>
-                <a href="#<?= $slug ?>"><?= $ico($slug, 46) ?><span class="full"><?= $h($projects[$slug]['name']) ?></span><span class="short"><?= $L(...$short[$slug]) ?></span></a>
-            <?php endforeach; ?>
-        </nav>
+        <?php
+        // the kinds of apps, to filter the list (radio buttons and CSS: the page runs no script of its own)
+        $kinds = ['write' => ['Scrivere e creare', 'Write and create'], 'time' => ['Organizzare', 'Organise'], 'talk' => ['Comunicare', 'Communicate'], 'files' => ['File e media', 'Files and media']];
+        $kindOf = ['savdocuments' => 'write', 'savspreadsheets' => 'write', 'savpresentations' => 'write', 'savbooks' => 'write', 'savdiagrams' => 'write', 'savwhiteboard' => 'write', 'savnotes' => 'write',
+            'savcalendar' => 'time', 'savtasks' => 'time', 'savschedules' => 'time', 'savcontacts' => 'time', 'savsplits' => 'time',
+            'savmail' => 'talk', 'savnewsletters' => 'talk', 'savforms' => 'talk',
+            'savdrive' => 'files', 'savphotos' => 'files', 'savpodcasts' => 'files', 'savreads' => 'files'];
+        $keep = $q !== '' ? '?lang=' . $lang : '';
+        ?>
+        <section class="block" id="apps" aria-labelledby="apps-h">
+            <div class="head">
+                <p class="kicker"><?= $L('Le app', 'The apps') ?></p>
+                <h2 id="apps-h"><?= $L(ucfirst($nw('it')) . ' app, ognuna con un’idea in più.', ucfirst($nw('en')) . ' apps, each with an extra idea.') ?></h2>
+                <p><?= $L('Fanno quello che ti aspetti, e poi qualcosa che altrove non trovi. Apri la scheda di un’app per le sue funzioni e le schermate.', 'They do what you expect, and then something you will not find elsewhere. Open the page of an app for its features and screenshots.') ?></p>
+            </div>
+            <div class="catalog">
+                <sav-chip-group class="kinds" id="kinds" required value="all" label="<?= $L('Mostra', 'Show') ?>">
+                    <sav-chip value="all" selected><?= $L('Tutte', 'All') ?> <small><?= $n ?></small></sav-chip>
+                    <?php foreach ($kinds as $k => $kl): ?><sav-chip value="<?= $k ?>"><?= $L(...$kl) ?> <small><?= count(array_filter(array_keys($apps), fn($x) => ($kindOf[$x] ?? 'write') === $k)) ?></small></sav-chip><?php endforeach; ?>
+                </sav-chip-group>
+                <sav-grid class="cards" id="cards" min="16.5rem" gap="1rem">
+                    <?php foreach ($apps as $slug => [$color, $desk, $phone, $eit, $een]): $P = $projects[$slug]; ?>
+                        <sav-card class="card" data-kind="<?= $kindOf[$slug] ?? 'write' ?>" style="--c:<?= $color ?>; --sav-color-primary:<?= $color ?>; --sav-color-on-primary:#fff" id="<?= $slug ?>">
+                            <a slot="header" class="card-main" href="/savoffice/<?= $slug ?>/<?= $keep ?>">
+                                <span class="card-ico"><?= $ico($slug, 48) ?></span>
+                                <span class="card-text"><b><?= $name($slug) ?></b><small><?= $h($P[$lang][0]) ?></small></span>
+                            </a>
+                            <?php if (!empty($P['invite'])): ?><sav-badge class="card-tag" appearance="soft" pill><?= $L('Su invito', 'By invitation') ?></sav-badge><?php endif; ?>
+                            <p class="card-edge"><?= $L($eit, $een) ?></p>
+                            <div slot="footer" class="card-acts">
+                                <sav-button size="sm" href="/<?= $slug ?>/"><?= $L('Apri', 'Open') ?></sav-button>
+                                <sav-button size="sm" appearance="ghost" variant="neutral" href="/savoffice/<?= $slug ?>/<?= $keep ?>"><?= $L('Scheda e schermate', 'Details and screenshots') ?></sav-button>
+                            </div>
+                        </sav-card>
+                    <?php endforeach; ?>
+                </sav-grid>
+        </section>
 
         <section class="block" aria-labelledby="why-h">
             <div class="head">
@@ -422,44 +433,14 @@ $graph = $app
                 <p><?= $L('Ogni app fa bene il suo lavoro, ma il bello arriva quando le usi insieme: le stesse abitudini ovunque, i dati che passano da un’app all’altra, nessuno che guadagna sulle tue informazioni.', 'Each app does its job well, but the best part comes when you use them together: the same habits everywhere, data that moves from one app to the next, and nobody making money on your information.') ?></p>
             </div>
             <div class="why">
-                <div><span class="i" style="background:var(--violet)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg></span>
-                    <h3><?= $L('Collegate tra loro', 'Connected') ?></h3><p><?= $L('La data scelta in un sondaggio, la scadenza di un modulo o di un’attività, una newsletter programmata: compaiono da sole nel calendario.', 'The date chosen in a poll, the deadline of a form or a task, a planned newsletter: they show up in the calendar by themselves.') ?></p></div>
-                <div><span class="i" style="background:var(--green)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
-                    <h3><?= $L('Privacy per davvero', 'Privacy for real') ?></h3><p><?= $L('Niente pubblicità, profilazione o statistiche di terzi. Server nell’Unione europea, e i tuoi dati li scarichi o li cancelli quando vuoi.', 'No ads, profiling or third-party analytics. Servers in the European Union, and you download or delete your data whenever you like.') ?></p></div>
-                <div><span class="i" style="background:var(--pink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg></span>
-                    <h3><?= $L('Aperte e tue', 'Open and yours') ?></h3><p><?= $L('Il codice è pubblico, e sono costruite con SavComponents, anch’esso open source ed europeo. Apri e salvi i formati di sempre, Word, PowerPoint, PDF, .ics, CSV: non resti mai bloccato.', 'The code is public, and they are built with SavComponents, open source and European too. You open and save the usual formats, Word, PowerPoint, PDF, .ics, CSV: you are never locked in.') ?></p></div>
-                <div><span class="i" style="background:#1f56d1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="14" height="10" rx="2"/><rect x="16" y="9" width="6" height="11" rx="1.5"/><path d="M6 18h6"/></svg></span>
-                    <h3><?= $L('Ovunque, subito', 'Anywhere, at once') ?></h3><p><?= $L('Si aprono nel browser di computer, tablet e telefono, senza installare nulla, e si installano come app. Documenti e presentazioni funzionano anche offline.', 'They open in the browser of a computer, tablet or phone, with nothing to install, and install as apps. Documents and presentations also work offline.') ?></p></div>
-            </div>
-        </section>
-
-        <section class="block" id="apps" aria-labelledby="apps-h">
-            <div class="head">
-                <p class="kicker"><?= $L('Le app', 'The apps') ?></p>
-                <h2 id="apps-h"><?= $L(ucfirst($nw('it')) . ' app, ognuna con un’idea in più.', ucfirst($nw('en')) . ' apps, each with an extra idea.') ?></h2>
-                <p><?= $L('Fanno quello che ti aspetti da documenti, calendario o moduli, e poi qualcosa che altrove non trovi.', 'They do what you expect from documents, a calendar or forms, and then something you will not find elsewhere.') ?></p>
-            </div>
-            <div class="list">
-                    <?php foreach ($apps as $slug => [$color, $desk, $phone, $eit, $een]): $p = $projects[$slug][$lang]; ?>
-                        <article class="app" id="<?= $slug ?>" style="--c:<?= $color ?>">
-                            <div class="text">
-                                <div class="name"><?= $ico($slug, 52) ?><div><h4><?= $name($slug) ?></h4><small><?= $h($p[0]) ?></small></div></div>
-                                <p class="desc"><?= $h(preg_replace(['/\s*(Fa parte di SavOffice|Part of SavOffice)[^.]*\.?\s*$/u', '/,? (e|and) (fa parte di|is part of) SavOffice/u', '/ (e|and) (fa parte di|is part of) SavOffice\./u'], ['', '', '.'], $p[1])) ?></p>
-                                <ul class="feat"><?php foreach ($p[2] as $f): ?><li><?= $h($f) ?></li><?php endforeach; ?></ul>
-                                <p class="edge"><b><?= $L('In più', 'The extra') ?></b><span><?= $L($eit, $een) ?></span></p>
-                                <?= $invite($slug) ?>
-                                <div class="acts">
-                                    <a class="btn main" href="/<?= $slug ?>/"><?= $L('Apri', 'Open') ?> <?= $h($projects[$slug]['name']) ?></a>
-                                    <a class="btn ghost" href="/savoffice/<?= $slug ?>/<?= $q !== '' ? '?lang=' . $lang : '' ?>"><?= $L('Scheda e schermate', 'Details and screenshots') ?></a>
-                                </div>
-                            </div>
-                            <div class="shots">
-                                <?php if ($has($slug, $desk)): ?><div class="desk"><sav-image zoom src="<?= $shot($slug, $desk) ?>" alt="<?= $h($projects[$slug]['name'] . ($it ? ' su un computer' : ' on a computer')) ?>" ratio="1440:900"></sav-image></div>
-                                <?php else: ?><div class="desk noshot" aria-hidden="true"><?= $ico($slug, 112) ?></div><?php endif; ?>
-                                <?php if ($has($slug, $phone)): ?><div class="phone"><sav-image zoom src="<?= $shot($slug, $phone) ?>" alt="<?= $h($projects[$slug]['name'] . ($it ? ' su un telefono' : ' on a phone')) ?>" ratio="562:1000"></sav-image></div><?php endif; ?>
-                            </div>
-                        </article>
-                    <?php endforeach; ?>
+                <sav-card><span class="i" style="background:var(--violet)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg></span>
+                    <h3><?= $L('Collegate tra loro', 'Connected') ?></h3><p><?= $L('La data scelta in un sondaggio, la scadenza di un modulo o di un’attività, una newsletter programmata: compaiono da sole nel calendario.', 'The date chosen in a poll, the deadline of a form or a task, a planned newsletter: they show up in the calendar by themselves.') ?></p></sav-card>
+                <sav-card><span class="i" style="background:var(--green)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+                    <h3><?= $L('Privacy per davvero', 'Privacy for real') ?></h3><p><?= $L('Niente pubblicità, profilazione o statistiche di terzi. Server nell’Unione europea, e i tuoi dati li scarichi o li cancelli quando vuoi.', 'No ads, profiling or third-party analytics. Servers in the European Union, and you download or delete your data whenever you like.') ?></p></sav-card>
+                <sav-card><span class="i" style="background:var(--pink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg></span>
+                    <h3><?= $L('Aperte e tue', 'Open and yours') ?></h3><p><?= $L('Il codice è pubblico, e sono costruite con SavComponents, anch’esso open source ed europeo. Apri e salvi i formati di sempre, Word, PowerPoint, PDF, .ics, CSV: non resti mai bloccato.', 'The code is public, and they are built with SavComponents, open source and European too. You open and save the usual formats, Word, PowerPoint, PDF, .ics, CSV: you are never locked in.') ?></p></sav-card>
+                <sav-card><span class="i" style="background:#1f56d1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="14" height="10" rx="2"/><rect x="16" y="9" width="6" height="11" rx="1.5"/><path d="M6 18h6"/></svg></span>
+                    <h3><?= $L('Ovunque, subito', 'Anywhere, at once') ?></h3><p><?= $L('Si aprono nel browser di computer, tablet e telefono, senza installare nulla, e si installano come app. Documenti e presentazioni funzionano anche offline.', 'They open in the browser of a computer, tablet or phone, with nothing to install, and install as apps. Documents and presentations also work offline.') ?></p></sav-card>
             </div>
         </section>
 
@@ -469,26 +450,38 @@ $graph = $app
                     <p class="kicker"><?= $L('Insieme', 'Together') ?></p>
                     <h2 id="tog-h"><?= $L('Un solo account, tutto al suo posto.', 'One account, everything in its place.') ?></h2>
                     <p style="color:var(--muted);font-size:1.06rem;margin:0"><?= $L('SavSchedules, SavCalendar, SavTasks, SavForms, SavWhiteboard, SavDiagrams, SavNotes, SavMail, SavPodcasts, SavReads, SavSplits e SavContacts condividono lo stesso account, e SavPhotos quello di SavDrive; con SavAccount entri in tutte e ' . $nw('it') . ' con un solo accesso. E il pulsante a griglia, in ogni app, ti porta alle altre.', 'SavSchedules, SavCalendar, SavTasks, SavForms, SavWhiteboard, SavDiagrams, SavNotes, SavMail, SavPodcasts, SavReads, SavSplits and SavContacts share the same account, and SavPhotos the one of SavDrive; with SavAccount you get into all ' . $nw('en') . ' with a single sign-in. And the grid button, in every app, takes you to the others.') ?></p>
-                    <ul class="flows">
-                        <li><span class="ic"><?= $ico('savschedules', 26) ?><span>→</span><?= $ico('savcalendar', 26) ?></span><span><?= $L('La data scelta e i posti prenotati entrano nel calendario; e dal calendario nasce un nuovo sondaggio.', 'The chosen date and booked slots go into the calendar; and a new poll can start from the calendar.') ?></span></li>
-                        <li><span class="ic"><?= $ico('savtasks', 26) ?><span>→</span><?= $ico('savcalendar', 26) ?></span><span><?= $L('Le attività con scadenza compaiono nel calendario; un’attività può diventare un evento o un sondaggio.', 'Tasks with a due day show in the calendar; a task can become an event or a poll.') ?></span></li>
-                        <li><span class="ic"><?= $ico('savforms', 26) ?><span>→</span><?= $ico('savcalendar', 26) ?></span><span><?= $L('La scadenza di un modulo è nel calendario, e a quell’ora il modulo si chiude da solo.', 'The deadline of a form is in the calendar, and at that time the form closes by itself.') ?></span></li>
-                        <li><span class="ic"><?= $ico('savnewsletters', 26) ?><span>→</span><?= $ico('savcalendar', 26) ?></span><span><?= $L('Le newsletter programmate si vedono nel giorno in cui partiranno.', 'Planned newsletters show on the day they will go out.') ?></span></li>
-                    </ul>
                 </div>
-                <?php // SavAccount in the middle, the one sign-in of all of them; all the apps around, in alphabetical order
-                $hub = ['savbooks' => ['EPUB · PDF', 'EPUB · PDF'], 'savcalendar' => ['date e scadenze', 'dates and deadlines'], 'savdocuments' => ['.docx · PDF', '.docx · PDF'], 'savdrive' => ['i tuoi file', 'your files'], 'savforms' => ['chiusure', 'deadlines'],
-                    'savnewsletters' => ['invii', 'sendings'], 'savnotes' => ['PDF · PNG', 'PDF · PNG'], 'savpresentations' => ['.pptx · .odp', '.pptx · .odp'], 'savschedules' => ['date e posti', 'dates and slots'],
-                    'savspreadsheets' => ['.xlsx · .ods', '.xlsx · .ods'], 'savtasks' => ['scadenze', 'due days'], 'savwhiteboard' => ['PNG · SVG · PDF', 'PNG · SVG · PDF'], 'savdiagrams' => ['.drawio · SVG', '.drawio · SVG'],
-                    'savmail' => ['IMAP · SMTP', 'IMAP · SMTP'], 'savphotos' => ['backup e album', 'backup and albums'], 'savpodcasts' => ['RSS · OPML', 'RSS · OPML'], 'savsplits' => ['saldi', 'balances'], 'savcontacts' => ['vCard · CSV', 'vCard · CSV'], 'savreads' => ['Pocket · feed', 'Pocket · feeds']]; ?>
-                <?php $hc = $n > 16 ? 6 : 5; $hr = $n > 18 ? 6 : 5; // the ring has 2 × columns + 2 × (rows − 2) places ?>
-                <div class="hub" aria-hidden="true" style="--hc:<?= $hc ?>;--hr:<?= $hr ?>">
-                    <div class="n core"><img src="/assets/projects/savaccount.png" alt="" width="72" height="72"><b>SavAccount</b><small><?= $L('un solo accesso per tutte', 'one sign-in for all of them') ?></small></div>
-                    <?php foreach ($apps as $slug => $a): ?>
-                        <div class="n"><?= $ico($slug, 46) ?><b><span class="full"><?= $h($projects[$slug]['name']) ?></span><span class="short"><?= $L(...$short[$slug]) ?></span></b><small><?= $L(...($hub[$slug] ?? ['', ''])) ?></small></div>
+                <?php // SavAccount in the middle, the one sign-in of all of them; the apps on a circle around it, in alphabetical order (any number fits) ?>
+                <div class="orbit" style="--n:<?= $n ?>">
+                    <div class="orbit-core"><img src="/assets/projects/savaccount.png" alt="" width="72" height="72"><b>SavAccount</b><small><?= $L('un solo accesso per tutte', 'one sign-in for all of them') ?></small></div>
+                    <?php $i = 0; foreach ($apps as $slug => $a): ?>
+                        <a class="orbit-app" style="--i:<?= $i++ ?>" href="/savoffice/<?= $slug ?>/<?= $keep ?>" title="<?= $h($projects[$slug]['name'] . ' · ' . $projects[$slug][$lang][0]) ?>" aria-label="<?= $h($projects[$slug]['name']) ?>"><?= $ico($slug, 44) ?></a>
                     <?php endforeach; ?>
                 </div>
             </div>
+            <?php
+            // how the apps work together: one link for each app, from data.php ($works). The one chosen goes to the app
+            // that has been chosen least so far, and never back along a pair already shown, so every app is there.
+            $used = []; $pairs = []; $flows = [];
+            foreach ($apps as $slug => $a) {
+                $opts = array_values(array_filter($works[$slug] ?? [], fn($w) => isset($apps[$w[0]]) && !isset($pairs[$w[0] . '>' . $slug])));
+                if (!$opts) continue;
+                usort($opts, fn($x, $y) => ($used[$x[0]] ?? 0) <=> ($used[$y[0]] ?? 0));
+                $w = $opts[0];
+                $used[$w[0]] = ($used[$w[0]] ?? 0) + 1; $pairs[$slug . '>' . $w[0]] = true;
+                $flows[] = [$slug, $w[0], $L($w[1], $w[2])];
+            }
+            ?>
+            <sav-grid class="flows-grid" min="19rem" gap=".8rem">
+                <?php foreach ($flows as [$from, $to, $text]): ?>
+                    <sav-card class="flow">
+                        <div class="flow-in">
+                            <a class="ic" href="/savoffice/<?= $from ?>/<?= $keep ?>" title="<?= $h($projects[$from]['name']) ?>"><?= $ico($from, 28) ?></a><span class="arr" aria-hidden="true">→</span><a class="ic" href="/savoffice/<?= $to ?>/<?= $keep ?>" title="<?= $h($projects[$to]['name']) ?>"><?= $ico($to, 28) ?></a>
+                            <p><b><?= $h($projects[$from]['name']) ?> · <?= $h($projects[$to]['name']) ?></b><?= $text ?></p>
+                        </div>
+                    </sav-card>
+                <?php endforeach; ?>
+            </sav-grid>
         </section>
 
         <section class="block" id="privacy" aria-labelledby="priv-h">
@@ -514,28 +507,26 @@ $graph = $app
             <div class="head">
                 <p class="kicker">Open source</p>
                 <h2 id="open-h"><?= $L('Aperto dentro, aperto fuori.', 'Open inside, open outside.') ?></h2>
-                <p><?= $L('Il codice è su GitHub, i mattoni con cui sono fatte sono aperti anche loro, e i file sono tuoi: puoi portarli dove vuoi, quando vuoi.', 'The code is on GitHub, the bricks they are made of are open too, and the files are yours: take them wherever you want, whenever you want.') ?></p>
             </div>
             <div class="open">
-                <div>
+                <sav-card>
                     <h3><?= $L('Codice pubblico', 'Public code') ?></h3>
-                    <p><?= $L('Ogni app è open source: leggi come funziona, segnala un problema o proponi un miglioramento. Nessuna scatola nera.', 'Every app is open source: read how it works, report a problem or suggest an improvement. No black boxes.') ?></p>
-                    <a class="btn ghost" href="https://github.com/Sav22999/illerom">github.com/Sav22999/illerom</a>
-                </div>
-                <div class="built">
-                    <h3><img src="/assets/projects/savcomponents.png" alt="" width="40" height="40"><?= $L('Costruite con SavComponents', 'Built with SavComponents') ?></h3>
-                    <p><?= $L('Pulsanti, campi, finestre, schede, calendari e selettori di tutte e ' . $nw('it') . ' le app vengono da SavComponents: componenti web liberi, sviluppati in Italia, senza framework né dipendenze. Per questo le app si somigliano, si usano allo stesso modo e funzionano bene con la tastiera e i lettori di schermo. Chiunque può usarli anche nel proprio sito.', 'The buttons, fields, dialogs, tabs, calendars and pickers of all ' . $nw('en') . ' apps come from SavComponents: free web components, made in Italy, with no framework and no dependencies. That is why the apps look alike, work the same way and behave well with the keyboard and screen readers. Anyone can use them on their own site too.') ?></p>
-                    <ul class="fmt" style="margin-bottom:1.1rem"><li class="own">Open source · MIT</li><li><?= $L('Europeo', 'European') ?></li><li><?= $L('Nessuna dipendenza', 'No dependencies') ?></li><li><?= $L('Accessibile', 'Accessible') ?></li></ul>
-                    <div class="ctas" style="margin:0"><a class="btn ghost" href="https://savcomponents.com/">savcomponents.com</a><a class="btn ghost" href="https://github.com/Sav22999/savcomponents"><?= $L('Codice', 'Code') ?></a></div>
-                </div>
-                <div>
+                    <p><?= $L('Ogni app è open source: leggi come funziona, segnala un problema o proponi un miglioramento.', 'Every app is open source: read how it works, report a problem or suggest an improvement.') ?></p>
+                    <sav-button appearance="outline" variant="neutral" href="https://github.com/Sav22999/illerom" icon="code">github.com/Sav22999/illerom</sav-button>
+                </sav-card>
+                <sav-card>
+                    <h3><img src="/assets/projects/savcomponents.png" alt="" width="32" height="32" class="h3ico"><?= $L('Costruite con SavComponents', 'Built with SavComponents') ?></h3>
+                    <p><?= $L('Pulsanti, campi, finestre e selettori di tutte le app vengono da SavComponents: componenti web liberi ed europei, senza dipendenze. Per questo si somigliano e funzionano bene con tastiera e lettori di schermo.', 'The buttons, fields, dialogs and pickers of every app come from SavComponents: free, European web components with no dependencies. That is why they look alike and work well with the keyboard and screen readers.') ?></p>
+                    <sav-button appearance="outline" variant="neutral" href="https://www.savcomponents.com/" icon-end="external">savcomponents.com</sav-button>
+                </sav-card>
+                <sav-card>
                     <h3><?= $L('Formati aperti e di sempre', 'Open and familiar formats') ?></h3>
                     <p><?= $L('Ogni app ha un suo file che conserva tutto, e apre e salva quelli che usano tutti.', 'Each app has a file of its own that keeps everything, and it opens and saves the ones everybody uses.') ?></p>
-                    <ul class="fmt">
-                        <?php $own = array_unique(array_filter(array_merge(...array_values($files)), fn($f) => str_starts_with($f, '.sav'))); sort($own); foreach ($own as $f): ?><li class="own"><?= $f ?></li><?php endforeach; ?>
-                        <?php foreach (['.docx', '.xlsx', '.ods', '.pptx', '.odp', 'PDF', 'EPUB', 'Markdown', '.ics', 'CSV', 'PNG', 'SVG'] as $f): ?><li><?= $f ?></li><?php endforeach; ?>
-                    </ul>
-                </div>
+                    <div class="fmt">
+                        <?php $own = array_unique(array_filter(array_merge(...array_values($files)), fn($f) => str_starts_with($f, '.sav'))); sort($own); foreach ($own as $f): ?><sav-tag size="sm" variant="primary"><?= $f ?></sav-tag><?php endforeach; ?>
+                        <?php foreach (['.docx', '.xlsx', '.pptx', '.odt', '.ods', '.odp', 'PDF', 'EPUB', '.ics', 'vCard', 'CSV', 'OPML'] as $f): ?><sav-tag size="sm"><?= $f ?></sav-tag><?php endforeach; ?>
+                    </div>
+                </sav-card>
             </div>
         </section>
 
@@ -547,18 +538,14 @@ $graph = $app
                     <p><?= $L('SavOffice non ha pubblicità, abbonamenti né funzioni a pagamento, e non vende i tuoi dati. I server e il tempo per migliorarlo li coprono le donazioni di chi lo usa: se ti è utile e puoi, anche un piccolo contributo fa la differenza.', 'SavOffice has no ads, no subscriptions and no paid features, and it does not sell your data. The servers and the time to make it better are covered by the donations of those who use it: if it helps you and you can, even a small contribution makes a difference.') ?></p>
                     <p><?= $L('Se non puoi, va benissimo così: usalo, e consiglialo a chi potrebbe servire.', 'If you cannot, that is perfectly fine: use it, and tell whoever might need it.') ?></p>
                 </div>
-                <a class="btn main" href="https://www.saveriomorelli.com/donate/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.6 1.2 4.3 2.4h2c.7-1.2 2.2-2.4 4.3-2.4 3.7 0 5.8 3.9 4.3 7.2C19.5 16.4 12 21 12 21z"/></svg><?= $L('Fai una donazione', 'Make a donation') ?></a>
+                <sav-button size="lg" href="https://www.saveriomorelli.com/donate/" target="_blank" icon="heart"><?= $L('Fai una donazione', 'Make a donation') ?></sav-button>
             </div>
         </section>
 
         <section class="end" aria-labelledby="end-h">
             <h2 id="end-h"><?= $L('Comincia da quella che ti serve oggi.', 'Start with the one you need today.') ?></h2>
             <p><?= $L('Sono gratuite e non serve installare nulla. Le altre saranno lì, quando ti serviranno.', 'They are free and there is nothing to install. The others will be there when you need them.') ?></p>
-            <nav class="strip" style="margin:0" aria-label="<?= $L('Apri un’app', 'Open an app') ?>">
-                <?php foreach ($apps as $slug => $a): ?>
-                    <a href="/<?= $slug ?>/"><?= $ico($slug, 46) ?><span class="full"><?= $h($projects[$slug]['name']) ?></span><span class="short"><?= $L(...$short[$slug]) ?></span></a>
-                <?php endforeach; ?>
-            </nav>
+            <div class="ctas"><sav-button size="lg" href="#apps"><?= $L('Scegli un’app', 'Pick an app') ?></sav-button></div>
         </section>
     </div>
 <?php } ?>
@@ -569,6 +556,7 @@ $graph = $app
         <a href="https://www.illerom.eu/<?= $lang ?>/status/"><?= $L('Stato dei servizi', 'Service status') ?></a>
         <a href="https://github.com/Sav22999/illerom"><?= $L('Codice', 'Code') ?></a>
         <a href="https://www.saveriomorelli.com/donate/" target="_blank" rel="noopener"><?= $L('Sostieni', 'Support') ?></a>
+        <span class="ai" title="<?= $L('Claude, di Anthropic', 'Claude, by Anthropic') ?>"><?= $L('Applicazioni realizzate con il supporto dell’intelligenza artificiale', 'Apps made with the support of artificial intelligence') ?></span>
         <span><?= $L('Un progetto di', 'A project by') ?> <a href="https://www.saveriomorelli.com">Saverio Morelli</a></span>
     </div>
 </footer>

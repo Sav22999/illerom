@@ -90,6 +90,47 @@ function savspace_q(string $sql, array $args = []): ?PDOStatement
     }
 }
 
+/** Where the default space is kept for a while, so the pages that show it (the first page of SavDrive, Illerom) do not ask the database every time. */
+function savspace_default_file(): string
+{
+    return sys_get_temp_dir() . '/savspace-default-' . substr(md5(__DIR__), 0, 12);
+}
+
+/**
+ * The space every new person gets (bytes): the one the admins of SavDrive chose, kept five minutes in a small file.
+ * If SavDrive cannot be reached, the space of the start (and nothing is kept, so the next page asks again).
+ */
+function savspace_default(): int
+{
+    static $v = null;
+    if ($v !== null) return $v;
+    $f = savspace_default_file();
+    if (is_file($f) && time() - (int)@filemtime($f) < 300 && ($c = (int)@file_get_contents($f)) > 0) return $v = $c;
+    $st = savspace_q("SELECT v FROM `{p}meta` WHERE k = 'default_quota'");
+    if (!$st) return $v = SAVSPACE_DEFAULT;
+    $d = (int)$st->fetchColumn();
+    $v = $d > 0 ? $d : SAVSPACE_DEFAULT;
+    @file_put_contents($f, (string)$v, LOCK_EX);
+    return $v;
+}
+
+/** The admins changed it: the pages show the new one at once. */
+function savspace_default_forget(): void
+{
+    @unlink(savspace_default_file());
+}
+
+/** A space as people read it: "500 MB", "2 GB", "1,5 GB" (Italian) or "1.5 GB" (English). */
+function savspace_size(int $bytes, string $lang = 'en'): string
+{
+    $u = ['B', 'KB', 'MB', 'GB', 'TB'];
+    $i = 0;
+    $n = (float)$bytes;
+    while ($n >= 1024 && $i < count($u) - 1) { $n /= 1024; $i++; }
+    $d = $n < 10 && $i && floor($n) != $n ? 1 : 0;
+    return number_format($n, $d, $lang === 'it' ? ',' : '.', $lang === 'it' ? '.' : ',') . ' ' . $u[$i];
+}
+
 /** The space of a person: the one of their account of SavDrive, or the default one of SavDrive. */
 function savspace_quota(string $email): int
 {

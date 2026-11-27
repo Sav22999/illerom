@@ -42,14 +42,19 @@
   const GRIP = '<circle cx="12" cy="5" r="1"/><circle cx="19" cy="5" r="1"/><circle cx="5" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/><circle cx="12" cy="19" r="1"/><circle cx="19" cy="19" r="1"/><circle cx="5" cy="19" r="1"/>';
   const CSS = `
 savoffice-apps { display: inline-flex; }
-.so-pop { --width: min(27rem, calc(100vw - 1.5rem)); }
-.so-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .3rem; }
-.so-app { display: grid; justify-items: center; align-content: start; gap: .35rem; padding: .8rem .25rem .7rem; min-width: 0; border-radius: 14px; color: inherit; text-decoration: none; text-align: center; line-height: 1.2; }
+.so-pop { --width: min(25rem, calc(100vw - 1.5rem)); }
+/* many apps: a field to find one, then a compact grid of four (the name without "Sav", what it does in the tooltip) that scrolls */
+.so-find { display: block; margin: 0 0 .55rem; }
+.so-grid { max-height: min(25rem, 58vh); overflow-y: auto; overscroll-behavior: contain; margin: 0 -.2rem; padding: .1rem .2rem; }
+.so-app { display: grid; justify-items: center; align-content: start; gap: .3rem; padding: .6rem .15rem .5rem; min-width: 0; border-radius: 12px; color: inherit; text-decoration: none; text-align: center; line-height: 1.2; }
 .so-app:hover, .so-app:focus-visible { background: var(--sav-color-surface-2, rgba(127,127,127,.12)); outline: none; }
-.so-app img { width: 44px; height: 44px; border-radius: 11px; }
-.so-app b { font-size: .86rem; font-weight: 650; letter-spacing: -.01em; }
-.so-app b { font-size: .8rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .so-app small { font-size: .72rem; color: var(--sav-color-text-muted, #777); }
+.so-app img { width: 38px; height: 38px; border-radius: 10px; }
+.so-app b { font-size: .76rem; font-weight: 650; letter-spacing: -.01em; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .so-app[aria-current] { background: color-mix(in oklab, var(--sav-color-primary, #36c) 12%, transparent); }
+.so-app[hidden] { display: none; }
+.so-grid { min-width: min(22.5rem, calc(100vw - 3.5rem)); } /* the same width while filtering */
+@media (max-width: 26rem) { .so-app b { font-size: .68rem; letter-spacing: -.02em; } }
+.so-none { grid-column: 1 / -1; padding: 1rem .5rem; text-align: center; font-size: .85rem; color: var(--sav-color-text-muted, #777); }
 .so-foot { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-top: .6rem; padding-top: .6rem; border-top: 1px solid var(--sav-color-border, rgba(127,127,127,.25)); font-size: .8rem; }
 .so-foot a { color: inherit; font-weight: 600; text-decoration: none; } .so-foot a:hover { text-decoration: underline; }
 .so-foot span { color: var(--sav-color-text-muted, #777); display: inline-flex; align-items: center; gap: .45rem; } .so-foot img { width: 20px; height: 20px; flex: none; }
@@ -82,19 +87,47 @@ savoffice-apps { display: inline-flex; }
       pop.setAttribute('sheet-on-mobile', '');
       const btn = document.createElement('sav-button');
       Object.entries({ slot: 'trigger', icon: 'grip', label: lang ? 'App di SavOffice' : 'SavOffice apps', title: lang ? 'App di SavOffice' : 'SavOffice apps', appearance: 'ghost', variant: 'neutral', square: '', size: this.getAttribute('size') || 'sm' }).forEach(([k, v]) => btn.setAttribute(k, v));
-      const grid = document.createElement('div');
+      // a field to find an app by its name or by what it does ("calendario", "expenses"…); Enter opens the first one
+      const fold = (x) => String(x).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      // the field of SavComponents: <sav-input type="search"> with its clear button and the search icon
+      const q = document.createElement('sav-input');
+      Object.entries({ type: 'search', size: 'sm', clearable: '', placeholder: lang ? 'Cerca un’app…' : 'Find an app…', autocomplete: 'off', enterkeyhint: 'go', 'aria-label': lang ? 'Cerca un’app di SavOffice' : 'Find a SavOffice app', class: 'so-find' }).forEach(([k, v]) => q.setAttribute(k, v));
+      q.append(Object.assign(document.createElement('sav-icon'), { slot: 'prefix' }));
+      q.lastChild.setAttribute('name', 'search');
+      const find = q;
+      // the apps in a <sav-grid> of four columns, also on phones (keep)
+      const grid = document.createElement('sav-grid');
       grid.className = 'so-grid';
+      Object.entries({ columns: '4', gap: '.15rem', keep: '' }).forEach(([k, v]) => grid.setAttribute(k, v));
+      const items = [];
       for (const [id, name, itx, en] of APPS) {
         const a = document.createElement('a');
         a.className = 'so-app';
         a.href = new URL(id + '/', base).href;
+        a.title = name + ' · ' + (lang ? itx : en);
+        a.setAttribute('aria-label', name + ': ' + (lang ? itx : en));
         if (id === cur) a.setAttribute('aria-current', 'page');
         const img = document.createElement('img');
         img.src = new URL(id + '/icons/favicon.svg', base).href;
         img.alt = '';
-        a.append(img, Object.assign(document.createElement('b'), { textContent: name }), Object.assign(document.createElement('small'), { textContent: lang ? itx : en }));
+        img.loading = 'lazy';
+        a.append(img, Object.assign(document.createElement('b'), { textContent: name.replace(/^Sav(?=[A-Z])/, '') }));
         grid.append(a);
+        items.push([a, fold([name, itx, en].join(' '))]);
       }
+      const none = Object.assign(document.createElement('p'), { className: 'so-none', hidden: true, textContent: lang ? 'Nessuna app con questo nome' : 'No app with this name' });
+      grid.append(none);
+      const filter = () => {
+        const w = fold(String(q.value || '').trim()).split(/\s+/).filter(Boolean);
+        let n = 0;
+        for (const [a, text] of items) { a.hidden = !w.every((x) => text.includes(x)); n += !a.hidden; }
+        none.hidden = n > 0;
+      };
+      q.addEventListener('input', filter);
+      q.addEventListener('sav-clear', () => setTimeout(filter));
+      q.addEventListener('keydown', (e) => { if (e.key === 'Enter') { const first = items.find(([a]) => !a.hidden); if (first) { e.preventDefault(); location.href = first[0].href; } } });
+      // every time it opens: the field empty, and focused only where a keyboard is likely (not to open the keyboard of a phone)
+      pop.addEventListener('sav-show', () => { q.value = ''; filter(); if (matchMedia('(hover: hover) and (pointer: fine)').matches) setTimeout(() => q.focus(), 60); });
       const foot = document.createElement('div');
       foot.className = 'so-foot';
       const hub = Object.assign(document.createElement('a'), { href: new URL('savoffice/', base).href, textContent: lang ? 'Cos’è SavOffice →' : 'About SavOffice →' });
@@ -108,12 +141,265 @@ savoffice-apps { display: inline-flex; }
       give.className = 'so-give';
       give.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.6 1.2 4.3 2.4h2c.7-1.2 2.2-2.4 4.3-2.4 3.7 0 5.8 3.9 4.3 7.2C19.5 16.4 12 21 12 21z"/></svg>';
       give.append(lang ? 'Gratis per tutti, grazie a chi dona.' : 'Free for everyone, thanks to those who donate.', Object.assign(document.createElement('a'), { href: DONATE, target: '_blank', rel: 'noopener', textContent: lang ? 'Sostieni →' : 'Support →' }));
-      pop.append(btn, grid, foot, give);
+      pop.append(btn, find, grid, foot, give);
       this.append(pop);
       window.SavOffice?.paintDrive?.(this);
     }
   }
   customElements.define('savoffice-apps', SavOfficeApps);
+
+  // Every app says it was made with the support of AI: next to "by Saverio Morelli" in its footer (the footers of the apps
+  // are drawn by each one, and again when the page changes, so they are found as they appear)
+  const AI_CSS = '.so-ai { display: inline-flex; align-items: center; gap: .3em; color: var(--sav-color-text-muted, #777); } .so-ai svg { width: 1em; height: 1em; flex: none; }';
+  const aiNote = () => {
+    for (const f of document.querySelectorAll('footer:not([data-so-ai])')) {
+      if (!f.querySelector('a[href^="https://www.saveriomorelli.com"]')) continue;
+      f.dataset.soAi = '';
+      if (!document.getElementById('savoffice-ai-css')) document.head.append(Object.assign(document.createElement('style'), { id: 'savoffice-ai-css', textContent: AI_CSS }));
+      const l = it(), span = document.createElement('span');
+      span.className = 'so-ai';
+      span.title = l ? 'Applicazione realizzata con il supporto dell’intelligenza artificiale (Claude, di Anthropic)' : 'App made with the support of artificial intelligence (Claude, by Anthropic)';
+      span.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.9 6.1L20 10l-6.1 1.9L12 18l-1.9-6.1L4 10l6.1-1.9z"/></svg>';
+      span.append(l ? 'Realizzata con il supporto dell’AI' : 'Made with the support of AI');
+      f.append(span);
+    }
+  };
+  // at most once a frame, however busy the page is (an editor changes it at every key)
+  let aiQueued = false;
+  const aiSoon = () => { if (aiQueued) return; aiQueued = true; requestAnimationFrame(() => { aiQueued = false; decorate(); }); };
+  // The first page of every app, for whoever is not signed in: below the opening of the app (its own title, picture and
+  // features) come the same SavOffice sections, filled with what is true of that app (../savoffice/landing.php): its
+  // screenshots, the apps it works with, its files, privacy, frequent questions, and the other apps of the suite.
+  const LAND_CSS = `
+.sol { --sol-c: var(--sav-color-primary, #36c); padding-bottom: 1rem; }
+.sol-sec { padding: clamp(2.2rem, 5vw, 3.6rem) 0; border-top: 1px solid var(--sav-color-border, rgba(127,127,127,.22)); }
+.sol-sec > sav-heading { display: block; margin-bottom: 1.5rem; max-width: 46rem; }
+.sol-stage { position: relative; padding: 0 0 6% 0; max-width: 64rem; }
+.sol-desk { border-radius: var(--sav-radius-lg, 14px); overflow: hidden; box-shadow: 0 30px 60px -32px rgb(0 0 0 / .45), 0 0 0 1px var(--sav-color-border, rgba(127,127,127,.25)); }
+.sol-phone { position: absolute; right: 2%; bottom: 0; width: 21%; border-radius: 20px; overflow: hidden; border: 5px solid #1d1d22; background: #1d1d22; box-shadow: 0 24px 40px -18px rgb(0 0 0 / .5); }
+.sol-desk sav-image, .sol-phone sav-image { --sav-radius-lg: 0px; --sav-shadow-sm: none; display: block; }
+.sol-thumbs { margin-top: 1.4rem; max-width: 64rem; --mobile-columns: 2; }
+.sol-thumbs sav-image { display: block; }
+.sol-works { display: block; max-width: 52rem; }
+.sol-works img { width: 36px; height: 36px; }
+.sol-two { max-width: 64rem; } .sol-box { display: block; height: 100%; }
+.sol-box p { margin: 0 0 1rem; color: var(--sav-color-text-muted, #666); line-height: 1.5; }
+.sol-tags { display: flex; flex-wrap: wrap; gap: .4rem; }
+.sol-box sav-icon { color: var(--sol-c); }
+.sol-faq { display: block; max-width: 52rem; }
+.sol-end { display: block; margin: clamp(1.5rem, 4vw, 2.5rem) 0 1rem; text-align: center; --sav-card-padding: clamp(1.6rem, 4vw, 2.8rem); }
+.sol-center { display: flex; justify-content: center; margin-bottom: .4rem; } .sol-center sav-heading { display: inline-block; } .sol-end p { margin: 0 auto 1.3rem; max-width: 36rem; color: var(--sav-color-text-muted, #666); line-height: 1.55; }
+.sol-row { display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem; }
+.sol-suite { margin-top: 1.8rem; padding-top: 1.4rem; border-top: 1px dashed var(--sav-color-border, rgba(127,127,127,.3)); }
+.sol-suite p { display: inline-flex; align-items: center; gap: .5rem; margin: 0 0 .9rem; font-size: .9rem; font-weight: 650; color: var(--sav-color-text, #222); }
+.sol-suite p img { width: 20px; height: 20px; }
+.sol-icons { display: flex; flex-wrap: wrap; justify-content: center; gap: .45rem; margin-bottom: .6rem; }
+@media (max-width: 760px) { .sol-phone { width: 26%; border-width: 3px; border-radius: 12px; } }`;
+  const LAND_WORDS = {
+    look: ['Com’è fatta', 'What it looks like'], look_h: ['{n} su computer, tablet e telefono', '{n} on a computer, tablet and phone'], look_p: ['Tocca una schermata per ingrandirla.', 'Tap a screenshot to enlarge it.'],
+    together: ['Insieme', 'Together'], works_h: ['Lavora con le altre app di SavOffice', 'Works with the other SavOffice apps'], works_p: ['Lo stesso stile, e i dati che passano da un’app all’altra quando serve.', 'The same style, and data that moves from one app to another when it helps.'],
+    files_h: ['I tuoi file, i formati di sempre', 'Your files, the usual formats'], files_p: ['Apri e salvi quello che usano tutti; il file di {n} conserva tutto ed è aperto.', 'Open and save what everybody uses; the file of {n} keeps everything and is open.'],
+    privacy_h: ['I tuoi dati restano tuoi', 'Your data stays yours'],
+    p1: ['Niente pubblicità', 'No ads'], p1t: ['Nessun banner, nessuna profilazione.', 'No banners, no profiling.'],
+    p2: ['Server nell’Unione europea', 'Servers in the European Union'], p2t: ['Sotto il GDPR, senza statistiche di terzi.', 'Under the GDPR, with no third-party analytics.'],
+    p3: ['Open source', 'Open source'], p3t: ['Il codice è pubblico: chiunque può controllarlo.', 'The code is public: anyone can check it.'],
+    p4: ['Tuoi, sempre', 'Yours, always'], p4t: ['Elimini l’account quando vuoi, e i dati con lui.', 'Delete the account whenever you like, and the data with it.'],
+    faq: ['Domande frequenti', 'Frequent questions'],
+    end_h: ['Comincia con {n}', 'Start with {n}'], end_p: ['Gratis, senza pubblicità e senza installare nulla.', 'Free, with no ads and nothing to install.'],
+    start: ['Inizia gratis', 'Start for free'], signin: ['Accedi', 'Sign in'],
+    suite: ['{n} fa parte di SavOffice: {c} app che lavorano insieme', '{n} is part of SavOffice: {c} apps that work together'], all: ['Scopri tutte le app di SavOffice →', 'Discover all the SavOffice apps →'], code: ['Codice sorgente', 'Source code'],
+  };
+  const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+  const landData = {};
+  const el = (tag, props = {}, ...kids) => { const e = document.createElement(tag); for (const [k, v] of Object.entries(props)) { if (k === 'class') e.className = v; else if (k === 'html') e.innerHTML = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v); } e.append(...kids.filter((x) => x != null && x !== false)); return e; };
+  const thisApp = () => location.pathname.split('/').filter(Boolean).find((p) => APPS.some((a) => a[0] === p)) || '';
+  async function landing(main) {
+    const app = thisApp(); if (!app) return;
+    main.dataset.soLand = '';
+    const l = it(), lang = l ? 'it' : 'en', W = (k, n = '', c = '') => LAND_WORDS[k][l ? 0 : 1].replace('{n}', n).replace('{c}', c);
+    let d = landData[app + lang];
+    if (!d) { try { const r = await fetch(new URL(`savoffice/landing.php?app=${app}&lang=${lang}`, root()), { credentials: 'omit' }); if (!r.ok) return; d = landData[app + lang] = await r.json(); } catch { return; } }
+    if (!main.isConnected) return;
+    if (!document.getElementById('savoffice-land-css')) document.head.append(el('style', { id: 'savoffice-land-css' }, LAND_CSS));
+    const base = root(), icon = (a, size = 40) => el('img', { src: new URL(a + '/icons/favicon.svg', base).href, alt: '', width: size, height: size, loading: 'lazy' });
+    const sec = (eyebrow, title, subtitle, ...kids) => el('section', { class: 'sol-sec' }, el('sav-heading', { level: '2', size: '2', ...(eyebrow ? { eyebrow } : {}), ...(subtitle ? { subtitle } : {}) }, title), ...kids);
+    // the buttons of the opening of the app: the same actions at the end of the page (each app starts its own way)
+    const heroBtns = [...main.querySelectorAll('.hero sav-button, .hero a.btn, .hero button')];
+    const again = (i, label, appearance) => heroBtns[i] ? el('sav-button', { size: 'lg', ...(appearance ? { appearance, variant: 'neutral' } : {}), onclick: () => heroBtns[i].click() }, label) : null;
+    const box = el('div', { class: 'sol', style: `--sol-c:${d.color}` });
+    const sh = d.shots || {}, desk = sh.desk || [], phone = sh.phone || [];
+    const zoom = (src, ratio, alt) => el('sav-image', { zoom: '', src, alt, ratio });
+    if (desk.length || phone.length) {
+      const stage = el('div', { class: 'sol-stage' }, desk[0] ? el('div', { class: 'sol-desk' }, zoom(desk[0], '1440:900', d.name + (l ? ' su un computer' : ' on a computer'))) : null,
+        phone[0] ? el('div', { class: 'sol-phone' }, zoom(phone[0], '562:1000', d.name + (l ? ' su un telefono' : ' on a phone'))) : null);
+      const more = [...desk.slice(1, 3).map((s) => [s, '1440:900']), ...(sh.tablet || []).slice(0, 1).map((s) => [s, '1180:820'])].slice(0, 3); // landscape only: one even row
+      box.append(sec(W('look'), W('look_h', d.name), W('look_p'), stage, more.length ? el('sav-grid', { columns: '3', gap: '.9rem', class: 'sol-thumbs' }, ...more.map(([s, r]) => zoom(s, r, d.name))) : null));
+    }
+    // the apps it works with: a list of SavComponents, each row a link to the app
+    if (d.works?.length) box.append(sec(W('together'), W('works_h'), W('works_p'),
+      el('sav-list', { appearance: 'card', class: 'sol-works' }, ...d.works.map((w) => el('sav-list-item', { href: new URL(w.app + '/', base).href, description: w.text }, el('img', { slot: 'prefix', src: new URL(w.app + '/icons/favicon.svg', base).href, alt: '', width: 36, height: 36 }), w.name)))));
+    const files = (d.own?.length || d.files?.length) ? el('sav-card', { class: 'sol-box' }, el('strong', { slot: 'header' }, W('files_h')), el('p', {}, W('files_p', d.name)),
+      el('div', { class: 'sol-tags' }, ...(d.own || []).map((f) => el('sav-tag', { variant: 'primary' }, f)), ...(d.files || []).map((f) => el('sav-tag', {}, f)))) : null;
+    const privacy = el('sav-card', { class: 'sol-box' }, el('strong', { slot: 'header' }, W('privacy_h')),
+      el('sav-list', { appearance: 'plain' }, ...['p1', 'p2', 'p3', 'p4'].map((k) => el('sav-list-item', { description: W(k + 't') }, el('sav-icon', { slot: 'prefix', name: 'check' }), W(k)))));
+    box.append(el('section', { class: 'sol-sec' }, el('sav-grid', { columns: files ? '2' : '1', gap: '1.2rem', class: 'sol-two' }, files, privacy)));
+    // frequent questions: the accordion of SavComponents, one open at a time
+    if (d.faq?.length) box.append(sec('', W('faq'), '', el('sav-accordion', { exclusive: '', class: 'sol-faq' }, ...d.faq.map(([q, a]) => el('sav-details', { summary: q }, a)))));
+    box.append(el('sav-card', { appearance: 'flat', class: 'sol-end' },
+      el('div', { class: 'sol-center' }, el('sav-heading', { level: '2', size: '2' }, W('end_h', d.name))), el('p', {}, W('end_p')),
+      el('div', { class: 'sol-row' }, again(0, heroBtns[0]?.textContent?.trim() || W('start')), again(1, heroBtns[1]?.textContent?.trim() || W('signin'), 'outline')),
+      el('div', { class: 'sol-suite' }, el('p', {}, el('img', { src: new URL('savoffice/icons/favicon.svg', base).href, alt: '' }), W('suite', d.name, d.count)),
+        el('div', { class: 'sol-icons' }, ...(d.apps || []).map((a) => el('sav-avatar', { image: new URL(a.app + '/icons/favicon.svg', base).href, label: a.name, title: a.name + ' · ' + a.what, href: new URL(a.app + '/', base).href, shape: 'rounded', size: 'md' }))),
+        el('sav-button', { appearance: 'link', href: new URL(d.suite.replace(/^\//, ''), base).href }, W('all')))));
+    main.append(box);
+  }
+  // The opening picture of the apps that do not make pages (a calendar, a list, a poll, balances, mail, contacts): instead of
+  // the fan of pages, a small window of the app at work, where one thing happens after the other and then starts again.
+  // SavOffice.scene(kind) gives it to the app; whoever asked for less motion sees it finished and still.
+  const SCENE_CSS = `
+.sos { position: absolute; inset: 0; display: grid; place-items: center; }
+.sos::before { content: ""; position: absolute; width: 78%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, color-mix(in oklab, var(--sav-color-primary, #36c) 16%, transparent), transparent 68%); }
+.sos::after { content: ""; position: absolute; width: min(86%, 27rem); height: 62%; border-radius: 22px; background: color-mix(in oklab, var(--sav-color-primary, #36c) 12%, var(--sav-color-surface, #fff)); rotate: 4deg; translate: 4% 3%; }
+.sos-win { position: relative; z-index: 1; rotate: -1.2deg; width: min(100%, 31rem); border-radius: 18px; background: var(--sav-color-surface, #fff); color: var(--sav-color-text, #222); box-shadow: 0 34px 70px -34px rgb(0 0 0 / .42), 0 0 0 1px var(--sav-color-border, rgba(127,127,127,.2)); overflow: hidden; font-size: 13px; line-height: 1.35; }
+.sos-bar { display: flex; align-items: center; gap: 6px; padding: 11px 14px; border-bottom: 1px solid var(--sav-color-border, rgba(127,127,127,.18)); font-weight: 650; }
+.sos-bar i { width: 9px; height: 9px; border-radius: 50%; background: var(--sav-color-border, #ddd); } .sos-bar span { margin-left: 6px; } .sos-bar em { margin-left: auto; font-style: normal; font-weight: 600; font-size: 11px; color: var(--sav-color-text-muted, #777); }
+.sos-body { padding: 14px; display: grid; gap: 8px; }
+.sos .st { transition: opacity .45s ease, transform .45s cubic-bezier(.3,1.4,.5,1), background-color .3s, color .3s; }
+.sos .st:not(.on) { opacity: 0; transform: translateY(8px) scale(.96); }
+.sos .pop:not(.on) { transform: scale(.4); }
+.sos-c { --k: var(--sav-color-primary, #36c); }
+/* calendar */
+.sos-month { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.sos-month b { font-size: 10px; text-align: center; color: var(--sav-color-text-muted, #888); font-weight: 650; }
+.sos-day { position: relative; min-height: 46px; padding: 4px; border-radius: 8px; background: var(--sav-color-surface-2, rgba(127,127,127,.07)); font-size: 10px; color: var(--sav-color-text-muted, #888); display: flex; flex-direction: column; gap: 3px; }
+.sos-day.today > span { align-self: flex-start; padding: 1px 5px; border-radius: 99px; background: var(--k); color: #fff; font-weight: 700; }
+.sos-ev { height: 7px; border-radius: 4px; background: var(--e, var(--k)); }
+.sos-toast { justify-self: end; display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 12px; background: var(--sav-color-text, #222); color: var(--sav-color-surface, #fff); font-size: 12px; font-weight: 600; }
+.sos-toast img { width: 18px; height: 18px; }
+/* tasks */
+.sos-task { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; background: var(--sav-color-surface-2, rgba(127,127,127,.06)); }
+.sos-ck { width: 18px; height: 18px; flex: none; border-radius: 50%; border: 2px solid var(--sav-color-border-strong, #aaa); display: grid; place-items: center; transition: background .3s, border-color .3s; }
+.sos-ck svg { width: 11px; height: 11px; opacity: 0; transition: opacity .2s; color: #fff; }
+.sos-task.done .sos-ck { background: var(--k); border-color: var(--k); } .sos-task.done .sos-ck svg { opacity: 1; }
+.sos-task > span:not(.sos-ck) { flex: 1; transition: color .3s; } .sos-task.done > span:not(.sos-ck) { color: var(--sav-color-text-muted, #999); text-decoration: line-through; }
+.sos-task small { font-size: 11px; color: var(--sav-color-text-muted, #888); } .sos-task small.late { color: #c2410c; font-weight: 650; }
+/* poll */
+.sos-poll { display: grid; grid-template-columns: 74px repeat(4, 1fr); gap: 5px; align-items: center; text-align: center; }
+.sos-poll .hd { font-size: 11px; font-weight: 700; padding: 6px 0; border-radius: 8px; transition: background .3s, color .3s; } .sos-poll .hd small { display: block; font-weight: 500; color: var(--sav-color-text-muted, #888); }
+.sos-poll .who { display: flex; align-items: center; gap: 6px; --size: 24px; text-align: left; font-size: 12px; font-weight: 600; }
+.sos-vote { height: 26px; border-radius: 7px; display: grid; place-items: center; background: var(--sav-color-surface-2, rgba(127,127,127,.07)); font-weight: 800; }
+.sos-vote.y { background: color-mix(in oklab, #16a34a 18%, transparent); color: #15803d; } .sos-vote.n { color: var(--sav-color-text-muted, #aaa); }
+.sos-poll .best { background: var(--k); color: #fff; } .sos-poll .best small { color: rgb(255 255 255 / .8); }
+/* balances */
+.sos-exp { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: var(--sav-color-surface-2, rgba(127,127,127,.06)); }
+.sos-exp span { flex: 1; } .sos-exp b { font-variant-numeric: tabular-nums; }
+.sos-bal { display: grid; grid-template-columns: 54px 1fr 54px; gap: 8px; align-items: center; font-size: 12px; }
+.sos-bal .bar { height: 8px; border-radius: 99px; background: var(--sav-color-surface-2, rgba(127,127,127,.1)); position: relative; }
+.sos-bal .bar i { position: absolute; top: 0; bottom: 0; left: 50%; width: calc(var(--w) * 1%); border-radius: 99px; background: #16a34a; transition: width .6s ease, left .6s ease; }
+.sos-bal .bar i.neg { left: auto; right: 50%; background: #dc2626; }
+.sos-win.settled .sos-bal .bar i { width: 0; }
+.sos-bal em { font-style: normal; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+.sos-pay { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-radius: 12px; border: 1.5px dashed var(--k); font-weight: 650; }
+.sos-pay svg { width: 16px; height: 16px; color: var(--k); } .sos-pay span { margin-left: auto; color: #15803d; }
+/* mail */
+.sos-mail { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; }
+.sos-mail.unread { background: color-mix(in oklab, var(--k) 8%, transparent); } .sos-mail.unread b::after { content: ""; display: inline-block; width: 7px; height: 7px; margin-left: 6px; border-radius: 50%; background: var(--k); vertical-align: 1px; }
+.sos-mail div { flex: 1; min-width: 0; } .sos-mail b { display: block; font-size: 12.5px; } .sos-mail small { display: block; color: var(--sav-color-text-muted, #888); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* contacts */
+.sos-cards { position: relative; height: 150px; }
+.sos-card { position: absolute; top: 0; width: 62%; padding: 12px; border-radius: 14px; background: var(--sav-color-surface, #fff); box-shadow: 0 10px 24px -14px rgb(0 0 0 / .35), 0 0 0 1px var(--sav-color-border, rgba(127,127,127,.2)); display: grid; gap: 4px; transition: left .7s cubic-bezier(.6,0,.3,1), opacity .5s, transform .7s; }
+.sos-card .nm { display: flex; align-items: center; gap: 8px; font-weight: 700; } .sos-card small { color: var(--sav-color-text-muted, #777); }
+.sos-card.a { left: 0; } .sos-card.b { left: 38%; }
+.sos-win.merged .sos-card.a, .sos-win.merged .sos-card.b { left: 19%; opacity: 0; transform: scale(.9); }
+.sos-card.m { left: 19%; opacity: 0; transform: scale(.9); } .sos-win.merged .sos-card.m { opacity: 1; transform: none; }
+.sos-card.m .ok { justify-self: start; margin-top: 4px; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 99px; background: color-mix(in oklab, #16a34a 16%, transparent); color: #15803d; }
+@media (prefers-reduced-motion: reduce) { .sos .st, .sos-card, .sos-bal .bar i { transition: none !important; } }`;
+  const CK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+  const ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+  /** Runs the steps one after the other (each turns a class on), keeps the last state for a while, then starts again. */
+  function play(win, steps, gap = 850, hold = 2600) {
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (still) { steps.forEach((f) => f(true)); return; }
+    let i = 0;
+    const tick = () => {
+      if (!win.isConnected) return; // the page changed: nothing more to do
+      if (i < steps.length) { steps[i++](true); setTimeout(tick, gap); }
+      else setTimeout(() => { if (!win.isConnected) return; steps.slice().reverse().forEach((f) => f(false)); i = 0; setTimeout(tick, 700); }, hold);
+    };
+    setTimeout(tick, 600);
+  }
+  const on = (node, cls = 'on') => (v) => node.classList.toggle(cls, v);
+  function scene(kind) {
+    if (!document.getElementById('savoffice-scene-css')) document.head.append(el('style', { id: 'savoffice-scene-css' }, SCENE_CSS));
+    const l = it(), T = (i, e) => (l ? i : e), base = root();
+    const app = APPS.find((a) => a[0] === 'sav' + kind) || ['', 'Sav' + kind];
+    const body = el('div', { class: 'sos-body' });
+    const win = el('div', { class: 'sos-win sos-c' }, el('div', { class: 'sos-bar' }, el('i'), el('i'), el('i'), el('span', {}, app[1])), body);
+    const bar = win.firstChild, steps = [];
+    if (kind === 'calendar') {
+      bar.append(el('em', {}, T('Novembre 2026', 'November 2026')));
+      const grid = el('div', { class: 'sos-month' }, ...(l ? ['L', 'M', 'M', 'G', 'V', 'S', 'D'] : ['M', 'T', 'W', 'T', 'F', 'S', 'S']).map((x) => el('b', {}, x)));
+      const days = [];
+      for (let d = 1; d <= 28; d++) { const c = el('div', { class: 'sos-day' + (d === 12 ? ' today' : '') }, el('span', {}, String(d))); days.push(c); grid.append(c); }
+      // where the events land: [day, colour] — the event of SavSchedules is the last, with its note
+      for (const [d, c] of [[3, ''], [6, '#2563eb'], [10, '#16a34a'], [12, ''], [12, '#9333ea'], [17, '#d97706'], [20, '#2563eb'], [24, '#16a34a']]) { const e = el('i', { class: 'sos-ev st', style: c ? `--e:${c}` : '' }); days[d - 1].append(e); steps.push(on(e)); }
+      const toast = el('div', { class: 'sos-toast st' }, el('img', { src: new URL('savschedules/icons/favicon.svg', base).href, alt: '' }), T('Data scelta: venerdì 27', 'Date chosen: Friday 27'));
+      const ev = el('i', { class: 'sos-ev st', style: '--e:#1f56d1' }); days[26 > days.length ? days.length - 1 : 26].append(ev);
+      body.append(grid, toast); steps.push(on(toast), on(ev));
+    } else if (kind === 'tasks') {
+      bar.append(el('em', {}, T('Oggi', 'Today')));
+      const items = [[T('Rispondere a Giulia', 'Reply to Giulia'), T('ieri', 'yesterday'), true], [T('Prenotare il dentista', 'Book the dentist'), '10:00'], [T('Bozza della relazione', 'Report draft'), '#' + T('lavoro', 'work')], [T('Spesa per la cena', 'Shopping for dinner'), '18:30'], [T('Chiamare la banca', 'Call the bank'), T('domani', 'tomorrow')]];
+      const prog = el('sav-progress-bar', { value: '0', max: '100', label: T('Fatte oggi', 'Done today'), style: '--height: 6px' });
+      const rows = items.map(([txt, when, late]) => el('div', { class: 'sos-task' }, el('span', { class: 'sos-ck', html: CK }), el('span', {}, txt), el('small', { class: late ? 'late' : '' }, when)));
+      const fresh = el('div', { class: 'sos-task st' }, el('span', { class: 'sos-ck', html: CK }), el('span', {}, T('Regalo per Marco', 'Gift for Marco')), el('small', {}, '!' + T('alta', 'high')));
+      body.append(...rows, fresh, prog);
+      [0, 2, 1, 3].forEach((n, k) => steps.push((v) => { rows[n].classList.toggle('done', v); prog.setAttribute('value', String(v ? (k + 1) * 20 : k * 20)); }));
+      steps.push(on(fresh));
+    } else if (kind === 'schedules') {
+      bar.append(el('em', {}, T('Cena di classe', 'Class dinner')));
+      const dates = l ? [['Gio', '12'], ['Ven', '13'], ['Sab', '14'], ['Dom', '15']] : [['Thu', '12'], ['Fri', '13'], ['Sat', '14'], ['Sun', '15']];
+      const people = [['Anna', '#e11d48'], ['Bruno', '#2563eb'], ['Carla', '#16a34a'], ['Dario', '#d97706']];
+      const votes = [['y', 'n', 'y', 'y'], ['n', 'y', 'y', 'n'], ['y', 'y', 'y', 'n'], ['n', 'y', 'y', 'y']];
+      const poll = el('div', { class: 'sos-poll' }, el('span'));
+      const heads = dates.map(([d, n]) => el('div', { class: 'hd' }, d, el('small', {}, n)));
+      poll.append(...heads);
+      people.forEach(([nm, c], r) => { poll.append(el('div', { class: 'who' }, el('sav-avatar', { label: nm, size: 'sm' }), nm)); votes[r].forEach((v) => { const x = el('div', { class: 'sos-vote st pop ' + v }, v === 'y' ? '✓' : '–'); poll.append(x); steps.push(on(x)); }); });
+      const done = el('div', { class: 'sos-toast st' }, CKspan(), T('Sabato 14: ci sono tutti', 'Saturday 14: everyone can'));
+      body.append(poll, done);
+      steps.push(on(heads[2], 'best'), on(done));
+    } else if (kind === 'splits') {
+      bar.append(el('em', {}, T('Viaggio a Lisbona', 'Lisbon trip')));
+      const exp = [[T('Cena', 'Dinner'), 'Anna', '60 €'], ['Taxi', 'Bruno', '24 €'], [T('Museo', 'Museum'), 'Carla', '36 €']].map(([w, who, eur]) => el('div', { class: 'sos-exp st' }, el('span', {}, w, el('small', {}, '  · ' + who)), el('b', {}, eur)));
+      const bal = el('div', { class: 'sos-bal st' }, ...[['Anna', 28, '+20 €'], ['Bruno', -22, '−16 €'], ['Carla', -6, '−4 €']].flatMap(([n, w, eur]) => [el('span', {}, n), el('div', { class: 'bar' }, el('i', { class: w < 0 ? 'neg' : '', style: `--w:${Math.abs(w)}` })), el('em', {}, eur)]));
+      const pays = [['Bruno', 'Anna', '16 €'], ['Carla', 'Anna', '4 €']].map(([a, b, eur]) => el('div', { class: 'sos-pay st', html: '' }, a, el('span', { html: ARROW, style: 'margin:0;color:inherit' }), b + ' · ' + eur, el('span', {}, T('saldato', 'settled'))));
+      body.append(...exp, bal, ...pays);
+      exp.forEach((e) => steps.push(on(e)));
+      steps.push(on(bal), on(pays[0]), on(pays[1]), on(win, 'settled'));
+    } else if (kind === 'mail') {
+      bar.append(el('em', {}, T('Posta in arrivo', 'Inbox')));
+      const mails = [['Giulia', T('Le foto di sabato', 'Saturday’s photos'), 'Gmail', '#e11d48'], ['Aruba', T('Fattura di novembre', 'November invoice'), 'Aruba', '#d97706'], [T('Club di lettura', 'Book club'), T('Il libro del mese', 'Book of the month'), 'Outlook', '#16a34a'], ['Marco', T('Ci vediamo domani?', 'See you tomorrow?'), 'iCloud', '#2563eb']];
+      const old = el('div', { class: 'sos-mail' }, el('sav-avatar', { label: 'SavCalendar', size: 'sm' }), el('div', {}, el('b', {}, 'SavCalendar'), el('small', {}, T('Promemoria: riunione alle 15', 'Reminder: meeting at 3 pm'))), el('sav-badge', { variant: 'neutral', appearance: 'soft', pill: '' }, 'Aruba'));
+      const rows = mails.map(([who, subj, src, c]) => el('div', { class: 'sos-mail unread st' }, el('sav-avatar', { label: who, size: 'sm' }), el('div', {}, el('b', {}, who), el('small', {}, subj)), el('sav-badge', { variant: 'neutral', appearance: 'soft', pill: '' }, src)));
+      body.append(...rows.slice().reverse(), old); // the newest on top
+      rows.forEach((r) => steps.push(on(r)));
+      steps.push((v) => rows[0].classList.toggle('unread', !v));
+    } else if (kind === 'contacts') {
+      bar.append(el('em', {}, T('Contatti doppi', 'Duplicates')));
+      const card = (cls, lines, extra) => el('div', { class: 'sos-card ' + cls }, el('div', { class: 'nm' }, el('sav-avatar', { label: 'Anna Verdi', size: 'sm', variant: 'primary' }), 'Anna Verdi'), ...lines.map((x) => el('small', {}, x)), extra || null);
+      const cards = el('div', { class: 'sos-cards' }, card('a', ['+39 347 000 1234', T('Compleanno: 3 maggio', 'Birthday: 3 May')]), card('b', ['anna@verdi.eu', 'Verdi Studio']),
+        card('m', ['+39 347 000 1234', 'anna@verdi.eu', 'Verdi Studio · ' + T('3 maggio', '3 May')], el('span', { class: 'ok' }, T('Uniti, senza perdere nulla', 'Merged, nothing lost'))));
+      const list = ['Bruno Neri', 'Carla Rossi', 'Dario Bianchi'].map((n, i) => el('div', { class: 'sos-mail st' }, el('sav-avatar', { label: n, size: 'sm' }), el('div', {}, el('b', {}, n), el('small', {}, ['vCard', 'CSV · Google', 'CSV · Outlook'][i]))));
+      body.append(cards, ...list);
+      steps.push(on(win, 'merged'), ...list.map((x) => on(x)));
+    } else return null;
+    function CKspan() { return el('span', { html: CK, style: 'display:grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#16a34a;color:#fff' }); }
+    play(win, steps);
+    return el('div', { class: 'sos', 'aria-hidden': 'true' }, win);
+  }
+  window.SavOffice = Object.assign(window.SavOffice || {}, { scene });
+  const decorate = () => { aiNote(); for (const m of document.querySelectorAll('.landing main.lmain:not([data-so-land]), main.lmain:not([data-so-land])')) if (m.querySelector('.hero')) landing(m); };
+  const watchFooters = () => { decorate(); new MutationObserver(aiSoon).observe(document.body, { childList: true, subtree: true }); };
+  if (document.body) watchFooters(); else addEventListener('DOMContentLoaded', watchFooters);
   // the same list for the search of actions below
   window.SavOffice = Object.assign(window.SavOffice || {}, { apps: APPS });
 

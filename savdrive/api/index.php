@@ -351,7 +351,7 @@ switch ($r) {
     // ================================================================ accounts
 
     case 'auth.config':
-        send_json(['ok' => true, 'installed' => true, 'savAccount' => sav_enabled(), 'mailReady' => mail_settings() !== null, 'chunk' => CHUNK_BYTES]);
+        send_json(['ok' => true, 'installed' => true, 'savAccount' => sav_enabled(), 'mailReady' => mail_settings() !== null, 'chunk' => CHUNK_BYTES, 'space' => default_quota()]); // space: what a new account gets, shown on the first page
 
     case 'auth.me':
         only('GET');
@@ -1298,6 +1298,8 @@ switch ($r) {
             $q = (int)$b['defaultQuota'];
             if ($q < 1048576 || $q > MAX_QUOTA) fail('bad_quota', 422);
             set_setting('default_quota', (string)$q);
+            if (!function_exists('savspace_default_forget')) require_once dirname(__DIR__) . '/lib/space.php';
+            savspace_default_forget(); // the first page of SavDrive and Illerom show the new space at once
         }
         if (isset($b['defaultActive'])) set_setting('default_active', !empty($b['defaultActive']) ? '1' : '0');
         send_json(['ok' => true, 'defaultQuota' => default_quota(), 'defaultActive' => default_active()]);

@@ -28,8 +28,8 @@ $next = $order[($i + 1) % count($order)];
             <div class="name big"><?= $ico($app, 72) ?><div><h1><?= $name($app) ?></h1><small><?= $h($p[0]) ?></small></div></div>
             <p class="lead"><?= $h(preg_replace(['/\s*(Fa parte di SavOffice|Part of SavOffice)[^.]*\.?\s*$/u', '/,? (e|and) (fa parte di|is part of) SavOffice/u', '/ (e|and) (fa parte di|is part of) SavOffice\./u'], ['', '', '.'], $p[1])) ?></p>
             <div class="ctas">
-                <a class="btn main app-c" href="<?= $h($open) ?>"><?= $L('Apri', 'Open') ?> <?= $h($P['name']) ?></a>
-                <?php if ($src): ?><a class="btn ghost" href="<?= $h($src) ?>"><?= $L('Codice sorgente', 'Source code') ?></a><?php endif; ?>
+                <sav-button size="lg" href="<?= $h($open) ?>" style="--sav-color-primary:<?= $color ?>; --sav-color-on-primary:#fff"><?= $L('Apri', 'Open') ?> <?= $h($P['name']) ?></sav-button>
+                <?php if ($src): ?><sav-button size="lg" appearance="outline" variant="neutral" href="<?= $h($src) ?>" icon="code"><?= $L('Codice sorgente', 'Source code') ?></sav-button><?php endif; ?>
             </div>
             <?= $invite($app) ?>
             <ul class="pills"><li><?= $h($strings['levels'][$P['level']]) ?></li><li><?= $L('Gratis', 'Free') ?></li><li>Open source</li><?php if ($P['offline']): ?><li><?= $L('Anche offline', 'Works offline') ?></li><?php endif; ?></ul>
@@ -84,7 +84,7 @@ $next = $order[($i + 1) % count($order)];
                 <div><dt>Account</dt><dd><?= $h($strings['account'][$P['account']]) ?></dd></div>
                 <div><dt>Offline</dt><dd><?= $h($P['offline'] ? $strings['yes_offline'] : $strings['no_offline']) ?></dd></div>
                 <div><dt><?= $L('Lingue', 'Languages') ?></dt><dd><?= $h(ucfirst(implode(', ', array_map(fn($l) => $strings['lang_names'][$l], $P['langs'])))) ?></dd></div>
-                <div><dt><?= $L('File', 'Files') ?></dt><dd><ul class="fmt"><?php foreach ($files[$app] as $f): ?><li<?= str_starts_with($f, '.sav') ? ' class="own"' : '' ?>><?= $h($f) ?></li><?php endforeach; ?></ul></dd></div>
+                <div><dt><?= $L('File', 'Files') ?></dt><dd><div class="fmt"><?php foreach ($files[$app] as $f): ?><sav-tag size="sm"<?= str_starts_with($f, '.sav') ? ' variant="primary"' : '' ?>><?= $h($f) ?></sav-tag><?php endforeach; ?></div></dd></div>
                 <div><dt>Privacy</dt><dd><a href="<?= $h($open . $P['privacy']) ?>"><?= $L('Informativa dell’app', 'Privacy notice of the app') ?></a></dd></div>
                 <div><dt><?= $L('Servizi', 'Services') ?></dt><dd><a href="https://www.illerom.eu/<?= $lang ?>/status/#<?= $app ?>"><?= $L('Vedi lo stato', 'See the status') ?></a></dd></div>
                 <div><dt><?= $L('Codice', 'Code') ?></dt><dd><?php if ($src): ?><a href="<?= $h($src) ?>">Open source</a><?php else: ?>Open source<?php endif; ?></dd></div>

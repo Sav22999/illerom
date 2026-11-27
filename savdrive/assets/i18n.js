@@ -21,10 +21,10 @@ const T = {
   // first page and accounts
   land_title: ['Your files, in a drive of your own.', 'I tuoi file, in un drive tutto tuo.'],
   land_text: ['Keep photos, documents and folders safe and reach them from any device. Create documents, spreadsheets and presentations of SavOffice right in the drive. Free, open, with the data in the European Union.', 'Conserva foto, documenti e cartelle al sicuro e ritrovali da qualsiasi dispositivo. Crea documenti, fogli di calcolo e presentazioni di SavOffice direttamente nel drive. Libero, aperto, con i dati nell’Unione europea.'],
-  l_cta: ['Get 500 MB free', 'Prendi 500 MB gratis'],
+  l_cta: ['Get {q} free', 'Prendi {q} gratis'], // {q}: the space of a new account, chosen by the admins (auth.config)
   l_small: ['No ads, no tracking. Part of SavOffice.', 'Niente pubblicità, niente tracciamento. Fa parte di SavOffice.'],
-  ft_space: ['500 MB for you', '500 MB per te'],
-  ft_space_t: ['Every person has 500 MB for the whole of SavOffice: the files here and what you keep in the other apps, and you always see how much is left.', 'Ogni persona ha 500 MB per tutta SavOffice: i file qui e ciò che conservi nelle altre app, e vedi sempre quanto ne resta.'],
+  ft_space: ['{q} for you', '{q} per te'],
+  ft_space_t: ['Every person has {q} for the whole of SavOffice: the files here and what you keep in the other apps, and you always see how much is left.', 'Ogni persona ha {q} per tutta SavOffice: i file qui e ciò che conservi nelle altre app, e vedi sempre quanto ne resta.'],
   ft_office: ['The files of SavOffice', 'I file di SavOffice'],
   ft_office_t: ['New documents, spreadsheets, presentations, books, whiteboards and notebooks, made here and opened in their app with one press.', 'Nuovi documenti, fogli di calcolo, presentazioni, libri, lavagne e quaderni, creati qui e aperti nella loro app con un tocco.'],
   ft_upload: ['Upload anything', 'Carica di tutto'],
@@ -42,7 +42,7 @@ const T = {
   ex_spr: ['Budget.savspr', 'Bilancio.savspr'],
   ex_pre: ['Pitch.savpre', 'Presentazione.savpre'],
   ex_whi: ['Ideas.savwhi', 'Idee.savwhi'],
-  ex_quota: ['170 MB of 500 MB used', '170 MB su 500 MB usati'],
+  ex_quota: ['{used} of {q} used', '{used} su {q} usati'],
   sign_in: ['Sign in', 'Accedi'],
   sign_up: ['Create account', 'Crea account'],
   sign_out: ['Sign out', 'Esci'],
