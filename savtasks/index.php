@@ -3,10 +3,16 @@
 
 declare(strict_types=1);
 
+// every module of assets/ gets its version (the time of its last change) through an import map: after an update the
+// browser never keeps an old copy of a module imported by another one (only the address of app.js carries ?v= itself)
+$nonce = base64_encode(random_bytes(16));
+$modules = [];
+foreach (glob(__DIR__ . '/assets/*.js') ?: [] as $file) $modules['./assets/' . basename($file)] = './assets/' . basename($file) . '?v=' . filemtime($file);
+
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: strict-origin-when-cross-origin');
 header('X-Frame-Options: SAMEORIGIN');
-header("Content-Security-Policy: default-src 'self'; script-src 'self' https://www.savaccount.eu; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://www.savaccount.eu https://savcomponents.com https://www.savcomponents.com; font-src 'self'; connect-src 'self' https://www.savaccount.eu; object-src 'none'; base-uri 'self'; form-action 'self' https://www.savaccount.eu; frame-ancestors 'self'");
+header("Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-$nonce' https://www.savaccount.eu; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://www.savaccount.eu https://savcomponents.com https://www.savcomponents.com; font-src 'self'; connect-src 'self' https://www.savaccount.eu; object-src 'none'; base-uri 'self'; form-action 'self' https://www.savaccount.eu; frame-ancestors 'self'");
 $v = static fn(string $f): string => $f . '?v=' . (@filemtime(__DIR__ . '/' . $f) ?: 1);
 ?><!doctype html>
 <html lang="en">
@@ -35,6 +41,7 @@ $v = static fn(string $f): string => $f . '?v=' . (@filemtime(__DIR__ . '/' . $f
 <script defer src="<?= $v('../assets/sav/sav.js') ?>"></script>
 <script defer src="<?= $v('../assets/savoffice/savoffice.js') ?>"></script>
 <script defer src="../identity/identity.js?v=3"></script>
+<script type="importmap" nonce="<?= $nonce ?>"><?= json_encode(['imports' => $modules], JSON_UNESCAPED_SLASHES) ?></script>
 <script type="module" src="<?= $v('assets/app.js') ?>"></script>
 </body>
 </html>

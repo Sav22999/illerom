@@ -4,8 +4,10 @@ export const VERSION = '1.2.0';
 export const CHANGES = [
   {
     v: '1.2.0', date: '2026-11-27', items: [
-      ['Table: any list as a sheet, sorted by any column, with status, due day and priority changed from the cell', 'Tabella: ogni lista come un foglio, ordinata per qualsiasi colonna, con stato, scadenza e priorità da cambiare nella cella'],
+      ['Table: a type of list like a sheet, sorted by any column, with status, due day and priority changed from the cell', 'Tabella: un tipo di lista come un foglio, ordinata per qualsiasi colonna, con stato, scadenza e priorità da cambiare nella cella'],
       ['Habits: things to do on some days, ticked day by day, with the streak; the ones of the day also in Today', 'Abitudini: cose da fare in certi giorni, spuntate giorno per giorno, con la serie; quelle del giorno anche in Oggi'],
+      ['The type of a list stays as it was made in “New” (list, table, kanban, Gantt, matrix, habits): it is not converted into another', 'Il tipo di una lista resta quello scelto in «Nuovo» (lista, tabella, kanban, Gantt, matrice, abitudini): non si converte in un altro'],
+      ['The details of a task in a dialog in the middle; “Add” opens the dialog of the section (a habit, a bar, an item)', 'I dettagli di un’attività in un dialogo al centro; «Aggiungi» apre il dialogo della sezione (un’abitudine, una barra, un elemento)'],
     ],
   },
   {

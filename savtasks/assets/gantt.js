@@ -11,6 +11,7 @@ import { api, keep, taskById } from './store.js';
 import { prefs, setPrefs } from './account.js';
 import { addDays, dayLabel, daysBetween, keyParts, todayKey, weekday } from './time.js';
 import { openTask } from './task.js';
+import { addDialog } from './add.js';
 import { PRIO_COLOR, toggleDone } from './tasks.js';
 
 const tz = () => prefs().tz || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
@@ -52,8 +53,11 @@ export function ganttView(l, tasks, ctx) {
 
   const rows = dated.map((x) => row(x, l, ctx, at, dw, from)).concat(undated.length ? [h('div.gsep', h('div.gname', t('g_undated')), h('div.gtrack', h('small.muted', t('g_undated_t'))))] : [], undated.map((x) => row(x, l, ctx, at, dw, from)));
   const head = h('div.gthead', h('div.gcorner', h('b', t('g_task'))), h('div.gtime', { style: `width:${width}px` }, h('div.gmonths', months), h('div.gdays', days)));
+  // the last row adds an item (the dialog in the middle, with this list chosen): a press on its name or anywhere on its line
+  const add = () => addDialog(l, ctx);
+  rows.push(h('div.grow.gaddr', { role: 'button', tabindex: 0, onclick: add, onkeydown: (e) => { if (e.key === 'Enter') add(); } }, h('div.gname.gaddname', icon('plus'), h('span', t('add_item'))), h('div.gtrack', { title: t('add_item') })));
   const body = h('div.gbody', { style: `--w:${width}px` }, h('div.gcols', { style: `width:${width}px` }, cols, at(k) >= 0 && at(k) < n ? h('i.gnow', { style: `left:${at(k) * dw + dw / 2}px` }) : null), rows);
-  const scroll = h('div.gscroll', head, list.length ? body : h('div.gempty', h('sav-empty-state', { icon: 'calendar-range', heading: t('g_empty'), text: t('g_empty_t') })));
+  const scroll = h('div.gscroll', head, body, list.length ? null : h('div.gempty', h('sav-empty-state', { icon: 'calendar-range', heading: t('g_empty'), text: t('g_empty_t') })));
   // (a chart taken off the screen resets its scroll: that is not remembered)
   scroll.addEventListener('scroll', () => { if (scroll.isConnected && scroll.clientWidth) scrolls.set(l.id + scale, scroll.scrollLeft); }, { passive: true });
 

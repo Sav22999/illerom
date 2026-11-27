@@ -29,6 +29,7 @@ const KINDS = [
   ['task', 'circle-check', 'nk_task', 'nk_task_t'],
   ['list', 'list-checks', 'nk_list', 'nk_list_t'],
   ['board', 'square-kanban', 'nk_board', 'nk_board_t'],
+  ['table', 'table', 'nk_table', 'nk_table_t'],
   ['gantt', 'chart-gantt', 'nk_gantt', 'nk_gantt_t'],
   ['matrix', 'grid-2x2', 'nk_matrix', 'nk_matrix_t'],
   ['habits', 'flame', 'nk_habits', 'nk_habits_t'],
@@ -40,6 +41,7 @@ function thumb(kind) {
   if (kind === 'task') return h('div.nth.ntask', h('div.nrow', h('i.nbox'), line(64)), h('div.nmeta', h('i.nchip'), h('i.nchip.s')), h('div.nbell', icon('bell')));
   if (kind === 'list') return h('div.nth.nlist', [70, 52, 80, 46].map((w, i) => h('div.nrow', h('i.nbox' + (i === 2 ? '.on' : '')), line(w))));
   if (kind === 'board') return h('div.nth.nboard', [[60, 80], [70], [50, 66]].map((col) => h('div.ncol', col.map((w) => h('i.ncard', line(w))))));
+  if (kind === 'table') return h('div.nth.ntable', [0, 1, 2, 3].map((r) => h('div.ntr' + (r ? '' : '.head'), [44, 22, 18].map((w) => h('span.nl', { style: `width:${w}%` })))));
   if (kind === 'gantt') return h('div.nth.ngantt', [[4, 34], [24, 30], [46, 40], [80, 0]].map(([a, w]) => h('div.ngrow', w ? h('i.nbar', { style: `left:${a}%;width:${w}%` }) : h('i.ndia', { style: `left:${a}%` }))));
   if (kind === 'habits') return h('div.nth.nhabits', [[1, 1, 1, 0, 1, 1, 0], [1, 0, 1, 1, 0, 0, 0], [0, 1, 1, 1, 1, 0, 0]].map((r) => h('div.nhrow', r.map((on) => h('i.nhd' + (on ? '.on' : ''))))));
   return h('div.nth.nmatrix', ['#c93a2f', '#0b7a87', '#c27a06', '#8a8f9d'].map((c) => h('i.nq', { style: `--q:${c}` }, line(60), line(40))));
@@ -60,6 +62,11 @@ function templates(kind) {
     ['home', 'house', L('Home', 'Casa'), { color: '#7a5c3e', icon: 'house', tasks: [tk('Laundry', 'Lavatrice', { due: k, rrule: 'FREQ=WEEKLY' }), tk('Water the plants', 'Annaffiare le piante', { due: d(1), rrule: 'FREQ=DAILY;INTERVAL=3' }),
       tk('Pay the bills', 'Pagare le bollette', { due: d(5), rrule: 'FREQ=MONTHLY', priority: 2 }), tk('Clean the fridge', 'Pulire il frigorifero', { due: d(7), rrule: 'FREQ=MONTHLY' }), tk('Take out the recycling', 'Portare fuori la differenziata', { due: d(2), rrule: 'FREQ=WEEKLY' })] }],
     ['week', 'calendar-days', L('My week', 'La mia settimana'), { color: '#6a2cf0', icon: 'calendar-days', tasks: [tk('Plan the week', 'Pianificare la settimana', { due: mon, rrule: 'FREQ=WEEKLY', priority: 2 }), tk('Weekly review', 'Revisione della settimana', { due: addDays(mon, 4), rrule: 'FREQ=WEEKLY' }), tk('Sport', 'Sport', { due: addDays(mon, 1), rrule: 'FREQ=WEEKLY;BYDAY=TU,TH' })] }]];
+  if (kind === 'table') return [blank,
+    ['tracker', 'briefcase', L('Project tracker', 'Avanzamento progetto'), { color: '#1f56d1', icon: 'table', tasks: [tk('Brief and goals', 'Brief e obiettivi', { due: d(2), priority: 3, tags: ['plan'] }), tk('Budget', 'Budget', { due: d(5), priority: 2, tags: ['plan'] }),
+      tk('Supplier quotes', 'Preventivi dei fornitori', { due: d(9), tags: ['buy'] }), tk('Kick-off meeting', 'Riunione di avvio', { due: d(12), tags: ['team'] }), tk('First review', 'Prima revisione', { due: d(20), priority: 2, tags: ['team'] })] }],
+    ['study', 'graduation-cap', L('Study plan', 'Piano di studio'), { color: '#6a2cf0', icon: 'graduation-cap', tasks: [tk('Chapter 1', 'Capitolo 1', { due: d(3), tags: ['reading'], checklist: cl(['Read', 'Leggere'], ['Notes', 'Appunti'], ['Exercises', 'Esercizi']) }),
+      tk('Chapter 2', 'Capitolo 2', { due: d(7), tags: ['reading'], checklist: cl(['Read', 'Leggere'], ['Notes', 'Appunti'], ['Exercises', 'Esercizi']) }), tk('Mock exam', 'Simulazione d’esame', { due: d(14), priority: 3, tags: ['exam'] }), tk('Exam', 'Esame', { due: d(21), priority: 3, tags: ['exam'] })] }]];
   if (kind === 'board') {
     const cols = (...n) => n.map(([id, en, it, done]) => ({ id, name: L(en, it), done: !!done }));
     return [blank,
@@ -108,7 +115,19 @@ export function newDialog(ctx, init = {}) {
   let priority = 0;
   const prio = segmented(t('priority'), '0', [['0', '=' + t('p_none'), t('p_none')], ['1', '=' + t('p_low'), t('p_low')], ['2', '=' + t('p_medium'), t('p_medium')], ['3', '=' + t('p_high'), t('p_high')]], (v) => { priority = +v; }, { show: true, class: 'prio' });
   const more = h('sav-checkbox', {}, t('open_details'));
-  const taskForm = h('div.form', title, h('div.grid3', listSel, due, time), prio, more);
+  // in a list of habits: which days, instead of a due day and a time
+  let days = 'daily';
+  const daysSel = segmented(t('h_when'), 'daily', [['daily', '=' + t('r_every_day'), t('r_every_day')], ['weekdays', '=' + t('h_weekdays'), t('h_weekdays')]], (v) => { days = v; }, { show: true, class: 'wide' });
+  const when = h('div.nwhen');
+  const habitList = () => listById(listSel.value)?.view === 'habits';
+  const paintWhen = () => {
+    put(when, habitList() ? daysSel : [due, time]);
+    when.className = habitList() ? 'nwhen hab' : 'nwhen';
+    title.setAttribute('placeholder', t(habitList() ? 'habit_ph' : 'title_ph'));
+    if (kind === 'task') d?.setAttribute('label', t(habitList() ? 'new_habit' : 'new_task'));
+  };
+  listSel.addEventListener('change', paintWhen);
+  const taskForm = h('div.form', title, h('div.grid3.ntaskrow', listSel, when), prio, more);
 
   // a list: name, colour, a ready-made start
   const name = h('sav-input', { label: t('name'), maxlength: 120, placeholder: t('list_ph') });
@@ -119,7 +138,7 @@ export function newDialog(ctx, init = {}) {
   const paint = () => {
     for (const [k, c] of Object.entries(cards)) { c.classList.toggle('on', k === kind); c.setAttribute('aria-pressed', String(k === kind)); }
     d.setAttribute('label', t(kind === 'task' ? 'new_task' : 'new_' + (kind === 'list' ? 'list' : kind)));
-    if (kind === 'task') { put(form, taskForm); requestAnimationFrame(() => title.focus()); return; }
+    if (kind === 'task') { put(form, taskForm); paintWhen(); requestAnimationFrame(() => title.focus()); return; }
     const tps = templates(kind);
     put(tplBox, tps.map(([id, ic, label, x]) => h('sav-chip', { size: 'md', selected: id === tpl || null, onclick: () => { tpl = id; if (x.color) { color = x.color; col.show_?.(color); } if (!name.value.trim() || tps.some((y) => y[2] === name.value.trim())) name.value = id === 'blank' ? '' : label; paint(); } }, icon(ic, { slot: 'prefix' }), label)),
       tpl !== 'blank' ? h('p.muted.small.ntplinfo', t('tpl_info', { n: tps.find((y) => y[0] === tpl)?.[3].tasks?.length || 0 })) : null);
@@ -132,6 +151,8 @@ export function newDialog(ctx, init = {}) {
       const v = title.value.trim();
       if (!v) { title.focus(); throw Object.assign(new Error(), { code: 'title_required' }); }
       const body = { title: v, list: listSel.value, due: due.value || null, time: due.value ? time.value || null : null, priority, tz: tz(), starred: !!init.starred, tags: init.tags || [] };
+      if (habitList()) { body.due = body.time = null; body.rrule = days === 'weekdays' ? 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR' : ''; }
+      if (listById(listSel.value)?.view !== 'habits' && !habitList()) body.end = true; // added from a list: at its end
       if (body.due) body.remind = defaultRemind(body.due, body.time);
       const r = await api('tasks.task.save', body);
       keep(r.task);
@@ -143,9 +164,9 @@ export function newDialog(ctx, init = {}) {
     const x = templates(kind).find((y) => y[0] === tpl)?.[3] || {};
     const label = name.value.trim() || (tpl !== 'blank' ? templates(kind).find((y) => y[0] === tpl)[2] : '');
     if (!label) { name.focus(); throw Object.assign(new Error(), { code: 'name_required' }); }
-    const view = kind === 'list' ? 'list' : kind === 'gantt' ? 'gantt' : kind === 'habits' ? 'habits' : 'board';
+    const view = { list: 'list', table: 'table', gantt: 'gantt', habits: 'habits' }[kind] || 'board';
     const columns = kind === 'matrix' ? MATRIX() : x.columns;
-    const ic = x.icon || { list: 'list-checks', board: 'square-kanban', gantt: 'chart-gantt', matrix: 'grid-2x2', habits: 'flame' }[kind];
+    const ic = x.icon || { list: 'list-checks', table: 'table', board: 'square-kanban', gantt: 'chart-gantt', matrix: 'grid-2x2', habits: 'flame' }[kind];
     let l;
     if (x.tasks?.length) {
       const tasks = x.tasks.map((y) => ({ ...y, remind: y.due ? defaultRemind(y.due, null) : null }));
@@ -155,7 +176,9 @@ export function newDialog(ctx, init = {}) {
     go('#/l/' + l.id);
   };
 
-  const d = dialog({ title: t('new_l'), width: '52rem', cls: 'newdlg', body: h('div.form', h('span.flabel', t('what_new')), kinds, form), actions: [{ label: t('cancel') }, { label: t('create'), icon: 'plus', primary: true, run: create }] });
+  // from "Add" in a list (init.only): only the task, in that list — no choice of what to make
+  let d = null;
+  d = dialog({ title: t('new_l'), width: init.only ? '40rem' : '52rem', cls: 'newdlg', body: h('div.form', init.only ? null : [h('span.flabel', t('what_new')), kinds], form), actions: [{ label: t('cancel') }, { label: t(init.only ? 'add' : 'create'), icon: 'plus', primary: true, run: create }] });
   paint();
   return d;
 }

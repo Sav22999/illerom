@@ -38,7 +38,7 @@ export function tableView(l, tasks, ctx) {
 
   const table = h('table.ttable', h('thead', h('tr', th('title'), shown.map(th), h('th.tc-menu', colsMenu))),
     h('tbody', rows.map((x) => row(x, l, ctx, shown))));
-  return h('div.twrapt', { style: `--c:${l.color}` }, rows.length ? table : h('div.gempty', h('sav-empty-state', { icon: 'table', heading: t('empty_list'), text: t('empty_list_t') })));
+  return h('div.twrapt', { style: `--c:${l.color}` }, rows.length ? table : h('div.gempty', h('sav-empty-state', { icon: 'table', heading: t('empty_list'), text: t('empty_list_t2') })));
 }
 
 /** A cell that changes with a small menu: the button shows the value, the menu the choices. */

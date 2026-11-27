@@ -17,6 +17,7 @@ import { boardView } from './board.js';
 import { ganttView } from './gantt.js';
 import { isMatrix, newDialog } from './create.js';
 import { tableView } from './table.js';
+import { addDialog } from './add.js';
 import { habitsView, habitsToday } from './habits.js';
 
 const tz = () => prefs().tz || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
@@ -128,8 +129,7 @@ function build(root) {
     if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || document.querySelector('sav-dialog[open], sav-drawer[open]')) return;
     if (e.composedPath().some((x) => /^(input|textarea|sav-input|sav-textarea|sav-select|sav-search|sav-chip-input|sav-date-picker|sav-time-picker)$/.test(x.localName || ''))) return;
     const map = { n: () => main.querySelector('.qadd')?.focus(), q: () => main.querySelector('.qadd')?.focus(), '/': () => q.focus(), t: () => go('#/today'), u: () => go('#/upcoming'), i: () => go('#/inbox'), s: () => go('#/starred'),
-      b: () => { const d = viewData(sc.view, sc.arg); if (d.list) setView(d.list, d.list.view === 'board' ? 'list' : 'board', sc); },
-      g: () => { const d = viewData(sc.view, sc.arg); if (d.list) setView(d.list, d.list.view === 'gantt' ? 'list' : 'gantt', sc); }, '?': () => shortcutsDialog() };
+      '?': () => shortcutsDialog() };
     if (map[e.key]) { e.preventDefault(); map[e.key](); }
   };
   let last = Date.now();
@@ -200,16 +200,18 @@ function drawMain(main, sc) {
     h('span.vicon', icon(d.icon || 'list-checks')),
     h('div.vtitle', h('h1', d.title), h('small.muted', d.sub || (l ? t(l.view === 'habits' ? 'n_habits' : 'n_open', { n: liveTasks().filter((x) => x.list === l.id && !x.done).length }) : d.count !== undefined ? t(d.schedulesView ? 'n_items' : 'n_tasks', { n: d.count }) : ''))),
     h('div.spacer'),
-    l && l.view !== 'habits' ? segmented(t('show_as'), l.view, [['list', 'list-checks', t('as_list')], isMatrix(l) ? ['board', 'grid-2x2', t('as_matrix')] : ['board', 'square-kanban', t('as_board')], ['gantt', 'chart-gantt', t('as_gantt')], ['table', 'table', t('as_table')]], (v) => setView(l, v, sc), { class: 'vsel' }) : null,
-    l && l.view === 'list' ? sortMenu(l, sc) : null,
+    // the type of a list (list, table, kanban, Gantt, matrix, habits) is chosen once in "New" and never changes: no switch
+    l && l.view === 'list' && !asTable(l) ? sortMenu(l, sc) : null,
+    l && (l.view !== 'board' || asTable(l)) ? addButton(l, sc) : null, // a kanban board and a matrix add from the "Add a card" of each column
     l ? listMenu(l, sc) : null);
-  const body = h('div.vbody' + (l?.view === 'board' || l?.view === 'gantt' ? '.isboard' : ''));
-  const qa = !d.doneView && !d.schedulesView ? quickAdd(sc, d) : null;
+  const body = h('div.vbody' + ((l?.view === 'board' || l?.view === 'gantt') && !asTable(l) ? '.isboard' : ''));
+  // the quick add only in the smart views: a list has its own "Add" (the button above, the line at its end, the cards)
+  const qa = !l && !d.doneView && !d.schedulesView ? quickAdd(sc, d) : null;
   put(main, head, qa, body);
   if (d.schedulesView) return put(body, schedulesView());
+  if (l && asTable(l)) return put(body, tableView(l, liveTasks().filter((x) => x.list === l.id), ctx));
   if (l && l.view === 'board') return put(body, boardView(l, liveTasks().filter((x) => x.list === l.id), ctx));
   if (l && l.view === 'gantt') return put(body, ganttView(l, liveTasks().filter((x) => x.list === l.id), ctx));
-  if (l && l.view === 'table') return put(body, tableView(l, liveTasks().filter((x) => x.list === l.id), ctx));
   if (l && l.view === 'habits') return put(body, habitsView(l, liveTasks().filter((x) => x.list === l.id), ctx));
   if (l) return put(body, listView(l, ctx));
   const groups = (d.groups || []).filter(([, list, kind]) => list.length || kind === 'day' || (kind === 'today' && sc.view === 'today'));
@@ -244,7 +246,7 @@ function listView(l, ctx) {
     });
   } else box = h('div.tlist', rows);
   const showDone = prefs().showDone !== false;
-  return [open.length ? box : empty(l.inbox ? 'inbox' : 'list-checks', t(l.inbox ? 'empty_inbox' : 'empty_list'), t('empty_list_t')),
+  return [open.length ? box : empty(l.inbox ? 'inbox' : 'list-checks', t(l.inbox ? 'empty_inbox' : 'empty_list'), t('empty_list_t2')),
     done.length && showDone ? h('sav-details.donebox', { summary: t('done_n', { n: done.length }), appearance: 'plain', open: done.length <= 3 || null },
       h('div.tlist', done.map((x) => taskRow(x, ctx))), btn(t('clear_done'), { size: 'sm', appearance: 'ghost', icon: 'trash', onclick: () => clearDone(l, ctx) })) : null];
 }
@@ -405,11 +407,13 @@ function newTaskDialog(sc) {
 
 // ------------------------------------------------------------------ list tools
 
-async function setView(l, v, sc) {
-  if (l.view === v) return;
-  l.view = v;
-  sc.draw();
-  try { Object.assign(l, (await api('tasks.list.save', { id: l.id, view: v })).list); } catch (e) { fail(e); }
+/** A table is a type of list of its own (made as such in "New"). */
+const asTable = (l) => l.view === 'table';
+
+/** "Add" in the head of a list, habits or Gantt: the dialog made for what is on screen (a habit, a bar, an item), adding to this list (add.js). */
+function addButton(l, sc) {
+  const habit = l.view === 'habits';
+  return btn(h('span.lbl', t('add_s')), { icon: 'plus', size: 'sm', variant: 'primary', appearance: 'soft', class: 'addb', title: t(habit ? 'add_habit' : 'add_item'), onclick: () => addDialog(l, sc.ctx) });
 }
 
 function sortMenu(l, sc) {
@@ -468,7 +472,7 @@ function schedulesView() {
 
 export function shortcutsDialog() {
   const r = (k, l) => h('div.krow', h('span', l), h('kbd', K(k)));
-  dialog({ title: t('shortcuts'), width: '26rem', body: h('div.keys', r('N', t('k_new')), r('/', t('k_search')), r('T', t('v_today')), r('U', t('v_upcoming')), r('I', t('inbox')), r('S', t('v_starred')), r('B', t('k_board')), r('G', t('k_gantt')), r('?', t('shortcuts')),
+  dialog({ title: t('shortcuts'), width: '26rem', body: h('div.keys', r('N', t('k_new')), r('/', t('k_search')), r('T', t('v_today')), r('U', t('v_upcoming')), r('I', t('inbox')), r('S', t('v_starred')),  r('?', t('shortcuts')),
     h('p.muted.small', t('k_quick'))), actions: [{ label: t('close'), primary: true }] });
 }
 

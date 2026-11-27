@@ -83,7 +83,7 @@ export function habitsView(l, tasks, ctx) {
       }),
       h('div.hstreak', { title: t('h_stats', { best: s.best, rate: s.rate }) }, s.cur ? h('span.hfire', icon('flame'), String(s.cur)) : h('span.muted', '0'), h('small', t('h_rate', { n: s.rate }))));
   });
-  return h('div.habits', { style: `--c:${l.color}` }, list.length ? h('div.hgrid', head, rows) : h('sav-empty-state', { icon: 'flame', heading: t('h_empty'), text: t('h_empty_t') }));
+  return h('div.habits', { style: `--c:${l.color}` }, list.length ? h('div.hgrid', head, rows) : h('sav-empty-state', { icon: 'flame', heading: t('h_empty'), text: t('h_empty_t2') }));
 }
 
 /** For "Today": the habits that ask for today, to tick from there (from lists of habits not archived). */

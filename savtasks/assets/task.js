@@ -1,5 +1,5 @@
 /**
- * One task, on the side: everything about it, saved as it changes (a new one is saved with its button). And the
+ * One task, in a dialog in the middle: everything about it, saved as it changes (a new one is saved with its button). And the
  * actions that join it to the other apps of the same account:
  *   "Add to SavCalendar"         an event in one of one's own calendars (tasks.cal.create); the task shows it after
  *   "Find a date with others"    a date poll in SavSchedules with the dates chosen here (tasks.sch.create), opened in its
@@ -54,7 +54,7 @@ const kindOf = (x) => { if (!x.remind) return 'none'; const ms = Date.parse(x.re
 
 // ------------------------------------------------------------------ the editor
 
-let open = null; // the drawer on screen
+let open = null; // the dialog on screen
 
 /**
  * The editor of a task (id) or of a new one (null, with init: {list, due, starred, tags}). An existing task is saved at
@@ -68,7 +68,8 @@ export function openTask(id, ctx, init = {}) {
   const x = real ? { ...real, checklist: real.checklist.map((c) => ({ ...c })), tags: [...real.tags] } : { title: '', notes: '', checklist: [], tags: init.tags || [], priority: 0, starred: !!init.starred, start: null, due: init.due || null, time: null, rrule: '', remind: null, list: init.list || inbox().id, col: null };
   if (isNew && x.due) x.remind = defaultRemind(x.due, null);
   let remindKind = kindOf(x);
-  const drawer = h('sav-drawer.tdet', { label: t(isNew ? 'new_task' : listById(x.list)?.view === 'habits' ? 'habit' : 'task'), placement: mobile() ? 'bottom' : 'end' });
+  // a dialog in the middle, as "New" and the dialogs of the other apps of SavOffice (a sheet from the bottom on phones)
+  const drawer = h('sav-dialog.tdet', { label: t(isNew ? 'new_task' : listById(x.list)?.view === 'habits' ? 'habit' : 'task'), 'sheet-on-mobile': true, style: '--width:min(44rem, calc(100vw - 2rem))' });
   open = drawer;
 
   /** Saves some fields of an existing task (and keeps the copy of the app); a new one only remembers them. */
@@ -249,7 +250,7 @@ export function openTask(id, ctx, init = {}) {
     if (open === drawer) open = null;
     if (/^#\/t\//.test(location.hash) && !isNew) history.replaceState(null, '', '#/l/' + x.list);
   });
-  customElements.whenDefined('sav-drawer').then(() => drawer.show());
+  customElements.whenDefined('sav-dialog').then(() => drawer.show());
   return drawer;
 }
 
@@ -348,10 +349,11 @@ export function listDialog(l, ctx, asNew = false) {
   let color = l?.color || LIST_COLORS[S.lists.length % LIST_COLORS.length], ic = l?.icon || (base?.view === 'board' ? 'square-kanban' : base?.view === 'gantt' ? 'chart-gantt' : ''), view = l?.view || base?.view || 'list';
   const col = colorPop(t('color'), color, (v) => { if (v) color = v; }, { list: LIST_COLORS });
   const icons = h('div.icons', LIST_ICONS.map((n) => h('button.icb' + (n === ic ? '.on' : ''), { type: 'button', title: n || t('no_icon'), 'aria-pressed': String(n === ic), onclick: (e) => { ic = n; icons.querySelectorAll('.icb').forEach((b) => { b.classList.toggle('on', b === e.currentTarget); b.setAttribute('aria-pressed', String(b === e.currentTarget)); }); } }, n ? icon(n) : h('i.ldot', { style: `--c:${color}` }))));
-  const as = segmented(t('show_as'), view, [['list', '=' + t('as_list'), t('as_list')], ['board', '=' + t('as_board'), t('as_board')], ['gantt', '=' + t('as_gantt'), t('as_gantt')]], (v) => { view = v; }, { show: true, class: 'wide' });
+  // the type of a list is chosen once, when it is made: here only name, colour and icon change
+  const as = l ? null : segmented(t('show_as'), view, [['list', '=' + t('as_list'), t('as_list')], ['board', '=' + t('as_board'), t('as_board')], ['gantt', '=' + t('as_gantt'), t('as_gantt')]], (v) => { view = v; }, { show: true, class: 'wide' });
   dialog({ title: t(l ? 'edit_list' : base?.view === 'board' ? 'new_board' : base?.view === 'gantt' ? 'new_gantt' : 'new_list'), width: '28rem', body: h('div.form', name, h('div.cf', h('span.flabel', t('color')), col), h('div', h('span.flabel', t('icon')), icons), as), actions: [{ label: t('cancel') }, { label: t(l ? 'save' : 'create'), primary: true, run: async () => {
     if (!name.value.trim()) throw Object.assign(new Error(), { code: 'name_required' });
-    const r = await api('tasks.list.save', { ...(l ? { id: l.id } : {}), name: name.value.trim(), color, icon: ic, view });
+    const r = await api('tasks.list.save', { ...(l ? { id: l.id } : { view }), name: name.value.trim(), color, icon: ic });
     if (l) Object.assign(l, r.list); else S.lists.push(r.list);
     if (!l) go('#/l/' + r.list.id); else ctx.redraw();
   } }] });

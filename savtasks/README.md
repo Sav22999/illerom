@@ -60,7 +60,8 @@ SavSchedules (same service, same pairwise id), or give SavTasks its own in `cred
 - **Habits**: a list of its own (made from "New"): each habit asks for some days (every day, the weekdays, the days
   chosen); each day is ticked on its own (kept in `log`, the last 400 days, never a day to come: `tasks.habit.mark`),
   with the streak, the best streak and the last 30 days. The habits of the day are in Today too.
-- A list can also be shown as a **table** (sort by any column; status, due day and priority change in the cell).
+- The **type** of a list (list, table, kanban board, Gantt, Eisenhower matrix, habits) is chosen when it is made and never
+  changes; a **table** is a type too (rows and columns to sort; status, due day and priority change in the cell).
 - Smart views: **Today** (late and due today), **Upcoming** (by day, two weeks ahead), **Starred**, **Done** (the last
   60 days), labels, search, and **From SavSchedules**.
 

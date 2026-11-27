@@ -284,7 +284,7 @@ body.dragging, body.dragging * { cursor: grabbing !important; }
 @media (max-width: 640px) { .gantt { --gname: 8.5rem; } .ghint { display: none; } .gname { font-size: .82rem; gap: .35rem; padding: 0 .4rem 0 .5rem; } .gtools { padding: .1rem .7rem .5rem; } }
 
 /* ------------------------------------------------------------------ "New": the dialog in the middle */
-.nkinds { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: .6rem; }
+.nkinds { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .6rem; }
 .nkind { --sav-card-padding: 0; --sav-radius-lg: 14px; min-width: 0; cursor: pointer; } .nkind::part(body) { min-width: 0; }
 .nkind.on::part(base) { border-color: var(--sav-color-primary); box-shadow: 0 0 0 2px var(--sav-color-primary); }
 .nkind:focus-visible { outline: 2px solid var(--sav-color-focus); outline-offset: 2px; border-radius: 14px; }
@@ -301,6 +301,7 @@ body.dragging, body.dragging * { cursor: grabbing !important; }
 .ncard { display: block; padding: 18% 10%; border-radius: 4px; background: var(--sav-color-surface); border-left: 3px solid var(--sav-color-primary); }
 .ngantt { justify-content: space-around; gap: 0; } .ngrow { position: relative; height: 9px; } .nbar { position: absolute; top: 0; bottom: 0; border-radius: 4px; background: var(--sav-color-primary); }
 .ndia { position: absolute; top: 0; width: 9px; height: 9px; transform: rotate(45deg); background: var(--sun); border-radius: 2px; }
+.ntable { justify-content: center; gap: 0; padding-top: 10%; } .ntr { display: flex; gap: 6%; padding: 6% 4%; border-bottom: 1px solid color-mix(in oklab, var(--sav-color-text-muted) 18%, transparent); } .ntr.head .nl { background: var(--sav-color-primary); opacity: .7; }
 .nmatrix { display: grid; grid-template-columns: 1fr 1fr; gap: 6%; } .nq { display: flex; flex-direction: column; gap: 12%; padding: 10%; border-radius: 5px; background: color-mix(in oklab, var(--q) 18%, var(--sav-color-surface)); border-top: 3px solid var(--q); }
 .nform { min-height: 12rem; } .nname { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .9rem; align-items: end; }
 .ntpls { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .25rem; } .ntplinfo { margin-top: .5rem; }
@@ -363,8 +364,18 @@ body.dragging, body.dragging * { cursor: grabbing !important; }
 .nhabits { justify-content: center; gap: 12%; } .nhrow { display: flex; gap: 6%; } .nhd { flex: 1; aspect-ratio: 1; border-radius: 3px; border: 1.5px solid color-mix(in oklab, var(--sav-color-primary) 45%, transparent); } .nhd.on { background: var(--sav-color-primary); border-color: var(--sav-color-primary); }
 @media (max-width: 640px) { .hrow { grid-template-columns: minmax(0, 1fr) repeat(7, 1.75rem) 2.3rem; gap: .15rem; padding: .3rem .2rem; } .hcell { width: 1.6rem; height: 1.6rem; border-radius: 8px; font-size: .85rem; } .hstreak small, .hhead .hname > span { display: none; } .hhead .hstreak small { display: block; } .hgrid { min-width: 0; } .hday small { font-size: .6rem; } .hday b { font-size: .78rem; } .hbtn span { font-size: .86rem; } .hbtn small { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; } }
 
+/* "Add" in the head of a list; the last row of a Gantt opens the same dialog */
+.adddlg .addin { display: flex; align-items: center; gap: .35rem; margin-top: -.4rem; } .adddlg .addin sav-icon { color: var(--sav-color-primary); }
+.qpick { display: grid; grid-template-columns: 1fr 1fr; gap: .45rem; margin-top: .25rem; }
+.qbtn { display: grid; gap: .1rem; text-align: left; padding: .55rem .7rem; border-radius: 12px; border: 1px solid var(--sav-color-border); border-top: 3px solid var(--q); background: color-mix(in oklab, var(--q) 7%, var(--sav-color-surface)); color: inherit; font: inherit; cursor: pointer; }
+.qbtn b { font-size: .86rem; } .qbtn small { color: var(--q); font-weight: 600; font-size: .74rem; } .qbtn.on { box-shadow: 0 0 0 2px var(--q); }
+.gaddr { cursor: pointer; } .gaddr .gname.gaddname { gap: .5rem; color: var(--sav-color-text-muted); font-size: .86rem; } .gaddr:hover .gname.gaddname { color: var(--sav-color-primary); }
+.gaddr .gtrack { cursor: pointer; } .gaddr:hover .gtrack { background: color-mix(in oklab, var(--c) 5%, transparent); } .gaddr:focus-visible { outline: 2px solid var(--sav-color-focus); outline-offset: -2px; }
+@media (max-width: 640px) { .addb .lbl { display: none; } }
+
 /* ------------------------------------------------------------------ one task (drawer) */
-.tdet { --size: min(30rem, 100vw); } .tdet[placement="bottom"] { --size: 92dvh; }
+.tdet .dbody { padding-bottom: .4rem; }
+@media (min-width: 760px) { .tdet .dbody { grid-template-columns: minmax(0, 1fr); } }
 .dbody { display: grid; gap: 1rem; }
 .dhead { display: flex; align-items: flex-start; gap: .4rem; } .dtitle { flex: 1; } .dtitle::part(textarea), .dtitle::part(input) { font-size: 1.12rem; font-weight: 600; }
 .dsec { display: grid; gap: .55rem; } .dquick { display: flex; flex-wrap: wrap; gap: .35rem; } .dremind { display: grid; gap: .45rem; } .dremind small { display: flex; align-items: center; gap: .3rem; }
