@@ -57,6 +57,19 @@ function space_bytes(array $u): int
         + $q('SELECT COALESCE(SUM(LENGTH(v.doc)),0) FROM ' . t('versions') . ' v JOIN ' . t('documents') . ' d ON d.id = v.doc_id WHERE d.owner_id = ?');
 }
 
+/**
+ * What this app keeps for the person, listed in SavDrive (a folder of the app in My drive): its folders and its
+ * items with the address that opens them here ({@see savspace_catalog_save} in ../savdrive/lib/space.php).
+ */
+function office_catalog(array $u): array
+{
+    $all = function (string $sql, array $args = []) use ($u): array { $st = db()->prepare($sql); $st->execute($args ?: [$u['id']]); return $st->fetchAll(); };
+    $folders = array_map(fn($f) => [(string)$f['id'], $f['name'], null], $all('SELECT id, name FROM ' . t('folders') . ' WHERE user_id = ? ORDER BY name'));
+    $items = array_map(fn($d) => [$d['pid'], $d['title'], $d['folder_id'] !== null ? (string)$d['folder_id'] : null, (int)$d['bytes'], $d['updated_at'], '#/d/' . $d['pid']],
+        $all('SELECT pid, title, folder_id, LENGTH(doc) + COALESCE(LENGTH(preview),0) bytes, updated_at FROM ' . t('documents') . ' WHERE owner_id = ? AND deleted_at IS NULL ORDER BY updated_at DESC LIMIT 3000'));
+    return ['folders' => $folders, 'items' => $items];
+}
+
 /** Whether the account $uid (the owner of what grows, also when someone else is writing) can keep $more bytes more. */
 function space_allows_id(int $uid, int $more): bool
 {
@@ -79,7 +92,7 @@ function writer(bool $unverifiedOk = false): array
     $u = require_user($unverifiedOk);
     require_csrf($u);
     // a write that would go beyond the space of SavOffice is refused; then what the app keeps is counted again
-    savspace_gate($u, SPACE_APP, (string)($GLOBALS['r'] ?? ''), fn() => space_bytes($u), fn() => fail('quota', 413));
+    savspace_gate($u, SPACE_APP, (string)($GLOBALS['r'] ?? ''), fn() => space_bytes($u), fn() => fail('quota', 413), fn() => office_catalog($u));
     return $u;
 }
 
@@ -87,7 +100,7 @@ function reader(): array
 {
     only('GET');
     $u = require_user();
-    savspace_touch($u, SPACE_APP, fn() => space_bytes($u));
+    savspace_touch($u, SPACE_APP, fn() => space_bytes($u), fn() => office_catalog($u));
     return $u;
 }
 

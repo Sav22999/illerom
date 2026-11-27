@@ -3,12 +3,16 @@
  * The space of SavOffice: one for each person, the one of SavDrive.
  *
  * Every app of SavOffice keeps its own accounts and database, but a person (the same email) has ONE space: the space of
- * SavDrive (the default one chosen by its admins, 2 GB at the start, or one of the account's own). It counts what the
+ * SavDrive (the default one chosen by its admins, 500 MB at the start, or one of the account's own). It counts what the
  * person keeps in SavDrive and in every other app, even without an account of SavDrive or with one that is not activated.
  *
  *   - each app reports how much a person keeps there: savspace_report($email, 'savdocuments', $bytes) -> table dr_usage
  *   - before a write that would go beyond the space, the app refuses it: savspace_allows($email, $app, $more)
  *   - SavDrive adds its own files to the others (savspace_used)
+ *
+ * What each app keeps is also listed in SavDrive (a folder of the app in My drive, with the folders of the app): the app
+ * sends its catalog (savspace_catalog_save, from savspace_gate and savspace_touch) -> table dr_office, read by SavDrive
+ * with savspace_catalogs($email).
  *
  * Required by the APIs of the apps, which have functions of their own with common names (db(), t(), credentials()…):
  * here everything is savspace_* and has its own connection, made with the credentials of SavDrive (savdrive/credentials.php,
@@ -18,7 +22,7 @@
 
 declare(strict_types=1);
 
-const SAVSPACE_DEFAULT = 2147483648; // 2 GB, until the admins of SavDrive choose another space
+const SAVSPACE_DEFAULT = 524288000; // 500 MB, until the admins of SavDrive choose another space
 const SAVSPACE_PAUSE = 60;           // after a failed connection, seconds without trying again (in every app, every request)
 const SAVSPACE_TIMEOUT = 2;          // seconds to wait for the database of SavDrive
 
@@ -165,10 +169,11 @@ function savspace_info(string $email): ?array
  * (deleting, trash, sign-in, admin…) always passes. After the write the app reports what it keeps now ($measure), at most
  * once a minute, or at once after a big write or something deleted.
  */
-function savspace_gate(array $u, string $app, string $action, callable $measure, callable $fail): void
+function savspace_gate(array $u, string $app, string $action, callable $measure, callable $fail, ?callable $catalog = null): void
 {
     $email = (string)($u['email'] ?? '');
     if ($email === '' || !savspace_db()) return;
+    if ($catalog) savspace_catalog_later($email, $app, $catalog, (bool)preg_match(SAVSPACE_SHAPE, $action) ? 0 : 60);
     $len = max(0, (int)($_SERVER['CONTENT_LENGTH'] ?? 0));
     $frees = (bool)preg_match('/^(auth|master|identity)\.|(^|\.)(delete|trash|remove|leave|empty|empty_trash|cancel|star|unstar|move|rename|logout|presence|ping|resolve|report|read|seen|visit|order|sort|prefs|profile)([._]|$)/', $action);
     if (!$frees && $len > 0 && !savspace_allows($email, $app, $len)) $fail();
@@ -183,11 +188,96 @@ function savspace_gate(array $u, string $app, string $action, callable $measure,
 }
 
 /** For auth.me and the lists of the home: keeps the count of the app up to date (at most every 10 minutes). */
-function savspace_touch(array $u, string $app, callable $measure): void
+function savspace_touch(array $u, string $app, callable $measure, ?callable $catalog = null): void
 {
     $email = (string)($u['email'] ?? '');
-    if ($email === '' || !savspace_db() || time() - savspace_reported($email, $app) < 600) return;
+    if ($email === '' || !savspace_db()) return;
+    if ($catalog) savspace_catalog_later($email, $app, $catalog, 30);
+    if (time() - savspace_reported($email, $app) < 600) return;
     register_shutdown_function(static function () use ($email, $app, $measure) {
         try { savspace_report($email, $app, (int)$measure()); } catch (Throwable $e) { /* never in the way */ }
     });
+}
+
+// ---------------------------------------------------------------- the catalog: what each app keeps, listed in SavDrive
+
+/** Actions that change what an app keeps (new, gone, renamed, moved): the catalog is sent again at once after them. */
+const SAVSPACE_SHAPE = '/(create|new|import|upload|copy|duplicate|delete|trash|restore|remove|rename|title|move|folder|empty|archive|meta|settings)/';
+const SAVSPACE_CATALOG_MAX = 3000; // items of one app, at most
+
+function savspace_catalog_table(): bool
+{
+    static $ok = null;
+    if ($ok !== null) return $ok;
+    return $ok = (bool)savspace_q("CREATE TABLE IF NOT EXISTS `{p}office` (
+        `email` VARCHAR(190) NOT NULL,
+        `app` VARCHAR(30) NOT NULL,
+        `catalog` MEDIUMTEXT NOT NULL,
+        `hash` CHAR(40) NOT NULL,
+        `items` INT UNSIGNED NOT NULL DEFAULT 0,
+        `checked_at` DATETIME NOT NULL,
+        `updated_at` DATETIME NOT NULL,
+        PRIMARY KEY (`email`, `app`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+}
+
+/**
+ * After the answer, the app sends its catalog when the last one is older than $every seconds (0: always).
+ * $catalog(): ['folders' => [[id, name, parent id or null], …], 'items' => [[id, title, folder id or null, bytes,
+ * updated (UTC datetime), address inside the app (as "#/d/abc" or "?d=abc")], …]].
+ */
+function savspace_catalog_later(string $email, string $app, callable $catalog, int $every): void
+{
+    register_shutdown_function(static function () use ($email, $app, $catalog, $every) {
+        try {
+            if ($every > 0) {
+                $st = savspace_q('SELECT checked_at FROM `{p}office` WHERE email = ? AND app = ?', [mb_strtolower(trim($email)), $app]);
+                $t = $st ? $st->fetchColumn() : false;
+                if ($t && time() - (int)strtotime($t . ' UTC') < $every) return;
+            }
+            savspace_catalog_save($email, $app, (array)$catalog());
+        } catch (Throwable $e) { /* never in the way of the answer */
+        }
+    });
+}
+
+/** Keeps the catalog of an app for a person (written only when it changed). */
+function savspace_catalog_save(string $email, string $app, array $cat): void
+{
+    $email = mb_strtolower(trim($email));
+    if ($email === '' || !preg_match('/^[a-z0-9]{2,30}$/', $app) || !savspace_catalog_table()) return;
+    $str = static fn($v, int $n) => mb_substr(trim((string)$v), 0, $n);
+    $folders = [];
+    foreach (array_slice((array)($cat['folders'] ?? []), 0, 1000) as $f) {
+        if (!is_array($f) || ($f[0] ?? '') === '') continue;
+        $folders[] = [$str($f[0], 40), $str($f[1] ?? '', 120), isset($f[2]) && $f[2] !== '' ? $str($f[2], 40) : null];
+    }
+    $items = [];
+    foreach (array_slice((array)($cat['items'] ?? []), 0, SAVSPACE_CATALOG_MAX) as $d) {
+        if (!is_array($d) || ($d[0] ?? '') === '') continue;
+        $updated = $d[4] ?? null;
+        $items[] = [$str($d[0], 40), $str($d[1] ?? '', 200), isset($d[2]) && $d[2] !== '' ? $str($d[2], 40) : null, max(0, (int)($d[3] ?? 0)),
+            $updated ? gmdate('Y-m-d\TH:i:s\Z', (int)strtotime($updated . ' UTC')) : null, $str($d[5] ?? '', 200)];
+    }
+    $json = json_encode(['folders' => $folders, 'items' => $items], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
+    $hash = sha1((string)$json);
+    $st = savspace_q('SELECT hash FROM `{p}office` WHERE email = ? AND app = ?', [$email, $app]);
+    $old = $st ? $st->fetchColumn() : false;
+    if ($old === $hash) { savspace_q('UPDATE `{p}office` SET checked_at = UTC_TIMESTAMP() WHERE email = ? AND app = ?', [$email, $app]); return; }
+    savspace_q('INSERT INTO `{p}office` (email, app, catalog, hash, items, checked_at, updated_at) VALUES (?,?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP())
+        ON DUPLICATE KEY UPDATE catalog = VALUES(catalog), hash = VALUES(hash), items = VALUES(items), checked_at = VALUES(checked_at), updated_at = VALUES(updated_at)',
+        [$email, $app, $json, $hash, count($items)]);
+}
+
+/** The catalogs of a person, by app: ['savdocuments' => ['folders' => …, 'items' => …, 'updated' => …], …] (only apps with items). */
+function savspace_catalogs(string $email): array
+{
+    if (!savspace_catalog_table()) return [];
+    $st = savspace_q('SELECT app, catalog, updated_at FROM `{p}office` WHERE email = ? AND items > 0', [mb_strtolower(trim($email))]);
+    $out = [];
+    foreach ($st ? $st->fetchAll() : [] as $r) {
+        $c = json_decode((string)$r['catalog'], true);
+        if (is_array($c) && !empty($c['items'])) $out[$r['app']] = $c + ['updated' => gmdate('Y-m-d\TH:i:s\Z', (int)strtotime($r['updated_at'] . ' UTC'))];
+    }
+    return $out;
 }

@@ -4,14 +4,16 @@
  *
  * Accounts:     auth.config, auth.me, auth.register, auth.login (and the routes of ../identity/identity.php), auth.resend, auth.verify, auth.logout,
  *               auth.password, auth.forgot, auth.reset, auth.prefs, auth.profile, auth.export, auth.delete
- * Drive:        drive.list, drive.folders, folder.create, node.rename, node.move, node.copy, node.star, node.color,
+ * Drive:        drive.list, drive.folders, office.get (what an app of SavOffice keeps, listed), folder.create, node.rename, node.move, node.copy, node.star, node.color,
  *               node.trash, node.restore, node.delete, trash.empty, node.share
- * Files:        file.get (GET: the file itself; inline=1 shows it in the page when it is safe), upload.start,
+ * Files:        file.get (GET: the file itself; inline=1 shows it in the page when it is safe), folder.zip (a folder as a ZIP), file.thumb, file.thumbs, file.heads (what the cards show of many files), file.part (a picture inside a file of SavOffice), node.info, upload.start
+ *               (conflict: rename keeps both when the name is taken, otherwise 409 name_taken),
  *               upload.chunk (the piece is the body), upload.cancel
  * People:       people.get, people.set (levels by folder, inherited below, with exceptions: lib/access.php), drive.list?in=withme
  * Comments:     comment.list, comment.add, comment.delete
  * Shared links: pub.info, pub.get (anyone with the link, files only)
  * Master admin: master.overview, master.settings, master.users, master.activate, master.quota, master.delete
+ * SavPhotos:    photos.* (lib/photos.php)
  *
  * Every POST of a signed-in user needs the X-CSRF-Token header (given at sign-in).
  */
@@ -49,6 +51,115 @@ if ($r === 'file.get') {
     stream_file(blob_path((int)$n['user_id'], (string)$n['bkey']), (string)$n['name'], (string)$n['mime'], !empty($_GET['inline']));
 }
 
+// The small picture of an image (for the cards of the grid): who can read the file
+if ($r === 'file.thumb') {
+    $u = current_user();
+    $n = $u && $u['status'] === 'active' && is_activated($u) ? node_by_uid((string)($_GET['id'] ?? '')) : null;
+    $role = $n && $n['kind'] === 'file' ? node_role($u, $n) : null;
+    $path = $role && ($role === 'owner' || (!$n['trashed_at'] && level($role) >= level('read') && owner_active((int)$n['user_id']))) && str_starts_with((string)$n['mime'], 'image/') ? thumb_path($n) : null;
+    if (!$path) {
+        http_response_code(404);
+        exit;
+    }
+    header('Content-Type: image/jpeg');
+    header('X-Content-Type-Options: nosniff');
+    header('Cache-Control: private, max-age=604800');
+    header('ETag: "' . $n['bkey'] . '"');
+    header('Content-Length: ' . filesize($path));
+    readfile($path);
+    exit;
+}
+
+// Many small pictures in one request (?ids=a,b,c, at most 40): {thumbs: {id: base64 JPEG | null}, later: [ids]}. The cards
+// of the grid ask them together, so the hosting never sees a burst of requests (it answers 429 to too many). Pictures not
+// yet drawn are drawn for 3 seconds at most: the rest come back in "later" and are asked again a moment after.
+if ($r === 'file.thumbs') {
+    $u = current_user();
+    if (!$u || $u['status'] !== 'active' || !is_activated($u)) fail('unauthorized', 401);
+    $ids = array_values(array_unique(array_filter(explode(',', (string)($_GET['ids'] ?? '')), fn($x) => preg_match('/^[A-Za-z0-9]{16}$/', $x))));
+    if (!$ids || count($ids) > 40) fail('bad_request', 422);
+    $out = [];
+    $later = [];
+    $t0 = microtime(true);
+    foreach ($ids as $id) {
+        $n = node_by_uid($id);
+        $role = $n && $n['kind'] === 'file' ? node_role($u, $n) : null;
+        if (!$role || ($role !== 'owner' && ($n['trashed_at'] || level($role) < level('read') || !owner_active((int)$n['user_id']))) || !str_starts_with((string)$n['mime'], 'image/')) { $out[$id] = null; continue; }
+        if (!is_file(blob_path((int)$n['user_id'], (string)$n['bkey']) . '.t.jpg') && microtime(true) - $t0 > 3) { $later[] = $id; continue; }
+        $path = thumb_path($n);
+        $out[$id] = $path ? base64_encode((string)file_get_contents($path)) : null;
+    }
+    header('Cache-Control: private, no-store');
+    send_json(['ok' => true, 'thumbs' => (object)$out, 'later' => $later]);
+}
+
+// A picture inside a file of SavOffice (?id=&path=media/…): the previews draw a presentation or a document without
+// downloading it whole. Who can read the file.
+if ($r === 'file.part') {
+    $u = current_user();
+    $n = $u && $u['status'] === 'active' && is_activated($u) ? node_by_uid((string)($_GET['id'] ?? '')) : null;
+    $role = $n && $n['kind'] === 'file' && $n['bkey'] ? node_role($u, $n) : null;
+    $part = (string)($_GET['path'] ?? '');
+    $ok = $role && ($role === 'owner' || (!$n['trashed_at'] && level($role) >= level('read') && owner_active((int)$n['user_id'])))
+        && preg_match('/\.(savdoc|savboo|savspr|savpre)$/i', (string)$n['name']) && preg_match('#^media/[A-Za-z0-9_.-]{1,120}$#', $part);
+    $src = $ok ? blob_path((int)$n['user_id'], (string)$n['bkey']) : '';
+    $entry = $ok ? (zip_index($src)[$part] ?? null) : null;
+    $data = $entry ? zip_entry($src, $entry, 40 * 1048576) : null;
+    if ($data === null) {
+        http_response_code(404);
+        exit;
+    }
+    $types = ['png' => 'image/png', 'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'gif' => 'image/gif', 'webp' => 'image/webp', 'avif' => 'image/avif', 'svg' => 'image/svg+xml', 'mp4' => 'video/mp4', 'webm' => 'video/webm'];
+    $type = $types[strtolower(pathinfo($part, PATHINFO_EXTENSION))] ?? 'application/octet-stream';
+    // ?w=: smaller, for the cards (480) and the preview window (1600); kept next to the file
+    $w = (int)($_GET['w'] ?? 0);
+    if (in_array($w, [480, 1600], true) && str_starts_with($type, 'image/') && $type !== 'image/svg+xml' && ($small = part_small($n, $part, $data, $w))) { $data = (string)file_get_contents($small[0]); $type = $small[1]; }
+    header('Content-Type: ' . $type);
+    header('X-Content-Type-Options: nosniff');
+    header("Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; sandbox"); // a picture, never a page
+    header('Cache-Control: private, max-age=604800');
+    header('ETag: "' . $n['bkey'] . '"');
+    header('Content-Length: ' . strlen($data));
+    echo $data;
+    exit;
+}
+
+// A folder as a ZIP (lib/zipstream.php), with the folders inside it: who can read it (only what they can read, when it is
+// shared with exceptions lower down). ?check=1: only whether it can be made ({files, bytes} or the error)
+if ($r === 'folder.zip') {
+    require_once __DIR__ . '/../lib/zipstream.php';
+    $u = current_user();
+    $f = $u && $u['status'] === 'active' && is_activated($u) ? node_by_uid((string)($_GET['id'] ?? '')) : null;
+    $role = $f && $f['kind'] === 'folder' ? node_role($u, $f) : null;
+    if (!$role || ($role !== 'owner' && ($f['trashed_at'] || level($role) < level('read') || !owner_active((int)$f['user_id'])))) {
+        http_response_code(404);
+        exit;
+    }
+    $owner = (int)$f['user_id'];
+    $roles = $role === 'owner' ? null : tree_roles($u, $owner);
+    $ids = implode(',', subtree_ids($owner, (int)$f['id']));
+    $st = db()->prepare('SELECT id, parent_id, kind, name, size, bkey, updated_at FROM ' . t('nodes') . " WHERE user_id = ? AND id IN ($ids) AND trashed_at IS NULL");
+    $st->execute([$owner]);
+    $rows = [];
+    foreach ($st->fetchAll() as $n) $rows[(int)$n['id']] = $n;
+    // the path of a file inside the folder: the names of the folders between them
+    $path = function (array $n) use (&$rows, $f): string {
+        $parts = [$n['name']];
+        for ($p = (int)$n['parent_id'], $i = 0; $p && $p !== (int)$f['id'] && isset($rows[$p]) && $i <= MAX_DEPTH; $p = (int)$rows[$p]['parent_id'], $i++) array_unshift($parts, $rows[$p]['name']);
+        return implode('/', $parts);
+    };
+    $entries = [];
+    foreach ($rows as $id => $n) {
+        if ($n['kind'] !== 'file' || !$n['bkey'] || ($roles !== null && level($roles[$id] ?? null) < level('read'))) continue;
+        $entries[] = ['name' => $path($n), 'path' => blob_path($owner, (string)$n['bkey']), 'size' => (int)$n['size'], 'time' => $n['updated_at']];
+    }
+    usort($entries, fn($a, $b) => strcmp($a['name'], $b['name']));
+    $err = zip_check($entries);
+    if (!empty($_GET['check'])) send_json($err ? ['ok' => false, 'error' => $err] : ['ok' => true, 'files' => count($entries), 'bytes' => array_sum(array_column($entries, 'size'))], $err ? 422 : 200);
+    if ($err) fail($err, 422);
+    zip_send(clean_name($f['name']) . '.zip', $entries);
+}
+
 // A file shared with a link: anyone who has the link
 if ($r === 'pub.get') {
     $tok = (string)($_GET['t'] ?? '');
@@ -67,7 +178,8 @@ if ($r === 'pub.get') {
 
 // POST is JSON (a form of another site cannot send it); only a piece of an upload travels as itself, with the X-CSRF-Token header
 $ctype = (string)($_SERVER['CONTENT_TYPE'] ?? '');
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && stripos($ctype, 'application/json') !== 0 && !($r === 'upload.chunk' && stripos($ctype, 'application/octet-stream') === 0)) fail('bad_request', 415);
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && stripos($ctype, 'application/json') !== 0 && !(($r === 'upload.chunk' || $r === 'photos.thumbset') && stripos($ctype, 'application/octet-stream') === 0)
+    && !($r === 'photos.upload' && stripos($ctype, 'multipart/form-data') === 0)) fail('bad_request', 415); // SavPhotos sends a photo, its data and its small picture in one request
 remember_app_url();
 if (random_int(1, 60) === 1) purge_old();
 
@@ -196,6 +308,12 @@ identity_setup([
     'writer' => fn() => writer(),
 ]);
 identity_route($r);
+
+// SavPhotos (../savphotos/): the photos and videos of the drive, with albums; its routes are in lib/photos.php
+if (strncmp($r, 'photos.', 7) === 0) {
+    require __DIR__ . '/../lib/photos.php';
+    photos_route($r);
+}
 
 switch ($r) {
 
@@ -438,6 +556,7 @@ switch ($r) {
         }
         // the size of the folders: what is inside them, at any depth (one query for the whole account)
         $sizes = [];
+        $treeKids = [];
         foreach (array_unique(array_map(fn($n) => (int)$n['user_id'], array_filter($rows, fn($n) => $n['kind'] === 'folder'))) as $treeOwner) {
             $s3 = db()->prepare("SELECT id, parent_id, kind, size FROM $T WHERE user_id = ? AND trashed_at IS NULL" . ($where === 'trash' ? ' OR (user_id = ? AND trashed_at IS NOT NULL)' : ''));
             $s3->execute($where === 'trash' ? [$treeOwner, $treeOwner] : [$treeOwner]);
@@ -458,14 +577,62 @@ switch ($r) {
                 return [$b, $c];
             };
             foreach ($rows as $n) if ($n['kind'] === 'folder' && (int)$n['user_id'] === $treeOwner) $sizes[(int)$n['id']] = $sum((int)$n['id']);
+            $treeKids[$treeOwner] = $kids; // for what peeks out of the folders below
+        }
+        // what peeks out of the folder cards: two files inside each folder, pictures first, the newest ones (directly
+        // inside it, or else in the folders inside it)
+        $peeks = [];
+        if ($where !== 'trash') {
+            $order = "ORDER BY (mime LIKE 'image/%' AND mime <> 'image/svg+xml' AND size < 41943040) DESC, updated_at DESC LIMIT 8";
+            $ps = db()->prepare("SELECT id, uid, name, mime, size, updated_at FROM $T WHERE user_id = ? AND parent_id = ? AND kind = 'file' AND trashed_at IS NULL $order");
+            $rolesOf = [];
+            foreach (array_slice(array_values(array_filter($rows, fn($n) => $n['kind'] === 'folder')), 0, 80) as $n) {
+                $o = (int)$n['user_id'];
+                $ps->execute([$o, $n['id']]);
+                $list = $ps->fetchAll();
+                if (!$list && !empty($treeKids[$o][(int)$n['id']])) {
+                    $below = [];
+                    for ($level = $treeKids[$o][(int)$n['id']], $i = 0; $level && $i <= MAX_DEPTH && count($below) < 3000; $i++) {
+                        $below = array_merge($below, $level);
+                        $next = [];
+                        foreach ($level as $k) foreach ($treeKids[$o][$k] ?? [] as $kk) $next[] = $kk;
+                        $level = $next;
+                    }
+                    $sd = db()->prepare("SELECT id, uid, name, mime, size, updated_at FROM $T WHERE user_id = ? AND id IN (" . implode(',', array_map('intval', array_slice($below, 0, 3000))) . ") AND kind = 'file' AND trashed_at IS NULL $order");
+                    $sd->execute([$o]);
+                    $list = $sd->fetchAll();
+                }
+                if ($o !== (int)$u['id']) { // somebody else's folder: only what this person can read
+                    $rolesOf[$o] ??= tree_roles($u, $o);
+                    $list = array_filter($list, fn($c) => level($rolesOf[$o][(int)$c['id']] ?? null) >= level('read'));
+                }
+                $peeks[$n['uid']] = array_map(fn($c) => ['id' => $c['uid'], 'name' => $c['name'], 'mime' => $c['mime'], 'size' => (int)$c['size'], 'updated' => iso($c['updated_at'])], array_slice(array_values($list), 0, 2));
+            }
         }
         $extra = [];
         foreach ($rows as $n) if ($n['parent_id'] !== null && isset($parents[(int)$n['parent_id']]) && (int)$n['user_id'] === (int)$u['id']) $extra[(int)$n['id']] = ['parent' => $parents[(int)$n['parent_id']]];
-        $items = array_map(function ($x) use ($sizes, $rows) {
+        $items = array_map(function ($x) use ($sizes, $rows, $peeks) {
             if ($x['kind'] === 'folder') { $row = array_values(array_filter($rows, fn($n) => $n['uid'] === $x['id']))[0] ?? null; [$x['size'], $x['count']] = $row ? ($sizes[(int)$row['id']] ?? [0, 0]) : [0, 0]; }
+            if (isset($peeks[$x['id']])) $x['peek'] = $peeks[$x['id']];
             return $x;
         }, out_items($u, $rows, $extra));
-        send_json(['ok' => true, 'items' => $items, 'path' => $path, 'role' => $folderRole ?? 'owner', 'sharedRoot' => isset($owner) && $owner !== (int)$u['id']] + drive_space($u));
+        // My drive also holds a folder for each app of SavOffice that keeps something for this person (office.get)
+        $office = $where === 'root' && $q === '' ? office_summary($u) : [];
+        // a search finds what the apps keep too
+        $officeHits = [];
+        if ($q !== '') foreach (office_catalogs($u) as $app => $c) foreach ($c['items'] as $d) {
+            if (count($officeHits) >= 100) break 2;
+            if (mb_stripos((string)$d[1], $q) !== false) $officeHits[] = ['app' => $app, 'id' => $d[0], 'title' => $d[1], 'folder' => $d[2], 'size' => (int)$d[3], 'updated' => $d[4], 'open' => $d[5]];
+        }
+        send_json(['ok' => true, 'items' => $items, 'office' => $office, 'officeHits' => $officeHits, 'path' => $path, 'role' => $folderRole ?? 'owner', 'sharedRoot' => isset($owner) && $owner !== (int)$u['id']] + drive_space($u));
+
+    case 'office.get':
+        // ?app=: what an app of SavOffice keeps for this person, with its folders, as the app listed it (lib/space.php)
+        $u = reader();
+        $app = (string)($_GET['app'] ?? '');
+        $c = office_catalogs($u)[$app] ?? null;
+        if (!$c) fail('not_found', 404);
+        send_json(['ok' => true, 'app' => $app] + $c);
 
     case 'drive.folders':
         // Every folder of the account, for choosing where to move things
@@ -494,6 +661,12 @@ switch ($r) {
         if ($parent && count(node_path($parent)) >= MAX_DEPTH) fail('too_deep', 422);
         if (count_nodes($owner) >= MAX_NODES) fail('too_many', 422);
         $pid = $parent ? (int)$parent['id'] : null;
+        // reuse: a folder with this name already there is used as it is (a folder uploaded again goes into the same one)
+        if (!empty(body()['reuse'])) {
+            $st = db()->prepare('SELECT uid FROM ' . t('nodes') . ' WHERE user_id = ? AND parent_id ' . ($pid === null ? 'IS NULL' : '= ' . $pid) . " AND kind = 'folder' AND trashed_at IS NULL AND LOWER(name) = LOWER(?) LIMIT 1");
+            $st->execute([$owner, $name]);
+            if ($same = $st->fetchColumn()) send_json(['ok' => true, 'reused' => true, 'item' => out_node(node_by_uid((string)$same))]);
+        }
         $uid = new_uid();
         db()->prepare('INSERT INTO ' . t('nodes') . " (uid, user_id, parent_id, kind, name, created_by, created_at, updated_at) VALUES (?,?,?,'folder',?,?,?,?)")
             ->execute([$uid, $owner, $pid, free_name($owner, $pid, $name), $u['id'], now_utc(), now_utc()]);
@@ -635,6 +808,106 @@ switch ($r) {
         send_json(['ok' => true, 'file' => ['name' => $n['name'], 'mime' => $n['mime'], 'size' => (int)$n['size'], 'updated' => iso($n['updated_at']), 'owner' => $n['owner'],
             'app' => out_node($n)['app']]]);
 
+    case 'node.info':
+        // ?id=: everything about a file or folder for the panel of details
+        $u = reader();
+        $n = reach_node($u, (string)($_GET['id'] ?? ''), 'read');
+        $owner = (int)$n['user_id'];
+        $names = names_by_id([$owner, (int)($n['created_by'] ?? 0)]);
+        // where it is: the folders this person can reach
+        $path = [];
+        $roles = $n['role'] === 'owner' ? null : tree_roles($u, $owner);
+        foreach (array_reverse(node_path($n)) as $i => $p) {
+            if ($i === 0) continue;
+            if ($roles !== null && level($roles[(int)$p['id']] ?? null) < level('read')) break;
+            array_unshift($path, ['id' => $p['uid'], 'name' => $p['name']]);
+        }
+        $x = out_items($u, [$n])[0] + ['path' => $path, 'mine' => $n['role'] === 'owner', 'ownerName' => $names[$owner] ?? '', 'author' => $names[(int)($n['created_by'] ?: $owner)] ?? ''];
+        if ($n['kind'] === 'folder') {
+            // its size and the last change of what is inside, at any depth
+            $ids = implode(',', subtree_ids($owner, (int)$n['id']));
+            $st = db()->prepare('SELECT COUNT(CASE WHEN kind = \'file\' THEN 1 END) files, COUNT(CASE WHEN kind = \'folder\' THEN 1 END) - 1 folders, COALESCE(SUM(CASE WHEN kind = \'file\' THEN size END),0) size,
+                MAX(CASE WHEN id <> ? THEN updated_at END) inner_at FROM ' . t('nodes') . " WHERE user_id = ? AND id IN ($ids) AND trashed_at IS NULL");
+            $st->execute([$n['id'], $owner]);
+            $g = $st->fetch();
+            $x += ['files' => (int)$g['files'], 'folders' => max(0, (int)$g['folders']), 'innerUpdated' => iso($g['inner_at'])];
+            $x['size'] = (int)$g['size'];
+        } elseif (str_starts_with((string)$n['mime'], 'image/')) $x['image'] = image_details($n);
+        if ($n['role'] !== 'owner') unset($x['opened']);
+        send_json(['ok' => true, 'info' => $x]);
+
+    case 'node.archive':
+        // ?id=: what is inside an archive (ZIP, TAR, TAR.GZ, RAR), read from its index without extracting (lib/archive.php)
+        $u = reader();
+        $n = reach_node($u, (string)($_GET['id'] ?? ''), 'read', 'file');
+        if ($n['role'] !== 'owner' && $n['trashed_at']) fail('not_found', 404); // as file.get: in the trash, only for its owner
+        if (!preg_match('/\.(zip|tar|tgz|gz|rar|7z)$/i', (string)$n['name']) || !$n['bkey']) fail('not_archive', 400);
+        $src = blob_path((int)$n['user_id'], (string)$n['bkey']);
+        if (!is_file($src)) fail('not_found', 404);
+        // the same file (the same key) has always the same contents: what was read once is kept next to it
+        $cache = $src . '.a.json';
+        $list = is_file($cache) ? json_decode((string)file_get_contents($cache), true) : null;
+        if (!is_array($list)) {
+            @set_time_limit(30);
+            $list = archive_list($src, (string)$n['name']);
+            @file_put_contents($cache, json_encode($list, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE));
+        }
+        send_json(['ok' => true, 'archive' => $list]);
+
+    case 'file.heads':
+        // ?ids=a,b,c (at most 20): what the cards show of many files in one request, so the hosting never sees a burst of
+        // requests. For each id: {b64, whole} (the beginning of a text file, or a whole file of SavOffice up to 3 MB),
+        // {archive} (the index of an archive, as node.archive), or null. What does not fit (6 MB in all, 4 s of work)
+        // comes back in "later", to be asked again.
+        $u = reader();
+        $ids = array_values(array_unique(array_filter(explode(',', (string)($_GET['ids'] ?? '')), fn($x) => preg_match('/^[A-Za-z0-9]{16}$/', $x))));
+        if (!$ids || count($ids) > 20) fail('bad_request', 422);
+        $out = [];
+        $later = [];
+        $budget = 6 * 1048576;
+        $t0 = microtime(true);
+        foreach ($ids as $id) {
+            $n = node_by_uid($id);
+            $role = $n && $n['kind'] === 'file' && $n['bkey'] ? node_role($u, $n) : null;
+            if (!$role || ($role !== 'owner' && ($n['trashed_at'] || level($role) < level('read') || !owner_active((int)$n['user_id'])))) { $out[$id] = null; continue; }
+            $src = blob_path((int)$n['user_id'], (string)$n['bkey']);
+            if (!is_file($src)) { $out[$id] = null; continue; }
+            if (microtime(true) - $t0 > 4) { $later[] = $id; continue; }
+            $name = (string)$n['name'];
+            $size = (int)$n['size'];
+            if (preg_match('/\.(zip|tar|tgz|gz|rar|7z)$/i', $name)) {
+                $cache = $src . '.a.json';
+                $list = is_file($cache) ? json_decode((string)file_get_contents($cache), true) : null;
+                if (!is_array($list)) {
+                    @set_time_limit(30);
+                    $list = archive_list($src, $name);
+                    @file_put_contents($cache, json_encode($list, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE));
+                }
+                $out[$id] = ['archive' => $list];
+                $budget -= (int)@filesize($cache);
+            } elseif (preg_match('/\.(savdoc|savboo|savspr|savpre)$/i', $name)) {
+                // a file of SavOffice: only its JSON (the pictures come one by one, file.part), whatever the size of the file
+                $index = zip_index($src);
+                $main = null;
+                foreach (['document.json', 'book.json', 'workbook.json', 'deck.json'] as $k) if (isset($index[$k])) { $main = $k; break; }
+                $json = $main ? zip_entry($src, $index[$main], 12 * 1048576) : null;
+                if ($json === null) { $out[$id] = null; continue; }
+                if (strlen($json) > $budget && $out) { $later[] = $id; continue; }
+                $out[$id] = ['office' => $main, 'json' => $json, 'names' => array_values(array_filter(array_keys($index), fn($k) => strncmp($k, 'media/', 6) === 0))];
+                $budget -= strlen($json);
+            } else {
+                $len = $size <= 60000 ? $size : 4000;
+                if ($len > $budget && $out) { $later[] = $id; continue; }
+                $fh = @fopen($src, 'rb');
+                $data = $fh && $len > 0 ? (string)fread($fh, $len) : '';
+                if ($fh) fclose($fh);
+                $out[$id] = ['b64' => base64_encode($data), 'whole' => $len >= $size];
+                $budget -= $len;
+            }
+            if ($budget <= 0) { foreach (array_slice($ids, array_search($id, $ids, true) + 1) as $rest) $later[] = $rest; break; }
+        }
+        send_json(['ok' => true, 'heads' => (object)$out, 'later' => array_values(array_unique($later))]);
+
     // ================================================================ people and their levels (lib/access.php)
 
     case 'people.get':
@@ -726,6 +999,13 @@ switch ($r) {
         $old = isset($b['replace']) && $b['replace'] !== null ? reach_node($u, $b['replace'], 'write', 'file') : null;
         if ($old && $old['trashed_at']) fail('in_trash', 409);
         $parent = $old ? null : reach_folder($u, $b['folder'] ?? null, 'write');
+        // a file with the same name in that folder: the app asks whether to replace it or keep both (conflict: rename)
+        if (!$old && ($b['conflict'] ?? '') !== 'rename') {
+            $st = db()->prepare('SELECT uid FROM ' . t('nodes') . " WHERE user_id = ? AND parent_id " . ($parent ? '= ' . (int)$parent['id'] : 'IS NULL') . " AND kind = 'file' AND trashed_at IS NULL AND LOWER(name) = LOWER(?) LIMIT 1");
+            $st->execute([$parent ? (int)$parent['user_id'] : (int)$u['id'], $name]);
+            $same = $st->fetchColumn();
+            if ($same) send_json(['ok' => false, 'error' => 'name_taken', 'existing' => $same, 'name' => $name], 409);
+        }
         // what goes into a folder of somebody else belongs to them and counts in their space
         $owner = $old ? (int)$old['user_id'] : ($parent ? (int)$parent['user_id'] : (int)$u['id']);
         $row = user_row($owner);
@@ -804,7 +1084,7 @@ switch ($r) {
             db()->prepare('UPDATE ' . t('nodes') . ' SET bkey = ?, size = ?, updated_at = ? WHERE id = ?')->execute([$key, $up['size'], now_utc(), $old['id']]);
             db()->prepare('DELETE FROM ' . t('uploads') . ' WHERE id = ?')->execute([$id]);
             db()->commit();
-            if ($old['bkey']) @unlink(blob_path($owner, (string)$old['bkey']));
+            if ($old['bkey']) { @unlink(blob_path($owner, (string)$old['bkey'])); @unlink(blob_path($owner, (string)$old['bkey']) . '.t.jpg'); @unlink(blob_path($owner, (string)$old['bkey']) . '.a.json'); }
             send_json(['ok' => true, 'done' => true, 'replaced' => true, 'item' => out_node(node_by_uid((string)$old['uid']))] + drive_space($u));
         }
         // a file to replace that is gone meanwhile (or no longer writable) becomes a new file

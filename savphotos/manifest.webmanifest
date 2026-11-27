@@ -1,0 +1,20 @@
+{
+  "name": "SavPhotos",
+  "short_name": "SavPhotos",
+  "description": "The photos and videos of your SavDrive, day by day: the backup of your phone, albums and links to share them.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#faf7f2",
+  "theme_color": "#9a5f00",
+  "lang": "en",
+  "categories": ["photo", "productivity", "utilities"],
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ],
+  "launch_handler": {"client_mode": "navigate-existing"}
+}

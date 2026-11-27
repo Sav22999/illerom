@@ -2,7 +2,7 @@
 import { btn, dialog, drop, empty, errText, face, h, icon, primary, put, segmented, toast } from './ui.js';
 import { getLang, setLang, t } from './i18n.js';
 import { VERSION } from './version.js';
-import { S, api } from './store.js';
+import { S, api, forgetThumbs } from './store.js';
 
 export const go = (x) => { if (location.hash === x) dispatchEvent(new HashChangeEvent('hashchange')); else location.hash = x; };
 
@@ -43,6 +43,7 @@ export function userMenu() {
 export async function signOut() {
   await api('auth.logout', {}).catch(() => {});
   S.user = null; S.csrf = '';
+  forgetThumbs();
   go('#/welcome');
 }
 
@@ -63,6 +64,8 @@ export function signedIn(r) {
   setUser(r.user, r.csrf);
   const next = sessionStorage.getItem('savdrive-next');
   sessionStorage.removeItem('savdrive-next');
+  // back to SavPhotos, which sent the person here to sign in
+  if (next && /^\.\.\/savphotos\/(#[\w/-]*)?$/.test(next)) { location.href = next; return; }
   go(next || '#/');
 }
 function authCard(mode) {

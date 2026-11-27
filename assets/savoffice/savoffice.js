@@ -11,7 +11,10 @@
  * SavOffice.exporter({key, make}) | exporter(null): an editor says which document is open (key: its id in the app) and
  * how to make its file (make: async () => ({blob, name}), the same file as its own "Download"). A cloud button appears next
  * to the grid of the apps (and in ⌘J): it saves the file into SavDrive, over the file it was opened from (remembered in
- * this browser: localStorage savoffice-drive-links, "<app>:<key>" -> {id, name}), or as a new file in My drive.
+ * this browser: localStorage savoffice-drive-links, "<app>:<key>" -> {id, name, href, h}), or as a new file in My drive.
+ * A document linked to a file of SavDrive saves into it on its own (every 30 s, when the tab or window is left, when it closes:
+ * only when it changed), and that file opened again from SavDrive opens the same document (href), not a new copy,
+ * as long as the file has not changed in SavDrive meanwhile (h: its hash, the times inside the ZIP left out).
  */
 (() => {
   if (customElements.get('savoffice-apps')) return;
@@ -120,7 +123,22 @@ savoffice-apps { display: inline-flex; }
     })
     .catch(() => { window.Sav?.toast?.(it() ? 'Il file di SavDrive non si è aperto: accedi a SavDrive e riprova.' : 'The SavDrive file did not open: sign in to SavDrive and try again.', { variant: 'danger', placement: 'bottom-start' }); return null; }));
   window.SavOffice = Object.assign(window.SavOffice || {}, {
-    fromDrive(consumer) { driveFile().then((f) => { if (!f) return; pending = { id: driveId, name: f.name, at: Date.now() }; consumer({ files: [{ kind: 'file', name: f.name, getFile: async () => f }] }); }); },
+    // a file opened again: the document it became the first time, if the file has not changed since (otherwise a new copy)
+    fromDrive(consumer) {
+      driveFile().then(async (f) => {
+        if (!f) return;
+        const h = await fileHash(f);
+        const [key, link] = Object.entries(links()).find(([k, v]) => k.startsWith(appId + ':') && v.id === driveId) || [];
+        if (link?.href && h && link.h === h) {
+          say(it() ? 'Aperto il documento collegato al file di SavDrive.' : 'Opened the document linked to the SavDrive file.', 'neutral');
+          if (link.href !== location.pathname + location.search + location.hash) location.assign(link.href);
+          return;
+        }
+        if (key) setLink(key, null); // the file changed in SavDrive: the old copy is no longer its document
+        pending = { id: driveId, name: f.name, at: Date.now(), h };
+        consumer({ files: [{ kind: 'file', name: f.name, getFile: async () => f }] });
+      });
+    },
   });
 
   // ---------------------------------------------------------------- saving back into SavDrive
@@ -131,6 +149,27 @@ savoffice-apps { display: inline-flex; }
   const setLink = (key, v) => { const l = links(); if (v) l[key] = v; else delete l[key]; try { localStorage.setItem(LINKS, JSON.stringify(l)); } catch { /* private mode */ } };
   const linkKey = () => (exp ? appId + ':' + exp.key : '');
   let exp = null, pending = null, me = null, busy = false;
+  /**
+   * What a file holds, as a hash: the files of SavOffice are ZIPs whose entries carry the time they were made, so those
+   * times are left out (the same document makes the same hash). '' when the browser cannot hash.
+   */
+  async function fileHash(blob) {
+    try {
+      const b = new Uint8Array(await blob.arrayBuffer()), v = new DataView(b.buffer);
+      let e = b.length - 22;
+      while (e >= 0 && v.getUint32(e, true) !== 0x06054b50) e--;
+      if (e >= 0) {
+        const n = v.getUint16(e + 10, true);
+        for (let i = 0, p = v.getUint32(e + 16, true); i < n && p + 46 <= b.length && v.getUint32(p, true) === 0x02014b50; i++) {
+          const off = v.getUint32(p + 42, true);
+          v.setUint32(p + 12, 0, true); // time and date in the central directory
+          if (off + 30 <= b.length && v.getUint32(off, true) === 0x04034b50) v.setUint32(off + 10, 0, true); // and in the local header
+          p += 46 + v.getUint16(p + 28, true) + v.getUint16(p + 30, true) + v.getUint16(p + 32, true);
+        }
+      }
+      return [...new Uint8Array(await crypto.subtle.digest('SHA-256', b))].map((x) => x.toString(16).padStart(2, '0')).join('');
+    } catch { return ''; }
+  }
   const say = (msg, variant = 'success') => window.Sav?.toast?.(msg, { variant, placement: 'bottom-start' });
   const api = (r) => new URL('savdrive/api/?r=' + r, root()).href;
   /** The account of SavDrive in this browser (its cookie), when it can use the drive: {csrf} */
@@ -144,7 +183,7 @@ savoffice-apps { display: inline-flex; }
   }
   /** One file into SavDrive, in pieces; replace: the id of the file it becomes the new content of. */
   async function send(blob, name, replace, csrf) {
-    const st = await post('upload.start', { name, size: blob.size, mime: blob.type, folder: null, replace: replace || null }, csrf);
+    const st = await post('upload.start', { name, size: blob.size, mime: blob.type, folder: null, replace: replace || null, conflict: 'rename' }, csrf); // a copy never stops on a name already there
     if (st.done) return st;
     let off = 0;
     for (;;) {
@@ -153,25 +192,44 @@ savoffice-apps { display: inline-flex; }
       off = d.received;
     }
   }
-  async function saveToDrive() {
-    if (!exp || busy) return;
-    const l = it(), d = await driveMe(true);
-    if (!d) { say(l ? 'Accedi a SavDrive (in un’altra scheda) per salvare qui i tuoi file.' : 'Sign in to SavDrive (in another tab) to save your files there.', 'neutral'); window.open(new URL('savdrive/', root()).href, '_blank', 'noopener'); return; }
-    busy = true; paintAll();
+  /**
+   * Saves the open document into SavDrive: over the file it is linked to, or as a new file. auto: the saving done on its
+   * own for a linked document (every little while, when the tab is left, when the editor closes): silent, and only when
+   * something changed.
+   */
+  async function saveToDrive(auto) {
+    auto = auto === true;
+    const cur = exp;
+    if (!cur || busy) return;
+    const key = appId + ':' + cur.key, link = links()[key];
+    if (auto && !link) return;
+    const l = it(), d = await driveMe(!auto);
+    if (!d) { if (!auto) { say(l ? 'Accedi a SavDrive (in un’altra scheda) per salvare qui i tuoi file.' : 'Sign in to SavDrive (in another tab) to save your files there.', 'neutral'); window.open(new URL('savdrive/', root()).href, '_blank', 'noopener'); } return; }
+    busy = true; if (!auto) paintAll();
     try {
-      const { blob, name } = await exp.make();
-      const key = linkKey(), link = links()[key];
+      const { blob, name } = await cur.make();
+      const h = await fileHash(blob);
+      if (auto && h && link.h === h) return; // nothing changed since the last time
       let r;
       try { r = await send(blob, name, link?.id, d.csrf); } catch (e) {
         if (!link || !['not_found', 'in_trash'].includes(e.code)) throw e;
+        if (auto) { setLink(key, null); return; } // the file of the drive is gone: no new one without asking
         r = await send(blob, name, null, d.csrf); // the file of the drive is gone (or in the trash): a new one
       }
-      setLink(key, { id: r.item.id, name: r.item.name });
-      say((l ? (r.replaced ? 'Salvato in SavDrive: ' : 'Salvato in SavDrive come ') : (r.replaced ? 'Saved in SavDrive: ' : 'Saved in SavDrive as ')) + r.item.name);
+      setLink(key, { id: r.item.id, name: r.item.name, href: link?.href || here(), h });
+      if (!auto) say((l ? (r.replaced ? 'Salvato in SavDrive: ' : 'Salvato in SavDrive come ') : (r.replaced ? 'Saved in SavDrive: ' : 'Saved in SavDrive as ')) + r.item.name);
     } catch (e) {
-      say(e.code === 'quota' ? (l ? 'Non c’è abbastanza spazio in SavDrive.' : 'There is not enough space in SavDrive.') : (l ? 'Non è stato possibile salvare in SavDrive.' : 'It could not be saved in SavDrive.'), 'danger');
+      if (!auto || e.code === 'quota') say(e.code === 'quota' ? (l ? 'Non c’è abbastanza spazio in SavDrive.' : 'There is not enough space in SavDrive.') : (l ? 'Non è stato possibile salvare in SavDrive.' : 'It could not be saved in SavDrive.'), 'danger');
     } finally { busy = false; paintAll(); }
   }
+  const here = () => location.pathname + location.search + location.hash;
+  // a document linked to a file of SavDrive goes back there on its own: every 30 seconds while it is open, when the tab
+  // or the window is left and when the editor closes (only what changed is sent)
+  setInterval(() => { if (exp && document.visibilityState === 'visible') saveToDrive(true); }, 30000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && exp) saveToDrive(true); });
+  addEventListener('blur', () => { if (exp) saveToDrive(true); }); // another tab or window (SavDrive, to look at the file)
+  addEventListener('pagehide', () => { if (exp) saveToDrive(true); });
+
   /** The cloud button next to the grid: only in an editor, and when its document comes from SavDrive or SavDrive is signed in. */
   async function paintDrive(el) {
     let b = el.querySelector(':scope > .so-save');
@@ -183,10 +241,10 @@ savoffice-apps { display: inline-flex; }
       b = document.createElement('sav-button');
       b.className = 'so-save';
       Object.entries({ icon: 'so-cloud-up', appearance: 'ghost', variant: 'neutral', square: '', size: el.getAttribute('size') || 'sm' }).forEach(([k, v]) => b.setAttribute(k, v));
-      b.addEventListener('click', saveToDrive);
+      b.addEventListener('click', () => saveToDrive());
       el.prepend(b);
     }
-    const l = it(), text = link ? (l ? 'Salva in SavDrive' : 'Save in SavDrive') + ' · ' + link.name : (l ? 'Salva una copia in SavDrive' : 'Save a copy in SavDrive');
+    const l = it(), text = link ? (l ? 'Collegato a SavDrive (si salva da solo) · ' : 'Linked to SavDrive (saves on its own) · ') + link.name : (l ? 'Salva una copia in SavDrive' : 'Save a copy in SavDrive');
     b.setAttribute('label', text); b.setAttribute('title', text);
     b.loading = busy;
   }
@@ -194,13 +252,15 @@ savoffice-apps { display: inline-flex; }
   window.SavOffice = Object.assign(window.SavOffice || {}, {
     paintDrive,
     exporter(x) {
+      // the editor that closes saves its last changes into its file of SavDrive (it can still make its file now)
+      if (exp && (!x || String(x.key) !== exp.key)) saveToDrive(true);
       exp = x && x.key != null && typeof x.make === 'function' ? { key: String(x.key), make: x.make } : null;
       // the first document opened after a file of SavDrive was handed over is that file
       if (exp && pending && Date.now() - pending.at < 120000) {
-        setLink(linkKey(), { id: pending.id, name: pending.name });
+        setLink(linkKey(), { id: pending.id, name: pending.name, href: here(), h: pending.h });
         pending = null;
-        say(it() ? 'Aperto da SavDrive: con ☁ in alto salvi le modifiche nel file del drive.' : 'Opened from SavDrive: ☁ at the top saves your changes into the drive file.', 'neutral');
-      }
+        say(it() ? 'Aperto da SavDrive: le modifiche tornano da sole nel file del drive.' : 'Opened from SavDrive: your changes go back into the drive file on their own.', 'neutral');
+      } else if (exp) { const k = linkKey(), l = links()[k]; if (l && l.href !== here()) setLink(k, { ...l, href: here() }); } // where it is opened now
       paintAll();
     },
     saveToDrive,

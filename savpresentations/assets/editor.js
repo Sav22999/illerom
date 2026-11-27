@@ -170,8 +170,15 @@ export async function deckScreen(app, deckId, q) {
   // ------------------------------------------------------------------ strip of slides
   const thumbs = new Map();
   let stripW = 0;
+  // the width of the small slides: what the column leaves after the number and the ring of the chosen one (2.5px), and
+  // after its scroll bar when it has one; at most 150px. A fixed width cut the ring on the right.
+  const stripFit = () => {
+    if (mobile()) return 92;
+    const cw = strip.clientWidth, rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    return cw ? Math.max(96, Math.min(150, Math.floor(cw - 3 - 6 - 1.7 * rem))) : 140;
+  };
   function drawStrip() {
-    const list = deck.order(), w = stripW = mobile() ? 92 : 150;
+    const list = deck.order(), w = stripW = stripFit();
     strip.replaceChildren(...list.map((s, i) => {
       const b = h('div.st', { 'data-sid': s.sid, 'data-id': s.sid, 'aria-label': t('slide') + ' ' + (i + 1), tabindex: 0, onclick: () => ed.goto(s.sid), onfocus: () => { if (strip.matches(':focus-within') && b.matches(':focus-visible')) ed.goto(s.sid); } }, h('span.stn', String(i + 1)), h('div.stb', h('div.stt'), h('div.stl')), h('div.stp'));
       thumbs.set(s.sid, b);
@@ -571,8 +578,10 @@ export async function deckScreen(app, deckId, q) {
   addEventListener('keydown', onKey); addEventListener('copy', onCopy); addEventListener('cut', onCopy); addEventListener('paste', onPaste);
   // buttons of the panel do not take the focus away from the text being written
   panel.addEventListener('mousedown', (e) => { if (ed.editing && !e.composedPath().some((x) => /^(INPUT|TEXTAREA)$/.test(x.tagName))) e.preventDefault(); });
-  const onResize = () => { if ((mobile() ? 92 : 150) !== stripW) { mobile() ? strip.setAttribute('direction', 'horizontal') : strip.removeAttribute('direction'); drawStrip(); } };
+  const onResize = () => { if (stripFit() !== stripW) { mobile() ? strip.setAttribute('direction', 'horizontal') : strip.removeAttribute('direction'); drawStrip(); } };
   addEventListener('resize', onResize);
+  // the column changes width on its own too (shown again, a scroll bar): the small slides follow it
+  if (typeof ResizeObserver === 'function') { let raf = 0; new ResizeObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(onResize); }).observe(strip); }
   // swipe between slides on phones (viewers)
   if (!ed.editor) { let x0 = null; stage.scroller.addEventListener('touchstart', (e) => { x0 = e.touches.length === 1 ? e.touches[0].clientX : null; }, { passive: true }); stage.scroller.addEventListener('touchend', (e) => { if (x0 == null || ed.picking) return; const dx = e.changedTouches[0].clientX - x0, l = deck.order(), i = deck.index(ed.sid); if (Math.abs(dx) > 60) ed.goto(l[clamp(i + (dx < 0 ? 1 : -1), 0, l.length - 1)].sid); }, { passive: true }); }
 

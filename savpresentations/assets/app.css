@@ -1308,8 +1308,9 @@ body.ed #app {
     overflow: hidden auto;
     --gap: .55rem;
     align-content: start;
-    padding: 3px 0 3px 3px;
+    padding: 3px 6px 3px 3px;
     scrollbar-width: thin;
+    scrollbar-gutter: stable; /* the same width with and without a scroll bar: the small slides do not jump */
     min-height: 0;
 }
 
@@ -1375,7 +1376,8 @@ body.ed #app {
     padding-top: .15rem;
     font-size: .7rem;
     color: var(--sav-color-text-muted);
-    width: 150px;
+    width: 0;
+    min-width: 100%; /* as wide as the small slide above it, whatever its width */
 }
 
 .stl:empty {
@@ -2607,6 +2609,7 @@ sav-avatar {
 
     .strip {
         flex-direction: row;
+        scrollbar-gutter: auto;
     }
 
     .st {

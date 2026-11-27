@@ -3,22 +3,29 @@
  * and folders as cards or rows, selection, menus, moving, uploads with their progress, previews.
  *   #/  My drive · #/f/<id> a folder · #/recent · #/starred · #/shared · #/trash · #/search/<words>
  */
-import { ask, btn, confirm, copyText, dialog, drop, empty, errText, face, fail, h, icon, iconBtn, item, menuAt, mobile, primary, put, segmented, select, toast } from './ui.js';
+import { ask, btn, bytes, confirm, copyText, dialog, drop, empty, errText, face, fail, h, icon, iconBtn, item, menuAt, mobile, primary, put, segmented, select, toast } from './ui.js';
 import { getLang, t, when } from './i18n.js';
-import { S, api, fileUrl, upload } from './store.js';
+import { S, api, fileUrl, lazyImg, thumbFor, thumbUrl, upload } from './store.js';
 import { brand, commands, credit, go, prefs, setPrefs, userMenu } from './account.js';
-import { KINDS, NAMES, appOf, blankFile, openInApp } from './office.js';
+import { APPS, KINDS, NAMES, appOf, blankFile, openInApp } from './office.js';
+import { APP_PREVIEW, OFFICE_PREVIEW, contentView, isArchive, lazyApp, lazyFill } from './preview.js';
 
 // ------------------------------------------------------------------ small helpers
 
-export function bytes(n) {
-  const u = ['B', 'KB', 'MB', 'GB', 'TB'];
-  let i = 0, v = +n || 0;
-  while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
-  return `${v.toLocaleString(getLang(), { maximumFractionDigits: v < 10 && i ? 1 : 0 })} ${u[i]}`;
-}
+export { bytes }; // lives in ui.js (the previews use it too); app.js takes it from here
 const ext = (name) => (/\.([a-z0-9]+)$/i.exec(name || '')?.[1] || '').toLowerCase();
 /** What a file is, for its icon, its colour and how it can be shown. */
+/**
+ * Which kinds of files show what is inside them in the cards (Settings → My drive). Off by default (it is slower), except
+ * the pictures peeking out of the folders; the old single switch (previews: true) turns them all on.
+ */
+export const PREVIEW_KINDS = ['images', 'texts', 'office', 'archives', 'folders'];
+export function previewOn(kind) {
+  const p = prefs().previews;
+  if (p === true) return true;
+  if (p && typeof p === 'object' && typeof p[kind] === 'boolean') return p[kind];
+  return kind === 'folders';
+}
 export function kindOf(it) {
   if (it.kind === 'folder') return { ic: 'folder', c: it.color || '#5f7d95', k: 'folder' };
   const m = it.mime || '', e = ext(it.name);
@@ -32,7 +39,7 @@ export function kindOf(it) {
   if (/^(xlsx|xls|ods|csv|tsv)$/.test(e)) return { ic: 'table-2', c: '#4d7c0f', k: e === 'csv' || e === 'tsv' ? 'text' : 'file' };
   if (/^(pptx|ppt|odp|key)$/.test(e)) return { ic: 'presentation', c: '#6d3bef', k: 'file' };
   if (/^(docx|doc|odt|rtf|pages|epub)$/.test(e)) return { ic: 'file-text', c: '#1f56d1', k: 'file' };
-  if (/^(zip|rar|7z|tar|gz|bz2|xz)$/.test(e)) return { ic: 'file-archive', c: '#7b5434', k: 'file' };
+  if (/^(zip|rar|7z|tar|gz|tgz|bz2|xz)$/.test(e)) return { ic: 'file-archive', c: '#7b5434', k: 'file' };
   if (/^(json|js|mjs|ts|html|htm|css|xml|php|py|java|c|cpp|h|rb|go|rs|sh|yml|yaml|sql|kt|swift)$/.test(e)) return { ic: 'file-code', c: '#0b7a87', k: 'text' };
   if (m.startsWith('text/') || /^(txt|md|log|ini|cfg)$/.test(e)) return { ic: 'file-text', c: '#55646f', k: 'text' };
   return { ic: 'file', c: '#55646f', k: 'file' };
@@ -43,7 +50,20 @@ const FOLDER_COLORS = ['', '#0a6fb0', '#13a079', '#c45a0c', '#c93a2f', '#86329e'
 // ------------------------------------------------------------------ uploads: one at a time, in a panel at the bottom
 
 const queue = [];
-let panel = null, running = false, afterUpload = null;
+/** How many uploaded files the folder waits for before showing them: one by one up to 30, then 5, 10 or 25 at a time; LIVE_WAIT at most. */
+const liveBatch = (total) => (total <= 30 ? 1 : total <= 100 ? 5 : total <= 500 ? 10 : 25), LIVE_WAIT = 8000;
+let panel = null, running = false, afterUpload = null, sameForAll = null;
+/** A file with this name is already in the folder: replace it, keep both ("Name (2)"), or leave this one out. */
+function askConflict(name) {
+  if (sameForAll) return Promise.resolve(sameForAll);
+  return new Promise((res) => {
+    let pick = 'skip';
+    const all = h('sav-checkbox', {}, t('conflict_all'));
+    dialog({ title: t('conflict_title'), width: '28rem', body: h('div.form', h('p', t('conflict_text', { name })), all),
+      actions: [{ label: t('conflict_skip'), run: () => { pick = 'skip'; } }, { label: t('conflict_keep'), run: () => { pick = 'keep'; } }, { label: t('conflict_replace'), primary: true, run: () => { pick = 'replace'; } }],
+      onclose: () => { if (all.checked) sameForAll = pick; res(pick); } });
+  });
+}
 function drawPanel() {
   if (!queue.length) { panel?.remove(); panel = null; return; }
   if (!panel) { panel = h('sav-card.upanel', { appearance: 'elevated' }); document.body.append(panel); }
@@ -68,16 +88,27 @@ async function run() {
     drawPanel();
     let last = 0;
     try {
-      const r = await upload(q.file, q.folder, { name: q.name, signal: q.abort.signal, onProgress: (n) => { q.sent = n; if (Date.now() - last > 150) { last = Date.now(); drawPanel(); } } });
+      const opts = { name: q.name, signal: q.abort.signal, onProgress: (n) => { q.sent = n; if (Date.now() - last > 150) { last = Date.now(); drawPanel(); } } };
+      let r;
+      try { r = await upload(q.file, q.folder, opts); } catch (e) {
+        if (e.code !== 'name_taken') throw e;
+        const what = await askConflict(q.name);
+        if (what === 'skip') { q.state = 'error'; q.error = t('conflict_skipped'); drawPanel(); continue; }
+        r = await upload(q.file, q.folder, what === 'replace' ? { ...opts, replace: e.data.existing } : { ...opts, conflict: 'rename' });
+      }
       q.state = 'done';
+      q.item = r.item;
       if (r.used !== undefined) setSpace(r.used, r.quota, r.parts);
     } catch (e) {
       if (q.state !== 'error') { q.state = 'error'; q.error = e.code === 'quota' ? t('err_quota_file', { free: bytes(Math.max(0, (e.data?.quota || 0) - (e.data?.used || 0))) }) : errText(e); }
     }
     drawPanel();
-    afterUpload?.();
+    // the file appears in the folder at once (from the answer of the upload, no other request); the whole list once at the end
+    if (q.state === 'done') afterUpload?.(q);
   }
   running = false;
+  afterUpload?.(null);
+  sameForAll = null;
   if (queue.length && queue.every((q) => q.state === 'done')) setTimeout(() => { if (queue.every((q) => q.state === 'done')) { queue.length = 0; drawPanel(); } }, 4000);
 }
 
@@ -100,7 +131,7 @@ async function makeFolders(paths, parent) {
     let cur = '';
     for (const part of p.split('/')) {
       const next = cur ? `${cur}/${part}` : part;
-      if (!(next in ids)) ids[next] = (await api('folder.create', { name: part, parent: ids[cur] || null })).item.id;
+      if (!(next in ids)) ids[next] = (await api('folder.create', { name: part, parent: ids[cur] || null, reuse: true })).item.id; // a folder uploaded again goes into the same one
       cur = next;
     }
   }
@@ -110,7 +141,9 @@ async function uploadAll(list, folder) {
   if (!list.length) return;
   try {
     const ids = await makeFolders(list.map((x) => x.path), folder);
-    enqueue(list.map((x) => ({ file: x.file, folder: ids[x.path] || null })));
+    if (list.some((x) => x.path)) afterUpload?.(null); // the folders just made show up before their files travel
+    // top: the folder dropped (or chosen) that holds the file, as a card of the folder that is open: its count grows live
+    enqueue(list.map((x) => ({ file: x.file, folder: ids[x.path] || null, top: x.path ? ids[x.path.split('/')[0]] || null : null })));
   } catch (e) { fail(e); }
 }
 const pick = (o = {}) => new Promise((res) => {
@@ -144,8 +177,37 @@ export const ROLES = ['view', 'read', 'comment', 'write', 'move', 'delete'];
 const LV = { view: 1, read: 2, comment: 3, write: 4, move: 5, delete: 6, owner: 9 };
 const can = (x, need) => (LV[x?.role || 'owner'] || 0) >= LV[need];
 
-export async function home(root, a, b) {
-  const where = a === 'f' && b ? b : VIEWS[a] ? a : a === 'search' ? 'search' : 'root';
+// ------------------------------------------------------------------ what the apps of SavOffice keep (office.get)
+
+/** The extension of the files of an app ('savdocuments' → 'savdoc'). */
+const EXT = Object.fromEntries(Object.entries(APPS).map(([e, a]) => [a, e]));
+const appUrl = (app, open = '') => `../${app}/${open || ''}`;
+// they look like the items of the drive (cards, rows), with the role "office": nothing can be done to them here but opening
+const officeFile = (app, d) => ({ id: `o:${app}:${d[0]}`, kind: 'file', name: `${d[1] || '—'}.${EXT[app] || app}`, size: d[3] || 0, updated: d[4], app, role: 'office', office: { app, open: d[5] } });
+const appFolder = (o) => ({ id: 'o:' + o.app, kind: 'folder', name: NAMES[o.app] || o.app, color: '#0a6fb0', count: o.count, size: o.size, updated: o.updated, role: 'office', office: { app: o.app, root: true },
+  peek: (o.peek || []).map((p) => ({ name: `${p.name}.${EXT[o.app] || ''}`, app: o.app })) });
+/** One place inside the folder of an app: its folders (with what they hold, at any depth) and its items, and the path. */
+function officePlace(c, folder) {
+  const ids = new Set(c.folders.map((f) => f[0])), parentOf = (f) => (f[2] && ids.has(f[2]) ? f[2] : null);
+  const where = (d) => (d[2] && ids.has(d[2]) ? d[2] : null); // an item of a folder that is gone is at the top
+  const kids = new Map();
+  for (const f of c.folders) { const p = parentOf(f); if (!kids.has(p)) kids.set(p, []); kids.get(p).push(f); }
+  const inside = (id, depth = 0) => { const list = c.items.filter((d) => where(d) === id); for (const f of depth < 30 ? kids.get(id) || [] : []) list.push(...inside(f[0], depth + 1)); return list; };
+  const here = folder && ids.has(folder) ? folder : null;
+  const folders = (kids.get(here) || []).map((f) => {
+    const all = inside(f[0]).sort((x, y) => String(y[4] || '').localeCompare(String(x[4] || '')));
+    return { id: `o:${c.app}:f:${f[0]}`, kind: 'folder', name: f[1] || '—', color: '#0a6fb0', count: all.length, size: all.reduce((n, d) => n + (d[3] || 0), 0), updated: all[0]?.[4], role: 'office',
+      office: { app: c.app, folder: f[0] }, peek: all.slice(0, 2).map((d) => ({ name: `${d[1]}.${EXT[c.app] || ''}`, app: c.app })) };
+  });
+  const path = [];
+  for (let f = here, i = 0; f && i < 30; i++) { const x = c.folders.find((y) => y[0] === f); if (!x) break; path.unshift({ id: x[0], name: x[1] }); f = parentOf(x); }
+  return { items: [...folders, ...c.items.filter((d) => where(d) === here).map((d) => officeFile(c.app, d))], path, role: 'office', office: c.app };
+}
+
+export async function home(root, a, b, c) {
+  // #/o/<app>[/<folder>]: the folder of an app of SavOffice
+  const office = a === 'o' && /^sav[a-z]+$/.test(b || '') ? { app: b, folder: c ? decodeURIComponent(c) : null } : null;
+  const where = office ? 'office' : a === 'f' && b ? b : VIEWS[a] ? a : a === 'search' ? 'search' : 'root';
   const q = a === 'search' ? decodeURIComponent(b || '') : '';
   const sel = new Set();
   let data = { items: [], path: [] }, alive = true, dragging = null;
@@ -190,14 +252,16 @@ export async function home(root, a, b) {
   const view = () => prefs().view || (mobile() ? 'list' : 'grid');
   const sortBy = () => prefs().sort || 'name';
 
-  put(root, h('div.home.drive', h('header.htop', brand(), search, h('div.spacer'), userMenu()),
-    h('div.hbody', h('nav.hside', newMenu(), nav, spaceBox), main), credit()));
+  const ipanel = h('aside.ipanel', { 'aria-label': t('details') });
+  const hbody = h('div.hbody' + (prefs().info && !mobile() ? '.withinfo' : ''), h('nav.hside', newMenu(), nav, spaceBox), main, ipanel);
+  put(root, h('div.home.drive', h('header.htop', brand(), search, h('div.spacer'), userMenu()), hbody, credit()));
   document.title = 'SavDrive';
 
-  // files dropped from the device anywhere on the main area: into the folder that is open (or the folder card under them)
-  main.addEventListener('dragover', (e) => { if (dragging || !e.dataTransfer.types.includes('Files') || where === 'trash' || (!writable() && !VIEWS[where])) return; e.preventDefault(); main.classList.add('dropping'); });
-  main.addEventListener('dragleave', (e) => { if (!main.contains(e.relatedTarget)) main.classList.remove('dropping'); });
-  main.addEventListener('drop', async (e) => {
+  // files dropped from the device anywhere on the page body (side menu, folder, empty space down to the bottom): into
+  // the folder that is open, or the folder card under them
+  hbody.addEventListener('dragover', (e) => { if (dragging || !e.dataTransfer.types.includes('Files') || where === 'trash' || (!writable() && !VIEWS[where])) return; e.preventDefault(); main.classList.add('dropping'); });
+  hbody.addEventListener('dragleave', (e) => { if (!hbody.contains(e.relatedTarget)) main.classList.remove('dropping'); });
+  hbody.addEventListener('drop', async (e) => {
     main.classList.remove('dropping');
     if (dragging || !e.dataTransfer.types.includes('Files') || where === 'trash') return;
     e.preventDefault();
@@ -219,7 +283,7 @@ export async function home(root, a, b) {
     e.preventDefault();
     getSelection()?.removeAllRanges();
     const x0 = e.clientX, y0 = e.clientY, keep = e.ctrlKey || e.metaKey || e.shiftKey, base = new Set(keep ? sel : []);
-    const box = h('div.band'), nodes = [...body.querySelectorAll('[data-id]')].map((n) => [n, n.getBoundingClientRect()]);
+    const box = h('div.band'), nodes = [...body.querySelectorAll('[data-id]')].filter((n) => !n.dataset.id.startsWith('o:')).map((n) => [n, n.getBoundingClientRect()]); // what the apps keep is not chosen
     let moved = false;
     const pick = (ev) => {
       const l = Math.min(x0, ev.clientX), r = Math.max(x0, ev.clientX), t0 = Math.min(y0, ev.clientY), b = Math.max(y0, ev.clientY);
@@ -277,7 +341,7 @@ export async function home(root, a, b) {
     const at = (items, label) => menuAt(e.clientX, e.clientY, items, { label });
     const it = e.target.closest('[data-id]');
     if (it) {
-      const x = data.items.find((y) => y.id === it.dataset.id);
+      const x = data.items.find((y) => y.id === it.dataset.id) || data.extra?.find((y) => y.id === it.dataset.id);
       if (!x) return;
       if (sel.has(x.id) && sel.size > 1) return at(selMenu(), t('n_selected', { n: sel.size }));
       return at(menuOf(x), x.name);
@@ -304,30 +368,62 @@ export async function home(root, a, b) {
   };
   const page = root.firstElementChild; // before the menu of the app (app.js, on root), which then sees it handled
   page.addEventListener('contextmenu', onMenu);
-  afterUpload = () => { if (alive) load(search.value.trim(), true); };
+  // q: a file just uploaded (it appears here if it went into this folder); null: the list again, from the server.
+  // Shown one by one for a few files, in groups for many (liveBatch: 5, 10 or 25), never waiting more than LIVE_WAIT
+  let fresh = [], freshTimer = 0;
+  const showFresh = () => {
+    clearTimeout(freshTimer);
+    freshTimer = 0;
+    if (!alive || !fresh.length) { fresh = []; return; }
+    const here = where === 'root' ? null : where;
+    for (const q of fresh) {
+      // a file that went inside a folder shown here (an uploaded folder): its card counts it
+      const card = q.top && q.top !== here ? data.items.find((x) => x.id === q.top && x.kind === 'folder') : null;
+      if (card) { card.count = (card.count || 0) + 1; card.size = (card.size || 0) + (q.size || 0); continue; }
+      if ((q.folder || null) !== here) continue;
+      const i = data.items.findIndex((x) => x.id === q.item.id);
+      if (i >= 0) data.items[i] = { ...data.items[i], ...q.item }; else data.items.push({ ...q.item, role: data.sharedRoot ? data.role || 'write' : 'owner' });
+    }
+    fresh = [];
+    draw();
+  };
+  afterUpload = (q) => {
+    if (!alive) return;
+    if (!q) { fresh = []; clearTimeout(freshTimer); freshTimer = 0; load(search.value.trim(), true); return; }
+    if (!q.item || data.q || VIEWS[where]) return;
+    fresh.push(q);
+    if (fresh.length >= liveBatch(queue.length)) showFresh(); else if (!freshTimer) freshTimer = setTimeout(showFresh, LIVE_WAIT);
+  };
 
   // ---------------------------------------------------------------- loading and drawing
 
   async function load(qq = q, quiet = false) {
     if (!quiet) put(body, h('div.dwait', h('sav-spinner', { style: 'font-size:2rem' })));
     try {
-      data = await api('drive.list', undefined, qq ? { q: qq } : { in: where === 'search' ? 'root' : where });
+      if (office && !qq) data = officePlace(await api('office.get', undefined, { app: office.app }), office.folder);
+      else data = await api('drive.list', undefined, qq ? { q: qq } : { in: where === 'search' || office ? 'root' : where });
       data.q = qq;
       if (!alive) return;
-      setSpace(data.used, data.quota, data.parts);
+      if (typeof data.office !== 'string') setSpace(data.used, data.quota, data.parts);
       // inside somebody else's folder the place is "Shared with me"
       if (!VIEWS[where] && where !== 'search') nav.querySelectorAll('sav-menu-item').forEach((m) => m.toggleAttribute('current', m.getAttribute('value') === (data.sharedRoot ? 'withme' : 'root')));
       for (const id of [...sel]) if (!data.items.some((x) => x.id === id)) sel.delete(id);
       draw();
     } catch (e) {
       if (!alive) return;
-      if (e.code === 'not_found' || e.code === 'in_trash') { toast(t('err_folder_gone'), 'neutral'); go('#/'); return; }
+      if (e.code === 'not_found' || e.code === 'in_trash') { toast(t(office ? 'office_gone' : 'err_folder_gone', { app: NAMES[office?.app] || '' }), 'neutral'); go('#/'); return; }
       put(body, empty('cloud-off', errText(e), '', btn(t('retry'), { onclick: () => load(qq) })));
     }
   }
 
   function title() {
     if (data.q) return h('h1', t('results_for', { q: data.q }));
+    if (typeof data.office === 'string') {
+      // My drive › the app › its folders; and a way to the app itself
+      const app = data.office, crumbs = [{ href: '#/', name: t('my_drive') }, { href: '#/o/' + app, name: NAMES[app] || app }, ...data.path.map((f) => ({ href: `#/o/${app}/${encodeURIComponent(f.id)}`, name: f.name }))];
+      return h('div.crumbwrap', h('sav-breadcrumb.crumbs', { label: t('path') }, crumbs.map((x, i) => h('sav-breadcrumb-item', { href: i === crumbs.length - 1 ? null : x.href }, x.name))),
+        h('sav-badge.lvl', { variant: 'neutral', appearance: 'soft', pill: true, title: t('office_note', { app: NAMES[app] || app }) }, appIcon(app, 14), t('office_badge')));
+    }
     if (VIEWS[where]) return h('h1', t(VIEWS[where][1]));
     // somebody else's folder starts from "Shared with me"
     const crumbs = [data.sharedRoot ? { id: 'withme', name: t('withme') } : { id: null, name: t('my_drive') }, ...(data.path || [])];
@@ -339,21 +435,28 @@ export async function home(root, a, b) {
   function draw() {
     const items = sorted(data.items);
     setCommands(items);
-    const folders = items.filter((x) => x.kind === 'folder'), files = items.filter((x) => x.kind === 'file');
+    drawInfo();
+    // My drive: a folder for each app of SavOffice that keeps something; a search: what the apps keep, too
+    const apps = (data.office && typeof data.office !== 'string' ? data.office : []).map(appFolder);
+    const hits = (data.officeHits || []).map((d) => officeFile(d.app, [d.id, d.title, d.folder, d.size, d.updated, d.open]));
+    data.extra = [...apps, ...hits];
+    const folders = items.filter((x) => x.kind === 'folder'), files = [...items.filter((x) => x.kind === 'file'), ...hits];
     // header: the path or the name of the view, or what can be done with the chosen items
     if (sel.size) {
-      const chosen = data.items.filter((x) => sel.has(x.id)), allStar = chosen.every((x) => x.starred), oneFile = chosen.length === 1 && chosen[0].kind === 'file';
-      put(head, h('div.selbar', iconBtn('x', t('clear_sel'), () => { sel.clear(); draw(); }), h('b', t('n_selected', { n: sel.size })), h('span.grow'),
+      const chosen = data.items.filter((x) => sel.has(x.id)), allStar = chosen.every((x) => x.starred);
+      put(head, h('div.selbar', iconBtn('x', t('clear_sel'), () => { sel.clear(); draw(); }), h('b', t('n_selected', { n: sel.size })), h('span.grow'), infoBtn(),
         where === 'trash' ? [btn(t('restore'), { icon: 'undo-2', size: 'sm', onclick: () => restore([...sel]) }), btn(t('delete_forever'), { icon: 'trash-2', size: 'sm', variant: 'danger', onclick: () => destroy([...sel]) })]
-          : [oneFile && can(chosen[0], 'read') ? iconBtn('download', t('download'), () => download(chosen[0])) : null, chosen.every((x) => can(x, 'move')) ? iconBtn('folder-input', t('move'), () => moveDialog([...sel])) : null,
+          : [chosen.every((x) => can(x, 'read')) ? iconBtn('download', chosen.length > 1 ? t('download_n', { n: chosen.length }) : t('download'), () => downloadAll(chosen)) : null, chosen.every((x) => can(x, 'move')) ? iconBtn('folder-input', t('move'), () => moveDialog([...sel])) : null,
             chosen.every((x) => can(x, 'owner')) ? iconBtn(allStar ? 'star-off' : 'star', t(allStar ? 'unstar' : 'star'), () => star([...sel], !allStar)) : null, chosen.every((x) => can(x, 'delete')) ? iconBtn('trash-2', t('to_trash'), () => trash([...sel])) : null]));
     } else {
       put(head, title(), h('span.grow'),
         where === 'trash' && items.length ? btn(t('empty_trash'), { icon: 'trash-2', size: 'sm', variant: 'danger', appearance: 'soft', onclick: emptyTrash }) : null,
-        dropSort(), segmented(t('view'), view(), [['grid', 'grid', t('v_grid')], ['list', 'list', t('v_list')]], (v) => { setPrefs({ view: v }).catch(() => {}); draw(); }));
+        typeof data.office === 'string' ? btn(t('open_app', { app: NAMES[data.office] || data.office }), { icon: 'external', size: 'sm', appearance: 'outline', onclick: () => window.open(appUrl(data.office), '_blank', 'noopener') }) : null,
+        typeof data.office === 'string' ? null : infoBtn(), dropSort(), segmented(t('view'), view(), [['grid', 'grid', t('v_grid')], ['list', 'list', t('v_list')]], (v) => { setPrefs({ view: v }).catch(() => {}); draw(); }));
     }
-    if (!items.length) {
+    if (!items.length && !apps.length && !hits.length) {
       const e = data.q ? empty('search', t('no_results'), t('no_results_t'))
+        : typeof data.office === 'string' ? empty('folder', t('folder_empty'), '')
         : where === 'trash' ? empty('trash-2', t('trash_empty'), t('trash_empty_t'))
           : where === 'starred' ? empty('star', t('no_starred'), t('no_starred_t'))
             : where === 'shared' ? empty('link', t('no_shared'), t('no_shared_t'))
@@ -366,9 +469,10 @@ export async function home(root, a, b) {
     }
     const note = where === 'trash' ? h('sav-alert.tnote', { variant: 'neutral' }, t('trash_note')) : null;
     if (view() === 'list') {
-      put(body, note, !VIEWS[where] && !data.q && !data.path?.length ? officeRow() : null, h('div.dlist', { role: 'list' }, h('div.lhead', h('span'), h('span', t('name')), h('span.lc-m', t(where === 'trash' ? 'trashed' : 'modified')), h('span.lc-s', t('size')), h('span')), items.map(row)));
+      put(body, note, !VIEWS[where] && !office && !data.q && !data.path?.length ? officeRow() : null, h('div.dlist', { role: 'list' }, h('div.lhead', h('span'), h('span', t('name')), h('span.lc-m', t(where === 'trash' ? 'trashed' : 'modified')), h('span.lc-s', t('size')), h('span')), [...apps, ...items, ...hits].map(row)));
     } else {
-      put(body, note, !VIEWS[where] && !data.q && !data.path?.length ? officeRow() : null,
+      put(body, note, !VIEWS[where] && !office && !data.q && !data.path?.length ? officeRow() : null,
+        apps.length ? [h('h2.dsec', t('office_apps')), h('div.dgrid.fgrid', { role: 'list' }, apps.map(card))] : null,
         folders.length ? [h('h2.dsec', t('folders')), h('div.dgrid.fgrid', { role: 'list' }, folders.map(card))] : null,
         files.length ? [h('h2.dsec', t('files')), h('div.dgrid', { role: 'list' }, files.map(card))] : null);
     }
@@ -383,6 +487,70 @@ export async function home(root, a, b) {
       [t('places'), [['hard-drive', t('my_drive'), '#/'], ['users', t('withme'), '#/withme'], ['clock', t('recent'), '#/recent'], ['star', t('starred'), '#/starred'], ['link', t('shared'), '#/shared'], ['trash-2', t('trash'), '#/trash'],
         where === 'trash' && items.length ? ['trash-2', t('empty_trash'), emptyTrash] : null]],
       items.length ? [t('in_here'), items.slice(0, 60).map((x) => [x.kind === 'folder' ? 'folder' : kindOf(x).ic, x.name, () => open(x), null, x.kind === 'folder' ? t('folder_l') : bytes(x.size)])] : null);
+  }
+
+  // ---------------------------------------------------------------- the panel of details (on the right; a window on phones)
+
+  const infoOpen = () => hbody.classList.contains('withinfo');
+  const infoBtn = () => { const b = iconBtn('info', t('details'), () => toggleInfo()); b.on(infoOpen()); return b; };
+  function toggleInfo() {
+    if (mobile()) { const box = h('div.ipanel.indialog'); dialog({ title: t('details'), width: '26rem', body: box, actions: [{ label: t('close') }] }); infoContent().then((c) => put(box, c)).catch(fail); return; }
+    const on = !infoOpen();
+    hbody.classList.toggle('withinfo', on);
+    setPrefs({ info: on }).catch(() => {});
+    draw();
+  }
+  const infoMemo = new Map();
+  const getInfo = (id, v) => { const k = id + '|' + (v || ''); if (!infoMemo.has(k)) infoMemo.set(k, api('node.info', undefined, { id }).then((r) => r.info).catch((e) => { infoMemo.delete(k); throw e; })); return infoMemo.get(k); };
+  let infoTurn = 0;
+  async function drawInfo() {
+    if (!infoOpen()) return;
+    const n = ++infoTurn;
+    try { const c = await infoContent(); if (n === infoTurn) put(ipanel, c); } catch (e) { if (n === infoTurn) put(ipanel, h('p.muted', errText(e))); }
+  }
+  const dt = (iso) => (iso ? new Date(iso).toLocaleString(getLang(), { dateStyle: 'medium', timeStyle: 'short' }) : '—');
+  /** What the panel shows: the chosen item, the chosen items together, the folder that is open, or the place. */
+  async function infoContent() {
+    const row = (label, ...v) => (v.filter((x) => x !== null && x !== undefined && x !== '').length ? h('div.irow', h('dt', label), h('dd', v)) : null);
+    const close = mobile() ? null : iconBtn('x', t('close'), () => toggleInfo());
+    const chosen = data.items.filter((x) => sel.has(x.id));
+    if (chosen.length > 1) {
+      const files = chosen.filter((x) => x.kind === 'file').length;
+      return [h('div.ihead', h('span.iic', icon('layers')), h('h3', t('n_selected', { n: chosen.length })), close),
+        h('dl.irows', row(t('size'), bytes(chosen.reduce((a, x) => a + (x.size || 0), 0))), row(t('info_files'), String(files)), row(t('folders'), String(chosen.length - files)))];
+    }
+    const one = chosen[0] || (!VIEWS[where] && where !== 'search' && where !== 'root' ? { id: where, kind: 'folder' } : null);
+    if (!one) {
+      return [h('div.ihead', h('span.iic', icon(VIEWS[where]?.[0] || 'hard-drive')), h('h3', data.q ? t('results_for', { q: data.q }) : VIEWS[where] ? t(VIEWS[where][1]) : t('my_drive')), close),
+        h('dl.irows', row(t('info_items'), String(data.items.length)), row(t('info_files'), String(data.items.filter((x) => x.kind === 'file').length)), row(t('folders'), String(data.items.filter((x) => x.kind === 'folder').length)),
+          where === 'root' ? row(t('space'), unlimited(data.quota) ? t('space_used_unl', { used: bytes(data.used) }) : t('space_used', { used: bytes(data.used), quota: bytes(data.quota) })) : null),
+        h('p.muted.small.ihint', t('info_hint'))];
+    }
+    const x = await getInfo(one.id, one.updated), img = x.image || {}, isFolder = x.kind === 'folder';
+    const k = kindOf(x), app = x.app || appOf(x.name), e = ext(x.name);
+    const place = [h('a', { href: x.mine ? '#/' : '#/withme' }, x.mine ? t('my_drive') : t('withme')), ...(x.path || []).flatMap((p) => [' › ', h('a', { href: '#/f/' + p.id }, p.name)])];
+    const map = img.lat !== undefined ? h('span', `${img.lat}, ${img.lon} · `, h('a', { href: `https://www.openstreetmap.org/?mlat=${img.lat}&mlon=${img.lon}#map=15/${img.lat}/${img.lon}`, target: '_blank', rel: 'noopener' }, t('info_map'))) : null;
+    return [h('div.ihead', h('span.iic', isFolder ? h('span.fic', { style: `--fc:${k.c}` }, icon('folder')) : icon(k.ic)), h('h3', { title: x.name }, x.name), close),
+      isFolder ? null : h('div.ithumb', thumb(x, true)),
+      h('dl.irows',
+        row(t('info_kind'), isFolder ? t('folder_l') : (app ? NAMES[app] + ' · ' : '') + (e ? e.toUpperCase() : x.mime || '—')),
+        row(t('size'), bytes(x.size)),
+        isFolder ? row(t('info_contents'), t('info_contents_n', { files: x.files, folders: x.folders })) : null,
+        row(t('info_place'), place),
+        row(t('info_created'), dt(x.created)),
+        row(t('modified'), dt(x.updated)),
+        isFolder ? row(t('info_inner'), x.innerUpdated ? dt(x.innerUpdated) : t('folder_empty')) : null,
+        x.opened ? row(t('info_opened'), dt(x.opened)) : null,
+        row(t('info_author'), x.author),
+        x.mine ? null : row(t('info_owner'), x.ownerName),
+        x.mine || !x.role ? null : row(t('level'), t('lv_' + x.role)),
+        x.mine && x.people ? row(t('info_shared'), t('shared_n', { n: x.people })) : null,
+        x.shared ? row(t('share_link'), t('info_link_on')) : null,
+        img.width ? row(t('info_dims'), `${img.width} × ${img.height} px`) : null,
+        img.taken ? row(t('info_taken'), new Date(img.taken.replace(' ', 'T')).toLocaleString(getLang(), { dateStyle: 'medium', timeStyle: 'short' })) : null,
+        img.camera ? row(t('info_camera'), img.camera) : null,
+        map ? row(t('info_where'), map) : null),
+      h('div.prow.wrap.iact', x.mine ? btn(t('people'), { size: 'sm', icon: 'users', onclick: () => peopleDialog(x) }) : null, can(x, 'read') ? btn(t('comments'), { size: 'sm', icon: 'message-circle', onclick: () => commentsDialog(x) }) : null)];
   }
 
   function sorted(list) {
@@ -405,21 +573,49 @@ export async function home(root, a, b) {
 
   const meta = (x) => {
     if (where === 'trash') return t('trashed_when', { when: when(x.trashed) });
-    if (x.kind === 'folder') return x.count ? `${t('n_items', { n: x.count })} · ${bytes(x.size)}` : t('folder_empty');
+    if (x.kind === 'folder') return x.count ? `${t(x.count === 1 ? 'n_items_1' : 'n_items', { n: x.count })} · ${bytes(x.size)}` : t('folder_empty');
     return `${bytes(x.size)} · ${when(x.updated)}`;
   };
-  const where2 = (x) => where === 'withme' && x.owner ? h('small.inf', icon('user'), x.owner) : (data.q || ['starred', 'recent', 'shared'].includes(where)) ? h('small.inf', icon('folder'), x.parent?.name || t('my_drive')) : null;
+  const where2 = (x) => x.office && data.q ? h('small.inf', appIcon(x.office.app, 12), NAMES[x.office.app] || x.office.app) : where === 'withme' && x.owner ? h('small.inf', icon('user'), x.owner) : (data.q || ['starred', 'recent', 'shared'].includes(where)) ? h('small.inf', icon('folder'), x.parent?.name || t('my_drive')) : null;
   /** The mark of what is shared: the people of the owner, or the level of this person on something of somebody else. */
-  const tag = (x) => x.role && x.role !== 'owner' ? h('span.rtag', { title: t('lv_' + x.role + '_t') + (x.owner ? ' · ' + t('owned_by', { name: x.owner }) : '') }, icon(x.role === 'view' ? 'eye' : 'users'), h('span', t('lv_' + x.role)))
+  const tag = (x) => x.office ? null : x.role && x.role !== 'owner' ? h('span.rtag', { title: t('lv_' + x.role + '_t') + (x.owner ? ' · ' + t('owned_by', { name: x.owner }) : '') }, icon(x.role === 'view' ? 'eye' : 'users'), h('span', t('lv_' + x.role)))
     : x.people ? h('span.ptag', { title: t('shared_n', { n: x.people }) }, icon('users')) : null;
+  // the cards show what is inside the kinds of files chosen in Settings (previewOn): a small picture of an image (made by
+  // the server), the first lines of a text or JSON file, a document, a spreadsheet or a slide of SavOffice, the index of
+  // an archive. They are asked together (thumbFor, file.heads): never a burst of requests to the hosting.
+  /** A sheet peeking out of a folder card: the small picture of an image, or the icon and the extension of the file. */
+  function peekSheet(f, i, folder) {
+    const cls = 'i.fs.fs' + (i + 1);
+    if (!f) return h(cls);
+    const fk = kindOf(f), fe = ext(f.name), fapp = f.app || appOf(f.name);
+    const plain = () => h(cls + '.fpk', { style: `--pc:${fk.c}`, title: f.name }, fapp ? appIcon(fapp, 22) : icon(fk.ic), fe && !fapp ? h('em', fe.slice(0, 5)) : null);
+    if (fk.k === 'image' && f.size < 40e6 && previewOn('folders') && can(folder, 'read')) {
+      const el = h(cls + '.fpimg', { title: f.name });
+      el.append(lazyImg(h('img', { alt: '', decoding: 'async' }), () => thumbFor(f.id, f.updated), () => el.replaceWith(plain())));
+      return el;
+    }
+    return plain();
+  }
   function thumb(x, big) {
-    const k = kindOf(x), app = x.app || appOf(x.name);
-    if (x.kind === 'folder') return h('span.fic', { style: `--fc:${k.c}` }, icon('folder'));
-    if (app) return h('span.tic.app', appIcon(app, big ? 56 : 30));
-    if (big && k.k === 'image' && x.size < 25e6) return h('span.tic.img', h('img', { src: fileUrl(x.id, true), alt: '', loading: 'lazy', decoding: 'async', onerror: (e) => e.target.replaceWith(icon(k.ic)) }));
-    return h('span.tic', { style: `--fc:${k.c}` }, icon(k.ic), big && ext(x.name) ? h('em', ext(x.name).slice(0, 5)) : null);
+    const k = kindOf(x), app = x.app || appOf(x.name), e = ext(x.name);
+    // a folder: its tile, and on the cards two sheets leaning out from behind it: the first files inside it (pictures
+    // first), or two plain sheets of its colour when it is empty
+    if (x.kind === 'folder') {
+      const peek = big && !x.trashed ? (x.peek || []).slice(0, 2) : [];
+      return h('span.fic.fstack' + (peek.length ? '.haspeek' : ''), { style: `--fc:${k.c}` }, peek.length ? [peekSheet(peek[0], 0, x), peekSheet(peek[1], 1, x)] : [h('i.fs.fs1'), h('i.fs.fs2')],
+        h('span.ftile' + (x.office?.root ? '.apptile' : ''), x.office?.root ? appIcon(x.office.app, big ? 44 : 22) : icon('folder')));
+    }
+    const plainIcon = () => (app ? h('span.tic.app', appIcon(app, big ? 56 : 30)) : h('span.tic', { style: `--fc:${k.c}` }, icon(k.ic), big && e ? h('em', e.slice(0, 5)) : null));
+    // what an app keeps: its small picture comes from the app (its session in this browser)
+    if (big && x.office && x.kind === 'file' && APP_PREVIEW.includes(x.office.app) && previewOn('office')) return h('span.tic.cwrap', lazyApp(h('span.tic.cprev', plainIcon()), x), h('span.appbadge', appIcon(x.office.app, 22)));
+    if (big && can(x, 'read') && !x.trashed) {
+      if ((x.mime || '').startsWith('image/') && x.size < 40e6 && previewOn('images')) return h('span.tic.img', lazyImg(h('img', { alt: '', decoding: 'async' }), () => thumbFor(x.id, x.updated), (im) => im.parentElement?.replaceWith(plainIcon())));
+      if ((k.k === 'text' && x.size < 20e6 && previewOn('texts')) || (OFFICE_PREVIEW.includes(e) && previewOn('office')) || (isArchive(x.name) && e !== '7z' && previewOn('archives'))) return h('span.tic.cwrap', lazyFill(h('span.tic.cprev', plainIcon()), x), app ? h('span.appbadge', appIcon(app, 22)) : null);
+    }
+    return plainIcon();
   }
   function check(x) {
+    if (x.office) return null; // what the apps keep is only opened from here
     const c = h('sav-checkbox.pick', { checked: sel.has(x.id) || null, 'aria-label': t('select_item', { name: x.name }) });
     c.addEventListener('click', (e) => e.stopPropagation());
     c.addEventListener('change', () => { if (c.checked) sel.add(x.id); else sel.delete(x.id); draw(); });
@@ -448,10 +644,11 @@ export async function home(root, a, b) {
     if (x.kind === 'folder') n.dataset.folder = x.id;
     // a click opens; with Ctrl/⌘ or Shift, or while something is chosen, it chooses
     n.addEventListener('click', (e) => {
+      if (x.office) return open(x);
       if (e.ctrlKey || e.metaKey || e.shiftKey || sel.size) { if (e.shiftKey && sel.size) rangeTo(x); else if (sel.has(x.id)) sel.delete(x.id); else sel.add(x.id); draw(); return; }
       open(x);
     });
-    n.addEventListener('keydown', (e) => { if (e.target !== n) return; if (e.key === 'Enter') open(x); else if (e.key === ' ') { e.preventDefault(); if (sel.has(x.id)) sel.delete(x.id); else sel.add(x.id); draw(); } });
+    n.addEventListener('keydown', (e) => { if (e.target !== n) return; if (e.key === 'Enter') open(x); else if (e.key === ' ' && !x.office) { e.preventDefault(); if (sel.has(x.id)) sel.delete(x.id); else sel.add(x.id); draw(); } });
     // dragged onto a folder (a card, the path, My drive): moved there
     if (where !== 'trash' && !mobile() && can(x, 'move')) {
       n.draggable = true;
@@ -473,13 +670,19 @@ export async function home(root, a, b) {
     n.addEventListener('dragleave', () => n.classList.remove('over'));
     n.addEventListener('drop', (e) => { n.classList.remove('over'); if (!dragging) return; e.preventDefault(); e.stopPropagation(); const ids = dragging; dragging = null; move(ids, idOf()); });
   }
-  const card = (x) => wire(h('div.dcard' + (x.kind === 'folder' ? '.isf' : ''), check(x), x.kind === 'folder'
-    ? [thumb(x), h('div.dname', h('b', { title: x.name }, x.name), h('small', meta(x)), where2(x), tag(x)), starBtn(x), more(x)]
+  // a folder is a card as big as the files: its pile of sheets above (they open up on hover), the name and what it holds under it
+  const card = (x) => wire(h('div.dcard' + (x.kind === 'folder' ? '.isfo' : ''), check(x), x.kind === 'folder'
+    ? [h('div.dthumb.fthumb', { style: `--fc:${kindOf(x).c}` }, thumb(x, true)), h('div.dinfo', h('div.dname', h('b', { title: x.name }, x.name), h('small', meta(x)), where2(x), tag(x)), starBtn(x), more(x))]
     : [h('div.dthumb', thumb(x, true), x.shared ? h('span.cglobe', { title: t('has_link') }, icon('link')) : null), h('div.dinfo', h('div.dname', h('b', { title: x.name }, x.name), h('small', meta(x)), where2(x), tag(x)), starBtn(x), more(x))]), x);
   const row = (x) => wire(h('div.drow', check(x), h('div.rname', thumb(x), h('div', h('b', { title: x.name }, x.name), where2(x) || h('small.rmeta', meta(x))), x.shared ? h('span.lnk', { title: t('has_link') }, icon('link')) : null, tag(x)),
     h('span.lc-m', when(where === 'trash' ? x.trashed : x.updated)), h('span.lc-s', x.kind === 'folder' ? (x.count ? bytes(x.size) : '—') : bytes(x.size)), h('span.ract', starBtn(x), more(x))), x);
 
   function menuOf(x) {
+    if (x.office) {
+      const o = x.office, name = NAMES[o.app] || o.app;
+      return x.kind === 'folder' ? [['folder-open', t('open'), () => open(x)], ['external', t('open_in', { app: name }), () => window.open(appUrl(o.app), '_blank', 'noopener')]]
+        : [['external', t('open_in', { app: name }), () => open(x)], { head: t('office_note', { app: name }) }];
+    }
     const app = x.app || appOf(x.name), k = kindOf(x);
     if (where === 'trash') return [['undo-2', t('restore'), () => restore([x.id])], '-', ['trash-2', t('delete_forever'), () => destroy([x.id]), { danger: true }]];
     // only what the level of this person allows (the owner can do everything)
@@ -488,7 +691,7 @@ export async function home(root, a, b) {
     return [
       x.kind === 'folder' ? ['folder-open', t('open'), () => go('#/f/' + x.id)] : app ? ['external', t('open_in', { app: NAMES[app] }), () => openInApp(x)] : ['eye', t('preview'), () => preview(x)],
       x.kind === 'file' && app ? ['eye', t('details'), () => preview(x)] : null,
-      x.kind === 'file' ? ['download', t('download'), () => download(x)] : null,
+      x.kind === 'file' ? ['download', t('download'), () => download(x)] : ['download', t('download_zip'), () => download(x)],
       ['message-circle', t('comments'), () => commentsDialog(x)],
       owner ? ['users', t('people'), () => peopleDialog(x)] : null,
       '-',
@@ -507,13 +710,40 @@ export async function home(root, a, b) {
   // ---------------------------------------------------------------- actions
 
   function open(x) {
+    // what an app keeps: its folders open here, its items in the app (a new tab, as the files of SavOffice)
+    if (x.office) {
+      if (x.kind === 'folder') return go('#/o/' + x.office.app + (x.office.folder ? '/' + encodeURIComponent(x.office.folder) : ''));
+      return window.open(appUrl(x.office.app, x.office.open), '_blank', 'noopener');
+    }
     if (where === 'trash') return preview(x);
     if (!can(x, 'read')) return toast(t('lv_view_t'), 'neutral');
     if (x.kind === 'folder') return go('#/f/' + x.id);
-    if (!openInApp(x)) preview(x);
+    preview(x); // every file opens its preview first; "Open in …", download and the rest are there
     x.opened = new Date().toISOString();
   }
-  const download = (x) => { const a = h('a', { href: fileUrl(x.id), download: x.name }); document.body.append(a); a.click(); a.remove(); };
+  // a file as it is; a folder as a ZIP made by the server (lib/zipstream.php), after asking whether it can be made
+  // a file as it is; a folder as a ZIP made by the server (lib/zipstream.php), after asking whether it can be made.
+  // quiet: no message for each one (downloadAll says it once)
+  const download = async (x, quiet = false) => {
+    let href = fileUrl(x.id), name = x.name;
+    if (x.kind === 'folder') {
+      try { await api('folder.zip', undefined, { id: x.id, check: 1 }); } catch (e) { toast((e.code === 'empty' ? t('zip_empty') : e.code === 'too_big' ? t('zip_too_big') : errText(e)) + ' (' + x.name + ')', 'danger'); return false; }
+      href = `api/?r=folder.zip&id=${encodeURIComponent(x.id)}`;
+      name = x.name + '.zip';
+      if (!quiet) toast(t('zip_started'), 'neutral');
+    }
+    const a = h('a', { href, download: name }); document.body.append(a); a.click(); a.remove();
+    return true;
+  };
+  /** Everything chosen: one download each (files as they are, folders as ZIP), a little apart so the browser lets them all start. */
+  const downloadAll = async (list) => {
+    if (list.length === 1) return download(list[0]);
+    toast(t('downloads_n', { n: list.length }), 'neutral', { duration: 6000 });
+    for (const [i, x] of list.entries()) {
+      if (i) await new Promise((r) => setTimeout(r, 900));
+      await download(x, true);
+    }
+  };
   async function newFolder(parent = here()) {
     const name = await ask(t('new_folder'), t('name'), t('untitled_folder'), t('create'));
     if (!name) return;
@@ -530,7 +760,7 @@ export async function home(root, a, b) {
     });
     if (!name) return;
     try {
-      const r = await upload(await blankFile(k, name), here());
+      const r = await upload(await blankFile(k, name), here(), { conflict: 'rename' });
       if (r.used !== undefined) setSpace(r.used, r.quota, r.parts);
       toast(t('created', { name: r.item.name }), 'success');
       if (win) win.location.href = `../${x.app}/?savdrive=${encodeURIComponent(r.item.id)}`;
@@ -665,16 +895,29 @@ export async function home(root, a, b) {
     const show = async () => {
       const f = files[i] || x, k = kindOf(f), app = f.app || appOf(f.name), src = fileUrl(f.id, true);
       d.setAttribute('label', f.name);
+      const moreB = where === 'trash' ? null : drop(h('sav-button', { icon: 'more-vertical', label: t('more'), appearance: 'outline', variant: 'neutral', square: true, size: 'sm' }), () => menuOf(f), { placement: 'top-end', label: f.name });
       put(info, h('small.muted', `${bytes(f.size)} · ${t('modified')} ${when(f.updated)}`), h('span.grow'),
         app && where !== 'trash' ? primary(t('open_in', { app: NAMES[app] }), { size: 'sm', icon: 'external', onclick: () => openInApp(f) }) : null,
-        btn(t('download'), { size: 'sm', icon: 'download', onclick: () => download(f) }));
-      if (k.k === 'image') put(stage, h('img.pvimg', { src, alt: f.name }));
+        btn(t('download'), { size: 'sm', icon: 'download', onclick: () => download(f) }),
+        can(f, 'delete') && where !== 'trash' ? btn(t('to_trash'), { size: 'sm', icon: 'trash-2', variant: 'danger', appearance: 'outline', onclick: () => { d.hide(); trash([f.id]); } }) : null, moreB);
+      if (k.k === 'image') {
+        // a skeleton until the picture has arrived (as in SavPhotos)
+        const spin = h('sav-skeleton.pvload', { shape: 'rect', 'aria-hidden': 'true' });
+        const im = h('img.pvimg', { src, alt: f.name, onload: () => spin.remove(), onerror: () => spin.remove() });
+        put(stage, im, spin);
+        if (im.complete) spin.remove();
+      }
       else if (k.k === 'pdf') put(stage, h('iframe.pvpdf', { src, title: f.name }));
       else if (k.k === 'video') put(stage, h('sav-video.pvvid', { src, label: f.name }));
       else if (k.k === 'audio') put(stage, h('div.pvaud', icon('music'), h('sav-audio', { src, label: f.name })));
-      else if (k.k === 'text' && f.size < 2e6) {
+      else if (k.k === 'text' || OFFICE_PREVIEW.includes(ext(f.name)) || isArchive(f.name)) {
+        // the first part of a text or JSON file; a document, spreadsheet or presentation of SavOffice drawn as it begins;
+        // what is inside an archive (its index, read by the server without extracting)
         put(stage, h('sav-spinner'));
-        try { const r = await fetch(src, { cache: 'no-store' }); put(stage, h('pre.pvtext', await r.text())); } catch { put(stage, empty(k.ic, f.name, t('err_network'))); }
+        try { const v = await contentView(f, true); put(stage, v || h('div.pvnone', appIcon(app, 72), h('b', f.name), h('p.muted', t('pv_app', { app: NAMES[app] })))); if (v && app) stage.append(h('p.pvnote.muted', t('pv_office', { app: NAMES[app] }))); } catch { put(stage, empty(k.ic, f.name, t('err_network'))); }
+      } else if ((f.mime || '').startsWith('image/')) {
+        // a picture the browser cannot show (HEIC…): the small picture of the server, if it could make one
+        put(stage, h('img.pvimg', { src: thumbUrl(f.id, f.updated), alt: f.name, onerror: () => put(stage, h('div.pvnone', h('span.tic.big', { style: `--fc:${k.c}` }, icon(k.ic)), h('b', f.name), h('p.muted', t('pv_none')))) }));
       } else put(stage, h('div.pvnone', app ? appIcon(app, 72) : h('span.tic.big', { style: `--fc:${k.c}` }, icon(k.ic)), h('b', f.name), h('p.muted', app ? t('pv_app', { app: NAMES[app] }) : t('pv_none'))));
     };
     const nav = (dir) => { if (files.length < 2) return; i = (i + dir + files.length) % files.length; show(); };

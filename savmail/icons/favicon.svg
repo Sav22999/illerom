@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <defs>
+        <linearGradient id="a" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#d2a33a"/>
+            <stop offset="1" stop-color="#8f6500"/>
+        </linearGradient>
+        <linearGradient id="b" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#5e4300"/>
+            <stop offset="1" stop-color="#2f2205"/>
+        </linearGradient>
+    </defs>
+    <!-- an S made of two pieces, as in the other apps of SavOffice: above, the @ of every address; below, the tray of the
+         inbox where the mail of all of them arrives, with a new message waiting in the yellow of the suite -->
+    <path d="M20.500 4H53a5 5 0 0 1 5 5v17.500a5 5 0 0 1-5 5H20.500A13.750 13.750 0 0 1 20.500 4z" fill="url(#a)"/>
+    <g transform="translate(25.600 6.150) scale(.97)" fill="none" stroke="#fff" stroke-width="2.700" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="4"/>
+        <path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8"/>
+    </g>
+    <path d="M43.500 60H11a5 5 0 0 1-5-5V37.500a5 5 0 0 1 5-5h32.500a13.750 13.750 0 0 1 0 27.500z" fill="url(#b)"/>
+    <path d="M6 37.500a5 5 0 0 1 5-5h3V60h-3a5 5 0 0 1-5-5z" fill="#000" fill-opacity=".25"/>
+    <g transform="translate(18.500 34.600) scale(.98)" fill="none" stroke="#fff" stroke-width="2.300" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5.450 5.110 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.450-6.890A2 2 0 0 0 16.760 4H7.240a2 2 0 0 0-1.790 1.110z" fill="#fff" fill-opacity=".14"/>
+        <path d="M22 12h-6l-2 3h-4l-2-3H2"/>
+    </g>
+    <circle cx="44.200" cy="38.600" r="5" fill="#ffd166" stroke="#2f2205" stroke-width="1.600"/>
+</svg>

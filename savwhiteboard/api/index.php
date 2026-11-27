@@ -54,6 +54,17 @@ function space_bytes(array $u): int
         + $q('SELECT COALESCE(SUM(bytes),0) FROM ' . t('wb_media') . ' WHERE user_id = ?');
 }
 
+/**
+ * What this app keeps for the person, listed in SavDrive (a folder of the app in My drive): its folders and its
+ * items with the address that opens them here ({@see savspace_catalog_save} in ../savdrive/lib/space.php).
+ */
+function office_catalog(array $u): array
+{
+    $all = function (string $sql, array $args = []) use ($u): array { $st = db()->prepare($sql); $st->execute($args ?: [$u['id']]); return $st->fetchAll(); };
+    return ['folders' => [], 'items' => array_map(fn($b) => [$b['bid'], $b['title'], null, (int)$b['bytes'], $b['updated_at'], '#/b/' . $b['bid']],
+        $all('SELECT bid, title, bytes, updated_at FROM ' . t('wb_boards') . ' WHERE user_id = ? AND trashed_at IS NULL ORDER BY updated_at DESC LIMIT 3000'))];
+}
+
 /** Whether the account $uid (the owner of what grows, also when someone else is writing) can keep $more bytes more. */
 function space_allows_id(int $uid, int $more): bool
 {
@@ -76,7 +87,7 @@ function writer(bool $unverifiedOk = false): array
     $u = require_user($unverifiedOk);
     require_csrf($u);
     // a write that would go beyond the space of SavOffice is refused; then what the app keeps is counted again
-    savspace_gate($u, SPACE_APP, (string)($GLOBALS['r'] ?? ''), fn() => space_bytes($u), fn() => fail('quota', 413));
+    savspace_gate($u, SPACE_APP, (string)($GLOBALS['r'] ?? ''), fn() => space_bytes($u), fn() => fail('quota', 413), fn() => office_catalog($u));
     return $u;
 }
 
@@ -84,7 +95,7 @@ function reader(): array
 {
     only('GET');
     $u = require_user();
-    savspace_touch($u, SPACE_APP, fn() => space_bytes($u));
+    savspace_touch($u, SPACE_APP, fn() => space_bytes($u), fn() => office_catalog($u));
     return $u;
 }
 

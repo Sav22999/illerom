@@ -22,6 +22,7 @@ const SAVOFFICE = [
     'savcal' => ['savcalendar', 'application/vnd.savcalendar.calendar+json'],
     'savsch' => ['savschedules', 'application/vnd.savschedules.schedule+json'],
     'savnew' => ['savnewsletters', 'application/vnd.savnewsletters.newsletter+json'],
+    'savspl' => ['savsplits', 'application/vnd.savsplits.group+json'],
 ];
 
 /** Types a browser may show inside the page (everything else is always downloaded). */
@@ -192,7 +193,7 @@ function delete_nodes_forever(int $uid, array $ids): int
     $st->execute([$uid]);
     $keys = $st->fetchAll(PDO::FETCH_COLUMN);
     db()->prepare('DELETE FROM ' . t('nodes') . " WHERE user_id = ? AND id IN (" . implode(',', $ids) . ')')->execute([$uid]);
-    foreach ($keys as $k) @unlink(blob_path($uid, (string)$k));
+    foreach ($keys as $k) { @unlink(blob_path($uid, (string)$k)); @unlink(blob_path($uid, (string)$k) . '.t.jpg'); @unlink(blob_path($uid, (string)$k) . '.a.json'); foreach (glob(blob_path($uid, (string)$k) . '.p*') ?: [] as $x) @unlink($x); }
     return count($all);
 }
 
@@ -280,3 +281,84 @@ function human_bytes(int $b): string
     if ($b >= GB) return rtrim(rtrim(number_format($b / GB, 1, '.', ''), '0'), '.') . ' GB';
     return max(1, (int)round($b / 1048576)) . ' MB';
 }
+
+// ---------- small pictures (the cards of the grid) and the details of a picture
+
+/**
+ * The small picture of an image file (480 px at most, JPEG), made the first time with GD and kept next to the file as
+ * <bkey>.t.jpg. Null when GD cannot read it (HEIC, TIFF, RAW…: the card shows the kind of file instead).
+ */
+function thumb_path(array $n): ?string
+{
+    $src = blob_path((int)$n['user_id'], (string)$n['bkey']);
+    $out = $src . '.t.jpg';
+    if (is_file($out)) return $out;
+    if (!function_exists('imagecreatefromstring') || !is_file($src) || (int)$n['size'] > 40 * 1048576) return null;
+    $info = @getimagesize($src);
+    if (!$info || $info[0] * $info[1] > 80000000) return null; // too large to open in memory
+    $im = @imagecreatefromstring((string)file_get_contents($src));
+    if (!$im) return null;
+    // a photo taken sideways: as EXIF says
+    if (function_exists('exif_read_data') && ($info[2] ?? 0) === IMAGETYPE_JPEG) {
+        $o = (int)(@exif_read_data($src)['Orientation'] ?? 1);
+        if ($o === 3) $im = imagerotate($im, 180, 0); elseif ($o === 6) $im = imagerotate($im, -90, 0); elseif ($o === 8) $im = imagerotate($im, 90, 0);
+    }
+    $w = imagesx($im); $h = imagesy($im); $k = min(1, 480 / max($w, $h));
+    $tw = max(1, (int)round($w * $k)); $th = max(1, (int)round($h * $k));
+    $t = imagecreatetruecolor($tw, $th);
+    imagefill($t, 0, 0, imagecolorallocate($t, 255, 255, 255)); // transparent pictures on white
+    imagecopyresampled($t, $im, 0, 0, 0, 0, $tw, $th, $w, $h);
+    $ok = @imagejpeg($t, $out, 82);
+    unset($im, $t); // freed (imagedestroy has done nothing since PHP 8)
+    return $ok ? $out : null;
+}
+
+/**
+ * A picture inside a file of SavOffice (file.part) at most $w pixels wide, made once with GD and kept next to the file
+ * (<bkey>.p<w>-<hash>, gone with it). JPEG for photos, PNG for pictures that may be transparent. Null: GD cannot.
+ */
+function part_small(array $n, string $part, string $data, int $w): ?array
+{
+    $out = blob_path((int)$n['user_id'], (string)$n['bkey']) . '.p' . $w . '-' . substr(sha1($part), 0, 12);
+    foreach (['jpg' => 'image/jpeg', 'png' => 'image/png'] as $e => $type) if (is_file("$out.$e")) return ["$out.$e", $type];
+    if (!function_exists('imagecreatefromstring') || strlen($data) > 40 * 1048576) return null;
+    $info = @getimagesizefromstring($data);
+    if (!$info || $info[0] * $info[1] > 80000000) return null;
+    if ($info[0] <= $w) return null; // small already: as it is
+    $im = @imagecreatefromstring($data);
+    if (!$im) return null;
+    $k = $w / $info[0];
+    $t = imagecreatetruecolor($w, max(1, (int)round($info[1] * $k)));
+    $alpha = in_array($info[2], [IMAGETYPE_PNG, IMAGETYPE_GIF, IMAGETYPE_WEBP], true);
+    if ($alpha) { imagealphablending($t, false); imagesavealpha($t, true); imagefill($t, 0, 0, imagecolorallocatealpha($t, 0, 0, 0, 127)); }
+    imagecopyresampled($t, $im, 0, 0, 0, 0, imagesx($t), imagesy($t), $info[0], $info[1]);
+    $ok = $alpha ? @imagepng($t, "$out.png", 6) : @imagejpeg($t, "$out.jpg", 84);
+    unset($im, $t);
+    return $ok ? ($alpha ? ["$out.png", 'image/png'] : ["$out.jpg", 'image/jpeg']) : null;
+}
+
+/** What a picture says about itself: size in pixels, when and with what it was taken, where (EXIF GPS). */
+function image_details(array $n): array
+{
+    $src = blob_path((int)$n['user_id'], (string)$n['bkey']);
+    $out = [];
+    $info = @getimagesize($src);
+    if ($info) [$out['width'], $out['height']] = [(int)$info[0], (int)$info[1]];
+    if (!function_exists('exif_read_data')) return $out;
+    $x = @exif_read_data($src, null, true);
+    if (!is_array($x)) return $out;
+    $exif = ($x['EXIF'] ?? []) + ($x['IFD0'] ?? []);
+    if (!empty($exif['DateTimeOriginal']) && preg_match('/^(\d{4}):(\d\d):(\d\d) (\d\d):(\d\d)/', (string)$exif['DateTimeOriginal'], $m)) $out['taken'] = "$m[1]-$m[2]-$m[3] $m[4]:$m[5]";
+    $cam = trim(trim((string)($exif['Make'] ?? '')) . ' ' . trim((string)($exif['Model'] ?? '')));
+    if ($cam !== '') $out['camera'] = mb_substr($cam, 0, 80);
+    $g = $x['GPS'] ?? [];
+    $deg = function ($v) { if (!is_array($v) || count($v) < 3) return null; $f = function ($r) { $p = explode('/', (string)$r); return count($p) === 2 && (float)$p[1] ? (float)$p[0] / (float)$p[1] : (float)$p[0]; }; return $f($v[0]) + $f($v[1]) / 60 + $f($v[2]) / 3600; };
+    $lat = $deg($g['GPSLatitude'] ?? null); $lon = $deg($g['GPSLongitude'] ?? null);
+    if ($lat !== null && $lon !== null && ($lat || $lon)) {
+        if (($g['GPSLatitudeRef'] ?? 'N') === 'S') $lat = -$lat;
+        if (($g['GPSLongitudeRef'] ?? 'E') === 'W') $lon = -$lon;
+        $out['lat'] = round($lat, 6); $out['lon'] = round($lon, 6);
+    }
+    return $out;
+}
+

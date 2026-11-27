@@ -3,9 +3,9 @@
  * from the network (nothing of an account is kept in the browser).
  *   pages, scripts and styles: network first, the kept copy when offline · icons: kept copy first
  */
-const CACHE = 'savdrive-7';
+const CACHE = 'savdrive-16';
 const SHELL = ['./', 'manifest.webmanifest', 'icons/favicon.svg', 'icons/icon-192.png', '../assets/sav/sav.css', '../assets/sav/sav.js', '../assets/savoffice/savoffice.js', '../identity/identity.css?v=2', '../identity/identity.js?v=3',
-    ...['account.js', 'admin.js', 'app.css', 'app.js', 'drive.js', 'i18n.js', 'icons.js', 'office.js', 'options.js', 'store.js', 'ui.js', 'version.js', 'zip.js'].map((f) => 'assets/' + f)];
+    ...['account.js', 'admin.js', 'app.css', 'app.js', 'drive.js', 'i18n.js', 'icons.js', 'office.js', 'options.js', 'preview.js', 'store.js', 'ui.js', 'version.js', 'zip.js'].map((f) => 'assets/' + f)];
 
 self.addEventListener('install', (e) => e.waitUntil(caches.open(CACHE).then((c) => Promise.allSettled(SHELL.map((u) => c.add(u)))).then(() => self.skipWaiting())));
 self.addEventListener('activate', (e) => e.waitUntil(caches.keys().then((k) => Promise.all(k.filter((x) => x.startsWith('savdrive-') && x !== CACHE).map((x) => caches.delete(x)))).then(() => self.clients.claim())));

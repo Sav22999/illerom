@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <defs>
+        <linearGradient id="a" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#62d36a"/>
+            <stop offset="1" stop-color="#1a7f37"/>
+        </linearGradient>
+        <linearGradient id="b" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#166b2a"/>
+            <stop offset="1" stop-color="#083d14"/>
+        </linearGradient>
+    </defs>
+    <!-- an S made of two pieces, as in the other apps of SavOffice: above, a coin split in three parts, one of them
+         taken out in the yellow of the suite, and the receipt with its torn edge; below, the two arrows of the
+         paybacks, going and coming back -->
+    <path d="M20.500 4H53a5 5 0 0 1 5 5v17.500a5 5 0 0 1-5 5H20.500A13.750 13.750 0 0 1 20.500 4z" fill="url(#a)"/>
+    <g fill="#fff" stroke="#2ea44a" stroke-width="1.300" stroke-linejoin="round">
+        <path d="M20.500 17.750L20.500 9.250A8.500 8.500 0 0 1 27.861 22z"/>
+        <path d="M20.500 17.750L27.861 22A8.500 8.500 0 0 1 13.139 22z"/>
+    </g>
+    <path d="M18.700 16.700L11.340 20.950A8.500 8.500 0 0 1 18.700 8.200z" fill="#ffd166"/>
+    <path d="M35.500 8.500h16v15.200l-2.670 2-2.670-2-2.660 2-2.670-2-2.660 2-2.670-2z" fill="#fff" fill-opacity=".92"/>
+    <path d="M39 13.600h9M39 18.400h6" stroke="#249a42" stroke-width="2.200" stroke-linecap="round"/>
+    <path d="M43.500 60H11a5 5 0 0 1-5-5V37.500a5 5 0 0 1 5-5h32.500a13.750 13.750 0 0 1 0 27.500z" fill="url(#b)"/>
+    <g fill="none" stroke-width="3.400" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M13 41.200h27M35 36.400l5 4.800-5 4.800" stroke="#ffd166"/>
+        <path d="M44 51.300H17M22 46.500l-5 4.800 5 4.800" stroke="#fff" stroke-opacity=".88"/>
+    </g>
+</svg>

@@ -236,7 +236,7 @@ function e(string $s): string
  * The session cookie, also on the paths of SavCalendar and SavWhiteboard: the apps share accounts and session (sign in or
  * out in one, it is done in all). They set the same cookie on every path too (savcalendar/lib/bootstrap.php, savwhiteboard/…, savtasks/…).
  */
-const SHARED_WITH = ['savcalendar', 'savwhiteboard', 'savtasks', 'savnotes', 'savforms'];
+const SHARED_WITH = ['savcalendar', 'savwhiteboard', 'savtasks', 'savnotes', 'savforms', 'savsplits', 'savpodcasts', 'savmail'];
 
 function set_auth_cookie(string $value, int $expires): void
 {

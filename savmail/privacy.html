@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="it">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>Privacy · SavMail</title>
+    <meta content="#8f6500" name="theme-color">
+    <link href="icons/favicon.svg" rel="icon" type="image/svg+xml">
+    <style>
+        :root { color-scheme: light dark; }
+        body { margin: 0; background: light-dark(#fbf6f1, #17120e); color: light-dark(#2a1a0e, #f6ece3); font: 1rem/1.65 Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+        main { max-width: 44rem; margin: 0 auto; padding: 1.5rem 1.25rem 4rem; }
+        h1 { font-size: 1.9rem; letter-spacing: -.02em; line-height: 1.2; }
+        h2 { font-size: 1.1rem; margin: 1.8rem 0 .4rem; }
+        a { color: light-dark(#8f6500, #e9bf5c); }
+        .note { padding: .8rem 1rem; border-left: 4px solid #ffd166; background: light-dark(#fff, #221a14); }
+        .en { margin-top: 3.5rem; border-top: 1px solid light-dark(#efe1d3, #3b2f25); }
+        li { margin: .3rem 0; }
+    </style>
+</head>
+<body>
+<main>
+    <p><a href="./">← SavMail</a></p>
+    <h1>Informativa sulla privacy</h1>
+    <p>SavMail è un’app web di posta elettronica di Saverio Morelli, parte di SavOffice: mostra e invia la posta delle caselle che vi colleghi. Questa è l’informativa sul trattamento dei dati personali ai sensi del Regolamento (UE) 2016/679 (GDPR). Ultimo aggiornamento: 27 novembre 2026.</p>
+    <p class="note"><strong>Valore legale: solo il testo in italiano.</strong> La <a href="#en">versione in inglese</a> è una copia di cortesia, senza valore legale: in caso di differenze o dubbi prevale sempre l’italiano.</p>
+    <h2>Titolare del trattamento</h2>
+    <p>Saverio Morelli — <a href="https://www.saveriomorelli.com">www.saveriomorelli.com</a>. Per qualsiasi richiesta: <a href="https://www.saveriomorelli.com/contact-me/email/">modulo di contatto</a>.</p>
+    <h2>Un account con le altre app di SavOffice</h2>
+    <p>SavMail usa lo stesso account e la stessa sessione di <a href="../savschedules/">SavSchedules</a>, SavCalendar, SavNotes e delle altre app collegate: entrare (o uscire) in una vale anche per le altre. Per l’account vale anche l’<a href="../savschedules/privacy.html">informativa di SavSchedules</a>.</p>
+    <h2>Quali dati trattiamo</h2>
+    <ul>
+        <li><strong>Account</strong>: nome, email (unica e non modificabile), password (conservata solo come hash) oppure l’identificativo del tuo SavAccount, lingua.</li>
+        <li><strong>Caselle collegate</strong>: indirizzo, nome del mittente, server di posta, nome utente, password (o, per Outlook, i token di Microsoft), firma, colore. Sono conservati <strong>solo cifrati</strong>, come spiegato sotto.</li>
+        <li><strong>Messaggi</strong>: SavMail li legge dal server del tuo provider quando li apri e li invia tramite quel server quando scrivi. <strong>Non li conserva</strong>: passano dal nostro server solo il tempo di mostrarli o inviarli, e non vengono registrati.</li>
+        <li><strong>Dispositivi</strong>: per ogni browser dove SavMail è aperta, il tipo di browser e di sistema (per esempio «Firefox · macOS») e la data dell’ultimo uso, per mostrarteli nelle impostazioni.</li>
+        <li><strong>Aspetto</strong>: tema, densità dell’elenco, scelte sulle immagini (compresi gli indirizzi dei mittenti di cui hai scelto di mostrare sempre le immagini).</li>
+        <li><strong>Sicurezza</strong>: un cookie tecnico di sessione, un cookie tecnico per dispositivo con la sua parte della chiave (vedi sotto) e, contro i tentativi ripetuti, l’indirizzo IP, cancellato entro 48 ore.</li>
+    </ul>
+    <p>Nessuna pubblicità, nessuna profilazione, nessuna statistica di terzi. Non leggiamo, analizziamo né usiamo i tuoi messaggi per altri scopi.</p>
+    <h2>Come sono protette le caselle</h2>
+    <p>Le impostazioni delle caselle (password comprese) sono cifrate con una chiave propria del tuo account (XChaCha20-Poly1305). Questa chiave non viene mai scritta in chiaro: è a sua volta chiusa con un segreto che vive solo nel cookie di ciascuno dei tuoi dispositivi, oppure con la password di una delle tue caselle o con il tuo codice di recupero (tramite Argon2id). Chi ottenesse una copia del database, dei backup o dei file del server non potrebbe leggere le tue caselle. Mentre usi SavMail il server deve però usare la password per collegarsi al tuo provider: come per qualsiasi app di posta web, chi controllasse il server in quel momento potrebbe vedere ciò che transita.</p>
+    <h2>I provider di posta</h2>
+    <p>SavMail si collega ai server che indichi (per esempio Google, Microsoft, Yahoo, Apple, Aruba) con connessioni cifrate: ciascun provider tratta la tua posta secondo la propria informativa. Per Outlook l’accesso avviene sulla pagina di Microsoft, che ci consegna dei token e non la password. Per proporre le impostazioni di un indirizzo, il suo dominio (non l’indirizzo completo) può essere chiesto al database pubblico di configurazioni di Thunderbird (autoconfig.thunderbird.net, Mozilla) e ai DNS.</p>
+    <h2>Immagini nei messaggi</h2>
+    <p>Le immagini caricate da internet possono dire al mittente quando e dove leggi un messaggio: per questo restano bloccate finché non scegli di mostrarle. Quando le mostri, il tuo browser le scarica direttamente dai server indicati nel messaggio.</p>
+    <h2>Email e accesso con SavAccount</h2>
+    <p>Mandiamo email solo per l’account (conferma, nuova password). Se scegli SavAccount riceviamo nome, email confermata e un identificativo; il suo pulsante si carica da <a href="https://www.savaccount.eu">savaccount.eu</a>, anch’esso di Saverio Morelli, che riceve il tuo indirizzo IP. Le bandiere della scelta della lingua si caricano da savcomponents.com, anch’esso di Saverio Morelli.</p>
+    <h2>Basi giuridiche e conservazione</h2>
+    <p>Fornire il servizio richiesto (art. 6.1.b) e proteggerlo da abusi (art. 6.1.f). Le impostazioni cifrate restano finché non rimuovi la casella o l’account; rimuovendo l’ultima casella non resta nulla. I messaggi non vengono conservati. Il sito è ospitato nell’Unione europea.</p>
+    <h2>Chi risponde dei contenuti</h2>
+    <p>I messaggi che invii partono dalla tua casella e sono sotto la tua responsabilità, compresi i dati di altre persone che contengono. Saverio Morelli fornisce lo strumento e non risponde di ciò che gli utenti fanno con il servizio. I dettagli sono nei <a href="terms.html">termini d’uso</a>.</p>
+    <h2>I tuoi diritti</h2>
+    <p>Accesso, rettifica, cancellazione, limitazione, opposizione e portabilità: dalle Impostazioni puoi scaricare i tuoi dati (mai le password), rimuovere le caselle, bloccare i dispositivi ed eliminare l’account (lo stesso delle altre app: si elimina in tutte), o scriverci. Puoi presentare reclamo al <a href="https://www.garanteprivacy.it">Garante per la protezione dei dati personali</a>.</p>
+    <h2 data-gdpr="common">Altre informazioni (artt. 13 e 14 GDPR)</h2>
+    <ul>
+        <li><strong>Fornitori</strong>: il fornitore dell’hosting, Aruba S.p.A. (Italia), agisce come responsabile del trattamento (art. 28 GDPR); gli altri soggetti eventualmente coinvolti sono indicati sopra. I dati non vengono venduti né usati per pubblicità.</li>
+        <li><strong>Trasferimenti fuori dall’UE</strong>: i dati restano nell’Unione europea.</li>
+        <li><strong>Obbligo di fornire i dati</strong>: i dati dell’account sono necessari per usare il servizio; senza, l’account non si può creare. Gli altri dati sono facoltativi.</li>
+        <li><strong>Decisioni automatizzate</strong>: nessuna decisione basata unicamente su un trattamento automatizzato, profilazione compresa (art. 22 GDPR).</li>
+        <li><strong>Consenso</strong>: dove un trattamento si basa sul tuo consenso (per esempio le notifiche), puoi revocarlo in qualsiasi momento, senza effetti su quanto fatto prima.</li>
+        <li><strong>Età</strong>: per creare un account servono almeno 14 anni; sotto, serve il consenso di chi esercita la responsabilità genitoriale (art. 8 GDPR e art. 2-quinquies del Codice privacy, D.Lgs. 196/2003).</li>
+        <li><strong>Cookie e memoria locale</strong>: solo quelli tecnici, strettamente necessari al funzionamento, che non richiedono consenso (art. 122 del Codice privacy; Linee guida del Garante sui cookie del 10 giugno 2021); nessun cookie di profilazione, pubblicitario o statistico di terze parti, salvo quanto indicato sopra per i servizi esterni.</li>
+        <li><strong>Diritti e reclamo</strong>: accesso, rettifica, cancellazione, limitazione, portabilità e opposizione (artt. 15–22 GDPR), dal <a href="https://www.saveriomorelli.com/contact-me/">modulo di contatto</a>; puoi presentare reclamo al <a href="https://www.garanteprivacy.it">Garante per la protezione dei dati personali</a> o rivolgerti all’autorità giudiziaria.</li>
+        <li><strong>Termini e segnalazioni</strong>: valgono i <a href="https://www.illerom.eu/it/terms/">termini d’uso di Illerom</a>, con le regole per segnalare contenuti illeciti e contestare le decisioni (Digital Services Act, Regolamento UE 2022/2065).</li>
+    </ul>
+        <section class="en" id="en" lang="en">
+        <h1>Privacy notice (courtesy copy)</h1>
+        <p class="note"><strong>Courtesy copy.</strong> Only the Italian text above is legally binding; this English version has no legal value and, if the two differ, the Italian text always prevails.</p>
+        <p>SavMail is a web mail app by Saverio Morelli, part of SavOffice: it shows and sends the mail of the mailboxes you connect. Last updated: 27 November 2026. Controller: Saverio Morelli — <a href="https://www.saveriomorelli.com">www.saveriomorelli.com</a>, <a href="https://www.saveriomorelli.com/contact-me/email/">contact form</a>.</p>
+        <h2>One account with the other apps of SavOffice</h2>
+        <p>SavMail uses the same account and session as SavSchedules, SavCalendar, SavNotes and the other linked apps; the <a href="../savschedules/privacy.html">privacy notice of SavSchedules</a> also applies to the account.</p>
+        <h2>What we process</h2>
+        <ul>
+            <li><strong>Account</strong>: name, email (unique, cannot be changed), password (stored only as a hash) or your SavAccount identifier, language.</li>
+            <li><strong>Connected mailboxes</strong>: address, sender name, mail servers, user name, password (or, for Outlook, Microsoft tokens), signature, colour — kept <strong>only encrypted</strong>, as explained below.</li>
+            <li><strong>Messages</strong>: read from your provider’s server when you open them and sent through it when you write. <strong>They are not kept</strong>: they pass through our server only while they are shown or sent, and are not logged.</li>
+            <li><strong>Devices</strong>: for each browser where SavMail is open, the kind of browser and system and the date of last use.</li>
+            <li><strong>Look</strong>: theme, density, picture choices (including the senders whose pictures you chose to always show).</li>
+            <li><strong>Security</strong>: a technical session cookie, a technical cookie per device holding its part of the key, and, against repeated attempts, the IP address, deleted within 48 hours.</li>
+        </ul>
+        <p>No ads, no profiling, no third-party analytics. We do not read, analyse or use your messages for anything else.</p>
+        <h2>How the mailboxes are protected</h2>
+        <p>The settings of your mailboxes (passwords included) are encrypted with a key of your account (XChaCha20-Poly1305) that is never written in clear: it is locked with a secret that lives only in the cookie of each of your devices, or with the password of one of your mailboxes or your recovery code (through Argon2id). A copy of the database, the backups or the server’s files is not enough to read them. While you use SavMail the server has to use the password to reach your provider: as with any web mail app, whoever controlled the server at that moment could see what passes through.</p>
+        <h2>Mail providers, pictures, SavAccount</h2>
+        <p>SavMail connects over encrypted connections to the servers you choose; each provider handles your mail under its own policy. For Outlook you sign in on Microsoft’s page, which gives us tokens, not your password. To suggest the settings of an address, its domain (not the full address) may be looked up in Thunderbird’s public configuration database (Mozilla) and in the DNS. Pictures from the internet stay blocked until you choose to show them; then your browser downloads them directly. We send emails only for the account. If you choose SavAccount we receive name, confirmed email and an identifier; its button loads from savaccount.eu, also by Saverio Morelli.</p>
+        <h2>Legal bases, retention, your rights</h2>
+        <p>Providing the service you asked for (art. 6.1.b) and protecting it from abuse (art. 6.1.f). Encrypted settings stay until you remove the mailbox or the account; removing the last mailbox leaves nothing. Messages are not kept. The site is hosted in the European Union. From the Settings you can download your data (never the passwords), remove mailboxes, lock devices and delete the account, or write to us; you can lodge a complaint with the Italian <a href="https://www.garanteprivacy.it">Garante</a>.</p>
+        <h2 data-gdpr="common">More information (arts. 13 and 14 GDPR)</h2>
+        <ul>
+            <li><strong>Providers</strong>: the hosting provider, Aruba S.p.A. (Italy), acts as processor (art. 28 GDPR); any other party involved is listed above. The data is never sold or used for advertising.</li>
+            <li><strong>Transfers outside the EU</strong>: the data stays in the European Union.</li>
+            <li><strong>Whether you must give the data</strong>: the account data is needed to use the service; without it the account cannot be created. Any other data is optional.</li>
+            <li><strong>Automated decisions</strong>: no decision based solely on automated processing, profiling included (art. 22 GDPR).</li>
+            <li><strong>Consent</strong>: where processing relies on your consent (notifications, for example), you can withdraw it at any time, without affecting what was done before.</li>
+            <li><strong>Age</strong>: you must be at least 14 to create an account; below that age, the consent of whoever holds parental responsibility is needed (art. 8 GDPR and art. 2-quinquies of the Italian Privacy Code, Legislative Decree 196/2003).</li>
+            <li><strong>Cookies and local storage</strong>: only technical ones, strictly necessary for the service, which need no consent (art. 122 of the Italian Privacy Code; the Garante’s cookie guidelines of 10 June 2021); no profiling, advertising or third-party analytics cookies, apart from what is said above about external services.</li>
+            <li><strong>Rights and complaints</strong>: access, rectification, erasure, restriction, portability and objection (arts. 15–22 GDPR), with the <a href="https://www.saveriomorelli.com/contact-me/">contact form</a>; you can complain to the Italian data protection authority, the <a href="https://www.garanteprivacy.it">Garante per la protezione dei dati personali</a>, or go to court.</li>
+            <li><strong>Terms and reports</strong>: the <a href="https://www.illerom.eu/en/terms/">terms of use of Illerom</a> apply, with the rules to report illegal content and challenge decisions (Digital Services Act, Regulation (EU) 2022/2065).</li>
+        </ul>
+    </section>
+</main>
+</body>
+</html>

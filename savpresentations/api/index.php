@@ -58,6 +58,20 @@ function space_bytes(array $u): int
         + $q('SELECT COALESCE(SUM(bytes),0) FROM ' . t('fonts') . ' WHERE user_id = ?');
 }
 
+/**
+ * What this app keeps for the person, listed in SavDrive (a folder of the app in My drive): its folders and its
+ * items with the address that opens them here ({@see savspace_catalog_save} in ../savdrive/lib/space.php).
+ */
+function office_catalog(array $u): array
+{
+    $all = function (string $sql, array $args = []) use ($u): array { $st = db()->prepare($sql); $st->execute($args ?: [$u['id']]); return $st->fetchAll(); };
+    $folders = array_map(fn($f) => [(string)$f['id'], $f['name'], $f['parent_id'] !== null ? (string)$f['parent_id'] : null], $all('SELECT id, name, parent_id FROM ' . t('folders') . ' WHERE user_id = ? ORDER BY name'));
+    $items = array_map(fn($d) => [$d['uid'], $d['title'], $d['folder_id'] !== null ? (string)$d['folder_id'] : null, (int)$d['bytes'], $d['updated_at'], '?d=' . $d['uid']],
+        $all('SELECT d.uid, d.title, d.folder_id, COALESCE(LENGTH(d.meta),0) + COALESCE(LENGTH(d.thumb),0) + (SELECT COALESCE(SUM(LENGTH(s.data)),0) FROM ' . t('slides') . ' s WHERE s.deck_id = d.id) bytes, d.updated_at
+            FROM ' . t('decks') . ' d WHERE d.owner_id = ? AND d.trashed_at IS NULL AND d.is_template = 0 ORDER BY d.updated_at DESC LIMIT 3000'));
+    return ['folders' => $folders, 'items' => $items];
+}
+
 /** Whether the account $uid (the owner of what grows, also when someone else is writing) can keep $more bytes more. */
 function space_allows_id(int $uid, int $more): bool
 {
@@ -80,7 +94,7 @@ function writer(bool $unverifiedOk = false): array
     $u = require_user($unverifiedOk);
     require_csrf($u);
     // a write that would go beyond the space of SavOffice is refused; then what the app keeps is counted again
-    savspace_gate($u, SPACE_APP, (string)($GLOBALS['r'] ?? ''), fn() => space_bytes($u), fn() => fail('quota', 413));
+    savspace_gate($u, SPACE_APP, (string)($GLOBALS['r'] ?? ''), fn() => space_bytes($u), fn() => fail('quota', 413), fn() => office_catalog($u));
     return $u;
 }
 
@@ -88,7 +102,7 @@ function reader(): array
 {
     only('GET');
     $u = require_user();
-    savspace_touch($u, SPACE_APP, fn() => space_bytes($u));
+    savspace_touch($u, SPACE_APP, fn() => space_bytes($u), fn() => office_catalog($u));
     return $u;
 }
 

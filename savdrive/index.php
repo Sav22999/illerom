@@ -14,7 +14,7 @@ $v = static fn(string $f): string => $f . '?v=' . (@filemtime(__DIR__ . '/' . $f
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
     <title>SavDrive</title>
-    <meta name="description" content="A free, open drive for your files: 2 GB for each account, folders, previews, links to share and the files of SavOffice.">
+    <meta name="description" content="A free, open drive for your files: 500 MB for each account, folders, previews, links to share and the files of SavOffice.">
     <meta name="theme-color" content="#0a6fb0">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">

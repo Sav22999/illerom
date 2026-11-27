@@ -34,7 +34,7 @@ $shot = function (string $slug, string $file): string {
 
 // slug => [colour, screenshot of a computer, of a phone, what sets it apart (it, en)]
 $apps = [
-    'savdrive' => ['#0a6fb0', 'd1.jpg', '1.jpg', 'Ogni account ha 2 GB, e i documenti, i fogli di calcolo e le presentazioni di SavOffice nascono qui e si aprono nella loro app con un tocco.', 'Every account has 2 GB, and the documents, spreadsheets and presentations of SavOffice are born here and open in their app with one press.'],
+    'savdrive' => ['#0a6fb0', 'd1.jpg', '1.jpg', 'Ogni account ha 500 MB, e i documenti, i fogli di calcolo e le presentazioni di SavOffice nascono qui e si aprono nella loro app con un tocco.', 'Every account has 500 MB, and the documents, spreadsheets and presentations of SavOffice are born here and open in their app with one press.'],
     'savdocuments' => ['#0f6e56', 'd2.jpg', '2.jpg', 'Si scrive anche senza connessione: le modifiche partono appena torna la rete. E apre e salva i file Word.', 'You can write with no connection: changes go out as soon as the network is back. And it opens and saves Word files.'],
     'savspreadsheets' => ['#4d7c0f', 'd2.jpg', '2.jpg', 'Le formule si scrivono come in ogni foglio di calcolo, e i file di Excel e LibreOffice si aprono con le loro formule e il loro aspetto. Chi lavora con te vede su quale cella sei.', 'Formulas are written as in every spreadsheet, and Excel and LibreOffice files open with their formulas and their look. Whoever works with you sees which cell you are on.'],
     'savbooks' => ['#8a2346', 'd1.jpg', '2.jpg', 'Parte da un documento di SavDocuments o da un file .savdoc e lo trasforma in libro; la copertina si disegna da sola, e l’EPUB è pronto per i negozi.', 'Starts from a SavDocuments document or a .savdoc file and turns it into a book; the cover draws itself, and the EPUB is ready for the shops.'],
@@ -250,14 +250,14 @@ $graph = $app
 
         /* together */
         .together { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2.5rem; align-items: center; }
-        /* the hub: a ring of 4 × 4 around SavCalendar (2 × 2 in the middle), 3 columns on a phone */
+        /* the hub: a ring of 4 × 4 around SavAccount (2 × 2 in the middle), 3 columns on a phone */
         .hub { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .6rem; padding: 1.2rem; border-radius: 28px; background: var(--card); border: 1px solid var(--line); }
         .hub .n { display: grid; justify-items: center; align-content: center; gap: .25rem; min-width: 0; text-align: center; padding: .55rem .2rem; }
         .hub .n img { width: 46px; height: 46px; border-radius: 11px; }
         .hub .n b { color: var(--text); font-size: .8rem; letter-spacing: -.01em; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .hub .n small { font-size: .74rem; color: var(--muted); line-height: 1.25; }
         .hub .short { display: none; }
-        .hub .core { grid-column: 2 / 4; grid-row: 2 / 4; background: color-mix(in oklab, #c93a2f 9%, var(--card)); border-radius: 22px; border: 1px dashed color-mix(in oklab, #c93a2f 45%, transparent); }
+        .hub .core { grid-column: 2 / 4; grid-row: 2 / 4; background: color-mix(in oklab, #66cbff 12%, var(--card)); border-radius: 22px; border: 1px dashed color-mix(in oklab, #3a9fd6 55%, transparent); }
         .hub .core img { width: 72px; height: 72px; } .hub .core b { font-size: 1rem; } .hub .core small { font-size: .85rem; }
         @media (max-width: 560px) { .hub { grid-template-columns: repeat(3, minmax(0, 1fr)); padding: .9rem; } .hub .core { grid-column: 1 / -1; grid-row: 2; padding: 1rem; } .hub .full { display: none; } .hub .short { display: inline; } .hub .n b { white-space: normal; line-height: 1.2; } }
         .flows { list-style: none; padding: 0; margin: 1.4rem 0 0; display: grid; gap: .7rem; }
@@ -447,16 +447,15 @@ $graph = $app
                         <li><span class="ic"><?= $ico('savnewsletters', 26) ?><span>→</span><?= $ico('savcalendar', 26) ?></span><span><?= $L('Le newsletter programmate si vedono nel giorno in cui partiranno.', 'Planned newsletters show on the day they will go out.') ?></span></li>
                     </ul>
                 </div>
-                <?php // SavCalendar in the middle, where the dates of the others meet; the other apps all around, in alphabetical order, and SavAccount, the one sign-in
-                $hub = ['savbooks' => ['EPUB · PDF', 'EPUB · PDF'], 'savdocuments' => ['.docx · PDF', '.docx · PDF'], 'savdrive' => ['i tuoi file', 'your files'], 'savforms' => ['chiusure', 'deadlines'],
+                <?php // SavAccount in the middle, the one sign-in of all of them; the twelve apps all around, in alphabetical order
+                $hub = ['savbooks' => ['EPUB · PDF', 'EPUB · PDF'], 'savcalendar' => ['date e scadenze', 'dates and deadlines'], 'savdocuments' => ['.docx · PDF', '.docx · PDF'], 'savdrive' => ['i tuoi file', 'your files'], 'savforms' => ['chiusure', 'deadlines'],
                     'savnewsletters' => ['invii', 'sendings'], 'savnotes' => ['PDF · PNG', 'PDF · PNG'], 'savpresentations' => ['.pptx · .odp', '.pptx · .odp'], 'savschedules' => ['date e posti', 'dates and slots'],
                     'savspreadsheets' => ['.xlsx · .ods', '.xlsx · .ods'], 'savtasks' => ['scadenze', 'due days'], 'savwhiteboard' => ['PNG · SVG · PDF', 'PNG · SVG · PDF']]; ?>
                 <div class="hub" aria-hidden="true">
-                    <div class="n core"><?= $ico('savcalendar', 64) ?><b>SavCalendar</b><small><?= $L('tutto in un posto', 'all in one place') ?></small></div>
-                    <?php foreach ($apps as $slug => $a): if ($slug === 'savcalendar') continue; ?>
+                    <div class="n core"><img src="/assets/projects/savaccount.png" alt="" width="72" height="72"><b>SavAccount</b><small><?= $L('un solo accesso per tutte', 'one sign-in for all of them') ?></small></div>
+                    <?php foreach ($apps as $slug => $a): ?>
                         <div class="n"><?= $ico($slug, 46) ?><b><span class="full"><?= $h($projects[$slug]['name']) ?></span><span class="short"><?= $L(...$short[$slug]) ?></span></b><small><?= $L(...($hub[$slug] ?? ['', ''])) ?></small></div>
                     <?php endforeach; ?>
-                    <div class="n acc"><img src="/assets/projects/savaccount.png" alt="" width="46" height="46"><b>SavAccount</b><small><?= $L('un solo accesso', 'one sign-in') ?></small></div>
                 </div>
             </div>
         </section>

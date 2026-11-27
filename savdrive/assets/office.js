@@ -26,8 +26,8 @@ export const KINDS = {
 };
 
 /** The app of a file name (any kind of SavOffice, also the ones SavDrive cannot create), or null. */
-export const APPS = { savdoc: 'savdocuments', savspr: 'savspreadsheets', savpre: 'savpresentations', savboo: 'savbooks', savwhi: 'savwhiteboard', savnot: 'savnotes', savfor: 'savforms', savtas: 'savtasks', savcal: 'savcalendar', savsch: 'savschedules', savnew: 'savnewsletters' };
-export const NAMES = { savdocuments: 'SavDocuments', savspreadsheets: 'SavSpreadsheets', savpresentations: 'SavPresentations', savbooks: 'SavBooks', savwhiteboard: 'SavWhiteboard', savnotes: 'SavNotes', savforms: 'SavForms', savtasks: 'SavTasks', savcalendar: 'SavCalendar', savschedules: 'SavSchedules', savnewsletters: 'SavNewsletters' };
+export const APPS = { savdoc: 'savdocuments', savspr: 'savspreadsheets', savpre: 'savpresentations', savboo: 'savbooks', savwhi: 'savwhiteboard', savnot: 'savnotes', savfor: 'savforms', savtas: 'savtasks', savcal: 'savcalendar', savsch: 'savschedules', savnew: 'savnewsletters', savspl: 'savsplits' };
+export const NAMES = { savdocuments: 'SavDocuments', savspreadsheets: 'SavSpreadsheets', savpresentations: 'SavPresentations', savbooks: 'SavBooks', savwhiteboard: 'SavWhiteboard', savnotes: 'SavNotes', savforms: 'SavForms', savtasks: 'SavTasks', savcalendar: 'SavCalendar', savschedules: 'SavSchedules', savnewsletters: 'SavNewsletters', savsplits: 'SavSplits' };
 export const appOf = (name) => APPS[(/\.([a-z]+)$/i.exec(name || '')?.[1] || '').toLowerCase()] || null;
 
 /** An empty file of this kind, ready to upload. */

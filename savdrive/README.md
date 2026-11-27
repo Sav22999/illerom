@@ -1,6 +1,6 @@
 # SavDrive
 
-A drive for files and folders, part of SavOffice: 2 GB for each account (the master admins choose the space of everyone and
+A drive for files and folders, part of SavOffice: 500 MB for each account (the master admins choose the space of everyone and
 activate or deactivate accounts), uploads of any size in pieces, previews, share links, and new files of the apps of
 SavOffice opened in their app. <https://www.illerom.eu/savdrive/>
 
@@ -18,8 +18,11 @@ SavOffice opened in their app. <https://www.illerom.eu/savdrive/>
 | `lib/access.php`             | Who can do what: levels by folder, inherited below, with exceptions                    |
 | `lib/space.php`              | One space for the whole of SavOffice: required by the API of every app                |
 | `lib/files.php`              | Storage on disk, the tree of folders, names, trash, sending files with ranges        |
+| `lib/photos.php`             | The API of SavPhotos (`api/?r=photos.*`, pages in `../savphotos/`): what is read from photos, albums, who can use it |
+| `lib/archive.php`            | What is inside ZIP, TAR, TAR.GZ and RAR archives, read from their index (plain PHP)   |
 | `assets/drive.js`            | The drive: side menu, folders, cards and rows, selection, uploads, moving, previews   |
 | `assets/admin.js`            | The panel of the master admins                                                        |
+| `assets/preview.js`          | What a file contains, drawn small (cards) or large (preview): text, JSON, SavOffice files, archives |
 | `assets/office.js`           | Empty files of SavOffice (.savdoc, .savspr, .savpre, .savboo, .savwhi, .savnot)       |
 | `assets/store.js`            | API and uploads in pieces                                                             |
 | `assets/app.js`, `account.js`, `options.js` | Routes, accounts, settings                                             |
@@ -38,13 +41,21 @@ SavOffice opened in their app. <https://www.illerom.eu/savdrive/>
 ## How it works
 
 - **One space for the whole of SavOffice**: a person (the same email) has one space, the one of SavDrive: the default one
-  (meta `default_quota`, 2 GB at the start) or one of their own (`quotas`, by email, also for people without an account
+  (meta `default_quota`, 500 MB at the start) or one of their own (`quotas`, by email, also for people without an account
   here; `PHP_INT_MAX` = unlimited, chosen with a switch in the admin panel). It counts the files of SavDrive (the trash and the uploads under way too) and what the person keeps in every other
   app, even if their account of SavDrive is not activated or does not exist. `lib/space.php` is required by the API of
   every app: its `writer()` refuses (`quota`, 413) a write that would go beyond the space (deleting, trash, sign-in and admin
   always pass) and then reports what the app keeps for that person into `usage`; its `reader()` keeps that count fresh. The
   apps show this space instead of their old limits; SavDrive shows it app by app (sidebar, settings, admin panel).
   If SavDrive cannot be reached nothing is refused.
+- **The apps of SavOffice in My drive**: the documents a person creates in the apps that make documents (documents,
+  sheets, presentations, books, boards, notebooks, forms: `OFFICE_FOLDERS`) are listed in My drive, in a folder
+  for each app that keeps something (an app with nothing shows no folder), with the folders of the app inside. Each app
+  has `office_catalog($u)` in its API (its folders and items, with the address that opens them there) and sends it with
+  `savspace_gate`/`savspace_touch` (`lib/space.php`) into the table `office`: at once after an action that changes what it
+  keeps (new, renamed, moved, deleted…), otherwise at most once a minute, and when the app is opened. SavDrive reads it
+  (`office.get`, `drive.list` → `office`; a search finds those items too): they open in their app, in a new tab, and are
+  not moved, shared or deleted from SavDrive. An app opened for the first time after this change sends its list then.
 - **People and levels** (`lib/access.php`): the owner gives people (by email, also without an account yet) a level on a
   file or folder: view (sees it exists, cannot open it), read, comment, write, move, delete; or none, an exception. A level
   on a folder holds for everything inside it until a nearer level for the same person changes it (`shares`). What people
@@ -69,8 +80,31 @@ SavOffice opened in their app. <https://www.illerom.eu/savdrive/>
   apps (and in ⌘J) saves it into SavDrive: over the file it was opened from (`upload.start` with `replace`: same id, name,
   folder, star and link; the space counts only the difference), or as a new file in My drive, which is then remembered
   (localStorage `savoffice-drive-links`, per browser). Documents whose owner forbade downloads cannot be saved there.
+- **Previews and details**: `file.thumb` makes a small JPEG of an image with GD the first time (kept as `<bkey>.t.jpg`,
+  deleted with the file); HEIC and other formats GD cannot read keep the icon. `node.info` gives the details of the side
+  panel (EXIF date, camera and GPS of photos; size and last change inside folders). `upload.start` answers `name_taken`
+  when a file with that name is already there (the app asks: replace, keep both with `conflict: rename`, or skip).
+- **Archives**: `node.archive` lists what is inside a ZIP (ZIP64 too), TAR, TAR.GZ/TGZ, GZ or RAR (4 and 5) without
+  extracting anything: only the index is read (the central directory of a ZIP, the headers of TAR and RAR; a TAR.GZ is
+  decompressed in memory, at most 4 seconds). At most 5000 entries are listed (totals count up to 100 000); archives
+  with a password show the names when they can; 7z is not readable (its index is compressed). The list is kept as
+  `<bkey>.a.json`, deleted with the file. Who can read the file can read the list; in the trash only its owner.
+- **Never too many requests**: the hosting answers "429" to an address that asks a lot in a short time (as to an attack).
+  Every request of the app goes through a pacer (`assets/store.js` `request`: at most 2 at once, 0.35 s apart, 100 a
+  minute), the API and the uploads before the previews. The previews of the cards are asked only when they come near
+  the screen (`lazyImg`), and together: 40 small pictures in one request (`file.thumbs`, then kept in the browser's
+  Cache Storage until sign-out), 20 texts, SavOffice files and archive indexes in one request (`file.heads`). Documents,
+  books, spreadsheets and presentations are drawn by the code of their own apps (`../<app>/assets/thumbs.js`,
+  `render.js`, the formula engine of SavSpreadsheets), inside a shadow root with that app's stylesheets. Which kinds
+  of files show a preview is chosen in Settings → Drive (`prefs.previews`). A 429 that still comes is waited out and the
+  request sent again.
 - **Files sent**: only safe types are shown inline (pictures, PDF, video, audio, plain text); everything else is a
   download, always with `nosniff` and a CSP sandbox.
+
+- **SavPhotos** (`../savphotos/`, being tried): the photos and videos of the drive by day, backups, albums. Its routes are
+  `photos.*` in `lib/photos.php`, its tables `photo_users`, `photo_meta`, `albums`, `album_items` (made there). It signs in
+  here: `sessionStorage` `savdrive-next = ../savphotos/…` sends the person back after the sign-in (`assets/app.js`,
+  `assets/account.js`). See `../savphotos/README.md`.
 
 ## Versions
 

@@ -106,7 +106,7 @@ function cleanApp($project, $defaultPrefix)
         $old = "UTC_TIMESTAMP() - INTERVAL " . TRASH_DAYS . " DAY";
         $gone = 0;
         foreach ($db->query("SELECT user_id, bkey FROM `{$prefix}nodes` WHERE trashed_at < $old AND bkey IS NOT NULL")->fetchAll(PDO::FETCH_ASSOC) as $f) {
-            if (preg_match('/^[a-f0-9]{32}$/', (string)$f['bkey']) && @unlink($store . '/' . (int)$f['user_id'] . '/' . $f['bkey'])) $gone++;
+            if (preg_match('/^[a-f0-9]{32}$/', (string)$f['bkey']) && @unlink($store . '/' . (int)$f['user_id'] . '/' . $f['bkey'])) { $gone++; @unlink($store . '/' . (int)$f['user_id'] . '/' . $f['bkey'] . '.t.jpg'); @unlink($store . '/' . (int)$f['user_id'] . '/' . $f['bkey'] . '.a.json'); foreach (glob($store . '/' . (int)$f['user_id'] . '/' . $f['bkey'] . '.p*') ?: [] as $x) @unlink($x); }
         }
         $result['trash'] = $db->exec("DELETE FROM `{$prefix}nodes` WHERE trash_root = 1 AND trashed_at < $old");
         $result['trash_files'] = $gone;

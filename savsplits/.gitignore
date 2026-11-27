@@ -1,0 +1,4 @@
+# Own credentials (optional, see credentials-sample.php): never commit them
+credentials.php
+# The photos of the expenses, when kept here (see lib/photos.php)
+storage/

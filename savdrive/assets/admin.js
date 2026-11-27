@@ -2,14 +2,35 @@
  * The panel of the master admins: how the drive is used, the accounts (activated or not, their space, deleting them) and
  * the settings of new accounts (the default space and whether they are activated at once). Never the files themselves.
  */
-import { btn, confirm, dialog, empty, fail, face, h, item, put, segmented, toast } from './ui.js';
+import { btn, confirm, dialog, empty, fail, face, h, item, put, segmented, select, toast } from './ui.js';
 import { getLang, t, when } from './i18n.js';
 import { S, api } from './store.js';
 import { brand, commands, credit, go, userMenu } from './account.js';
 import { bytes, spaceParts } from './drive.js';
 
-const GBY = 1073741824;
-const gb = (b) => Math.round((b / GBY) * 100) / 100;
+const UNITS = { MB: 1048576, GB: 1073741824, TB: 1099511627776 };
+/** The unit a space reads best in: TB from 1 TB, GB from 1 GB, otherwise MB. */
+const unitOf = (b) => (b >= UNITS.TB && b % (UNITS.TB / 100) === 0 ? 'TB' : b >= UNITS.GB ? 'GB' : 'MB');
+/**
+ * A space typed as a number and a unit (MB, GB, TB), the two at the same height. .bytes reads and writes it in bytes;
+ * .disabled switches both off.
+ */
+function sizeField(label, value) {
+  const n = h('sav-number-input', { label, min: 0, step: 1, size: 'md', class: 'grow' });
+  let unit = unitOf(value);
+  const u = select(null, Object.keys(UNITS).map((k) => [k, k]), unit, (v) => {
+    // the number stays the same space in the new unit
+    const b = f.bytes; unit = v; n.value = Math.round((b / UNITS[unit]) * 100) / 100;
+  }, { size: 'md', class: 'unitsel', 'aria-label': t('a_unit') });
+  const f = h('div.sizef', n, u);
+  Object.defineProperty(f, 'bytes', {
+    get: () => { const v = parseFloat(String(n.value).replace(',', '.')); return Number.isFinite(v) ? Math.round(v * UNITS[unit]) : NaN; },
+    set: (b) => { unit = unitOf(b); u.value = unit; n.value = Math.round((b / UNITS[unit]) * 100) / 100; },
+  });
+  Object.defineProperty(f, 'disabled', { set: (v) => { n.disabled = v; u.disabled = v; } });
+  f.bytes = value;
+  return f;
+}
 
 export async function admin(root, tab) {
   document.title = t('admin') + ' – SavDrive';
@@ -37,19 +58,19 @@ export async function admin(root, tab) {
 
   if (tab === 'settings') {
     const o = await api('master.overview');
-    const quota = h('sav-number-input', { label: t('a_default_quota'), value: gb(o.defaultQuota), min: 0.01, max: 10240, step: 0.5, size: 'md', help: t('a_default_quota_t') }, h('span', { slot: 'suffix' }, 'GB'));
-    const presets = h('div.prow.wrap', [1, 2, 5, 10, 15, 50, 100].map((n) => btn(n + ' GB', { size: 'sm', appearance: 'outline', onclick: () => { quota.value = n; } })));
+    const quota = sizeField(t('a_default_quota'), o.defaultQuota);
+    const presets = h('div.prow.wrap', [[500, 'MB'], [1, 'GB'], [2, 'GB'], [5, 'GB'], [10, 'GB'], [50, 'GB'], [100, 'GB'], [1, 'TB']].map(([n, k]) => btn(`${n} ${k}`, { size: 'sm', appearance: 'outline', onclick: () => { quota.bytes = n * UNITS[k]; } })));
     const act = h('sav-radio-group', { label: t('a_new_state'), value: o.defaultActive ? 'on' : 'off' },
       h('sav-radio', { value: 'on' }, h('b', t('a_activate')), h('br'), h('small.muted', t('a_activate_t'))),
       h('sav-radio', { value: 'off' }, h('b', t('a_deactivate')), h('br'), h('small.muted', t('a_deactivate_t'))));
     const save = btn(t('save'), { variant: 'primary', appearance: 'solid', icon: 'check', onclick: async () => {
-      const v = parseFloat(String(quota.value).replace(',', '.'));
-      if (!Number.isFinite(v) || v <= 0) throw Object.assign(new Error('bad_quota'), { code: 'bad_quota' });
-      await api('master.settings', { defaultQuota: Math.round(v * GBY), defaultActive: act.value === 'on' });
+      const b = quota.bytes;
+      if (!Number.isFinite(b) || b < UNITS.MB) throw Object.assign(new Error('bad_quota'), { code: 'bad_quota' });
+      await api('master.settings', { defaultQuota: b, defaultActive: act.value === 'on' });
       toast(t('settings_saved'), 'success');
     } });
     put(main, h('h1.ah', t('a_settings')), h('p.muted', t('a_settings_t')),
-      h('sav-card.acard', h('div.form', h('h2', t('a_space')), quota, presets, h('p.muted.small', t('a_space_note')))),
+      h('sav-card.acard', h('div.form', h('h2', t('a_space')), h('div', quota, h('p.muted.small.fhelp', t('a_default_quota_t'))), presets, h('p.muted.small', t('a_space_note')))),
       h('sav-card.acard', h('div.form', h('h2', t('a_new_accounts')), act, h('p.muted.small', t('a_masters_note')))),
       h('div.prow', save));
     return;
@@ -68,16 +89,17 @@ export async function admin(root, tab) {
     // a space of its own (a number, or without a limit: "Unlimited" switches the number off), or the space of everybody
     const own = h('sav-switch', { checked: u.ownQuota || null }, t('a_own_quota'));
     const unl = h('sav-switch', { checked: u.unlimited || null, disabled: !u.ownQuota || null }, t('a_unlimited'));
-    const n = h('sav-number-input', { label: t('a_space'), value: u.unlimited ? gb(defaultQuota) : gb(u.quota), min: 0, max: 10240, step: 0.5, size: 'md', disabled: !u.ownQuota || u.unlimited || null }, h('span', { slot: 'suffix' }, 'GB'));
-    const sync = () => { unl.disabled = !own.checked; n.disabled = !own.checked || unl.checked; if (!own.checked) { unl.checked = false; n.value = gb(defaultQuota); } };
+    const n = sizeField(t('a_space'), u.unlimited ? defaultQuota : u.quota);
+    n.disabled = !u.ownQuota || u.unlimited;
+    const sync = () => { unl.disabled = !own.checked; n.disabled = !own.checked || unl.checked; if (!own.checked) { unl.checked = false; n.bytes = defaultQuota; } };
     own.addEventListener('change', sync);
     unl.addEventListener('change', sync);
     dialog({ title: t('a_quota_of', { name: u.name }), width: '26rem',
       body: h('div.form', h('p.muted', t('a_quota_used', { used: bytes(u.used), files: num(u.files) })), own, unl, n, h('p.muted.small', t('a_quota_def', { q: bytes(defaultQuota) }))),
       actions: [{ label: t('cancel') }, { label: t('save'), primary: true, run: async () => {
-        const v = parseFloat(String(n.value).replace(',', '.'));
-        if (own.checked && !unl.checked && (!Number.isFinite(v) || v < 0)) throw Object.assign(new Error('bad_quota'), { code: 'bad_quota' });
-        await api('master.quota', own.checked && unl.checked ? { id: u.id, email: u.email, unlimited: true } : { id: u.id, email: u.email, quota: own.checked ? Math.round(v * GBY) : null });
+        const b = n.bytes;
+        if (own.checked && !unl.checked && (!Number.isFinite(b) || b < 0)) throw Object.assign(new Error('bad_quota'), { code: 'bad_quota' });
+        await api('master.quota', own.checked && unl.checked ? { id: u.id, email: u.email, unlimited: true } : { id: u.id, email: u.email, quota: own.checked ? b : null });
         toast(t('settings_saved'), 'success');
         load().catch(fail);
       } }] });

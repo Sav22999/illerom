@@ -19,7 +19,7 @@ $table_prefix = "dr_";
 $storage_dir = "";
 
 // Master admins (account emails, once confirmed): from the admin panel of the app they choose the space of every account
-// (2 GB unless changed), activate and deactivate accounts, and whether new accounts are activated at once
+// (500 MB unless changed), activate and deactivate accounts, and whether new accounts are activated at once
 $master_emails = [];
 
 

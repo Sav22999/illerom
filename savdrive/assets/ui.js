@@ -1,11 +1,19 @@
 /** Helpers of the interface. Every control is a SavComponent (Soft style); what is composed here is made of them. */
-import { has, t } from './i18n.js';
+import { getLang, has, t } from './i18n.js';
 import { svg } from './icons.js';
 
 export const MAC = /Mac|iPhone|iPad/.test(navigator.platform);
 export const mobile = () => matchMedia('(max-width: 900px)').matches;
 /** Ctrl or Cmd, as people read it. */
 export const K = (s) => s.replace('Mod', MAC ? '⌘' : 'Ctrl').replace('Alt', MAC ? '⌥' : 'Alt').replace('Shift', MAC ? '⇧' : 'Shift').replace(/\+/g, MAC ? '' : '+');
+
+/** A size as people read it: 1.5 MB. */
+export function bytes(n) {
+  const u = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let i = 0, v = +n || 0;
+  while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
+  return `${v.toLocaleString(getLang(), { maximumFractionDigits: v < 10 && i ? 1 : 0 })} ${u[i]}`;
+}
 
 /** h('div.row', {onclick}, children…) */
 export function h(sel, ...kids) {

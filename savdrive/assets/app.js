@@ -22,7 +22,12 @@ async function boot() {
   }
   window.Identity?.setup({ name: 'SavDrive', lang: getLang, accent: '#0A6FB0', accept: 'acceptTerms', acceptUrl: () => 'terms.html', body: () => ({ lang: getLang() }) });
   const next = sessionStorage.getItem('savdrive-next');
-  if (S.user?.verified && next) { sessionStorage.removeItem('savdrive-next'); if (/^(#\/?(signin|signup|welcome)?)?$/.test(location.hash)) history.replaceState(null, '', next); }
+  if (S.user?.verified && next) {
+    sessionStorage.removeItem('savdrive-next');
+    // SavPhotos sends here to sign in (it uses the account of SavDrive) and gets the person back
+    if (/^\.\.\/savphotos\/(#[\w/-]*)?$/.test(next)) return location.replace(next);
+    if (/^(#\/?(signin|signup|welcome)?)?$/.test(location.hash)) history.replaceState(null, '', next);
+  }
   addEventListener('hashchange', route);
   // the right button everywhere else in SavDrive (the drive has its own menus, by place): where to go from here
   root.addEventListener('contextmenu', (e) => {
@@ -39,7 +44,7 @@ async function boot() {
 }
 
 async function route() {
-  const [, a = '', b = ''] = location.hash.split('/'), n = ++turn;
+  const [, a = '', b = '', c = ''] = location.hash.split('/'), n = ++turn;
   leave?.();
   leave = null;
   commands(); // every address starts from the pages of SavDrive; a screen adds its own
@@ -57,7 +62,7 @@ async function route() {
     if (a === 'settings') { const { settingsScreen } = await import('./options.js'); return settingsScreen(root, b); }
     if (a === 'admin' && S.user.master) { const { admin } = await import('./admin.js'); return await admin(root, b || 'overview'); }
     const { home } = await import('./drive.js');
-    const x = await home(root, a, b);
+    const x = await home(root, a, b, c);
     if (n === turn) leave = x; else x?.();
   } catch (e) {
     if (n !== turn) return;

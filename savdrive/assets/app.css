@@ -76,7 +76,7 @@ sav-menu-item.over, sav-breadcrumb-item.over { outline: 2px dashed var(--sav-col
 .dempty { padding: 2rem 0; }
 .dsec { font-size: .9rem; font-weight: 650; color: var(--sav-color-text-muted); margin: 1.3rem 0 .6rem; } .dsec:first-child { margin-top: .2rem; }
 .tnote { display: block; margin-bottom: 1rem; }
-.dgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(12.5rem, 1fr)); gap: 1rem; } .fgrid { grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: .7rem; }
+.dgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(12.5rem, 1fr)); gap: 1rem; } .fgrid { gap: 1rem; } /* folders are cards as big as the files */
 .dcard { position: relative; background: var(--card); border: 1px solid var(--sav-color-border); border-radius: 16px; cursor: pointer; transition: border-color .15s, box-shadow .15s, transform .15s; min-width: 0; outline: none; user-select: none; -webkit-user-select: none; }
 .dcard:hover { border-color: color-mix(in oklab, var(--sav-color-primary) 40%, var(--sav-color-border)); box-shadow: 0 6px 20px rgb(10 50 90 / .09); }
 .dcard:focus-visible { box-shadow: 0 0 0 2px var(--sav-color-focus); } .dcard.on { border-color: var(--sav-color-primary); box-shadow: 0 0 0 1px var(--sav-color-primary); background: color-mix(in oklab, var(--sav-color-primary) 7%, var(--card)); }
@@ -86,12 +86,52 @@ sav-menu-item.over, sav-breadcrumb-item.over { outline: 2px dashed var(--sav-col
 .dcard.isf .pick { position: static; opacity: 1; display: none; }
 .dcard:hover .pick, .dcard.on .pick, .drive:has(.dcard.on) .dcard .pick { opacity: 1; } .drive:has(.dcard.on) .dcard.isf .pick, .dcard.isf:hover .pick { display: block; } .dcard.isf:hover .fic, .dcard.isf.on .fic, .drive:has(.dcard.on) .dcard.isf .fic { display: none; }
 .fic { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; border-radius: 10px; color: var(--fc); background: color-mix(in oklab, var(--fc) 14%, transparent); font-size: 1.3rem; flex: none; }
+/* the tile of a folder (rows, details); on the cards a pile of sheets of its colour, leaning, that opens up on hover (Tilt, as the albums of SavPhotos) */
+.fstack { position: relative; background: none; isolation: isolate; }
+.fstack .ftile { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; border-radius: inherit; color: var(--fc); background: color-mix(in oklab, var(--fc) 14%, var(--card)); }
+.fstack .fs { display: none; }
+.dthumb.fthumb { background: radial-gradient(120% 100% at 30% 15%, color-mix(in oklab, var(--fc) 16%, var(--card)), color-mix(in oklab, var(--fc) 6%, var(--thumb))); }
+.fthumb .fstack { width: 46%; height: auto; aspect-ratio: 1; border-radius: 20%; font-size: clamp(2.2rem, 4.2vw, 3.4rem); }
+.fthumb .fstack .ftile sav-icon { font-size: inherit; }
+.fthumb .fstack .ftile { transform: rotate(-4deg); background: linear-gradient(150deg, color-mix(in oklab, var(--fc) 30%, var(--card)), color-mix(in oklab, var(--fc) 14%, var(--card)));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--fc) 30%, transparent), 0 10px 22px -10px color-mix(in oklab, var(--fc) 60%, transparent); transition: transform .3s cubic-bezier(.2, .8, .3, 1); }
+.fthumb .fstack .fs { display: block; position: absolute; inset: 0; z-index: 1; border-radius: inherit; border: 1px solid color-mix(in oklab, var(--fc) 32%, transparent); transition: transform .3s cubic-bezier(.2, .8, .3, 1); }
+.fthumb .fstack .fs1 { background: color-mix(in oklab, var(--fc) 10%, var(--card)); transform: rotate(7deg) translate(6%, -2%); }
+.fthumb .fstack .fs2 { background: color-mix(in oklab, var(--fc) 20%, var(--card)); transform: rotate(-13deg) translate(-6%, 3%); }
+.dcard.isfo:hover .fstack .fs1, .dcard.isfo:focus-visible .fstack .fs1, .dcard.isfo.on .fstack .fs1 { transform: rotate(15deg) translate(16%, -5%); }
+.dcard.isfo:hover .fstack .fs2, .dcard.isfo:focus-visible .fstack .fs2, .dcard.isfo.on .fstack .fs2 { transform: rotate(-21deg) translate(-16%, 5%); }
+.dcard.isfo:hover .fstack .ftile, .dcard.isfo:focus-visible .fstack .ftile { transform: rotate(-1deg) translateY(-4%); }
+/* the first files of the folder peek out of it from above: photos as they are, other files as a sheet with their icon */
+.fthumb .fstack.haspeek .fs { inset: 4% 10% auto; height: 84%; border-radius: 14%; overflow: hidden; background: var(--card); border-color: color-mix(in oklab, var(--sav-color-text) 12%, transparent); box-shadow: 0 2px 10px rgb(0 0 0 / .14); }
+.fthumb .fstack.haspeek .ftile { transform: rotate(-3deg) translateY(16%); }
+.fthumb .fstack.haspeek .fs1 { transform: rotate(-11deg) translate(-24%, -24%); }
+.fthumb .fstack.haspeek .fs2 { transform: rotate(10deg) translate(24%, -19%); }
+.dcard.isfo:hover .fstack.haspeek .ftile, .dcard.isfo:focus-visible .fstack.haspeek .ftile { transform: rotate(-1deg) translateY(20%); }
+.dcard.isfo:hover .fstack.haspeek .fs1, .dcard.isfo:focus-visible .fstack.haspeek .fs1, .dcard.isfo.on .fstack.haspeek .fs1 { transform: rotate(-16deg) translate(-38%, -30%); }
+.dcard.isfo:hover .fstack.haspeek .fs2, .dcard.isfo:focus-visible .fstack.haspeek .fs2, .dcard.isfo.on .fstack.haspeek .fs2 { transform: rotate(15deg) translate(38%, -25%); }
+.fstack .fs.fpimg img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.fstack .fs.fpk { display: flex; align-items: flex-start; justify-content: center; gap: .18em; padding-top: 9%; color: var(--pc); font-size: .5em; background: linear-gradient(180deg, color-mix(in oklab, var(--pc) 14%, var(--card)), var(--card) 60%); }
+.fstack .fs.fpk sav-icon { font-size: 1em; } .fstack .fs.fpk .appic { width: 1em; height: 1em; }
+.fstack .fs.fpk em { font-style: normal; font-weight: 750; font-size: .4em; line-height: 2.5; letter-spacing: .03em; text-transform: uppercase; }
+/* the left sheet lies over the right one: each shows its icon on its outer side, so neither covers the other's */
+.fthumb .fstack.haspeek .fs2 { z-index: 0; }
+.fstack .fs1.fpk { justify-content: flex-start; padding-left: 13%; } .fstack .fs2.fpk { justify-content: flex-end; padding-right: 13%; }
+.fthumb .fstack.haspeek .fs:not(.fpk, .fpimg) { background: color-mix(in oklab, var(--fc) 14%, var(--card)); box-shadow: none; }
+.pvlist { display: grid; gap: .7rem; margin-top: .5rem; }
+/* the folder of an app of SavOffice: the icon of the app on its tile */
+.fstack .ftile.apptile { background: linear-gradient(150deg, var(--card), color-mix(in oklab, var(--fc) 10%, var(--card))); }
+.fstack .ftile.apptile .appic { width: 54%; height: auto; border-radius: 22%; }
+.lvl .appic { width: 14px; height: 14px; }
+@media (prefers-reduced-motion: reduce) { .fthumb .fstack .fs, .fthumb .fstack .ftile { transition: none; } }
 .dname { display: grid; min-width: 0; flex: 1; line-height: 1.3; } .dname b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .dname small { color: var(--sav-color-text-muted); font-size: .78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .inf { display: inline-flex !important; align-items: center; gap: .25rem; } .inf sav-icon { font-size: .8rem; }
 .dthumb { position: relative; aspect-ratio: 4 / 3; margin: .45rem .45rem 0; border-radius: 11px; background: var(--thumb); display: grid; place-items: center; overflow: hidden; }
 .dinfo { display: flex; align-items: center; gap: .2rem; padding: .55rem .3rem .6rem .8rem; }
 .tic { display: grid; place-items: center; color: var(--fc); font-size: 1.35rem; position: relative; } .tic.big, .dthumb .tic { font-size: 2.6rem; } .tic em { position: absolute; bottom: -.15rem; right: -1.1rem; font: 700 .58rem/1 var(--sav-font); text-transform: uppercase; color: #fff; background: var(--fc); padding: .18rem .32rem; border-radius: 5px; letter-spacing: .02em; }
 .tic.img { position: absolute; inset: 0; } .tic.img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* a skeleton while a picture is on its way (a card, the preview), as in SavPhotos */
+.tload { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; } .tload::part(base) { border-radius: 0; }
+.pvstage:has(.pvload) { position: relative; min-height: 50vh; } .pvload { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; } .pvload::part(base) { border-radius: 10px; }
 .tic.app img { border-radius: 11px; filter: drop-shadow(0 4px 10px rgb(10 40 70 / .18)); }
 .cglobe { position: absolute; right: .45rem; bottom: .45rem; width: 1.7rem; height: 1.7rem; display: grid; place-items: center; border-radius: 50%; background: rgb(255 255 255 / .94); color: #14202b; box-shadow: var(--sav-shadow-sm); font-size: .9rem; }
 .starb { opacity: 0; transition: opacity .15s; } .dcard:hover .starb, .drow:hover .starb, .starb.on, .starb:focus-within { opacity: 1; } .starb:focus-visible { opacity: 1; }
@@ -172,7 +212,7 @@ sav-menu-item.over, sav-breadcrumb-item.over { outline: 2px dashed var(--sav-col
   .dcard .pick { opacity: 1; } .dcard.isf .pick { display: none; }
 }
 @media (max-width: 640px) {
-  .dgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; } .fgrid { grid-template-columns: minmax(0, 1fr); }
+  .dgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; }
   .dhead h1 { font-size: 1.2rem; } .dhead sav-button .lbl { display: none; }
   .offlist { grid-auto-columns: minmax(9.5rem, 1fr); } .pvpdf { height: 65vh; }
   .urow2 { grid-template-columns: auto minmax(0, 1fr); } .ustate { grid-column: 2; flex-direction: row; }
@@ -196,3 +236,59 @@ sav-menu-item.over, sav-breadcrumb-item.over { outline: 2px dashed var(--sav-col
 .clist { display: grid; gap: .7rem; max-height: 46vh; overflow: auto; } .cm { display: flex; gap: .6rem; align-items: flex-start; } .cmb { flex: 1; min-width: 0; } .cmh { display: flex; align-items: center; gap: .5rem; } .cmb p { margin: .15rem 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 @media (max-width: 640px) { .padd { flex-wrap: wrap; } .padd .lvsel, .prow2 .lvsel { width: 100%; } .prow2 { flex-wrap: wrap; } .rtag span { display: none; } }
 .dname .rtag, .dname .ptag { justify-self: start; margin-top: .2rem; }
+/* the drop area reaches the bottom of the page */
+.drive .hbody { align-content: stretch; } .drive .dmain { min-height: 0; }
+/* previews in the cards: text and JSON, documents, spreadsheets, slides */
+.tic.cprev { position: absolute; inset: 0; display: grid; place-items: center; overflow: hidden; }
+.tic.cprev.filled { place-items: stretch; }
+/* files of SavOffice drawn by their apps (preview.js): a slide in the middle, a page peeking from the top, a sheet filling the card */
+.cprev .oview { width: 100%; min-width: 0; overflow: hidden; }
+.cprev .oview.oslides { align-self: center; justify-self: center; width: 84%; border-radius: 5px; box-shadow: 0 2px 10px rgb(0 0 0 / .14), 0 0 0 1px rgb(0 0 0 / .05); }
+.cprev .oview.opage { align-self: start; justify-self: center; width: 76%; margin-top: 7%; border-radius: 3px; box-shadow: 0 2px 10px rgb(0 0 0 / .14), 0 0 0 1px rgb(0 0 0 / .05); }
+.cprev .oview.oboard { align-self: stretch; height: 100%; display: grid; place-items: center; } .cprev .oview.oboard img { width: 100%; height: 100%; object-fit: cover; }
+.cprev:has(.opage), .cprev:has(.oslides) { background: color-mix(in oklab, var(--sav-color-text) 5%, var(--thumb)); }
+.pvstage > .oview.big { width: min(960px, 100%); max-height: 72vh; overflow: auto; align-self: stretch; padding: 18px; border-radius: 10px; background: color-mix(in oklab, var(--sav-color-text) 6%, var(--sav-color-surface)); }
+.pvstage > .oview.big.osheet { background: #fff; padding: 0; }
+.tprev { margin: 0; padding: .55rem .65rem; font: 9px/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--sav-color-text-muted); white-space: pre; overflow: hidden; text-align: left; background: var(--sav-color-surface); }
+.dprev { margin: .5rem .9rem 0; padding: .7rem .8rem; background: #fff; color: #222; border-radius: 4px 4px 0 0; box-shadow: 0 2px 8px rgb(0 0 0 / .15); overflow: hidden; font: 7px/1.4 Georgia, serif; text-align: left; }
+.dprev b { display: block; font: 700 9px/1.25 var(--sav-font); margin: .1rem 0 .3rem; } .dprev p { margin: 0 0 .3rem; } .dprev .li::before { content: "• "; }
+.dprev.big { margin: 0 auto; width: min(46rem, 100%); padding: 2.4rem 2.6rem; font-size: 15px; line-height: 1.6; border-radius: 6px; max-height: 72vh; overflow: auto; }
+.dprev.big h2 { font: 700 1.5rem/1.2 var(--sav-font); margin: 0 0 1rem; } .dprev.big b { font-size: 1.1rem; margin: 1rem 0 .4rem; }
+.sprev { overflow: hidden; background: #fff; color: #222; } .sprev table { border-collapse: collapse; font: 8px/1.2 var(--sav-font); width: 100%; table-layout: fixed; }
+.sprev th, .sprev td { border: 1px solid #dde2e6; padding: .15rem .25rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .sprev th { background: #eef2f5; color: #66727c; font-weight: 600; }
+.sprev.big { max-height: 72vh; overflow: auto; width: 100%; } .sprev.big table { font-size: 13px; table-layout: auto; } .sprev.big th, .sprev.big td { padding: .3rem .5rem; min-width: 5rem; }
+.pslide { position: relative; width: 86%; margin: auto; background: #fff; color: #222; border-radius: 4px; box-shadow: 0 2px 8px rgb(0 0 0 / .18); overflow: hidden; container-type: inline-size; align-self: center; justify-self: center; }
+.pslide span { position: absolute; overflow: hidden; line-height: 1.15; font-family: var(--sav-font); } .pslide span.ttl { font-weight: 700; }
+.pslide.big { width: min(60rem, 100%); }
+.pvnote { text-align: center; margin: .6rem 0 0; font-size: .85rem; }
+/* what is inside an archive: the window (a tree) and the cards (the first names) */
+.arcv { align-self: stretch; width: 100%; display: grid; gap: .6rem; padding: 1rem; text-align: left; }
+.ahead { display: flex; align-items: center; gap: .7rem; } .ahead .tic { font-size: 2rem; } .ahead > div { display: grid; gap: .1rem; min-width: 0; }
+.anote { display: flex; align-items: flex-start; gap: .5rem; margin: 0; padding: .55rem .8rem; border-radius: 10px; background: var(--sav-color-surface); font-size: .88rem; } .anote sav-icon { flex: none; margin-top: .15rem; color: var(--sav-color-text-muted); }
+.anote.warn { background: color-mix(in oklab, #b7791f 14%, var(--sav-color-surface)); } .anote.warn sav-icon { color: #b7791f; }
+.atree { max-height: 58vh; overflow: auto; padding: .3rem 0; border: 1px solid var(--sav-color-border); border-radius: 12px; background: var(--sav-color-surface); }
+.ar { display: grid; grid-template-columns: 1rem 1.15rem minmax(0, 1fr) auto 7.5rem; align-items: center; gap: .45rem; padding: .3rem .8rem .3rem calc(.8rem + var(--d, 0) * 1.2rem); font-size: .9rem; line-height: 1.3; }
+.ar > sav-icon { color: var(--sav-color-text-muted); } .adet > summary > sav-icon:first-of-type { color: #5f7d95; }
+summary.ar { list-style: none; cursor: pointer; border-radius: 0; } summary.ar::-webkit-details-marker { display: none; } summary.ar:hover { background: var(--sav-color-surface-2); }
+.ach { display: grid; place-items: center; color: var(--sav-color-text-muted); font-size: .8rem; } .ach sav-icon { transition: transform .15s; } .adet[open] > summary .ach sav-icon { transform: rotate(90deg); }
+.an { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .as, .ad { color: var(--sav-color-text-muted); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pvwrap:has(.pvnav) .arcv { padding-inline: 3.4rem; } /* the arrows to the files next to it stay outside the tree */
+@media (max-width: 600px) { .ar { grid-template-columns: 1rem 1.15rem minmax(0, 1fr) auto; } .ar .ad { display: none; } .arcv { padding: .6rem; } .pvwrap:has(.pvnav) .arcv { padding-inline: 2.8rem; } }
+.aprev { display: grid; align-content: start; gap: .2rem; padding: .6rem .7rem; overflow: hidden; background: var(--sav-color-surface); text-align: left; }
+.aprev .ar { grid-template-columns: auto minmax(0, 1fr); gap: .35rem; padding: 0; font-size: 10px; color: var(--sav-color-text-muted); } .aprev .ar sav-icon { font-size: 11px; }
+.aprev .ar.top { color: var(--sav-color-text); font-weight: 600; } .aprev .ar.more { display: block; padding-left: 1.05rem; font-style: italic; }
+.pvstage { flex-direction: column; }
+/* the panel of details */
+.ipanel { display: none; }
+.hbody.withinfo { grid-template-columns: 15rem minmax(0, 1fr) 19rem; }
+.hbody.withinfo .ipanel { display: block; align-self: start; position: sticky; top: 4.6rem; max-height: calc(100dvh - 6rem); overflow: auto; background: var(--card); border: 1px solid var(--sav-color-border); border-radius: 18px; padding: 1rem; }
+.ipanel.indialog { display: block; }
+.ihead { display: flex; align-items: center; gap: .6rem; margin-bottom: .8rem; } .ihead h3 { flex: 1; min-width: 0; font-size: 1rem; overflow-wrap: anywhere; } .iic { display: grid; font-size: 1.3rem; color: var(--sav-color-text-muted); } .iic .fic { width: 2.2rem; height: 2.2rem; }
+.ithumb { position: relative; aspect-ratio: 4 / 3; border-radius: 12px; background: var(--thumb); display: grid; place-items: center; overflow: hidden; margin-bottom: .8rem; } .ithumb .tic { font-size: 2.6rem; }
+.irows { margin: 0; display: grid; gap: .55rem; } .irow { display: grid; gap: .1rem; } .irow dt { font-size: .74rem; color: var(--sav-color-text-muted); font-weight: 600; } .irow dd { margin: 0; font-size: .88rem; overflow-wrap: anywhere; }
+.irow dd a { color: inherit; } .iact { margin-top: 1rem; } .ihint { margin-top: 1rem; }
+@media (max-width: 1200px) { .hbody.withinfo { grid-template-columns: 13rem minmax(0, 1fr) 16rem; } }
+@media (max-width: 900px) { .hbody.withinfo { grid-template-columns: minmax(0, 1fr); } .hbody.withinfo .ipanel { display: none; } }
+.tic.cwrap { position: absolute; inset: 0; } .appbadge { position: absolute; left: .45rem; bottom: .45rem; display: grid; padding: 3px; border-radius: 8px; background: var(--card); box-shadow: var(--sav-shadow-sm); } .appbadge img { border-radius: 5px; }
+/* a space: a number and its unit, side by side and of the same height */
+.sizef { display: flex; align-items: flex-end; gap: .5rem; } .sizef .unitsel { width: 6.5rem; flex: none; } .fhelp { margin: .35rem 0 0; }

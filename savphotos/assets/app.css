@@ -1,0 +1,242 @@
+/* SavPhotos — look of the app: the one of SavDrive (header with the search, side menu with New and the space, the header
+   of a folder, cards, the preview, the panel of the uploads, the settings), with the grid of the photos by day. Colours
+   come from the SavComponents tokens with its own primary: the amber of an evening light. */
+@font-face { font-family: "Stack Sans Notch"; src: url(../../assets/fonts/stack-sans-notch.ttf); font-display: swap; }
+
+:root, .sav-theme-light { --sav-color-primary: #9a5f00; --sav-color-on-primary: #fff; --sav-color-bg: #faf7f2; --sav-color-surface: #fff; --sav-color-surface-2: #f1ebe1; --sav-color-text: #241b10; --sav-color-text-muted: #6b5d4b; --sav-color-border: #e7dccb; --sav-font: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; --accent: #e8a317; --card: #fff; --thumb: #efe7da; --tile-r: 6px; }
+.sav-theme-dark { --sav-color-primary: #f2bd4b; --sav-color-on-primary: #2a1b00; --sav-color-bg: #13110e; --sav-color-surface: #1c1915; --sav-color-surface-2: #27221b; --sav-color-text: #f2ebe0; --sav-color-text-muted: #b2a590; --sav-color-border: #383024; --sav-color-input-bg: #17140f; --accent: #f2bd4b; --card: #1c1915; --thumb: #262019; }
+@media (prefers-color-scheme: dark) { .sav-theme-auto { --sav-color-primary: #f2bd4b; --sav-color-on-primary: #2a1b00; --sav-color-bg: #13110e; --sav-color-surface: #1c1915; --sav-color-surface-2: #27221b; --sav-color-text: #f2ebe0; --sav-color-text-muted: #b2a590; --sav-color-border: #383024; --sav-color-input-bg: #17140f; --accent: #f2bd4b; --card: #1c1915; --thumb: #262019; } }
+
+*, ::before, ::after { box-sizing: border-box; }
+html { height: 100%; -webkit-text-size-adjust: 100%; }
+body { margin: 0; min-height: 100%; background: var(--sav-color-bg); color: var(--sav-color-text); font: 400 15px/1.5 var(--sav-font); -webkit-tap-highlight-color: transparent; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+body.noscroll { overflow: hidden; }
+[hidden] { display: none !important; }
+h1, h2, h3, p { margin: 0; }
+a { color: color-mix(in oklab, var(--sav-color-primary) 85%, var(--sav-color-text)); }
+:focus-visible { outline: 2px solid var(--sav-color-focus, var(--sav-color-primary)); outline-offset: 2px; }
+sav-menu-item:focus-visible, sav-radio:focus-visible { outline: none; }
+.muted { color: var(--sav-color-text-muted); } .small { font-size: .82rem; } .grow { flex: 1; min-width: 0; } .spacer { flex: 1; }
+.stack { display: grid; gap: .6rem; grid-template-columns: minmax(0, 1fr); } .form { display: grid; gap: .95rem; grid-template-columns: minmax(0, 1fr); }
+.prow { display: flex; align-items: center; gap: .5rem; min-width: 0; } .prow.wrap { flex-wrap: wrap; } .prow.cen { justify-content: center; }
+.wait { min-height: 60dvh; display: grid; place-items: center; padding: 1rem; } .dwait { display: grid; place-items: center; min-height: 30vh; } .dwait.small { min-height: 5rem; }
+.dlg-err { margin-top: .8rem; } .ctxm { position: fixed; z-index: 70; }
+.stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: .8rem; }
+.auth { --sav-card-padding: 1.8rem; display: block; width: min(32rem, 100%); }
+.spin-soft { animation: breathe 1.6s ease-in-out infinite; } @keyframes breathe { 50% { opacity: .45; } }
+@media (prefers-reduced-motion: reduce) { .spin-soft { animation: none; } }
+
+/* first page */
+.landing { min-height: 100dvh; display: flex; flex-direction: column; }
+.ltop { display: flex; align-items: center; gap: .6rem; padding: 1rem clamp(1rem, 4vw, 3rem); padding-top: max(1rem, env(safe-area-inset-top)); }
+.brand { display: inline-flex; align-items: center; gap: .65rem; font-size: 1.18rem; letter-spacing: -.015em; color: inherit; text-decoration: none; flex: none; } .brand b { font-weight: 700; } .brand img { border-radius: 9px; }
+.lmain { width: 100%; max-width: 1240px; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 3rem); }
+.hero { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: clamp(1.5rem, 4vw, 4rem); align-items: center; padding: clamp(1.5rem, 6vh, 5rem) 0 4.5rem; }
+.hero h1 { font-size: clamp(2.3rem, 5vw, 4rem); line-height: 1.02; letter-spacing: -.045em; font-weight: 700; text-wrap: balance; }
+.hero-t > p { margin: 1.2rem 0 1.6rem; font-size: 1.12rem; color: var(--sav-color-text-muted); max-width: 34rem; text-wrap: pretty; } .hero-t small { display: block; margin-top: 1rem; color: var(--sav-color-text-muted); }
+/* the picture of SavPhotos: days with their photos, drawn with colours */
+.hart { position: relative; padding: 1rem 0 1rem 1rem; }
+.hart::before { content: ""; position: absolute; inset: 8% 0 -2% 10%; border-radius: 28px; background: linear-gradient(135deg, #ffd56b, #c97a00); opacity: .2; transform: rotate(3deg); }
+.hwin { position: relative; background: var(--card); border: 1px solid var(--sav-color-border); border-radius: 20px; box-shadow: 0 24px 60px rgb(80 50 0 / .18); padding: 0 1.2rem 1.2rem; display: grid; gap: .9rem; }
+.hwbar { display: flex; align-items: center; gap: .4rem; padding: .85rem 0 .1rem; font-size: .85rem; font-weight: 650; } .hwbar i { width: .65rem; height: .65rem; border-radius: 50%; background: var(--sav-color-border); } .hwbar span { margin-left: .5rem; }
+.hday { display: grid; gap: .4rem; } .hday b { font-size: .8rem; font-weight: 650; }
+.htiles { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; } .htiles i { aspect-ratio: 1; border-radius: 6px; display: block; }
+.hback { display: grid; grid-template-columns: auto auto minmax(0, 1fr); align-items: center; gap: .5rem; font-size: .78rem; color: var(--sav-color-text-muted); padding-top: .3rem; } .hback sav-icon { color: var(--sav-color-primary); }
+.hqbar { height: 7px; border-radius: 9px; background: var(--sav-color-surface-2); overflow: hidden; } .hqbar i { display: block; height: 100%; background: var(--accent); border-radius: inherit; }
+.feats { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 2rem 2.5rem; padding: 2rem 0 3rem; border-top: 1px solid var(--sav-color-border); }
+.feat sav-icon { font-size: 1.5rem; color: var(--sav-color-primary); } .feat h3 { margin: .5rem 0 .2rem; font-size: 1.05rem; } .feat p { color: var(--sav-color-text-muted); }
+.landing > .credit { width: 100%; max-width: 1680px; margin: auto auto 0; padding: 1rem clamp(1rem, 4vw, 3rem); }
+@media (max-width: 900px) { .hero { grid-template-columns: minmax(0, 1fr); padding-bottom: 3rem; } .hart { max-width: 34rem; width: 100%; justify-self: center; } }
+@media (max-width: 520px) { .htiles { grid-template-columns: repeat(4, minmax(0, 1fr)); } .htiles i:nth-child(n+5) { display: none; } .ltop .langb .lbl { display: none; } }
+.credit { display: flex; flex-wrap: wrap; gap: .4rem 1.1rem; align-items: center; padding: 1.1rem 0; color: var(--sav-color-text-muted); font-size: .85rem; margin-top: auto; } .credit a { color: inherit; } .sig { font-family: "Stack Sans Notch", sans-serif; }
+
+/* the frame, as in SavDrive: header with the search, side menu (New, places, space), the page */
+.home { min-height: 100dvh; display: flex; flex-direction: column; }
+.htop { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 1rem; padding: .7rem clamp(.8rem, 2vw, 1.6rem); padding-top: max(.7rem, env(safe-area-inset-top)); background: color-mix(in oklab, var(--sav-color-bg) 88%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.hsearch { flex: 0 1 34rem; min-width: 0; } .htop .hsearch + .spacer { flex: 1; }
+.umenu { display: inline-flex; align-items: center; gap: .3rem; flex: none; }
+.hbody { flex: 1; display: grid; grid-template-columns: 15rem minmax(0, 1fr); gap: 1.6rem; width: 100%; max-width: 1680px; margin: 0 auto; padding: .6rem clamp(.8rem, 2vw, 1.6rem) 2rem; align-content: start; }
+.hside { display: flex; flex-direction: column; gap: .15rem; align-self: start; position: sticky; top: 4.6rem; }
+.newd { display: block; width: 100%; margin-bottom: .8rem; } .newb { width: 100%; }
+.quota { display: grid; gap: .45rem; padding: 1.2rem .8rem; margin-top: .4rem; border-top: 1px solid var(--sav-color-border); } .quota small { color: var(--sav-color-text-muted); } .qhead { display: flex; align-items: center; gap: .45rem; font-size: .9rem; } .qhead sav-icon { color: var(--sav-color-text-muted); }
+.hmain { min-width: 0; }
+.home > .credit { width: 100%; max-width: 1680px; margin: auto auto 0; padding: 1rem clamp(.8rem, 2vw, 1.6rem); }
+
+/* the page of the photos: the header of a folder of SavDrive, the days, the grid */
+.dmain { position: relative; border-radius: 20px; min-height: 60vh; }
+/* as in SavDrive, the page reaches down to the footer: files can be dropped (and a rectangle drawn) anywhere, also when it is empty */
+.photos .hbody { align-content: stretch; } .photos .dmain { display: flex; flex-direction: column; } .photos .dmain > sav-infinite-scroll { flex: 1; }
+.photos .dmain:has(.dempty) > sav-infinite-scroll { display: grid; align-content: center; }
+.dmain.dropping { outline: 2px dashed var(--sav-color-primary); outline-offset: 6px; background: color-mix(in oklab, var(--sav-color-primary) 5%, transparent); }
+.photos .hbody, .photos .htop .brand { -webkit-user-select: none; user-select: none; }
+/* the rectangle that chooses photos (as in SavDrive), drawn in the page so it follows the scroll */
+.band { position: absolute; z-index: 40; pointer-events: none; border: 1px solid var(--sav-color-primary); background: color-mix(in oklab, var(--sav-color-primary) 14%, transparent); border-radius: 4px; }
+body.banding, body.banding * { cursor: default !important; }
+.dhead { display: flex; align-items: center; gap: .5rem; min-height: 3rem; margin-bottom: .8rem; flex-wrap: wrap; } .dhead h1 { font-size: 1.45rem; letter-spacing: -.025em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.crumbwrap { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; min-width: 0; flex: 0 1 auto; } .crumbs { font-size: 1.05rem; }
+.dcount { color: var(--sav-color-text-muted); font-size: .82rem; white-space: nowrap; }
+.selbar { display: flex; align-items: center; gap: .4rem; width: 100%; padding: .25rem .5rem; border-radius: 14px; background: color-mix(in oklab, var(--sav-color-primary) 11%, var(--sav-color-surface)); }
+.selbar b { padding: 0 .2rem; }
+.pickbar { padding: .45rem .6rem; gap: .6rem; } .pickbar .grow { display: grid; line-height: 1.3; }
+.picking .dhead { position: sticky; top: 4.4rem; z-index: 15; }
+.dhead:has(.selbar) { position: sticky; top: 4.4rem; z-index: 15; }
+.lnote:not(:empty) { margin-bottom: .8rem; }
+.dempty { padding: 2rem 0; grid-column: 1 / -1; }
+sav-infinite-scroll:has(.dempty)::part(footer) { display: none; }
+.dwait { display: grid; place-items: center; min-height: 40vh; } .dwait.small { min-height: 5rem; }
+.day { margin: 0 0 1.1rem; }
+.dayh { display: flex; align-items: center; gap: .45rem; font-size: .9rem; font-weight: 650; color: var(--sav-color-text-muted); margin: 1.1rem 0 .6rem; min-height: 1.6rem; } .day:first-child .dayh { margin-top: .2rem; }
+.dayh .dchk { opacity: 0; transition: opacity .15s; } .day:hover .dchk, .selecting .dchk, .dchk[checked] { opacity: 1; }
+.grid .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--tile, 160px), 1fr)); gap: .5rem; }
+.grid[data-size="s"] { --tile: 110px; } .grid[data-size="s"] .tiles { gap: .35rem; } .grid[data-size="l"] { --tile: 250px; } .grid[data-size="l"] .tiles { gap: .7rem; }
+.tile { position: relative; aspect-ratio: 1; padding: 0; margin: 0; border: 1px solid var(--sav-color-border); border-radius: 12px; overflow: hidden; background: var(--thumb); cursor: pointer; display: block; width: 100%; color: inherit; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; transition: border-color .15s, box-shadow .15s; }
+.tile:hover { border-color: color-mix(in oklab, var(--sav-color-primary) 40%, var(--sav-color-border)); box-shadow: 0 6px 20px rgb(60 40 0 / .1); }
+.tile img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .18s ease; }
+.tile:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--sav-color-focus, var(--sav-color-primary)); }
+.tskel { aspect-ratio: 1; width: 100%; height: auto; } .tskel::part(base) { border-radius: 12px; }
+sav-infinite-scroll:has(.gskel)::part(footer) { display: none; } /* the skeleton says it is loading */
+.askel { cursor: default; pointer-events: none; }
+.tload { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; } .tload::part(base) { border-radius: 0; }
+.vload { grid-area: 1 / 1; width: 100%; height: 100%; pointer-events: none; z-index: 1; } .vload::part(base) { border-radius: 10px; }
+.tile .noimg, .noimg { display: grid; place-items: center; width: 100%; height: 100%; font-size: 1.6rem; color: var(--sav-color-text-muted); background: var(--thumb); }
+.vbadge { position: absolute; right: .4rem; bottom: .4rem; display: inline-flex; align-items: center; gap: .2rem; padding: .1rem .45rem .1rem .3rem; border-radius: 99px; background: rgb(0 0 0 / .55); color: #fff; font-size: .72rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.vbadge sav-icon { font-size: .8rem; }
+.fav { position: absolute; right: .4rem; top: .35rem; color: #ffd166; font-size: .95rem; filter: drop-shadow(0 1px 2px rgb(0 0 0 / .6)); }
+.chk { position: absolute; left: .45rem; top: .45rem; width: 1.4rem; height: 1.4rem; border-radius: 50%; display: grid; place-items: center; border: 2px solid #fff; background: rgb(0 0 0 / .22); color: transparent; font-size: .8rem; opacity: 0; transition: opacity .12s, background .12s; box-shadow: 0 1px 4px rgb(0 0 0 / .3); }
+.tile:hover .chk, .selecting .chk { opacity: 1; }
+.tile.on { border-color: var(--sav-color-primary); box-shadow: 0 0 0 1px var(--sav-color-primary); background: color-mix(in oklab, var(--sav-color-primary) 12%, var(--card)); }
+.tile.on img, .tile.on .noimg { transform: scale(.88); border-radius: 8px; }
+.tile.on .chk { opacity: 1; background: var(--sav-color-primary); border-color: var(--sav-color-primary); color: var(--sav-color-on-primary); }
+.picking .tile .chk { opacity: 1; }
+@media (hover: none) { .tile:hover .chk { opacity: 0; } .selecting .tile .chk, .tile.on .chk, .picking .tile .chk { opacity: 1; } .dayh .dchk { display: none; } .selecting .dayh .dchk { display: inline-flex; opacity: 1; } }
+
+/* albums: the cards of SavDrive */
+.dgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(12.5rem, 1fr)); gap: 1rem; }
+.dcard { position: relative; display: block; background: var(--card); border: 1px solid var(--sav-color-border); border-radius: 16px; cursor: pointer; transition: border-color .15s, box-shadow .15s; min-width: 0; color: inherit; text-decoration: none; outline: none; }
+.dcard:hover { border-color: color-mix(in oklab, var(--sav-color-primary) 40%, var(--sav-color-border)); box-shadow: 0 6px 20px rgb(60 40 0 / .09); }
+.dcard:focus-visible { box-shadow: 0 0 0 2px var(--sav-color-focus, var(--sav-color-primary)); }
+.dcard.on { border-color: var(--sav-color-primary); box-shadow: 0 0 0 1px var(--sav-color-primary); background: color-mix(in oklab, var(--sav-color-primary) 7%, var(--card)); }
+/* the box that chooses a card, as in SavDrive: on hover, and always while something is chosen */
+.dcard .pick { position: absolute; left: .7rem; top: .7rem; z-index: 2; opacity: 0; transition: opacity .15s; }
+.dcard:hover .pick, .dcard.on .pick, .selecting .dcard .pick { opacity: 1; }
+@media (hover: none) { .dcard .pick { opacity: 1; } }
+.dthumb { position: relative; aspect-ratio: 4 / 3; margin: .45rem .45rem 0; border-radius: 11px; background: var(--thumb); display: grid; place-items: center; overflow: hidden; }
+.dthumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* the cover of an album: the cover large in front, two more of its photos peeking out from behind it, round corners */
+.albc .albstage { position: relative; margin: .45rem .45rem 0; aspect-ratio: 4 / 3; border-radius: 11px; overflow: hidden; isolation: isolate;
+  background: radial-gradient(130% 100% at 25% 10%, color-mix(in oklab, var(--accent) 22%, var(--sav-color-surface)), var(--sav-color-surface-2)); }
+.albc .albstage > .noimg { background: none; font-size: 2.4rem; color: color-mix(in oklab, var(--sav-color-primary) 70%, var(--sav-color-text-muted)); }
+.prt { position: absolute; left: 12%; top: 11%; width: 76%; height: 78%; border-radius: 10px; overflow: hidden; background: var(--sav-color-surface-2);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / .06), 0 8px 20px -10px rgb(20 10 0 / .45); transition: transform .35s cubic-bezier(.2, .8, .3, 1); }
+.prt img, .prt .noimg { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: inherit; }
+.prt .noimg { font-size: 1.3rem; }
+.prt.p0 { z-index: 3; transform: translateY(-2%); }
+.prt.p1 { z-index: 2; transform: rotate(5deg) translate(8%, 1%); }
+.prt.p2 { z-index: 1; transform: rotate(-6deg) translate(-8%, 3%); }
+.albstage[data-n="1"] .prt.p0 { transform: none; }
+.albc:hover .prt.p0, .albc:focus-visible .prt.p0 { transform: translateY(-3%) scale(1.03); }
+.albc:hover .prt.p1, .albc:focus-visible .prt.p1 { transform: rotate(9deg) translate(16%, 0); }
+.albc:hover .prt.p2, .albc:focus-visible .prt.p2 { transform: rotate(-10deg) translate(-16%, 3%); }
+@media (prefers-reduced-motion: reduce) { .prt { transition: none; } }
+.albchip { position: absolute; left: .5rem; bottom: .5rem; z-index: 5; display: inline-flex; align-items: center; gap: .25rem; padding: .16rem .55rem .16rem .45rem; border-radius: 99px;
+  font-size: .74rem; font-weight: 650; color: var(--sav-color-text); background: color-mix(in oklab, var(--sav-color-surface) 78%, transparent); border: 1px solid var(--sav-color-border); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); font-variant-numeric: tabular-nums; }
+.albchip sav-icon { font-size: .82rem; color: var(--sav-color-text-muted); } .albchip sav-icon:nth-of-type(2) { margin-left: .3rem; }
+.albc .ashared { z-index: 5; }
+.albc .pick { z-index: 6; }
+/* the mosaic: one photo fills it; two side by side; three and four as one big photo with the others in a column */
+.amos { display: grid; width: 100%; height: 100%; gap: 2px; background: var(--card); grid-template-columns: 2fr 1fr; grid-auto-rows: 1fr; }
+.amos[data-n="2"] { grid-template-columns: 1fr 1fr; }
+.amos[data-n="3"] > :first-child { grid-row: span 2; } .amos[data-n="4"] > :first-child { grid-row: span 3; }
+.amos > img, .amos > .noimg { width: 100%; height: 100%; min-width: 0; min-height: 0; object-fit: cover; display: block; background: var(--sav-color-surface-2); }
+.amos > .noimg { font-size: 1.2rem; } .dthumb .noimg { font-size: 2.2rem; }
+.dinfo { display: flex; align-items: center; gap: .2rem; padding: .55rem .3rem .6rem .8rem; }
+.dname { display: grid; min-width: 0; flex: 1; line-height: 1.3; } .dname b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .dname small { color: var(--sav-color-text-muted); font-size: .78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ashared { position: absolute; top: .45rem; right: .45rem; width: 1.8rem; height: 1.8rem; border-radius: 50%; display: grid; place-items: center; background: rgb(0 0 0 / .5); color: #fff; font-size: .85rem; }
+.alist { display: grid; gap: .2rem; max-height: min(50vh, 24rem); overflow: auto; margin: 0 -.3rem .9rem; padding: 0 .3rem; }
+.arow { display: flex; align-items: center; gap: .75rem; padding: .45rem .5rem; border: 0; background: none; border-radius: 12px; text-align: left; cursor: pointer; color: inherit; font: inherit; width: 100%; }
+.arow:hover, .arow:focus-visible { background: var(--sav-color-surface-2); outline: none; } .arow[disabled] { opacity: .5; }
+.arow .grow { display: grid; line-height: 1.3; } .arow b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .arow small { font-size: .78rem; } .arow > sav-icon { color: var(--sav-color-text-muted); }
+.acov { width: 3rem; height: 3rem; border-radius: 10px; overflow: hidden; flex: none; background: var(--thumb); display: grid; place-items: center; } .acov img { width: 100%; height: 100%; object-fit: cover; display: block; } .acov .noimg { font-size: 1.2rem; }
+.newa { align-items: flex-end; gap: .5rem; }
+.linkrow sav-input { min-width: 0; }
+.pubm { width: 100%; max-width: 1500px; margin: 0 auto; padding: .4rem clamp(.8rem, 3vw, 2rem) 2rem; flex: 1; }
+
+/* the viewer: the preview of SavDrive (a dialog), for photos */
+.pv { --sav-dialog-padding: .8rem; }
+.pvwrap { position: relative; display: grid; place-items: center; min-height: 50vh; background: var(--sav-color-surface-2); border-radius: 14px; overflow: hidden; touch-action: none; }
+/* the whole photo always: the stage takes the height left by the title and the buttons of the dialog, never more */
+.pvstage { width: 100%; height: clamp(14rem, calc(100dvh - 15rem), 52rem); display: grid; grid-template: minmax(0, 1fr) / minmax(0, 1fr); place-items: center; overflow: hidden; transition: transform .2s ease; }
+/* the photo fills the stage only as a box: object-fit contain keeps all of it inside (the track above has a fixed height) */
+.pvstage > img { min-width: 0; min-height: 0; }
+.pvimg { grid-area: 1 / 1; width: 100%; height: 100%; max-width: 100%; max-height: 100%; object-fit: contain !important; display: block; -webkit-user-select: none; user-select: none; transform-origin: center; }
+.vimg { opacity: 0; transition: opacity .2s ease, transform .12s ease-out; } .vimg.ready { opacity: 1; }
+.zoomed .vimg { cursor: grab; transition: opacity .2s ease; }
+.pvvid { grid-area: 1 / 1; width: min(100%, calc(clamp(14rem, calc(100dvh - 15rem), 52rem) * var(--vw, 16) / var(--vh, 9))); max-height: clamp(14rem, calc(100dvh - 15rem), 52rem); }
+.vnote { grid-area: 1 / 1; align-self: end; margin-bottom: 1rem; display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; justify-content: center; padding: .5rem .85rem; border-radius: 12px; background: var(--sav-color-surface); border: 1px solid var(--sav-color-border); font-size: .88rem; }
+.pvnav { position: absolute; top: 50%; transform: translateY(-50%); z-index: 2; } .pvnav.l { left: .5rem; } .pvnav.r { right: .5rem; } .pvnav sav-button { background: color-mix(in oklab, var(--sav-color-surface) 85%, transparent); border-radius: 50%; }
+.pvinfo { display: flex; align-items: center; gap: .5rem; padding-top: .8rem; flex-wrap: wrap; }
+.pvmeta { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.pvdetails:not(:empty) { margin-top: .8rem; padding-top: .9rem; border-top: 1px solid var(--sav-color-border); }
+.iwait { display: grid; place-items: center; min-height: 5rem; }
+.ilist { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: .9rem 1.4rem; }
+.irow { display: grid; grid-template-columns: 1.3rem minmax(0, 1fr); gap: .6rem; align-items: start; } .irow > sav-icon { font-size: 1.1rem; color: var(--sav-color-text-muted); margin-top: .1rem; }
+.irow > div { display: grid; gap: .1rem; min-width: 0; line-height: 1.35; } .irow b { font-weight: 600; overflow-wrap: anywhere; } .irow small { color: var(--sav-color-text-muted); font-size: .82rem; } .irow a { font-size: .85rem; }
+.ichips { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .2rem; } .ichip { padding: .1rem .6rem; border-radius: 99px; background: var(--sav-color-surface-2); color: inherit; text-decoration: none; font-size: .8rem !important; }
+
+/* the panel of the backup: the one of the uploads of SavDrive */
+.upanel { position: fixed; right: max(1rem, env(safe-area-inset-right)); bottom: max(1rem, env(safe-area-inset-bottom)); z-index: 60; width: min(24rem, calc(100vw - 2rem)); --sav-card-padding: .8rem .9rem; }
+.uhead { display: flex; align-items: center; gap: .5rem; margin-bottom: .4rem; }
+.usum { display: block; margin: .35rem 0 .2rem; font-size: .8rem; color: var(--sav-color-text-muted); } .ukeep { display: block; margin-top: .45rem; font-size: .76rem; }
+.ulist { display: grid; gap: .5rem; max-height: 40vh; overflow: auto; margin-top: .5rem; }
+.urow { display: flex; align-items: center; gap: .6rem; } .uic { display: grid; color: var(--sav-color-text-muted); font-size: 1.1rem; } .urow[data-state=error] .uic, .uerr { color: var(--sav-color-danger); }
+.uinfo { flex: 1; min-width: 0; display: grid; gap: .2rem; } .uname { font-size: .86rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .uinfo small { font-size: .76rem; }
+.upact { margin-top: .6rem; }
+.uwait { display: flex; align-items: center; gap: .3rem; margin-top: .4rem; font-size: .8rem; color: var(--sav-color-warning, var(--sav-color-text)); }
+.umade { margin-top: .6rem; } .urow[data-state=done] .uic { color: var(--sav-color-success); }
+.uskip { display: flex; align-items: center; gap: .4rem; margin-top: .5rem; } .uskip small { flex: 1; min-width: 0; display: flex; align-items: center; gap: .3rem; color: var(--sav-color-warning, var(--sav-color-text-muted)); }
+.uskiplist { margin: .3rem 0 0; padding: 0 0 0 1.1rem; max-height: 9rem; overflow: auto; font-size: .78rem; color: var(--sav-color-text-muted); overflow-wrap: anywhere; }
+
+/* administration, settings, what's new */
+.ah { font-size: 1.5rem; letter-spacing: -.025em; margin: .3rem 0 1rem; } .amain2 .acard { display: block; margin: 1rem 0; max-width: 46rem; } .acard h2 { font-size: 1.05rem; }
+.amain2 > sav-alert { display: block; max-width: 46rem; margin: 1rem 0; }
+.atools { display: flex; align-items: center; gap: .8rem; flex-wrap: wrap; margin-bottom: 1rem; } .atools > sav-input { flex: 1 1 16rem; max-width: 26rem; }
+.ulist2 { display: grid; gap: .6rem; } .wbar { display: block; }
+.ucard { --sav-card-padding: .85rem 1rem; display: block; }
+.urow2 { display: grid; grid-template-columns: auto minmax(0, 1.4fr) auto minmax(9rem, 1fr) auto; align-items: center; gap: .6rem 1rem; }
+.uwho { display: grid; min-width: 0; line-height: 1.35; } .uwho b { display: flex; align-items: center; gap: .4rem; } .uwho small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ustate { display: flex; flex-direction: column; gap: .25rem; align-items: flex-start; } .uspace { display: grid; gap: .2rem; min-width: 0; } .uspace small { color: var(--sav-color-text-muted); font-size: .8rem; }
+.uact { display: flex; gap: .35rem; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
+@media (max-width: 1100px) { .urow2 { grid-template-columns: auto minmax(0, 1fr) auto; } .uspace { grid-column: 2 / -1; } .uact { grid-column: 1 / -1; justify-content: flex-start; } }
+.smain { width: 100%; max-width: 1080px; margin: 0 auto; padding: 1rem clamp(.8rem, 3vw, 2rem) 2rem; } .shd { display: flex; align-items: center; gap: .6rem; margin-bottom: .4rem; flex-wrap: wrap; } .shd h1 { font-size: 1.5rem; letter-spacing: -.025em; }
+.otabs { margin-top: 1rem; --sav-tab-vertical-rail: transparent; } .otabs[placement="start"] { min-height: 60vh; }
+.osec { display: grid; gap: .5rem; max-width: 46rem; } .osec h2 { font-size: 1.25rem; letter-spacing: -.015em; margin: 0; } .osec > .muted { margin: 0 0 .4rem; }
+.ocard { --sav-card-padding: 0; margin: 0; } .orows { display: grid; }
+.orow { display: flex; align-items: center; gap: 1rem 1.6rem; padding: .95rem 1.2rem; border-bottom: 1px solid var(--sav-color-border); } .orow:last-child { border-bottom: 0; }
+.orow-t { flex: 1; min-width: 0; display: grid; gap: .3rem; } .orow-t small { color: var(--sav-color-text-muted); font-size: .84rem; } .orow-c { flex: none; max-width: 55%; display: flex; justify-content: flex-end; } .orow-c > sav-select, .orow-c > sav-input { width: 15rem; max-width: 100%; }
+.chlog .vlist { display: grid; gap: 1rem; margin-top: 1.2rem; max-width: 46rem; }
+.vcard { background: var(--sav-color-surface); border: 1px solid var(--sav-color-border); border-radius: 16px; padding: 1rem 1.2rem 1.1rem; }
+.vhead { display: flex; align-items: center; gap: .6rem; } .vhead time { color: var(--sav-color-text-muted); font-size: .85rem; }
+.vcard ul { margin: .75rem 0 0; padding-left: 1.2rem; display: grid; gap: .4rem; } .vcard li { line-height: 1.45; }
+@media (max-width: 700px) { .orow { flex-wrap: wrap; } .orow-c { max-width: 100%; width: 100%; justify-content: flex-start; } .orow-c > sav-select, .orow-c > sav-input { width: 100%; } }
+
+/* phones and small tablets, as SavDrive: the search on a line of its own, New and the space in a row, the places in a row that scrolls */
+@media (max-width: 900px) {
+  .hbody { grid-template-columns: minmax(0, 1fr); gap: .8rem; } .htop { flex-wrap: wrap; gap: .6rem; } .hsearch { order: 3; flex: 1 0 100%; margin: 0; }
+  .hside { position: static; flex-direction: row; flex-wrap: wrap; align-items: center; gap: .4rem; }
+  .hside .newd { margin: 0; flex: none; width: auto; } .hside .newb { width: auto; }
+  .hside > sav-menu { flex: 1 1 100%; min-width: 0; order: 3; overflow-x: auto; scrollbar-width: none; } .hside > sav-menu::-webkit-scrollbar { display: none; } .hside > sav-menu::part(base) { display: flex; flex-direction: row; width: max-content; } .hside sav-menu-item { white-space: nowrap; } .hside sav-divider { display: none; }
+  .quota { flex: 1 1 10rem; order: 2; border: 0; margin: 0; padding: 0 .2rem; gap: .25rem; } .quota .qhead { display: none; } .quota small { font-size: .76rem; }
+  .picking .dhead, .dhead:has(.selbar) { top: 0; }
+  .photos .hbody { grid-template-rows: auto minmax(0, 1fr); }
+  .grid .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .3rem; }
+  .grid[data-size="s"] .tiles { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .2rem; } .grid[data-size="l"] .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
+  .tile { border-radius: 8px; } .grid[data-size="s"] .tile { border-radius: 5px; } .sizes { display: none; }
+  .pvstage { height: clamp(12rem, calc(100dvh - 13rem), 62vh); } .pvvid { max-height: clamp(12rem, calc(100dvh - 13rem), 62vh); width: min(100%, calc(clamp(12rem, calc(100dvh - 13rem), 62vh) * var(--vw, 16) / var(--vh, 9))); }
+  @media (pointer: coarse) { .pvnav { display: none; } }
+}
+@media (max-width: 640px) {
+  .dgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; }
+  .dhead h1 { font-size: 1.2rem; } .dhead sav-button .lbl, .pvinfo sav-button .lbl { display: none; } .dcount { display: none; }
+  .urow2 { grid-template-columns: auto minmax(0, 1fr); } .ustate { grid-column: 2; flex-direction: row; flex-wrap: wrap; }
+  .credit .langs { margin-left: 0; }
+}

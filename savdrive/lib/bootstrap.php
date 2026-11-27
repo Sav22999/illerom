@@ -8,7 +8,7 @@
  * of an account is unique and can never be changed.
  *
  * Space and activation are decided by the master admins (credentials.php), from the admin panel of the app:
- *   - every account has the default space (2 GB unless changed), or a space of its own (users.quota);
+ *   - every account has the default space (500 MB unless changed), or a space of its own (users.quota);
  *   - an account is activated or not (users.activated): a new one is activated at once, or waits for an admin, as the
  *     admins choose (setting default_active). An account that is not activated can sign in, sees that it is waiting and
  *     can delete itself, nothing else; its files stay where they are.
@@ -21,7 +21,7 @@ const AUTH_COOKIE = 'savdrive_auth';
 const SCHEMA_VERSION = 4; // 2: uploads.replace_id (an app of SavOffice saves its file back into the drive) · 3: usage (the space used by the other apps) · 4: shares, comments, nodes.created_by
 const LANGS = ['en', 'it'];
 const GB = 1073741824;
-const DEFAULT_QUOTA = 2 * GB;          // until the admins choose another one
+const DEFAULT_QUOTA = 500 * 1048576;   // 500 MB, until the admins choose another one
 const MAX_QUOTA = 10240 * GB;          // what an admin can give at most as a number (10 TB)
 const UNLIMITED = PHP_INT_MAX;         // a space without a limit (an admin's choice, by person)
 const CHUNK_BYTES = 4194304;           // a piece of an upload (4 MB: under the usual post_max_size of PHP)
@@ -374,6 +374,43 @@ function other_apps(int $uid): array
     return $memo[$uid] = array_map('intval', array_column($st->fetchAll(), 'bytes', 'app'));
 }
 
+/**
+ * What the other apps of SavOffice keep for this person, listed (lib/space.php, savspace_catalog_save): the folder of each
+ * app in My drive. ['savdocuments' => ['folders' => [[id, name, parent]], 'items' => [[id, title, folder, bytes, updated,
+ * address]], 'updated' => …], …], only the apps with something in them.
+ */
+/** The apps whose documents have a folder in My drive (the others keep things that live only in their app: calendars, polls…). */
+const OFFICE_FOLDERS = ['savdocuments', 'savspreadsheets', 'savpresentations', 'savbooks', 'savwhiteboard', 'savnotes', 'savforms'];
+
+function office_catalogs(array $u): array
+{
+    try {
+        $st = db()->prepare('SELECT app, catalog, updated_at FROM ' . t('office') . ' WHERE email = ? AND items > 0 ORDER BY app');
+        $st->execute([mb_strtolower((string)$u['email'])]);
+    } catch (PDOException $e) {
+        return []; // no app has sent its list yet (the table is made by the first one)
+    }
+    $out = [];
+    foreach ($st->fetchAll() as $r) {
+        $c = json_decode((string)$r['catalog'], true);
+        if (is_array($c) && !empty($c['items']) && in_array($r['app'], OFFICE_FOLDERS, true)) $out[$r['app']] = ['folders' => $c['folders'] ?? [], 'items' => $c['items'], 'updated' => iso($r['updated_at'])];
+    }
+    return $out;
+}
+
+/** The folders of the apps in My drive: [{app, count, size, updated, peek: [{name, app}]}] */
+function office_summary(array $u): array
+{
+    $out = [];
+    foreach (office_catalogs($u) as $app => $c) {
+        $items = $c['items'];
+        usort($items, fn($a, $b) => strcmp((string)($b[4] ?? ''), (string)($a[4] ?? '')));
+        $out[] = ['app' => $app, 'count' => count($c['items']), 'folders' => count($c['folders']), 'size' => array_sum(array_map(fn($d) => (int)$d[3], $c['items'])),
+            'updated' => $items[0][4] ?? $c['updated'], 'peek' => array_map(fn($d) => ['name' => (string)$d[1]], array_slice($items, 0, 2))];
+    }
+    return $out;
+}
+
 /** The space of an account, app by app: ['savdrive' => its files, 'savdocuments' => …] */
 function space_parts(int $uid): array
 {
@@ -481,3 +518,4 @@ function iso(?string $utc): ?string
 require_once __DIR__ . '/mail.php';
 require_once __DIR__ . '/files.php';
 require_once __DIR__ . '/access.php';
+require_once __DIR__ . '/archive.php';

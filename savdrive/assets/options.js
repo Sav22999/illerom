@@ -1,9 +1,9 @@
 /** Settings: a page of its own, one section at a time chosen on the side, as in the other apps of SavOffice. */
 import { btn, dialog, fail, h, mobile, put, select, toast } from './ui.js';
 import { getLang, setLang, t } from './i18n.js';
-import { S, api } from './store.js';
+import { S, api, forgetThumbs } from './store.js';
 import { brand, credit, go, prefs, setPrefs, setUser, signOut, userMenu } from './account.js';
-import { bytes, spaceParts, unlimited } from './drive.js';
+import { PREVIEW_KINDS, bytes, previewOn, spaceParts, unlimited } from './drive.js';
 
 export function settingsScreen(root, want = '') {
   const u = S.user, p = prefs(), md = { size: 'sm' };
@@ -35,6 +35,13 @@ export function settingsScreen(root, want = '') {
   const drive = () => section(t('g_drive'), null,
     row(t('view'), null, select(null, [['grid', t('v_grid')], ['list', t('v_list')]], p.view || (mobile() ? 'list' : 'grid'), (v) => save({ view: v }), { ...md, 'aria-label': t('view') })),
     row(t('sort'), null, select(null, ['name', 'updated', 'size'].map((k) => [k, t('sort_' + k)]), p.sort || 'name', (v) => save({ sort: v }), { ...md, 'aria-label': t('sort') })),
+    // which kinds of files show what is inside them in the cards: one choice for each
+    h('div.orow.pvkinds', h('div.orow-t', h('b', t('previews')), h('small', t('previews_t')),
+      h('div.pvlist', { role: 'group', 'aria-label': t('previews') }, PREVIEW_KINDS.map((k) => {
+        const c = h('sav-checkbox', { checked: previewOn(k) || null, help: t('pv_' + k + '_t') }, t('pv_' + k));
+        c.addEventListener('change', () => save({ previews: Object.fromEntries(PREVIEW_KINDS.map((x) => [x, x === k ? !!c.checked : previewOn(x)])) }, true));
+        return c;
+      })))),
     row(t('create_office'), t('create_office_t'), (() => { const s = h('sav-switch', { checked: !p.hideOffice || null, 'aria-label': t('create_office') }); s.addEventListener('change', () => save({ hideOffice: !s.checked }, true)); return s; })()));
 
   const look = () => {
@@ -45,7 +52,7 @@ export function settingsScreen(root, want = '') {
 
   const del = () => {
     const f = u.hasPassword ? h('sav-input', { label: t('password'), type: 'password', 'password-toggle': true, autocomplete: 'current-password' }) : null;
-    dialog({ title: t('delete_account'), width: '28rem', body: h('div.form', h('p', t('delete_account_text')), f), actions: [{ label: t('cancel') }, { label: t('delete_forever'), danger: true, run: async () => { await api('auth.delete', { password: f?.value || '' }); S.user = null; go('#/welcome'); } }] });
+    dialog({ title: t('delete_account'), width: '28rem', body: h('div.form', h('p', t('delete_account_text')), f), actions: [{ label: t('cancel') }, { label: t('delete_forever'), danger: true, run: async () => { await api('auth.delete', { password: f?.value || '' }); S.user = null; forgetThumbs(); go('#/welcome'); } }] });
   };
   const data = () => section(t('your_data'), t('your_data_t'),
     row(t('export_data'), t('export_data_t'), small(t('export_data'), { icon: 'download', href: 'api/?r=auth.export', download: 'savdrive-data.json' })),
