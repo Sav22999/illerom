@@ -8,6 +8,7 @@
  * Tasks:        tasks.init, tasks.prefs, tasks.all, tasks.list.save, tasks.list.delete, tasks.list.order, tasks.list.export,
  *               tasks.import, tasks.task.save, tasks.task.done, tasks.task.delete, tasks.task.move, tasks.task.order,
  *               tasks.done.clear, tasks.habit.mark, tasks.calendars
+ * Time tracked: tasks.time.list, tasks.time.start, tasks.time.stop, tasks.time.save, tasks.time.delete (lib/track.php)
  * Other apps:   tasks.cal.create (a task becomes an event of SavCalendar), tasks.sch.create (a task becomes a poll of
  *               SavSchedules), tasks.schedules (what SavSchedules asks of the account)
  *
@@ -20,6 +21,7 @@ require __DIR__ . '/../lib/bootstrap.php';
 // what a schedule is: the library of SavSchedules itself, so the apps never disagree
 require dirname(__DIR__, 2) . '/savschedules/lib/sched.php';
 require __DIR__ . '/../lib/tasks.php';
+require __DIR__ . '/../lib/track.php';
 
 header('X-Robots-Tag: noindex');
 set_exception_handler(function (Throwable $e) {
@@ -48,12 +50,13 @@ function only(string $method): void
 require_once dirname(__DIR__, 2) . '/savdrive/lib/space.php';
 const SPACE_APP = 'savtasks';
 
-/** What a person keeps in SavTasks: lists and tasks. It counts in their space of SavOffice. */
+/** What a person keeps in SavTasks: lists, tasks and the time tracked. It counts in their space of SavOffice. */
 function space_bytes(array $u): int
 {
     $q = function (string $sql) use ($u): int { $st = db()->prepare($sql); $st->execute([$u['id']]); return (int)$st->fetchColumn(); };
     return $q('SELECT COALESCE(SUM(COALESCE(LENGTH(i.notes),0) + COALESCE(LENGTH(i.checklist),0) + COALESCE(LENGTH(i.log),0) + 256),0) FROM ' . t('task_items') . ' i JOIN ' . t('task_lists') . ' l ON l.id = i.list_id WHERE l.user_id = ?')
-        + $q('SELECT COALESCE(SUM(COALESCE(LENGTH(`columns`),0) + 256),0) FROM ' . t('task_lists') . ' WHERE user_id = ?');
+        + $q('SELECT COALESCE(SUM(COALESCE(LENGTH(`columns`),0) + 256),0) FROM ' . t('task_lists') . ' WHERE user_id = ?')
+        + $q('SELECT COALESCE(SUM(LENGTH(note) + LENGTH(title) + 96),0) FROM ' . t('task_time') . ' WHERE user_id = ?');
 }
 
 /** Whether the account $uid (the owner of what grows, also when someone else is writing) can keep $more bytes more. */
@@ -306,9 +309,10 @@ switch ($r) {
             $x['tasks'] = array_map(fn($i) => out_task($i, $l), q('SELECT * FROM ' . t('task_items') . ' WHERE list_id = ? ORDER BY done_at IS NOT NULL, position, id', [$l['id']])->fetchAll());
             $lists[] = $x;
         }
+        $time = array_map('out_time', q(time_select() . ' WHERE e.user_id = ? ORDER BY e.day, e.start_at, e.id', [$u['id']])->fetchAll());
         header('Content-Disposition: attachment; filename="savtasks-data.json"');
         send_json(['app' => 'SavTasks', 'exported' => gmdate('c'), 'account' => ['name' => $u['name'], 'email' => $u['email'], 'created' => iso($u['created_at'])],
-            'prefs' => profile_prefs($p), 'lists' => $lists]);
+            'prefs' => profile_prefs($p), 'lists' => $lists, 'time' => $time]);
 
     case 'auth.delete':
         $u = writer(true);
@@ -345,12 +349,14 @@ switch ($r) {
         $lists = lists_of($u['id']);
         $tasks = tasks_of($lists);
         $prefs = profile_prefs(profile($u));
-        send_json(['ok' => true, 'lists' => array_map('out_list', $lists), 'tasks' => $tasks,
+        $run = running_time($u);
+        send_json(['ok' => true, 'lists' => array_map('out_list', $lists), 'tasks' => $tasks, 'timer' => $run ? out_time($run) : null, 'timeTotals' => (object)time_totals($u),
             'schedules' => ($prefs['schedules'] ?? true) !== false ? schedule_todos($u) : [],
             'linked' => ['events' => (object)linked_events($u, array_column($tasks, 'calEvent')), 'schedules' => (object)linked_schedules(array_column($tasks, 'schedule'))]]);
 
     case 'tasks.list.save':
-        // A new list, or its name, colour, icon, way of showing (list or board), columns and archive
+        // A new list, or its name, colour, icon, way of showing (list or board), columns, archive and hourly rate (the
+        // list as a project or a client of the time tracked)
         $u = writer();
         $b = body();
         $l = isset($b['id']) ? list_of($u, $b['id']) : null;
@@ -362,15 +368,16 @@ switch ($r) {
         if (!$l) {
             if ($name === '') fail('name_required', 422);
             if (count(lists_of($u['id'])) >= MAX_LISTS) fail('too_many_lists', 422);
-            q('INSERT INTO ' . t('task_lists') . ' (lid, user_id, name, color, icon, view, columns, position, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)',
+            q('INSERT INTO ' . t('task_lists') . ' (lid, user_id, name, color, icon, view, columns, position, rate, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
                 [new_code('task_lists', 'lid'), $u['id'], $name, valid_color($b['color'] ?? '', LIST_COLORS[array_rand(LIST_COLORS)]), $icon ?? '', $view ?? 'list',
-                    json_out(isset($b['columns']) ? clean_columns($b['columns'], $lang) : default_columns($lang)), 100, now_utc(), now_utc()]);
+                    json_out(isset($b['columns']) ? clean_columns($b['columns'], $lang) : default_columns($lang)), 100, clean_rate($b['rate'] ?? null), now_utc(), now_utc()]);
             $l = list_row((int)db()->lastInsertId());
         } else {
             db()->beginTransaction();
             $cols = isset($b['columns']) ? clean_columns($b['columns'], $lang) : columns_of($l);
-            q('UPDATE ' . t('task_lists') . ' SET name = ?, color = ?, icon = ?, view = ?, columns = ?, archived = ?, updated_at = ? WHERE id = ?', [$name !== '' ? $name : $l['name'], valid_color($b['color'] ?? '', $l['color']),
-                $icon ?? $l['icon'], $view ?? $l['view'], json_out($cols), array_key_exists('archived', $b) && !$l['inbox'] ? (!empty($b['archived']) ? 1 : 0) : $l['archived'], now_utc(), $l['id']]);
+            q('UPDATE ' . t('task_lists') . ' SET name = ?, color = ?, icon = ?, view = ?, columns = ?, archived = ?, rate = ?, updated_at = ? WHERE id = ?', [$name !== '' ? $name : $l['name'], valid_color($b['color'] ?? '', $l['color']),
+                $icon ?? $l['icon'], $view ?? $l['view'], json_out($cols), array_key_exists('archived', $b) && !$l['inbox'] ? (!empty($b['archived']) ? 1 : 0) : $l['archived'],
+                array_key_exists('rate', $b) ? clean_rate($b['rate']) : $l['rate'], now_utc(), $l['id']]);
             if (isset($b['columns'])) {
                 // the tasks of a column that went move to the first one (or to the column of done tasks, when they are done)
                 $l = list_row((int)$l['id']);
@@ -558,6 +565,120 @@ switch ($r) {
         if (!$l) fail('not_found', 404);
         $n = q('DELETE FROM ' . t('task_items') . ' WHERE list_id = ? AND done_at IS NOT NULL', [$l['id']])->rowCount();
         send_json(['ok' => true, 'removed' => $n]);
+
+    // ================================================================ time tracked (lib/track.php)
+
+    case 'tasks.time.list':
+        // The spans of the days from–to (the reports), or all those of a task (its detail); and the timer
+        $u = reader();
+        if (!empty($_GET['task'])) {
+            $x = task_of($u, $_GET['task']);
+            if (!$x) fail('not_found', 404);
+            $rows = q(time_select() . ' WHERE e.user_id = ? AND e.task_id = ? ORDER BY e.day DESC, e.start_at DESC, e.id DESC LIMIT 1000', [$u['id'], $x['id']])->fetchAll();
+        } else {
+            $from = valid_day($_GET['from'] ?? null);
+            $to = valid_day($_GET['to'] ?? null);
+            if (!$from || !$to || $to < $from) fail('bad_time', 422);
+            $rows = q(time_select() . ' WHERE e.user_id = ? AND e.day BETWEEN ? AND ? ORDER BY e.day DESC, e.start_at DESC, e.id DESC LIMIT 20000', [$u['id'], $from, $to])->fetchAll();
+        }
+        $run = running_time($u);
+        send_json(['ok' => true, 'entries' => array_map('out_time', $rows), 'timer' => $run ? out_time($run) : null]);
+
+    case 'tasks.time.start':
+        // The timer starts on a task (or a list, or nothing): the one running stops first (one at a time, on every
+        // device). Billable when its list has an hourly rate
+        $u = writer();
+        $b = body();
+        $tz = valid_tz($b['tz'] ?? '', 'UTC');
+        db()->beginTransaction();
+        lock_account($u);
+        [$x, $l] = time_target($u, $b);
+        $stopped = stop_running($u);
+        if (time_count($u) >= MAX_TIME) fail('too_many_times', 422);
+        $now = now_utc();
+        $eid = new_code('task_time', 'eid');
+        q('INSERT INTO ' . t('task_time') . ' (eid, user_id, list_id, task_id, title, note, day, start_at, seconds, running, billable, tz, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,0,1,?,?,?,?)',
+            [$eid, $u['id'], $l['id'] ?? null, $x['id'] ?? null, $x['title'] ?? '', s($b, 'note', 500), utc_day($now, $tz), $now, $l && $l['rate'] !== null ? 1 : 0, $tz, $now, $now]);
+        db()->commit();
+        $st = $stopped ? time_row($stopped) : null;
+        send_json(['ok' => true, 'timer' => out_time(time_of($u, $eid)), 'stopped' => $st ? out_time($st) : null]);
+
+    case 'tasks.time.stop':
+        // The timer stops: it becomes a span of its length
+        $u = writer();
+        db()->beginTransaction();
+        lock_account($u);
+        $id = stop_running($u);
+        db()->commit();
+        $e = $id ? time_row($id) : null;
+        send_json(['ok' => true, 'entry' => $e ? out_time($e) : null]);
+
+    case 'tasks.time.save':
+        // A span written by hand, or a change to one: the day and from–to (an end before the start is the next day) or a
+        // length in minutes, the task or list, the note, billable. The timer that runs can change all but its end, and
+        // the moment it started (never later than now)
+        $u = writer();
+        $b = body();
+        db()->beginTransaction();
+        lock_account($u);
+        $old = !empty($b['id']) ? time_of($u, $b['id']) : null;
+        if (!empty($b['id']) && !$old) fail('not_found', 404);
+        if (!$old && time_count($u) >= MAX_TIME) fail('too_many_times', 422);
+        $tz = valid_tz($b['tz'] ?? '', $old['tz'] ?? 'UTC');
+        if ($old && !array_key_exists('task', $b) && !array_key_exists('list', $b)) [$taskId, $listId, $title] = [$old['task_id'], $old['list_id'], $old['title']];
+        else {
+            [$x, $l] = time_target($u, $b);
+            [$taskId, $listId, $title] = [$x['id'] ?? null, $l['id'] ?? null, $x['title'] ?? ''];
+        }
+        $note = array_key_exists('note', $b) ? s($b, 'note', 500) : (string)($old['note'] ?? '');
+        $billable = array_key_exists('billable', $b) ? (!empty($b['billable']) ? 1 : 0) : (int)($old['billable'] ?? 0);
+        $now = now_utc();
+        if ($old && $old['running']) {
+            $start = $old['start_at'];
+            $day = valid_day($b['day'] ?? null);
+            $clock = valid_clock($b['start'] ?? null);
+            if ($day && $clock) {
+                $start = wall_to_utc($day, $clock, $tz);
+                if (!$start || $start > $now) fail('bad_time', 422);
+            }
+            q('UPDATE ' . t('task_time') . ' SET task_id = ?, list_id = ?, title = ?, note = ?, billable = ?, start_at = ?, day = ?, tz = ?, updated_at = ? WHERE id = ?',
+                [$taskId, $listId, $title, $note, $billable, $start, utc_day($start, $tz), $tz, $now, $old['id']]);
+            $id = (int)$old['id'];
+        } else {
+            $day = valid_day($b['day'] ?? null);
+            if (!$day) fail('bad_time', 422);
+            $from = valid_clock($b['start'] ?? null);
+            $to = valid_clock($b['end'] ?? null);
+            if ($from && $to) {
+                $startAt = wall_to_utc($day, $from, $tz);
+                $endAt = wall_to_utc($day, $to, $tz);
+                if (!$startAt || !$endAt) fail('bad_time', 422);
+                if ($endAt <= $startAt) $endAt = gmdate('Y-m-d H:i:s', strtotime($endAt . ' UTC') + 86400); // past midnight
+                $sec = strtotime($endAt . ' UTC') - strtotime($startAt . ' UTC');
+            } else {
+                $startAt = $endAt = null;
+                $sec = (int)round((float)($b['minutes'] ?? 0) * 60);
+            }
+            if ($sec < ($old ? 1 : 60) || $sec > max(86400, (int)($old['seconds'] ?? 0))) fail('bad_length', 422);
+            if ($old) {
+                q('UPDATE ' . t('task_time') . ' SET task_id = ?, list_id = ?, title = ?, note = ?, billable = ?, day = ?, start_at = ?, end_at = ?, seconds = ?, tz = ?, updated_at = ? WHERE id = ?',
+                    [$taskId, $listId, $title, $note, $billable, $day, $startAt, $endAt, $sec, $tz, $now, $old['id']]);
+                $id = (int)$old['id'];
+            } else {
+                q('INSERT INTO ' . t('task_time') . ' (eid, user_id, list_id, task_id, title, note, day, start_at, end_at, seconds, running, billable, tz, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,0,?,?,?,?)',
+                    [new_code('task_time', 'eid'), $u['id'], $listId, $taskId, $title, $note, $day, $startAt, $endAt, $sec, $billable, $tz, $now, $now]);
+                $id = (int)db()->lastInsertId();
+            }
+        }
+        db()->commit();
+        send_json(['ok' => true, 'entry' => out_time(time_row($id))]);
+
+    case 'tasks.time.delete':
+        $u = writer();
+        $e = time_of($u, body()['id'] ?? '');
+        if (!$e) fail('not_found', 404);
+        q('DELETE FROM ' . t('task_time') . ' WHERE id = ?', [$e['id']]);
+        send_json(['ok' => true]);
 
     case 'tasks.schedules':
         $u = reader();

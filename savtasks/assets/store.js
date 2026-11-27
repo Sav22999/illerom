@@ -4,9 +4,10 @@ import { offlineQueue, tmp } from '../../assets/savoffice/offline-queue.js';
 
 /**
  * user: the account (the same of SavSchedules and SavCalendar) · prefs: settings of SavTasks · lists · tasks ·
- * schedules: what SavSchedules asks of the account (read-only) · linked: the events and polls made from tasks
+ * schedules: what SavSchedules asks of the account (read-only) · linked: the events and polls made from tasks ·
+ * timer: the timer that runs (one per account, kept on the server) · timeTotals: the seconds tracked on each task
  */
-export const S = { user: null, csrf: '', config: {}, prefs: {}, lists: [], tasks: [], schedules: [], linked: { events: {}, schedules: {} }, schedulesUrl: '../savschedules/', calendarUrl: '../savcalendar/', ready: false };
+export const S = { user: null, csrf: '', config: {}, prefs: {}, lists: [], tasks: [], schedules: [], timer: null, timeTotals: {}, linked: { events: {}, schedules: {} }, schedulesUrl: '../savschedules/', calendarUrl: '../savcalendar/', ready: false };
 
 /** The API as it is (the network): changes made offline go through the queue below first. */
 async function send(r, body, query = {}) {
@@ -76,6 +77,8 @@ export async function loadAll() {
   S.lists = r.lists;
   S.tasks = r.tasks;
   S.schedules = r.schedules || [];
+  S.timer = r.timer || null;
+  S.timeTotals = r.timeTotals && !Array.isArray(r.timeTotals) ? r.timeTotals : {};
   S.linked = { events: r.linked?.events || {}, schedules: r.linked?.schedules || {} };
   await Q.replay();
   S.ready = true;

@@ -47,7 +47,7 @@ export async function saveSavtas(id) {
   } catch (e) { fail(e); }
 }
 
-const csvCell = (v) => { const s = String(v ?? ''); return /[",;\n\r]/.test(s) || /^[=+\-@]/.test(s) ? '"' + (/^[=+\-@]/.test(s) ? "'" : '') + s.replace(/"/g, '""') + '"' : s; };
+export const csvCell = (v) => { const s = String(v ?? ''); return /[",;\n\r]/.test(s) || /^[=+\-@]/.test(s) ? '"' + (/^[=+\-@]/.test(s) ? "'" : '') + s.replace(/"/g, '""') + '"' : s; };
 export async function saveCsv(id) {
   try {
     const { list: l, tasks } = await whole(id);

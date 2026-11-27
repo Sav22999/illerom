@@ -1,7 +1,15 @@
 /** The version of SavTasks (in the footer) and what changed in each one (the page #/changelog). Newest first. */
-export const VERSION = '1.2.0';
+export const VERSION = '1.3.0';
 
 export const CHANGES = [
+  {
+    v: '1.3.0', date: '2026-11-27', items: [
+      ['Time tracking: a timer on every task, one at a time, always in the bar while it runs and kept on every device', 'Tracciamento del tempo: un timer su ogni attività, uno alla volta, sempre nella barra mentre corre e lo stesso su ogni dispositivo'],
+      ['Time entries by hand (from–to or a length, a note, billable or not); the time of a task in its detail', 'Voci di tempo a mano (dalle–alle o una durata, una nota, fatturabili o no); il tempo di un’attività nel suo dettaglio'],
+      ['Lists as projects or clients with an hourly rate; reports by week, month or days, by project and by task, with hours and amounts', 'Liste come progetti o clienti con una tariffa oraria; report per settimana, mese o intervallo, per progetto e per attività, con ore e importi'],
+      ['Reports as CSV or opened in SavSpreadsheets (saved in SavDrive)', 'Report in CSV o aperti in SavSpreadsheets (salvati in SavDrive)'],
+    ],
+  },
   {
     v: '1.2.0', date: '2026-11-27', items: [
       ['Table: a type of list like a sheet, sorted by any column, with status, due day and priority changed from the cell', 'Tabella: un tipo di lista come un foglio, ordinata per qualsiasi colonna, con stato, scadenza e priorità da cambiare nella cella'],

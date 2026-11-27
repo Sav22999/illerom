@@ -1,7 +1,7 @@
 # SavTasks
 
 Free, open tasks, part of **SavOffice**: to-dos, lists, boards (kanban), Gantt charts, tables and habits in one app, with due days and times,
-reminders, repetitions, priorities, labels and subtasks. The same account as **SavSchedules** and **SavCalendar**: tasks
+reminders, repetitions, priorities, labels and subtasks, and time tracking (a timer on every task, reports by project or client). The same account as **SavSchedules** and **SavCalendar**: tasks
 with a due day show in the calendar, a task can become an event or a date poll, and what SavSchedules asks of the
 account (polls to decide, places booked) comes here as read-only to-dos.
 <https://www.illerom.eu/savtasks/>
@@ -20,7 +20,8 @@ account (polls to decide, places booked) comes here as read-only to-dos.
 |------|------|
 | `api/index.php` | JSON API (the actions are listed at its top) |
 | `lib/tasks.php` | Lists, tasks, repetitions, and what goes to and comes from SavCalendar and SavSchedules |
-| `lib/schema.php` | The tables `sch_task_profiles`, `sch_task_lists`, `sch_task_items` |
+| `lib/track.php` | The time tracked: the timer (one per account), spans written by hand, rates |
+| `lib/schema.php` | The tables `sch_task_profiles`, `sch_task_lists`, `sch_task_items`, `sch_task_time` |
 | `lib/mail.php` | Emails of the account and of the reminders |
 | `../cron/savtasks-reminders.php` | The reminders by email (every 30 minutes, or more often) |
 | `assets/tasks.js` | The screen: side (smart views and lists), quick add, the views, reminders in the browser |
@@ -30,6 +31,7 @@ account (polls to decide, places booked) comes here as read-only to-dos.
 | `assets/habits.js` | Habits: the week, each day ticked, the streak; the habits of the day in Today |
 | `assets/gantt.js` | A list as a Gantt chart: bars from start to due day (milestones with a due day only), dragged and stretched, days or weeks |
 | `assets/task.js` | One task on the side (saved as it changes), "Add to SavCalendar", "Find a date with others", the dialog of a list |
+| `assets/track.js` | Time tracked: the timer in the bar, the time of a task, spans by hand, the view Time (reports, CSV, “Open in SavSpreadsheets”) |
 | `assets/parse.js` | Quick add: "Call Anna tomorrow 15:00 !high #work @Home every monday", in Italian and English |
 | `assets/files.js`, `zip.js` | `.savtas`, `.csv`, `.md`, lines of text |
 | `assets/account.js`, `hero.js`, `options.js`, `changelog.js`, `version.js`, `ui.js`, `time.js`, `i18n.js` | First page and accounts, settings, what's new, helpers |
@@ -64,6 +66,26 @@ SavSchedules (same service, same pairwise id), or give SavTasks its own in `cred
   changes; a **table** is a type too (rows and columns to sort; status, due day and priority change in the cell).
 - Smart views: **Today** (late and due today), **Upcoming** (by day, two weeks ahead), **Starred**, **Done** (the last
   60 days), labels, search, and **From SavSchedules**.
+
+## Time tracked
+
+- **Timer**: ▶ on the row of a task (on hover; on phones in its detail) or in its detail. One runs at a time for the account:
+  starting one stops the one before. It is kept on the server with the moment it started (`sch_task_time`, `running = 1`),
+  so it goes on across reloads and devices, and it is always in the bar while it runs (what it is on, the clock, stop).
+- **Entries by hand**: a day and from–to (an end before the start is the next day) or a length (1 minute to 24 hours),
+  a note, billable or not; editable and deletable. The running timer can change its task, note and start time.
+- **Projects and clients are the lists**: no new hierarchy. A list may have an **hourly rate** (its dialog, or “Rates
+  and currency” in the view Time; the currency is a setting of the account, one of those SavSpreadsheets knows). A new
+  entry is billable when its list has a rate. An entry belongs to a task (and so to the list the task is in now) or only
+  to a list; a deleted task leaves its entries with its title.
+- **The view Time** (`#/time`): week, month or the days chosen; filters by project and billable; totals of hours,
+  billable hours and amount; tables by project or client and by task; the entries by day.
+- **Export**: CSV (one row per entry, then the totals), and **Open in SavSpreadsheets**: a `.savspr` (a sheet *Entries*
+  with hours, rate and amount as formulas, and a sheet *Summary* with SUMIF/SUMIFS totals by project and by task) is put
+  into **SavDrive** (My drive, with the SavDrive session of the browser: `upload.start`/`upload.chunk`) and opened as
+  SavDrive opens its files, `../savspreadsheets/?savdrive=<id>`. Without a SavDrive session the file is downloaded.
+- API: `tasks.time.list|start|stop|save|delete`; `tasks.all` also gives `timer` and `timeTotals`; `tasks.list.save` takes
+  `rate`. The account export (`auth.export`) includes the entries.
 
 ## With the other apps
 

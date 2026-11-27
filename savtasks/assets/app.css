@@ -425,3 +425,44 @@ body.dragging, body.dragging * { cursor: grabbing !important; }
 
 /* the language in the footer: as wide as its name (never cut), as in the other apps of SavOffice */
 .langs { width: max-content; max-width: 100%; }
+
+/* ------------------------------------------------------------------ time tracked (track.js) */
+/* the timer in the bar, while it runs */
+.ttimer { display: flex; align-items: center; gap: .2rem; flex: none; } .ttimer[hidden] { display: none; }
+.ttgo { flex: none; } .ttgo::part(label) { display: flex; align-items: center; gap: .45rem; }
+.ttname { max-width: 12rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .ttclock { font-variant-numeric: tabular-nums; font-weight: 700; }
+.ttdot { width: .5rem; height: .5rem; border-radius: 50%; background: var(--no); flex: none; animation: ttpulse 1.4s ease-in-out infinite; }
+@keyframes ttpulse { 50% { opacity: .35; } } @media (prefers-reduced-motion: reduce) { .ttdot { animation: none; } }
+/* in the rows of tasks: start on hover (always shown when it runs there) */
+.tplay { flex: none; margin: -.2rem -.3rem 0 0; opacity: 0; } .trow:hover .tplay, .trow:focus-within .tplay, .tplay.on { opacity: 1; }
+.m.mtime.on { color: var(--no); font-weight: 600; }
+/* a span of time */
+.telist { display: grid; gap: 0; }
+.terow { display: flex; align-items: center; gap: .6rem; padding: .5rem .55rem; border-radius: 10px; cursor: pointer; min-width: 0; }
+.terow:hover { background: var(--grid-2); } .terow:focus-visible { outline: 2px solid var(--sav-color-focus); outline-offset: -2px; } .terow.on .tedur { color: var(--no); }
+.tedot { width: .6rem; height: .6rem; border-radius: 3px; background: var(--c); flex: none; }
+.teinfo { display: grid; flex: 1; min-width: 0; } .teinfo b { font-weight: 550; font-size: .92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .teinfo small { font-size: .78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tedur { font-variant-numeric: tabular-nums; font-weight: 600; font-size: .9rem; white-space: nowrap; flex: none; }
+/* in the detail of a task */
+.dtt { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; } .dttot { display: grid; line-height: 1.2; margin-right: auto; } .dttot small { font-size: .72rem; }
+.dtime .telist { margin-top: .3rem; }
+/* the view "Time" */
+.tvacts { gap: .35rem; flex-wrap: wrap; }
+.tvtools { display: flex; align-items: flex-end; flex-wrap: wrap; gap: .5rem .7rem; padding: 0 clamp(.9rem, 2vw, 1.6rem) .6rem; }
+.tvtools > .spacer { flex: 1; } .tvnav { display: flex; align-items: center; gap: .15rem; } .tvrange { display: flex; gap: .5rem; } .tvrange sav-date-picker { width: 10.5rem; } .tvsel { min-width: 10rem; }
+.tvbody { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: .2rem; }
+.tvstats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .8rem; padding: .4rem .3rem .2rem; }
+.tvhint { display: flex; align-items: center; gap: .3rem; padding: .3rem .5rem 0; }
+.tvbody sav-table { margin: .1rem .2rem 0; } .tvbody td, .tvbody th { white-space: nowrap; } .tvbody td:first-child { white-space: normal; }
+.tvname { display: inline-flex; align-items: center; gap: .45rem; } .tvlink { color: inherit; } .tvtot td { font-weight: 700; }
+.tvday { margin-top: .4rem; } .tvday .ghead { font-size: .82rem; } .tvday .ghead small { margin-left: auto; font-variant-numeric: tabular-nums; }
+.trates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
+@media (max-width: 900px) { .ttname { display: none; } .tplay:not(.on) { display: none; } .ttimer ~ .tsearch { min-width: 0; } }
+@media (max-width: 420px) { .ttgo sav-icon[slot="prefix"] { display: none; } .ttop:has(.ttimer:not([hidden])) .brand { display: none; } }
+@media (max-width: 640px) {
+  .tvtools { padding: 0 .7rem .5rem; } .tvtools > .spacer { display: none; } .tvsel { flex: 1 1 9rem; min-width: 0; } .tvrange { width: 100%; } .tvrange sav-date-picker { flex: 1; width: auto; min-width: 0; }
+  .tvstats { gap: .4rem; padding: .3rem 0 .1rem; --sav-stat-size: 1.15rem; } .tvstats sav-stat::part(icon) { display: none; } .tvstats sav-stat::part(label) { font-size: .72rem; } .tvacts { width: 100%; } .tvacts > :last-child { margin-left: auto; }
+  .trates { grid-template-columns: minmax(0, 1fr); } .terow { padding: .5rem .35rem; }
+}
+@media (hover: none) { .tplay:not(.on) { display: none; } }
+.tvbody .tvn { text-align: right; font-variant-numeric: tabular-nums; }

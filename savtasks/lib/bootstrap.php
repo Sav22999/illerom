@@ -16,7 +16,7 @@ const APP_NAME = 'SavTasks';
 const AUTH_COOKIE = 'savschedules_auth';     // the same cookie of SavSchedules: one session for all
 const SHARED_APPS = ['savschedules', 'savcalendar', 'savwhiteboard', 'savtasks', 'savnotes', 'savforms', 'savsplits', 'savpodcasts', 'savmail']; // folders next to each other that share the session
 const SCHEMA_VERSION = 1;              // of the tables of SavSchedules (created here only if SavSchedules never ran)
-const TASK_SCHEMA_VERSION = 3;         // of the tables of the tasks (2: start day, the Gantt view · 3: table, habits)
+const TASK_SCHEMA_VERSION = 4;         // of the tables of the tasks (2: start day, the Gantt view · 3: table, habits · 4: time tracked, rates)
 const LANGS = ['en', 'it'];
 const KINDS = ['poll', 'slots'];       // the kinds of SavSchedules (lib/sched.php of SavSchedules is used as it is)
 const MAX_OPTIONS = 400;
@@ -27,6 +27,7 @@ const MAX_LISTS = 100;                // lists and boards of one account
 const MAX_TASKS = 5000;               // tasks of one list
 const MAX_COLUMNS = 12;               // columns of a board
 const MAX_FILE_BYTES = 6000000;       // a file to open
+const MAX_TIME = 50000;               // spans of time tracked by one account
 
 
 // ---------- Configuration ----------
