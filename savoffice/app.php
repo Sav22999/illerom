@@ -28,7 +28,7 @@ $next = $order[($i + 1) % count($order)];
             <div class="name big"><?= $ico($app, 72) ?><div><h1><?= $name($app) ?></h1><small><?= $h($p[0]) ?></small></div></div>
             <p class="lead"><?= $h(preg_replace(['/\s*(Fa parte di SavOffice|Part of SavOffice)[^.]*\.?\s*$/u', '/,? (e|and) (fa parte di|is part of) SavOffice/u', '/ (e|and) (fa parte di|is part of) SavOffice\./u'], ['', '', '.'], $p[1])) ?></p>
             <div class="ctas">
-                <sav-button size="lg" href="<?= $h($open) ?>" style="--sav-color-primary:<?= $color ?>; --sav-color-on-primary:#fff"><?= $L('Apri', 'Open') ?> <?= $h($P['name']) ?></sav-button>
+                <sav-button size="lg" href="<?= $h($open) ?>" style="--sav-color-primary:<?= savoffice_solid($color) ?>; --sav-color-on-primary:#fff"><?= $L('Apri', 'Open') ?> <?= $h($P['name']) ?></sav-button>
                 <?php if ($src): ?><sav-button size="lg" appearance="outline" variant="neutral" href="<?= $h($src) ?>" icon="code"><?= $L('Codice sorgente', 'Source code') ?></sav-button><?php endif; ?>
             </div>
             <?= $invite($app) ?>

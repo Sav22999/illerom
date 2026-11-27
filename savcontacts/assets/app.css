@@ -136,7 +136,10 @@ sav-dialog h3 { font-size: .98rem; } .dlg-err { margin-top: .8rem; } .segm.wide 
 .crow:hover .csel, .crow.sel .csel, .selecting .csel { opacity: 1; } .crow:hover .cpick sav-avatar, .crow.sel .cpick sav-avatar, .selecting .cpick sav-avatar { opacity: 0; }
 .cbody { min-width: 0; display: grid; } .cname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .94rem; } .cname b { font-weight: 650; }
 .csub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .8rem; color: var(--sav-color-text-muted); }
-.cstar { color: #d99a00; font-size: .95rem; } .cside { display: flex; align-items: center; gap: .3rem; } .cdays { font-size: .74rem; font-weight: 700; padding: .1rem .5rem; border-radius: 99px; background: var(--sun); color: var(--sun-ink); white-space: nowrap; }
+/* the star of a favourite (sav-favourite-button), as in SavDrive and SavTasks: there when on, on hover otherwise */
+.cside .starb { opacity: 0; transition: opacity .15s; } .crow:hover .cside .starb, .crow:focus-within .cside .starb, .cside .starb.on { opacity: 1; } .starb.on { --sav-tint: 80%; }
+@media (hover: none) { .cside .starb { opacity: .55; } .cside .starb.on { opacity: 1; } }
+.cside { display: flex; align-items: center; gap: .3rem; } .cdays { font-size: .74rem; font-weight: 700; padding: .1rem .5rem; border-radius: 99px; background: var(--sun); color: var(--sun-ink); white-space: nowrap; }
 .cdays.soon { background: var(--sav-color-primary); color: var(--sav-color-on-primary); }
 .crows sav-empty-state, .cread sav-empty-state { margin: 3rem auto; }
 sav-avatar.cav { flex: none; color: #fff; }

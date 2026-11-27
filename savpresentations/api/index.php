@@ -357,7 +357,7 @@ switch ($r) {
         // The link of the email opens the app, which asks for this with a button: mail scanners that open links do nothing
         only('POST');
         if (too_many_attempts('verify', 20, 15)) fail('rate_limited', 429);
-        $st = db()->prepare('SELECT user_id FROM ' . t('email_tokens') . " WHERE token_hash = ? AND kind = 'verify' AND expires_at > ?");
+        $st = db()->prepare('SELECT user_id FROM ' . t('email_tokens') . " WHERE token_hash = ? AND purpose = 'verify' AND expires_at > ?");
         $st->execute([hash('sha256', (string)(body()['token'] ?? '')), now_utc()]);
         $uid = (int)$st->fetchColumn();
         if (!$uid) {
@@ -365,7 +365,7 @@ switch ($r) {
             fail('token_invalid', 410);
         }
         db()->prepare('UPDATE ' . t('users') . ' SET email_verified_at = COALESCE(email_verified_at, ?) WHERE id = ?')->execute([now_utc(), $uid]);
-        db()->prepare('DELETE FROM ' . t('email_tokens') . " WHERE user_id = ? AND kind = 'verify'")->execute([$uid]);
+        db()->prepare('DELETE FROM ' . t('email_tokens') . " WHERE user_id = ? AND purpose = 'verify'")->execute([$uid]);
         refuse_blocked(user_row($uid));
         signed_in($uid);
 
@@ -383,7 +383,7 @@ switch ($r) {
         if (too_many_attempts('verify', 20, 15)) fail('rate_limited', 429);
         $b = body();
         validate_password((string)($b['password'] ?? ''));
-        $st = db()->prepare('SELECT user_id FROM ' . t('email_tokens') . " WHERE token_hash = ? AND kind = 'reset' AND expires_at > ?");
+        $st = db()->prepare('SELECT user_id FROM ' . t('email_tokens') . " WHERE token_hash = ? AND purpose = 'reset' AND expires_at > ?");
         $st->execute([hash('sha256', (string)($b['token'] ?? '')), now_utc()]);
         $uid = (int)$st->fetchColumn();
         if (!$uid) {

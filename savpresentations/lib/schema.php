@@ -3,7 +3,8 @@
  * SavPresentations — database tables (all prefixed, default "sp_"). Every statement is idempotent: the tables are
  * created at the first request with a valid credentials.php.
  *
- * users          accounts (email unique and never changed); status blocked = see block_reason
+ * (accounts)     the ones of the whole suite (../../identity/suite.php, t('users')); status blocked = see block_reason;
+ *                settings: the settings of SavPresentations of the account
  * folders        folders of each person (parent_id for subfolders)
  * decks          presentations: meta = {format, theme, opts}; access private|link; seq = number of the last change
  * slides         one row each: sid (made by the browser), pos (order), data = {layout, bg, els: {id: element}, …}
@@ -26,48 +27,12 @@ declare(strict_types=1);
 function schema_statements(string $p): array
 {
     $e = 'ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci';
-    $fk = fn(string $name, string $col, string $table, string $on = 'CASCADE') => "CONSTRAINT `fk_{$p}{$name}` FOREIGN KEY (`$col`) REFERENCES `{$p}$table` (`id`) ON DELETE $on";
+    // the accounts are the ones of the whole suite (t('users'), ../../identity/suite.php): deleting one deletes what it had here
+    $fk = fn(string $name, string $col, string $table, string $on = 'CASCADE') => "CONSTRAINT `fk_{$p}{$name}` FOREIGN KEY (`$col`) REFERENCES " . ($table === 'users' ? t('users') : "`{$p}$table`") . " (`id`) ON DELETE $on";
     return [
         "CREATE TABLE IF NOT EXISTS `{$p}meta` (
             `k` VARCHAR(40) NOT NULL PRIMARY KEY,
             `v` VARCHAR(255) NOT NULL
-        ) $e",
-        "CREATE TABLE IF NOT EXISTS `{$p}users` (
-            `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            `name` VARCHAR(80) NOT NULL,
-            `email` VARCHAR(190) NOT NULL,
-            `email_verified_at` DATETIME NULL,
-            `password_hash` VARCHAR(255) NOT NULL DEFAULT '',
-            `google_sub` VARCHAR(64) NULL,
-            `ui_lang` VARCHAR(5) NOT NULL DEFAULT 'en',
-            `settings` TEXT NOT NULL,
-            `status` ENUM('active','blocked') NOT NULL DEFAULT 'active',
-            `block_reason` VARCHAR(20) NOT NULL DEFAULT '',
-            `block_note` VARCHAR(500) NOT NULL DEFAULT '',
-            `blocked_at` DATETIME NULL,
-            `created_at` DATETIME NOT NULL,
-            `last_login_at` DATETIME NULL,
-            UNIQUE KEY `uq_email` (`email`),
-            UNIQUE KEY `uq_google` (`google_sub`)
-        ) $e",
-        "CREATE TABLE IF NOT EXISTS `{$p}auth_tokens` (
-            `token_hash` CHAR(64) NOT NULL PRIMARY KEY,
-            `user_id` INT UNSIGNED NOT NULL,
-            `csrf_token` CHAR(48) NOT NULL,
-            `created_at` DATETIME NOT NULL,
-            `last_seen_at` DATETIME NOT NULL,
-            `expires_at` DATETIME NOT NULL,
-            KEY `ix_user` (`user_id`),
-            " . $fk('tok_user', 'user_id', 'users') . "
-        ) $e",
-        "CREATE TABLE IF NOT EXISTS `{$p}email_tokens` (
-            `token_hash` CHAR(64) NOT NULL PRIMARY KEY,
-            `user_id` INT UNSIGNED NOT NULL,
-            `kind` VARCHAR(10) NOT NULL DEFAULT 'verify',
-            `created_at` DATETIME NOT NULL,
-            `expires_at` DATETIME NOT NULL,
-            KEY `ix_user` (`user_id`),
-            " . $fk('etok_user', 'user_id', 'users') . "
         ) $e",
         "CREATE TABLE IF NOT EXISTS `{$p}attempts` (
             `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -276,6 +241,9 @@ function schema_statements(string $p): array
 
 function install_schema(PDO $pdo, string $prefix): void
 {
+    // once only: the tables of the time when this app had accounts of its own go, then the accounts of the suite are there
+    suite_reset_app($pdo, $prefix);
+    suite_install($pdo, (string)(credentials()['name'] ?? ''));
     foreach (schema_statements($prefix) as $sql) $pdo->exec($sql);
     // columns added after the first version
     if (!$pdo->query("SHOW COLUMNS FROM `{$prefix}media` LIKE 'poster'")->fetch()) $pdo->exec("ALTER TABLE `{$prefix}media` ADD `poster` CHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL DEFAULT '' AFTER `credit`");

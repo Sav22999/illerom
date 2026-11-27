@@ -1,4 +1,4 @@
-/** Helpers of the interface. Every control is a SavComponent (Soft style); what is composed here is made of them. */
+/** Helpers of the interface. Every control is a SavComponent (Tilt style); what is composed here is made of them. */
 import { has, t } from './i18n.js';
 import { svg } from './icons.js';
 
@@ -52,6 +52,24 @@ export function iconBtn(name, label, onclick, o = {}) {
   const tip = h('sav-tooltip', { content: kbd ? `${label} (${K(kbd)})` : label, placement: place, delay: 350 }, b);
   tip.button = b;
   tip.on = (v) => { b.variant = v ? 'primary' : 'neutral'; b.appearance = v ? 'soft' : 'ghost'; b.setAttribute('aria-pressed', String(!!v)); };
+  return tip;
+}
+/**
+ * The star of a favourite: the favourite button of SavComponents, as in SavDrive, SavTasks and the other apps of
+ * SavOffice. It fills at once when pressed; save(on) keeps the change and, if it fails, the star goes back.
+ */
+export function favBtn(on, save, o = {}) {
+  const b = h('sav-favourite-button', { icon: 'star', pressed: on || null, appearance: 'ghost', size: 'sm', label: t('star') });
+  const tip = h('sav-tooltip.starb', { placement: o.place || 'bottom', delay: 350 }, b);
+  const look = (v) => { tip.classList.toggle('on', v); tip.setAttribute('content', t(v ? 'unstar' : 'star')); };
+  look(!!on);
+  b.addEventListener('click', (e) => e.stopPropagation());
+  b.addEventListener('change', async (e) => {
+    const v = !!e.detail?.pressed;
+    look(v);
+    try { await save(v); } catch (err) { b.toggleAttribute('pressed', !v); look(!v); fail(err); } // back, without a new change
+  });
+  tip.button = b;
   return tip;
 }
 export const item = (value, ic, label, o = {}) => h('sav-menu-item', { value, variant: o.danger ? 'danger' : null, disabled: o.disabled, type: o.check !== undefined ? 'checkbox' : null, checked: !!o.check, style: o.style }, ic ? icon(ic, { slot: 'prefix' }) : o.img ? h('img.mimg', { slot: 'prefix', src: o.img, alt: '', width: 18, height: 18 }) : null, label, o.kbd ? h('kbd', { slot: 'suffix' }, K(o.kbd)) : null);

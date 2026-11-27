@@ -12,9 +12,11 @@
 
 declare(strict_types=1);
 
+require_once dirname(__DIR__, 2) . '/identity/suite.php'; // one account for all the apps of SavOffice
+
 const APP_NAME = 'SavContacts';
-const AUTH_COOKIE = 'savschedules_auth';     // the same cookie of SavSchedules: one session for all
-const SHARED_APPS = ['savschedules', 'savcalendar', 'savwhiteboard', 'savtasks', 'savnotes', 'savforms', 'savsplits', 'savpodcasts', 'savmail', 'savdiagrams', 'savcontacts', 'savreads']; // folders next to each other that share the session
+const AUTH_COOKIE = SUITE_COOKIE; // the session of the whole suite (../identity/suite.php)
+const SHARED_APPS = SUITE_APPS; // every app of SavOffice shares the session (../identity/suite.php)
 const SCHEMA_VERSION = 1;              // of the tables of SavSchedules (created here only if SavSchedules never ran)
 const CON_SCHEMA_VERSION = 2;          // of the tables of the contacts and their groups (2: CardDAV — app passwords, deletions, resource names)
 const LANGS = ['en', 'it'];

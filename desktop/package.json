@@ -1,0 +1,91 @@
+{
+  "name": "savoffice-desktop",
+  "productName": "SavOffice",
+  "version": "1.0.0",
+  "description": "SavOffice for Mac: the apps of the suite, installed one by one, working offline",
+  "main": "src/main.js",
+  "private": true,
+  "author": "Saverio Morelli",
+  "license": "SEE LICENSE IN ../LICENSE",
+  "scripts": {
+    "start": "node tools/prepare.js && electron .",
+    "brand": "electron tools/brand.js",
+    "dist": "node tools/dist.js"
+  },
+  "devDependencies": {
+    "electron": "45.3.2",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "eu.illerom.savoffice",
+    "productName": "SavOffice",
+    "copyright": "© Saverio Morelli · illerom.eu",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "build/apps",
+        "to": "apps",
+        "filter": [
+          "*.icns"
+        ]
+      }
+    ],
+    "protocols": [
+      {
+        "name": "SavOffice",
+        "schemes": [
+          "savoffice"
+        ]
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.icns",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "identity": null,
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "minimumSystemVersion": "12.0"
+    },
+    "afterSign": "tools/adhoc-sign.js",
+    "dmg": {
+      "title": "SavOffice",
+      "background": "build/background.tiff",
+      "icon": "build/icon.icns",
+      "iconSize": 128,
+      "window": {
+        "width": 660,
+        "height": 420
+      },
+      "contents": [
+        {
+          "x": 170,
+          "y": 215,
+          "type": "file"
+        },
+        {
+          "x": 490,
+          "y": 215,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ],
+      "artifactName": "SavOffice-${arch}.${ext}"
+    }
+  }
+}

@@ -131,7 +131,7 @@ not_ready: ['Not ready yet', 'Non ancora pronto'],
   g_defaults: ['New schedules', 'Nuove pianificazioni'], defaults_text: ['How a new schedule starts. Each one can still be changed.', 'Come parte una nuova pianificazione. Ognuna si può comunque cambiare.'],
   look_app: ['Look', 'Aspetto'], theme: ['Theme', 'Tema'], g_account: ['Account', 'Account'], change_pw: ['Change the password', 'Cambia la password'], set_pw: ['Set a password', 'Imposta una password'],
   your_data: ['Your data', 'I tuoi dati'], your_data_t: ['Download everything your account keeps, or delete it with all its schedules.', 'Scarica tutto quello che il tuo account conserva, oppure eliminalo con tutte le sue pianificazioni.'],
-  export_data: ['Download my data', 'Scarica i miei dati'], delete_account: ['Delete the account', 'Elimina l’account'], delete_account_text: ['The account, its schedules and all their answers will be deleted for good.', 'L’account, le sue pianificazioni e tutte le loro risposte verranno eliminati per sempre.'],
+  export_data: ['Download my data', 'Scarica i miei dati'], delete_account: ['Delete the account', 'Elimina l’account'], delete_account_text: ['The account is the same in every app of SavOffice: deleting it deletes it in all of them, for good, with everything it has there (documents, files, calendars, polls…), also for the people you shared them with.', 'L’account è lo stesso in tutte le app di SavOffice: eliminarlo lo elimina in tutte, per sempre, con tutto quello che contiene (documenti, file, calendari, sondaggi…), anche per le persone con cui li hai condivisi.'],
 
   // administration
   a_overview: ['Overview', 'Panoramica'], a_users: ['Accounts', 'Account'], a_schedules: ['Schedules', 'Pianificazioni'], a_reports: ['Reports', 'Segnalazioni'], a_answers: ['Answers', 'Risposte'], a_guests: ['Answers without account', 'Risposte senza account'],
@@ -158,7 +158,7 @@ not_ready: ['Not ready yet', 'Non ancora pronto'],
   sign_in_ways: ['Ways to sign in', 'Modi per entrare'], sign_in_ways_t: ['SavAccount and password, joined to this account.', 'SavAccount e password, collegati a questo account.'],
   sign_out_t: ['On this device.', 'Su questo dispositivo.'],
   export_data_t: ['Everything stored about you, in one file.', 'Tutto quello che è salvato su di te, in un file.'],
-  delete_account_short: ['Your polls, slots and answers go for good.', 'I tuoi sondaggi, turni e risposte spariscono per sempre.'],
+  delete_account_short: ['It goes in every app of SavOffice, with everything in it.', 'Sparisce in tutte le app di SavOffice, con tutto quello che contiene.'],
   recent: ['Recent', 'Recenti'],
   // versions
   changelog: ['What’s new', 'Novità'],

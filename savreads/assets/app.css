@@ -1,7 +1,7 @@
 /* SavReads — look of the app. Same arrangement of the other apps of SavOffice (SavDrive, SavPodcasts: they belong
    together); colours come from the SavComponents tokens with its own primary: the indigo of ink, and the yellow of the
-   suite. The reader has pages of its own: light, sepia, dark (data-page on .reader). No bar at the bottom on phones: the
-   side becomes rows, as in SavDrive. */
+   suite. The reader has pages of its own: light, sepia, dark (data-page on .reader). On phones, as in SavTasks and
+   SavPodcasts, a bar at the bottom (sav-bottom-nav) holds the main places; the side becomes a row with "New". */
 @font-face { font-family: "Stack Sans Notch"; src: url(../../assets/fonts/stack-sans-notch.ttf); font-display: swap; }
 @font-face { font-family: Inter; src: url(../../assets/fonts/inter-latin-wght-normal.woff2) format("woff2"); font-weight: 100 900; font-display: swap; unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 @font-face { font-family: Inter; src: url(../../assets/fonts/inter-latin-ext-wght-normal.woff2) format("woff2"); font-weight: 100 900; font-display: swap; unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
@@ -114,12 +114,14 @@ sav-empty-state .prow { margin-top: .6rem; }
 .ar-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .ar-foot { grid-area: foot; display: flex; align-items: center; flex-wrap: wrap; gap: .3rem .7rem; font-size: .78rem; color: var(--sav-color-text-muted); min-height: 1.2rem; }
 .ar-foot sav-icon { font-size: .9rem; } .ar-time, .ar-hl, .ar-fin { display: inline-flex; align-items: center; gap: .25rem; }
-.ar-prog { width: 4rem; height: 4px; border-radius: 4px; background: var(--sav-color-surface-2); overflow: hidden; } .ar-prog i { display: block; height: 100%; background: var(--sav-color-primary); border-radius: inherit; }
-.ar-star { color: #d99a00; }
+.ar-prog { width: 4rem; --height: 4px; }
 .ar-tag { color: var(--sav-color-primary); text-decoration: none; font-weight: 500; } .ar-tag:hover { text-decoration: underline; }
-.ar-act { grid-area: act; display: flex; align-items: flex-start; gap: .1rem; opacity: 0; transition: opacity .12s; }
-.arow:hover .ar-act, .irow:hover .ar-act, .ar-act:focus-within { opacity: 1; }
-@media (hover: none) { .ar-act { opacity: 1; } }
+.ar-act { grid-area: act; display: flex; align-items: flex-start; gap: .1rem; }
+/* the actions show on hover; the star of a favourite stays, as the stars of SavDrive and SavTasks */
+.ar-act > * { opacity: 0; transition: opacity .12s; }
+.arow:hover .ar-act > *, .irow:hover .ar-act > *, .ar-act:focus-within > *, .ar-act > .starb.on { opacity: 1; }
+.starb.on { --sav-tint: 80%; }
+@media (hover: none) { .ar-act > * { opacity: 1; } }
 .arow.done { opacity: .7; }
 /* the articles of the feeds: the unread ones stand out */
 .irow .ar-title { font-weight: 500; color: var(--sav-color-text-muted); } .irow.unread .ar-title { font-weight: 650; color: var(--sav-color-text); }
@@ -163,7 +165,7 @@ sav-empty-state .prow { margin-top: .6rem; }
 .reader[data-page="sepia"] { --r-bg: #f6efe0; --r-text: #4a3a28; --r-muted: #84705a; --r-line-c: #e5d8c0; --r-link: #8a4b14; }
 .reader[data-page="dark"] { --r-bg: #15161d; --r-text: #dcdde6; --r-muted: #9a9cb0; --r-line-c: #2b2d3a; --r-link: #aeb0f2; }
 .rtop { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: .2rem; padding: .5rem clamp(.5rem, 2vw, 1.2rem); padding-top: max(.5rem, env(safe-area-inset-top)); background: color-mix(in oklab, var(--r-bg) 90%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: var(--r-text); }
-.reader[data-page] .rtop sav-button { --sav-color-text: var(--r-text); }
+.reader[data-page] .rtop sav-button, .reader[data-page] .rtop sav-favourite-button { --sav-color-text: var(--r-text); --sav-color-text-muted: var(--r-text); }
 .rbrand { display: inline-flex; margin-left: .2rem; } .rbrand img { border-radius: 7px; }
 .hlb { position: relative; display: inline-flex; } .hlb sav-badge { position: absolute; top: -.25rem; right: -.25rem; pointer-events: none; transform: scale(.85); }
 .rprog { position: sticky; top: calc(3.1rem + env(safe-area-inset-top)); z-index: 29; height: 3px; background: transparent; } .rprog i { display: block; height: 100%; width: 0; background: var(--r-link); transition: width .12s linear; }
@@ -212,7 +214,7 @@ sav-empty-state .prow { margin-top: .6rem; }
 .pg small { white-space: nowrap; font-size: .64rem; } .pg-auto { background: linear-gradient(135deg, #fff 50%, #15161d 50%); color: #1d1d22; } .pg-auto span, .pg-auto small { background: rgb(255 255 255 / .9); padding: 0 .3rem; border-radius: 6px; } .pg-light { background: #fff; color: #1d1d22; border-color: #e4e4ea; } .pg-sepia { background: #f6efe0; color: #4a3a28; } .pg-dark { background: #15161d; color: #dcdde6; }
 .pg.on { border-color: var(--sav-color-primary); box-shadow: 0 0 0 2px color-mix(in oklab, var(--sav-color-primary) 25%, transparent); }
 
-/* ------------------------------------------------------------------ tablets and phones (the rows of SavDrive, never a bar at the bottom) */
+/* ------------------------------------------------------------------ tablets and phones (the row of SavDrive, the bar at the bottom of SavTasks) */
 @media (max-width: 1100px) { .hbody { grid-template-columns: 13.5rem minmax(0, 1fr); gap: 1.2rem; } }
 @media (max-width: 900px) {
   .hbody { grid-template-columns: minmax(0, 1fr); gap: .7rem; padding-top: .2rem; } .htop { flex-wrap: wrap; gap: .6rem; } .hsearch { order: 3; flex: 1 0 100%; margin: 0; }
@@ -225,7 +227,7 @@ sav-empty-state .prow { margin-top: .6rem; }
   .rbottom { display: block; } .home { padding-bottom: calc(4.6rem + env(safe-area-inset-bottom)); }
   body:has(.rbottom) sav-toast-stack[placement="bottom-start"] { inset: auto auto calc(5.4rem + env(safe-area-inset-bottom)) .75rem; } /* the messages above the bar */
   .fchoose { display: block; }
-  .ar-act { opacity: 1; }
+  .ar-act > * { opacity: 1; }
 }
 @media (max-width: 640px) {
   .arow, .irow { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "main img" "foot act"; column-gap: .8rem; padding: .9rem .1rem; }

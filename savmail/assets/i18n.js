@@ -21,7 +21,7 @@ const T = {
   sign_in_ways: ['Ways to sign in', 'Modi per entrare'], sign_in_ways_t: ['SavAccount and password, joined to this account.', 'SavAccount e password, collegati a questo account.'],
   sign_out_t: ['On this device.', 'Su questo dispositivo.'], settings_saved: ['Settings saved', 'Impostazioni salvate'],
   your_data: ['Your data', 'I tuoi dati'], export_data: ['Download my data', 'Scarica i miei dati'], delete_account: ['Delete the account', 'Elimina l’account'],
-  delete_account_short: ['The account is the same of SavSchedules and the other apps: what they keep goes for good. Your mailboxes stay with their providers.', 'L’account è lo stesso di SavSchedules e delle altre app: ciò che conservano sparisce per sempre. Le tue caselle restano presso i loro provider.'],
+  delete_account_short: ['It goes in every app of SavOffice, with everything in it.', 'Sparisce in tutte le app di SavOffice, con tutto quello che contiene.'],
   delete_forever: ['Delete forever', 'Elimina per sempre'], changelog: ['What’s new', 'Novità'], current_v: ['current version', 'versione attuale'],
   name_t: ['Shown on your account, in every app of SavOffice that uses it.', 'Compare sul tuo account, in ogni app di SavOffice che lo usa.'],
   shared_account: ['This is your SavSchedules, SavCalendar and SavNotes account too: name, password and ways to sign in are the same in all the apps.', 'Questo è anche il tuo account SavSchedules, SavCalendar e SavNotes: nome, password e modi di accesso sono gli stessi in tutte le app.'],
@@ -191,7 +191,7 @@ const T = {
   img_senders: ['Shown always from {n} senders', 'Mostrate sempre da {n} mittenti'], img_senders_t: ['The ones you chose with “Always from…”.', 'Quelli scelti con «Sempre da…».'], forget_all: ['Forget them', 'Dimenticali'],
   your_data_t: ['Download or delete what SavMail keeps.', 'Scarica o elimina quello che SavMail conserva.'],
   export_data_t: ['The settings of your mailboxes (never the passwords) and of the app. Your messages are with your providers.', 'Le impostazioni delle caselle (mai le password) e dell’app. I tuoi messaggi sono presso i tuoi provider.'],
-  delete_account_text: ['This deletes your account in SavMail, SavSchedules, SavCalendar, SavNotes and the other apps that share it (it is one account), with everything they keep. Your mailboxes and messages stay with their providers. It cannot be undone.', 'Così elimini il tuo account in SavMail, SavSchedules, SavCalendar, SavNotes e nelle altre app che lo condividono (è un unico account), con tutto ciò che conservano. Le tue caselle e i messaggi restano presso i loro provider. Non si può annullare.'],
+  delete_account_text: ['The account is the same in every app of SavOffice: deleting it deletes it in all of them, for good, with everything it has there (documents, files, calendars, polls…), also for the people you shared them with.', 'L’account è lo stesso in tutte le app di SavOffice: eliminarlo lo elimina in tutte, per sempre, con tutto quello che contiene (documenti, file, calendari, sondaggi…), anche per le persone con cui li hai condivisi.'],
 };
 
 let lang = (() => { try { return localStorage.getItem('savmail-lang'); } catch { return null; } })() || (navigator.language.startsWith('it') ? 'it' : 'en');

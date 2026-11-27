@@ -1,0 +1,325 @@
+[
+    {
+        "slug": "savbooks",
+        "name": "SavBooks",
+        "color": "#8a2346",
+        "offline": "edit",
+        "invite": false,
+        "it": {
+            "short": "Libri",
+            "tag": "Dal primo capitolo all’e-book.",
+            "more": "Parte da un documento di SavDocuments o da un file .savdoc e lo trasforma in libro; la copertina si disegna da sola, e l’EPUB è pronto per i negozi."
+        },
+        "en": {
+            "short": "Books",
+            "tag": "From the first chapter to the e-book.",
+            "more": "Starts from a SavDocuments document or a .savdoc file and turns it into a book; the cover draws itself, and the EPUB is ready for the shops."
+        }
+    },
+    {
+        "slug": "savcalendar",
+        "name": "SavCalendar",
+        "color": "#c93a2f",
+        "offline": "queue",
+        "invite": false,
+        "it": {
+            "short": "Calendario",
+            "tag": "Il tuo tempo, in un calendario.",
+            "more": "Un link privato lo mostra in Google, Outlook e Apple; e ci trovi da soli sondaggi, posti prenotati, scadenze e newsletter."
+        },
+        "en": {
+            "short": "Calendar",
+            "tag": "Your time, in one calendar.",
+            "more": "A private link shows it in Google, Outlook and Apple; and polls, booked slots, due days and newsletters show up in it by themselves."
+        }
+    },
+    {
+        "slug": "savcontacts",
+        "name": "SavContacts",
+        "color": "#4338ca",
+        "offline": "read",
+        "invite": false,
+        "it": {
+            "short": "Contatti",
+            "tag": "I tuoi contatti, in ordine e tuoi.",
+            "more": "Lo stesso contatto scritto due volte viene trovato e unito; vCard e CSV di Google e Outlook entrano ed escono senza perdere niente."
+        },
+        "en": {
+            "short": "Contacts",
+            "tag": "Your contacts, tidy and yours.",
+            "more": "The same contact written twice is found and merged; vCard and CSV of Google and Outlook come in and go out without losing anything."
+        }
+    },
+    {
+        "slug": "savdiagrams",
+        "name": "SavDiagrams",
+        "color": "#4352d6",
+        "offline": "queue",
+        "invite": false,
+        "it": {
+            "short": "Diagrammi",
+            "tag": "Le idee in ordine, a colpo d’occhio.",
+            "more": "I connettori restano attaccati quando sposti le forme, e organigrammi e mappe mentali si dispongono da soli; uno schizzo di SavWhiteboard diventa un diagramma pulito."
+        },
+        "en": {
+            "short": "Diagrams",
+            "tag": "Ideas in order, at a glance.",
+            "more": "Connectors stay attached when you move the shapes, and org charts and mind maps lay themselves out; a sketch in SavWhiteboard becomes a clean diagram."
+        }
+    },
+    {
+        "slug": "savdocuments",
+        "name": "SavDocuments",
+        "color": "#0f6e56",
+        "offline": "edit",
+        "invite": false,
+        "it": {
+            "short": "Documenti",
+            "tag": "Documenti veri, senza ingombri.",
+            "more": "Si scrive anche senza connessione: le modifiche partono appena torna la rete. E apre e salva i file Word."
+        },
+        "en": {
+            "short": "Documents",
+            "tag": "Real documents, without the clutter.",
+            "more": "You can write with no connection: changes go out as soon as the network is back. And it opens and saves Word files."
+        }
+    },
+    {
+        "slug": "savdrive",
+        "name": "SavDrive",
+        "color": "#0a6fb0",
+        "offline": "read",
+        "invite": true,
+        "it": {
+            "short": "File e cartelle",
+            "tag": "I tuoi file, in un drive tutto tuo.",
+            "more": "Ogni account ha 500 MB, e i documenti, i fogli di calcolo e le presentazioni di SavOffice nascono qui e si aprono nella loro app con un tocco. E per i file grandi, un link temporaneo che scade da solo, anche con password."
+        },
+        "en": {
+            "short": "Files and folders",
+            "tag": "Your files, in a drive of your own.",
+            "more": "Every account has 500 MB, and the documents, spreadsheets and presentations of SavOffice are born here and open in their app with one press. And for big files, a temporary link that expires by itself, with a password too."
+        }
+    },
+    {
+        "slug": "savforms",
+        "name": "SavForms",
+        "color": "#86329e",
+        "offline": "read",
+        "invite": false,
+        "it": {
+            "short": "Moduli",
+            "tag": "Chiedi di tutto, vedi ogni risposta.",
+            "more": "Quattordici tipi di domande, un grafico per ognuna, e il modulo si chiude da solo alla scadenza, segnata in SavCalendar."
+        },
+        "en": {
+            "short": "Forms",
+            "tag": "Ask anything, see every answer.",
+            "more": "Fourteen kinds of questions, a chart for each, and the form closes by itself at its deadline, marked in SavCalendar."
+        }
+    },
+    {
+        "slug": "savmail",
+        "name": "SavMail",
+        "color": "#2563eb",
+        "offline": "online",
+        "invite": false,
+        "it": {
+            "short": "Posta",
+            "tag": "Tutta la tua posta, in un posto solo.",
+            "more": "Gmail, Outlook, Aruba o qualsiasi casella IMAP nella stessa posta in arrivo, e le password delle caselle restano cifrate sui tuoi dispositivi."
+        },
+        "en": {
+            "short": "Email",
+            "tag": "All your email, in one place.",
+            "more": "Gmail, Outlook, Aruba or any IMAP mailbox in the same inbox, and the passwords of the mailboxes stay encrypted on your devices."
+        }
+    },
+    {
+        "slug": "savnewsletters",
+        "name": "SavNewsletters",
+        "color": "#c2307a",
+        "offline": "read",
+        "invite": false,
+        "it": {
+            "short": "Newsletter",
+            "tag": "Newsletter scritte, approvate e spedite in gruppo.",
+            "more": "Ogni gruppo ha i suoi ruoli: qualcuno scrive, qualcun altro approva, e niente parte per sbaglio a centinaia di persone."
+        },
+        "en": {
+            "short": "Newsletters",
+            "tag": "Newsletters written, approved and sent as a team.",
+            "more": "Each group has its roles: someone writes, someone else approves, and nothing goes out by mistake to hundreds of people."
+        }
+    },
+    {
+        "slug": "savnotes",
+        "name": "SavNotes",
+        "color": "#7b5434",
+        "offline": "queue",
+        "invite": false,
+        "it": {
+            "short": "Quaderni",
+            "tag": "I tuoi quaderni, a mano o a tastiera.",
+            "more": "Fogli veri, di formato fisso: sullo stesso foglio scrivi a mano e digiti, e il testo continua sul foglio successivo."
+        },
+        "en": {
+            "short": "Notebooks",
+            "tag": "Your notebooks, by hand or typed.",
+            "more": "Real sheets of a fixed size: on the same sheet you write by hand and type, and the text carries on to the next sheet."
+        }
+    },
+    {
+        "slug": "savphotos",
+        "name": "SavPhotos",
+        "color": "#b7791f",
+        "offline": "read",
+        "invite": true,
+        "it": {
+            "short": "Foto e video",
+            "tag": "Le tue foto e i tuoi video, giorno per giorno.",
+            "more": "Il backup salta le foto che hai già e tiene la data di scatto; una cartella intera diventa un album con il suo nome."
+        },
+        "en": {
+            "short": "Photos and videos",
+            "tag": "Your photos and videos, day by day.",
+            "more": "The backup skips the photos you already have and keeps the date they were taken; a whole folder becomes an album with its name."
+        }
+    },
+    {
+        "slug": "savpodcasts",
+        "name": "SavPodcasts",
+        "color": "#3b4b63",
+        "offline": "read",
+        "invite": false,
+        "it": {
+            "short": "Podcast",
+            "tag": "I tuoi podcast, dai loro feed.",
+            "more": "I podcast arrivano dai loro feed e dai cataloghi aperti, mai dalle grandi piattaforme; il punto di ascolto ti segue su ogni dispositivo."
+        },
+        "en": {
+            "short": "Podcasts",
+            "tag": "Your podcasts, from their own feeds.",
+            "more": "Podcasts come from their own feeds and open catalogues, never from the big platforms; where you stopped follows you on every device."
+        }
+    },
+    {
+        "slug": "savpresentations",
+        "name": "SavPresentations",
+        "color": "#6d3bef",
+        "offline": "edit",
+        "invite": false,
+        "it": {
+            "short": "Presentazioni",
+            "tag": "Presentazioni, senza il peso.",
+            "more": "Più persone sulla stessa slide nello stesso momento, link usa e getta per chi deve solo guardare, e funziona anche offline."
+        },
+        "en": {
+            "short": "Presentations",
+            "tag": "Presentations, without the weight.",
+            "more": "Several people on the same slide at once, single-use links for those who only need to look, and it works offline too."
+        }
+    },
+    {
+        "slug": "savreads",
+        "name": "SavReads",
+        "color": "#3d40a0",
+        "offline": "read",
+        "invite": false,
+        "it": {
+            "short": "Da leggere",
+            "tag": "Leggi dopo, in pace.",
+            "more": "Salvi un articolo e lo leggi pulito, senza pubblicità né tracker, con le tue evidenziazioni; la lista di Pocket entra con i suoi tag, e accanto ci sono i tuoi feed."
+        },
+        "en": {
+            "short": "Read later",
+            "tag": "Read later, in peace.",
+            "more": "Save an article and read it clean, without ads or trackers, with your highlights; your Pocket list comes in with its tags, and your feeds sit next to it."
+        }
+    },
+    {
+        "slug": "savschedules",
+        "name": "SavSchedules",
+        "color": "#1f56d1",
+        "offline": "read",
+        "invite": false,
+        "it": {
+            "short": "Sondaggi e posti",
+            "tag": "Trova la data. Distribuisci i posti.",
+            "more": "Chi risponde non deve registrarsi; i posti presi non li può prendere nessun altro, e la data scelta finisce nel tuo calendario."
+        },
+        "en": {
+            "short": "Polls and slots",
+            "tag": "Find the date. Hand out the slots.",
+            "more": "Whoever answers needs no account; a slot once taken cannot be taken by anyone else, and the chosen date lands in your calendar."
+        }
+    },
+    {
+        "slug": "savsplits",
+        "name": "SavSplits",
+        "color": "#1a7f37",
+        "offline": "queue",
+        "invite": false,
+        "it": {
+            "short": "Spese condivise",
+            "tag": "Spese condivise, senza far conti.",
+            "more": "Chi ha il link entra senza account; i saldi si pareggiano con il minor numero di pagamenti, anche per i millesimi di un condominio. E in «Le mie spese» la tua quota di ogni gruppo, con le spese personali e l’estratto conto della banca."
+        },
+        "en": {
+            "short": "Shared expenses",
+            "tag": "Shared expenses, settled without fuss.",
+            "more": "Whoever has the link joins without an account; balances are settled with the fewest payments, even by the thousandths of a condominium. And in “My spending”, your share of every group, with your personal expenses and your bank statement."
+        }
+    },
+    {
+        "slug": "savspreadsheets",
+        "name": "SavSpreadsheets",
+        "color": "#4d7c0f",
+        "offline": "edit",
+        "invite": false,
+        "it": {
+            "short": "Fogli di calcolo",
+            "tag": "I numeri, chiari e condivisi.",
+            "more": "Le formule si scrivono come in ogni foglio di calcolo, e i file di Excel e LibreOffice si aprono con le loro formule e il loro aspetto. Chi lavora con te vede su quale cella sei."
+        },
+        "en": {
+            "short": "Spreadsheets",
+            "tag": "Numbers, clear and together.",
+            "more": "Formulas are written as in every spreadsheet, and Excel and LibreOffice files open with their formulas and their look. Whoever works with you sees which cell you are on."
+        }
+    },
+    {
+        "slug": "savtasks",
+        "name": "SavTasks",
+        "color": "#0b7a87",
+        "offline": "queue",
+        "invite": false,
+        "it": {
+            "short": "Attività",
+            "tag": "Tutto da fare, in un posto solo.",
+            "more": "Scrivi «domani 15:00 !alta #lavoro» e capisce da solo scadenza, priorità ed etichetta. Ogni lista diventa una bacheca, e con il timer tracci il tempo e le ore da fatturare."
+        },
+        "en": {
+            "short": "Tasks",
+            "tag": "Everything to do, in one place.",
+            "more": "Type “tomorrow 3pm !high #work” and it understands the due time, priority and label. Any list becomes a board, and the timer tracks your time and billable hours."
+        }
+    },
+    {
+        "slug": "savwhiteboard",
+        "name": "SavWhiteboard",
+        "color": "#c45a0c",
+        "offline": "queue",
+        "invite": false,
+        "it": {
+            "short": "Lavagna",
+            "tag": "Una lavagna senza bordi.",
+            "more": "La penna sente la pressione e, con il pennino, il palmo non disegna: come scrivere su una lavagna vera, ma senza bordi."
+        },
+        "en": {
+            "short": "Whiteboard",
+            "tag": "A board without edges.",
+            "more": "The pen feels the pressure and, with a stylus, the palm does not draw: like writing on a real board, but without edges."
+        }
+    }
+]

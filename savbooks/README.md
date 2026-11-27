@@ -13,6 +13,9 @@ SavBooks is SavDocuments with a book on top: the same editor, accounts, sharing,
 - Without its own `credentials.php`, SavBooks uses `../savdocuments/credentials.php`: the same database, always its own `sb_` tables (`lib/bootstrap.php`; the clean-up and the status page do the same).
 - No build step and no libraries: ES modules in `assets/`. Controls: SavComponents (Soft style) from `../assets/sav/`.
 - Google and SavAccount sign-in: `../identity/`.
+- **Accounts: the ones of the whole suite** (`../identity/suite.php`): an account made in any app of SavOffice (email and
+  password, or SavAccount) is the account of every app, and one session (cookie `savoffice_auth`, on the path of every app)
+  signs in and out everywhere. The tables of this app keep only what is its own, tied to the account (`users.id`).
 
 | Path                                   | What                                                                               |
 |----------------------------------------|------------------------------------------------------------------------------------|

@@ -9,9 +9,11 @@
 
 declare(strict_types=1);
 
+require_once dirname(__DIR__, 2) . '/identity/suite.php'; // one account for all the apps of SavOffice
+
 const APP_NAME = 'SavPresentations';
-const AUTH_COOKIE = 'savpresentations_auth';
-const SCHEMA_VERSION = 5; // 2: versions, 3: page_rules, 4: videos (media.poster), 5: typefaces from file
+const AUTH_COOKIE = SUITE_COOKIE; // the session of the whole suite (../identity/suite.php)
+const SCHEMA_VERSION = 6; // 2: versions, 3: page_rules, 4: videos (media.poster), 5: typefaces from file · 6: the accounts of the suite (../identity/suite.php)
 const LANGS = ['en', 'it'];
 // What a person can do on a presentation, from the weakest: each role can do everything the ones before it can
 const ROLES = ['viewer', 'commenter', 'editor', 'owner'];
@@ -77,9 +79,11 @@ function config_value(string $key, $default = null)
     return $c[$key] ?? $default;
 }
 
-/** Table name with prefix, already quoted: t('users') -> `sp_users`. */
+/** Table name with prefix, already quoted: t('documents') -> `sp_documents`; t('users') -> the accounts of the suite. */
 function t(string $name): string
 {
+    // the accounts, sessions and email links are the ones of the whole suite (../identity/suite.php)
+    if (in_array($name, SUITE_TABLES, true)) return suite_table($name, (string)(credentials()['name'] ?? ''));
     $prefix = (string)config_value('prefix', 'sp_');
     if (!preg_match('/^[A-Za-z0-9_]{0,20}$/', $prefix)) throw new RuntimeException('Invalid table prefix');
     return '`' . $prefix . $name . '`';
@@ -247,7 +251,7 @@ function e(string $s): string
 
 function set_auth_cookie(string $value, int $expires): void
 {
-    setcookie(AUTH_COOKIE, $value, ['expires' => $expires, 'path' => app_base_path(), 'secure' => is_https(), 'httponly' => true, 'samesite' => 'Lax']);
+    suite_set_cookie($value, $expires, app_base_path(), is_https()); // on every app of the suite: signed in once, signed in everywhere
 }
 
 function create_auth_session(int $userId): string

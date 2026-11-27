@@ -32,8 +32,8 @@ itself. The same account as **SavSchedules**, **SavCalendar** and **SavTasks**.
 
 ## One account with SavSchedules, SavCalendar and SavTasks
 
-The apps use the users and sessions of SavSchedules. The session cookie (`savschedules_auth`, HttpOnly) is set **on the
-paths of all of them** by each of them (`SHARED_APPS` in every `lib/bootstrap.php`, `SHARED_WITH` in SavSchedules):
+The apps use the users and sessions of SavSchedules. The session cookie (`savoffice_auth`, HttpOnly: the session of the whole suite, `../identity/suite.php`) is set **on the
+paths of all of them** by each of them (`SUITE_APPS` of `../identity/suite.php`, every app of SavOffice):
 signing in or out in one does it in the others. Deleting the account deletes its forms and their answers everywhere.
 
 SavAccount: add `https://www.illerom.eu/savforms/api/?r=auth.sav.callback` to the redirect addresses of the service of

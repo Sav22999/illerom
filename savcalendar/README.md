@@ -34,7 +34,7 @@ Show it in Google Calendar, Outlook or Apple Calendar with a private link, and b
 
 ## One account with SavSchedules
 
-Both apps use the users and sessions of SavSchedules. The session cookie (`savschedules_auth`, HttpOnly) is set **on the
+Both apps use the users and sessions of SavSchedules. The session cookie (`savoffice_auth`, HttpOnly: the session of the whole suite, `../identity/suite.php`) is set **on the
 paths of both apps** by both (`set_auth_cookie()` in each `lib/bootstrap.php`): signing in or out in one does it in the
 other. A session opened in SavSchedules before this is handed over by its `auth.me` (`share_session()`). Deleting the
 account deletes it in both (the calendar tables reference `sch_users` with `ON DELETE CASCADE`).

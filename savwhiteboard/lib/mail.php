@@ -114,7 +114,7 @@ function fill(string $s, array $vars): string
     return $s;
 }
 
-function mail_button(string $url, string $label, string $color = '#C45A0C'): string
+function mail_button(string $url, string $label, string $color = '#B5530B'): string
 {
     return '<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="border-radius:999px;background:' . e($color) . '">'
         . '<a href="' . e($url) . '" style="display:inline-block;padding:12px 26px;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px">' . e($label) . '</a></td></tr></table>';

@@ -26,6 +26,8 @@
 
 declare(strict_types=1);
 
+require_once dirname(__DIR__, 2) . '/identity/suite.php'; // the accounts are the ones of the whole suite
+
 const SAVNEWSLETTERS_CAL_COLOR = '#c2307a';
 const SAVNEWSLETTERS_CAL_SLOT = 1800; // seconds: newsletters leave on a 30-minute slot
 
@@ -58,7 +60,7 @@ function savnewsletters_cal_db(): ?array
             PDO::ATTR_TIMEOUT => 5,
         ]);
         $pdo->exec("SET time_zone = '+00:00'");
-        return $link = [$pdo, $prefix];
+        return $link = [$pdo, $prefix, $name];
     } catch (Throwable $e) {
         error_log('SavNewsletters calendar: ' . $e->getMessage());
         return null;
@@ -72,13 +74,14 @@ function savnewsletters_calendar_items(string $email, string $from, string $to, 
     if ($email === '' || !preg_match($re, $from) || !preg_match($re, $to)) return [];
     $link = savnewsletters_cal_db();
     if (!$link) return [];
-    [$pdo, $p] = $link;
+    [$pdo, $p, $db] = $link;
+    $users = suite_table('users', $db); // the accounts of the suite (../../identity/suite.php)
     $appUrl = rtrim($appUrl, '/') . '/';
     // the time of a newsletter: the slot proposed, the slot approved, or the slot it left in
     $when = "CASE n.status WHEN 'pending' THEN n.proposed_at WHEN 'sent' THEN COALESCE(n.scheduled_at, n.started_at, n.sent_at) ELSE n.scheduled_at END";
     try {
         $st = $pdo->prepare("SELECT n.id, n.group_id, n.subject, n.lang, n.status, $when AS at, g.name AS group_name, g.timezone, m.role
-            FROM `{$p}users` u
+            FROM $users u
             JOIN `{$p}members` m ON m.user_id = u.id
             JOIN `{$p}groups` g ON g.id = m.group_id AND g.status = 'active'
             JOIN `{$p}newsletters` n ON n.group_id = g.id AND n.status IN ('pending', 'scheduled', 'sending', 'sent')

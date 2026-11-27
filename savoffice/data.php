@@ -5,6 +5,20 @@
  * Needs $lang ('it' | 'en') and ../data/projects.php (which loads savdrive/lib/space.php, for the space of SavDrive). The words of each app (name, what it is, features) are in ../data/projects.php.
  */
 if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) { http_response_code(404); return; } // data only, not a page
+
+/** The colour of an app as the background of white text: the same hue, darkened just enough to reach 4.5:1 (WCAG AA). */
+if (!function_exists('savoffice_solid')) {
+    function savoffice_solid(string $hex): string
+    {
+        $rgb = array_map('hexdec', str_split(ltrim($hex, '#'), 2));
+        $lum = function (array $c): float {
+            $l = array_map(fn($v) => ($v /= 255) <= .04045 ? $v / 12.92 : (($v + .055) / 1.055) ** 2.4, $c);
+            return .2126 * $l[0] + .7152 * $l[1] + .0722 * $l[2];
+        };
+        for ($k = 1.0; $k > .3 && 1.05 / ($lum(array_map(fn($v) => $v * $k, $rgb)) + .05) < 4.5; $k -= .01);
+        return $k === 1.0 ? $hex : vsprintf('#%02x%02x%02x', array_map(fn($v) => (int)round($v * $k), $rgb));
+    }
+}
 // slug => [colour, screenshot of a computer, of a phone, what sets it apart (it, en)]
 $apps = [
     'savdrive' => ['#0a6fb0', 'd1.jpg', '1.jpg', 'Ogni account ha ' . savspace_size(savspace_default(), 'it') . ', e i documenti, i fogli di calcolo e le presentazioni di SavOffice nascono qui e si aprono nella loro app con un tocco. E per i file grandi, un link temporaneo che scade da solo, anche con password.', 'Every account has ' . savspace_size(savspace_default(), 'en') . ', and the documents, spreadsheets and presentations of SavOffice are born here and open in their app with one press. And for big files, a temporary link that expires by itself, with a password too.'],

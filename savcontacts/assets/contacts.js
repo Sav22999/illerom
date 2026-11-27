@@ -5,7 +5,7 @@
  *   places: #/ all · #/fav · #/birthdays · #/duplicates · #/trash · #/g/<group>; a contact open: <place>/c/<id>
  * The screen stays while only the open contact changes, so the list keeps its scroll and its selection.
  */
-import { K, btn, colorPop, confirm, dialog, drop, empty, fail, h, icon, iconBtn, item, primary, put, toast, copyText, mobile } from './ui.js';
+import { K, btn, colorPop, confirm, dialog, drop, empty, fail, favBtn, h, icon, iconBtn, item, primary, put, toast, copyText, mobile } from './ui.js';
 import { getLang, t, when } from './i18n.js';
 import { S, api, contact, group, putContact, setGroups } from './store.js';
 import { brand, commands, credit, go, prefs, setPrefs, userMenu } from './account.js';
@@ -188,7 +188,7 @@ function build(root, view, key) {
       h('div.cpick', avatar(c, 38), box),
       h('div.cbody', h('div.cname', nameNode(c)), h('div.csub' + (!nb && view.kind !== 'trash' && !c.title && !c.company ? '.plain' : ''), nb ? birthdayText(c) + (nb.age ? ' · ' + t('turns', { n: nb.age }) : '') : view.kind === 'trash' ? t('changed', { w: when(c.deleted) }) : subline(c))),
       view.kind !== 'birthdays' && view.kind !== 'trash' ? h('div.cmore', h('span', c.emails[0]?.value || ''), h('span', c.phones[0]?.value || '')) : null,
-      h('div.cside', nb ? h('span.cdays' + (nb.days <= 7 ? '.soon' : ''), daysText(nb.days) || nb.date.toLocaleDateString(getLang(), { day: 'numeric', month: 'short' })) : null, c.favorite && view.kind !== 'trash' ? icon('star-full', { class: 'cstar', label: t('favorite') }) : null));
+      h('div.cside', nb ? h('span.cdays' + (nb.days <= 7 ? '.soon' : ''), daysText(nb.days) || nb.date.toLocaleDateString(getLang(), { day: 'numeric', month: 'short' })) : null, view.kind !== 'trash' ? favBtn(c.favorite, (on) => setStar(c, on), { place: 'left' }) : null));
     r.addEventListener('click', (e) => {
       if (e.metaKey || e.ctrlKey || panes.classList.contains('selecting')) { box.checked = !box.checked; box.dispatchEvent(new Event('change')); return; }
       go(hashOf(view, c.id));
@@ -241,8 +241,7 @@ function build(root, view, key) {
       h('div.fa', iconBtn('copy', t('copy_v'), () => copyText(value)), extra));
     const sec = (title, kids) => (kids.length ? h('section.csec', h('h3', title), kids) : null);
     const nb = nextBirthday(c);
-    const star = iconBtn(c.favorite ? 'star-full' : 'star', t(c.favorite ? 'unstar' : 'star'), () => toggleStar(c), { kbd: 'S' });
-    if (c.favorite) star.on(true);
+    const star = favBtn(c.favorite, (on) => setStar(c, on), { kbd: 'S' });
     const moreMenu = drop(h('sav-button', { icon: 'ellipsis-vertical', label: t('more'), appearance: 'ghost', variant: 'neutral', square: true, size: 'sm' }), () => [
       ['download', t('export'), () => import('./files.js').then((m) => m.exportDialog({ ids: [c.id], one: fullName(c) }))],
       ['copy', t('copy_v'), () => copyText([fullName(c), ...c.emails.map((x) => x.value), ...c.phones.map((x) => x.value)].join('\n'))],
@@ -314,9 +313,14 @@ function build(root, view, key) {
 
   // ---------------------------------------------------------------- actions
   const refresh = () => { drawSide(); drawBottom(); drawList(); show(open); };
-  async function toggleStar(c) {
-    const r = await api('con.contact.star', { id: c.id, on: !c.favorite });
-    putContact(r.contact); refresh();
+  // the star (sav-favourite-button) is already pressed: the rest follows a moment later, so its animation is seen and
+  // the open contact is not drawn again
+  let starLater = 0;
+  async function setStar(c, on) {
+    const r = await api('con.contact.star', { id: c.id, on });
+    putContact(r.contact);
+    clearTimeout(starLater);
+    starLater = setTimeout(() => { drawSide(); drawBottom(); drawList(); if (open === c.id) document.querySelector('.ctool .starb')?.set(r.contact.favorite); }, 350);
   }
   async function bulk(doWhat, gid) {
     const ids = [...sel];
@@ -409,7 +413,7 @@ function build(root, view, key) {
     if (e.key === '/' && !e.metaKey && !e.ctrlKey) { e.preventDefault(); search.focus(); }
     else if ((e.key === 'n' || e.key === 'N') && !e.metaKey && !e.ctrlKey) { e.preventDefault(); newContact(); }
     else if (e.key === 'e' && c && !e.metaKey && !e.ctrlKey) { e.preventDefault(); edit(c); }
-    else if (e.key === 's' && c && !e.metaKey && !e.ctrlKey) { e.preventDefault(); toggleStar(c).catch(fail); }
+    else if (e.key === 's' && c && !e.metaKey && !e.ctrlKey) { e.preventDefault(); const fb = document.querySelector('.ctool sav-favourite-button'); if (fb) fb.toggle(); else setStar(c, !c.favorite).catch(fail); }
     else if ((e.key === 'Delete' || e.key === 'Backspace') && (sel.size || c) && view.kind !== 'trash') { e.preventDefault(); remove(sel.size ? [...sel] : [c.id]).catch(fail); }
     else if ((e.key === 'ArrowDown' || e.key === 'j') && view.kind !== 'duplicates') { e.preventDefault(); step(1); }
     else if ((e.key === 'ArrowUp' || e.key === 'k') && view.kind !== 'duplicates') { e.preventDefault(); step(-1); }

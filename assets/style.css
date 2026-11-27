@@ -3049,7 +3049,8 @@ a, button {
 .steps {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1.4rem;
+    --step-gap: 2.6rem;
+    gap: var(--step-gap);
     margin: 1.8rem 0 0;
     padding: 0;
     list-style: none;
@@ -3075,17 +3076,17 @@ a, button {
     border-top: 5px solid var(--c);
 }
 
-/* an arrow from one step to the next */
+/* an arrow from one step to the next: a chevron drawn in its own box, centred in the gap between the two steps */
 .step:not(:last-child)::after {
     content: "";
     position: absolute;
     top: 2.1rem;
-    right: -1.15rem;
-    width: .9rem;
-    height: .9rem;
-    border-top: 2px solid var(--sav-color-border-strong);
-    border-right: 2px solid var(--sav-color-border-strong);
-    rotate: 45deg;
+    right: calc(var(--step-gap) / -2 - .55rem);
+    width: 1.1rem;
+    height: 1.1rem;
+    background: var(--sav-color-border-strong);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 5l7 7-7 7'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 5l7 7-7 7'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 
 .step-1 { --c: var(--note-pink); }
@@ -3149,9 +3150,9 @@ a, button {
     .step:not(:last-child)::after {
         top: auto;
         right: auto;
-        bottom: -1.05rem;
+        bottom: calc(var(--step-gap) / -2 - .55rem);
         left: 2rem;
-        rotate: 135deg;
+        rotate: 90deg;
     }
 }
 

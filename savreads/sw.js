@@ -7,7 +7,7 @@
  * The share menu of the phone opens ./?share… (manifest.webmanifest, share_target): a navigation like any other.
  */
 importScripts('../assets/savoffice/offline-sw.js');
-const CACHE = 'savreads-1';
+const CACHE = 'savreads-2';
 const ART = 'savreads-img';
 const SHELL = ['./', 'manifest.webmanifest', 'icons/favicon.svg', 'icons/icon-192.png', '../assets/sav/sav.css', '../assets/sav/sav.js', '../assets/savoffice/savoffice.js', '../identity/identity.css?v=2', '../identity/identity.js?v=3',
   ...['account.js', 'actions.js', 'app.css', 'app.js', 'changelog.js', 'feeds.js', 'files.js', 'hero.js', 'i18n.js', 'icons.js', 'list.js', 'office.js', 'offline.js', 'options.js', 'reader.js', 'shell.js', 'store.js', 'ui.js', 'version.js'].map((f) => 'assets/' + f)];

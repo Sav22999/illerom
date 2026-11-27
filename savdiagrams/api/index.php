@@ -401,14 +401,14 @@ switch ($r) {
     case 'dg.trash':
     case 'dg.restore':
     case 'dg.delete':
-        // Several diagrams at once (ids). Deleting for good: only from the trash.
+        // Several diagrams at once (ids: their did). Deleting for good: only from the trash.
         $u = writer();
         $ids = array_values(array_filter(array_map('valid_code', is_array(body()['ids'] ?? null) ? array_slice(body()['ids'], 0, 500) : [])));
         if (!$ids) fail('bad_request', 422);
         $in = implode(',', array_fill(0, count($ids), '?'));
-        if ($r === 'dg.trash') q('UPDATE ' . t('dg_diagrams') . " SET trashed_at = ? WHERE user_id = ? AND trashed_at IS NULL AND bid IN ($in)", array_merge([now_utc(), $u['id']], $ids));
-        elseif ($r === 'dg.restore') q('UPDATE ' . t('dg_diagrams') . " SET trashed_at = NULL WHERE user_id = ? AND bid IN ($in)", array_merge([$u['id']], $ids));
-        else q('DELETE FROM ' . t('dg_diagrams') . " WHERE user_id = ? AND trashed_at IS NOT NULL AND bid IN ($in)", array_merge([$u['id']], $ids));
+        if ($r === 'dg.trash') q('UPDATE ' . t('dg_diagrams') . " SET trashed_at = ? WHERE user_id = ? AND trashed_at IS NULL AND did IN ($in)", array_merge([now_utc(), $u['id']], $ids));
+        elseif ($r === 'dg.restore') q('UPDATE ' . t('dg_diagrams') . " SET trashed_at = NULL WHERE user_id = ? AND did IN ($in)", array_merge([$u['id']], $ids));
+        else q('DELETE FROM ' . t('dg_diagrams') . " WHERE user_id = ? AND trashed_at IS NOT NULL AND did IN ($in)", array_merge([$u['id']], $ids));
         send_json(['ok' => true]);
 
     case 'dg.empty_trash':

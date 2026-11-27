@@ -10,9 +10,11 @@
 
 declare(strict_types=1);
 
+require_once dirname(__DIR__, 2) . '/identity/suite.php'; // one account for all the apps of SavOffice
+
 const APP_NAME = 'SavNewsletters';
-const AUTH_COOKIE = 'savnewsletters_auth';
-const SCHEMA_VERSION = 3; // 2: groups.rate_per_hour, 3: users.fav_templates, subscribers.source 'import'
+const AUTH_COOKIE = SUITE_COOKIE; // the session of the whole suite (../identity/suite.php)
+const SCHEMA_VERSION = 4; // 2: groups.rate_per_hour, 3: users.fav_templates, subscribers.source 'import' · 4: the accounts of the suite (../identity/suite.php)
 const LANGS = ['en', 'it']; // languages of the app itself
 // Languages a group can collect subscribers in (and write newsletters for)
 const SUB_LANGS = ['it', 'en', 'fr', 'de', 'es', 'pt', 'nl', 'pl', 'ro', 'sv', 'el', 'cs', 'hu', 'da', 'fi', 'hr', 'sl', 'sk', 'bg', 'ca'];
@@ -69,9 +71,11 @@ function config_value(string $key, $default = null)
     return $c[$key] ?? $default;
 }
 
-/** Table name with prefix, already quoted: t('users') -> `on_users`. */
+/** Table name with prefix, already quoted: t('documents') -> `on_documents`; t('users') -> the accounts of the suite. */
 function t(string $name): string
 {
+    // the accounts, sessions and email links are the ones of the whole suite (../identity/suite.php)
+    if (in_array($name, SUITE_TABLES, true)) return suite_table($name, (string)(credentials()['name'] ?? ''));
     $prefix = (string)config_value('prefix', 'on_');
     if (!preg_match('/^[A-Za-z0-9_]{0,20}$/', $prefix)) throw new RuntimeException('Invalid table prefix');
     return '`' . $prefix . $name . '`';
@@ -241,7 +245,7 @@ function e(string $s): string
 
 function set_auth_cookie(string $value, int $expires): void
 {
-    setcookie(AUTH_COOKIE, $value, ['expires' => $expires, 'path' => app_base_path(), 'secure' => is_https(), 'httponly' => true, 'samesite' => 'Lax']);
+    suite_set_cookie($value, $expires, app_base_path(), is_https()); // on every app of the suite: signed in once, signed in everywhere
 }
 
 function create_auth_session(int $userId): string

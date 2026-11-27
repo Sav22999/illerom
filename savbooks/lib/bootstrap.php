@@ -10,9 +10,11 @@
 
 declare(strict_types=1);
 
+require_once dirname(__DIR__, 2) . '/identity/suite.php'; // one account for all the apps of SavOffice
+
 const APP_NAME = 'SavBooks';
-const AUTH_COOKIE = 'savbooks_auth';
-const SCHEMA_VERSION = 4; // 2: documents.preview · 3: names and history of single-use links · 4: typefaces from file (the same steps as SavDocuments)
+const AUTH_COOKIE = SUITE_COOKIE; // the session of the whole suite (../identity/suite.php)
+const SCHEMA_VERSION = 5; // 2: documents.preview · 3: names and history of single-use links · 4: typefaces from file (the same steps as SavDocuments) · 5: the accounts of the suite (../identity/suite.php), settings in profiles
 const LANGS = ['en', 'it'];
 // What a person can do with a document, from the weakest: each role can do everything the ones before it can
 const ROLES = ['viewer', 'commenter', 'editor', 'owner'];
@@ -80,9 +82,11 @@ function config_value(string $key, $default = null)
     return $c[$key] ?? $default;
 }
 
-/** Table name with prefix, already quoted: t('users') -> `sb_users`. */
+/** Table name with prefix, already quoted: t('documents') -> `sb_documents`; t('users') -> the accounts of the suite. */
 function t(string $name): string
 {
+    // the accounts, sessions and email links are the ones of the whole suite (../identity/suite.php)
+    if (in_array($name, SUITE_TABLES, true)) return suite_table($name, (string)(credentials()['name'] ?? ''));
     $prefix = (string)config_value('prefix', 'sb_');
     if (!preg_match('/^[A-Za-z0-9_]{0,20}$/', $prefix)) throw new RuntimeException('Invalid table prefix');
     return '`' . $prefix . $name . '`';
@@ -250,7 +254,7 @@ function e(string $s): string
 
 function set_auth_cookie(string $value, int $expires): void
 {
-    setcookie(AUTH_COOKIE, $value, ['expires' => $expires, 'path' => app_base_path(), 'secure' => is_https(), 'httponly' => true, 'samesite' => 'Lax']);
+    suite_set_cookie($value, $expires, app_base_path(), is_https()); // on every app of the suite: signed in once, signed in everywhere
 }
 
 function create_auth_session(int $userId): string
@@ -278,8 +282,8 @@ function current_user(): ?array
     if ($cached !== false) return $cached;
     $token = $_COOKIE[AUTH_COOKIE] ?? '';
     if (!is_string($token) || !preg_match('/^[a-f0-9]{64}$/', $token)) return $cached = null;
-    $st = db()->prepare('SELECT u.*, a.csrf_token, a.last_seen_at AS token_seen, a.token_hash FROM ' . t('auth_tokens') . ' a
-        JOIN ' . t('users') . ' u ON u.id = a.user_id WHERE a.token_hash = ? AND a.expires_at > UTC_TIMESTAMP()');
+    $st = db()->prepare('SELECT u.*, pr.prefs AS prefs, a.csrf_token, a.last_seen_at AS token_seen, a.token_hash FROM ' . t('auth_tokens') . ' a
+        JOIN ' . t('users') . ' u ON u.id = a.user_id LEFT JOIN ' . t('profiles') . ' pr ON pr.user_id = u.id WHERE a.token_hash = ? AND a.expires_at > UTC_TIMESTAMP()');
     $st->execute([hash('sha256', $token)]);
     $u = $st->fetch();
     if (!$u) return $cached = null;
@@ -289,6 +293,20 @@ function current_user(): ?array
     unset($u['token_hash'], $u['token_seen']);
     $u['id'] = (int)$u['id'];
     return $cached = $u;
+}
+
+/** Saves the settings of this app for an account ($json: a JSON object): its own table, never the shared users.prefs. */
+function save_prefs(int $userId, string $json): void
+{
+    db()->prepare('INSERT INTO ' . t('profiles') . ' (user_id, prefs) VALUES (?, ?) ON DUPLICATE KEY UPDATE prefs = VALUES(prefs)')->execute([$userId, $json]);
+}
+
+/** The settings of this app of another account (to know, for example, whether it wants an email when something is shared). */
+function prefs_of(int $userId): array
+{
+    $st = db()->prepare('SELECT prefs FROM ' . t('profiles') . ' WHERE user_id = ?');
+    $st->execute([$userId]);
+    return json_decode((string)$st->fetchColumn(), true) ?: [];
 }
 
 /** Master admin of the whole platform: a confirmed account whose email is listed in credentials.php. */

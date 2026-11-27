@@ -415,8 +415,8 @@ const T = {
   export_data: ['Download my data', 'Scarica i miei dati'],
   export_data_t: ['Your account and the list of your files and folders, as a JSON file (the files are downloaded from the drive).', 'Il tuo account e l’elenco di file e cartelle, in un file JSON (i file si scaricano dal drive).'],
   delete_account: ['Delete the account', 'Elimina l’account'],
-  delete_account_short: ['The account and all its files, for ever.', 'L’account e tutti i suoi file, per sempre.'],
-  delete_account_text: ['Your account, all your files and folders and the links you shared will be deleted at once and for ever.', 'Il tuo account, tutti i tuoi file e cartelle e i link condivisi saranno eliminati subito e per sempre.'],
+  delete_account_short: ['It goes in every app of SavOffice, with everything in it.', 'Sparisce in tutte le app di SavOffice, con tutto quello che contiene.'],
+  delete_account_text: ['The account is the same in every app of SavOffice: deleting it deletes it in all of them, for good, with everything it has there (documents, files, calendars, polls…), also for the people you shared them with.', 'L’account è lo stesso in tutte le app di SavOffice: eliminarlo lo elimina in tutte, per sempre, con tutto quello che contiene (documenti, file, calendari, sondaggi…), anche per le persone con cui li hai condivisi.'],
 
   // administration
   a_overview: ['Overview', 'Panoramica'],

@@ -10,6 +10,9 @@ LibreOffice (.ods). Same arrangement as SavDocuments and SavPresentations. <http
   tables are the ones of SavDocuments (`documents` holds the workbooks), so `cron/cleanup.php` treats both alike.
 - No build step and no libraries: ES modules in `assets/`. Controls: SavComponents (Soft style) from `../assets/sav/`.
 - SavAccount sign-in: `../identity/`. The SavOffice button: `../assets/savoffice/savoffice.js`.
+- **Accounts: the ones of the whole suite** (`../identity/suite.php`): an account made in any app of SavOffice (email and
+  password, or SavAccount) is the account of every app, and one session (cookie `savoffice_auth`, on the path of every app)
+  signs in and out everywhere. The tables of this app keep only what is its own, tied to the account (`users.id`).
 
 | Path | What |
 |------|------|

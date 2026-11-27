@@ -22,6 +22,8 @@
 
 declare(strict_types=1);
 
+require_once dirname(__DIR__, 2) . '/identity/suite.php'; // the accounts are the ones of the whole suite
+
 const SAVSPACE_DEFAULT = 524288000; // 500 MB, until the admins of SavDrive choose another space
 const SAVSPACE_PAUSE = 60;           // after a failed connection, seconds without trying again (in every app, every request)
 const SAVSPACE_TIMEOUT = 2;          // seconds to wait for the database of SavDrive
@@ -68,7 +70,7 @@ function savspace_db(): ?array
             `updated_at` DATETIME NOT NULL,
             PRIMARY KEY (`email`, `app`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-        return $c = [$pdo, $prefix];
+        return $c = [$pdo, $prefix, suite_table('users', $name)];
     } catch (Throwable $e) {
         error_log('SavOffice space: SavDrive cannot be reached: ' . $e->getMessage());
         return null;
@@ -80,7 +82,7 @@ function savspace_q(string $sql, array $args = []): ?PDOStatement
     $c = savspace_db();
     if (!$c) return null;
     try {
-        $st = $c[0]->prepare(str_replace('{p}', $c[1], $sql));
+        $st = $c[0]->prepare(str_replace(['`{p}users`', '{p}'], [$c[2], $c[1]], $sql)); // {p}users: the accounts of the suite
         $st->execute($args);
         return $st;
     } catch (PDOException $e) {

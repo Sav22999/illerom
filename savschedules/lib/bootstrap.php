@@ -10,8 +10,10 @@
 
 declare(strict_types=1);
 
+require_once dirname(__DIR__, 2) . '/identity/suite.php'; // one account for all the apps of SavOffice
+
 const APP_NAME = 'SavSchedules';
-const AUTH_COOKIE = 'savschedules_auth';
+const AUTH_COOKIE = SUITE_COOKIE; // the session of the whole suite (../identity/suite.php)
 const SCHEMA_VERSION = 2;
 const LANGS = ['en', 'it'];
 const KINDS = ['poll', 'slots', 'assign']; // poll: everyone says when they can · slots: each place is taken by one person · assign: everyone says when they can, then the owner gives each one a slot of their own
@@ -236,14 +238,11 @@ function e(string $s): string
  * The session cookie, also on the paths of SavCalendar and SavWhiteboard: the apps share accounts and session (sign in or
  * out in one, it is done in all). They set the same cookie on every path too (savcalendar/lib/bootstrap.php, savwhiteboard/…, savtasks/…).
  */
-const SHARED_WITH = ['savcalendar', 'savwhiteboard', 'savtasks', 'savnotes', 'savforms', 'savsplits', 'savpodcasts', 'savmail', 'savdiagrams', 'savcontacts', 'savreads'];
+const SHARED_WITH = SUITE_APPS; // every app of SavOffice shares the session (../identity/suite.php)
 
 function set_auth_cookie(string $value, int $expires): void
 {
-    $parent = rtrim(dirname(rtrim(app_base_path(), '/')), '/');
-    foreach (array_merge([app_base_path()], array_map(fn($a) => $parent . '/' . $a . '/', SHARED_WITH)) as $path) {
-        setcookie(AUTH_COOKIE, $value, ['expires' => $expires, 'path' => $path, 'secure' => is_https(), 'httponly' => true, 'samesite' => 'Lax']);
-    }
+    suite_set_cookie($value, $expires, app_base_path(), is_https()); // on every app of the suite
 }
 
 /** A session opened before the cookie was shared: its cookie is given to the paths of the other apps too (called by auth.me). */
@@ -255,8 +254,7 @@ function share_session(): void
     $exp->execute([hash('sha256', $token)]);
     $at = $exp->fetchColumn();
     if (!$at) return;
-    $parent = rtrim(dirname(rtrim(app_base_path(), '/')), '/');
-    foreach (SHARED_WITH as $a) setcookie(AUTH_COOKIE, $token, ['expires' => strtotime($at . ' UTC'), 'path' => $parent . '/' . $a . '/', 'secure' => is_https(), 'httponly' => true, 'samesite' => 'Lax']);
+    suite_set_cookie($token, (int)strtotime($at . ' UTC'), app_base_path(), is_https());
 }
 
 function create_auth_session(int $userId): string

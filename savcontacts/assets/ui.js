@@ -53,6 +53,26 @@ export function iconBtn(name, label, onclick, o = {}) {
   tip.on = (v) => { b.variant = v ? 'primary' : 'neutral'; b.appearance = v ? 'soft' : 'ghost'; b.setAttribute('aria-pressed', String(!!v)); };
   return tip;
 }
+/**
+ * The star of a favourite: the favourite button of SavComponents, as in SavDrive, SavTasks and SavReads. It fills at
+ * once when pressed; save(on) keeps the change and, if it fails, the star goes back. o.kbd: the key, in the tooltip.
+ */
+export function favBtn(on, save, o = {}) {
+  const b = h('sav-favourite-button', { icon: 'star', pressed: on || null, appearance: 'ghost', size: 'sm', label: t('star') });
+  const tip = h('sav-tooltip.starb', { placement: o.place || 'bottom', delay: 350 }, b);
+  const look = (v) => { const l = t(v ? 'unstar' : 'star'); tip.classList.toggle('on', v); tip.setAttribute('content', o.kbd ? `${l} (${K(o.kbd)})` : l); };
+  look(!!on);
+  // a press (or Enter, Space) on the star is not a press on the row around it
+  for (const ev of ['click', 'keydown']) b.addEventListener(ev, (e) => e.stopPropagation());
+  b.addEventListener('change', async (e) => {
+    const v = !!e.detail?.pressed;
+    look(v);
+    try { await save(v); } catch (err) { b.toggleAttribute('pressed', !v); look(!v); fail(err); } // back, without a new change
+  });
+  tip.button = b;
+  tip.set = (v) => { b.toggleAttribute('pressed', !!v); look(!!v); }; // from outside, without a change
+  return tip;
+}
 export const item = (value, ic, label, o = {}) => h('sav-menu-item', { value, variant: o.danger ? 'danger' : null, disabled: o.disabled, type: o.check !== undefined ? 'checkbox' : null, checked: !!o.check, style: o.style }, ic ? icon(ic, { slot: 'prefix' }) : null, label, o.kbd ? h('kbd', { slot: 'suffix' }, K(o.kbd)) : null);
 
 /** items: [icon, label, run, {kbd, danger, check, disabled, style}] | '-' | {head} | Node | falsy */

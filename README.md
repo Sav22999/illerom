@@ -29,6 +29,7 @@ On the server Apache needs `mod_rewrite` (see `.htaccess`).
 | `cron/`                             | Daily clean-up and reminders of the projects                                                                            |
 | `move/`, `assets/move.js`           | Arrival of who comes from saveriomorelli.com: copies once what a project had saved in the browser                       |
 | `assets/sav/`                       | SavComponents 1.1.1 (Tilt style), a local copy                                                                          |
+| `desktop/`                          | SavOffice for Mac: the Toolbox (Electron) that installs the apps of SavOffice, keeps them offline and up to date (its README) |
 | `assets/projects/`                  | `<slug>.png` (icon) and `<slug>/1.jpg`… (screenshots)                                                                   |
 | `tools/brand.sh`                    | Redraws the icons and the Open Graph banner                                                                             |
 | `data/typeface.json`, `tools/typeface.py` | Illerom Bars: the letters as bars, and the script that builds `assets/fonts/illerom-bars.ttf` and `.woff`; `/<lang>/typeface/` shows it |

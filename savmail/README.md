@@ -28,7 +28,7 @@ SavOffice. <https://www.illerom.eu/savmail/>
   `credentials.php` (see `credentials-sample.php`) adds the Microsoft sign-in or an own SavAccount service.
 - No build step and no libraries: ES modules in `assets/`. Controls: SavComponents from `../assets/sav/`.
 - SavAccount sign-in: `../identity/`. The SavOffice button: `../assets/savoffice/savoffice.js`. The session is shared
-  with the apps of `SHARED_APPS` (each `lib/bootstrap.php` lists `savmail`, and `savschedules` its `SHARED_WITH`).
+  with every app of SavOffice (`SUITE_APPS` of `../identity/suite.php`).
 
 | Path | What |
 |------|------|

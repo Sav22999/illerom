@@ -1,0 +1,6 @@
+node_modules/
+dist/
+# drawn by tools/brand.js, copied by tools/prepare.js
+build/
+src/launcher/sav/
+src/launcher/icons/

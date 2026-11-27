@@ -16,9 +16,11 @@
 
 declare(strict_types=1);
 
+require_once dirname(__DIR__, 2) . '/identity/suite.php'; // one account for all the apps of SavOffice
+
 const APP_NAME = 'SavDrive';
-const AUTH_COOKIE = 'savdrive_auth';
-const SCHEMA_VERSION = 7; // 2: uploads.replace_id (an app of SavOffice saves its file back into the drive) · 3: usage (the space used by the other apps) · 4: shares, comments, nodes.created_by · 5: temporary links (temp_links, temp_items, uploads.temp_id) · 6: the Vault (vault_keys, vault_nodes, uploads.vault_id) · 7: the two together
+const AUTH_COOKIE = SUITE_COOKIE; // the session of the whole suite (../identity/suite.php)
+const SCHEMA_VERSION = 8; // 2: uploads.replace_id (an app of SavOffice saves its file back into the drive) · 3: usage (the space used by the other apps) · 4: shares, comments, nodes.created_by · 5: temporary links (temp_links, temp_items, uploads.temp_id) · 6: the Vault (vault_keys, vault_nodes, uploads.vault_id) · 7: the two together · 8: the accounts of the suite (../identity/suite.php), settings in profiles
 const LANGS = ['en', 'it'];
 const GB = 1073741824;
 const DEFAULT_QUOTA = 500 * 1048576;   // 500 MB, until the admins choose another one
@@ -87,9 +89,11 @@ function config_value(string $key, $default = null)
     return $c[$key] ?? $default;
 }
 
-/** Table name with prefix, already quoted: t('users') -> `dr_users`. */
+/** Table name with prefix, already quoted: t('documents') -> `dr_documents`; t('users') -> the accounts of the suite. */
 function t(string $name): string
 {
+    // the accounts, sessions and email links are the ones of the whole suite (../identity/suite.php)
+    if (in_array($name, SUITE_TABLES, true)) return suite_table($name, (string)(credentials()['name'] ?? ''));
     $prefix = (string)config_value('prefix', 'dr_');
     if (!preg_match('/^[A-Za-z0-9_]{0,20}$/', $prefix)) throw new RuntimeException('Invalid table prefix');
     return '`' . $prefix . $name . '`';
@@ -276,7 +280,7 @@ function e(string $s): string
 
 function set_auth_cookie(string $value, int $expires): void
 {
-    setcookie(AUTH_COOKIE, $value, ['expires' => $expires, 'path' => app_base_path(), 'secure' => is_https(), 'httponly' => true, 'samesite' => 'Lax']);
+    suite_set_cookie($value, $expires, app_base_path(), is_https()); // on every app of the suite: signed in once, signed in everywhere
 }
 
 function create_auth_session(int $userId): string
@@ -304,8 +308,8 @@ function current_user(): ?array
     if ($cached !== false) return $cached;
     $token = $_COOKIE[AUTH_COOKIE] ?? '';
     if (!is_string($token) || !preg_match('/^[a-f0-9]{64}$/', $token)) return $cached = null;
-    $st = db()->prepare('SELECT u.*, a.csrf_token, a.last_seen_at AS token_seen, a.token_hash FROM ' . t('auth_tokens') . ' a
-        JOIN ' . t('users') . ' u ON u.id = a.user_id WHERE a.token_hash = ? AND a.expires_at > UTC_TIMESTAMP()');
+    $st = db()->prepare('SELECT u.*, pr.prefs AS prefs, a.csrf_token, a.last_seen_at AS token_seen, a.token_hash FROM ' . t('auth_tokens') . ' a
+        JOIN ' . t('users') . ' u ON u.id = a.user_id LEFT JOIN ' . t('profiles') . ' pr ON pr.user_id = u.id WHERE a.token_hash = ? AND a.expires_at > UTC_TIMESTAMP()');
     $st->execute([hash('sha256', $token)]);
     $u = $st->fetch();
     if (!$u) return $cached = null;
@@ -314,7 +318,27 @@ function current_user(): ?array
     }
     unset($u['token_hash'], $u['token_seen']);
     $u['id'] = (int)$u['id'];
+    // an account of the suite made in another app, here for the first time: activated as the admins chose for new accounts
+    if (array_key_exists('activated', $u) && $u['activated'] === null) {
+        $on = default_active() ? 1 : 0;
+        db()->prepare('UPDATE ' . t('users') . ' SET activated = ?, activated_at = ? WHERE id = ? AND activated IS NULL')->execute([$on, $on ? now_utc() : null, $u['id']]);
+        $u['activated'] = $on;
+    }
     return $cached = $u;
+}
+
+/** Saves the settings of this app for an account ($json: a JSON object): its own table, never the shared users.prefs. */
+function save_prefs(int $userId, string $json): void
+{
+    db()->prepare('INSERT INTO ' . t('profiles') . ' (user_id, prefs) VALUES (?, ?) ON DUPLICATE KEY UPDATE prefs = VALUES(prefs)')->execute([$userId, $json]);
+}
+
+/** The settings of this app of another account (to know, for example, whether it wants an email when something is shared). */
+function prefs_of(int $userId): array
+{
+    $st = db()->prepare('SELECT prefs FROM ' . t('profiles') . ' WHERE user_id = ?');
+    $st->execute([$userId]);
+    return json_decode((string)$st->fetchColumn(), true) ?: [];
 }
 
 /** Master admin of the whole app: a confirmed account whose email is listed in credentials.php. */

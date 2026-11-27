@@ -17,10 +17,15 @@
  * Command line: php cleanup.php (no key needed)
  */
 
+require_once __DIR__ . '/../identity/suite.php'; // the accounts of the suite of SavOffice
+
 const ROOM_RETENTION_HOURS = 24;
 const GAMES = ['c4' => 'connect-four', 'chess' => 'chess', 'fg' => 'faceguess', 'sb' => 'sea-battle', 'pm' => 'prism-mine']; // table prefix => project
 const APPS = ['foodtrack' => 'ft_', 'giftwise' => 'gw_', 'fucina' => 'fc_', 'thinkhop' => 'th_', 'forkville' => 'fv_', 'mycurriculum' => 'mc_', 'savnewsletters' => 'on_', 'savdocuments' => 'sd_', 'savbooks' => 'sb_', 'savspreadsheets' => 'ss_', 'savpresentations' => 'sp_', 'savschedules' => 'sch_', 'savdrive' => 'dr_']; // project => default table prefix
 const NO_SESSION_DETAILS = ['thinkhop', 'forkville', 'mycurriculum', 'savnewsletters', 'savdocuments', 'savbooks', 'savspreadsheets', 'savpresentations', 'savschedules', 'savdrive']; // these apps never stored the IP and browser on their sessions: no such columns
+// these apps use the accounts of the whole suite (../identity/suite.php): sessions, accounts never confirmed and email links
+// are cleaned once, with SavSchedules (whose tables they are); here only what is their own
+const SUITE_MEMBERS = ['savdocuments', 'savspreadsheets', 'savbooks', 'savpresentations', 'savdrive', 'savnewsletters'];
 const BORROWED = ['savbooks' => 'savdocuments', 'savdrive' => 'savdocuments']; // without a credentials.php of their own, SavBooks and SavDrive use the database of SavDocuments, always with their own prefix
 const ATTEMPT_RETENTION_HOURS = 2; // the longest rate limit looks back 60 minutes: older IPs serve no purpose
 const TRASH_DAYS = 30; // SavDocuments, SavSpreadsheets, SavPresentations and SavSchedules: what is in the trash
@@ -76,23 +81,36 @@ function cleanApp($project, $defaultPrefix)
     }
     $prefix = validPrefix($table_prefix ?: $defaultPrefix, $defaultPrefix);
     $db = connectTo($host, $port, $database_name, $username_db, $password_db);
-    $result = cleanTables($db, $prefix, 'attempts', !in_array($project, NO_SESSION_DETAILS, true));
+    $suite = in_array($project, SUITE_MEMBERS, true);
+    $result = $suite
+        ? ['attempts' => $db->exec("DELETE FROM `{$prefix}attempts` WHERE created_at < UTC_TIMESTAMP() - INTERVAL " . ATTEMPT_RETENTION_HOURS . " HOUR")]
+        : cleanTables($db, $prefix, 'attempts', !in_array($project, NO_SESSION_DETAILS, true));
+    $users = $suite ? suite_table('users', (string)$database_name) : null; // the accounts of the suite, seen from this database
     if ($project === 'savnewsletters') {
         $result['pending_subscribers'] = $db->exec("DELETE FROM `{$prefix}subscribers` WHERE status = 'pending' AND COALESCE(confirm_sent_at, created_at) < UTC_TIMESTAMP() - INTERVAL " . PENDING_SUBSCRIBER_DAYS . " DAY");
-        $result['email_links'] = $db->exec("DELETE FROM `{$prefix}email_tokens` WHERE expires_at < UTC_TIMESTAMP()");
     }
     if ($project === 'savdocuments' || $project === 'savspreadsheets' || $project === 'savbooks') { // SavSpreadsheets and SavBooks keep their workbooks and books in tables made the same way
         $result['trash'] = $db->exec("DELETE FROM `{$prefix}documents` WHERE deleted_at < UTC_TIMESTAMP() - INTERVAL " . TRASH_DAYS . " DAY");
-        $result['unconfirmed'] = $db->exec("DELETE FROM `{$prefix}users` WHERE email_verified_at IS NULL AND status = 'active' AND created_at < UTC_TIMESTAMP() - INTERVAL 7 DAY");
-        $result['links'] = $db->exec("DELETE FROM `{$prefix}email_tokens` WHERE expires_at < UTC_TIMESTAMP()") + $db->exec("DELETE FROM `{$prefix}invites` WHERE expires_at < UTC_TIMESTAMP()");
+        $result['links'] = $db->exec("DELETE FROM `{$prefix}invites` WHERE expires_at < UTC_TIMESTAMP()");
         if ($db->query("SHOW TABLES LIKE " . $db->quote(addcslashes($prefix, '_%') . 'identity'))->fetchColumn()) $result['sign_in_requests'] = $db->exec("DELETE FROM `{$prefix}identity` WHERE expires_at < UTC_TIMESTAMP()"); // made at the first SavAccount or Google sign-in
         $db->exec("DELETE FROM `{$prefix}presence` WHERE seen_at < UTC_TIMESTAMP() - INTERVAL 1 HOUR");
     }
     if ($project === 'savpresentations') {
         // as its privacy notice promises: trash 30 days, accounts never confirmed 7, live changes 2, reports and log 2 years
         $result['trash'] = $db->exec("DELETE FROM `{$prefix}decks` WHERE status = 'trashed' AND trashed_at < UTC_TIMESTAMP() - INTERVAL " . TRASH_DAYS . " DAY");
-        $result['unconfirmed'] = $db->exec("DELETE FROM `{$prefix}users` WHERE email_verified_at IS NULL AND status = 'active' AND created_at < UTC_TIMESTAMP() - INTERVAL 7 DAY");
-        $result['links'] = $db->exec("DELETE FROM `{$prefix}email_tokens` WHERE expires_at < UTC_TIMESTAMP()") + $db->exec("DELETE FROM `{$prefix}links` WHERE expires_at < UTC_TIMESTAMP() - INTERVAL 30 DAY");
+        $result['links'] = $db->exec("DELETE FROM `{$prefix}links` WHERE expires_at < UTC_TIMESTAMP() - INTERVAL 30 DAY");
+        // pictures and videos of accounts deleted from another app of the suite: their rows went with the account, the files stay
+        // on disk (<storage>/<2 letters>/<id>.bin): those older than a day with no row in media go
+        $media = rtrim((string)($storage_dir ?? '') ?: __DIR__ . '/../savpresentations/storage', '/\\');
+        $gone = 0;
+        foreach (glob($media . '/*/*.bin') ?: [] as $f) {
+            $id = basename($f, '.bin');
+            if (!preg_match('/^[a-f0-9]{16,64}$/', $id) || @filemtime($f) > time() - 86400) continue;
+            $st = $db->prepare("SELECT 1 FROM `{$prefix}media` WHERE id = ?");
+            $st->execute([$id]);
+            if (!$st->fetchColumn() && @unlink($f)) $gone++;
+        }
+        $result['orphan_media'] = $gone;
         $result['changes'] = $db->exec("DELETE FROM `{$prefix}ops` WHERE created_at < UTC_TIMESTAMP() - INTERVAL 2 DAY");
         $result['old_reports'] = $db->exec("DELETE FROM `{$prefix}reports` WHERE created_at < UTC_TIMESTAMP() - INTERVAL 2 YEAR") + $db->exec("DELETE FROM `{$prefix}audit` WHERE created_at < UTC_TIMESTAMP() - INTERVAL 2 YEAR");
         $db->exec("DELETE FROM `{$prefix}presence` WHERE seen_at < UTC_TIMESTAMP() - INTERVAL 1 HOUR");
@@ -142,8 +160,17 @@ function cleanApp($project, $defaultPrefix)
             $result['temp_links'] = $db->exec("DELETE l FROM `{$prefix}temp_links` l WHERE $over");
             $result['temp_files'] = $gone;
         }
-        $result['unconfirmed'] = $db->exec("DELETE FROM `{$prefix}users` WHERE email_verified_at IS NULL AND status = 'active' AND created_at < UTC_TIMESTAMP() - INTERVAL 7 DAY");
-        $result['links'] = $db->exec("DELETE FROM `{$prefix}email_tokens` WHERE expires_at < UTC_TIMESTAMP()");
+        // the folders of accounts deleted from another app of the suite (<storage>/<user id>/): ids are never given again
+        $gone = 0;
+        $alive = $db->prepare("SELECT 1 FROM $users WHERE id = ?");
+        foreach (glob($store . '/*', GLOB_ONLYDIR) ?: [] as $dir) {
+            if (!preg_match('/^\d+$/', basename($dir))) continue;
+            $alive->execute([(int)basename($dir)]);
+            if ($alive->fetchColumn()) continue;
+            foreach (glob($dir . '/{,.}*', GLOB_BRACE) ?: [] as $f) if (is_file($f)) @unlink($f);
+            if (@rmdir($dir)) $gone++;
+        }
+        $result['orphan_folders'] = $gone;
         if ($db->query("SHOW TABLES LIKE " . $db->quote(addcslashes($prefix, '_%') . 'identity'))->fetchColumn()) $result['sign_in_requests'] = $db->exec("DELETE FROM `{$prefix}identity` WHERE expires_at < UTC_TIMESTAMP()"); // made at the first SavAccount sign-in
     }
     if ($project === 'savschedules') {

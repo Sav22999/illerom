@@ -71,6 +71,12 @@ savoffice-apps { display: inline-flex; }
   const it = () => (document.documentElement.lang || navigator.language || 'en').startsWith('it');
   const root = () => new URL('../', location.href.split('#')[0]);
   const DONATE = 'https://www.saveriomorelli.com/donate/';
+  // Installed apps. In SavOffice for Mac (../../desktop/: window.SavOfficeDesktop) the grid lists only the apps installed
+  // on the Mac and opens each in its own window, "All the apps" opens the Toolbox. In an app installed from the browser
+  // (standalone) there is no grid: another app could only open inside this window, or in the browser.
+  const DESK = window.SavOfficeDesktop || null;
+  const STANDALONE = !DESK && (['standalone', 'fullscreen', 'minimal-ui', 'window-controls-overlay'].some((m) => matchMedia(`(display-mode: ${m})`).matches) || navigator.standalone === true);
+  const reachable = (id) => (DESK ? DESK.installed.includes(id) : !STANDALONE);
 
   class SavOfficeApps extends HTMLElement {
     connectedCallback() {
@@ -79,6 +85,7 @@ savoffice-apps { display: inline-flex; }
       if (!document.getElementById('savoffice-css')) document.head.append(Object.assign(document.createElement('style'), { id: 'savoffice-css', textContent: CSS }));
       window.Sav?.registerIcon?.('grip', GRIP);
       const cur = this.getAttribute('current') || '', lang = it(), base = root();
+      if (STANDALONE) { window.SavOffice?.paintDrive?.(this); return; } // the cloud button of SavDrive stays, the grid does not
       const label = 'SavOffice';
       const pop = document.createElement('sav-popover');
       pop.className = 'so-pop';
@@ -100,10 +107,11 @@ savoffice-apps { display: inline-flex; }
       grid.className = 'so-grid';
       Object.entries({ columns: '4', gap: '.15rem', keep: '' }).forEach(([k, v]) => grid.setAttribute(k, v));
       const items = [];
-      for (const [id, name, itx, en] of APPS) {
+      for (const [id, name, itx, en] of APPS.filter(([id]) => !DESK || id === cur || reachable(id))) {
         const a = document.createElement('a');
         a.className = 'so-app';
         a.href = new URL(id + '/', base).href;
+        if (DESK) a.addEventListener('click', (e) => { e.preventDefault(); pop.hide?.(); if (id !== cur) DESK.open(id); });
         a.title = name + ' · ' + (lang ? itx : en);
         a.setAttribute('aria-label', name + ': ' + (lang ? itx : en));
         if (id === cur) a.setAttribute('aria-current', 'page');
@@ -125,12 +133,16 @@ savoffice-apps { display: inline-flex; }
       };
       q.addEventListener('input', filter);
       q.addEventListener('sav-clear', () => setTimeout(filter));
-      q.addEventListener('keydown', (e) => { if (e.key === 'Enter') { const first = items.find(([a]) => !a.hidden); if (first) { e.preventDefault(); location.href = first[0].href; } } });
+      q.addEventListener('keydown', (e) => { if (e.key === 'Enter') { const first = items.find(([a]) => !a.hidden); if (first) { e.preventDefault(); if (DESK) first[0].click(); else location.href = first[0].href; } } });
       // every time it opens: the field empty, and focused only where a keyboard is likely (not to open the keyboard of a phone)
       pop.addEventListener('sav-show', () => { q.value = ''; filter(); if (matchMedia('(hover: hover) and (pointer: fine)').matches) setTimeout(() => q.focus(), 60); });
       const foot = document.createElement('div');
       foot.className = 'so-foot';
       const hub = Object.assign(document.createElement('a'), { href: new URL('savoffice/', base).href, textContent: lang ? 'Cos’è SavOffice →' : 'About SavOffice →' });
+      if (DESK) {
+        hub.textContent = lang ? 'Tutte le app →' : 'All the apps →';
+        hub.addEventListener('click', (e) => { e.preventDefault(); pop.hide?.(); DESK.toolbox(); });
+      }
       // the mark of SavOffice (savoffice/icons/favicon.svg): three bars of Illerom in the colours of the apps
       const mark = Object.assign(document.createElement('img'), { src: new URL('savoffice/icons/favicon.svg', base).href, alt: '' });
       const note = document.createElement('span');
@@ -148,25 +160,9 @@ savoffice-apps { display: inline-flex; }
   }
   customElements.define('savoffice-apps', SavOfficeApps);
 
-  // Every app says it was made with the support of AI: next to "by Saverio Morelli" in its footer (the footers of the apps
-  // are drawn by each one, and again when the page changes, so they are found as they appear)
-  const AI_CSS = '.so-ai { display: inline-flex; align-items: center; gap: .3em; color: var(--sav-color-text-muted, #777); } .so-ai svg { width: 1em; height: 1em; flex: none; }';
-  const aiNote = () => {
-    for (const f of document.querySelectorAll('footer:not([data-so-ai])')) {
-      if (!f.querySelector('a[href^="https://www.saveriomorelli.com"]')) continue;
-      f.dataset.soAi = '';
-      if (!document.getElementById('savoffice-ai-css')) document.head.append(Object.assign(document.createElement('style'), { id: 'savoffice-ai-css', textContent: AI_CSS }));
-      const l = it(), span = document.createElement('span');
-      span.className = 'so-ai';
-      span.title = l ? 'Applicazione realizzata con il supporto dell’intelligenza artificiale (Claude, di Anthropic)' : 'App made with the support of artificial intelligence (Claude, by Anthropic)';
-      span.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.9 6.1L20 10l-6.1 1.9L12 18l-1.9-6.1L4 10l6.1-1.9z"/></svg>';
-      span.append(l ? 'Realizzata con il supporto dell’AI' : 'Made with the support of AI');
-      f.append(span);
-    }
-  };
   // at most once a frame, however busy the page is (an editor changes it at every key)
-  let aiQueued = false;
-  const aiSoon = () => { if (aiQueued) return; aiQueued = true; requestAnimationFrame(() => { aiQueued = false; decorate(); }); };
+  let queued = false;
+  const soon = () => { if (queued) return; queued = true; requestAnimationFrame(() => { queued = false; decorate(); }); };
   // The first page of every app, for whoever is not signed in: below the opening of the app (its own title, picture and
   // features) come the same SavOffice sections, filled with what is true of that app (../savoffice/landing.php): its
   // screenshots, the apps it works with, its files, privacy, frequent questions, and the other apps of the suite.
@@ -397,9 +393,9 @@ savoffice-apps { display: inline-flex; }
     return el('div', { class: 'sos', 'aria-hidden': 'true' }, win);
   }
   window.SavOffice = Object.assign(window.SavOffice || {}, { scene });
-  const decorate = () => { aiNote(); for (const m of document.querySelectorAll('.landing main.lmain:not([data-so-land]), main.lmain:not([data-so-land])')) if (m.querySelector('.hero')) landing(m); };
-  const watchFooters = () => { decorate(); new MutationObserver(aiSoon).observe(document.body, { childList: true, subtree: true }); };
-  if (document.body) watchFooters(); else addEventListener('DOMContentLoaded', watchFooters);
+  const decorate = () => { for (const m of document.querySelectorAll('.landing main.lmain:not([data-so-land]), main.lmain:not([data-so-land])')) if (m.querySelector('.hero')) landing(m); };
+  const watchPage = () => { decorate(); new MutationObserver(soon).observe(document.body, { childList: true, subtree: true }); };
+  if (document.body) watchPage(); else addEventListener('DOMContentLoaded', watchPage);
   // the same list for the search of actions below
   window.SavOffice = Object.assign(window.SavOffice || {}, { apps: APPS });
 
@@ -679,6 +675,10 @@ savoffice-apps { display: inline-flex; }
 (() => {
   if (window.SavOffice?.commands) return;
   const IS_MAC = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+  // the other apps: as in the grid above (only the installed ones in SavOffice for Mac, none in an installed web app)
+  const DESK = window.SavOfficeDesktop || null;
+  const STANDALONE = !DESK && (['standalone', 'fullscreen', 'minimal-ui', 'window-controls-overlay'].some((m) => matchMedia(`(display-mode: ${m})`).matches) || navigator.standalone === true);
+  const reachable = (id) => (DESK ? DESK.installed.includes(id) : !STANDALONE);
   const it = () => (document.documentElement.lang || navigator.language || 'en').startsWith('it');
   const APPS = [['savbooks', 'SavBooks', 'Libri ed e-book', 'Books and e-books'], ['savcalendar', 'SavCalendar', 'Calendario', 'Calendar'], ['savcontacts', 'SavContacts', 'Contatti', 'Contacts'], ['savdiagrams', 'SavDiagrams', 'Diagrammi', 'Diagrams'], ['savdocuments', 'SavDocuments', 'Documenti', 'Documents'], ['savdrive', 'SavDrive', 'File e cartelle', 'Files and folders'],
     ['savforms', 'SavForms', 'Moduli e sondaggi', 'Forms and surveys'], ['savmail', 'SavMail', 'Posta', 'Email'], ['savnewsletters', 'SavNewsletters', 'Newsletter', 'Newsletters'], ['savnotes', 'SavNotes', 'Quaderni', 'Notebooks'],
@@ -760,10 +760,12 @@ savoffice-apps { display: inline-flex; }
     document.body.append(p);
     return p;
   }
+  /** A command that opens another app: its address, or its own window in SavOffice for Mac. */
+  const appCommand = (l) => ([id, name, itx, en]) => ({ icon: 'grip', label: name, description: l ? itx : en, keywords: 'app savoffice', ...(DESK ? { run: () => DESK.open(id) } : { href: new URL(id + '/', base()).href }) });
   function fill() {
     fns.clear();
     const l = it(), cur = current(), list = [];
-    const apps = { label: 'SavOffice', items: (window.SavOffice?.apps || APPS).filter((a) => a[0] !== cur).map(([id, name, itx, en]) => ({ icon: 'grip', label: name, description: l ? itx : en, keywords: 'app savoffice', href: new URL(id + '/', base()).href })) };
+    const apps = { label: 'SavOffice', items: (window.SavOffice?.apps || APPS).filter((a) => a[0] !== cur && reachable(a[0])).map(appCommand(l)) };
     let n = 0;
     for (const g of [...(window.SavOffice?.driveCommands?.() || []), ...groups, ...pageCommands(), apps]) for (const c of (g?.items || []).filter(Boolean)) {
       const id = 'c' + n++;
@@ -816,7 +818,7 @@ savoffice-apps { display: inline-flex; }
       o.append(g);
     };
     for (const g of [...(window.SavOffice?.driveCommands?.() || []), ...pageCommands()]) add(g.label, g.items || []);
-    add('SavOffice', (window.SavOffice?.apps || APPS).filter((a) => a[0] !== cur).map(([id, name, itx, en]) => ({ icon: 'grip', label: name, description: l ? itx : en, keywords: 'app savoffice', href: new URL(id + '/', base()).href })));
+    add('SavOffice', (window.SavOffice?.apps || APPS).filter((a) => a[0] !== cur && reachable(a[0])).map(appCommand(l)));
   }
   // the palettes of the editors, as soon as they are on the page
   const seen = () => document.querySelectorAll('sav-command:not([data-savoffice])').forEach(dress);

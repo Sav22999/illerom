@@ -249,7 +249,8 @@ function valid_email(string $email): void
 
 function user_row(int $id): array
 {
-    $st = db()->prepare('SELECT * FROM ' . t('users') . ' WHERE id = ?');
+    // the account of the suite, with the settings of this app (its own table: profiles)
+    $st = db()->prepare('SELECT u.*, pr.prefs AS prefs FROM ' . t('users') . ' u LEFT JOIN ' . t('profiles') . ' pr ON pr.user_id = u.id WHERE u.id = ?');
     $st->execute([$id]);
     return $st->fetch() ?: [];
 }
@@ -480,7 +481,7 @@ switch ($r) {
         $u = writer();
         $p = json_out((object)(is_array(body()['prefs'] ?? null) ? body()['prefs'] : []));
         if (strlen($p) > 4000) fail('bad_request', 413);
-        db()->prepare('UPDATE ' . t('users') . ' SET prefs = ? WHERE id = ?')->execute([$p, $u['id']]);
+        save_prefs((int)$u['id'], $p); // the settings of this app: its own table (profiles), the account is the suite's
         send_json(['ok' => true]);
 
     case 'auth.profile':

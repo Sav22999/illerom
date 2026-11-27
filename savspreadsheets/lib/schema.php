@@ -3,7 +3,8 @@
  * SavSpreadsheets — database tables (the same arrangement as SavDocuments, so the daily clean-up treats both alike) (all prefixed, default "ss_"). Every statement is idempotent: the API creates the tables
  * by itself the first time it answers.
  *
- * users       accounts (email unique and never changed); prefs: JSON of the global settings of the editor
+ * (accounts)  the ones of the whole suite: users, auth_tokens, email_tokens of ../../identity/suite.php (t('users'))
+ * profiles    the settings of the editor of each account (prefs: JSON)
  * folders     folders of an account (they only order its own workbooks)
  * documents   the workbooks. doc: JSON {settings, sheets: [{id, name, cells: {A1: {v, f, s}}, …}]} (see lib/clean.php);
  *             rev grows by one at every change; words: how many cells are filled
@@ -22,47 +23,17 @@ declare(strict_types=1);
 function schema_statements(string $p): array
 {
     $e = 'ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci';
-    $fk = fn(string $name, string $col, string $table, string $on = 'CASCADE') => "CONSTRAINT `fk_{$p}{$name}` FOREIGN KEY (`$col`) REFERENCES `{$p}$table` (`id`) ON DELETE $on";
+    // the accounts are the ones of the whole suite (t('users'), ../../identity/suite.php): deleting one deletes what it had here
+    $fk = fn(string $name, string $col, string $table, string $on = 'CASCADE') => "CONSTRAINT `fk_{$p}{$name}` FOREIGN KEY (`$col`) REFERENCES " . ($table === 'users' ? t('users') : "`{$p}$table`") . " (`id`) ON DELETE $on";
     return [
         "CREATE TABLE IF NOT EXISTS `{$p}meta` (
             `k` VARCHAR(40) NOT NULL PRIMARY KEY,
             `v` VARCHAR(255) NOT NULL
         ) $e",
-        "CREATE TABLE IF NOT EXISTS `{$p}users` (
-            `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            `name` VARCHAR(80) NOT NULL,
-            `email` VARCHAR(190) NOT NULL,
-            `email_verified_at` DATETIME NULL,
-            `password_hash` VARCHAR(255) NOT NULL DEFAULT '',
-            `google_sub` VARCHAR(64) NULL,
-            `ui_lang` VARCHAR(5) NOT NULL DEFAULT 'en',
+        "CREATE TABLE IF NOT EXISTS `{$p}profiles` (
+            `user_id` INT UNSIGNED NOT NULL PRIMARY KEY,
             `prefs` TEXT NULL,
-            `status` ENUM('active','disabled') NOT NULL DEFAULT 'active',
-            `block_reason` VARCHAR(20) NOT NULL DEFAULT '',
-            `block_note` VARCHAR(300) NOT NULL DEFAULT '',
-            `created_at` DATETIME NOT NULL,
-            `last_login_at` DATETIME NULL,
-            UNIQUE KEY `uq_email` (`email`),
-            UNIQUE KEY `uq_google` (`google_sub`)
-        ) $e",
-        "CREATE TABLE IF NOT EXISTS `{$p}auth_tokens` (
-            `token_hash` CHAR(64) NOT NULL PRIMARY KEY,
-            `user_id` INT UNSIGNED NOT NULL,
-            `csrf_token` CHAR(48) NOT NULL,
-            `created_at` DATETIME NOT NULL,
-            `last_seen_at` DATETIME NOT NULL,
-            `expires_at` DATETIME NOT NULL,
-            KEY `ix_user` (`user_id`),
-            " . $fk('tok_user', 'user_id', 'users') . "
-        ) $e",
-        "CREATE TABLE IF NOT EXISTS `{$p}email_tokens` (
-            `token_hash` CHAR(64) NOT NULL PRIMARY KEY,
-            `user_id` INT UNSIGNED NOT NULL,
-            `purpose` VARCHAR(10) NOT NULL DEFAULT 'verify',
-            `created_at` DATETIME NOT NULL,
-            `expires_at` DATETIME NOT NULL,
-            KEY `ix_user` (`user_id`),
-            " . $fk('etok_user', 'user_id', 'users') . "
+            " . $fk('prof_user', 'user_id', 'users') . "
         ) $e",
         "CREATE TABLE IF NOT EXISTS `{$p}attempts` (
             `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -201,6 +172,9 @@ function schema_statements(string $p): array
 
 function install_schema(PDO $pdo, string $prefix): void
 {
+    // once only: the tables of the time when this app had accounts of its own go, then the accounts of the suite are there
+    suite_reset_app($pdo, $prefix);
+    suite_install($pdo, (string)(credentials()['name'] ?? ''));
     foreach (schema_statements($prefix) as $sql) $pdo->exec($sql);
     $pdo->prepare("INSERT INTO `{$prefix}meta` (k, v) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)")->execute([(string)SCHEMA_VERSION]);
 }

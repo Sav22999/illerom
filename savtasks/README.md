@@ -39,7 +39,7 @@ account (polls to decide, places booked) comes here as read-only to-dos.
 
 ## One account with SavSchedules and SavCalendar
 
-The three apps use the users and sessions of SavSchedules. The session cookie (`savschedules_auth`, HttpOnly) is set **on
+The three apps use the users and sessions of SavSchedules. The session cookie (`savoffice_auth`, HttpOnly: the session of the whole suite, `../identity/suite.php`) is set **on
 the paths of all three apps** by each of them (`set_auth_cookie()` in every `lib/bootstrap.php`): signing in or out in
 one does it in the others. A session opened in SavSchedules before this is handed over by its `auth.me`
 (`share_session()`). Deleting the account deletes it everywhere (the tables reference `sch_users` with `ON DELETE CASCADE`).

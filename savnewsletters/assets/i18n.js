@@ -458,7 +458,7 @@ const EN = {
     current_password: 'Current password',
     new_password: 'New password',
     delete_account: 'Delete account',
-    delete_account_text: 'Your account is deleted. First hand over or delete the groups you own.',
+    delete_account_text: 'The account is the same in every app of SavOffice: it is deleted in all of them, for good, with everything it has there. First hand over or delete the groups you own.',
     delete_account_confirm: 'Your account and your sessions are deleted. Newsletters you wrote stay in their groups.',
     // master
     master_title: 'The whole platform',
@@ -1097,7 +1097,7 @@ const IT = {
     current_password: 'Password attuale',
     new_password: 'Nuova password',
     delete_account: 'Elimina account',
-    delete_account_text: 'Il tuo account viene eliminato. Prima cedi o elimina i gruppi di cui sei proprietario.',
+    delete_account_text: 'L’account è lo stesso in tutte le app di SavOffice: viene eliminato in tutte, per sempre, con tutto quello che contiene. Prima cedi o elimina i gruppi di cui sei proprietario.',
     delete_account_confirm: 'Il tuo account e le tue sessioni vengono eliminati. Le newsletter che hai scritto restano nei loro gruppi.',
     master_title: 'Tutta la piattaforma',
     master_text: 'Ogni gruppo con i suoi numeri. Le impostazioni SMTP restano private a ogni gruppo.',

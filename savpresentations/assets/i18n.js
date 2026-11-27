@@ -122,7 +122,7 @@ deck_name|Name|Nome
 deck_options|Presentation options|Opzioni della presentazione
 delete|Delete|Elimina
 delete_account|Delete account|Elimina account
-delete_account_t|Your account, presentations, pictures, comments and notes are deleted for good. This cannot be undone.|Account, presentazioni, immagini, commenti e note vengono eliminati per sempre. Non si può annullare.
+delete_account_t|The account is the same in every app of SavOffice: deleting it deletes it in all of them, for good, with everything it has there (documents, files, calendars, polls…), also for the people you shared them with. This cannot be undone.|L’account è lo stesso in tutte le app di SavOffice: eliminarlo lo elimina in tutte, per sempre, con tutto quello che contiene (documenti, file, calendari, sondaggi…), anche per le persone con cui li hai condivisi. Non si può annullare.
 delete_comment_t|The comment and its replies are deleted.|Il commento e le sue risposte vengono eliminati.
 delete_folder|Delete folder|Elimina cartella
 delete_folder_t|“{name}” is deleted; the presentations inside move one level up.|“{name}” viene eliminata; le presentazioni dentro salgono di un livello.
@@ -894,7 +894,7 @@ offline_decks|Offline presentations|Presentazioni offline
 offline_decks_t|You can move them into your account whenever you want.|Puoi spostarle nel tuo account quando vuoi.
 open_device|Open|Apri
 export_data_t|Everything stored about you, in one file.|Tutto quello che è salvato su di te, in un file.
-delete_account_short|Your presentations, pictures and comments go for good.|Le tue presentazioni, immagini e commenti spariscono per sempre.
+delete_account_short|It goes in every app of SavOffice, with everything in it.|Sparisce in tutte le app di SavOffice, con tutto quello che contiene.
 saved_here|Saved on this device|Salvata su questo dispositivo
 local_missing|It is not on this device any more.|Non è più su questo dispositivo.
 local_media_t|This presentation lives only on this device: pictures and videos come from your computer.|Questa presentazione vive solo su questo dispositivo: immagini e video arrivano dal tuo computer.

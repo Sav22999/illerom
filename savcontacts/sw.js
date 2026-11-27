@@ -4,7 +4,7 @@
  *   pages, scripts and styles: network first, the kept copy when offline · icons: kept copy first
  */
 importScripts('../assets/savoffice/offline-sw.js');
-const CACHE = 'savcontacts-3';
+const CACHE = 'savcontacts-4';
 const SHELL = ['./', 'manifest.webmanifest', 'icons/favicon.svg', 'icons/icon-192.png', '../assets/sav/sav.css', '../assets/sav/sav.js', '../assets/savoffice/savoffice.js', '../identity/identity.css?v=2', '../identity/identity.js?v=3',
   ...['account.js', 'app.css', 'app.js', 'changelog.js', 'contacts.js', 'editor.js', 'files.js', 'hero.js', 'i18n.js', 'icons.js', 'office.js', 'options.js', 'people.js', 'store.js', 'ui.js', 'version.js'].map((f) => 'assets/' + f)];
 

@@ -10,7 +10,7 @@
  * found again even if the page was read again and moved a little. The text is HTML cleaned by the server (rd_clean):
  * links open apart and say nothing of where the reader comes from.
  */
-import { btn, dialog, dropBtn, empty, errText, fail, h, icon, iconBtn, put, segmented, toast } from './ui.js';
+import { btn, dialog, dropBtn, empty, errText, fail, favBtn, h, icon, iconBtn, put, segmented, toast } from './ui.js';
 import { day, getLang, t } from './i18n.js';
 import { S, api, minutes, setCounts } from './store.js';
 import { commands, go, prefs, setPrefs } from './account.js';
@@ -165,7 +165,7 @@ export async function readerScreen(root, kind, id) {
         ? [a.link ? (a.saved ? iconBtn('bookmark', t('open_saved'), () => go('#/a/' + a.saved), { variant: 'primary', appearance: 'soft' }) : iconBtn('bookmark-plus', t('save_later'), async () => { const s = await saveUrl(a.link, { item: a.id, source: 'feed', title: a.title }); a.saved = s.id; paintTop(); })) : null,
           iconBtn('circle-dot', t('mark_unread'), async () => { const u = await api('rd.items.read', { ids: [a.id], read: false }); setCounts(u); toast(t('mark_unread'), 'success'); }),
           a.link ? iconBtn('external-link', t('open_original'), () => window.open(a.link, '_blank', 'noopener,noreferrer')) : null]
-        : [iconBtn('star', t(a.starred ? 'unstar' : 'star'), () => setA({ starred: !a.starred }), { variant: a.starred ? 'primary' : 'neutral', appearance: a.starred ? 'soft' : 'ghost' }),
+        : [favBtn(a.starred, async (on) => { const u = await api('rd.update', { id: a.id, starred: on }); setCounts(u); Object.assign(a, u.articles[0]); }),
           iconBtn(a.archived ? 'inbox' : 'archive', t(a.archived ? 'unarchive' : 'archive'), async () => { const was = a.archived; await setA({ archived: !was }); toast(t(was ? 'unarchived' : 'archived'), 'success'); if (!was) back(); }),
           panelBtn],
       lookPop(el),

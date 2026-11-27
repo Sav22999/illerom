@@ -132,8 +132,8 @@ Nothing to fill in when SavSchedules is installed. SavAccount: add
 `https://www.illerom.eu/savsplits/api/?r=auth.sav.callback` to the redirect addresses of the service of SavSchedules
 (same service, same pairwise id), or give SavSplits its own in `credentials.php`.
 
-The session is shared with the other apps because `savsplits` is in `SHARED_APPS` of their `lib/bootstrap.php` (and in
-`SHARED_WITH` of SavSchedules): already done.
+The session is shared with every app of SavOffice because `savsplits` is in `SUITE_APPS` of `../identity/suite.php`:
+already done.
 
 ## Making it public
 

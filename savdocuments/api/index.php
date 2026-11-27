@@ -175,7 +175,8 @@ function valid_email(string $email): void
 
 function user_row(int $id): array
 {
-    $st = db()->prepare('SELECT * FROM ' . t('users') . ' WHERE id = ?');
+    // the account of the suite, with the settings of this app (its own table: profiles)
+    $st = db()->prepare('SELECT u.*, pr.prefs AS prefs FROM ' . t('users') . ' u LEFT JOIN ' . t('profiles') . ' pr ON pr.user_id = u.id WHERE u.id = ?');
     $st->execute([$id]);
     return $st->fetch() ?: [];
 }
@@ -426,7 +427,7 @@ switch ($r) {
         $u = writer();
         $p = json_out((object)(is_array(body()['prefs'] ?? null) ? body()['prefs'] : []));
         if (strlen($p) > 4000) fail('bad_request', 413);
-        db()->prepare('UPDATE ' . t('users') . ' SET prefs = ? WHERE id = ?')->execute([$p, $u['id']]);
+        save_prefs((int)$u['id'], $p); // the settings of this app: its own table (profiles), the account is the suite's
         send_json(['ok' => true]);
 
     case 'auth.profile':
@@ -690,7 +691,7 @@ switch ($r) {
         $st->execute([$d['id']]);
         if ((int)$st->fetchColumn() >= 200) fail('too_many_people', 422);
         record_attempt('share');
-        $st = db()->prepare('SELECT id, name, ui_lang, prefs FROM ' . t('users') . ' WHERE email = ? AND email_verified_at IS NOT NULL');
+        $st = db()->prepare('SELECT id, name, ui_lang FROM ' . t('users') . ' WHERE email = ? AND email_verified_at IS NOT NULL');
         $st->execute([$email]);
         $row = $st->fetch() ?: null;
         $st = db()->prepare('SELECT 1 FROM ' . t('shares') . ' WHERE doc_id = ? AND email = ?');
@@ -699,7 +700,7 @@ switch ($r) {
         db()->prepare('INSERT INTO ' . t('shares') . ' (doc_id, user_id, email, role, created_at) VALUES (?,?,?,?,?) ON DUPLICATE KEY UPDATE role = VALUES(role), user_id = COALESCE(user_id, VALUES(user_id))')
             ->execute([$d['id'], $row ? $row['id'] : null, $email, $role, now_utc()]);
         // who already has an account may have asked not to be told by email (settings)
-        if ($new && !empty($b['notify']) && !($row && (json_decode((string)$row['prefs'], true)['mailShare'] ?? true) === false)) {
+        if ($new && !empty($b['notify']) && !($row && (prefs_of((int)$row['id'])['mailShare'] ?? true) === false)) {
             $lang = $row ? (string)$row['ui_lang'] : (string)$u['ui_lang'];
             $T = mail_t($lang);
             $vars = ['by' => $u['name'], 'title' => $d['title'], 'role' => $T['roles'][$role]];

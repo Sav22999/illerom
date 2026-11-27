@@ -4,7 +4,7 @@
  * the tags; a picture on the right. A press opens the reader. "Select" turns the rows into choices (as in SavDrive): a bar
  * takes the place of the header, with what can be done to all of them at once.
  */
-import { btn, confirm, dialog, drop, dropBtn, empty, fail, h, icon, iconBtn, put, toast } from './ui.js';
+import { btn, confirm, dialog, drop, dropBtn, empty, fail, favBtn, h, icon, iconBtn, put, toast } from './ui.js';
 import { day, t, when } from './i18n.js';
 import { S, api, minutes, setCounts } from './store.js';
 import { commands, go, prefs, setPrefs } from './account.js';
@@ -36,7 +36,7 @@ export function articleMenu(a, { onChange, onDelete, highlights } = {}) {
     ['copy', t('copy_link'), () => navigator.clipboard.writeText(a.url).then(() => toast(t('copied'), 'success'))],
     navigator.share ? ['share-2', t('share'), () => navigator.share({ title: a.title, url: a.url }).catch(() => {})] : null,
     '-',
-    [a.starred ? 'star' : 'star', t(a.starred ? 'unstar' : 'star'), () => set({ starred: !a.starred })],
+    ['star', t(a.starred ? 'unstar' : 'star'), () => set({ starred: !a.starred })],
     [a.archived ? 'inbox' : 'archive', t(a.archived ? 'unarchive' : 'archive'), () => set({ archived: !a.archived }, a.archived ? 'unarchived' : 'archived')],
     ['tag', t('edit_tags'), () => tagsDialog([a], (list) => { Object.assign(a, list[0]); onChange?.(a); })],
     ['pencil', t('edit_title'), () => { const i = h('sav-input', { label: t('title'), value: a.title, maxlength: 400, autofocus: true }); dialog({ title: t('edit_title'), body: i, actions: [{ label: t('cancel') }, { label: t('save'), primary: true, run: () => set({ title: i.value.trim() }) }] }); }],
@@ -57,13 +57,12 @@ export function articleRow(a, ctx) {
     const meta = h('div.ar-meta', h('span.ar-site', a.site || new URL(a.url).hostname), h('span.dot', '·'), h('span', { title: day(a.added) }, when(a.added)),
       a.status === 'pending' ? [h('span.dot', '·'), h('span.ar-st', h('sav-spinner'), t('pending'))] : a.status === 'failed' ? [h('span.dot', '·'), h('span.ar-st.bad', icon('external-link'), t('failed'))] : null);
     const foot = h('div.ar-foot', a.words ? h('span.ar-time', icon('clock'), readTime(a.words)) : null,
-      pc >= 98 ? h('span.ar-fin', icon('circle-check'), t('finished')) : pc > 0 ? h('span.ar-prog', { title: t('read_pc', { n: pc }) }, h('i', { style: `width:${pc}%` })) : null,
+      pc >= 98 ? h('span.ar-fin', icon('circle-check'), t('finished')) : pc > 0 ? h('sav-progress-bar.ar-prog', { value: pc, max: 100, title: t('read_pc', { n: pc }), 'aria-label': t('read_pc', { n: pc }) }) : null,
       a.hl ? h('span.ar-hl', icon('highlighter'), String(a.hl)) : null,
-      a.starred ? icon('star', { class: 'ar-star', label: t('star') }) : null,
       a.tags.slice(0, 4).map((x) => h('a.ar-tag', { href: '#/tag/' + encodeURIComponent(x), onclick: (e) => e.stopPropagation() }, '#' + x)));
     const pick = h('sav-checkbox.pick', { checked: ctx.sel.has(a.id) || null, 'aria-label': t('select'), onclick: (e) => e.stopPropagation(), onchange: (e) => ctx.toggle(a.id, e.target.checked) });
     const acts = h('div.ar-act', { onclick: (e) => e.stopPropagation() },
-      iconBtn('star', t(a.starred ? 'unstar' : 'star'), () => quick({ starred: !a.starred }), { variant: a.starred ? 'primary' : 'neutral', appearance: a.starred ? 'soft' : 'ghost' }),
+      favBtn(a.starred, star),
       iconBtn(a.archived ? 'inbox' : 'archive', t(a.archived ? 'unarchive' : 'archive'), () => quick({ archived: !a.archived }, true)),
       dropBtn('ellipsis-vertical', t('more'), articleMenu(a, { onChange: () => paint(), onDelete: () => ctx.remove(a.id) }), { caret: false, placement: 'bottom-end' }));
     put(row, pick,
@@ -71,7 +70,14 @@ export function articleRow(a, ctx) {
       a.image ? h('a.ar-img', { href: '#/a/' + a.id, tabindex: -1, 'aria-hidden': 'true' }, h('img', { src: a.image, alt: '', loading: 'lazy', onerror: (e) => e.target.parentNode.remove() })) : null,
       foot, acts);
   };
-  // star and archive straight from the row; archive (or back) takes the row away from the list it no longer belongs to
+  // the star stays as pressed (no new paint, so its animation is seen); out of the favourites, the row leaves them
+  const star = async (on) => {
+    const r = await api('rd.update', { id: a.id, starred: on });
+    setCounts(r);
+    Object.assign(a, r.articles[0]);
+    if (!on && ctx.view === 'starred') setTimeout(() => ctx.remove(a.id), 350);
+  };
+  // archive straight from the row: archive (or back) takes the row away from the list it no longer belongs to
   const quick = async (x, leaves) => {
     const r = await api('rd.update', { id: a.id, ...x });
     setCounts(r);
@@ -79,8 +85,7 @@ export function articleRow(a, ctx) {
     if (leaves && (ctx.view === 'unread' || ctx.view === 'archive')) {
       ctx.remove(a.id);
       toast(t(a.archived ? 'archived' : 'unarchived'), 'success', { action: btn(t('undo'), { size: 'sm', appearance: 'ghost', onclick: async () => { const u = await api('rd.update', { id: a.id, archived: !a.archived }); setCounts(u); ctx.reload(); } }) });
-    } else if (x.starred === false && ctx.view === 'starred') ctx.remove(a.id);
-    else paint();
+    } else paint();
   };
   row.addEventListener('click', (e) => { if (ctx.selecting()) { e.preventDefault(); ctx.toggle(a.id, !ctx.sel.has(a.id)); row.querySelector('.pick').checked = ctx.sel.has(a.id); } });
   paint();

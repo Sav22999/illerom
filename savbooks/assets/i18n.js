@@ -331,7 +331,7 @@ const T = {
     current_pw: ['Current password', 'Password attuale'],
     pw_changed: ['Password changed', 'Password cambiata'],
     delete_account: ['Delete account', 'Elimina account'],
-    delete_account_text: ['Your account and all your books are deleted forever, also for the people you shared them with.', 'L’account e tutti i tuoi libri vengono eliminati per sempre, anche per le persone con cui li hai condivisi.'],
+    delete_account_text: ['The account is the same in every app of SavOffice: deleting it deletes it in all of them, for good, with everything it has there (documents, files, calendars, polls…), also for the people you shared them with.', 'L’account è lo stesso in tutte le app di SavOffice: eliminarlo lo elimina in tutte, per sempre, con tutto quello che contiene (documenti, file, calendari, sondaggi…), anche per le persone con cui li hai condivisi.'],
     settings_saved: ['Settings saved', 'Impostazioni salvate'],
     defaults_text: ['How a new blank book starts.', 'Come inizia un nuovo libro vuoto.'],
     // sharing
@@ -512,7 +512,7 @@ const T = {
     toolbar_reset_t: ['The buttons of the insert bar, as they were at the start.', 'I pulsanti della barra degli inserimenti, come all’inizio.'],
     sharing_t: ['What a new book starts with, and when to get an email.', 'Con cosa parte un libro nuovo, e quando ricevere un’email.'],
     export_data_t: ['Everything stored about you, in one file.', 'Tutto quello che è salvato su di te, in un file.'],
-    delete_account_short: ['Your books, pictures and comments go for good.', 'I tuoi libri, immagini e commenti spariscono per sempre.'],
+    delete_account_short: ['It goes in every app of SavOffice, with everything in it.', 'Sparisce in tutte le app di SavOffice, con tutto quello che contiene.'],
     // the window of the downloads, as in SavPresentations
     dlt_pdf: ['The pages to print, as in the editor', 'Le pagine da stampare, come nell’editor'],
     dlt_docx: ['To edit in Word, LibreOffice, Google Docs', 'Da modificare in Word, LibreOffice, Google Docs'],

@@ -43,7 +43,7 @@ function photos_schema(): void
     if ((int)setting('photos_schema', '0') >= PHOTOS_SCHEMA) return;
     $p = (string)config_value('prefix', 'dr_');
     $e = 'ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci';
-    $fk = fn(string $name, string $col, string $table) => "CONSTRAINT `fk_{$p}{$name}` FOREIGN KEY (`$col`) REFERENCES `{$p}$table` (`id`) ON DELETE CASCADE";
+    $fk = fn(string $name, string $col, string $table) => "CONSTRAINT `fk_{$p}{$name}` FOREIGN KEY (`$col`) REFERENCES " . ($table === 'users' ? t('users') : "`{$p}$table`") . " (`id`) ON DELETE CASCADE"; // the accounts of the suite
     foreach ([
         "CREATE TABLE IF NOT EXISTS `{$p}photo_users` (
             `user_id` INT UNSIGNED NOT NULL PRIMARY KEY,

@@ -2,7 +2,7 @@
 /**
  * SavNewsletters — database tables (all prefixed, default "on_"). Every statement is idempotent.
  *
- * users            accounts (email unique and never changed)
+ * (accounts)       the ones of the whole suite (../../identity/suite.php, t('users')), with fav_templates
  * groups           one newsletter publisher each: its subscribers, its outgoing address (smtp_sealed, encrypted)
  * members          who is in a group and with which role (user, moderator, publisher, admin, owner)
  * invites          invitations to people without an account yet: they become members once their email is confirmed
@@ -19,44 +19,12 @@ declare(strict_types=1);
 function schema_statements(string $p): array
 {
     $e = 'ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci';
-    $fk = fn(string $name, string $col, string $table, string $on = 'CASCADE') => "CONSTRAINT `fk_{$p}{$name}` FOREIGN KEY (`$col`) REFERENCES `{$p}$table` (`id`) ON DELETE $on";
+    // the accounts are the ones of the whole suite (t('users'), ../../identity/suite.php): deleting one deletes what it had here
+    $fk = fn(string $name, string $col, string $table, string $on = 'CASCADE') => "CONSTRAINT `fk_{$p}{$name}` FOREIGN KEY (`$col`) REFERENCES " . ($table === 'users' ? t('users') : "`{$p}$table`") . " (`id`) ON DELETE $on";
     return [
         "CREATE TABLE IF NOT EXISTS `{$p}meta` (
             `k` VARCHAR(40) NOT NULL PRIMARY KEY,
             `v` VARCHAR(255) NOT NULL
-        ) $e",
-        "CREATE TABLE IF NOT EXISTS `{$p}users` (
-            `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            `name` VARCHAR(80) NOT NULL,
-            `email` VARCHAR(190) NOT NULL,
-            `email_verified_at` DATETIME NULL,
-            `password_hash` VARCHAR(255) NOT NULL DEFAULT '',
-            `google_sub` VARCHAR(64) NULL,
-            `ui_lang` VARCHAR(5) NOT NULL DEFAULT 'en',
-            `fav_templates` VARCHAR(1000) NOT NULL DEFAULT '[]',
-            `status` ENUM('active','disabled') NOT NULL DEFAULT 'active',
-            `created_at` DATETIME NOT NULL,
-            `last_login_at` DATETIME NULL,
-            UNIQUE KEY `uq_email` (`email`),
-            UNIQUE KEY `uq_google` (`google_sub`)
-        ) $e",
-        "CREATE TABLE IF NOT EXISTS `{$p}auth_tokens` (
-            `token_hash` CHAR(64) NOT NULL PRIMARY KEY,
-            `user_id` INT UNSIGNED NOT NULL,
-            `csrf_token` CHAR(48) NOT NULL,
-            `created_at` DATETIME NOT NULL,
-            `last_seen_at` DATETIME NOT NULL,
-            `expires_at` DATETIME NOT NULL,
-            KEY `ix_user` (`user_id`),
-            " . $fk('tok_user', 'user_id', 'users') . "
-        ) $e",
-        "CREATE TABLE IF NOT EXISTS `{$p}email_tokens` (
-            `token_hash` CHAR(64) NOT NULL PRIMARY KEY,
-            `user_id` INT UNSIGNED NOT NULL,
-            `created_at` DATETIME NOT NULL,
-            `expires_at` DATETIME NOT NULL,
-            KEY `ix_user` (`user_id`),
-            " . $fk('etok_user', 'user_id', 'users') . "
         ) $e",
         "CREATE TABLE IF NOT EXISTS `{$p}attempts` (
             `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -207,13 +175,14 @@ function schema_statements(string $p): array
 
 function install_schema(PDO $pdo, string $prefix): void
 {
+    // once only: the tables of the time when this app had accounts of its own go, then the accounts of the suite are there
+    suite_reset_app($pdo, $prefix);
+    suite_install($pdo, (string)(credentials()['name'] ?? ''));
     foreach (schema_statements($prefix) as $sql) $pdo->exec($sql);
     // v3: subscribers imported from a CSV by an admin (source 'import')
     $type = (string)$pdo->query("SELECT COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{$prefix}subscribers' AND COLUMN_NAME = 'source'")->fetchColumn();
     if ($type !== '' && strpos($type, 'import') === false) $pdo->exec("ALTER TABLE `{$prefix}subscribers` MODIFY `source` ENUM('page','widget','import') NOT NULL DEFAULT 'page'");
-    // v3: the built-in templates each user marked as favourites
-    $has = $pdo->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{$prefix}users' AND COLUMN_NAME = 'fav_templates'")->fetchColumn();
-    if (!(int)$has) $pdo->exec("ALTER TABLE `{$prefix}users` ADD `fav_templates` VARCHAR(1000) NOT NULL DEFAULT '[]' AFTER `ui_lang`");
+    // v3: the built-in templates each user marked as favourites: users.fav_templates, added by suite_install()
     // v2: the hourly sending limit of each group (tables created by v1 do not have it)
     $has = $pdo->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{$prefix}groups' AND COLUMN_NAME = 'rate_per_hour'")->fetchColumn();
     if (!(int)$has) $pdo->exec("ALTER TABLE `{$prefix}groups` ADD `rate_per_hour` SMALLINT UNSIGNED NOT NULL DEFAULT 200 AFTER `smtp_checked_at`");

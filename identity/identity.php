@@ -97,11 +97,12 @@ function ident_schema(): void
         `expires_at` DATETIME NOT NULL,
         UNIQUE KEY `uq_token` (`token_hash`), KEY `ix_state` (`state_hash`), KEY `ix_expires` (`expires_at`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-    $users = trim(t('users'), '`');
-    $has = ident_q("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = 'sav_sub'", [$users])->fetchColumn();
+    // the accounts may be the shared ones of SavOffice, in another database (../identity/suite.php): `db`.`table`
+    $parts = static function (string $quoted): array { $x = array_map(fn($v) => trim($v, '`'), explode('`.`', $quoted)); return count($x) === 2 ? $x : [null, $x[0]]; };
+    $has = ident_q("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = COALESCE(?, DATABASE()) AND table_name = ? AND column_name = 'sav_sub'", $parts(t('users')))->fetchColumn();
     if (!$has) db()->exec('ALTER TABLE ' . t('users') . ' ADD COLUMN `sav_sub` VARCHAR(190) CHARACTER SET ascii COLLATE ascii_bin NULL, ADD UNIQUE KEY `uq_sav` (`sav_sub`)');
     // 2: the profile picture of SavAccount
-    $col = fn(string $table, string $name) => (int)ident_q('SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?', [trim(t($table), '`'), $name])->fetchColumn();
+    $col = fn(string $table, string $name) => (int)ident_q('SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = COALESCE(?, DATABASE()) AND table_name = ? AND column_name = ?', [...$parts(t($table)), $name])->fetchColumn();
     if (!$col('users', 'sav_picture')) db()->exec('ALTER TABLE ' . t('users') . ' ADD COLUMN `sav_picture` VARCHAR(400) NULL');
     if (!$col('identity', 'picture')) db()->exec('ALTER TABLE ' . t('identity') . " ADD COLUMN `picture` VARCHAR(400) NOT NULL DEFAULT ''");
     ident_q('INSERT INTO ' . t('meta') . " (k, v) VALUES ('identity', '2') ON DUPLICATE KEY UPDATE v = '2'");

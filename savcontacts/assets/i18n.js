@@ -28,8 +28,8 @@ const T = {
   change_pw: ['Change the password', 'Cambia la password'], set_pw: ['Set a password', 'Imposta una password'], sign_in_ways: ['Ways to sign in', 'Modi per entrare'], sign_in_ways_t: ['SavAccount and password, joined to this account.', 'SavAccount e password, collegati a questo account.'], sign_out_t: ['On this device.', 'Su questo dispositivo.'],
   shared_account: ['This is your account of SavSchedules, SavCalendar, SavTasks and the other apps of SavOffice too: name, password and ways to sign in are the same.', 'Questo è anche il tuo account di SavSchedules, SavCalendar, SavTasks e delle altre app di SavOffice: nome, password e modi di accesso sono gli stessi.'],
   look_app: ['Look', 'Aspetto'], theme: ['Theme', 'Tema'], your_data: ['Your data', 'I tuoi dati'], your_data_t: ['Download everything SavContacts keeps, or delete the account.', 'Scarica tutto quello che SavContacts conserva, oppure elimina l’account.'],
-  delete_account: ['Delete the account', 'Elimina l’account'], delete_account_text: ['The account will be deleted for good in every app of SavOffice that shares it (SavSchedules, SavCalendar, SavTasks, SavMail…), with all its contacts and groups.', 'L’account verrà eliminato per sempre in ogni app di SavOffice che lo condivide (SavSchedules, SavCalendar, SavTasks, SavMail…), con tutti i suoi contatti e gruppi.'],
-  delete_account_short: ['It goes in all the apps that share it.', 'Sparisce in tutte le app che lo condividono.'], delete_forever: ['Delete forever', 'Elimina per sempre'],
+  delete_account: ['Delete the account', 'Elimina l’account'], delete_account_text: ['The account is the same in every app of SavOffice: deleting it deletes it in all of them, for good, with everything it has there (documents, files, calendars, polls…), also for the people you shared them with.', 'L’account è lo stesso in tutte le app di SavOffice: eliminarlo lo elimina in tutte, per sempre, con tutto quello che contiene (documenti, file, calendari, sondaggi…), anche per le persone con cui li hai condivisi.'],
+  delete_account_short: ['It goes in every app of SavOffice, with everything in it.', 'Sparisce in tutte le app di SavOffice, con tutto quello che contiene.'], delete_forever: ['Delete forever', 'Elimina per sempre'],
 
 
   // first page
@@ -56,7 +56,7 @@ const T = {
   show_as: ['Names shown as', 'Nomi mostrati come'], show_as_t: ['“Mario Rossi” or “Rossi Mario”.', '«Mario Rossi» oppure «Rossi Mario».'], first_last: ['First Last', 'Nome Cognome'], last_first: ['Last First', 'Cognome Nome'],
   your_data_t: ['Download everything SavContacts keeps, or delete the account.', 'Scarica tutto quello che SavContacts conserva, oppure elimina l’account.'],
   export_data: ['Download my data', 'Scarica i miei dati'], export_data_t: ['Every contact and group, with the photos, in one JSON file.', 'Ogni contatto e gruppo, con le foto, in un file JSON.'],
-  delete_account_short: ['It goes in all the apps that share it.', 'Sparisce in tutte le app che lo condividono.'], delete_forever: ['Delete forever', 'Elimina per sempre'],
+  delete_account_short: ['It goes in every app of SavOffice, with everything in it.', 'Sparisce in tutte le app di SavOffice, con tutto quello che contiene.'], delete_forever: ['Delete forever', 'Elimina per sempre'],
 
   // phones and other apps (CardDAV)
   g_devices: ['Phone and other apps', 'Telefono e altre app'], g_devices_t: ['Your phone, your computer and Thunderbird keep the contacts in sync with SavContacts (CardDAV): a change on one side shows on the other.', 'Il telefono, il computer e Thunderbird tengono i contatti in sincronia con SavContacts (CardDAV): una modifica da una parte compare dall’altra.'],

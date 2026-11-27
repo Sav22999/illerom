@@ -63,7 +63,7 @@ and history; the position follows you on every device. The same account as **Sav
    open them).
 4. `cache/` must be writable by PHP (otherwise the temporary folder is used).
 
-The session is shared through the lists `SHARED_APPS` / `SHARED_WITH` in the `lib/bootstrap.php` of SavSchedules,
+The session is shared with every app of SavOffice through `SUITE_APPS` in `../identity/suite.php` (read by the `lib/bootstrap.php` of each app),
 SavCalendar, SavTasks, SavForms, SavWhiteboard and SavNotes, which include `savpodcasts`.
 
 ## Going public
@@ -75,7 +75,7 @@ Today SavPodcasts is complete but unlisted. To publish it:
 3. `../data/projects.php` (its page on Illerom, screenshots in `../assets/projects/savpodcasts/`) and
    `../data/services.php` (`'savpodcasts' => ['app' => ['sch_', 'Podcast seguiti', 'Podcasts followed', ['savschedules', 'pod_schema_version', 'POD_SCHEMA_VERSION']]]`).
 4. Remove the `noindex` from `index.php` (header and meta), `.htaccess`, `privacy.html` and `terms.html`.
-5. Add `savpodcasts` to the `SHARED_APPS` of any app of the shared account made after it (e.g. SavSplits, SavMail).
+5. Nothing to add for the session: every app listed in `SUITE_APPS` (`../identity/suite.php`) shares it.
 
 ## Not yet
 

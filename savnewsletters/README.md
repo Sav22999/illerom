@@ -52,6 +52,12 @@ Listed on the portal (`data/projects.php`, key `savnewsletters`) and on the stat
 
 ## Accounts and roles
 
+- **Accounts: the ones of the whole suite** (`../identity/suite.php`): an account made in any app of SavOffice (email and
+  password, or SavAccount) is the account of every app, and one session (cookie `savoffice_auth`, on the path of every app)
+  signs in and out everywhere. The tables of this app keep only what is its own, tied to the account (`users.id`).
+  The accounts live in the database of SavSchedules: if SavNewsletters has another database (`$database_name`), the same
+  MySQL user must reach both (the tables are named `` `db`.`sch_users` ``); simpler to give it the same database.
+
 - Email + password (the address must be confirmed via `?verify=`) or SavAccount (no Google sign-in: SavOffice is an independent European alternative). The email is unique and never
   changes.
 - Roles in a group, each including the ones before: `user` (sees newsletters and numbers), `moderator` (writes

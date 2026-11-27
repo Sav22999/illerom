@@ -1,0 +1,77 @@
+/* SavOffice for Mac — the window of the Toolbox. The same arrangement as the apps of SavOffice (SavDrive: header, side
+   menu with the places, cards, settings in rows); SavComponents in the Soft style, colours from its tokens, with the violet
+   of the mark. */
+
+:root, .sav-theme-light { --sav-color-primary: #6a3fe0; --sav-color-on-primary: #fff; --sav-color-bg: #f6f4f9; --sav-color-surface: #fff; --sav-color-surface-2: #eeebf4; --sav-color-text: #1b1724; --sav-color-text-muted: #625b70; --sav-color-border: #e2ddea; --card: #fff; }
+.sav-theme-dark { --sav-color-primary: #a58bff; --sav-color-on-primary: #1b0f3d; --sav-color-bg: #121016; --sav-color-surface: #1b1820; --sav-color-surface-2: #25212c; --sav-color-text: #ece8f3; --sav-color-text-muted: #a39cb0; --sav-color-border: #2f2a37; --card: #1b1820; }
+@media (prefers-color-scheme: dark) { .sav-theme-auto { --sav-color-primary: #a58bff; --sav-color-on-primary: #1b0f3d; --sav-color-bg: #121016; --sav-color-surface: #1b1820; --sav-color-surface-2: #25212c; --sav-color-text: #ece8f3; --sav-color-text-muted: #a39cb0; --sav-color-border: #2f2a37; --card: #1b1820; } }
+
+*, ::before, ::after { box-sizing: border-box; }
+html { height: 100%; }
+body { margin: 0; min-height: 100%; background: var(--sav-color-bg); color: var(--sav-color-text); font: 400 14.5px/1.5 var(--sav-font); -webkit-font-smoothing: antialiased; overflow-x: hidden; user-select: none; -webkit-user-select: none; }
+[hidden] { display: none !important; }
+h1, h2, h3, p { margin: 0; }
+a { color: color-mix(in oklab, var(--sav-color-primary) 85%, var(--sav-color-text)); }
+:focus-visible { outline: 2px solid var(--sav-color-focus); outline-offset: 2px; }
+sav-menu-item:focus-visible { outline: none; }
+.muted { color: var(--sav-color-text-muted); } .spacer { flex: 1; }
+
+/* header: the window has no title bar, the traffic lights sit over its left side; it drags the window */
+.home { min-height: 100dvh; display: flex; flex-direction: column; }
+.htop { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 1rem; min-height: 60px; padding: .7rem 1.4rem .7rem 92px; background: color-mix(in oklab, var(--sav-color-bg) 86%, transparent); -webkit-backdrop-filter: blur(18px) saturate(160%); backdrop-filter: blur(18px) saturate(160%); -webkit-app-region: drag; }
+.htop > * { -webkit-app-region: no-drag; } .htop > .spacer, .htop > .brand { -webkit-app-region: drag; }
+.brand { display: inline-flex; align-items: center; gap: .6rem; font-size: 1.12rem; letter-spacing: -.015em; flex: none; } .brand b { font-weight: 700; } .brand img { width: 26px; height: 26px; }
+.hsearch { flex: 0 1 30rem; min-width: 0; }
+.offb { flex: none; }
+.spin sav-button, sav-button.spin { animation: spin 1s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } }
+
+/* body: places on the left, the apps */
+.hbody { flex: 1; display: grid; grid-template-columns: 14.5rem minmax(0, 1fr); gap: 1.6rem; width: 100%; max-width: 1500px; margin: 0 auto; padding: .4rem 1.4rem 2rem; align-content: start; }
+.hside { display: flex; flex-direction: column; gap: .15rem; align-self: start; position: sticky; top: 4.8rem; }
+.newb { width: 100%; margin-bottom: .8rem; }
+.cnt { margin-left: auto; font-size: .78rem; color: var(--sav-color-text-muted); font-variant-numeric: tabular-nums; }
+.cnt.hot { color: var(--sav-color-primary); font-weight: 700; }
+sav-menu-item[current] .cnt { color: inherit; opacity: .85; }
+.quota { display: grid; gap: .45rem; padding: 1.2rem .8rem; margin-top: .4rem; border-top: 1px solid var(--sav-color-border); } .quota small { color: var(--sav-color-text-muted); }
+.qhead { display: flex; align-items: center; gap: .45rem; font-size: .9rem; } .qhead sav-icon { color: var(--sav-color-text-muted); }
+.hmain { min-width: 0; }
+.dhead { display: grid; gap: .25rem; margin: .3rem 0 1.2rem; } .dhead h1 { font-size: 1.5rem; letter-spacing: -.025em; } .dhead p { color: var(--sav-color-text-muted); max-width: 46rem; text-wrap: pretty; }
+.offnote { margin-bottom: 1.2rem; }
+.accnote b { display: block; font-size: .98rem; } .accnote p { margin: .2rem 0 .7rem; color: var(--sav-color-text-muted); max-width: 44rem; } .accbtns { display: flex; flex-wrap: wrap; gap: .5rem; }
+.acct { flex: none; display: flex; align-items: center; } .accb::part(base) { padding: 2px; }
+
+/* the apps */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(17.5rem, 1fr)); gap: 1rem; }
+.acard { --sav-card-padding: 1.1rem; display: block; height: 100%; }
+.acard::part(base), .acard::part(body) { height: 100%; }
+.ain { display: flex; flex-direction: column; gap: .7rem; height: 100%; }
+.ahead { display: flex; align-items: center; gap: .8rem; min-width: 0; }
+.aicon { width: 48px; height: 48px; flex: none; border-radius: 13px; padding: 7px; background: color-mix(in oklab, var(--c) 10%, var(--sav-color-surface)); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--c) 16%, transparent); }
+.aname { display: grid; min-width: 0; line-height: 1.25; } .aname b { font-size: 1.02rem; letter-spacing: -.01em; } .aname small { color: var(--sav-color-text-muted); font-size: .82rem; }
+.atag { color: var(--sav-color-text-muted); font-size: .88rem; text-wrap: pretty; }
+.ameta { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .5rem; font-size: .8rem; color: var(--sav-color-text-muted); }
+.ameta .ver { font-variant-numeric: tabular-nums; }
+.astate { display: grid; gap: .35rem; font-size: .84rem; }
+.astate .upd { display: flex; align-items: center; gap: .4rem; color: var(--sav-color-primary); font-weight: 600; } .astate .upd.wait { color: var(--sav-color-text-muted); font-weight: 500; }
+.astate .err { color: var(--sav-color-danger); }
+.aact { display: flex; align-items: center; gap: .45rem; margin-top: auto; padding-top: .2rem; }
+.aact .grow { flex: 1; }
+.dot { width: .5rem; height: .5rem; border-radius: 50%; background: var(--sav-color-success, #1f9d55); display: inline-block; }
+
+/* settings: rows in cards, as in the apps */
+.osec { display: grid; gap: .6rem; margin-bottom: 1.8rem; max-width: 52rem; } .osec h2 { font-size: 1.05rem; } .osec > p { color: var(--sav-color-text-muted); font-size: .9rem; }
+.ocard { --sav-card-padding: 0; margin: 0; } .orows { display: grid; }
+.orow { display: flex; align-items: center; gap: 1rem 1.6rem; padding: .95rem 1.2rem; border-bottom: 1px solid var(--sav-color-border); } .orow:last-child { border-bottom: 0; }
+.orow-t { flex: 1; min-width: 0; display: grid; gap: .3rem; } .orow-t small { color: var(--sav-color-text-muted); font-size: .84rem; text-wrap: pretty; }
+.orow-c { flex: none; max-width: 55%; display: flex; gap: .5rem; justify-content: flex-end; } .orow-c > sav-select { width: 13rem; max-width: 100%; }
+.olist { margin: .2rem 0 0; padding-left: 1.1rem; color: var(--sav-color-text-muted); font-size: .86rem; display: grid; gap: .25rem; } .olist b { color: var(--sav-color-text); font-weight: 600; }
+
+/* narrow windows: the places go to a bar at the bottom */
+.bnav { display: none; }
+@media (max-width: 760px) {
+  .hbody { grid-template-columns: minmax(0, 1fr); padding-bottom: 6rem; }
+  .hside { display: none; }
+  .bnav { display: block; }
+  .htop { gap: .6rem; padding-right: .8rem; } .brand b { display: none; }
+  .orow { flex-wrap: wrap; } .orow-c { max-width: 100%; width: 100%; justify-content: flex-start; } .orow-c > sav-select { width: 100%; }
+}

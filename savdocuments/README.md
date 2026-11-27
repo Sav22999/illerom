@@ -9,6 +9,9 @@ the documents are kept on the server; without one they stay in the browser. <htt
 - PHP 7.4+ and MySQL 5.7+ / MariaDB 10.3+ (PDO), tables prefixed `sd_`, created by the API at its first answer.
 - No build step and no libraries: ES modules in `assets/`. Controls: SavComponents (Soft style) from `../assets/sav/`.
 - Google and SavAccount sign-in: `../identity/`.
+- **Accounts: the ones of the whole suite** (`../identity/suite.php`): an account made in any app of SavOffice (email and
+  password, or SavAccount) is the account of every app, and one session (cookie `savoffice_auth`, on the path of every app)
+  signs in and out everywhere. The tables of this app keep only what is its own, tied to the account (`users.id`).
 
 | Path                                   | What                                                                               |
 |----------------------------------------|------------------------------------------------------------------------------------|

@@ -9,6 +9,9 @@ Themes that already look good, live editing together, precise sharing, PDF, PPTX
 - No build step and no libraries: ES modules in `assets/`. The interface is made of SavComponents (`../assets/sav/`,
   Soft style).
 - Sign-in with Google and SavAccount: shared library in `../identity/` (never edited from here).
+- **Accounts: the ones of the whole suite** (`../identity/suite.php`): an account made in any app of SavOffice (email and
+  password, or SavAccount) is the account of every app, and one session (cookie `savoffice_auth`, on the path of every app)
+  signs in and out everywhere. The tables of this app keep only what is its own, tied to the account (`users.id`).
 - Typefaces in `fonts/` (OFL, Latin), icons in `assets/icons.js` (interface) and `assets/icons-lib.js` (for the slides),
   both Lucide.
 

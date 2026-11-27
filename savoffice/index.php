@@ -24,7 +24,9 @@ $lang = $it ? 'it' : 'en';
 $h = fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
 $L = fn(string $i, string $e): string => $h($it ? $i : $e);
 $projects = require dirname(__DIR__) . '/data/projects.php';
-$contact = (require dirname(__DIR__) . '/data/site.php')['contact'];
+$site = require dirname(__DIR__) . '/data/site.php';
+$contact = $site['contact'];
+$mac = (string)($site['savoffice_mac'] ?? ''); // where the DMGs of SavOffice for Mac are (desktop/)
 /** Whether a screenshot is there: until it is, the place shows the icon of the app on its colour. */
 $has = fn(string $slug, string $file): bool => is_file(dirname(__DIR__) . "/assets/projects/$slug/$file");
 /** An app only for the accounts the administrators turn on: says so, with where to ask. */
@@ -92,6 +94,7 @@ $appLd = function (string $s) use ($projects, $lang, $site, $person, $files): ar
     if (($d = (int)($P['desk'] ?? 0)) > 0) $x['screenshot'] = array_map(fn($j) => "$site/assets/projects/$s/d$j.jpg", range(1, $d));
     return $x;
 };
+$ldOrder = array_values(array_unique(array_merge(['savdocuments', 'savspreadsheets', 'savpresentations'], array_keys($apps)))); // the three main apps first, as on the page
 $graph = $app
     ? [$appLd($app), ['@type' => 'BreadcrumbList', 'itemListElement' => [
         ['@type' => 'ListItem', 'position' => 1, 'name' => 'Illerom', 'item' => "$site/$lang/"],
@@ -100,7 +103,7 @@ $graph = $app
     : [['@type' => 'CollectionPage', 'url' => "$site/savoffice/?lang=$lang", 'name' => 'SavOffice', 'inLanguage' => $lang, 'isPartOf' => ['@type' => 'WebSite', '@id' => "$site/#website", 'name' => 'Illerom', 'url' => "$site/"],
         'description' => $it ? "SavOffice: $n app gratuite e open source che lavorano insieme, con un solo account e i dati nell’Unione europea." : "SavOffice: $n free, open-source apps that work together, with one account and the data in the European Union.",
         'primaryImageOfPage' => "$site/savoffice/og-$lang.png", 'author' => $person,
-        'mainEntity' => ['@type' => 'ItemList', 'name' => 'SavOffice', 'numberOfItems' => $n, 'itemListElement' => array_map(fn($i, $s) => ['@type' => 'ListItem', 'position' => $i + 1, 'item' => $appLd($s)], array_keys(array_keys($apps)), array_keys($apps))]]];
+        'mainEntity' => ['@type' => 'ItemList', 'name' => 'SavOffice', 'numberOfItems' => $n, 'itemListElement' => array_map(fn($i, $s) => ['@type' => 'ListItem', 'position' => $i + 1, 'item' => $appLd($s)], array_keys($ldOrder), $ldOrder)]]];
 ?>
     <script type="application/ld+json"><?= json_encode(['@context' => 'https://schema.org', '@graph' => $graph], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?></script>
     <!-- SavComponents (the same copy as Illerom): sav-image enlarges the screenshots -->
@@ -320,21 +323,53 @@ $graph = $app
         footer .wrap { display: flex; flex-wrap: wrap; gap: .5rem 1.4rem; padding: 1.4rem 0 2rem; color: var(--muted); font-size: .88rem; }
         footer .wrap span:last-child { margin-left: auto; }
 
-        /* the catalogue: sav-chip-group to filter (page.js), every app a sav-card */
-        :root { --sav-color-primary: #7845f4; --sav-font: Inter, system-ui, sans-serif; }
-        .kinds { display: block; margin-bottom: 1.4rem; }
-        .kinds small { opacity: .65; font-variant-numeric: tabular-nums; margin-left: .2rem; }
-        .card { position: relative; display: block; height: 100%; scroll-margin-top: 6rem; --sav-card-padding: 1.1rem; }
-        .card[hidden] { display: none; }
-        .card::part(base) { border-top: 4px solid var(--c); }
-        .card-main { display: flex; align-items: center; gap: .8rem; text-decoration: none; color: inherit; font-weight: inherit; font-size: 1rem; }
-        .card-ico { flex: none; } .card-ico img { display: block; width: 48px; height: 48px; }
-        .card-text { min-width: 0; display: grid; gap: .1rem; }
-        .card-text b { font-size: 1.08rem; letter-spacing: -.02em; line-height: 1.15; }
-        .card-text small { color: var(--c); font-weight: 650; font-size: .86rem; line-height: 1.3; filter: brightness(1.05); }
-        .card-edge { margin: 0; color: var(--muted); font-size: .9rem; line-height: 1.5; max-height: 4.5em; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        /* the apps: the three main ones large (sav-card with its screenshots), then the others in groups (sav-card with rows) */
+        :root { --sav-color-primary: #7845f4; --sav-color-on-primary: #fff; --sav-font: Inter, system-ui, sans-serif; }
+        .trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.2rem; }
+        .big { display: block; height: 100%; scroll-margin-top: 6rem; --sav-card-padding: 1.3rem; }
+        .big::part(base) { border-top: 4px solid var(--c); }
+        .big-shot { position: relative; display: block; padding: 1.4rem 1.4rem 0; overflow: hidden; aspect-ratio: 16 / 11; background: radial-gradient(130% 110% at 0% 0%, color-mix(in oklab, var(--c) 30%, var(--card)), color-mix(in oklab, var(--c) 10%, var(--card)) 70%); }
+        .big-desk { display: block; width: 100%; height: auto; border-radius: 10px 10px 0 0; box-shadow: 0 18px 40px -16px rgb(20 10 30 / .45), 0 0 0 1px rgb(0 0 0 / .08); transition: transform .35s var(--sav-easing); }
+        .big-phone { position: absolute; right: 1rem; bottom: -12%; width: 23%; height: auto; border-radius: 14px; border: 4px solid #1d1d22; background: #1d1d22; box-shadow: 0 16px 30px -10px rgb(20 10 30 / .5); transition: transform .35s var(--sav-easing); }
+        .big:hover .big-desk { transform: translateY(-5px); } .big:hover .big-phone { transform: translateY(-9px) rotate(-2deg); }
+        .big-name { display: flex; align-items: center; gap: .85rem; padding-top: .3rem; text-decoration: none; color: inherit; font-weight: inherit; }
+        .big-name img { flex: none; width: 56px; height: 56px; }
+        .big-name > span { display: grid; gap: .1rem; min-width: 0; }
+        .big-name b { font-size: 1.45rem; letter-spacing: -.03em; line-height: 1.1; }
+        .big-name small { color: light-dark(var(--c), color-mix(in oklab, var(--c) 45%, #fff)); font-weight: 650; font-size: .95rem; line-height: 1.3; }
+        .big-edge { margin: 0 0 1rem; color: var(--muted); font-size: .96rem; line-height: 1.55; }
         .card-acts { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
-        .card-tag { position: absolute; top: .9rem; right: .9rem; z-index: 1; }
+        .more-h { margin: clamp(2.6rem, 6vw, 4rem) 0 1.4rem; }
+        .more-h h3 { font-size: clamp(1.4rem, 2.6vw, 1.9rem); line-height: 1.12; letter-spacing: -.035em; margin: 0; font-weight: 800; }
+        .groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.2rem; align-items: start; }
+        .groups-col { display: grid; gap: 1.2rem; align-content: start; }
+        .group { display: block; --sav-card-padding: .55rem; }
+        .group-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: .1rem .7rem; padding: .25rem .35rem 0; }
+        .group-h h4 { margin: 0; font-size: 1.15rem; letter-spacing: -.02em; }
+        .group-h p { margin: 0; color: var(--muted); font-size: .9rem; font-weight: 400; }
+        .rows { list-style: none; margin: 0; padding: 0; display: grid; }
+        .rows li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .6rem; padding-right: .5rem; border-radius: 14px; scroll-margin-top: 6rem; transition: background .15s; }
+        .rows li + li { border-top: 1px solid color-mix(in oklab, var(--line) 70%, transparent); }
+        .rows li:hover { background: color-mix(in oklab, var(--c) 7%, transparent); }
+        .row { display: flex; align-items: center; gap: .8rem; padding: .65rem .5rem; text-decoration: none; color: inherit; min-width: 0; }
+        .row img { flex: none; width: 40px; height: 40px; }
+        .row span { min-width: 0; }
+        .row b { font-size: 1rem; letter-spacing: -.015em; }
+        .row small { display: block; color: var(--muted); font-size: .88rem; line-height: 1.35; }
+        .row sav-badge { margin-left: .3rem; vertical-align: 1px; }
+        @media (max-width: 1080px) {
+            .trio { grid-template-columns: minmax(0, 1fr); }
+            .big::part(base) { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); grid-template-rows: auto 1fr auto; }
+            .big::part(media) { grid-row: 1 / -1; } .big-shot { height: 100%; aspect-ratio: auto; min-height: 16rem; display: flex; align-items: center; padding: 1.4rem; }
+            .big-shot .big-desk { border-radius: 10px; } .big-phone { bottom: 8%; }
+        }
+        @media (max-width: 820px) { .groups { grid-template-columns: minmax(0, 1fr); } }
+        @media (max-width: 640px) { .big-phone { bottom: -12%; } }
+        @media (max-width: 640px) {
+            .big::part(base) { display: flex; } .big-shot { aspect-ratio: 16 / 11; min-height: 0; display: block; padding: 1rem 1rem 0; }
+            .big-name b { font-size: 1.25rem; } .big-name img { width: 48px; height: 48px; }
+            .row small { font-size: .84rem; }
+        }
         /* together: the apps on a circle around SavAccount; any number of apps fits */
         .orbit { position: relative; width: min(100%, 32rem); aspect-ratio: 1; margin: 0 auto; container-type: inline-size; }
         .orbit::before { content: ""; position: absolute; inset: 11%; border-radius: 50%; border: 1.5px dashed color-mix(in oklab, #3a9fd6 40%, var(--line)); }
@@ -345,9 +380,20 @@ $graph = $app
             transform: rotate(calc(var(--i) * 360deg / var(--n))) translateY(-39cqi) rotate(calc(var(--i) * -360deg / var(--n))); transition: box-shadow .15s; }
         .orbit-app img { width: 72%; height: 72%; }
         .orbit-app:hover, .orbit-app:focus-visible { box-shadow: 0 10px 24px -10px rgb(20 10 30 / .45), 0 0 0 2px var(--violet); z-index: 1; }
-        @media (max-width: 560px) { .card { --sav-card-padding: .85rem; } .card-edge { -webkit-line-clamp: 2; max-height: 3em; font-size: .86rem; } .card-ico img { width: 40px; height: 40px; } }
         .h3ico { width: 28px; height: 28px; vertical-align: -6px; margin-right: .5rem; }
         footer .ai { flex-basis: 100%; order: 9; font-size: .82rem; }
+
+        /* SavOffice for Mac: only on a Mac (page.js removes hidden) */
+        .mac { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: clamp(1.2rem, 3vw, 2.4rem); align-items: center; margin: 0 0 clamp(2rem, 4vw, 3rem); padding: clamp(1.3rem, 3vw, 2.2rem);
+            border-radius: var(--r); background: linear-gradient(135deg, color-mix(in oklab, var(--violet) 9%, var(--card)), var(--card) 55%, color-mix(in oklab, var(--pink) 7%, var(--card))); border: 1px solid var(--line); }
+        .mac[hidden] { display: none; }
+        .mac-icon { width: clamp(84px, 11vw, 128px); height: auto; filter: drop-shadow(0 14px 24px rgb(40 20 80 / .22)); }
+        .mac h2 { margin: .1rem 0 .4rem; font-size: clamp(1.4rem, 2.6vw, 1.9rem); letter-spacing: -.03em; }
+        .mac-t > p { margin: 0; color: var(--muted); max-width: 46rem; }
+        .mac .ctas { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1.2rem; margin: 1.1rem 0 .7rem; }
+        .mac-other { color: var(--muted); font-size: .92rem; } .mac-other:hover { color: var(--text); }
+        .mac-t > .mac-note { font-size: .82rem; }
+        @media (max-width: 640px) { .mac { grid-template-columns: minmax(0, 1fr); } .mac-icon { width: 76px; } }
     </style>
 </head>
 <body>
@@ -382,48 +428,101 @@ $graph = $app
             </div>
             <div class="collage" aria-hidden="true">
                 <span class="dot d1"></span><span class="dot d2"></span>
-                <figure class="c1"><img src="<?= $shot('savcalendar', 'd1.jpg') ?>" alt="" width="1440" height="900"></figure>
+                <figure class="c1"><img src="<?= $shot('savspreadsheets', 'd1.jpg') ?>" alt="" width="1440" height="900"></figure>
                 <figure class="c2"><img src="<?= $shot('savdocuments', 'd2.jpg') ?>" alt="" width="1440" height="900"></figure>
-                <figure class="c3"><img src="<?= $shot('savtasks', '2.jpg') ?>" alt="" width="562" height="1000"></figure>
+                <figure class="c3"><img src="<?= $shot('savpresentations', '1.jpg') ?>" alt="" width="562" height="1000"></figure>
             </div>
         </section>
 
+        <?php if ($mac !== '') { ?>
+        <!-- SavOffice for Mac (desktop/): hidden, shown by page.js only on a Mac, which also picks Apple silicon or Intel -->
+        <section class="mac" id="mac" aria-labelledby="mac-h" hidden data-arm="<?= $h($mac . 'SavOffice-arm64.dmg') ?>" data-intel="<?= $h($mac . 'SavOffice-x64.dmg') ?>">
+            <img class="mac-icon" src="/savoffice/icons/mac.png" alt="" width="128" height="128">
+            <div class="mac-t">
+                <p class="eyebrow"><?= $L('Nuovo · per Mac', 'New · for Mac') ?></p>
+                <h2 id="mac-h"><?= $L('SavOffice sul tuo Mac', 'SavOffice on your Mac') ?></h2>
+                <p><?= $L('Un’app sola per tutte le app: installi quelle che usi, si aprono nella loro finestra anche senza connessione, si aggiornano da sole e quando torna la rete sincronizzano tutto. Accedi una volta e sei dentro ovunque.', 'One app for all the apps: install the ones you use, each opens in its own window even without a connection, updates by itself and syncs everything when the network is back. Sign in once and you are in everywhere.') ?></p>
+                <div class="ctas">
+                    <sav-button size="lg" class="mac-get" href="<?= $h($mac . 'SavOffice-arm64.dmg') ?>" icon="download" data-l-arm="<?= $L('Scarica per Mac', 'Download for Mac') ?>" data-l-intel="<?= $L('Scarica per Mac (Intel)', 'Download for Mac (Intel)') ?>"><?= $L('Scarica per Mac', 'Download for Mac') ?></sav-button>
+                    <a class="mac-other" href="<?= $h($mac . 'SavOffice-x64.dmg') ?>" data-l-arm="<?= $L('Hai un Mac con Intel?', 'A Mac with Intel?') ?>" data-l-intel="<?= $L('Hai un Mac con Apple silicon?', 'A Mac with Apple silicon?') ?>"><?= $L('Hai un Mac con Intel?', 'A Mac with Intel?') ?></a>
+                </div>
+                <p class="mac-note"><?= $L('Gratis · macOS 12 o successivo · la prima volta che lo apri: Impostazioni di Sistema › Privacy e sicurezza › «Apri comunque».', 'Free · macOS 12 or later · the first time you open it: System Settings › Privacy & Security › “Open Anyway”.') ?></p>
+            </div>
+        </section>
+        <?php } ?>
+
         <?php
-        // the kinds of apps, to filter the list (radio buttons and CSS: the page runs no script of its own)
-        $kinds = ['write' => ['Scrivere e creare', 'Write and create'], 'time' => ['Organizzare', 'Organise'], 'talk' => ['Comunicare', 'Communicate'], 'files' => ['File e media', 'Files and media']];
-        $kindOf = ['savdocuments' => 'write', 'savspreadsheets' => 'write', 'savpresentations' => 'write', 'savbooks' => 'write', 'savdiagrams' => 'write', 'savwhiteboard' => 'write', 'savnotes' => 'write',
-            'savcalendar' => 'time', 'savtasks' => 'time', 'savschedules' => 'time', 'savcontacts' => 'time', 'savsplits' => 'time',
-            'savmail' => 'talk', 'savnewsletters' => 'talk', 'savforms' => 'talk',
-            'savdrive' => 'files', 'savphotos' => 'files', 'savpodcasts' => 'files', 'savreads' => 'files'];
+        // the three apps most people come for, large and first; then the others in groups of what they are for
+        $main = ['savdocuments', 'savspreadsheets', 'savpresentations'];
+        $groups = [
+            'time' => ['Organizzare', 'Organise', 'Il tempo, le cose da fare, le persone e i conti in comune.', 'Time, things to do, people and shared bills.', ['savcalendar', 'savcontacts', 'savschedules', 'savsplits', 'savtasks']],
+            'make' => ['Creare', 'Create', 'Libri, diagrammi, una lavagna senza bordi e quaderni a mano.', 'Books, diagrams, a board without edges and handwritten notebooks.', ['savbooks', 'savdiagrams', 'savnotes', 'savwhiteboard']],
+            'files' => ['File e media', 'Files and media', 'Lo spazio per i tuoi file, le foto, i podcast e gli articoli da leggere.', 'The space for your files, photos, podcasts and articles to read.', ['savdrive', 'savphotos', 'savpodcasts', 'savreads']],
+            'talk' => ['Comunicare', 'Communicate', 'La posta, le newsletter e i moduli per raccogliere risposte.', 'Email, newsletters and forms to collect answers.', ['savforms', 'savmail', 'savnewsletters']],
+        ];
+        // an app added to data.php and not to a group still shows, in "Create"
+        $grouped = array_merge($main, ...array_map(fn($g) => $g[4], array_values($groups)));
+        foreach (array_keys($apps) as $s) if (!in_array($s, $grouped, true)) $groups['make'][4][] = $s;
         $keep = $q !== '' ? '?lang=' . $lang : '';
+        $fmt = fn(string $f): string => '<li><sav-tag size="sm"' . (str_starts_with($f, '.sav') ? ' variant="primary"' : '') . '>' . $h($f) . '</sav-tag></li>';
         ?>
         <section class="block" id="apps" aria-labelledby="apps-h">
             <div class="head">
-                <p class="kicker"><?= $L('Le app', 'The apps') ?></p>
-                <h2 id="apps-h"><?= $L(ucfirst($nw('it')) . ' app, ognuna con un’idea in più.', ucfirst($nw('en')) . ' apps, each with an extra idea.') ?></h2>
-                <p><?= $L('Fanno quello che ti aspetti, e poi qualcosa che altrove non trovi. Apri la scheda di un’app per le sue funzioni e le schermate.', 'They do what you expect, and then something you will not find elsewhere. Open the page of an app for its features and screenshots.') ?></p>
+                <p class="kicker"><?= $L('Il cuore di SavOffice', 'The heart of SavOffice') ?></p>
+                <h2 id="apps-h"><?= $L('Documenti, fogli di calcolo, presentazioni.', 'Documents, spreadsheets, presentations.') ?></h2>
+                <p><?= $L('Le tre app di ogni giorno. Aprono e salvano i file di Word, Excel, PowerPoint e LibreOffice, si lavora in più persone sullo stesso file e si continua anche senza connessione.', 'The three everyday apps. They open and save Word, Excel, PowerPoint and LibreOffice files, several people work on the same file, and you carry on without a connection too.') ?></p>
             </div>
-            <div class="catalog">
-                <sav-chip-group class="kinds" id="kinds" required value="all" label="<?= $L('Mostra', 'Show') ?>">
-                    <sav-chip value="all" selected><?= $L('Tutte', 'All') ?> <small><?= $n ?></small></sav-chip>
-                    <?php foreach ($kinds as $k => $kl): ?><sav-chip value="<?= $k ?>"><?= $L(...$kl) ?> <small><?= count(array_filter(array_keys($apps), fn($x) => ($kindOf[$x] ?? 'write') === $k)) ?></small></sav-chip><?php endforeach; ?>
-                </sav-chip-group>
-                <sav-grid class="cards" id="cards" min="16.5rem" gap="1rem">
-                    <?php foreach ($apps as $slug => [$color, $desk, $phone, $eit, $een]): $P = $projects[$slug]; ?>
-                        <sav-card class="card" data-kind="<?= $kindOf[$slug] ?? 'write' ?>" style="--c:<?= $color ?>; --sav-color-primary:<?= $color ?>; --sav-color-on-primary:#fff" id="<?= $slug ?>">
-                            <a slot="header" class="card-main" href="/savoffice/<?= $slug ?>/<?= $keep ?>">
-                                <span class="card-ico"><?= $ico($slug, 48) ?></span>
-                                <span class="card-text"><b><?= $name($slug) ?></b><small><?= $h($P[$lang][0]) ?></small></span>
+            <div class="trio">
+                <?php foreach ($main as $slug): [$color, $desk, $phone, $eit, $een] = $apps[$slug]; $P = $projects[$slug]; ?>
+                <sav-card class="big" id="<?= $slug ?>" style="--c:<?= $color ?>; --sav-color-primary:<?= $color ?>; --sav-color-on-primary:#fff">
+                    <a slot="media" class="big-shot" href="/savoffice/<?= $slug ?>/<?= $keep ?>" tabindex="-1" aria-hidden="true">
+                        <img class="big-desk" src="<?= $shot($slug, $desk) ?>" alt="" width="1440" height="900" loading="lazy">
+                        <?php if ($has($slug, $phone)): ?><img class="big-phone" src="<?= $shot($slug, $phone) ?>" alt="" width="563" height="1000" loading="lazy"><?php endif; ?>
+                    </a>
+                    <a slot="header" class="big-name" href="/savoffice/<?= $slug ?>/<?= $keep ?>">
+                        <?= $ico($slug, 56) ?>
+                        <span><b><?= $name($slug) ?></b><small><?= $h($P[$lang][0]) ?></small></span>
+                    </a>
+                    <p class="big-edge"><?= $L($eit, $een) ?></p>
+                    <ul class="fmt" aria-label="<?= $L('File', 'Files') ?>"><?= implode('', array_map($fmt, $files[$slug] ?? [])) ?></ul>
+                    <div slot="footer" class="card-acts">
+                        <sav-button href="/<?= $slug ?>/" style="--sav-color-primary:<?= savoffice_solid($color) ?>" label="<?= $L('Apri', 'Open') ?> <?= $h($P['name']) ?>"><?= $L('Apri', 'Open') ?></sav-button>
+                        <sav-button appearance="ghost" variant="neutral" href="/savoffice/<?= $slug ?>/<?= $keep ?>"><?= $L('Scheda e schermate', 'Details and screenshots') ?></sav-button>
+                    </div>
+                </sav-card>
+                <?php endforeach; ?>
+            </div>
+
+            <div class="head more-h">
+                <p class="kicker"><?= $L('E poi', 'And then') ?></p>
+                <h3><?= $L('Altre ' . (count($apps) - count($main)) . ' app, per tutto il resto.', (count($apps) - count($main)) . ' more apps, for everything else.') ?></h3>
+            </div>
+            <?php
+            // two columns with about as many apps each (a group never splits): the biggest groups go first, each to the shorter column
+            $cols = [[], []]; $len = [0, 0];
+            $bySize = $groups; uasort($bySize, fn($x, $y) => count($y[4]) <=> count($x[4]));
+            foreach ($bySize as $g => $grp) { if (!$grp[4]) continue; $i = $len[0] <= $len[1] ? 0 : 1; $cols[$i][$g] = $grp; $len[$i] += count($grp[4]) + 1.5; }
+            ?>
+            <div class="groups">
+                <?php foreach ($cols as $col): ?><div class="groups-col">
+                <?php foreach ($col as $g => [$git, $gen, $dit, $den, $list]): ?>
+                <sav-card class="group" id="g-<?= $g ?>">
+                    <div slot="header" class="group-h"><h4><?= $L($git, $gen) ?></h4><p><?= $L($dit, $den) ?></p></div>
+                    <ul class="rows">
+                        <?php foreach ($list as $slug): $P = $projects[$slug]; ?>
+                        <li id="<?= $slug ?>" style="--c:<?= $apps[$slug][0] ?>">
+                            <a class="row" href="/savoffice/<?= $slug ?>/<?= $keep ?>">
+                                <?= $ico($slug, 40) ?>
+                                <span><b><?= $name($slug) ?></b><?php if (!empty($P['invite'])): ?> <sav-badge appearance="soft" pill><?= $L('Su invito', 'By invitation') ?></sav-badge><?php endif; ?><small><?= $h($P[$lang][0]) ?></small></span>
                             </a>
-                            <?php if (!empty($P['invite'])): ?><sav-badge class="card-tag" appearance="soft" pill><?= $L('Su invito', 'By invitation') ?></sav-badge><?php endif; ?>
-                            <p class="card-edge"><?= $L($eit, $een) ?></p>
-                            <div slot="footer" class="card-acts">
-                                <sav-button size="sm" href="/<?= $slug ?>/"><?= $L('Apri', 'Open') ?></sav-button>
-                                <sav-button size="sm" appearance="ghost" variant="neutral" href="/savoffice/<?= $slug ?>/<?= $keep ?>"><?= $L('Scheda e schermate', 'Details and screenshots') ?></sav-button>
-                            </div>
-                        </sav-card>
-                    <?php endforeach; ?>
-                </sav-grid>
+                            <sav-button class="go" size="sm" appearance="outline" variant="neutral" href="/<?= $slug ?>/" label="<?= $L('Apri', 'Open') ?> <?= $h($P['name']) ?>"><?= $L('Apri', 'Open') ?></sav-button>
+                        </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </sav-card>
+                <?php endforeach; ?>
+                </div><?php endforeach; ?>
+            </div>
         </section>
 
         <section class="block" aria-labelledby="why-h">
@@ -556,7 +655,9 @@ $graph = $app
         <a href="https://www.illerom.eu/<?= $lang ?>/status/"><?= $L('Stato dei servizi', 'Service status') ?></a>
         <a href="https://github.com/Sav22999/illerom"><?= $L('Codice', 'Code') ?></a>
         <a href="https://www.saveriomorelli.com/donate/" target="_blank" rel="noopener"><?= $L('Sostieni', 'Support') ?></a>
+        <?php if (!$app): // said once, on the page of the suite; not on the page of each app ?>
         <span class="ai" title="<?= $L('Claude, di Anthropic', 'Claude, by Anthropic') ?>"><?= $L('Applicazioni realizzate con il supporto dell’intelligenza artificiale', 'Apps made with the support of artificial intelligence') ?></span>
+        <?php endif; ?>
         <span><?= $L('Un progetto di', 'A project by') ?> <a href="https://www.saveriomorelli.com">Saverio Morelli</a></span>
     </div>
 </footer>

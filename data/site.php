@@ -8,6 +8,9 @@ return [
     'source' => 'https://github.com/Sav22999/illerom/tree/main/',
     // the "read it backwards" button next to the name: hidden for now
     'flip' => false,
+    // SavOffice for Mac (desktop/): the DMGs of the latest release on GitHub, SavOffice-arm64.dmg and SavOffice-x64.dmg
+    // (desktop/README.md: npm run dist, then a release with both files). Shown by /savoffice/ only on a Mac
+    'savoffice_mac' => 'https://github.com/Sav22999/illerom/releases/latest/download/',
     // the bigger projects, which have a home of their own
     'big' => [
         ['Notefox', 'https://www.notefox.eu/', 'websites-notes', ['it' => 'Note su qualsiasi sito web', 'en' => 'Notes on any website']],

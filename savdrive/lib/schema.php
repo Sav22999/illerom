@@ -4,8 +4,10 @@
  * by itself the first time it answers.
  *
  * meta         schema version and the settings of the admins: default_quota (bytes), default_active (1 | 0), app_url
- * users        accounts (email unique and never changed); quota: bytes of its own (NULL = the default); activated: it
- *              can use the app (an admin decides, or the default of new accounts)
+ * (accounts)   the ones of the whole suite (../../identity/suite.php, t('users')); on the account: quota (bytes of its own,
+ *              NULL = the default) and activated: it can use the app (an admin decides; NULL = not seen here yet, the
+ *              default of new accounts is applied at its first visit)
+ * profiles     the settings of the app of each account (prefs: JSON)
  * nodes        files and folders of an account, as a tree (parent_id NULL = My drive). A file is kept on disk under
  *              <storage>/<user_id>/<bkey>; share_token: a link anyone can open (files only)
  * shares       the levels of other people (by email) on a file or folder, inherited below until another row (lib/access.php)
@@ -32,49 +34,17 @@ declare(strict_types=1);
 function schema_statements(string $p): array
 {
     $e = 'ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci';
-    $fk = fn(string $name, string $col, string $table, string $on = 'CASCADE') => "CONSTRAINT `fk_{$p}{$name}` FOREIGN KEY (`$col`) REFERENCES `{$p}$table` (`id`) ON DELETE $on";
+    // the accounts are the ones of the whole suite (t('users'), ../../identity/suite.php): deleting one deletes what it had here
+    $fk = fn(string $name, string $col, string $table, string $on = 'CASCADE') => "CONSTRAINT `fk_{$p}{$name}` FOREIGN KEY (`$col`) REFERENCES " . ($table === 'users' ? t('users') : "`{$p}$table`") . " (`id`) ON DELETE $on";
     return [
         "CREATE TABLE IF NOT EXISTS `{$p}meta` (
             `k` VARCHAR(40) NOT NULL PRIMARY KEY,
             `v` VARCHAR(255) NOT NULL
         ) $e",
-        "CREATE TABLE IF NOT EXISTS `{$p}users` (
-            `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            `name` VARCHAR(80) NOT NULL,
-            `email` VARCHAR(190) NOT NULL,
-            `email_verified_at` DATETIME NULL,
-            `password_hash` VARCHAR(255) NOT NULL DEFAULT '',
-            `google_sub` VARCHAR(64) NULL,
-            `ui_lang` VARCHAR(5) NOT NULL DEFAULT 'en',
+        "CREATE TABLE IF NOT EXISTS `{$p}profiles` (
+            `user_id` INT UNSIGNED NOT NULL PRIMARY KEY,
             `prefs` TEXT NULL,
-            `status` ENUM('active','disabled') NOT NULL DEFAULT 'active',
-            `activated` TINYINT(1) NOT NULL DEFAULT 1,
-            `activated_at` DATETIME NULL,
-            `quota` BIGINT UNSIGNED NULL,
-            `created_at` DATETIME NOT NULL,
-            `last_login_at` DATETIME NULL,
-            UNIQUE KEY `uq_email` (`email`),
-            UNIQUE KEY `uq_google` (`google_sub`),
-            KEY `ix_activated` (`activated`)
-        ) $e",
-        "CREATE TABLE IF NOT EXISTS `{$p}auth_tokens` (
-            `token_hash` CHAR(64) NOT NULL PRIMARY KEY,
-            `user_id` INT UNSIGNED NOT NULL,
-            `csrf_token` CHAR(48) NOT NULL,
-            `created_at` DATETIME NOT NULL,
-            `last_seen_at` DATETIME NOT NULL,
-            `expires_at` DATETIME NOT NULL,
-            KEY `ix_user` (`user_id`),
-            " . $fk('tok_user', 'user_id', 'users') . "
-        ) $e",
-        "CREATE TABLE IF NOT EXISTS `{$p}email_tokens` (
-            `token_hash` CHAR(64) NOT NULL PRIMARY KEY,
-            `user_id` INT UNSIGNED NOT NULL,
-            `purpose` VARCHAR(10) NOT NULL DEFAULT 'verify',
-            `created_at` DATETIME NOT NULL,
-            `expires_at` DATETIME NOT NULL,
-            KEY `ix_user` (`user_id`),
-            " . $fk('etok_user', 'user_id', 'users') . "
+            " . $fk('prof_user', 'user_id', 'users') . "
         ) $e",
         "CREATE TABLE IF NOT EXISTS `{$p}attempts` (
             `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -232,13 +202,13 @@ function schema_statements(string $p): array
 
 function install_schema(PDO $pdo, string $prefix): void
 {
+    // once only: the tables of the time when this app had accounts of its own go, then the accounts of the suite are there
+    suite_reset_app($pdo, $prefix);
+    suite_install($pdo, (string)(credentials()['name'] ?? ''));
     foreach (schema_statements($prefix) as $sql) $pdo->exec($sql);
     if (!$pdo->query("SHOW COLUMNS FROM `{$prefix}uploads` LIKE 'replace_id'")->fetch()) $pdo->exec("ALTER TABLE `{$prefix}uploads` ADD COLUMN `replace_id` INT UNSIGNED NULL AFTER `received`");
     if (!$pdo->query("SHOW COLUMNS FROM `{$prefix}uploads` LIKE 'vault_id'")->fetch()) $pdo->exec("ALTER TABLE `{$prefix}uploads` ADD COLUMN `vault_id` INT UNSIGNED NULL AFTER `replace_id`");
     if (!$pdo->query("SHOW COLUMNS FROM `{$prefix}uploads` LIKE 'temp_id'")->fetch()) $pdo->exec("ALTER TABLE `{$prefix}uploads` ADD COLUMN `temp_id` INT UNSIGNED NULL AFTER `replace_id`");
     if (!$pdo->query("SHOW COLUMNS FROM `{$prefix}nodes` LIKE 'created_by'")->fetch()) $pdo->exec("ALTER TABLE `{$prefix}nodes` ADD COLUMN `created_by` INT UNSIGNED NULL AFTER `opened_at`");
-    // 3: the spaces of their own move to quotas (by email), where the other apps read them too
-    $pdo->exec("INSERT IGNORE INTO `{$prefix}quotas` (email, quota, updated_at) SELECT email, quota, UTC_TIMESTAMP() FROM `{$prefix}users` WHERE quota IS NOT NULL");
-    $pdo->exec("UPDATE `{$prefix}users` SET quota = NULL WHERE quota IS NOT NULL");
     $pdo->prepare("INSERT INTO `{$prefix}meta` (k, v) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)")->execute([(string)SCHEMA_VERSION]);
 }

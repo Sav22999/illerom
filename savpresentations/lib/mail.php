@@ -159,8 +159,8 @@ function send_account_link(array $user, string $lang, string $kind): void
 {
     $token = bin2hex(random_bytes(32));
     $hours = $kind === 'reset' ? RESET_HOURS : VERIFY_HOURS;
-    db()->prepare('DELETE FROM ' . t('email_tokens') . ' WHERE user_id = ? AND kind = ?')->execute([$user['id'], $kind]);
-    db()->prepare('INSERT INTO ' . t('email_tokens') . ' (token_hash, user_id, kind, created_at, expires_at) VALUES (?,?,?,?,?)')
+    db()->prepare('DELETE FROM ' . t('email_tokens') . ' WHERE user_id = ? AND purpose = ?')->execute([$user['id'], $kind]); // the links of the suite (../../identity/suite.php): "purpose"
+    db()->prepare('INSERT INTO ' . t('email_tokens') . ' (token_hash, user_id, purpose, created_at, expires_at) VALUES (?,?,?,?,?)')
         ->execute([hash('sha256', $token), $user['id'], $kind, now_utc(), gmdate('Y-m-d H:i:s', time() + $hours * 3600)]);
     $T = mail_t($lang);
     $url = app_url() . '?' . $kind . '=' . $token;
