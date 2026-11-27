@@ -11,10 +11,10 @@ let leave = null, turn = 0;
 
 /**
  * Addresses:  #/today  #/upcoming  #/inbox  #/starred  #/done  #/schedules (what SavSchedules asks)  #/l/<list>
- *             #/t/<task> (opens the task in its list)  #/tag/<label>  #/settings/<section>
+ *             #/t/<task> (opens the task in its list)  #/tag/<label>  #/time (the time tracked)  #/settings/<section>
  *             #/welcome  #/signin  #/signup  #/verify/<token>  #/reset/<token>  #/changelog (what's new)
  */
-const VIEWS = ['today', 'upcoming', 'inbox', 'starred', 'done', 'schedules', 'l', 't', 'tag', 'search'];
+const VIEWS = ['today', 'upcoming', 'inbox', 'starred', 'done', 'schedules', 'time', 'l', 't', 'tag', 'search'];
 
 /** The settings of the account and the addresses of the other apps (the inbox is made the first time). */
 async function start() {

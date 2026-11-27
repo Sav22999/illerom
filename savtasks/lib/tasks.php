@@ -166,6 +166,7 @@ function out_list(array $l): array
     return [
         'id' => $l['lid'], 'name' => $l['name'], 'color' => $l['color'], 'icon' => $l['icon'], 'view' => $l['view'],
         'columns' => columns_of($l), 'inbox' => (bool)$l['inbox'], 'archived' => (bool)$l['archived'],
+        'rate' => isset($l['rate']) && $l['rate'] !== null ? (float)$l['rate'] : null,
     ];
 }
 

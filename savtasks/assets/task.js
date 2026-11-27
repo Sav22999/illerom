@@ -4,15 +4,17 @@
  *   "Add to SavCalendar"         an event in one of one's own calendars (tasks.cal.create); the task shows it after
  *   "Find a date with others"    a date poll in SavSchedules with the dates chosen here (tasks.sch.create), opened in its
  *                                editor; once a date is chosen there, the task shows it and can take it as its due day
- * Also the dialog of a list (name, colour, icon, list or board).
+ * Its time tracked too (track.js): the timer, the total and the spans. Also the dialog of a list (name, colour, icon,
+ * list or board, and the hourly rate when the list is a project or a client).
  */
-import { btn, colorPop, confirm, dialog, empty, fail, h, icon, iconBtn, mobile, primary, put, segmented, select, toast } from './ui.js';
+import { btn, colorPop, confirm, dialog, empty, fail, h, icon, iconBtn, mobile, num, primary, put, segmented, select, toast } from './ui.js';
 import { getLang, t, when } from './i18n.js';
 import { S, api, drop as forget, inbox, keep, listById, taskById } from './store.js';
 import { go, prefs } from './account.js';
 import { addDays, dayLabel, longDay, relDay, todayKey, weekday } from './time.js';
 import { PRIO, PRIO_COLOR, defaultRemind, toggleDone, whenText, zonedMs } from './tasks.js';
 import { streaks } from './habits.js';
+import { currency, taskTime } from './track.js';
 
 const tz = () => prefs().tz || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 const today = () => todayKey(tz());
@@ -239,6 +241,7 @@ export function openTask(id, ctx, init = {}) {
     sec(null, tags),
     sec(t('subtasks'), clBox, addCl),
     sec(null, notes),
+    isNew || habit ? null : taskTime(x, ctx),
     links,
     isNew ? null : h('small.muted.dinfo', t('created_w', { w: when(x.created) }) + (x.updated !== x.created ? ' · ' + t('updated_w', { w: when(x.updated) }) : ''))), ...foot);
   paintDue(); paintCl(); paintLinks();
@@ -349,9 +352,15 @@ export function listDialog(l, ctx, asNew = false) {
   const col = colorPop(t('color'), color, (v) => { if (v) color = v; }, { list: LIST_COLORS });
   const icons = h('div.icons', LIST_ICONS.map((n) => h('button.icb' + (n === ic ? '.on' : ''), { type: 'button', title: n || t('no_icon'), 'aria-pressed': String(n === ic), onclick: (e) => { ic = n; icons.querySelectorAll('.icb').forEach((b) => { b.classList.toggle('on', b === e.currentTarget); b.setAttribute('aria-pressed', String(b === e.currentTarget)); }); } }, n ? icon(n) : h('i.ldot', { style: `--c:${color}` }))));
   const as = segmented(t('show_as'), view, [['list', '=' + t('as_list'), t('as_list')], ['board', '=' + t('as_board'), t('as_board')], ['gantt', '=' + t('as_gantt'), t('as_gantt')]], (v) => { view = v; }, { show: true, class: 'wide' });
-  dialog({ title: t(l ? 'edit_list' : base?.view === 'board' ? 'new_board' : base?.view === 'gantt' ? 'new_gantt' : 'new_list'), width: '28rem', body: h('div.form', name, h('div.cf', h('span.flabel', t('color')), col), h('div', h('span.flabel', t('icon')), icons), as), actions: [{ label: t('cancel') }, { label: t(l ? 'save' : 'create'), primary: true, run: async () => {
+  // the hourly rate (optional): the list as a project or a client of the time tracked
+  let rate = l?.rate ?? null;
+  const rateIn = view === 'habits' ? null : num(t('tt_rate_l'), rate ?? '', (v) => { rate = v === '' ? null : v; }, { min: 0, max: 100000, step: 1, empty: true, unit: currency() + '/h', help: t('tt_rate_help'), placeholder: '—' });
+  dialog({ title: t(l ? 'edit_list' : base?.view === 'board' ? 'new_board' : base?.view === 'gantt' ? 'new_gantt' : 'new_list'), width: '28rem', body: h('div.form', name, h('div.cf', h('span.flabel', t('color')), col), h('div', h('span.flabel', t('icon')), icons), as, rateIn), actions: [{ label: t('cancel') }, { label: t(l ? 'save' : 'create'), primary: true, run: async () => {
     if (!name.value.trim()) throw Object.assign(new Error(), { code: 'name_required' });
-    const r = await api('tasks.list.save', { ...(l ? { id: l.id } : {}), name: name.value.trim(), color, icon: ic, view });
+    const raw = String(rateIn?.value ?? '').trim(), rv = raw === '' ? null : parseFloat(raw.replace(',', '.'));
+    if (raw !== '' && !Number.isFinite(rv)) throw Object.assign(new Error(), { code: 'bad_rate' });
+    rate = rv && rv > 0 ? Math.round(rv * 100) / 100 : null;
+    const r = await api('tasks.list.save', { ...(l ? { id: l.id } : {}), name: name.value.trim(), color, icon: ic, view, ...(rateIn ? { rate } : {}) });
     if (l) Object.assign(l, r.list); else S.lists.push(r.list);
     if (!l) go('#/l/' + r.list.id); else ctx.redraw();
   } }] });

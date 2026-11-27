@@ -15,6 +15,11 @@
  *                repetition (rrule, RFC 5545 subset: when it is ticked the next one is planned), and the links made
  *                by the actions with the other apps: an event of SavCalendar (cal_eid) and a schedule of SavSchedules
  *                (sch_pid). A habit keeps the days it was done in log (JSON, the last 400) and its days in rrule
+ * task_time      the time tracked: a timer (running = 1, from start_at; one at most per account) or a span of work
+ *                written by hand (a day, from–to or only a length in seconds), with a note and whether it is billable.
+ *                It belongs to a task (task_id) and so to its list, or only to a list (list_id): a list is the project
+ *                or the client, with its hourly rate (task_lists.rate, optional). The title of the task is kept, so
+ *                the time stays readable once the task is deleted
  */
 
 declare(strict_types=1);
@@ -41,6 +46,7 @@ function task_schema_statements(string $p): array
             `inbox` TINYINT(1) NOT NULL DEFAULT 0,
             `archived` TINYINT(1) NOT NULL DEFAULT 0,
             `position` SMALLINT NOT NULL DEFAULT 0,
+            `rate` DECIMAL(10,2) NULL,
             `created_at` DATETIME NOT NULL,
             `updated_at` DATETIME NOT NULL,
             UNIQUE KEY `uq_lid` (`lid`),
@@ -79,6 +85,31 @@ function task_schema_statements(string $p): array
             KEY `ix_remind` (`remind_at`, `reminded_at`),
             CONSTRAINT `fk_{$p}taski_list` FOREIGN KEY (`list_id`) REFERENCES `{$p}task_lists` (`id`) ON DELETE CASCADE
         ) $e",
+        "CREATE TABLE IF NOT EXISTS `{$p}task_time` (
+            `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `eid` CHAR(10) CHARACTER SET ascii NOT NULL,
+            `user_id` INT UNSIGNED NOT NULL,
+            `list_id` INT UNSIGNED NULL,
+            `task_id` INT UNSIGNED NULL,
+            `title` VARCHAR(255) NOT NULL DEFAULT '',
+            `note` VARCHAR(500) NOT NULL DEFAULT '',
+            `day` DATE NOT NULL,
+            `start_at` DATETIME NULL,
+            `end_at` DATETIME NULL,
+            `seconds` INT UNSIGNED NOT NULL DEFAULT 0,
+            `running` TINYINT(1) NOT NULL DEFAULT 0,
+            `billable` TINYINT(1) NOT NULL DEFAULT 0,
+            `tz` VARCHAR(64) NOT NULL DEFAULT 'UTC',
+            `created_at` DATETIME NOT NULL,
+            `updated_at` DATETIME NOT NULL,
+            UNIQUE KEY `uq_eid` (`eid`),
+            KEY `ix_user_day` (`user_id`, `day`),
+            KEY `ix_running` (`user_id`, `running`),
+            KEY `ix_task` (`task_id`),
+            CONSTRAINT `fk_{$p}taskt_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE,
+            CONSTRAINT `fk_{$p}taskt_list` FOREIGN KEY (`list_id`) REFERENCES `{$p}task_lists` (`id`) ON DELETE SET NULL,
+            CONSTRAINT `fk_{$p}taskt_task` FOREIGN KEY (`task_id`) REFERENCES `{$p}task_items` (`id`) ON DELETE SET NULL
+        ) $e",
     ];
 }
 
@@ -92,5 +123,8 @@ function install_task_schema(PDO $pdo, string $prefix): void
     $has = (int)$pdo->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{$prefix}task_items' AND COLUMN_NAME = 'log'")->fetchColumn();
     if (!$has) $pdo->exec("ALTER TABLE `{$prefix}task_items` ADD COLUMN `log` TEXT NULL AFTER `rrule`");
     $pdo->exec("ALTER TABLE `{$prefix}task_lists` MODIFY `view` ENUM('list','board','gantt','table','habits') NOT NULL DEFAULT 'list'");
+    // version 4: the time tracked (its table is made above) and the hourly rate of a list (the project or the client)
+    $has = (int)$pdo->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{$prefix}task_lists' AND COLUMN_NAME = 'rate'")->fetchColumn();
+    if (!$has) $pdo->exec("ALTER TABLE `{$prefix}task_lists` ADD COLUMN `rate` DECIMAL(10,2) NULL AFTER `position`");
     $pdo->prepare("INSERT INTO `{$prefix}meta` (k, v) VALUES ('task_schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)")->execute([(string)TASK_SCHEMA_VERSION]);
 }

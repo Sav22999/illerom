@@ -4,7 +4,8 @@
  * (task.js). The screen stays while the address changes view: only the side and the card are drawn again.
  *
  * Smart views: today (late and due today), upcoming (by day), inbox, starred, done (the last 60 days), labels, search,
- * and "From SavSchedules": what SavSchedules asks of the account (polls to decide, places booked), read-only.
+ * and "From SavSchedules": what SavSchedules asks of the account (polls to decide, places booked), read-only; and "Time"
+ * (track.js): the time tracked, whose timer is always in the bar while it runs.
  */
 import { btn, confirm, dialog, drop, dropBtn, empty, fail, h, icon, iconBtn, mobile, put, segmented, toast, K } from './ui.js';
 import { getLang, t, when } from './i18n.js';
@@ -18,6 +19,7 @@ import { ganttView } from './gantt.js';
 import { isMatrix, newDialog } from './create.js';
 import { tableView } from './table.js';
 import { habitsView, habitsToday } from './habits.js';
+import { paintTimers, rowTimer, stopTimer, timeMeta, timeView, timerBar } from './track.js';
 
 const tz = () => prefs().tz || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 const today = () => todayKey(tz());
@@ -64,6 +66,7 @@ function viewData(view, arg) {
     return { title: t('v_done'), icon: 'circle-check', color: '#0f8a63', groups: [...m.entries()].map(([g, l]) => [relDay(g, t, tz()), l]), count: list.length, doneView: true };
   }
   if (view === 'schedules') return { title: t('v_schedules'), icon: 'vote', color: '#1f56d1', schedulesView: true, count: S.schedules.length };
+  if (view === 'time') return { title: t('v_time'), icon: 'timer', color: '#6a2cf0', timeView: true };
   if (view === 'tag') { const list = openOnes().filter((x) => x.tags.includes(arg)).sort(SORTS.due); return { title: '#' + arg, icon: 'tag', color: '#4a5875', groups: [[null, list]], count: list.length, tag: arg }; }
   if (view === 'search') {
     const q = arg.toLowerCase();
@@ -93,7 +96,7 @@ export async function tasksScreen(root, view, arg) {
   } else screen.draw();
   // the search of actions (⌘J / Ctrl+J): new, the views of the side, the lists to open
   commands([t('new_l'), [['plus', t('new_l'), () => newTaskDialog(screen)], ['list-plus', t('new_list_dots'), () => newDialog(screen.ctx, { kind: 'list' })], ['file-up', t('open_file'), () => import('./files.js').then((m) => m.openFileDialog())]]],
-    [t('views'), [['sun', t('v_today'), '#/today'], ['calendar-days', t('v_upcoming'), '#/upcoming'], ['inbox', inbox()?.name || t('inbox'), '#/inbox'], ['star', t('v_starred'), '#/starred'], ['circle-check', t('v_done'), '#/done'], prefs().schedules !== false ? ['vote', t('v_schedules'), '#/schedules'] : null]],
+    [t('views'), [['sun', t('v_today'), '#/today'], ['calendar-days', t('v_upcoming'), '#/upcoming'], ['inbox', inbox()?.name || t('inbox'), '#/inbox'], ['star', t('v_starred'), '#/starred'], ['circle-check', t('v_done'), '#/done'], prefs().schedules !== false ? ['vote', t('v_schedules'), '#/schedules'] : null, ['timer', t('v_time'), '#/time'], S.timer ? ['square', t('tt_stop'), () => stopTimer().then(() => screen.draw()).catch(fail)] : null]],
     [t('my_lists'), S.lists.filter((l) => !l.inbox && !l.archived).map((l) => [l.icon || 'list', l.name, '#/l/' + l.id])]);
   if (S.pendingFile) import('./files.js').then((m) => m.openPending());
   addEventListener('keydown', screen.onKey);
@@ -109,7 +112,7 @@ function build(root) {
   const drawer = h('sav-drawer.tdrawer', { label: t('lists'), placement: 'start' });
   const menuBtn = iconBtn('menu', t('lists'), () => { put(drawer, sidebar(sc)); drawer.show(); }, { class: 'only-mobile' });
   const nav = h('sav-bottom-nav.tbottom', { label: t('views') });
-  const el = h('div.tapp', h('header.ttop', menuBtn, brand(), h('div.spacer'), h('div.tsearch', q), userMenu()), h('div.tbody', side, h('div.twrap', main)), nav, drawer);
+  const el = h('div.tapp', h('header.ttop', menuBtn, brand(), h('div.spacer'), timerBar(() => sc.draw()), h('div.tsearch', q), userMenu()), h('div.tbody', side, h('div.twrap', main)), nav, drawer);
   put(root, el);
 
   const sc = {
@@ -119,6 +122,7 @@ function build(root) {
       put(side, sidebar(sc));
       drawMain(main, sc);
       drawNav(nav, sc);
+      paintTimers();
       document.title = (viewData(sc.view, sc.arg).title || 'SavTasks') + ' – SavTasks';
       reminders.check();
     },
@@ -145,7 +149,7 @@ function sidebar(sc) {
   const cur = (v, a = '') => sc.view === v && (!a || sc.arg === a);
   const close = () => sc.drawer.hide?.();
   const link = (v, ic, label, count, o = {}) => h('a.vrow' + (cur(v, o.arg) ? '.on' : ''), { href: '#/' + v + (o.arg ? '/' + o.arg : ''), style: o.color ? `--c:${o.color}` : null, onclick: close, 'aria-current': cur(v, o.arg) ? 'page' : null },
-    icon(ic), h('span', label), count ? h('sav-badge', { pill: true, size: 'sm', variant: o.late ? 'danger' : 'neutral', appearance: o.late ? 'solid' : 'soft' }, String(count)) : null);
+    icon(ic), h('span', label), count ? h('sav-badge', { pill: true, size: 'sm', variant: o.late ? 'danger' : 'neutral', appearance: o.late ? 'solid' : 'soft' }, String(count)) : null, o.running ? h('i.ttdot', { title: t('tt_running') }) : null);
   const lists = S.lists.filter((l) => !l.inbox && !l.archived), archived = S.lists.filter((l) => l.archived);
   const counts = new Map();
   for (const x of open) counts.set(x.list, (counts.get(x.list) || 0) + 1);
@@ -168,6 +172,7 @@ function sidebar(sc) {
     link('starred', 'star', t('v_starred'), n.starred, { color: '#c27a06' }),
     link('done', 'circle-check', t('v_done'), 0, { color: '#0f8a63' }),
     prefs().schedules !== false ? link('schedules', 'vote', t('v_schedules'), S.schedules.length, { color: '#1f56d1' }) : null,
+    link('time', 'timer', t('v_time'), 0, { color: '#6a2cf0', running: !!S.timer }),
     h('div.shead', h('span', t('my_lists')), add),
     lists.length ? sortable : h('p.muted.small.snone', t('no_lists')),
     archived.length ? h('sav-details.sarch', { summary: t('archived_n', { n: archived.length }), appearance: 'plain' }, h('div.stack0', archived.map(lrow))) : null,
@@ -196,6 +201,7 @@ function drawMain(main, sc) {
   ctx.list = d.list || null;
   ctx.view = sc.view;
   const l = d.list;
+  if (d.timeView) return timeView(main, ctx);
   const head = h('div.vhead', { style: `--c:${d.color || '#0b7a87'}` },
     h('span.vicon', icon(d.icon || 'list-checks')),
     h('div.vtitle', h('h1', d.title), h('small.muted', d.sub || (l ? t(l.view === 'habits' ? 'n_habits' : 'n_open', { n: liveTasks().filter((x) => x.list === l.id && !x.done).length }) : d.count !== undefined ? t(d.schedulesView ? 'n_items' : 'n_tasks', { n: d.count }) : ''))),
@@ -270,6 +276,8 @@ export function metaOf(x, o = {}) {
   if (x.remind && !x.done && Date.parse(x.remind) > Date.now()) bits.push(h('span.m', { title: t('reminder') + ': ' + whenText(x.remind) }, icon('bell')));
   if (x.checklist.length) { const dn = x.checklist.filter((c) => c.d).length; bits.push(h('span.m' + (dn === x.checklist.length ? '.ok' : ''), icon('list-checks'), `${dn}/${x.checklist.length}`)); }
   if (x.notes) bits.push(h('span.m', { title: t('notes') }, icon('text')));
+  const tm = timeMeta(x);
+  if (tm) bits.push(tm);
   if (x.calEvent && S.linked.events[x.calEvent]) bits.push(h('span.m.app', { title: t('in_calendar') }, icon('calendar-check')));
   if (x.schedule) { const s = S.linked.schedules[x.schedule]; bits.push(h('span.m.app' + (s?.final ? '.ok' : ''), { title: s?.final ? t('sch_date_set') : t('sch_waiting') }, icon('vote'), s ? (s.final ? t('date_set') : String(s.answers)) : '')); }
   for (const g of x.tags) bits.push(h('a.m.tag', { href: '#/tag/' + encodeURIComponent(g), onclick: (e) => e.stopPropagation() }, '#' + g));
@@ -291,7 +299,7 @@ export function taskRow(x, ctx, o = {}) {
   const row = h('div.trow' + (x.done ? '.done' : '') + (x.priority ? '.p' + x.priority : ''), { 'data-id': x.id, tabindex: 0, role: 'button', 'aria-label': x.title,
     onclick: () => openTask(x.id, ctx), onkeydown: (e) => { if (e.key === 'Enter' && e.target === e.currentTarget) openTask(x.id, ctx); if (e.key === ' ' && e.target === e.currentTarget) { e.preventDefault(); cb.checked = !cb.checked; toggleDone(x, cb.checked, ctx, row); } } },
     o.drag ? h('span.grip', { 'data-grip': '', 'aria-hidden': 'true' }, icon('grip-vertical')) : null,
-    cb, h('div.tinfo', h('div.ttitle', x.title || t('no_title')), meta.length ? h('div.tmeta', meta) : null), x.done ? null : star);
+    cb, h('div.tinfo', h('div.ttitle', x.title || t('no_title')), meta.length ? h('div.tmeta', meta) : null), x.done || listById(x.list)?.view === 'habits' ? null : rowTimer(x, () => ctx.redraw()), x.done ? null : star);
   return row;
 }
 
