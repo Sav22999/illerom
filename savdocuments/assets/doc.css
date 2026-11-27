@@ -724,6 +724,8 @@
 .doc hr.short { width: 22% !important; height: 3px; margin-inline: auto; background: var(--accent); border-radius: 2px; }
 .doc hr.orn { height: 12px; background: radial-gradient(circle, var(--accent) 4px, transparent 4.5px) center / 12px 12px no-repeat, linear-gradient(var(--accent), var(--accent)) calc(50% - 34px) 50% / 44px 1px no-repeat, linear-gradient(var(--accent), var(--accent)) calc(50% + 34px) 50% / 44px 1px no-repeat; }
 .doc .drop::first-letter { float: left; font: 700 3.3em/.82 var(--hfont); color: var(--accent); padding: .06em .1em 0 0; }
+/* as a float the drop cap is pushed under the floats that make the pages (it ended up far below its paragraph): where the browser can, initial-letter needs no float */
+@supports (initial-letter: 3) or (-webkit-initial-letter: 3) { .doc .drop::first-letter { float: none; padding: 0 .08em 0 0; font-size: 1em; line-height: 1; -webkit-initial-letter: 3; initial-letter: 3; } }
 .doc p[style*=background-color], .doc h1[style*=background-color], .doc h2[style*=background-color] { padding: .45em .7em; border-radius: 4px; }
 .doc table.bare td, .doc table.bare th { border: 0; padding: 0 .6em; background: none; }
 .doc table.bare td:first-child { padding-left: 0; }

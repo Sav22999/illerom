@@ -46,6 +46,11 @@ if (preg_match('#^/(it|en)((?:/projects/[a-z0-9-]+|/about|/privacy|/status|/type
     header('Location: /' . $m[1] . $m[2] . '/', true, 301);
     return;
 }
+// the apps of SavOffice have their page inside the page of the suite (savoffice/app.php)
+if (preg_match('#^/(it|en)/projects/([a-z0-9-]+)/$#', $path, $m) && ($projects[$m[2]]['suite'] ?? '') === 'savoffice') {
+    header('Location: /savoffice/' . $m[2] . '/?lang=' . $m[1], true, 301);
+    return;
+}
 if (preg_match('#^/(it|en)/projects/?$#', $path, $m)) {
     header('Location: /' . $m[1] . '/', true, 301);
     return;

@@ -632,23 +632,6 @@ sav-card:not(:defined) {
     padding: 1.25rem;
 }
 
-.pcard {
-    flex: 1;
-    min-width: 0;
-    --sav-card-padding: 1.35rem;
-}
-
-.pc {
-    display: grid;
-    grid-template: auto auto 1fr auto / auto 1fr;
-    gap: .55rem 1rem;
-    height: 100%;
-}
-
-.pc > * {
-    min-width: 0;
-}
-
 .picon {
     position: relative;
     isolation: isolate;
@@ -674,10 +657,6 @@ sav-card:not(:defined) {
     background: var(--tile);
     rotate: -9deg;
     transition: rotate .35s var(--sav-easing);
-}
-
-.item:hover .picon::before {
-    rotate: 9deg;
 }
 
 .cat-games {
@@ -722,80 +701,7 @@ sav-card:not(:defined) {
     color: var(--sav-color-text-muted);
 }
 
-.pc .plevel {
-    justify-self: end;
-    align-self: start;
-    margin-top: .25rem;
-}
-
-.pc h3 {
-    grid-column: 1 / -1;
-    margin-top: .65rem;
-    font-size: 1.3rem;
-}
-
-.pc h3 a {
-    text-decoration: none;
-}
-
-.pc h3 a::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-}
-
-.pc h3 a:focus-visible {
-    outline: 0;
-}
-
-.pc h3 a:focus-visible::after {
-    outline: 3px solid var(--sav-color-focus);
-    outline-offset: -4px;
-}
-
-.pc > p {
-    grid-column: 1 / -1;
-    color: var(--sav-color-text-muted);
-    line-height: 1.5;
-}
-
-.pfoot {
-    grid-column: 1 / -1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    min-height: 2.4rem;
-    margin-top: .7rem;
-}
-
-.pfacts {
-    display: flex;
-    flex-wrap: wrap;
-    column-gap: .5em;
-    font-size: .82rem;
-    line-height: 1.4;
-    color: var(--sav-color-text-muted);
-}
-
-.pfacts li + li::before {
-    content: "\\";
-    margin-right: .5em;
-    opacity: .55;
-}
-
-.go {
-    position: relative;
-    z-index: 1;
-    --sav-control-sm: 2.4rem;
-}
-
-.soon {
-    font-size: .875rem;
-    font-weight: 550;
-    color: var(--sav-color-text-muted);
-}
-
+/* the icons of the apps of a suite (the card of SavOffice) */
 .none {
     display: grid;
     justify-items: center;
@@ -811,80 +717,6 @@ sav-card:not(:defined) {
 
 .none-bars .bars {
     height: 2.4rem;
-}
-
-/* bigger projects */
-.big {
-    background: var(--sav-color-surface-2);
-    padding-block: clamp(2.75rem, 6vw, 4.5rem);
-}
-
-.big-in {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
-    gap: 2rem clamp(2rem, 5vw, 4.5rem);
-    align-items: center;
-}
-
-.big h2 {
-    margin-bottom: .7rem;
-}
-
-.big p {
-    margin-bottom: 1.1rem;
-    color: var(--sav-color-text-muted);
-    max-width: 34em;
-}
-
-.big-list {
-    display: grid;
-    gap: .35rem;
-}
-
-.big-list a {
-    position: relative;
-    isolation: isolate;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: .8rem 1rem;
-    text-decoration: none;
-}
-
-.big-list a::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    transition: background .18s, rotate .25s var(--sav-easing);
-}
-
-.big-list a:hover::before {
-    background: var(--sav-color-surface);
-    rotate: -.7deg;
-}
-
-.big-list img {
-    width: 2.5rem;
-    height: 2.5rem;
-    object-fit: contain;
-}
-
-.big-list span {
-    flex: 1;
-    min-width: 0;
-    color: var(--sav-color-text-muted);
-    font-size: .95rem;
-}
-
-.big-list b {
-    display: block;
-    color: var(--sav-color-text);
-    font: 600 1.05rem/1.3 var(--display);
-}
-
-.big-list .ic {
-    color: var(--sav-color-text-muted);
 }
 
 /* project page */
@@ -1551,7 +1383,7 @@ code {
 }
 
 @media (max-width: 56rem) {
-    .hero-in, .big-in, .pbody, .aname, .filters {
+    .hero-in, .pbody, .aname, .filters {
         grid-template-columns: minmax(0, 1fr);
     }
 
@@ -1682,81 +1514,8 @@ a, button {
         margin: .9rem 0 .8rem;
     }
 
-    /* projects: a compact list, the whole row opens the page and the button opens the project */
     .grid {
         gap: 1rem;
-    }
-
-    .pcard {
-        --sav-card-padding: .95rem 1rem;
-    }
-
-    .pc {
-        grid-template: auto auto auto auto / auto minmax(0, 1fr) auto;
-        gap: .15rem .95rem;
-        align-items: center;
-    }
-
-    .picon {
-        width: 3.25rem;
-        height: 3.25rem;
-        grid-row: 1 / -1;
-        align-self: start;
-        margin: .35rem .3rem;
-    }
-
-    .pc h3 {
-        grid-column: 2 / -1;
-        grid-row: 1;
-        margin: 0;
-        font-size: 1.15rem;
-    }
-
-    .pc > p {
-        grid-column: 2 / -1;
-        grid-row: 2;
-        font-size: .95rem;
-        line-height: 1.4;
-    }
-
-    .pc .plevel {
-        grid-column: 2;
-        grid-row: 3;
-        justify-self: start;
-        align-self: center;
-        margin: .25rem 0 0;
-        font-size: .8rem;
-    }
-
-    .pfoot {
-        display: contents;
-    }
-
-    .pfacts {
-        grid-column: 2 / -1;
-        grid-row: 4;
-        font-size: .8rem;
-    }
-
-    .go, .soon {
-        grid-column: 3;
-        grid-row: 3;
-        align-self: center;
-        margin: .25rem 0 0;
-    }
-
-    .go {
-        --sav-control-sm: 2.75rem;
-    }
-
-    .soon {
-        max-width: 4rem;
-        text-align: right;
-        font-size: .82rem;
-    }
-
-    .item:active .picon::before {
-        rotate: 9deg;
     }
 
     /* one project */
@@ -1853,7 +1612,7 @@ a, button {
         padding: .6rem 0;
     }
 
-    .facts .more, .facts dd a, .big .more {
+    .facts .more, .facts dd a {
         min-height: 2.75rem;
         align-items: center;
         display: inline-flex;
@@ -2031,15 +1790,6 @@ a, button {
 
     .stapi {
         margin-top: 2.5rem;
-    }
-
-    .big {
-        padding-block: 2.25rem;
-    }
-
-    .big-list a {
-        padding-inline: .5rem;
-        min-height: 3.5rem;
     }
 
     .foot-in {

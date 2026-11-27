@@ -10,7 +10,7 @@
 import { btn, colorPop, confirm, dialog, drop, fail, h, icon, iconBtn, K, mobile, put, toast } from './ui.js';
 import { getLang, t } from './i18n.js';
 import { S, api } from './store.js';
-import { go, prefs, setPrefs, userMenu } from './account.js';
+import { commands, go, prefs, setPrefs, userMenu } from './account.js';
 import { appsButton } from './office.js';
 import { DEFS, NS, itemSVG, patternSVG } from './render.js';
 import { LINE, bounds, cut, hits, layoutNote, measure, moved, overlaps, scaled, union } from './ink.js';
@@ -805,29 +805,36 @@ export async function boardScreen(root, id) {
       ] : null,
       h('sav-divider'), btn(t('clear_board'), { icon: 'trash', size: 'sm', appearance: 'ghost', variant: 'danger', onclick: async () => { if (!items.size) return; if (await confirm(t('clear_board'), t('clear_board_t'), t('clear'))) { change([...items.values()].map((i) => [i.id, i, null])); } } }));
     fill();
+    box.refresh = fill;
     return box;
   }
   const lookB = iconBtn('palette', t('board_look'), null, { kbd: '' });
   const lookPop = h('sav-popover', { placement: 'bottom-end', 'sheet-on-mobile': true, heading: t('board_look'), style: '--width:20rem' });
   lookB.slot = 'trigger';
-  lookPop.append(lookB);
-  lookPop.addEventListener('sav-show', () => { if (lookPop.querySelector('.look')) lookPop.querySelector('.look').remove(); lookPop.append(lookPanel()); });
+  // the panel is there from the start, so the popover measures its real size when it places itself; opening only refreshes it
+  const look = lookPanel();
+  lookPop.append(lookB, look);
+  lookPop.addEventListener('sav-show', () => look.refresh());
 
   const undoB = iconBtn('undo-2', t('undo'), () => undo(), { kbd: 'Mod+Z' }), redoB = iconBtn('redo-2', t('redo'), () => redo(), { kbd: 'Mod+Shift+Z' });
   const whole = () => ({ title, settings, items: order.map((x) => items.get(x)) });
+  // SavDrive: the cloud next to the grid of the apps saves this board into the drive (../assets/savoffice/savoffice.js)
+  window.SavOffice?.exporter?.({ key: id, make: async () => { finishEdit(); const b = whole(), f = await import('./files.js'); return { blob: await f.makeSavwhi(b), name: f.fileName(b.title, 'savwhi') }; } });
   const exp = async (fn) => { finishEdit(); if (!items.size && fn !== saveSavwhi) return toast(t('export_empty'), 'neutral'); try { await fn(whole()); } catch (e) { fail(e); } };
-  const downloadB = drop(h('sav-button', { icon: 'download', label: t('download_as'), title: t('download_as'), appearance: 'ghost', variant: 'neutral', size: 'sm', square: true }), [
+  const dlList = [
     ['file-down', t('save_savwhi'), () => exp(saveSavwhi)], '-', ['image', t('save_png'), () => exp(savePng)], ['file-image', t('save_svg'), () => exp(saveSvg)], ['file-text', t('save_pdf'), () => exp(savePdf)],
-  ], { placement: 'bottom-end', label: t('download_as') });
+  ];
+  const downloadB = drop(h('sav-button', { icon: 'download', label: t('download_as'), title: t('download_as'), appearance: 'ghost', variant: 'neutral', size: 'sm', square: true }), dlList, { placement: 'bottom-end', label: t('download_as') });
   const fullscreen = () => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.())?.catch?.(() => {});
-  const moreB = drop(h('sav-button', { icon: 'ellipsis-vertical', label: t('more_tools'), title: t('more_tools'), appearance: 'ghost', variant: 'neutral', size: 'sm', square: true }), () => [
+  const moreList = () => [
     mobile() ? ['palette', t('board_look'), () => lookB.button.click()] : null,
     ['mouse-pointer-2', t('select_all'), () => { setTool('select'); select(order); }, { kbd: 'Mod+A' }],
     ['clipboard-paste', t('paste'), () => pasteFromMenu(...toWorld(size().l + size().w / 2, size().t + size().h / 2))],
     ['image', t('insert_image'), () => pickImage()],
     '-', ['scan', t('zoom_fit'), () => fit(), { kbd: 'Shift+1' }], document.documentElement.requestFullscreen ? ['maximize', t(document.fullscreenElement ? 'exit_full' : 'full_screen'), fullscreen] : null,
     '-', ['info', t('shortcuts'), () => shortcuts()],
-  ], { placement: 'bottom-end', label: t('more_tools') });
+  ];
+  const moreB = drop(h('sav-button', { icon: 'ellipsis-vertical', label: t('more_tools'), title: t('more_tools'), appearance: 'ghost', variant: 'neutral', size: 'sm', square: true }), moreList, { placement: 'bottom-end', label: t('more_tools') });
 
   const titleIn = h('sav-input.dtitle', { value: title, maxlength: 160, size: 'sm', 'aria-label': t('rename'), spellcheck: 'false' });
   titleIn.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') titleIn.blur(); });
@@ -845,6 +852,11 @@ export async function boardScreen(root, id) {
   const zoom = h('div.zoom', iconBtn('zoom-out', t('zoom_out'), () => zoomTo(V.z / 1.25), { place: 'top', kbd: '-' }), zoomLabel, iconBtn('zoom-in', t('zoom_in'), () => zoomTo(V.z * 1.25), { place: 'top', kbd: '+' }), iconBtn('scan', t('zoom_fit'), () => fit(), { place: 'top', kbd: 'Shift+1' }));
   wrap.append(top, h('div.dock', props, tools), zoom);
   put(root, wrap);
+  // the search of actions (⌘J / Ctrl+J): the tools, the menu and the downloads, as in the bar
+  const asCmd = (list) => list.filter(Array.isArray).map(([ic, l, fn, o]) => [ic, l, fn, o?.kbd || null]);
+  commands([t('tools'), TOOLS.map(([k, ic, key]) => [ic, t('tool_' + k), () => setTool(k), key])],
+    [t('more_tools'), [['undo-2', t('undo'), () => undo(), 'Mod+Z'], ['redo-2', t('redo'), () => redo(), 'Mod+Shift+Z'], ['palette', t('board_look'), () => lookB.button.click()], ...asCmd(moreList())]],
+    [t('download_as'), asCmd(dlList)]);
   document.title = title + ' – SavWhiteboard';
   setStatus('saved');
 
@@ -938,6 +950,7 @@ export async function boardScreen(root, id) {
   if (S.pendingImport) { const list = S.pendingImport; S.pendingImport = null; void list; }
 
   return () => {
+    window.SavOffice?.exporter?.(null);
     finishEdit();
     gone = true;
     flush(true);

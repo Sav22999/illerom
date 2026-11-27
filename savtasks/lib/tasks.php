@@ -2,7 +2,8 @@
 /**
  * SavTasks — lists, tasks, repetitions, and what goes to and comes from SavCalendar and SavSchedules.
  *
- * Every list belongs to one account; every task belongs to one list. A list is shown as a list or as a board (kanban):
+ * Every list belongs to one account; every task belongs to one list. A list is shown as a list, as a board (kanban) or as
+ * a Gantt chart (each task a bar from its start day to its due day; a task with only a due day is a milestone):
  * the columns of a board are kept with the list, and a task knows its column (col). A column may be marked "done": a
  * task moved there is ticked, and a task ticked elsewhere goes there.
  *
@@ -21,7 +22,7 @@
 declare(strict_types=1);
 
 const LIST_COLORS = ['#0b7a87', '#1f56d1', '#6a2cf0', '#c2307a', '#c93a2f', '#e0532f', '#c27a06', '#0f8a63', '#4a5875', '#7a5c3e'];
-const LIST_ICONS = ['', 'list-checks', 'square-kanban', 'briefcase', 'house', 'shopping-cart', 'book-open', 'heart', 'plane', 'graduation-cap', 'dumbbell', 'lightbulb', 'users', 'star', 'flag', 'inbox'];
+const LIST_ICONS = ['', 'list-checks', 'square-kanban', 'chart-gantt', 'grid-2x2', 'calendar-days', 'repeat', 'flame', 'table', 'briefcase', 'house', 'shopping-cart', 'book-open', 'heart', 'plane', 'graduation-cap', 'dumbbell', 'lightbulb', 'users', 'star', 'flag', 'inbox'];
 const SCH_COLORS = ['blue' => '#1f56d1', 'violet' => '#6a2cf0', 'green' => '#0f8a63', 'coral' => '#e0532f', 'amber' => '#c27a06', 'pink' => '#c2307a', 'teal' => '#0b8494', 'slate' => '#4a5875'];
 const MAX_CHECKLIST = 100;
 const MAX_TAGS = 12;
@@ -178,8 +179,8 @@ function out_task(array $x, array $l): array
         'checklist' => json_decode((string)($x['checklist'] ?? '[]'), true) ?: [],
         'tags' => $x['tags'] !== '' ? (json_decode($x['tags'], true) ?: []) : [],
         'priority' => (int)$x['priority'], 'starred' => (bool)$x['starred'], 'col' => $x['col'] ?: first_col($l), 'position' => (int)$x['position'],
-        'due' => $x['due_date'], 'time' => $x['due_time'] ? substr($x['due_time'], 0, 5) : null, 'dueAt' => iso($x['due_at']), 'tz' => $x['tz'],
-        'remind' => iso($x['remind_at']), 'reminded' => iso($x['reminded_at']), 'rrule' => $x['rrule'],
+        'start' => $x['start_date'] ?? null, 'due' => $x['due_date'], 'time' => $x['due_time'] ? substr($x['due_time'], 0, 5) : null, 'dueAt' => iso($x['due_at']), 'tz' => $x['tz'],
+        'remind' => iso($x['remind_at']), 'reminded' => iso($x['reminded_at']), 'rrule' => $x['rrule'], 'log' => json_decode((string)($x['log'] ?? '[]'), true) ?: [],
         'done' => iso($x['done_at']), 'calEvent' => $x['cal_eid'] ?: null, 'schedule' => $x['sch_pid'] ?: null,
         'created' => iso($x['created_at']), 'updated' => iso($x['updated_at']),
     ];
@@ -237,7 +238,7 @@ function next_due(string $rrule, string $day, bool $fromToday = true, string $tz
 function clean_task(array $b, array $l, string $defTz, ?array $old = null): array
 {
     $has = fn(string $k) => array_key_exists($k, $b);
-    $x = $old ?: ['title' => '', 'notes' => '', 'checklist' => '[]', 'tags' => '', 'priority' => 0, 'starred' => 0, 'col' => first_col($l), 'due_date' => null, 'due_time' => null, 'tz' => $defTz, 'remind_at' => null, 'reminded_at' => null, 'rrule' => ''];
+    $x = $old ?: ['title' => '', 'notes' => '', 'checklist' => '[]', 'tags' => '', 'priority' => 0, 'starred' => 0, 'col' => first_col($l), 'start_date' => null, 'due_date' => null, 'due_time' => null, 'tz' => $defTz, 'remind_at' => null, 'reminded_at' => null, 'rrule' => ''];
     if ($has('title')) $x['title'] = s($b, 'title', 255);
     if ($has('notes')) $x['notes'] = multiline($b, 'notes', 10000);
     if ($has('checklist')) {
@@ -269,9 +270,16 @@ function clean_task(array $b, array $l, string $defTz, ?array $old = null): arra
         if (!$x['due_date']) $x['due_time'] = null;
     }
     if ($has('time')) $x['due_time'] = $x['due_date'] ? valid_clock($b['time']) : null;
+    // the start day: never after the due day (a start alone becomes the due day too); no due day, no start
+    if ($has('start')) $x['start_date'] = valid_day($b['start']);
+    if (!empty($x['start_date']) && !$x['due_date']) $x['due_date'] = $x['start_date'];
+    if (!$x['due_date'] || ($x['start_date'] ?? null) === $x['due_date']) $x['start_date'] = null;
+    if (!empty($x['start_date']) && $x['start_date'] > $x['due_date']) [$x['start_date'], $x['due_date']] = [$x['due_date'], $x['start_date']];
     $x['due_at'] = $x['due_date'] && $x['due_time'] ? wall_to_utc($x['due_date'], $x['due_time'], $x['tz']) : null;
-    if ($has('rrule')) $x['rrule'] = $x['due_date'] ? clean_task_rrule((string)$b['rrule']) : '';
-    if (!$x['due_date']) $x['rrule'] = '';
+    // a habit repeats with no due day (its days are its rrule); any other task needs a due day to repeat
+    $habit = ($l['view'] ?? '') === 'habits';
+    if ($has('rrule')) $x['rrule'] = $x['due_date'] || $habit ? clean_task_rrule((string)$b['rrule']) : '';
+    if (!$x['due_date'] && !$habit) $x['rrule'] = '';
     if ($has('remind')) {
         $r = utc_time($b['remind'] ?? null);
         if ($r !== ($x['remind_at'] ?? null)) $x['reminded_at'] = null;
@@ -284,16 +292,16 @@ function insert_task(int $listId, array $x, ?int $position = null): string
 {
     $tid = new_code('task_items', 'tid');
     if ($position === null) $position = (int)q('SELECT COALESCE(MIN(position), 1000) - 10 FROM ' . t('task_items') . ' WHERE list_id = ? AND done_at IS NULL', [$listId])->fetchColumn();
-    q('INSERT INTO ' . t('task_items') . ' (tid, list_id, title, notes, checklist, tags, priority, starred, col, position, due_date, due_time, due_at, tz, remind_at, reminded_at, rrule, done_at, cal_eid, sch_pid, created_at, updated_at)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [$tid, $listId, $x['title'], $x['notes'], $x['checklist'] ?? '[]', $x['tags'], $x['priority'], $x['starred'], $x['col'], $position,
-        $x['due_date'], $x['due_time'], $x['due_at'], $x['tz'], $x['remind_at'], $x['reminded_at'] ?? null, $x['rrule'], $x['done_at'] ?? null, $x['cal_eid'] ?? null, $x['sch_pid'] ?? null, now_utc(), now_utc()]);
+    q('INSERT INTO ' . t('task_items') . ' (tid, list_id, title, notes, checklist, tags, priority, starred, col, position, start_date, due_date, due_time, due_at, tz, remind_at, reminded_at, rrule, log, done_at, cal_eid, sch_pid, created_at, updated_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [$tid, $listId, $x['title'], $x['notes'], $x['checklist'] ?? '[]', $x['tags'], $x['priority'], $x['starred'], $x['col'], $position,
+        $x['start_date'] ?? null, $x['due_date'], $x['due_time'], $x['due_at'], $x['tz'], $x['remind_at'], $x['reminded_at'] ?? null, $x['rrule'], $x['log'] ?? null, $x['done_at'] ?? null, $x['cal_eid'] ?? null, $x['sch_pid'] ?? null, now_utc(), now_utc()]);
     return $tid;
 }
 
 function update_task(int $id, array $x): void
 {
-    q('UPDATE ' . t('task_items') . ' SET title = ?, notes = ?, checklist = ?, tags = ?, priority = ?, starred = ?, col = ?, due_date = ?, due_time = ?, due_at = ?, tz = ?, remind_at = ?, reminded_at = ?, rrule = ?, updated_at = ? WHERE id = ?',
-        [$x['title'], $x['notes'], $x['checklist'] ?? '[]', $x['tags'], $x['priority'], $x['starred'], $x['col'], $x['due_date'], $x['due_time'], $x['due_at'], $x['tz'], $x['remind_at'], $x['reminded_at'] ?? null, $x['rrule'], now_utc(), $id]);
+    q('UPDATE ' . t('task_items') . ' SET title = ?, notes = ?, checklist = ?, tags = ?, priority = ?, starred = ?, col = ?, start_date = ?, due_date = ?, due_time = ?, due_at = ?, tz = ?, remind_at = ?, reminded_at = ?, rrule = ?, updated_at = ? WHERE id = ?',
+        [$x['title'], $x['notes'], $x['checklist'] ?? '[]', $x['tags'], $x['priority'], $x['starred'], $x['col'], $x['start_date'] ?? null, $x['due_date'], $x['due_time'], $x['due_at'], $x['tz'], $x['remind_at'], $x['reminded_at'] ?? null, $x['rrule'], now_utc(), $id]);
 }
 
 /** A task of the account with its list (FOR UPDATE inside a transaction), or null. */
@@ -328,6 +336,7 @@ function set_done(array $x, bool $done, string $tz): ?string
     $shift = strtotime($next . ' UTC') - strtotime($x['due_date'] . ' UTC');
     $copy = $x;
     $copy['due_date'] = $next;
+    $copy['start_date'] = !empty($x['start_date']) ? gmdate('Y-m-d', strtotime($x['start_date'] . ' UTC') + $shift) : null;
     $copy['due_at'] = $x['due_time'] ? wall_to_utc($next, $x['due_time'], $x['tz']) : null;
     $copy['remind_at'] = $x['remind_at'] ? gmdate('Y-m-d H:i:s', strtotime($x['remind_at'] . ' UTC') + $shift) : null;
     $copy['reminded_at'] = null;
@@ -347,6 +356,23 @@ function tasks_of(array $lists): array
     $rows = q('SELECT * FROM ' . t('task_items') . ' WHERE list_id IN (' . implode(',', array_keys($byId)) . ') AND (done_at IS NULL OR done_at > ?) ORDER BY position, id LIMIT 20000',
         [gmdate('Y-m-d H:i:s', time() - 60 * 86400)])->fetchAll();
     return array_map(fn($x) => out_task($x, $byId[(int)$x['list_id']]), $rows);
+}
+
+// ------------------------------------------------------------------ habits
+
+/** The days a habit was done, clean: valid days, none in the future, unique, sorted, the last 400. */
+function clean_log($log, string $tz): array
+{
+    try {
+        $today = (new DateTime('now', new DateTimeZone($tz)))->format('Y-m-d');
+    } catch (Throwable $e) {
+        $today = gmdate('Y-m-d');
+    }
+    $out = [];
+    foreach (is_array($log) ? $log : [] as $d) if (($d = valid_day($d)) && $d <= $today) $out[$d] = true;
+    $out = array_keys($out);
+    sort($out);
+    return array_slice($out, -400);
 }
 
 // ------------------------------------------------------------------ SavSchedules

@@ -9,7 +9,6 @@ import android.graphics.Insets;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.CancellationSignal;
 import android.provider.OpenableColumns;
 import android.util.Base64;
 import android.view.View;
@@ -28,25 +27,13 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 
-import androidx.credentials.Credential;
-import androidx.credentials.CredentialManager;
-import androidx.credentials.CredentialManagerCallback;
-import androidx.credentials.CustomCredential;
-import androidx.credentials.GetCredentialRequest;
-import androidx.credentials.GetCredentialResponse;
-import androidx.credentials.exceptions.GetCredentialCancellationException;
-import androidx.credentials.exceptions.GetCredentialException;
-
-import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption;
-import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
-
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-/** The SavDocuments web app: files to open and save, Google sign-in and full-screen videos are native (as in SavPresentations). */
+/** The SavDocuments web app: files to open and save, full-screen videos are native (as in SavPresentations). */
 public class MainActivity extends Activity {
     private static final String PATH_PREFIX = "/savdocuments/";
     private static final int REQ_FILE = 1, REQ_SAVE = 2;
@@ -263,45 +250,8 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void googleSignIn(String webClientId) {
-        if (webClientId == null || webClientId.isEmpty()) {
-            sendResult("google", null, "not configured");
-            return;
-        }
-        // The ID token is issued for the web client: the server verifies it exactly as on the website
-        GetCredentialRequest request = new GetCredentialRequest.Builder().addCredentialOption(new GetSignInWithGoogleOption.Builder(webClientId).build()).build();
-        CredentialManager.create(this).getCredentialAsync(this, request, new CancellationSignal(), getMainExecutorCompat(), new CredentialManagerCallback<GetCredentialResponse, GetCredentialException>() {
-            @Override
-            public void onResult(GetCredentialResponse response) {
-                Credential c = response.getCredential();
-                if (c instanceof CustomCredential && GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL.equals(c.getType())) {
-                    try {
-                        sendResult("google", GoogleIdTokenCredential.createFrom(c.getData()).getIdToken(), null);
-                    } catch (Exception e) {
-                        sendResult("google", null, "invalid credential");
-                    }
-                } else sendResult("google", null, "unexpected credential");
-            }
-
-            @Override
-            public void onError(GetCredentialException e) {
-                String m = e.getMessage() == null ? "" : e.getMessage();
-                boolean refused = m.contains("[16]") || m.toLowerCase(java.util.Locale.ROOT).contains("reauth"); // Google refused this app, not the person
-                sendResult("google", null, !refused && e instanceof GetCredentialCancellationException ? "cancelled" : e.getClass().getSimpleName());
-            }
-        });
-    }
-
-    private java.util.concurrent.Executor getMainExecutorCompat() {
-        return r -> runOnUiThread(r);
-    }
-
     /** window.SavDocumentsAndroid (methods run on a background thread). */
     private class Bridge {
-        @JavascriptInterface
-        public void googleSignIn(String webClientId) {
-            if (onAppPage) runOnUiThread(() -> MainActivity.this.googleSignIn(webClientId));
-        }
 
         // A file made by the page arrives in pieces, then the system asks where to keep it
         @JavascriptInterface

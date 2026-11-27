@@ -29,6 +29,8 @@ async function route() {
     const q = new URLSearchParams(location.search);
     if (current?.leave) await current.leave();
     current = null;
+    // the search of actions (⌘J / Ctrl+J): the pages of the app; the home and the editor add their own
+    window.SavOffice?.commands(state.user ? [{label: 'SavPresentations', items: [{icon: 'layout-grid', label: t('my_decks'), run: () => go('./')}, {icon: 'settings', label: t('settings'), run: () => go('?p=settings')}, {icon: 'sparkles', label: t('changelog'), run: () => go('?p=changelog')}]}] : []);
     document.body.className = 'sav-base';
     app.textContent = '';
     document.querySelectorAll('body > sav-dialog').forEach((d) => d.hide?.());
@@ -114,7 +116,6 @@ function failed(e) {
         accent: '#6d3bef',
         accept: 'acceptTerms',
         acceptUrl: 'terms.php',
-        google: async (slot, cb) => (await import('./auth.js')).googleInto(slot, cb),
         body: () => ({lang: lang()})
     });
     if (new URLSearchParams(location.search).has('sav')) history.replaceState(null, '', './');
@@ -134,10 +135,13 @@ function failed(e) {
         const f = JSON.parse(pend), bytes = Uint8Array.from(atob(f.data), (x) => x.charCodeAt(0));
         (await import('./files.js')).openFile(new File([bytes], f.name));
     }
-    window.launchQueue?.setConsumer?.(async (p) => {
+    { const take = async (p) => {
         if (!p.files?.length || !state.user) return;
         const f = await p.files[0].getFile();
         (await import('./files.js')).openFile(f);
-    });
+    };
+      window.launchQueue?.setConsumer(take);
+      window.SavOffice?.fromDrive?.(take); // a file opened from SavDrive (?savdrive=<id>), given like a file of the device
+    }
 })().catch(failed);
 export {lang};

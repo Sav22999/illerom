@@ -5,7 +5,7 @@
 import { btn, confirm, copyText, dialog, drop as dropDown, dropBtn, empty, fail, h, icon, iconBtn, item, mobile, primary, put, tile, toast } from './ui.js';
 import { t, when } from './i18n.js';
 import { S, api, drop, formLink, keep } from './store.js';
-import { brand, credit, go, prefs, setPrefs, userMenu } from './account.js';
+import { brand, commands, credit, go, prefs, setPrefs, userMenu } from './account.js';
 import { models } from './models.js';
 import { LOCAL_TZ, rel, shortMoment } from './time.js';
 
@@ -112,6 +112,10 @@ export function homeScreen(root, wantNew = false) {
     const head = h('div.hhead', h('h1', query ? t('results_for', { q: query }) : t(V[filter][0])), h('div.spacer'), sorter, btn(t('open_file'), { size: 'sm', icon: 'file-up', appearance: 'outline', variant: 'neutral', onclick: () => import('./files.js').then((m) => m.openFileDialog()) }));
     const none = S.forms.length ? empty('search', t('nothing_found'), '') : empty('clipboard-list', t('no_forms'), t('no_forms_t'), primary(t('new_l'), { icon: 'plus', onclick: () => newForm() }));
     put(listBox, list.length ? h('div.grid', list.map(card)) : none);
+    // the search of actions (⌘J / Ctrl+J): the filters are views of the same page
+    commands([t('new_l'), [['plus', t('new_form'), () => newForm()], ...models().map(([k, ic, color, make]) => [ic, t('m_' + k), () => createForm(make, color).catch(fail), null, t('m_' + k + '_t')]), ['file-up', t('open_file'), () => import('./files.js').then((m) => m.openFileDialog())]]],
+      [t('home'), Object.keys(V).map((v) => [V[v][1], t(V[v][0]), () => { filter = v; draw(); }])],
+      [t('recent'), S.forms.filter((f) => !f.archived).slice(0, 80).map((f) => ['clipboard-list', f.title || t('untitled'), '#/e/' + f.id, null, nextStep(f)])]);
     // as in SavDocuments and SavPresentations: the title, the box to start a new one, then "Recent"
     const home = filter === 'all' && !query;
     put(main, head, home ? quick() : null, home && list.length ? h('h2', t('recent')) : null, listBox);

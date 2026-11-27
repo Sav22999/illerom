@@ -222,9 +222,7 @@ format|Format|Formato
 forward|One step forward|Un passo avanti
 from_computer|From the computer|Dal computer
 fullscreen|Full screen|Schermo intero
-g_new|Hi {name}! One last thing to create your account.|Ciao {name}! Un’ultima cosa per creare il tuo account.
 general_access|General access|Accesso generale
-google|Continue with Google|Continua con Google
 gradient|Gradient|Sfumatura
 guest|Guest|Ospite
 h1|Start|Inizio
@@ -880,9 +878,9 @@ links_made|Links made ({n})|Link creati ({n})
 manage|Manage|Gestisci
 name_t|Shown to the people you work with.|La vedono le persone con cui lavori.
 password_t|To sign in with your email.|Per entrare con la tua email.
-password_none_t|You sign in with Google or SavAccount: you can add one.|Entri con Google o SavAccount: puoi aggiungerne una.
+password_none_t|You sign in with SavAccount: you can add one.|Entri con SavAccount: puoi aggiungerne una.
 sign_in_ways|Ways to sign in|Modi per entrare
-sign_in_ways_t|Google, SavAccount and password, joined to this account.|Google, SavAccount e password, collegati a questo account.
+sign_in_ways_t|SavAccount and password, joined to this account.|SavAccount e password, collegati a questo account.
 sign_out_t|On this device.|Su questo dispositivo.
 new_decks_t|What a new presentation starts with. Each one can change it later.|Con cosa parte una presentazione nuova. Ognuna può cambiarlo dopo.
 editor_t|How the editor behaves: only for you, on every presentation.|Come si comporta l’editor: solo per te, in tutte le presentazioni.
@@ -956,9 +954,6 @@ err_email_unverified|Confirm your email first|Prima conferma la tua email
 err_file|This file cannot be opened|Questo file non si può aprire
 err_folder_not_found|This folder is no longer there|Questa cartella non c’è più
 err_forbidden|You cannot do this|Non puoi farlo
-err_google_disabled|Google sign-in is not available|L’accesso con Google non è disponibile
-err_google_email|Google has not confirmed this email|Google non ha confermato questa email
-err_google_token|Google sign-in did not work|L’accesso con Google non è riuscito
 err_image_big|This picture is too big: 15 MB at most|Questa immagine è troppo grande: al massimo 15 MB
 err_image_type|This is not a picture we can use|Questa non è un’immagine utilizzabile
 err_import_failed|It could not be downloaded: try another one|Non si riesce a scaricare: provane un’altra

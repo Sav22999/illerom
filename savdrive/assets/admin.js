@@ -1,0 +1,110 @@
+/**
+ * The panel of the master admins: how the drive is used, the accounts (activated or not, their space, deleting them) and
+ * the settings of new accounts (the default space and whether they are activated at once). Never the files themselves.
+ */
+import { btn, confirm, dialog, empty, fail, face, h, item, put, segmented, toast } from './ui.js';
+import { getLang, t, when } from './i18n.js';
+import { S, api } from './store.js';
+import { brand, commands, credit, go, userMenu } from './account.js';
+import { bytes, spaceParts } from './drive.js';
+
+const GBY = 1073741824;
+const gb = (b) => Math.round((b / GBY) * 100) / 100;
+
+export async function admin(root, tab) {
+  document.title = t('admin') + ' – SavDrive';
+  const tabs = [['overview', 'layout-grid'], ['users', 'users'], ['settings', 'settings']];
+  if (!tabs.some(([k]) => k === tab)) tab = 'overview';
+  const main = h('main.hmain.amain2'), menu = h('sav-menu', { label: t('admin'), selectable: true }, tabs.map(([k, ic]) => { const x = item(k, ic, t('a_' + k)); x.toggleAttribute('current', k === tab); return x; }), h('sav-divider'), item('home', 'arrow-left', t('back_drive')));
+  menu.addEventListener('sav-select', (e) => go(e.detail.value === 'home' ? '#/' : '#/admin/' + e.detail.value));
+  commands([t('admin'), tabs.map(([k, ic]) => [ic, t('a_' + k), '#/admin/' + k])]);
+  put(root, h('div.home', h('header.htop', brand(), h('sav-badge', { appearance: 'soft', variant: 'primary', pill: true }, t('admin')), h('div.spacer'), userMenu()), h('div.hbody', h('nav.hside', menu), main), credit()));
+  const badge = (v, ...x) => h('sav-badge', { variant: v, appearance: 'soft', pill: true }, x);
+  const num = (n) => Number(n).toLocaleString(getLang());
+
+  if (tab === 'overview') {
+    const o = await api('master.overview');
+    put(main, h('h1.ah', t('a_overview')),
+      h('div.stats', [['a_users', num(o.users), 'users'], ['a_active', num(o.active), 'user-check'], ['a_waiting', num(o.waiting), 'clock'], ['a_files', num(o.files), 'file'], ['a_folders', num(o.folders), 'folder'], ['a_stored', bytes(o.bytes), 'hard-drive']]
+        .map(([k, v, ic]) => h('sav-stat', { label: t(k), value: v, icon: ic }))),
+      h('sav-card.acard', h('div.stack', h('h2', t('a_new_accounts')),
+        h('p', t('a_default_quota_is', { q: bytes(o.defaultQuota) })), h('p', t(o.defaultActive ? 'a_default_on' : 'a_default_off')),
+        h('p.muted.small', t('a_given', { q: bytes(o.given) }) + (o.disk ? ' · ' + t('a_disk', { q: bytes(o.disk) }) : '')),
+        h('div.prow.wrap', btn(t('a_settings'), { icon: 'settings', size: 'sm', onclick: () => go('#/admin/settings') }), o.waiting ? btn(t('a_see_waiting', { n: o.waiting }), { icon: 'clock', size: 'sm', variant: 'primary', appearance: 'soft', onclick: () => go('#/admin/users') }) : null))),
+      h('sav-alert', { variant: 'neutral' }, t('a_privacy')));
+    return;
+  }
+
+  if (tab === 'settings') {
+    const o = await api('master.overview');
+    const quota = h('sav-number-input', { label: t('a_default_quota'), value: gb(o.defaultQuota), min: 0.01, max: 10240, step: 0.5, size: 'md', help: t('a_default_quota_t') }, h('span', { slot: 'suffix' }, 'GB'));
+    const presets = h('div.prow.wrap', [1, 2, 5, 10, 15, 50, 100].map((n) => btn(n + ' GB', { size: 'sm', appearance: 'outline', onclick: () => { quota.value = n; } })));
+    const act = h('sav-radio-group', { label: t('a_new_state'), value: o.defaultActive ? 'on' : 'off' },
+      h('sav-radio', { value: 'on' }, h('b', t('a_activate')), h('br'), h('small.muted', t('a_activate_t'))),
+      h('sav-radio', { value: 'off' }, h('b', t('a_deactivate')), h('br'), h('small.muted', t('a_deactivate_t'))));
+    const save = btn(t('save'), { variant: 'primary', appearance: 'solid', icon: 'check', onclick: async () => {
+      const v = parseFloat(String(quota.value).replace(',', '.'));
+      if (!Number.isFinite(v) || v <= 0) throw Object.assign(new Error('bad_quota'), { code: 'bad_quota' });
+      await api('master.settings', { defaultQuota: Math.round(v * GBY), defaultActive: act.value === 'on' });
+      toast(t('settings_saved'), 'success');
+    } });
+    put(main, h('h1.ah', t('a_settings')), h('p.muted', t('a_settings_t')),
+      h('sav-card.acard', h('div.form', h('h2', t('a_space')), quota, presets, h('p.muted.small', t('a_space_note')))),
+      h('sav-card.acard', h('div.form', h('h2', t('a_new_accounts')), act, h('p.muted.small', t('a_masters_note')))),
+      h('div.prow', save));
+    return;
+  }
+
+  // ---------------------------------------------------------------- accounts
+  let show = 'all', q = '', users = [], defaultQuota = 0;
+  const box = h('div.ulist2'), count = h('span.muted.small');
+  const searchBox = h('sav-input', { type: 'search', placeholder: t('a_find'), clearable: true, 'aria-label': t('a_find') });
+  let to;
+  searchBox.addEventListener('input', () => { clearTimeout(to); to = setTimeout(() => { q = searchBox.value.trim(); load().catch(fail); }, 300); });
+  const filter = segmented(t('a_show'), show, [['all', '=' + t('a_all'), t('a_all')], ['waiting', '=' + t('a_waiting'), t('a_waiting')], ['active', '=' + t('a_active'), t('a_active')]], (v) => { show = v; load().catch(fail); }, { class: 'afilter' });
+
+  const quotaDialog = (u) => {
+    const own = h('sav-switch', { checked: u.ownQuota || null }, t('a_own_quota'));
+    const n = h('sav-number-input', { label: t('a_space'), value: gb(u.quota), min: 0, max: 10240, step: 0.5, size: 'md', disabled: !u.ownQuota || null }, h('span', { slot: 'suffix' }, 'GB'));
+    own.addEventListener('change', () => { n.disabled = !own.checked; if (!own.checked) n.value = gb(defaultQuota); });
+    dialog({ title: t('a_quota_of', { name: u.name }), width: '26rem',
+      body: h('div.form', h('p.muted', t('a_quota_used', { used: bytes(u.used), files: num(u.files) })), own, n, h('p.muted.small', t('a_quota_def', { q: bytes(defaultQuota) }))),
+      actions: [{ label: t('cancel') }, { label: t('save'), primary: true, run: async () => {
+        const v = parseFloat(String(n.value).replace(',', '.'));
+        if (own.checked && (!Number.isFinite(v) || v < 0)) throw Object.assign(new Error('bad_quota'), { code: 'bad_quota' });
+        await api('master.quota', { id: u.id, email: u.email, quota: own.checked ? Math.round(v * GBY) : null });
+        toast(t('settings_saved'), 'success');
+        load().catch(fail);
+      } }] });
+  };
+  const setActive = async (ids, on) => { const r = await api('master.activate', { ids, on }); toast(t(on ? 'a_activated_n' : 'a_deactivated_n', { n: r.changed }), 'success'); await load(); };
+  const del = async (u) => {
+    if (!(await confirm(t('a_delete'), t('a_delete_t', { name: u.name, email: u.email, used: bytes(u.used) }), t('a_delete')))) return;
+    try { await api('master.delete', { id: u.id }); toast(t('a_deleted'), 'success'); load(); } catch (e) { fail(e); }
+  };
+
+  const userCard = (u) => {
+    const pc = u.quota ? Math.min(100, (u.used / u.quota) * 100) : 0;
+    return h('sav-card.ucard', { appearance: 'outlined' }, h('div.urow2',
+      face(u.name, null, 40),
+      h('div.uwho', h('b', u.name, u.master ? badge('primary', t('admin')) : null), u.account ? h('small', u.email) : null, h('small.muted', u.account ? t('a_joined', { when: when(u.created) }) + (u.login ? ' · ' + t('a_last', { when: when(u.login) }) : '') : t('a_other_only'))),
+      h('div.ustate', !u.account ? badge('neutral', t('a_no_account')) : u.activated ? badge('success', t('a_is_active')) : badge('warning', t('a_is_waiting')), u.account && !u.verified ? badge('neutral', t('a_unverified')) : null),
+      h('div.uspace', h('sav-progress-bar', { value: Math.max(pc, u.used ? 1 : 0), max: 100, variant: pc > 95 ? 'danger' : pc > 85 ? 'warning' : 'primary', 'aria-label': t('a_space') }),
+        h('small', t('space_used', { used: bytes(u.used), quota: bytes(u.quota) }), u.ownQuota ? ' · ' + t('a_custom') : ''), Object.keys(u.parts || {}).length ? h('ul.qparts.row', spaceParts(u.parts)) : null),
+      h('div.uact', u.master ? h('small.muted', t('a_master_fixed')) : !u.account ? btn(t('a_space'), { size: 'sm', icon: 'hard-drive', onclick: () => quotaDialog(u) })
+        : [btn(t(u.activated ? 'a_deactivate_one' : 'a_activate_one'), { size: 'sm', icon: u.activated ? 'user-x' : 'user-check', variant: u.activated ? 'neutral' : 'primary', appearance: u.activated ? 'outline' : 'solid', onclick: () => setActive([u.id], !u.activated) }),
+          btn(t('a_space'), { size: 'sm', icon: 'hard-drive', onclick: () => quotaDialog(u) }),
+          btn('', { size: 'sm', icon: 'trash-2', variant: 'danger', appearance: 'ghost', label: t('a_delete'), title: t('a_delete'), onclick: () => del(u) })])));
+  };
+
+  async function load() {
+    const r = await api('master.users', undefined, { q, show });
+    users = r.users; defaultQuota = r.defaultQuota;
+    const waiting = users.filter((u) => u.account && !u.activated && !u.master);
+    put(count, t('a_n_accounts', { n: users.length }));
+    put(box, waiting.length > 1 && show !== 'active' ? h('sav-alert.wbar', { variant: 'warning' }, t('a_n_waiting', { n: waiting.length }), ' ', btn(t('a_activate_all'), { size: 'sm', icon: 'user-check', onclick: () => setActive(waiting.map((u) => u.id), true) })) : null,
+      users.length ? users.map(userCard) : empty('users', t('a_none'), ''));
+  }
+  put(main, h('h1.ah', t('a_users')), h('div.atools', searchBox, filter, count), box);
+  await load();
+}

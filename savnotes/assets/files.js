@@ -35,7 +35,8 @@ const dataUrl = (bytes, type) => new Promise((r) => { const fr = new FileReader(
 
 // ------------------------------------------------------------------ .savnot
 
-export async function saveSavnot(nb) {
+/** The .savnot file of a notebook (a Blob), for downloading it or saving it into SavDrive. */
+export async function makeSavnot(nb) {
   const media = [];
   const sheets = nb.sheets.map((s) => ({ ...s, items: s.items.map((i) => {
     if (i.t !== 'image') return i;
@@ -46,8 +47,9 @@ export async function saveSavnot(nb) {
     return { ...i, src: path };
   }) }));
   const json = { format: 'savnot', version: 1, app: 'SavNotes', exported: new Date().toISOString(), title: nb.title, settings: { ...nb.settings, view: undefined }, sheets };
-  download(await zip([['mimetype', SAVNOT, { store: true }], ['notebook.json', JSON.stringify(json)], ...media], SAVNOT), fileName(nb.title, 'savnot'));
+  return zip([['mimetype', SAVNOT, { store: true }], ['notebook.json', JSON.stringify(json)], ...media], SAVNOT);
 }
+export async function saveSavnot(nb) { download(await makeSavnot(nb), fileName(nb.title, 'savnot')); }
 
 /** {title, settings, sheets} from a .savnot file (or its notebook.json). */
 export async function readSavnot(file) {

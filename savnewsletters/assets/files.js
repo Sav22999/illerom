@@ -10,8 +10,8 @@
  * Opening one makes a new draft in a group: its pictures are uploaded to that group first, then the document points to
  * them. Nothing about the group, its subscribers or the sending travels in the file.
  */
-import {text, unzip, zip} from './zip.js?v=23';
-import {api} from './ui.js?v=23';
+import {text, unzip, zip} from './zip.js?v=25';
+import {api} from './ui.js?v=25';
 
 export const SAVNEW = 'application/vnd.savnewsletters.newsletter+zip';
 const IMG = /^img:[a-f0-9]{20}$/;

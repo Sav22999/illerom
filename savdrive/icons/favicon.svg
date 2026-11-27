@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <defs>
+        <linearGradient id="a" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#5cc8f7"/>
+            <stop offset="1" stop-color="#0a78c2"/>
+        </linearGradient>
+        <linearGradient id="b" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#0a5f9c"/>
+            <stop offset="1" stop-color="#063f69"/>
+        </linearGradient>
+    </defs>
+    <!-- an S made of two pieces, as in the other apps of SavOffice: above, a cloud with the arrow of an upload going
+         into it; below, the tab of a folder and the bar of the space used, filled in the yellow of the suite -->
+    <path d="M20.500 4H53a5 5 0 0 1 5 5v17.500a5 5 0 0 1-5 5H20.500A13.750 13.750 0 0 1 20.500 4z" fill="url(#a)"/>
+    <path d="M26.500 24.500h20.500a5.200 5.200 0 0 0 .6-10.360A7.600 7.600 0 0 0 33.300 12.300a5.900 5.900 0 0 0-6.800 12.200z" fill="#fff" fill-opacity=".92"/>
+    <path d="M36.800 23.500v-7.600M33.600 19l3.200-3.200 3.200 3.200" fill="none" stroke="#0a78c2" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M43.500 60H11a5 5 0 0 1-5-5V37.500a5 5 0 0 1 5-5h32.500a13.750 13.750 0 0 1 0 27.500z" fill="url(#b)"/>
+    <path d="M13 40.500h8.200l2.600 2.800H35" fill="none" stroke="#fff" stroke-opacity=".85" stroke-width="3.200" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="13" y="48.500" width="28" height="5.200" rx="2.600" fill="#fff" fill-opacity=".22"/>
+    <rect x="13" y="48.500" width="16" height="5.200" rx="2.600" fill="#ffd166"/>
+</svg>

@@ -64,7 +64,8 @@ export async function toServer(items) {
 
 // ------------------------------------------------------------------ .savwhi
 
-export async function saveSavwhi(board) {
+/** The .savwhi file of a board (a Blob), for downloading it or saving it into SavDrive. */
+export async function makeSavwhi(board) {
   const media = [], items = (await inlineMedia(board.items)).map((i) => {
     if (i.t !== 'image') return i;
     const m = /^data:image\/(png|jpeg|webp|gif);base64,(.*)$/.exec(i.src);
@@ -74,8 +75,9 @@ export async function saveSavwhi(board) {
     return { ...i, src: path };
   });
   const json = { format: 'savwhi', version: 1, app: 'SavWhiteboard', exported: new Date().toISOString(), title: board.title, settings: { ...board.settings, view: undefined }, items };
-  download(await zip([['mimetype', SAVWHI, { store: true }], ['board.json', JSON.stringify(json)], ...media], SAVWHI), fileName(board.title, 'savwhi'));
+  return zip([['mimetype', SAVWHI, { store: true }], ['board.json', JSON.stringify(json)], ...media], SAVWHI);
 }
+export async function saveSavwhi(board) { download(await makeSavwhi(board), fileName(board.title, 'savwhi')); }
 
 /** {title, settings, items} from a .savwhi file (or its board.json). */
 export async function readSavwhi(file) {

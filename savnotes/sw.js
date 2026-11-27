@@ -3,7 +3,7 @@
  * cached, because notebooks must always be fresh.
  *   pages, scripts and styles: network first, the kept copy when offline · icons and typefaces: kept copy first
  */
-const CACHE = 'savnotes-2';
+const CACHE = 'savnotes-6';
 const SHELL = ['./', 'manifest.webmanifest', 'icons/favicon.svg', 'icons/icon-192.png', '../assets/sav/sav.css', '../assets/sav/sav.js', '../assets/savoffice/savoffice.js', '../identity/identity.css?v=2', '../identity/identity.js?v=3',
   ...['account.js', 'app.css', 'app.js', 'changelog.js', 'files.js', 'hero.js', 'home.js', 'i18n.js', 'icons.js', 'ink.js', 'model.js', 'notebook.js', 'office.js', 'options.js', 'render.js', 'store.js', 'ui.js', 'version.js', 'zip.js'].map((f) => 'assets/' + f)];
 

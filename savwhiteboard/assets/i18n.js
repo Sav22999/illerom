@@ -42,8 +42,7 @@ const T = {
   check_email: ["Check your email","Controlla la tua email"],
   check_email_text: ["We sent you a link to confirm the address. If you do not see it, look in the spam.","Ti abbiamo mandato un link per confermare l’indirizzo. Se non lo vedi, guarda nello spam."],
   mail_off: ["Emails are switched off on this server.","Le email sono disattivate su questo server."],
-  google_terms: ["By continuing with Google or SavAccount you accept the terms and the privacy notice.","Continuando con Google o SavAccount accetti i termini e l’informativa sulla privacy."],
-  google_new: ["There is no account with this address yet: create one?","Non esiste ancora un account con questo indirizzo: vuoi crearlo?"],
+  google_terms: ["By continuing with SavAccount you accept the terms and the privacy notice.","Continuando con SavAccount accetti i termini e l’informativa sulla privacy."],
   not_ready: ["Not ready yet","Non ancora pronto"],
   verify_title: ["Confirm your email","Conferma la tua email"],
   verify_text: ["Press the button to confirm the address and sign in.","Premi il pulsante per confermare l’indirizzo e accedere."],
@@ -55,7 +54,6 @@ const T = {
   resend: ["Send the link again","Invia di nuovo il link"],
   resent: ["Link sent","Link inviato"],
   language: ["Language","Lingua"],
-  google_continue: ["Continue with Google","Continua con Google"],
   how_title: ["How it works","Come funziona"],
   look_app: ["Look","Aspetto"],
   theme: ["Theme","Tema"],
@@ -63,9 +61,9 @@ const T = {
   change_pw: ["Change the password","Cambia la password"],
   set_pw: ["Set a password","Imposta una password"],
   password_t: ["To sign in with your email.","Per entrare con la tua email."],
-  password_none_t: ["You sign in with Google or SavAccount: you can add one.","Entri con Google o SavAccount: puoi aggiungerne una."],
+  password_none_t: ["You sign in with SavAccount: you can add one.","Entri con SavAccount: puoi aggiungerne una."],
   sign_in_ways: ["Ways to sign in","Modi per entrare"],
-  sign_in_ways_t: ["Google, SavAccount and password, joined to this account.","Google, SavAccount e password, collegati a questo account."],
+  sign_in_ways_t: ["SavAccount and password, joined to this account.","SavAccount e password, collegati a questo account."],
   sign_out_t: ["On this device.","Su questo dispositivo."],
   settings_saved: ["Settings saved","Impostazioni salvate"],
   your_data: ["Your data","I tuoi dati"],
@@ -93,9 +91,6 @@ const T = {
   err_bad_password: ["Wrong password.","Password errata."],
   err_forbidden: ["You cannot do this.","Non puoi farlo."],
   err_bad_request: ["Something in the request is not right.","Qualcosa nella richiesta non va."],
-  err_google_token: ["Google did not confirm the sign-in.","Google non ha confermato l’accesso."],
-  err_google_disabled: ["Google sign-in is not available.","L’accesso con Google non è disponibile."],
-  err_google_email: ["The Google address is not confirmed.","L’indirizzo Google non è confermato."],
   download: ["Download","Scarica"]
   ,
 
@@ -136,7 +131,7 @@ const T = {
 
   // home
   new_board: ['New board', 'Nuova lavagna'], my_boards: ['My boards', 'Le mie lavagne'], search_boards: ['Search boards', 'Cerca lavagne'], trash: ['Trash', 'Cestino'], recent: ['Recent', 'Recenti'],
-  new_l: ['New', 'Nuova'], all_templates: ['All templates', 'Tutti i modelli'], paper_l: ['Paper', 'Carta'],
+  tools: ['Tools', 'Strumenti'], new_l: ['New', 'Nuova'], all_templates: ['All templates', 'Tutti i modelli'], paper_l: ['Paper', 'Carta'],
   start_with: ['Start a board', 'Inizia una lavagna'], open_file: ['Open a file', 'Apri un file'], opened_file: ['Board opened from the file', 'Lavagna aperta dal file'],
   none_yet: ['No boards yet', 'Ancora nessuna lavagna'], none_yet_t: ['Pick a paper above and start writing.', 'Scegli una carta qui sopra e inizia a scrivere.'],
   nothing_found: ['Nothing found', 'Nessun risultato'], results_for: ['Results for “{q}”', 'Risultati per «{q}»'],

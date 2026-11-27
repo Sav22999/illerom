@@ -33,17 +33,20 @@ import {shareDialog} from './share.js';
 
 export function userMenu() {
     const u = state.user;
+    const av = h('sav-avatar', {
+        'auto-text': true,
+        slot: 'trigger',
+        label: u.name,
+        button: true,
+        style: `--size:36px;background:${u.color};color:#fff;border-radius:50%`
+    });
+    // the picture of SavAccount, once it has really loaded (a service disconnected there keeps the initials)
+    if (u.picture) { const im = new Image(); im.onload = () => av.setAttribute('image', u.picture); im.src = u.picture; }
     const d = h('sav-dropdown', {
             placement: 'bottom-end',
             'sheet-on-mobile': true,
             label: u.name
-        }, h('sav-avatar', {
-            'auto-text': true,
-            slot: 'trigger',
-            label: u.name,
-            button: true,
-            style: `--size:36px;background:${u.color};color:#fff;border-radius:50%`
-        }),
+        }, av,
         h('sav-menu-label', u.email), item('settings', 'settings', t('settings')), u.master && item('admin', 'shield', t('admin')), h('sav-divider'), item('out', 'log-out', t('sign_out')));
     d.addEventListener('sav-select', (e) => ({
         settings: () => go('?p=settings'),
@@ -206,6 +209,14 @@ export async function homeScreen(app, q) {
     function draw() {
         if (!data) return;
         drawSide();
+        // the search of actions (⌘J / Ctrl+J, ../assets/savoffice/savoffice.js): new, the views and folders, the presentations, the pages
+        const cmd = (icon, label, run, description) => ({icon, label, run, description});
+        window.SavOffice?.commands([
+            {label: t('new'), items: [cmd('plus', t('new_deck'), () => newDialog(folder, data)), ...TEMPLATES.map((x) => cmd('presentation', tplName(x), () => newDialog(0, data, x), t('tc_' + x.cat))), cmd('file-up', t('open_file'), async () => { const [file] = await pickFile('.savpre,.pptx,.ppt,.odp,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-powerpoint,application/vnd.oasis.opendocument.presentation'); if (file) openFile(file, folder); })]},
+            {label: t('home'), items: [['recent', 'layout-grid', 'my_decks'], ['starred', 'star', 'starred'], ['shared', 'users', 'shared'], ['templates', 'layout-template', 'templates'], ['trash', 'trash', 'trash']].map(([v, ic, k]) => cmd(ic, t(k), () => set(v))).concat(cmd('hard-drive', t('local_title'), () => go('?p=local')), data.folders.map((f) => cmd('folder', f.name, () => set('folder', f.id), t('folders'))))},
+            {label: t('recent'), items: [...data.decks.filter((d) => d.status === 'active'), ...data.shared].slice(0, 80).map((d) => cmd('presentation', d.title, () => go('?d=' + d.uid), d.owner || ''))},
+            {label: 'SavPresentations', items: [cmd('settings', t('settings'), () => go('?p=settings')), cmd('sparkles', t('changelog'), () => go('?p=changelog')), cmd('log-out', t('sign_out'), () => logout())]},
+        ]);
         const f = data.folders.find((x) => x.id === folder);
         let list = view === 'shared' ? data.shared : view === 'starred' ? [...data.decks, ...data.shared].filter((d) => d.status === 'active' && stars().has(d.uid)) : view === 'trash' ? data.decks.filter((d) => d.status === 'trashed') : view === 'templates' ? data.decks.filter((d) => d.template && d.status !== 'trashed') : data.decks.filter((d) => d.status !== 'trashed' && !d.template && (search ? true : view === 'folder' ? d.folder === folder : true));
         if (search) list = [...(view === 'trash' ? list : [...list, ...(view === 'recent' ? data.shared : [])])].filter((d) => (d.title + ' ' + d.owner).toLowerCase().includes(search));

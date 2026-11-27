@@ -25,6 +25,10 @@ function doc_page(array $docs, string $self): void
         . '<link rel="icon" href="icons/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="../assets/sav/sav.css"><link rel="stylesheet" href="assets/app.css"></head><body class="sav-base">'
         . '<header class="ltop"><a class="brand" href="./"><img src="icons/favicon.svg" width="34" height="34" alt=""><span>Sav<b>Presentations</b></span></a><div class="spacer"></div><a href="' . $self . '?lang=' . ($l === 'it' ? 'en' : 'it') . '">' . ($l === 'it' ? 'English' : 'Italiano') . '</a></header>'
         . '<main class="doc"><h1>' . $e($d['title']) . '</h1><p class="muted">' . $e($d['updated']) . '</p>';
+    // only the Italian text is legally binding; the English one is a courtesy copy
+    echo $l === 'it'
+        ? '<p class="box"><b>Valore legale: solo il testo in italiano.</b> La <a href="' . $self . '?lang=en">versione in inglese</a> è una copia di cortesia, senza valore legale: in caso di differenze o dubbi prevale sempre l’italiano.</p>'
+        : '<p class="box"><b>Courtesy copy.</b> Only the <a href="' . $self . '?lang=it">Italian text</a> is legally binding; this English version has no legal value and, if the two differ, the Italian text always prevails.</p>';
     if (!empty($d['box'])) echo '<p class="box">' . $d['box'] . '</p>';
     foreach ($d['sections'] as [$t, $html]) echo '<h2>' . $e($t) . '</h2>' . $html;
     echo '</main></body></html>';

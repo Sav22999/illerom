@@ -31,7 +31,7 @@ $office = is_file(__DIR__ . '/../assets/savoffice/savoffice.js');
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="stylesheet" href="<?= $v('../assets/sav/sav.css') ?>">
     <link rel="stylesheet" href="../identity/identity.css?v=2">
-    <link rel="stylesheet" href="assets/app.css?v=23">
+    <link rel="stylesheet" href="assets/app.css?v=25">
 </head>
 <body>
 <div id="app">
@@ -42,6 +42,6 @@ $office = is_file(__DIR__ . '/../assets/savoffice/savoffice.js');
 <script defer src="<?= $v('../assets/savoffice/savoffice.js') ?>"></script>
 <?php endif ?>
 <script defer src="../identity/identity.js?v=3"></script>
-<script type="module" src="assets/app.js?v=23"></script>
+<script type="module" src="assets/app.js?v=25"></script>
 </body>
 </html>

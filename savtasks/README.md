@@ -1,6 +1,6 @@
 # SavTasks
 
-Free, open tasks, part of **SavOffice**: to-dos, lists and boards (kanban) in one app, with due days and times,
+Free, open tasks, part of **SavOffice**: to-dos, lists, boards (kanban), Gantt charts, tables and habits in one app, with due days and times,
 reminders, repetitions, priorities, labels and subtasks. The same account as **SavSchedules** and **SavCalendar**: tasks
 with a due day show in the calendar, a task can become an event or a date poll, and what SavSchedules asks of the
 account (polls to decide, places booked) comes here as read-only to-dos.
@@ -25,6 +25,10 @@ account (polls to decide, places booked) comes here as read-only to-dos.
 | `../cron/savtasks-reminders.php` | The reminders by email (every 30 minutes, or more often) |
 | `assets/tasks.js` | The screen: side (smart views and lists), quick add, the views, reminders in the browser |
 | `assets/board.js` | A list as a board: columns, cards dragged with mouse or finger, the column of done tasks |
+| `assets/create.js` | "New": the dialog in the middle (a task, or a list as list, kanban board, Gantt or Eisenhower matrix) and the templates |
+| `assets/table.js` | A list as a table: columns to sort, status, due day and priority changed in the cell, columns to show or hide |
+| `assets/habits.js` | Habits: the week, each day ticked, the streak; the habits of the day in Today |
+| `assets/gantt.js` | A list as a Gantt chart: bars from start to due day (milestones with a due day only), dragged and stretched, days or weeks |
 | `assets/task.js` | One task on the side (saved as it changes), "Add to SavCalendar", "Find a date with others", the dialog of a list |
 | `assets/parse.js` | Quick add: "Call Anna tomorrow 15:00 !high #work @Home every monday", in Italian and English |
 | `assets/files.js`, `zip.js` | `.savtas`, `.csv`, `.md`, lines of text |
@@ -44,12 +48,19 @@ SavSchedules (same service, same pairwise id), or give SavTasks its own in `cred
 ## Lists, boards, tasks
 
 - Every account has an **inbox** (made the first time, it cannot be deleted) and up to 100 lists. A list is shown as a
-  **list** (drag the handle to reorder; sort by due day, priority, title or newest) or as a **board**: its columns are
+  **list** (drag the handle to reorder; sort by due day, priority, title or newest), as a **Gantt chart** (each task a
+  bar from its start day to its due day, dragged to move it and stretched by its edges; a task with only a due day is a
+  milestone, one without dates is planned by pressing a day on its row; days or weeks), as an **Eisenhower matrix** (a board whose four columns are the quadrants urgent/important, drawn two by two) or as a
+  **board**: its columns are
   kept with the list (up to 12), and one of them may be the **column of done tasks**: a card dropped there is ticked,
   a ticked task goes there.
 - A task: title, notes, subtasks, labels, priority (none, low, medium, high), star, due day with an optional time in a
-  time zone, a **repetition** (every n days, weeks — some weekdays —, months, years: ticking it plans the next one) and a
+  time zone, an optional **start day** (the beginning of its bar in the Gantt), a **repetition** (every n days, weeks — some weekdays —, months, years: ticking it plans the next one) and a
   **reminder** (at the time, some minutes before, the day before, that morning, or any moment).
+- **Habits**: a list of its own (made from "New"): each habit asks for some days (every day, the weekdays, the days
+  chosen); each day is ticked on its own (kept in `log`, the last 400 days, never a day to come: `tasks.habit.mark`),
+  with the streak, the best streak and the last 30 days. The habits of the day are in Today too.
+- A list can also be shown as a **table** (sort by any column; status, due day and priority change in the cell).
 - Smart views: **Today** (late and due today), **Upcoming** (by day, two weeks ahead), **Starred**, **Done** (the last
   60 days), labels, search, and **From SavSchedules**.
 

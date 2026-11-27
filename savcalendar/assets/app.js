@@ -3,7 +3,7 @@ import { btn, empty, errText, h, primary, put } from './ui.js';
 import { registerIcons } from './icons.js';
 import { getLang, setLang, t } from './i18n.js';
 import { S, api } from './store.js';
-import { applyTheme, go, googleButton, land, reset, setUser, unverified, verify } from './account.js';
+import { commands, applyTheme, go, land, reset, setUser, unverified, verify } from './account.js';
 import { LOCAL_TZ } from './time.js';
 
 const root = document.getElementById('app');
@@ -37,12 +37,15 @@ async function boot() {
     S.config = { installed: false, down: true };
     if (e.code !== 'network') console.error(e);
   }
-  window.Identity?.setup({ name: 'SavCalendar', lang: getLang, accent: '#C93A2F', accept: 'acceptTerms', acceptUrl: () => 'terms.html', google: (slot, cb) => googleButton(slot, cb), body: () => ({ lang: getLang() }) });
+  window.Identity?.setup({ name: 'SavCalendar', lang: getLang, accent: '#C93A2F', accept: 'acceptTerms', acceptUrl: () => 'terms.html', body: () => ({ lang: getLang() }) });
   const next = sessionStorage.getItem('savcalendar-next');
   if (S.user?.verified && next) { sessionStorage.removeItem('savcalendar-next'); if (/^(#\/?(signin|signup|welcome)?)?$/.test(location.hash)) history.replaceState(null, '', next); }
   addEventListener('hashchange', route);
   // a .savcal or .ics opened from the files of the device (installed app): the calendar offers to import it
-  window.launchQueue?.setConsumer(async (p) => { const f = p.files?.[0]; if (!f) return; S.pendingFile = await f.getFile(); if (S.user?.verified) { if (/^#\/(day|week|month|agenda)?/.test(location.hash) || !location.hash) dispatchEvent(new HashChangeEvent('hashchange')); else location.hash = '#/'; } });
+  { const take = async (p) => { const f = p.files?.[0]; if (!f) return; S.pendingFile = await f.getFile(); if (S.user?.verified) { if (/^#\/(day|week|month|agenda)?/.test(location.hash) || !location.hash) dispatchEvent(new HashChangeEvent('hashchange')); else location.hash = '#/'; } };
+    window.launchQueue?.setConsumer(take);
+    window.SavOffice?.fromDrive?.(take); // a file opened from SavDrive (?savdrive=<id>), given like a file of the device
+  }
   // … or with the Android app: {name, data} in base64
   const pend = S.user?.verified && window.SavCalendarAndroid?.pendingFile?.();
   if (pend) { try { const f = JSON.parse(pend); S.pendingFile = new File([Uint8Array.from(atob(f.data), (x) => x.charCodeAt(0))], f.name); } catch { /* not a file */ } }
@@ -54,6 +57,7 @@ async function route() {
   const [, a = '', b = '', c = ''] = location.hash.split('/'), n = ++turn;
   leave?.();
   leave = null;
+  commands(); // the search of actions (⌘J / Ctrl+J): the screen adds its own
   document.querySelectorAll('sav-dialog').forEach((d) => d.hide?.());
   document.title = 'SavCalendar';
   try {

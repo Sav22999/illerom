@@ -5,14 +5,17 @@
 - **Games:** Deletes rooms for Connect Four, Chess, FaceGuess, Sea Battle and Prism Mine that have had no changes and no
   connected players for 24 hours, along with players, chat messages, and cards. Run once a day, data remains for at
   most ~48 hours since last activity: this matches the retention stated in privacy policies and store listings.
-- **FoodTrack, Giftwise, Fucina, ThinkHop, Forkville, MyCurriculum, SavNewsletters and SavDocuments:** Cleans up expired
+- **FoodTrack, Giftwise, Fucina, ThinkHop, Forkville, MyCurriculum, SavNewsletters, SavDocuments, SavBooks and SavDrive:** Cleans up expired
   sessions and login attempts older than 2 hours (IP addresses are only used for rate limiting over the past 60 minutes)
   and strips IP/browser data left on sessions from earlier versions. It never alters lists, items, wishes, stats,
   progress, or other user data.
 - **SavNewsletters only:** also deletes subscriptions never confirmed within 7 days (as its terms promise) and expired
   account-confirmation links.
-- **SavDocuments only:** also deletes documents left in the trash for 30 days, accounts never confirmed within 7 days
-  and expired links.
+- **SavDrive:** also deletes the files left in the trash for 30 days (from the disk too, in the `$storage_dir` of its
+  `credentials.php`), uploads left half-way for 24 hours, accounts never confirmed within 7 days and expired links.
+- **SavDocuments and SavBooks:** also delete documents (books) left in the trash for 30 days, accounts never confirmed
+  within 7 days and expired links. SavBooks without its own `credentials.php` uses the database of SavDocuments with its
+  `sb_` tables.
 
 The same scripts on saveriomorelli.com (`projects/cron/`) forward here what concerns these projects, so jobs scheduled
 on the old

@@ -23,6 +23,8 @@ body { margin: 0; min-height: 100%; background: var(--sav-color-bg); color: var(
 h1, h2, h3, p { margin: 0; }
 a { color: color-mix(in oklab, var(--sav-color-primary) 85%, var(--sav-color-text)); }
 :focus-visible { outline: 2px solid var(--sav-color-focus); outline-offset: 2px; }
+/* these SavComponents draw their own focus ring inside: a second outline around them made two loose lines across menus */
+sav-menu-item:focus-visible, sav-tree-item:focus-visible, sav-radio:focus-visible { outline: none; }
 kbd { font: 500 .74rem/1 var(--sav-font); color: var(--sav-color-text-muted); }
 .muted { color: var(--sav-color-text-muted); } .small { font-size: .82rem; } .hint { font-size: .8rem; } .center { text-align: center; } .grow { flex: 1; min-width: 0; } .spacer { flex: 1; }
 .stack { display: grid; gap: .6rem; grid-template-columns: minmax(0, 1fr); } .form { display: grid; gap: .95rem; grid-template-columns: minmax(0, 1fr); }

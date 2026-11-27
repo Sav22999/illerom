@@ -6,7 +6,7 @@ declare(strict_types=1);
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: strict-origin-when-cross-origin');
 header('X-Frame-Options: SAMEORIGIN');
-header("Content-Security-Policy: default-src 'self'; script-src 'self' https://accounts.google.com/gsi/client https://www.savaccount.eu; style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style https://fonts.bunny.net; img-src 'self' data: blob: https://api.openverse.org https://upload.wikimedia.org https://thumb.wikimedia.org https://www.savaccount.eu https://savcomponents.com https://www.savcomponents.com; font-src 'self' data: blob: https://fonts.bunny.net; connect-src 'self' https://accounts.google.com/gsi/ https://www.savaccount.eu https://fonts.bunny.net; frame-src https://accounts.google.com/gsi/; object-src 'none'; base-uri 'self'; form-action 'self' https://www.savaccount.eu; frame-ancestors 'self'");
+header("Content-Security-Policy: default-src 'self'; script-src 'self' https://www.savaccount.eu; style-src 'self' 'unsafe-inline' https://fonts.bunny.net; img-src 'self' data: blob: https://api.openverse.org https://upload.wikimedia.org https://thumb.wikimedia.org https://www.savaccount.eu https://savcomponents.com https://www.savcomponents.com; font-src 'self' data: blob: https://fonts.bunny.net; connect-src 'self' https://www.savaccount.eu https://fonts.bunny.net; object-src 'none'; base-uri 'self'; form-action 'self' https://www.savaccount.eu; frame-ancestors 'self'");
 $v = static fn(string $f): string => $f . '?v=' . (@filemtime(__DIR__ . '/' . $f) ?: 1);
 ?><!doctype html>
 <html lang="en">

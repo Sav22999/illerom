@@ -1,0 +1,784 @@
+<?php
+/**
+ * SavDrive — JSON API.  api/index.php?r=<action>
+ *
+ * Accounts:     auth.config, auth.me, auth.register, auth.login (and the routes of ../identity/identity.php), auth.resend, auth.verify, auth.logout,
+ *               auth.password, auth.forgot, auth.reset, auth.prefs, auth.profile, auth.export, auth.delete
+ * Drive:        drive.list, drive.folders, folder.create, node.rename, node.move, node.copy, node.star, node.color,
+ *               node.trash, node.restore, node.delete, trash.empty, node.share
+ * Files:        file.get (GET: the file itself; inline=1 shows it in the page when it is safe), upload.start,
+ *               upload.chunk (the piece is the body), upload.cancel
+ * Shared links: pub.info, pub.get (anyone with the link, files only)
+ * Master admin: master.overview, master.settings, master.users, master.activate, master.quota, master.delete
+ *
+ * Every POST of a signed-in user needs the X-CSRF-Token header (given at sign-in).
+ */
+
+declare(strict_types=1);
+
+require __DIR__ . '/../lib/bootstrap.php';
+
+header('X-Robots-Tag: noindex');
+set_exception_handler(function (Throwable $e) {
+    if ($e->getMessage() === 'not_installed') fail('not_installed', 503);
+    if (db_in_transaction()) db()->rollBack();
+    error_log('SavDrive API: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
+    send_json(['ok' => false, 'error' => 'server', 'detail' => config_value('debug', false) ? $e->getMessage() : null], 500);
+});
+
+$r = (string)($_GET['r'] ?? '');
+
+if ($r === 'auth.config' && !credentials()) send_json(['ok' => true, 'installed' => false]);
+if (!credentials()) fail('not_installed', 503);
+
+// ---------------------------------------------------------------- files sent as themselves (not JSON)
+
+// A file of the signed-in account. The apps of SavOffice read their files from here too (same site, same cookie).
+if ($r === 'file.get') {
+    $u = current_user();
+    $n = $u && $u['status'] === 'active' && is_activated($u) ? node_by_uid((string)($_GET['id'] ?? '')) : null;
+    if (!$n || (int)$n['user_id'] !== (int)$u['id'] || $n['kind'] !== 'file') {
+        http_response_code(404);
+        exit;
+    }
+    if (empty($_GET['inline']) || !empty($_GET['open'])) db()->prepare('UPDATE ' . t('nodes') . ' SET opened_at = ? WHERE id = ?')->execute([now_utc(), $n['id']]);
+    stream_file(blob_path((int)$n['user_id'], (string)$n['bkey']), (string)$n['name'], (string)$n['mime'], !empty($_GET['inline']));
+}
+
+// A file shared with a link: anyone who has the link
+if ($r === 'pub.get') {
+    $tok = (string)($_GET['t'] ?? '');
+    $n = null;
+    if (preg_match('/^[a-f0-9]{32}$/', $tok)) {
+        $st = db()->prepare('SELECT n.*, u.activated, u.status ustatus FROM ' . t('nodes') . ' n JOIN ' . t('users') . " u ON u.id = n.user_id WHERE n.share_token = ? AND n.trashed_at IS NULL AND n.kind = 'file'");
+        $st->execute([$tok]);
+        $n = $st->fetch() ?: null;
+    }
+    if (!$n || $n['ustatus'] !== 'active' || !$n['activated']) {
+        http_response_code(404);
+        exit;
+    }
+    stream_file(blob_path((int)$n['user_id'], (string)$n['bkey']), (string)$n['name'], (string)$n['mime'], !empty($_GET['inline']));
+}
+
+// POST is JSON (a form of another site cannot send it); only a piece of an upload travels as itself, with the X-CSRF-Token header
+$ctype = (string)($_SERVER['CONTENT_TYPE'] ?? '');
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && stripos($ctype, 'application/json') !== 0 && !($r === 'upload.chunk' && stripos($ctype, 'application/octet-stream') === 0)) fail('bad_request', 415);
+remember_app_url();
+if (random_int(1, 60) === 1) purge_old();
+
+function only(string $method): void
+{
+    if ($_SERVER['REQUEST_METHOD'] !== $method) fail('bad_request', 405);
+}
+
+function writer(bool $unverifiedOk = false): array
+{
+    only('POST');
+    $u = require_user($unverifiedOk);
+    require_csrf($u);
+    return $u;
+}
+
+function reader(): array
+{
+    only('GET');
+    return require_user();
+}
+
+function validate_password(string $pw): void
+{
+    if (mb_strlen($pw) < 8) fail('password_short', 422);
+    if (mb_strlen($pw) > 200) fail('password_long', 422);
+}
+
+function ui_lang(array $b): string
+{
+    $l = (string)($b['lang'] ?? '');
+    return in_array($l, LANGS, true) ? $l : 'en';
+}
+
+function valid_email(string $email): void
+{
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 190) fail('email_invalid', 422);
+}
+
+function user_row(int $id): array
+{
+    $st = db()->prepare('SELECT * FROM ' . t('users') . ' WHERE id = ?');
+    $st->execute([$id]);
+    return $st->fetch() ?: [];
+}
+
+/** A new account: activated at once or waiting for an admin, as the admins chose (masters never wait). */
+function new_user(string $name, string $email, string $hash, string $lang): int
+{
+    $on = default_active() || in_array(mb_strtolower($email), (array)config_value('master_emails', []), true);
+    db()->prepare('INSERT INTO ' . t('users') . ' (name, email, password_hash, ui_lang, activated, activated_at, created_at, last_login_at) VALUES (?,?,?,?,?,?,?,?)')
+        ->execute([$name, $email, $hash, $lang, $on ? 1 : 0, $on ? now_utc() : null, now_utc(), now_utc()]);
+    return (int)db()->lastInsertId();
+}
+
+function signed_in(int $uid): void
+{
+    db()->prepare('UPDATE ' . t('users') . ' SET last_login_at = ? WHERE id = ?')->execute([now_utc(), $uid]);
+    $csrf = create_auth_session($uid);
+    send_json(['ok' => true, 'user' => public_user(user_row($uid)), 'csrf' => $csrf]);
+}
+
+function require_master(): array
+{
+    $u = require_user();
+    if (!is_master($u)) fail('forbidden', 403);
+    return $u;
+}
+
+/** The ids of a request (one or many), as rows of this account. */
+function own_nodes(array $u): array
+{
+    $ids = body()['ids'] ?? (isset(body()['id']) ? [body()['id']] : []);
+    if (!is_array($ids) || !$ids || count($ids) > 500) fail('bad_request', 422);
+    return array_map(fn($id) => own_node($u, $id), array_values(array_unique(array_filter($ids, 'is_string'))));
+}
+
+function drive_space(array $u): array
+{
+    $row = user_row((int)$u['id']);
+    return ['used' => user_used((int)$u['id']), 'quota' => user_quota($row), 'parts' => (object)space_parts((int)$u['id'])];
+}
+
+// ---------------------------------------------------------------- SavAccount: signing in and joining an account that already exists
+
+require dirname(__DIR__, 2) . '/identity/identity.php';
+
+/** The language of the messages of the sign-in: the app sends it with every request. */
+function identity_lang(): string
+{
+    $h = strtolower((string)($_SERVER['HTTP_X_LANG'] ?? ($_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? '')));
+    return strpos($h, 'it') === 0 ? 'it' : 'en';
+}
+
+identity_setup([
+    'name' => 'SavDrive', 'cookie' => 'savdrive', 'lang' => fn() => identity_lang(),
+    'fail' => function (string $code, int $http): void {
+        fail($code, $http);
+    },
+    'accepted' => fn(array $b) => !empty($b['acceptTerms']),
+    'create' => fn(array $who, array $b) => new_user($who['name'] ?: explode('@', $who['email'])[0], $who['email'], '', ui_lang($b)),
+    'writer' => fn() => writer(),
+]);
+identity_route($r);
+
+switch ($r) {
+
+    // ================================================================ accounts
+
+    case 'auth.config':
+        send_json(['ok' => true, 'installed' => true, 'savAccount' => sav_enabled(), 'mailReady' => mail_settings() !== null, 'chunk' => CHUNK_BYTES]);
+
+    case 'auth.me':
+        only('GET');
+        $u = current_user();
+        if (!$u || $u['status'] !== 'active') send_json(['ok' => true, 'user' => null]);
+        send_json(['ok' => true, 'user' => public_user(user_row($u['id'])), 'csrf' => $u['csrf_token']]);
+
+    case 'auth.register':
+        only('POST');
+        if (too_many_attempts('register', 5, 60)) fail('rate_limited', 429);
+        $b = body();
+        $name = s($b, 'name', 80);
+        $email = mb_strtolower(s($b, 'email', 190));
+        $pw = (string)($b['password'] ?? '');
+        if (mb_strlen($name) < 2) fail('name_required', 422);
+        valid_email($email);
+        validate_password($pw);
+        if (empty($b['acceptTerms'])) fail('terms_required', 422);
+        // The same answer whether the address is new or already registered, so nobody can find out who has an account
+        $st = db()->prepare('SELECT * FROM ' . t('users') . ' WHERE email = ?');
+        $st->execute([$email]);
+        $row = $st->fetch();
+        record_attempt('register');
+        if (!$row) send_account_link(user_row(new_user($name, $email, password_hash($pw, PASSWORD_DEFAULT), ui_lang($b))), ui_lang($b), 'verify');
+        elseif (empty($row['email_verified_at']) && $row['status'] === 'active' && !too_many_attempts('verify_mail', 3, 60)) {
+            record_attempt('verify_mail');
+            send_account_link($row, ui_lang($b), 'verify');
+        }
+        send_json(['ok' => true, 'checkEmail' => true]);
+
+    case 'auth.login':
+        only('POST');
+        if (too_many_attempts('login', 10, 15)) fail('rate_limited', 429);
+        $b = body();
+        $email = mb_strtolower(s($b, 'email', 190));
+        $pw = (string)($b['password'] ?? '');
+        $st = db()->prepare('SELECT * FROM ' . t('users') . ' WHERE email = ?');
+        $st->execute([$email]);
+        $row = $st->fetch();
+        // One answer for an unknown address, a wrong password and an account without a password, in about the same time
+        $ok = $row && $row['password_hash'] !== '' ? password_verify($pw, $row['password_hash']) : password_hash($pw, PASSWORD_DEFAULT) === '';
+        if (!$ok) {
+            record_attempt('login');
+            fail('bad_credentials', 401);
+        }
+        if ($row['status'] !== 'active') fail('disabled', 403);
+        clear_attempts('login');
+        if (password_needs_rehash($row['password_hash'], PASSWORD_DEFAULT)) db()->prepare('UPDATE ' . t('users') . ' SET password_hash = ? WHERE id = ?')->execute([password_hash($pw, PASSWORD_DEFAULT), $row['id']]);
+        signed_in((int)$row['id']);
+
+    case 'auth.resend':
+        $u = writer(true);
+        if (!empty($u['email_verified_at'])) send_json(['ok' => true, 'user' => public_user(user_row((int)$u['id']))]);
+        if (too_many_attempts('verify_mail', 3, 60)) fail('rate_limited', 429);
+        record_attempt('verify_mail');
+        send_account_link(user_row((int)$u['id']), ui_lang(body()), 'verify');
+        send_json(['ok' => true]);
+
+    case 'auth.verify':
+        // The link of the email opens the app, which asks for this with a button: mail scanners that open links do nothing
+        only('POST');
+        if (too_many_attempts('verify', 20, 15)) fail('rate_limited', 429);
+        $st = db()->prepare('SELECT user_id FROM ' . t('email_tokens') . ' WHERE token_hash = ? AND purpose = \'verify\' AND expires_at > ?');
+        $st->execute([hash('sha256', (string)(body()['token'] ?? '')), now_utc()]);
+        $uid = (int)$st->fetchColumn();
+        if (!$uid) {
+            record_attempt('verify');
+            fail('token_invalid', 410);
+        }
+        db()->prepare('UPDATE ' . t('users') . ' SET email_verified_at = COALESCE(email_verified_at, ?) WHERE id = ?')->execute([now_utc(), $uid]);
+        db()->prepare('DELETE FROM ' . t('email_tokens') . ' WHERE user_id = ? AND purpose = \'verify\'')->execute([$uid]);
+        if (user_row($uid)['status'] !== 'active') fail('disabled', 403);
+        signed_in($uid);
+
+    case 'auth.logout':
+        only('POST');
+        $u = current_user();
+        if ($u) require_csrf($u);
+        destroy_auth_session();
+        send_json(['ok' => true]);
+
+    case 'auth.password':
+        $u = writer();
+        $b = body();
+        $row = user_row($u['id']);
+        if ($row['password_hash'] !== '' && !password_verify((string)($b['current'] ?? ''), $row['password_hash'])) fail('bad_password', 422);
+        $pw = (string)($b['password'] ?? '');
+        validate_password($pw);
+        db()->prepare('UPDATE ' . t('users') . ' SET password_hash = ? WHERE id = ?')->execute([password_hash($pw, PASSWORD_DEFAULT), $u['id']]);
+        send_json(['ok' => true, 'user' => public_user(user_row($u['id']))]);
+
+    case 'auth.forgot':
+        // The same answer whether the address has an account or not
+        only('POST');
+        if (too_many_attempts('forgot', 5, 60)) fail('rate_limited', 429);
+        record_attempt('forgot');
+        $b = body();
+        $st = db()->prepare('SELECT * FROM ' . t('users') . " WHERE email = ? AND status = 'active'");
+        $st->execute([mb_strtolower(s($b, 'email', 190))]);
+        $row = $st->fetch();
+        if ($row) send_account_link($row, ui_lang($b), 'reset');
+        send_json(['ok' => true]);
+
+    case 'auth.reset':
+        // The link proves the address too. Every other session of the account ends.
+        only('POST');
+        if (too_many_attempts('verify', 20, 15)) fail('rate_limited', 429);
+        $b = body();
+        $pw = (string)($b['password'] ?? '');
+        validate_password($pw);
+        $st = db()->prepare('SELECT user_id FROM ' . t('email_tokens') . " WHERE token_hash = ? AND purpose = 'reset' AND expires_at > ?");
+        $st->execute([hash('sha256', (string)($b['token'] ?? '')), now_utc()]);
+        $uid = (int)$st->fetchColumn();
+        if (!$uid) {
+            record_attempt('verify');
+            fail('token_invalid', 410);
+        }
+        if (user_row($uid)['status'] !== 'active') fail('disabled', 403);
+        db()->prepare('UPDATE ' . t('users') . ' SET password_hash = ?, email_verified_at = COALESCE(email_verified_at, ?) WHERE id = ?')->execute([password_hash($pw, PASSWORD_DEFAULT), now_utc(), $uid]);
+        db()->prepare('DELETE FROM ' . t('email_tokens') . ' WHERE user_id = ?')->execute([$uid]);
+        db()->prepare('DELETE FROM ' . t('auth_tokens') . ' WHERE user_id = ?')->execute([$uid]);
+        signed_in($uid);
+
+    case 'auth.prefs':
+        // Settings of the app (view, sorting, theme): a small JSON object read only by the app
+        $u = writer();
+        $p = json_out((object)(is_array(body()['prefs'] ?? null) ? body()['prefs'] : []));
+        if (strlen($p) > 4000) fail('bad_request', 413);
+        db()->prepare('UPDATE ' . t('users') . ' SET prefs = ? WHERE id = ?')->execute([$p, $u['id']]);
+        send_json(['ok' => true]);
+
+    case 'auth.profile':
+        // Name and language of the app (also the language of the emails). The email never changes.
+        $u = writer(true);
+        $b = body();
+        $name = s($b, 'name', 80);
+        if ($name !== '' && mb_strlen($name) < 2) fail('name_required', 422);
+        db()->prepare('UPDATE ' . t('users') . ' SET name = IF(? = \'\', name, ?), ui_lang = ? WHERE id = ?')->execute([$name, $name, ui_lang($b), $u['id']]);
+        send_json(['ok' => true, 'user' => public_user(user_row($u['id']))]);
+
+    case 'auth.export':
+        // What the account keeps about itself and the list of its files and folders (the files are downloaded one by one)
+        $u = require_user(true);
+        only('GET');
+        $st = db()->prepare('SELECT n.*, p.uid parent_uid FROM ' . t('nodes') . ' n LEFT JOIN ' . t('nodes') . ' p ON p.id = n.parent_id WHERE n.user_id = ? ORDER BY n.id');
+        $st->execute([$u['id']]);
+        $out = ['app' => 'SavDrive', 'exported' => gmdate('c'), 'account' => ['name' => $u['name'], 'email' => $u['email'], 'created' => iso($u['created_at']), 'quota' => user_quota($u), 'prefs' => json_decode((string)($u['prefs'] ?? '{}'), true)],
+            'items' => array_map(fn($n) => out_node($n, ['parent' => $n['parent_uid']]), $st->fetchAll())];
+        header('Content-Disposition: attachment; filename="savdrive-data.json"');
+        send_json($out);
+
+    case 'auth.delete':
+        // The account, its files and folders, at once and for ever
+        $u = writer(true);
+        $row = user_row($u['id']);
+        if ($row['password_hash'] !== '' && !password_verify((string)(body()['password'] ?? ''), $row['password_hash'])) fail('bad_password', 422);
+        if (is_master($row)) fail('forbidden', 403); // a master is removed from credentials.php first
+        db()->prepare('DELETE FROM ' . t('users') . ' WHERE id = ?')->execute([$u['id']]);
+        delete_user_storage((int)$u['id']);
+        set_auth_cookie('', time() - 3600);
+        send_json(['ok' => true]);
+
+    // ================================================================ drive
+
+    case 'drive.list':
+        // One place: a folder (uid or root), or a view: starred, recent, trash; ?q= searches every folder
+        $u = reader();
+        $where = (string)($_GET['in'] ?? 'root');
+        $q = s($_GET, 'q', 120);
+        $T = t('nodes');
+        $path = [];
+        if ($q !== '') {
+            $st = db()->prepare("SELECT * FROM $T WHERE user_id = ? AND trashed_at IS NULL AND name LIKE ? ORDER BY kind = 'file', name LIMIT 300");
+            $st->execute([$u['id'], '%' . addcslashes($q, '%_\\') . '%']);
+        } elseif ($where === 'starred') {
+            $st = db()->prepare("SELECT * FROM $T WHERE user_id = ? AND trashed_at IS NULL AND starred = 1 ORDER BY kind = 'file', name LIMIT 1000");
+            $st->execute([$u['id']]);
+        } elseif ($where === 'recent') {
+            $st = db()->prepare("SELECT * FROM $T WHERE user_id = ? AND trashed_at IS NULL AND kind = 'file' ORDER BY GREATEST(updated_at, COALESCE(opened_at, updated_at)) DESC LIMIT 60");
+            $st->execute([$u['id']]);
+        } elseif ($where === 'shared') {
+            $st = db()->prepare("SELECT * FROM $T WHERE user_id = ? AND trashed_at IS NULL AND share_token IS NOT NULL ORDER BY name LIMIT 1000");
+            $st->execute([$u['id']]);
+        } elseif ($where === 'trash') {
+            $st = db()->prepare("SELECT * FROM $T WHERE user_id = ? AND trash_root = 1 AND trashed_at IS NOT NULL ORDER BY trashed_at DESC LIMIT 2000");
+            $st->execute([$u['id']]);
+        } else {
+            $f = target_folder($u, $where);
+            if ($f) $path = array_map(fn($p) => ['id' => $p['uid'], 'name' => $p['name']], node_path($f));
+            $st = db()->prepare("SELECT * FROM $T WHERE user_id = ? AND parent_id " . ($f ? '= ' . (int)$f['id'] : 'IS NULL') . " AND trashed_at IS NULL ORDER BY kind = 'file', name LIMIT 5000");
+            $st->execute([$u['id']]);
+        }
+        $rows = $st->fetchAll();
+        // where each item is, for the views that mix folders
+        $parents = [];
+        if ($q !== '' || in_array($where, ['starred', 'recent', 'shared', 'trash'], true)) {
+            $ids = array_values(array_unique(array_filter(array_map(fn($n) => $n['parent_id'], $rows))));
+            if ($ids) {
+                $s2 = db()->query("SELECT id, uid, name FROM $T WHERE id IN (" . implode(',', array_map('intval', $ids)) . ')');
+                foreach ($s2->fetchAll() as $p) $parents[(int)$p['id']] = ['id' => $p['uid'], 'name' => $p['name']];
+            }
+        }
+        // the size of the folders: what is inside them, at any depth (one query for the whole account)
+        $sizes = [];
+        if (array_filter($rows, fn($n) => $n['kind'] === 'folder')) {
+            $s3 = db()->prepare("SELECT id, parent_id, kind, size FROM $T WHERE user_id = ? AND trashed_at IS NULL" . ($where === 'trash' ? ' OR (user_id = ? AND trashed_at IS NOT NULL)' : ''));
+            $s3->execute($where === 'trash' ? [$u['id'], $u['id']] : [$u['id']]);
+            $kids = [];
+            $own = [];
+            foreach ($s3->fetchAll() as $n) {
+                $kids[(int)$n['parent_id']][] = (int)$n['id'];
+                $own[(int)$n['id']] = $n['kind'] === 'file' ? (int)$n['size'] : 0;
+            }
+            $sum = function (int $id, int $depth = 0) use (&$sum, &$kids, &$own): array {
+                $b = $own[$id] ?? 0;
+                $c = 0;
+                if ($depth <= MAX_DEPTH) foreach ($kids[$id] ?? [] as $k) {
+                    [$kb, $kc] = $sum($k, $depth + 1);
+                    $b += $kb;
+                    $c += 1 + $kc;
+                }
+                return [$b, $c];
+            };
+            foreach ($rows as $n) if ($n['kind'] === 'folder') $sizes[(int)$n['id']] = $sum((int)$n['id']);
+        }
+        $items = array_map(function ($n) use ($parents, $sizes) {
+            $x = out_node($n, $n['parent_id'] !== null && isset($parents[(int)$n['parent_id']]) ? ['parent' => $parents[(int)$n['parent_id']]] : []);
+            if ($n['kind'] === 'folder') [$x['size'], $x['count']] = $sizes[(int)$n['id']] ?? [0, 0];
+            return $x;
+        }, $rows);
+        send_json(['ok' => true, 'items' => $items, 'path' => $path] + drive_space($u));
+
+    case 'drive.folders':
+        // Every folder of the account, for choosing where to move things
+        $u = reader();
+        $st = db()->prepare('SELECT n.uid, n.name, n.color, p.uid parent FROM ' . t('nodes') . ' n LEFT JOIN ' . t('nodes') . " p ON p.id = n.parent_id WHERE n.user_id = ? AND n.kind = 'folder' AND n.trashed_at IS NULL ORDER BY n.name LIMIT 5000");
+        $st->execute([$u['id']]);
+        send_json(['ok' => true, 'folders' => array_map(fn($f) => ['id' => $f['uid'], 'name' => $f['name'], 'color' => $f['color'], 'parent' => $f['parent']], $st->fetchAll())]);
+
+    case 'folder.create':
+        $u = writer();
+        $name = clean_name(body()['name'] ?? '');
+        if ($name === '') fail('name_required', 422);
+        $parent = target_folder($u, body()['parent'] ?? null);
+        if ($parent && count(node_path($parent)) >= MAX_DEPTH) fail('too_deep', 422);
+        if (count_nodes((int)$u['id']) >= MAX_NODES) fail('too_many', 422);
+        $pid = $parent ? (int)$parent['id'] : null;
+        $uid = new_uid();
+        db()->prepare('INSERT INTO ' . t('nodes') . " (uid, user_id, parent_id, kind, name, created_at, updated_at) VALUES (?,?,?,'folder',?,?,?)")
+            ->execute([$uid, $u['id'], $pid, free_name((int)$u['id'], $pid, $name), now_utc(), now_utc()]);
+        send_json(['ok' => true, 'item' => out_node(node_by_uid($uid), ['size' => 0, 'count' => 0])]);
+
+    case 'node.rename':
+        $u = writer();
+        $n = own_node($u, body()['id'] ?? '');
+        $name = clean_name(body()['name'] ?? '');
+        if ($name === '') fail('name_required', 422);
+        $pid = $n['parent_id'] === null ? null : (int)$n['parent_id'];
+        $name = free_name((int)$u['id'], $pid, $name, (int)$n['id']);
+        $mime = $n['kind'] === 'file' ? guess_mime($name, (string)$n['mime']) : '';
+        db()->prepare('UPDATE ' . t('nodes') . ' SET name = ?, mime = ?, updated_at = ? WHERE id = ?')->execute([$name, $mime, now_utc(), $n['id']]);
+        send_json(['ok' => true, 'item' => out_node(node_by_uid($n['uid']))]);
+
+    case 'node.move':
+        $u = writer();
+        $nodes = own_nodes($u);
+        $to = target_folder($u, body()['to'] ?? null);
+        $toId = $to ? (int)$to['id'] : null;
+        $depth = $to ? count(node_path($to)) : 0;
+        db()->beginTransaction();
+        foreach ($nodes as $n) {
+            if ($n['trashed_at']) fail('in_trash', 409);
+            if ($n['kind'] === 'folder' && $to && in_array((int)$to['id'], subtree_ids((int)$u['id'], (int)$n['id']), true)) fail('move_inside', 422);
+            if ($n['kind'] === 'folder' && $depth >= MAX_DEPTH) fail('too_deep', 422);
+            if ($n['parent_id'] === null ? $toId === null : (int)$n['parent_id'] === $toId) continue;
+            db()->prepare('UPDATE ' . t('nodes') . ' SET parent_id = ?, name = ?, updated_at = ? WHERE id = ?')->execute([$toId, free_name((int)$u['id'], $toId, (string)$n['name'], (int)$n['id']), now_utc(), $n['id']]);
+        }
+        db()->commit();
+        send_json(['ok' => true]);
+
+    case 'node.copy':
+        // A copy of a file next to it, "Name (2).ext": it counts in the space like any other file
+        $u = writer();
+        $n = own_node($u, body()['id'] ?? '', 'file');
+        if ($n['trashed_at']) fail('in_trash', 409);
+        if (user_used((int)$u['id'], true) + (int)$n['size'] > user_quota(user_row((int)$u['id']))) fail('quota', 413);
+        if (count_nodes((int)$u['id']) >= MAX_NODES) fail('too_many', 422);
+        $key = new_key();
+        if (!@copy(blob_path((int)$u['id'], (string)$n['bkey']), blob_path((int)$u['id'], $key))) throw new RuntimeException('copy failed');
+        $pid = $n['parent_id'] === null ? null : (int)$n['parent_id'];
+        $uid = new_uid();
+        db()->prepare('INSERT INTO ' . t('nodes') . " (uid, user_id, parent_id, kind, name, mime, size, bkey, created_at, updated_at) VALUES (?,?,?,'file',?,?,?,?,?,?)")
+            ->execute([$uid, $u['id'], $pid, free_name((int)$u['id'], $pid, (string)$n['name']), $n['mime'], $n['size'], $key, now_utc(), now_utc()]);
+        send_json(['ok' => true, 'item' => out_node(node_by_uid($uid))] + drive_space($u));
+
+    case 'node.star':
+        $u = writer();
+        $on = !empty(body()['on']) ? 1 : 0;
+        foreach (own_nodes($u) as $n) db()->prepare('UPDATE ' . t('nodes') . ' SET starred = ? WHERE id = ?')->execute([$on, $n['id']]);
+        send_json(['ok' => true]);
+
+    case 'node.color':
+        // The colour of a folder ('' = the usual one)
+        $u = writer();
+        $c = (string)(body()['color'] ?? '');
+        if ($c !== '' && !preg_match('/^#[0-9a-f]{6}$/', $c)) fail('bad_request', 422);
+        foreach (own_nodes($u) as $n) if ($n['kind'] === 'folder') db()->prepare('UPDATE ' . t('nodes') . ' SET color = ? WHERE id = ?')->execute([$c, $n['id']]);
+        send_json(['ok' => true]);
+
+    case 'node.trash':
+        // Into the trash with everything inside; it stays there TRASH_DAYS, still counted in the space
+        $u = writer();
+        db()->beginTransaction();
+        foreach (own_nodes($u) as $n) {
+            if ($n['trashed_at']) continue;
+            $ids = implode(',', subtree_ids((int)$u['id'], (int)$n['id']));
+            db()->prepare('UPDATE ' . t('nodes') . " SET trashed_at = ?, trash_root = 0, share_token = NULL WHERE user_id = ? AND id IN ($ids) AND trashed_at IS NULL")->execute([now_utc(), $u['id']]);
+            db()->prepare('UPDATE ' . t('nodes') . ' SET trash_root = 1 WHERE id = ?')->execute([$n['id']]);
+        }
+        db()->commit();
+        send_json(['ok' => true]);
+
+    case 'node.restore':
+        // Back where it was; if that folder is gone (or still in the trash), to My drive
+        $u = writer();
+        db()->beginTransaction();
+        foreach (own_nodes($u) as $n) {
+            if (!$n['trash_root']) continue;
+            $pid = $n['parent_id'] === null ? null : (int)$n['parent_id'];
+            if ($pid !== null) {
+                $st = db()->prepare('SELECT trashed_at FROM ' . t('nodes') . ' WHERE id = ?');
+                $st->execute([$pid]);
+                $p = $st->fetch();
+                if (!$p || $p['trashed_at']) $pid = null;
+            }
+            $ids = implode(',', subtree_ids((int)$u['id'], (int)$n['id']));
+            db()->prepare('UPDATE ' . t('nodes') . " SET trashed_at = NULL, trash_root = 0 WHERE user_id = ? AND id IN ($ids)")->execute([$u['id']]);
+            db()->prepare('UPDATE ' . t('nodes') . ' SET parent_id = ?, name = ? WHERE id = ?')->execute([$pid, free_name((int)$u['id'], $pid, (string)$n['name'], (int)$n['id']), $n['id']]);
+        }
+        db()->commit();
+        send_json(['ok' => true] + drive_space($u));
+
+    case 'node.delete':
+        // For ever: only what is in the trash
+        $u = writer();
+        $ids = [];
+        foreach (own_nodes($u) as $n) {
+            if (!$n['trashed_at']) fail('not_in_trash', 409);
+            $ids[] = (int)$n['id'];
+        }
+        delete_nodes_forever((int)$u['id'], $ids);
+        send_json(['ok' => true] + drive_space($u));
+
+    case 'trash.empty':
+        $u = writer();
+        $st = db()->prepare('SELECT id FROM ' . t('nodes') . ' WHERE user_id = ? AND trash_root = 1');
+        $st->execute([$u['id']]);
+        delete_nodes_forever((int)$u['id'], $st->fetchAll(PDO::FETCH_COLUMN));
+        send_json(['ok' => true] + drive_space($u));
+
+    case 'node.share':
+        // A link anyone can open to see or download a file; off = the link stops working
+        $u = writer();
+        $n = own_node($u, body()['id'] ?? '', 'file');
+        if ($n['trashed_at']) fail('in_trash', 409);
+        $tok = !empty(body()['on']) ? ($n['share_token'] ?: bin2hex(random_bytes(16))) : null;
+        db()->prepare('UPDATE ' . t('nodes') . ' SET share_token = ? WHERE id = ?')->execute([$tok, $n['id']]);
+        send_json(['ok' => true, 'token' => $tok]);
+
+    case 'pub.info':
+        only('GET');
+        $tok = (string)($_GET['t'] ?? '');
+        $n = null;
+        if (preg_match('/^[a-f0-9]{32}$/', $tok)) {
+            $st = db()->prepare('SELECT n.*, u.name owner, u.activated, u.status ustatus FROM ' . t('nodes') . ' n JOIN ' . t('users') . " u ON u.id = n.user_id WHERE n.share_token = ? AND n.trashed_at IS NULL AND n.kind = 'file'");
+            $st->execute([$tok]);
+            $n = $st->fetch() ?: null;
+        }
+        if (!$n || $n['ustatus'] !== 'active' || !$n['activated']) fail('not_found', 404);
+        send_json(['ok' => true, 'file' => ['name' => $n['name'], 'mime' => $n['mime'], 'size' => (int)$n['size'], 'updated' => iso($n['updated_at']), 'owner' => $n['owner'],
+            'app' => out_node($n)['app']]]);
+
+    // ================================================================ uploads, in pieces
+
+    case 'upload.start':
+        // Space is checked before anything travels: what is used, the uploads under way and this file
+        $u = writer();
+        if (too_many_attempts('upload', 2000, 60)) fail('rate_limited', 429);
+        record_attempt('upload');
+        $b = body();
+        $name = clean_name($b['name'] ?? '');
+        $size = (int)($b['size'] ?? -1);
+        if ($name === '') fail('name_required', 422);
+        if ($size < 0) fail('bad_request', 422);
+        // replace: the id of a file whose content this upload becomes (its name, folder, star and link stay); the old
+        // content stops counting when the new one arrives
+        $old = isset($b['replace']) && $b['replace'] !== null ? own_node($u, $b['replace'], 'file') : null;
+        if ($old && $old['trashed_at']) fail('in_trash', 409);
+        $parent = $old ? null : target_folder($u, $b['folder'] ?? null);
+        $row = user_row((int)$u['id']);
+        $quota = user_quota($row);
+        if (user_used((int)$u['id'], true) + $size - ($old ? (int)$old['size'] : 0) > $quota) send_json(['ok' => false, 'error' => 'quota', 'used' => user_used((int)$u['id']), 'quota' => $quota], 413);
+        if (!$old && count_nodes((int)$u['id']) >= MAX_NODES) fail('too_many', 422);
+        $id = new_key();
+        db()->prepare('INSERT INTO ' . t('uploads') . ' (id, user_id, parent_id, name, mime, size, replace_id, created_at, expires_at) VALUES (?,?,?,?,?,?,?,?,?)')
+            ->execute([$id, $u['id'], $parent ? $parent['id'] : null, $name, guess_mime($name, (string)($b['mime'] ?? '')), $size, $old ? $old['id'] : null, now_utc(), gmdate('Y-m-d H:i:s', time() + UPLOAD_HOURS * 3600)]);
+        if (@file_put_contents(storage_dir((int)$u['id']) . "/$id.part", '') === false) throw new RuntimeException('storage not writable');
+        // an empty file is already complete
+        if ($size === 0) $_GET['id'] = $id;
+        if ($size > 0) send_json(['ok' => true, 'upload' => $id, 'chunk' => CHUNK_BYTES]);
+    // no break: an empty file is finished at once
+
+    case 'upload.chunk':
+        // ?id=&offset=: the piece is the body. The last one makes the file.
+        $u = writer();
+        $id = (string)($_GET['id'] ?? '');
+        if (!preg_match('/^[a-f0-9]{32}$/', $id)) fail('bad_request', 422);
+        db()->beginTransaction();
+        $st = db()->prepare('SELECT * FROM ' . t('uploads') . ' WHERE id = ? AND user_id = ? FOR UPDATE');
+        $st->execute([$id, $u['id']]);
+        $up = $st->fetch();
+        if (!$up) fail('upload_gone', 410);
+        $part = storage_dir((int)$u['id']) . "/$id.part";
+        $offset = (int)($_GET['offset'] ?? 0);
+        if ($offset !== (int)$up['received']) {
+            db()->rollBack();
+            send_json(['ok' => false, 'error' => 'offset', 'received' => (int)$up['received']], 409);
+        }
+        if ((int)$up['size'] > 0) {
+            $in = fopen('php://input', 'rb');
+            $out = fopen($part, 'ab');
+            $got = stream_copy_to_stream($in, $out, CHUNK_BYTES + 1);
+            fclose($in);
+            fclose($out);
+            if ($got === false || $got > CHUNK_BYTES || $offset + $got > (int)$up['size']) {
+                $fh = fopen($part, 'r+');
+                ftruncate($fh, $offset);
+                fclose($fh);
+                fail('bad_chunk', 422);
+            }
+            $received = $offset + $got;
+        } else $received = 0;
+        if ($received < (int)$up['size']) {
+            db()->prepare('UPDATE ' . t('uploads') . ' SET received = ? WHERE id = ?')->execute([$received, $id]);
+            db()->commit();
+            send_json(['ok' => true, 'received' => $received]);
+        }
+        // complete: the folder may have gone to the trash meanwhile, then the file lands in My drive
+        clearstatcache(true, $part);
+        if (filesize($part) !== (int)$up['size']) fail('bad_chunk', 422);
+        $pid = $up['parent_id'] === null ? null : (int)$up['parent_id'];
+        if ($pid !== null) {
+            $s2 = db()->prepare('SELECT trashed_at FROM ' . t('nodes') . ' WHERE id = ? AND user_id = ?');
+            $s2->execute([$pid, $u['id']]);
+            $p = $s2->fetch();
+            if (!$p || $p['trashed_at']) $pid = null;
+        }
+        $key = new_key();
+        if (!@rename($part, blob_path((int)$u['id'], $key))) throw new RuntimeException('cannot store the file');
+        // the new content of a file that is still there (and not in the trash): same id, name, folder, star and link
+        if ($up['replace_id'] !== null) {
+            $s3 = db()->prepare('SELECT * FROM ' . t('nodes') . " WHERE id = ? AND user_id = ? AND kind = 'file' AND trashed_at IS NULL FOR UPDATE");
+            $s3->execute([$up['replace_id'], $u['id']]);
+            $old = $s3->fetch();
+            if ($old) {
+                db()->prepare('UPDATE ' . t('nodes') . ' SET bkey = ?, size = ?, updated_at = ? WHERE id = ?')->execute([$key, $up['size'], now_utc(), $old['id']]);
+                db()->prepare('DELETE FROM ' . t('uploads') . ' WHERE id = ?')->execute([$id]);
+                db()->commit();
+                if ($old['bkey']) @unlink(blob_path((int)$u['id'], (string)$old['bkey']));
+                send_json(['ok' => true, 'done' => true, 'replaced' => true, 'item' => out_node(node_by_uid((string)$old['uid']))] + drive_space($u));
+            }
+            // gone meanwhile: it becomes a new file in My drive
+        }
+        $uid = new_uid();
+        db()->prepare('INSERT INTO ' . t('nodes') . " (uid, user_id, parent_id, kind, name, mime, size, bkey, created_at, updated_at) VALUES (?,?,?,'file',?,?,?,?,?,?)")
+            ->execute([$uid, $u['id'], $pid, free_name((int)$u['id'], $pid, (string)$up['name']), $up['mime'], $up['size'], $key, now_utc(), now_utc()]);
+        db()->prepare('DELETE FROM ' . t('uploads') . ' WHERE id = ?')->execute([$id]);
+        db()->commit();
+        send_json(['ok' => true, 'done' => true, 'item' => out_node(node_by_uid($uid))] + drive_space($u));
+
+    case 'upload.cancel':
+        $u = writer();
+        $id = (string)(body()['id'] ?? '');
+        if (!preg_match('/^[a-f0-9]{32}$/', $id)) fail('bad_request', 422);
+        $st = db()->prepare('DELETE FROM ' . t('uploads') . ' WHERE id = ? AND user_id = ?');
+        $st->execute([$id, $u['id']]);
+        if ($st->rowCount()) @unlink(storage_dir((int)$u['id']) . "/$id.part");
+        send_json(['ok' => true]);
+
+    // ================================================================ master admin
+
+    case 'master.overview':
+        only('GET');
+        require_master();
+        $n = fn(string $sql) => (int)db()->query($sql)->fetchColumn();
+        send_json(['ok' => true, 'users' => $n('SELECT COUNT(*) FROM ' . t('users')), 'active' => $n('SELECT COUNT(*) FROM ' . t('users') . ' WHERE activated = 1'),
+            'waiting' => $n('SELECT COUNT(*) FROM ' . t('users') . ' WHERE activated = 0'), 'files' => $n('SELECT COUNT(*) FROM ' . t('nodes') . " WHERE kind = 'file'"),
+            'folders' => $n('SELECT COUNT(*) FROM ' . t('nodes') . " WHERE kind = 'folder'"), 'bytes' => $n('SELECT COALESCE(SUM(size),0) FROM ' . t('nodes') . " WHERE kind = 'file'") + $n('SELECT COALESCE(SUM(bytes),0) FROM ' . t('usage') . " WHERE app <> 'savdrive'"),
+            'driveBytes' => $n('SELECT COALESCE(SUM(size),0) FROM ' . t('nodes') . " WHERE kind = 'file'"), 'people' => $n('SELECT COUNT(*) FROM (SELECT email FROM ' . t('users') . ' UNION SELECT email FROM ' . t('usage') . ') x'),
+            'given' => $n('SELECT COALESCE(SUM(COALESCE(q.quota, ' . default_quota() . ')),0) FROM ' . t('users') . ' u LEFT JOIN ' . t('quotas') . ' q ON q.email = u.email WHERE u.activated = 1'),
+            'defaultQuota' => default_quota(), 'defaultActive' => default_active(), 'disk' => @disk_free_space(storage_dir()) ?: null]);
+
+    case 'master.settings':
+        // The space of the accounts without one of their own, and whether new accounts are activated at once
+        $u = require_master();
+        only('POST');
+        require_csrf($u);
+        $b = body();
+        if (isset($b['defaultQuota'])) {
+            $q = (int)$b['defaultQuota'];
+            if ($q < 1048576 || $q > MAX_QUOTA) fail('bad_quota', 422);
+            set_setting('default_quota', (string)$q);
+        }
+        if (isset($b['defaultActive'])) set_setting('default_active', !empty($b['defaultActive']) ? '1' : '0');
+        send_json(['ok' => true, 'defaultQuota' => default_quota(), 'defaultActive' => default_active()]);
+
+    case 'master.users':
+        // ?q= name or email · ?show=waiting|active|all
+        only('GET');
+        require_master();
+        $q = '%' . addcslashes(s($_GET, 'q', 80), '%_\\') . '%';
+        $show = (string)($_GET['show'] ?? 'all');
+        $extra = $show === 'waiting' ? ' AND u.activated = 0' : ($show === 'active' ? ' AND u.activated = 1' : '');
+        $st = db()->prepare('SELECT u.*, (SELECT COALESCE(SUM(n.size),0) FROM ' . t('nodes') . " n WHERE n.user_id = u.id AND n.kind = 'file') used, (SELECT COUNT(*) FROM " . t('nodes') . " n WHERE n.user_id = u.id AND n.kind = 'file') files
+            FROM " . t('users') . " u WHERE (u.name LIKE ? OR u.email LIKE ?)$extra ORDER BY u.activated, u.id DESC LIMIT 500");
+        $st->execute([$q, $q]);
+        $rows = $st->fetchAll();
+        // what every person keeps in the other apps of SavOffice (by email): their space is this one
+        $st = db()->query('SELECT email, app, bytes FROM ' . t('usage') . " WHERE bytes > 0 AND app <> 'savdrive'");
+        $other = [];
+        foreach ($st->fetchAll() as $g) $other[$g['email']][$g['app']] = (int)$g['bytes'];
+        $quotas = array_map('intval', array_column(db()->query('SELECT email, quota FROM ' . t('quotas'))->fetchAll(), 'quota', 'email'));
+        $out = array_map(function ($x) use ($other, $quotas) {
+            $e = mb_strtolower($x['email']);
+            $parts = array_filter(['savdrive' => (int)$x['used']] + ($other[$e] ?? []));
+            return ['id' => (int)$x['id'], 'name' => $x['name'], 'email' => $x['email'], 'account' => true, 'verified' => !empty($x['email_verified_at']),
+                'activated' => is_activated($x), 'master' => is_master($x), 'used' => array_sum($parts), 'parts' => (object)$parts, 'files' => (int)$x['files'], 'quota' => $quotas[$e] ?? default_quota(), 'ownQuota' => isset($quotas[$e]),
+                'created' => iso($x['created_at']), 'login' => iso($x['last_login_at'])];
+        }, $rows);
+        // people who use other apps of SavOffice without an account of SavDrive: they use this space too
+        if ($show !== 'waiting' && $show !== 'active') {
+            $have = array_flip(array_map(fn($x) => mb_strtolower($x['email']), $rows));
+            $needle = mb_strtolower(s($_GET, 'q', 80));
+            foreach ($other as $e => $parts) {
+                if (isset($have[$e]) || ($needle !== '' && mb_strpos($e, $needle) === false)) continue;
+                $out[] = ['id' => null, 'name' => $e, 'email' => $e, 'account' => false, 'verified' => false, 'activated' => false, 'master' => false, 'used' => array_sum($parts), 'parts' => (object)$parts, 'files' => 0,
+                    'quota' => $quotas[$e] ?? default_quota(), 'ownQuota' => isset($quotas[$e]), 'created' => null, 'login' => null];
+            }
+        }
+        send_json(['ok' => true, 'defaultQuota' => default_quota(), 'users' => $out]);
+
+    case 'master.activate':
+        // {ids, on}: activates (and tells by email) or deactivates accounts; a deactivated one is signed out everywhere
+        $u = require_master();
+        only('POST');
+        require_csrf($u);
+        $on = !empty(body()['on']);
+        $ids = body()['ids'] ?? (isset(body()['id']) ? [body()['id']] : []);
+        if (!is_array($ids) || !$ids || count($ids) > 500) fail('bad_request', 422);
+        $done = 0;
+        foreach (array_unique(array_map('intval', $ids)) as $id) {
+            $x = user_row($id);
+            if (!$x || is_master($x) || (bool)$x['activated'] === $on) continue;
+            db()->prepare('UPDATE ' . t('users') . ' SET activated = ?, activated_at = ? WHERE id = ?')->execute([$on ? 1 : 0, $on ? now_utc() : null, $id]);
+            if (!$on) db()->prepare('DELETE FROM ' . t('auth_tokens') . ' WHERE user_id = ?')->execute([$id]);
+            elseif (!empty($x['email_verified_at']) && mail_settings()) {
+                $L = in_array($x['ui_lang'], LANGS, true) ? $x['ui_lang'] : 'en';
+                $T = mail_t($L);
+                send_notice((string)$x['email'], (string)$x['name'], $L, $T['active_subject'], $T['active_title'],
+                    [fill($T['hello'], ['name' => $x['name']]), fill($T['active_body'], ['quota' => human_bytes(user_quota($x))])], app_url(), $T['active_button']);
+            }
+            $done++;
+        }
+        send_json(['ok' => true, 'changed' => $done]);
+
+    case 'master.quota':
+        // {id | email, quota}: bytes of its own, or null = the default space. By email also for people who use other apps
+        // of SavOffice without an account here: the space is one for the whole suite
+        $u = require_master();
+        only('POST');
+        require_csrf($u);
+        $x = !empty(body()['id']) ? user_row((int)body()['id']) : [];
+        $email = $x ? mb_strtolower((string)$x['email']) : mb_strtolower(s(body(), 'email', 190));
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) fail('not_found', 404);
+        $q = body()['quota'] ?? null;
+        if ($q !== null) {
+            $q = (int)$q;
+            if ($q < 0 || $q > MAX_QUOTA) fail('bad_quota', 422);
+            db()->prepare('INSERT INTO ' . t('quotas') . ' (email, quota, updated_at) VALUES (?,?,?) ON DUPLICATE KEY UPDATE quota = VALUES(quota), updated_at = VALUES(updated_at)')->execute([$email, $q, now_utc()]);
+        } else db()->prepare('DELETE FROM ' . t('quotas') . ' WHERE email = ?')->execute([$email]);
+        db()->prepare('UPDATE ' . t('users') . ' SET quota = NULL WHERE email = ?')->execute([$email]);
+        send_json(['ok' => true, 'quota' => email_quota($email) ?? default_quota()]);
+
+    case 'master.delete':
+        // An account and all its files, for ever (never a master)
+        $u = require_master();
+        only('POST');
+        require_csrf($u);
+        $x = user_row((int)(body()['id'] ?? 0));
+        if (!$x || is_master($x)) fail('forbidden', 403);
+        db()->prepare('DELETE FROM ' . t('users') . ' WHERE id = ?')->execute([$x['id']]);
+        delete_user_storage((int)$x['id']);
+        send_json(['ok' => true]);
+
+    default:
+        fail('not_found', 404);
+}

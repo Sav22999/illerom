@@ -3,12 +3,14 @@
  * (with a mouse at once, with a finger after holding it a moment, so the board still scrolls), or moved from its menu.
  * A column may be the one of done tasks: a card dropped there is ticked, and a ticked task goes there by itself.
  * On phones the columns are as wide as the screen and snap while scrolling sideways.
+ * The Eisenhower matrix is a board too: its four columns (q1…q4) are drawn two by two, with what to do in each one.
  */
 import { btn, confirm, dialog, drop, fail, h, icon, put, toast } from './ui.js';
 import { t } from './i18n.js';
 import { S, api, keep, taskById } from './store.js';
 import { prefs } from './account.js';
 import { openTask } from './task.js';
+import { isMatrix } from './create.js';
 import { PRIO_COLOR, defaultRemind, metaOf, toggleDone } from './tasks.js';
 
 const tz = () => prefs().tz || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
@@ -18,20 +20,21 @@ export function boardView(l, tasks, ctx) {
   const cols = l.columns, doneCol = cols.find((c) => c.done)?.id;
   const showDone = prefs().showDone !== false;
   const colOf = (x) => (cols.some((c) => c.id === x.col) ? x.col : x.done && doneCol ? doneCol : cols[0].id);
-  const board = h('div.board', { style: `--c:${l.color}` });
+  const matrix = isMatrix(l);
+  const board = h('div.board' + (matrix ? '.bmatrix' : ''), { style: `--c:${l.color}` });
   for (const c of cols) {
     // in the column of done tasks only the last ones (all of them with "show done")
-    let list = tasks.filter((x) => colOf(x) === c.id).sort((a, b) => (c.done ? (a.done < b.done ? 1 : -1) : byPos(a, b)));
+    let list = tasks.filter((x) => colOf(x) === c.id && (!matrix || showDone || !x.done)).sort((a, b) => (c.done ? (a.done < b.done ? 1 : -1) : byPos(a, b)));
     const hidden = c.done && !showDone ? list.length : c.done ? Math.max(0, list.length - 30) : 0;
     if (hidden) list = list.slice(0, list.length - hidden);
     const cards = h('div.bcards', { 'data-col': c.id }, list.map((x) => card(x, l, ctx)));
-    board.append(h('section.bcol' + (c.done ? '.isdone' : ''), { 'data-col': c.id },
-      h('header.bhead', c.done ? icon('circle-check', { class: 'bdone' }) : null, h('b', c.name), h('small.muted', String(tasks.filter((x) => colOf(x) === c.id).length)), h('div.spacer'), colMenu(l, c, ctx)),
+    board.append(h('section.bcol' + (c.done ? '.isdone' : '') + (matrix ? '.' + c.id : ''), { 'data-col': c.id },
+      h('header.bhead', c.done ? icon('circle-check', { class: 'bdone' }) : null, h('div.bht', h('b', c.name), matrix ? h('small.bq', t(c.id + '_t')) : null), h('small.muted', String(tasks.filter((x) => colOf(x) === c.id && !x.done).length)), h('div.spacer'), colMenu(l, c, ctx, matrix)),
       cards,
       hidden ? h('small.muted.bmore', t('done_hidden', { n: hidden })) : null,
       c.done ? null : addCard(l, c, ctx)));
   }
-  board.append(h('section.bcol.addcol', btn(t('add_column'), { icon: 'plus', appearance: 'ghost', onclick: () => addColumn(l, ctx) })));
+  if (!matrix) board.append(h('section.bcol.addcol', btn(t('add_column'), { icon: 'plus', appearance: 'ghost', onclick: () => addColumn(l, ctx) })));
   dragging(board, l, ctx);
   return board;
 }
@@ -173,9 +176,9 @@ function dragging(board, l, ctx) {
 
 // ------------------------------------------------------------------ columns
 
-function colMenu(l, c, ctx) {
+function colMenu(l, c, ctx, matrix = false) {
   const i = l.columns.findIndex((x) => x.id === c.id);
-  return drop(h('sav-button', { icon: 'ellipsis-vertical', label: t('column'), appearance: 'ghost', size: 'sm', square: true }), () => [
+  return drop(h('sav-button', { icon: 'ellipsis-vertical', label: t('column'), appearance: 'ghost', size: 'sm', square: true }), () => matrix ? [['pencil', t('rename'), () => renameColumn(l, c, ctx)]] : [
     ['pencil', t('rename'), () => renameColumn(l, c, ctx)],
     ['circle-check', t(c.done ? 'col_not_done' : 'col_done'), () => saveColumns(l, l.columns.map((x) => ({ ...x, done: x.id === c.id ? !c.done : false })), ctx)],
     i > 0 ? ['arrow-left', t('move_left'), () => { const a = [...l.columns]; [a[i - 1], a[i]] = [a[i], a[i - 1]]; saveColumns(l, a, ctx); }] : null,

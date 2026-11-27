@@ -12,7 +12,7 @@
 import { btn, dialog, drop, empty, fail, h, icon, iconBtn, mobile, primary, put, segmented, toast, errText } from './ui.js';
 import { t, getLang } from './i18n.js';
 import { S, api, calById } from './store.js';
-import { brand, credit, go, prefs, setPrefs, userMenu } from './account.js';
+import { brand, commands, credit, go, prefs, setPrefs, userMenu } from './account.js';
 import { addDays, dayKey, keyParts, LOCAL_TZ, parts, todayKey, weekday, zoned, clock, hm, monthLabel, dayLabel, longDay } from './time.js';
 import { expand } from './rrule.js';
 import { sidebar, openFile } from './sources.js';
@@ -180,6 +180,10 @@ export async function calendarScreen(root, view = '', k = '') {
   };
   const newEvent = () => { const s = zoned(...keyParts(k), 9, 0, viewTz()); editEvent(null, { start: s, end: s + 3600e3 }, ctx); };
   ctx.newEvent = newEvent;
+  // the search of actions (⌘J / Ctrl+J): the same moves as the keys of the calendar
+  commands([t('new_event'), [['plus', t('new_event'), () => newEvent(), 'C'], ['search', t('search_events'), () => q.focus(), '/']]],
+    [t('today'), [['calendar-check', t('today'), () => go(`#/${view}/${todayKey(viewTz())}`), 'T'], ['chevron-left', t('previous'), () => step(-1), 'K'], ['chevron-right', t('next'), () => step(1), 'J'],
+      ...VIEWS.map((v) => [{ day: 'calendar', week: 'calendar-range', month: 'calendar-days', agenda: 'list' }[v], t('v_' + v), () => go(`#/${v}/${k}`), v[0].toUpperCase()])]]);
   addEventListener('keydown', onKey);
   const onVis = () => { if (document.visibilityState === 'visible') refresh(true).catch(() => {}); };
   document.addEventListener('visibilitychange', onVis);

@@ -1,0 +1,23 @@
+{
+  "name": "SavSpreadsheets",
+  "short_name": "SavSpreadsheets",
+  "description": "A free, open spreadsheet: formulas, charts, Excel and OpenDocument files, people working together. Part of SavOffice.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f4f7ef",
+  "theme_color": "#4d7c0f",
+  "lang": "en",
+  "categories": ["productivity", "business", "finance"],
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ],
+  "file_handlers": [
+    {"action": "./", "accept": {"application/vnd.savspreadsheets.workbook+zip": [".savspr"], "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"], "application/vnd.ms-excel": [".xls"], "application/vnd.oasis.opendocument.spreadsheet": [".ods"], "text/csv": [".csv"]}}
+  ],
+  "launch_handler": {"client_mode": "navigate-existing"}
+}

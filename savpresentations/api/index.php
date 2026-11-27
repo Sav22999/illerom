@@ -2,7 +2,7 @@
 /**
  * SavPresentations — JSON API.  api/?r=<action>
  *
- * Accounts:      auth.config, me, register, login, google, resend, verify, forgot, reset, logout, password, profile, settings, export, delete
+ * Accounts:      auth.config, me, register, login, resend, verify, forgot, reset, logout, password, profile, settings, export, delete
  * Home:          home.list, folder.create|rename|delete, deck.create|get|sync|move|trash|restore|purge|duplicate|template
  * Pages:         page.rules, page.rule (permissions of single people on single pages)
  * Sharing:       share.get, share.access, share.invite, share.role, share.remove, share.link, share.unlink, share.accept, deck.leave
@@ -222,7 +222,7 @@ function delete_user(int $id): void
     foreach ($fonts as $f) @unlink(font_path($f));
 }
 
-// ---------- Google and SavAccount: signing in and joining an account that already exists (../identity/identity.php) ----------
+// ---------- SavAccount: signing in and joining an account that already exists (../identity/identity.php) ----------
 
 require dirname(__DIR__, 2) . '/identity/identity.php';
 
@@ -246,7 +246,7 @@ switch ($r) {
     // ================================================================ accounts
 
     case 'auth.config':
-        send_json(['ok' => true, 'googleClientId' => (string)config_value('google_client_id', ''), 'savAccount' => sav_enabled(), 'mailReady' => mail_settings() !== null, 'sources' => search_sources()]);
+        send_json(['ok' => true, 'savAccount' => sav_enabled(), 'mailReady' => mail_settings() !== null, 'sources' => search_sources()]);
 
     case 'auth.me':
         only('GET');
@@ -283,7 +283,7 @@ switch ($r) {
         $b = body();
         $pw = (string)($b['password'] ?? '');
         $row = user_by_email(mb_strtolower(s($b, 'email', 190)));
-        // One answer for an unknown address, a wrong password and a Google-only account, in about the same time
+        // One answer for an unknown address, a wrong password and an account without a password, in about the same time
         $ok = $row && $row['password_hash'] !== '' ? password_verify($pw, $row['password_hash']) : password_hash($pw, PASSWORD_DEFAULT) === '';
         if (!$ok) {
             record_attempt('login');
@@ -293,14 +293,6 @@ switch ($r) {
         clear_attempts('login');
         if (password_needs_rehash($row['password_hash'], PASSWORD_DEFAULT)) db()->prepare('UPDATE ' . t('users') . ' SET password_hash = ? WHERE id = ?')->execute([password_hash($pw, PASSWORD_DEFAULT), $row['id']]);
         signed_in((int)$row['id']);
-
-    case 'auth.google':
-        // Google already proves the address: no email check. A new account must accept the terms first ("needs_signup").
-        only('POST');
-        if (too_many_attempts('login', 20, 15)) fail('rate_limited', 429);
-        $b = body();
-        // Already linked: signs in. An address that has an account: whoever signs in proves it is theirs first
-        ident_sign_in('google', verify_google_token((string)($b['credential'] ?? '')), $b);
 
     case 'auth.resend':
         $u = writer(true);

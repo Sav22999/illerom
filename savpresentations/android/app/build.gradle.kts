@@ -47,10 +47,3 @@ android {
     }
 }
 
-dependencies {
-    // "Continue with Google" through the system account picker: Google sign-in does not run inside a WebView,
-    // so the app gets the ID token natively
-    implementation("androidx.credentials:credentials:1.5.0")
-    implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
-    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
-}

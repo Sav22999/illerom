@@ -5,7 +5,7 @@
  * Other API calls always go to the network: the data offline come from IndexedDB (local.js).
  */
 'use strict';
-const CACHE = 'savpresentations-8';
+const CACHE = 'savpresentations-12';
 const SHELL = ['./', 'manifest.webmanifest', 'icons/favicon.svg', 'icons/icon-192.png', '../assets/sav/sav.css', '../assets/sav/sav.js', '../assets/savoffice/savoffice.js', '../identity/identity.css?v=2', '../identity/identity.js?v=3',
     ...['admin.js', 'app.css', 'auth.js', 'cfb.js', 'changelog.js', 'core.js', 'editor.js', 'export-odp.js', 'export-pdf.js', 'export-pptx.js', 'features.js', 'files.js', 'fonts.js', 'grid.js', 'hero.js', 'home.js', 'i18n.js', 'icons-lib.js', 'icons.js', 'import-odp.js', 'import-ppt.js', 'import-pptx.js', 'layouts.js', 'local.js', 'main.js', 'marks.js', 'media.js', 'model.js', 'pages.js', 'panels.js', 'parts.js', 'present.js', 'render.js', 'richtext.js', 'settings.js', 'shapes.js', 'share.js', 'speaker.js', 'stage.js', 'templates.js', 'textedit.js', 'themes.js', 'ttf.js', 'version.js', 'zip.js'].map((f) => 'assets/' + f)];
 self.addEventListener('install', (e) => e.waitUntil(caches.open(CACHE).then((c) => Promise.allSettled(SHELL.map((u) => c.add(u)))).then(() => self.skipWaiting())));

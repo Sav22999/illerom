@@ -39,6 +39,8 @@ export const langButton = () => btn(h('span.lbl', getLang() === 'it' ? 'English'
 export const credit = () => h('footer.credit', h('a', { href: 'privacy.html' }, 'Privacy'), h('a', { href: 'terms.html' }, t('terms_c')), h('a', { href: 'https://www.illerom.eu/', rel: 'noopener' }, 'Illerom'), h('span', getLang() === 'it' ? 'di ' : 'by ', h('a.sig', { href: 'https://www.saveriomorelli.com', rel: 'noopener' }, 'Saverio Morelli')), h('a.vlink', { href: '#/changelog', title: t('changelog') }, 'v' + VERSION), h('span.grow'), langSwitch());
 export function userMenu() {
   const u = S.user, av = face(u.name, null, 36);
+  // the picture of SavAccount, once it has really loaded (a service disconnected there keeps the initials)
+  if (u.picture) { const im = new Image(); im.onload = () => av.setAttribute('image', u.picture); im.src = u.picture; }
   av.setAttribute('button', '');
   // the apps of SavOffice next to the avatar
   return h('span.umenu', h('savoffice-apps', { current: 'savdocuments' }), drop(av, [{ head: u.email }, ['settings', t('settings'), () => go('#/settings')], u.master ? ['shield', t('admin'), () => go('#/admin')] : null, '-', ['log-out', t('sign_out'), signOut]], { placement: 'bottom-end', label: u.name }));
@@ -52,22 +54,19 @@ export async function signOut() {
   go('#/welcome');
 }
 
+/**
+ * The search of actions (⌘J or Ctrl+J, the same in every app of SavOffice: ../assets/savoffice/savoffice.js): what this
+ * screen can do, as groups [label, [[icon, label, run or '#/address', shortcut, description]…]], then the pages of the app.
+ */
+export function commands(...groups) {
+  const item = ([icon, label, to, shortcut, description]) => ({ icon, label, shortcut, description, run: typeof to === 'function' ? to : () => { location.hash = to; } });
+  const pages = S.user ? [['layout-grid', t('home'), '#/'], ['settings', t('settings'), '#/settings'], ['sparkles', t('changelog'), '#/changelog'], ['log-out', t('sign_out'), () => signOut()]]
+    : [['', t('sign_in'), '#/signin'], ['', t('sign_up'), '#/signup'], ['sparkles', t('changelog'), '#/changelog']];
+  window.SavOffice?.commands([...groups.filter(Boolean).map(([label, list]) => ({ label, items: list.filter(Boolean).map(item) })), { label: 'SavDocuments', items: pages.map(item) }]);
+}
+
 // ------------------------------------------------------------------ signing in
 
-let gis = null;
-export function googleButton(slot, cb) {
-  if (!S.config.googleClientId) return;
-  if (/SavDocumentsApp\/Android/.test(navigator.userAgent) && window.SavDocumentsAndroid?.googleSignIn) {
-    window.SavDocumentsNative = { ...window.SavDocumentsNative, result: (kind, value, err) => { if (kind !== 'google') return; if (value) cb(value); else if (err !== 'cancelled') fail({ code: 'google_token' }); } };
-    slot.replaceChildren(btn(t('google_continue'), { block: true, appearance: 'outline', onclick: () => window.SavDocumentsAndroid.googleSignIn(S.config.googleClientId) }));
-    return;
-  }
-  gis ||= new Promise((ok, no) => { const s = h('script', { src: 'https://accounts.google.com/gsi/client', async: true }); s.onload = ok; s.onerror = no; document.head.append(s); });
-  gis.then(() => {
-    google.accounts.id.initialize({ client_id: S.config.googleClientId, callback: (r) => cb(r.credential) });
-    google.accounts.id.renderButton(slot, { theme: 'outline', size: 'large', width: Math.min(360, slot.clientWidth || 320), locale: getLang(), text: 'continue_with' });
-  }).catch(() => {});
-}
 export function signedIn(r) {
   setUser(r.user, r.csrf);
   const next = sessionStorage.getItem('savdocuments-next');
@@ -94,17 +93,10 @@ function authCard(mode) {
     submit.addEventListener('click', run);
     const form = h('div.form', mode === 'signup' ? name : null, email, pw, mode === 'signup' ? terms : null, err, submit);
     form.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.localName === 'sav-input') run(); });
-    const g = h('div.gbox'), sav = window.Identity?.button(S.config.savAccount) || null;
+    const sav = window.Identity?.button(S.config.savAccount) || null;
     put(inner, segmented(t('sign_in'), mode, [['signin', '=' + t('sign_in'), t('sign_in')], ['signup', '=' + t('sign_up'), t('sign_up')]], (v) => { mode = v; draw(); }, { class: 'wide' }), form,
       mode === 'signin' ? btn(t('forgot'), { size: 'sm', appearance: 'ghost', onclick: () => { forgot(); } }) : !S.config.mailReady && S.config.installed ? h('p.muted.small', t('mail_off')) : null,
-      S.config.googleClientId || sav ? [h('sav-divider', t('or')), S.config.googleClientId ? g : null, sav, h('p.muted.small.center', t('google_terms'))] : null);
-    if (S.config.googleClientId) setTimeout(() => googleButton(g, async (credential) => {
-      try {
-        let r = await api('auth.google', { credential, lang: getLang() });
-        if (r.error === 'needs_signup') { if (!(await confirm(t('sign_up'), t('google_new'), t('create'), false))) return; r = await api('auth.google', { credential, acceptTerms: true, lang: getLang() }); }
-        signedIn(r);
-      } catch (e) { if (!window.Identity?.handle(e)) show(e); }
-    }));
+      sav ? [h('sav-divider', t('or')), sav, h('p.muted.small.center', t('google_terms'))] : null);
   };
   draw();
   if (!S.config.installed) put(inner, empty('cloud-off', t(S.config.down ? 'err_network' : 'not_ready'), S.config.down ? '' : t('err_not_installed')));

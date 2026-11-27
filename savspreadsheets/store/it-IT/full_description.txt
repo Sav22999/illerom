@@ -1,0 +1,12 @@
+SavSpreadsheets è un foglio di calcolo gratuito e open source, parte di SavOffice: budget, elenchi, fatture, registri e piani che si calcolano mentre scrivi.
+
+• Cartelle con più fogli, righe e colonne bloccate, celle unite, filtri, ordinamento e riempimento a serie
+• Più di 250 funzioni (SUM, VLOOKUP, XLOOKUP, IFS, FILTER, UNIQUE…), sempre nell’inglese standard dei fogli di calcolo, con suggerimenti mentre scrivi
+• Formati di numeri, valute, percentuali e date; i valori mostrati come li scrive la tua lingua
+• Formattazione condizionale, convalida con elenchi e caselle di controllo, grafici disegnati dalle tue celle
+• Apre e salva Excel (.xlsx e .xls), OpenDocument (.ods), CSV e i propri file .savspr; stampa e PDF
+• 17 modelli pronti: budget, spese, fattura, foglio ore, avanzamento progetto, registro voti, calcolo mutuo…
+• Lavoro insieme in tempo reale: condivisione con link o email, vedi chi è su quale cella, commenti, note personali e versioni
+• Funziona offline: i fogli che apri restano sul dispositivo e si salvano appena torna la connessione
+
+Niente pubblicità, nessun tracciamento, dati nell’Unione europea.

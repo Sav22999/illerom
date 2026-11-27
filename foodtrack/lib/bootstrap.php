@@ -309,6 +309,7 @@ function public_user(array $u): array
         'id' => (int)$u['id'],
         'name' => $u['name'],
         'email' => $u['email'],
+        'picture' => function_exists('ident_picture') ? ident_picture($u) : null, // the profile picture of SavAccount (../identity/identity.php)
         'role' => $role,
         'roleLabel' => tr(ROLE_LABELS[$role] ?? ROLE_LABELS[ROLE_USER]),
         'isEditor' => $role >= ROLE_EDITOR,

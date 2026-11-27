@@ -73,16 +73,21 @@ function split_host(string $host, int $port = 3306): array
 function app_credentials(string $dir, string $defaultPrefix): ?array
 {
     static $memo = [];
-    if (array_key_exists($dir, $memo)) return $memo[$dir];
+    $k = "$dir|$defaultPrefix";
+    if (array_key_exists($k, $memo)) return $memo[$k];
     $file = ROOT . "/$dir/credentials.php";
-    if (!is_file($file)) return $memo[$dir] = null;
+    // SavBooks and SavDrive without a credentials.php of their own use the database of SavDocuments, always with their own prefix
+    $borrowed = !is_file($file) && ($dir === 'savbooks' || $dir === 'savdrive');
+    if ($borrowed) $file = ROOT . '/savdocuments/credentials.php';
+    if (!is_file($file)) return $memo[$k] = null;
     $localhost_db = $username_db = $password_db = $database_name = null;
     $table_prefix = $defaultPrefix;
     $mail_config = null;
     require $file;
-    if (!$localhost_db || !$username_db || !$database_name) return $memo[$dir] = null;
+    if ($borrowed) $table_prefix = $defaultPrefix;
+    if (!$localhost_db || !$username_db || !$database_name) return $memo[$k] = null;
     [$host, $port] = split_host((string)$localhost_db);
-    return $memo[$dir] = [
+    return $memo[$k] = [
         'host' => $host, 'port' => $port, 'name' => (string)$database_name,
         'user' => (string)$username_db, 'pass' => (string)$password_db,
         'prefix' => valid_prefix($table_prefix ?: $defaultPrefix, $defaultPrefix),
@@ -112,10 +117,11 @@ function site_mail_config(): ?array
 }
 
 /** Latest schema version an app expects, read from its source (null when it cannot be found). */
-function expected_schema(string $dir): ?int
+function expected_schema(string $dir, string $const = 'SCHEMA_VERSION'): ?int
 {
     $src = (string)@file_get_contents(ROOT . "/$dir/lib/bootstrap.php");
-    return preg_match('/const\s+SCHEMA_VERSION\s*=\s*(\d+)\s*;/', $src, $m) ? (int)$m[1] : null;
+    if (!preg_match('/^[A-Z_]{1,40}$/', $const)) return null;
+    return preg_match('/const\s+' . $const . '\s*=\s*(\d+)\s*;/', $src, $m) ? (int)$m[1] : null;
 }
 
 // ---------- Probes ----------
@@ -153,11 +159,13 @@ function db_probe(string $id, ?array $c, callable $query): array
     return $r;
 }
 
-function schema_probe(string $id, ?array $c, string $dir): array
+function schema_probe(string $id, ?array $c, string $dir, string $key = 'schema_version', string $const = 'SCHEMA_VERSION'): array
 {
-    return db_probe($id, $c, function (PDO $pdo) use ($c, $dir) {
-        $v = (int)$pdo->query("SELECT v FROM `{$c['prefix']}meta` WHERE k = 'schema_version'")->fetchColumn();
-        $expected = expected_schema($dir);
+    return db_probe($id, $c, function (PDO $pdo) use ($c, $dir, $key, $const) {
+        $st = $pdo->prepare("SELECT v FROM `{$c['prefix']}meta` WHERE k = ?");
+        $st->execute([$key]);
+        $v = (int)$st->fetchColumn();
+        $expected = expected_schema($dir, $const);
         if ($v === 0) return result('down', 'Not installed');
         // The apps update their own schema on the next request: an older version is a pending update, not an outage
         if ($expected !== null && $v < $expected) return result('degraded', "Database update pending (v$v of v$expected)");
@@ -265,7 +273,7 @@ function run_checks(array $services): array
                     $results[$id] = $r['code'] === 0 ? result('unknown', 'Not checked by the server') : http_result($r);
                     break;
                 case 'app':
-                    $results[$id] = schema_probe($id, app_credentials($s['project'], $s['prefix']), $s['project']);
+                    $results[$id] = schema_probe($id, app_credentials($s['creds'] ?? $s['project'], $s['prefix']), $s['project'], $s['key'] ?? 'schema_version', $s['const'] ?? 'SCHEMA_VERSION');
                     break;
                 case 'game':
                     $table = valid_prefix($s['table'], 'rooms');
@@ -275,7 +283,7 @@ function run_checks(array $services): array
                     });
                     break;
                 case 'mail':
-                    $results[$id] = smtp_probe(mail_settings($s['project']));
+                    $results[$id] = smtp_probe(mail_settings($s['creds'] ?? $s['project']));
                     break;
             }
         } catch (Throwable $e) {

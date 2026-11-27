@@ -99,74 +99,6 @@ function shell(app, ...kids) {
     app.append(topBar(), h('main.amain', h('sav-card.acard', {appearance: 'elevated'}, ...kids)), credit());
 }
 
-let googleLoading;
-const loadGoogle = () => (googleLoading ||= new Promise((r, no) => {
-    const s = h('script', {src: 'https://accounts.google.com/gsi/client', async: true});
-    s.onload = r;
-    s.onerror = no;
-    document.head.append(s);
-}));
-
-function google(box, terms) {
-    if (!state.config.googleClientId) return;
-    const done = async (credential) => {
-        const send = async (accept) => api('auth.google', {credential, acceptTerms: accept, lang: lang()});
-        try {
-            signedIn(await send(terms?.checked));
-        } catch (e) {
-            // the address already has an account: the shared library asks to prove it is theirs (password, code or the other way)
-            if (window.Identity?.handle(e)) return;
-            if (e.code !== 'needs_signup') return failedLogin(e);
-            // a new account: the terms first
-            const c = h('sav-checkbox', termsText());
-            box.replaceChildren(h('p', t('g_new', {name: e.data.name || ''})), c, btn(t('create_account'), async () => {
-                if (!c.checked) return failedLogin({code: 'terms_required', data: {}});
-                try {
-                    signedIn(await send(true));
-                } catch (x) {
-                    if (!window.Identity?.handle(x)) failedLogin(x);
-                }
-            }, {block: true}));
-        }
-    };
-    googleInto(box, done);
-}
-
-/** The Google button inside a box: native in the Android app, Google's own one elsewhere. */
-export async function googleInto(box, done) {
-    const id = state.config.googleClientId;
-    if (!id) return;
-    if (isApp && window.SavPresentationsAndroid?.googleSignIn) {
-        window.SavPresentationsNative = {
-            ...window.SavPresentationsNative, result: (kind, value, err) => {
-                if (kind !== 'google') return;
-                if (value) done(value); else if (err !== 'cancelled') oops({code: 'google_token'});
-            }
-        };
-        box.append(btn(t('google'), () => window.SavPresentationsAndroid.googleSignIn(id), {
-            block: true,
-            appearance: 'outline',
-            variant: 'neutral'
-        }));
-        return;
-    }
-    try {
-        await loadGoogle();
-        window.google.accounts.id.initialize({client_id: id, callback: (r) => done(r.credential), ux_mode: 'popup'});
-        const slot = h('div.gbtn');
-        box.append(slot);
-        window.google.accounts.id.renderButton(slot, {
-            theme: 'outline',
-            size: 'large',
-            width: Math.min(340, box.clientWidth || 340),
-            locale: lang(),
-            shape: 'pill',
-            text: 'continue_with'
-        });
-    } catch { /* blocked or offline: the password still works */
-    }
-}
-
 const termsText = () => h('span', t('accept_1'), ' ', h('a', {
     href: 'terms.php',
     target: '_blank'
@@ -212,7 +144,7 @@ export function authScreen(app, {mode = 'login', note = ''} = {}) {
         block: true,
         size: 'lg'
     });
-    const gbox = h('div.gbox'), sav = forgot ? null : window.Identity?.button(state.config.savAccount) || null;
+    const sav = forgot ? null : window.Identity?.button(state.config.savAccount) || null;
     const body = h('div.aform', {
             onkeydown: (e) => {
                 if (e.key === 'Enter') send();
@@ -220,7 +152,7 @@ export function authScreen(app, {mode = 'login', note = ''} = {}) {
         },
         h('h1', forgot ? t('forgot') : register ? t('register_title') : t('login_title')), note && h('sav-alert', note), h('div.aerr'),
         register && name, email, !forgot && pw, register && terms, submit,
-        !forgot && (state.config.googleClientId || sav) && h('div.or', h('span', t('or'))), !forgot && gbox, !forgot && sav,
+        !forgot && sav && h('div.or', h('span', t('or'))), !forgot && sav,
         h('div.alinks', mode === 'login' || !mode ? [h('a', {
             href: '?signin=forgot',
             'data-go': true
@@ -257,7 +189,6 @@ export function authScreen(app, {mode = 'login', note = ''} = {}) {
         submit.loading = false;
     };
     shell(app, body);
-    if (!forgot) google(gbox, register ? terms : null);
     setTimeout(() => (register ? name : email).focus?.(), 80);
 }
 
@@ -317,6 +248,5 @@ export async function logout() {
     }
     state.user = null;
     state.csrf = '';
-    window.google?.accounts?.id?.disableAutoSelect?.();
     go('./');
 }

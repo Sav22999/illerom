@@ -11,8 +11,8 @@
  * "Preview" and "Send a test" show exactly what subscribers will get.
  */
 
-import {saveSavnew} from './files.js?v=23';
-import {t} from './i18n.js?v=23';
+import {saveSavnew} from './files.js?v=25';
+import {t} from './i18n.js?v=25';
 import {
     api,
     ApiError,
@@ -39,7 +39,7 @@ import {
     textarea,
     toast,
     uid
-} from './ui.js?v=23';
+} from './ui.js?v=25';
 
 const BLOCKS = ['heading', 'text', 'image', 'button', 'columns', 'media', 'card', 'quote', 'divider', 'spacer', 'social'];
 // blocks that can go inside a column (INNER_TYPES in lib/render.php)

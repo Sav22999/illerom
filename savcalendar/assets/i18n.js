@@ -28,8 +28,9 @@ const T = {
   accept: ['I accept the', 'Accetto i'], terms: ['terms', 'termini'], and_privacy: ['and the', 'e l’'], privacy: ['privacy notice', 'informativa sulla privacy'], terms_c: ['Terms', 'Termini'],
   forgot: ['Forgot your password?', 'Password dimenticata?'], forgot_text: ['We will send you a link to choose a new one.', 'Ti mandiamo un link per sceglierne una nuova.'], send_link: ['Send the link', 'Invia il link'], link_sent: ['If the address has an account, the link is on its way.', 'Se l’indirizzo ha un account, il link è in arrivo.'],
   check_email: ['Check your email', 'Controlla la tua email'], check_email_text: ['We sent you a link to confirm the address. If you do not see it, look in the spam.', 'Ti abbiamo mandato un link per confermare l’indirizzo. Se non lo vedi, guarda nello spam.'],
-  mail_off: ['Emails are switched off on this server.', 'Le email sono disattivate su questo server.'], google_terms: ['By continuing with Google or SavAccount you accept the terms and the privacy notice.', 'Continuando con Google o SavAccount accetti i termini e l’informativa sulla privacy.'],
-  google_new: ['There is no account with this address yet: create one?', 'Non esiste ancora un account con questo indirizzo: vuoi crearlo?'], not_ready: ['Not ready yet', 'Non ancora pronto'],
+  mail_off: ['Emails are switched off on this server.', 'Le email sono disattivate su questo server.'],
+ google_terms: ['By continuing with SavAccount you accept the terms and the privacy notice.', 'Continuando con SavAccount accetti i termini e l’informativa sulla privacy.'],
+not_ready: ['Not ready yet', 'Non ancora pronto'],
   verify_title: ['Confirm your email', 'Conferma la tua email'], verify_text: ['Press the button to confirm the address and sign in.', 'Premi il pulsante per confermare l’indirizzo e accedere.'], verify_btn: ['Confirm and sign in', 'Conferma e accedi'],
   reset_title: ['Choose a new password', 'Scegli una nuova password'], new_password: ['New password', 'Nuova password'], current_pw: ['Current password', 'Password attuale'],
   unverified: ['Confirm your email to go on', 'Conferma la tua email per continuare'], resend: ['Send the link again', 'Invia di nuovo il link'], resent: ['Link sent', 'Link inviato'], language: ['Language', 'Lingua'],
@@ -138,8 +139,7 @@ const T = {
   a_last: ['Last sign-in', 'Ultimo accesso'], a_owner: ['Owner', 'Proprietario'], a_blocked: ['Blocked', 'Bloccato'], a_unverified: ['Not confirmed', 'Non confermato'], a_block: ['Block', 'Blocca'], a_unblock: ['Unblock', 'Sblocca'],
   a_suspend: ['Suspend', 'Sospendi'], a_unsuspend: ['Restore', 'Ripristina'], a_open: ['Open', 'Aperta'], a_done: ['Done', 'Gestita'], a_close: ['Mark as done', 'Segna come gestita'], a_noreports: ['No reports', 'Nessuna segnalazione'],
 
-  changelog: ['What’s new', 'Novità'], changelog_t: ['The versions of SavCalendar and what changed in each. This is version {v}.', 'Le versioni di SavCalendar e cosa è cambiato in ognuna. Questa è la versione {v}.'], current_v: ['current version', 'versione attuale'], google_continue: ['Continue with Google', 'Continua con Google'],
-  // errors
+  changelog: ['What’s new', 'Novità'], changelog_t: ['The versions of SavCalendar and what changed in each. This is version {v}.', 'Le versioni di SavCalendar e cosa è cambiato in ognuna. Questa è la versione {v}.'], current_v: ['current version', 'versione attuale'],  // errors
   err_server: ['Something went wrong. Try again in a moment.', 'Qualcosa è andato storto. Riprova tra poco.'], err_network: ['No connection.', 'Nessuna connessione.'], err_not_installed: ['The database is not configured yet.', 'Il database non è ancora configurato.'],
   err_unauthenticated: ['Sign in again.', 'Accedi di nuovo.'], err_disabled: ['This account is blocked.', 'Questo account è bloccato.'], err_email_unverified: ['Confirm your email first.', 'Prima conferma la tua email.'], err_csrf: ['The session expired: reload the page.', 'La sessione è scaduta: ricarica la pagina.'],
   err_rate_limited: ['Too many attempts: wait a little.', 'Troppi tentativi: aspetta un po’.'], err_bad_credentials: ['Wrong email or password.', 'Email o password errate.'], err_name_required: ['Write your name.', 'Scrivi il tuo nome.'], err_email_invalid: ['That email does not look right.', 'Questa email non sembra corretta.'],
@@ -150,12 +150,11 @@ const T = {
   err_nothing_chosen: ['Choose at least one.', 'Scegline almeno uno.'], err_need_yes: ['Say yes to at least one date.', 'Di’ sì ad almeno una data.'], err_too_many_places: ['You chose more places than allowed.', 'Hai scelto più posti di quelli consentiti.'],
   err_too_few_dates: ['Say yes to more dates: the organiser asks for a minimum.', 'Di’ sì a più date: chi organizza chiede un minimo.'], err_too_many_answers: ['This schedule is full of answers.', 'Questa pianificazione ha raggiunto il massimo di risposte.'],
   err_slot_taken: ['Someone took that slot a moment ago: choose another one.', 'Qualcuno ha appena preso quel posto: scegline un altro.'], err_file_big: ['The file is too big.', 'Il file è troppo grande.'], err_file_invalid: ['This is not a .savsch file.', 'Questo non è un file .savsch.'],
-  err_bad_request: ['Something in the request is not right.', 'Qualcosa nella richiesta non va.'], err_google_token: ['Google did not confirm the sign-in.', 'Google non ha confermato l’accesso.'], err_google_disabled: ['Google sign-in is not available.', 'L’accesso con Google non è disponibile.'], err_google_email: ['The Google address is not confirmed.', 'L’indirizzo Google non è confermato.'],
-  // settings, as in SavPresentations and SavDocuments
+  err_bad_request: ['Something in the request is not right.', 'Qualcosa nella richiesta non va.'],  // settings, as in SavPresentations and SavDocuments
   name_t: ['Shown to the people who answer.', 'La vedono le persone che rispondono.'],
   password_t: ['To sign in with your email.', 'Per entrare con la tua email.'],
-  password_none_t: ['You sign in with Google or SavAccount: you can add one.', 'Entri con Google o SavAccount: puoi aggiungerne una.'],
-  sign_in_ways: ['Ways to sign in', 'Modi per entrare'], sign_in_ways_t: ['Google, SavAccount and password, joined to this account.', 'Google, SavAccount e password, collegati a questo account.'],
+  password_none_t: ['You sign in with SavAccount: you can add one.', 'Entri con SavAccount: puoi aggiungerne una.'],
+  sign_in_ways: ['Ways to sign in', 'Modi per entrare'], sign_in_ways_t: ['SavAccount and password, joined to this account.', 'SavAccount e password, collegati a questo account.'],
   sign_out_t: ['On this device.', 'Su questo dispositivo.'],
   export_data_t: ['Everything stored about you, in one file.', 'Tutto quello che è salvato su di te, in un file.'],
   delete_account_short: ['Your polls, slots and answers go for good.', 'I tuoi sondaggi, turni e risposte spariscono per sempre.'],

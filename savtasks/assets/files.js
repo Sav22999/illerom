@@ -1,12 +1,13 @@
 /**
- * Files. .savtas is the format of SavTasks: one list, whole (name, colour, icon, list or board, its columns, every task
+ * Files. .savtas is the format of SavTasks: one list, whole (name, colour, icon, list, board or Gantt, its columns, every task
  * with its checklist, labels, due day, repetition and reminder, the done ones too), opened again as a new list exactly
  * as it was. The other formats: .csv for spreadsheets (the columns most apps read), .md as a checklist of Markdown
  * (- [ ] / - [x]), and lines of text (pasted, or a .txt/.md file) that become tasks.
  *
  * .savtas: a ZIP with `mimetype` (application/vnd.savtasks.list+zip, stored first) and list.json
  *   {format: "savtas", version: 1, app, exported, name, color, icon, view, columns: [{id, name, done}],
- *    tasks: [{title, notes, checklist: [{t, d}], tags, priority, starred, col, due, time, tz, remind, rrule, done}]}
+ *    tasks: [{title, notes, checklist: [{t, d}], tags, priority, starred, col, start, due, time, tz, remind, rrule, log, done}]}
+ *   (log: the days a habit was done)
  */
 import { zip, unzip, text } from './zip.js';
 import { S, api, listById } from './store.js';
@@ -41,7 +42,7 @@ export async function saveSavtas(id) {
   try {
     const { list: l, tasks } = await whole(id);
     const json = { format: 'savtas', version: 1, app: 'SavTasks', exported: new Date().toISOString(), name: l.name, color: l.color, icon: l.icon, view: l.view, columns: l.columns,
-      tasks: tasks.map(({ title, notes, checklist, tags, priority, starred, col, due, time, tz: z, remind, rrule, done }) => ({ title, notes, checklist, tags, priority, starred, col, due, time, tz: z, remind, rrule, done })) };
+      tasks: tasks.map(({ title, notes, checklist, tags, priority, starred, col, start, due, time, tz: z, remind, rrule, log, done }) => ({ title, notes, checklist, tags, priority, starred, col, start, due, time, tz: z, remind, rrule, log, done })) };
     download(await zip([['mimetype', SAVTAS, { store: true }], ['list.json', JSON.stringify(json, null, 1)]], SAVTAS), fileName(l.name, 'savtas'));
   } catch (e) { fail(e); }
 }
@@ -51,8 +52,8 @@ export async function saveCsv(id) {
   try {
     const { list: l, tasks } = await whole(id);
     const col = (k) => l.columns.find((c) => c.id === k)?.name || '';
-    const rows = [['Title', 'Notes', 'Due date', 'Due time', 'Priority', 'Starred', 'Labels', 'Checklist', 'Repeat', 'Column', 'Completed', 'List']];
-    for (const x of tasks) rows.push([x.title, x.notes, x.due || '', x.time || '', ['', 'low', 'medium', 'high'][x.priority], x.starred ? 'yes' : '', x.tags.join(', '), x.checklist.map((c) => (c.d ? '[x] ' : '[ ] ') + c.t).join(' | '), x.rrule, l.view === 'board' ? col(x.col) : '', x.done ? x.done.slice(0, 10) : '', l.name]);
+    const rows = [['Title', 'Notes', 'Start date', 'Due date', 'Due time', 'Priority', 'Starred', 'Labels', 'Checklist', 'Repeat', 'Column', 'Completed', 'List']];
+    for (const x of tasks) rows.push([x.title, x.notes, x.start || '', x.due || '', x.time || '', ['', 'low', 'medium', 'high'][x.priority], x.starred ? 'yes' : '', x.tags.join(', '), x.checklist.map((c) => (c.d ? '[x] ' : '[ ] ') + c.t).join(' | '), x.rrule, l.view === 'board' ? col(x.col) : '', x.done ? x.done.slice(0, 10) : '', l.name]);
     download(new Blob(['﻿' + rows.map((r) => r.map(csvCell).join(',')).join('\r\n') + '\r\n'], { type: 'text/csv;charset=utf-8' }), fileName(l.name, 'csv'));
   } catch (e) { fail(e); }
 }
@@ -60,7 +61,7 @@ export async function saveCsv(id) {
 export async function saveMd(id) {
   try {
     const { list: l, tasks } = await whole(id);
-    const line = (x) => `- [${x.done ? 'x' : ' '}] ${x.title}${x.due ? ' (' + x.due + (x.time ? ' ' + x.time : '') + ')' : ''}${x.tags.length ? ' ' + x.tags.map((g) => '#' + g).join(' ') : ''}` + x.checklist.map((c) => `\n  - [${c.d ? 'x' : ' '}] ${c.t}`).join('');
+    const line = (x) => `- [${x.done ? 'x' : ' '}] ${x.title}${x.due ? ' (' + (x.start ? x.start + ' → ' : '') + x.due + (x.time ? ' ' + x.time : '') + ')' : ''}${x.tags.length ? ' ' + x.tags.map((g) => '#' + g).join(' ') : ''}` + x.checklist.map((c) => `\n  - [${c.d ? 'x' : ' '}] ${c.t}`).join('');
     let md = `# ${l.name}\n\n`;
     if (l.view === 'board') for (const c of l.columns) { const list = tasks.filter((x) => x.col === c.id); if (list.length) md += `## ${c.name}\n\n${list.map(line).join('\n')}\n\n`; }
     else md += tasks.map(line).join('\n') + '\n';

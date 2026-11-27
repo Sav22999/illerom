@@ -13,14 +13,16 @@
  *   shots      how many screenshots of a phone in assets/projects/<slug>/ (1.jpg, 2.jpg…)
  *   tablet     optional: how many from a tablet (t1.jpg, t2.jpg…, 1180 × 820)
  *   desk       optional: how many from a computer (d1.jpg, d2.jpg…, 1440 × 900)
+ *   suite      optional: 'savoffice' = an app of SavOffice: the home page shows one card for the whole suite instead of
+ *              one per app (pages/home.php); its own page stays where it is
  */
 $five = ['en', 'it', 'fr', 'de', 'es'];
 $two = ['en', 'it'];
 
 return [
     'savnewsletters' => [
-        'name' => 'SavNewsletters', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '',
-        'url' => '/savnewsletters/', 'source' => 'savnewsletters', 'privacy' => 'terms.php', 'langs' => $two, 'shots' => 0,
+        'name' => 'SavNewsletters', 'suite' => 'savoffice', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '',
+        'url' => '/savnewsletters/', 'source' => 'savnewsletters', 'privacy' => 'terms.php', 'langs' => $two, 'shots' => 4, 'tablet' => 4, 'desk' => 4,
         'it' => ['Newsletter scritte, approvate e spedite in gruppo.',
             'Chi gestisce la newsletter di un’associazione raramente è una persona sola: qualcuno scrive, qualcun altro controlla, e nessuno vuole mandare per sbaglio un messaggio a centinaia di persone. SavNewsletters dà a ogni gruppo i suoi ruoli e un passaggio di approvazione prima dell’invio. Fa parte di SavOffice: ciò che è programmato compare in SavCalendar.',
             ['Editor a trascinamento con modelli pronti o del gruppo', 'Proposta, approvazione e invio all’ora scelta, anche in SavCalendar', 'Iscritti in più lingue, pagina di iscrizione e widget per qualsiasi sito', 'Ogni gruppo spedisce dal proprio indirizzo email; newsletter salvabili in file .savnew']],
@@ -28,8 +30,18 @@ return [
             'The newsletter of a club is rarely the work of one person: someone writes, someone else checks, and nobody wants a message to reach hundreds of people by mistake. SavNewsletters gives each group its own roles and an approval step before anything is sent. Part of SavOffice: what is scheduled shows up in SavCalendar.',
             ['Drag-and-drop editor with ready templates or the group’s own', 'Proposal, approval and sending at the chosen time, also in SavCalendar', 'Subscribers in several languages, a subscription page and a widget for any website', 'Each group sends from its own email address; newsletters saved as .savnew files']],
     ],
+    'savdrive' => [
+        'name' => 'SavDrive', 'suite' => 'savoffice', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '',
+        'url' => '/savdrive/', 'source' => 'savdrive', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 2, 'tablet' => 2, 'desk' => 2,
+        'it' => ['I tuoi file, in un drive tutto tuo.',
+            'Un posto per foto, documenti e cartelle, da ritrovare su qualsiasi dispositivo: carichi file di ogni dimensione, anche intere cartelle trascinandole, li guardi senza scaricarli e li condividi con un link. Ogni account ha 2 GB gratis. Fa parte di SavOffice: documenti, fogli di calcolo e presentazioni si creano nel drive e si aprono nella loro app.',
+            ['2 GB per account, scelti dagli amministratori, che attivano anche i nuovi account', 'Cartelle, speciali, recenti, ricerca e cestino per 30 giorni', 'Anteprime di immagini, PDF, video, musica e testo; link di condivisione', 'Nuovi file .savdoc, .savspr, .savpre, .savboo, .savwhi e .savnot aperti nella loro app']],
+        'en' => ['Your files, in a drive of your own.',
+            'A place for photos, documents and folders, to reach from any device: upload files of any size, whole folders too by dragging them in, look at them without downloading and share them with a link. Every account has 2 GB free. Part of SavOffice: documents, spreadsheets and presentations are created in the drive and open in their app.',
+            ['2 GB per account, chosen by the administrators, who also activate new accounts', 'Folders, starred, recent, search and a trash for 30 days', 'Previews of pictures, PDF, videos, music and text; share links', 'New .savdoc, .savspr, .savpre, .savboo, .savwhi and .savnot files opened in their app']],
+    ],
     'savdocuments' => [
-        'name' => 'SavDocuments', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => true, 'play' => '',
+        'name' => 'SavDocuments', 'suite' => 'savoffice', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => true, 'play' => '',
         'url' => '/savdocuments/', 'source' => 'savdocuments', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 3, 'tablet' => 3, 'desk' => 3,
         'it' => ['Documenti veri, senza ingombri.',
             'Un editor di documenti in cui prima viene la pagina e gli strumenti compaiono solo quando servono. Con il tuo account scrivi da qualsiasi dispositivo, anche senza connessione, da solo o in più persone nello stesso momento. Apre e salva i file Word. Fa parte di SavOffice.',
@@ -38,9 +50,29 @@ return [
             'A word processor where the page comes first and the tools appear only when you need them. With your account you write from any device, even without a connection, alone or together with other people at the same time. It opens and saves Word files. Part of SavOffice.',
             ['Pages from A6 to A3 with draggable margins, borders, watermark, headers, notes and a table of contents', 'Tables, images, charts, diagrams, shapes, formulas and QR codes', '43 ready templates, sharing, comments, versions and writing together', '.docx, .savdoc, PDF, EPUB, Markdown, web page and plain text files']],
     ],
+    'savspreadsheets' => [
+        'name' => 'SavSpreadsheets', 'suite' => 'savoffice', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => true, 'play' => '',
+        'url' => '/savspreadsheets/', 'source' => 'savspreadsheets', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 3, 'tablet' => 3, 'desk' => 3,
+        'it' => ['I numeri, chiari e condivisi.',
+            'Un foglio di calcolo che si apre subito e calcola mentre scrivi: budget, elenchi, fatture, registri, piani. Con il tuo account lavori da qualsiasi dispositivo, anche senza connessione, da solo o con altre persone nello stesso momento. Apre e salva i file di Excel e di LibreOffice. Fa parte di SavOffice.',
+            ['Più fogli per cartella, righe e colonne bloccate, celle unite, filtri, ordinamento e riempimento a serie', 'Più di 250 funzioni nell’inglese standard dei fogli di calcolo, con suggerimenti mentre scrivi', 'Formati di numeri, valute e date, formattazione condizionale, convalida con elenchi e caselle, grafici', 'File .xlsx, .xls, .ods, CSV, .savspr e PDF; 17 modelli, condivisione con permessi per foglio e celle protette']],
+        'en' => ['Numbers, clear and together.',
+            'A spreadsheet that opens at once and computes as you type: budgets, lists, invoices, registers, plans. With your account you work from any device, even without a connection, alone or with other people at the same time. It opens and saves Excel and LibreOffice files. Part of SavOffice.',
+            ['Many sheets per workbook, frozen rows and columns, merged cells, filters, sorting and series fill', 'More than 250 functions in the standard English of spreadsheets, with hints as you type', 'Number, currency and date formats, conditional formatting, validation with lists and checkboxes, charts', '.xlsx, .xls, .ods, CSV, .savspr and PDF files; 17 templates, sharing with rules for each sheet and protected cells']],
+    ],
+    'savbooks' => [
+        'name' => 'SavBooks', 'suite' => 'savoffice', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => true, 'play' => '',
+        'url' => '/savbooks/', 'source' => 'savbooks', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 4, 'tablet' => 3, 'desk' => 3,
+        'it' => ['Dal primo capitolo all’e-book.',
+            'Scrivi il tuo libro capitolo per capitolo, disegna la copertina, guardalo come lo mostra un e-reader e pubblicalo in EPUB. Puoi partire da zero, da un documento di SavDocuments (anche da un file .savdoc) o da un file Word, OpenDocument, EPUB, FB2, Markdown o di testo: diventa un libro da solo. Fa parte di SavOffice.',
+            ['Capitoli in un elenco da trascinare, con le parole di ognuno e l’etichetta “Capitolo uno”', 'Copertina in sei grafiche o con una tua immagine, a 1600 × 2560 pixel', 'Frontespizio, colophon, dedica, indice e note fatti dai dati del libro; anteprima su telefono, e-reader e tablet', 'EPUB 3, PDF, .savboo, Word; apre .savdoc, EPUB, Word, OpenDocument, FB2 e Markdown']],
+        'en' => ['From the first chapter to the e-book.',
+            'Write your book chapter by chapter, design its cover, see it as an e-reader shows it and publish it as EPUB. Start from scratch, from a SavDocuments document (or a .savdoc file) or from a Word, OpenDocument, EPUB, FB2, Markdown or text file: it becomes a book by itself. Part of SavOffice.',
+            ['Chapters in a list you drag, with the words of each one and a “Chapter One” label', 'A cover in six designs or with a picture of your own, at 1600 × 2560 pixels', 'Title page, copyright page, dedication, contents and notes made from the details of the book; preview on phone, e-reader and tablet', 'EPUB 3, PDF, .savboo, Word; opens .savdoc, EPUB, Word, OpenDocument, FB2 and Markdown']],
+    ],
     'savschedules' => [
-        'name' => 'SavSchedules', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '',
-        'url' => '/savschedules/', 'source' => 'savschedules', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 0,
+        'name' => 'SavSchedules', 'suite' => 'savoffice', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '',
+        'url' => '/savschedules/', 'source' => 'savschedules', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 4, 'tablet' => 4, 'desk' => 4,
         'it' => ['Trova la data. Distribuisci i posti.',
             'Sondaggi sulle date e prenotazioni di posti in una sola app. Chiedi a un gruppo quali giorni vanno bene, oppure offri orari che, una volta presi, nessun altro può prendere: colloqui, ricevimenti, turni. Chi risponde non ha bisogno di un account. Fa parte di SavOffice, con lo stesso account di SavCalendar, SavTasks e SavWhiteboard.',
             ['Sondaggi con sì, se serve e no, e la scelta della data finale', 'Posti unici o con più persone, e un limite di posti a testa', 'Risposte senza account, oppure solo per chi ha fatto l’accesso', 'Scadenza, risposte nascoste, codice QR, file .ics, CSV e .savsch']],
@@ -49,8 +81,8 @@ return [
             ['Polls with yes, if need be and no, and the choice of the final date', 'Unique slots or slots for several people, and a limit of places per person', 'Answers without an account, or only for signed-in people', 'Deadline, hidden answers, QR code, .ics, CSV and .savsch files']],
     ],
     'savcalendar' => [
-        'name' => 'SavCalendar', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '',
-        'url' => '/savcalendar/', 'source' => 'savcalendar', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 0,
+        'name' => 'SavCalendar', 'suite' => 'savoffice', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '',
+        'url' => '/savcalendar/', 'source' => 'savcalendar', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 3, 'tablet' => 4, 'desk' => 4,
         'it' => ['Il tuo tempo, in un calendario.',
             'Un calendario libero con giorno, settimana, mese e agenda, più calendari, ripetizioni e fusi orari. Ha lo stesso account di SavSchedules: le date scelte e i posti prenotati compaiono da soli, e dal calendario nasce un sondaggio. Fa parte di SavOffice: si vede anche in Google, Outlook e Apple, e porta qui i loro calendari.',
             ['Disegna, trascina e allunga gli eventi; ripetizioni con eccezioni', 'Settimana personalizzabile: primo giorno e giorni mostrati', 'Link privato per Google Calendar, Outlook e Apple; iscrizioni a calendari .ics', 'File .savcal, .ics e CSV; newsletter programmate di SavNewsletters']],
@@ -59,8 +91,8 @@ return [
             ['Draw, drag and stretch events; repetitions with exceptions', 'A week of your own: first day and days shown', 'Private link for Google Calendar, Outlook and Apple; subscriptions to .ics calendars', '.savcal, .ics and CSV files; planned newsletters of SavNewsletters']],
     ],
     'savtasks' => [
-        'name' => 'SavTasks', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '',
-        'url' => '/savtasks/', 'source' => 'savtasks', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 0,
+        'name' => 'SavTasks', 'suite' => 'savoffice', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '',
+        'url' => '/savtasks/', 'source' => 'savtasks', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 3, 'tablet' => 3, 'desk' => 3,
         'it' => ['Tutto da fare, in un posto solo.',
             'Attività, liste e bacheche kanban in un’unica app, con scadenze, promemoria e ripetizioni. Ha lo stesso account di SavSchedules e SavCalendar: le attività con scadenza compaiono nel calendario, un’attività può diventare un evento o un sondaggio, e i sondaggi da decidere arrivano qui. Fa parte di SavOffice.',
             ['Oggi, prossimi, speciali; scadenze con orario, ripetizioni, priorità, etichette e sottoattività', 'Ogni lista diventa una bacheca: colonne tue e schede da trascinare, anche col dito', 'Aggiunta rapida che capisce «domani 15:00 !alta #lavoro»; promemoria via email e nel browser', 'File .savtas, CSV e Markdown; insieme a SavCalendar e SavSchedules']],
@@ -69,8 +101,8 @@ return [
             ['Today, upcoming, starred; due days with a time, repetitions, priorities, labels and subtasks', 'Any list becomes a board: columns of your own and cards to drag, with a finger too', 'Quick add that understands “tomorrow 3pm !high #work”; reminders by email and in the browser', '.savtas, CSV and Markdown files; together with SavCalendar and SavSchedules']],
     ],
     'savforms' => [
-        'name' => 'SavForms', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '',
-        'url' => '/savforms/', 'source' => 'savforms', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 0,
+        'name' => 'SavForms', 'suite' => 'savoffice', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '',
+        'url' => '/savforms/', 'source' => 'savforms', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 4, 'tablet' => 4, 'desk' => 4,
         'it' => ['Chiedi di tutto, vedi ogni risposta.',
             'Moduli, sondaggi e quiz liberi e aperti, un’alternativa a Google Moduli, Microsoft Forms e LimeSurvey. Si condividono con un link e per rispondere non serve un account; ogni domanda ha il suo grafico, le risposte si leggono una per una o si scaricano in CSV. Se un modulo ha una scadenza, compare in SavCalendar e il modulo si chiude da solo. Ha lo stesso account di SavSchedules, SavCalendar e SavTasks e fa parte di SavOffice.',
             ['Quattordici tipi di domande: testi, scelte, scale, stelle, griglie, classifiche, numeri e date, su più pagine', 'Una risposta a persona, risposte modificabili, un limite di risposte, apertura e scadenza', 'Un grafico per ogni domanda, le risposte una per una, CSV; quiz con punteggio', 'Colori e caratteri a scelta; file .savfor; la scadenza in SavCalendar']],
@@ -79,8 +111,8 @@ return [
             ['Fourteen kinds of questions: texts, choices, scales, stars, grids, rankings, numbers and dates, on several pages', 'One answer per person, answers that can be changed, a limit of answers, opening and deadline', 'A chart for every question, the answers one by one, CSV; quizzes with points', 'Colours and fonts of your own; .savfor files; the deadline in SavCalendar']],
     ],
     'savwhiteboard' => [
-        'name' => 'SavWhiteboard', 'cat' => 'work', 'level' => 1, 'account' => 'required', 'offline' => false, 'play' => '',
-        'url' => '/savwhiteboard/', 'source' => 'savwhiteboard', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 0,
+        'name' => 'SavWhiteboard', 'suite' => 'savoffice', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '',
+        'url' => '/savwhiteboard/', 'source' => 'savwhiteboard', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 3, 'tablet' => 3, 'desk' => 3,
         'it' => ['Una lavagna senza bordi.',
             'Una lavagna libera che cresce in ogni direzione mentre lavori: scrivi a mano o digita, disegna, attacca foglietti e immagini. Sotto, una filigrana di puntini, quadretti o righe su qualsiasi colore, anche nera come una lavagna di scuola. Ha lo stesso account di SavSchedules e SavCalendar e fa parte di SavOffice.',
             ['Penna sensibile alla pressione, matita, evidenziatore, gomma e puntatore laser', 'Testo digitato, foglietti, forme, frecce e immagini da spostare e ridimensionare', 'Due dita per spostare e ingrandire; con il pennino il palmo non disegna', 'File .savwhi, PNG, SVG e PDF']],
@@ -89,8 +121,8 @@ return [
             ['Pressure-sensitive pen, pencil, highlighter, eraser and laser pointer', 'Typed text, sticky notes, shapes, arrows and pictures to move and resize', 'Two fingers to move and zoom; with a stylus the palm does not draw', '.savwhi, PNG, SVG and PDF files']],
     ],
     'savnotes' => [
-        'name' => 'SavNotes', 'cat' => 'work', 'level' => 1, 'account' => 'required', 'offline' => false, 'play' => '',
-        'url' => '/savnotes/', 'source' => 'savnotes', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 0,
+        'name' => 'SavNotes', 'suite' => 'savoffice', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '',
+        'url' => '/savnotes/', 'source' => 'savnotes', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 3, 'tablet' => 3, 'desk' => 3,
         'it' => ['I tuoi quaderni, a mano o a tastiera.',
             'Quaderni digitali divisi in fogli veri, di formato fisso: a quadretti, a righe, con il margine, appunti Cornell o puntini, del colore che preferisci. Scrivi a mano con penna, matita, evidenziatore, forme e immagini, oppure digita come in un documento, con titoli, elenchi e liste di controllo che si appoggiano sulle righe. Ha lo stesso account di SavSchedules e SavCalendar e fa parte di SavOffice.',
             ['Un quaderno per ogni materia, con copertina; dentro, fogli da aggiungere, spostare e riordinare', 'Scrittura libera: penna sensibile alla pressione, matita, evidenziatore, gomma, forme e immagini', 'Documento digitale: titoli, grassetto, colori, elenchi e liste di controllo; il testo continua sul foglio successivo', 'File .savnot, stampa e PDF, PNG di un foglio']],
@@ -99,7 +131,7 @@ return [
             ['One notebook for each subject, with a cover; inside, sheets to add, move and reorder', 'Free writing: pressure-sensitive pen, pencil, highlighter, eraser, shapes and pictures', 'Digital document: titles, bold, colours, lists and checklists; the text goes on to the next sheet', '.savnot files, print and PDF, PNG of a sheet']],
     ],
     'savpresentations' => [
-        'name' => 'SavPresentations', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '',
+        'name' => 'SavPresentations', 'suite' => 'savoffice', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => true, 'play' => '',
         'url' => '/savpresentations/', 'source' => 'savpresentations', 'privacy' => 'privacy.php', 'langs' => $two, 'shots' => 4, 'tablet' => 4, 'desk' => 4,
         'it' => ['Presentazioni, senza il peso.',
             'Un’alternativa aperta a Google Slides e PowerPoint Online: si apre subito, ha temi già belli e si lavora in più persone sulla stessa slide. Le presentazioni restano private, con link o con chi scegli tu, e si scaricano in PDF, PowerPoint e OpenDocument. Fa parte di SavOffice.',
@@ -110,7 +142,7 @@ return [
     ],
     'chess' => [
         'name' => 'Chess', 'cat' => 'games', 'level' => 3, 'account' => 'none', 'offline' => true, 'play' => 'com.saverio.chess',
-        'url' => '/chess/', 'source' => 'chess', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 4,
+        'url' => '/chess/', 'source' => 'chess', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 4, 'tablet' => 3, 'desk' => 3,
         'it' => ['Scacchi con un amico, uno sconosciuto o il computer.',
             'Crea una stanza e manda il codice a un amico, cerca un avversario a caso, gioca in due sullo stesso dispositivo o sfida il computer. I suggerimenti spiegano perché una mossa è buona, non solo quale fare.',
             ['Stanze con codice e avversari a caso', 'Suggerimenti spiegati', 'Orologio, chat e storico delle mosse']],
@@ -120,7 +152,7 @@ return [
     ],
     'thinkhop' => [
         'name' => 'ThinkHop', 'cat' => 'games', 'level' => 3, 'account' => 'optional', 'offline' => true, 'play' => 'com.saverio.thinkhop',
-        'url' => '/thinkhop/', 'source' => 'thinkhop', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 4,
+        'url' => '/thinkhop/', 'source' => 'thinkhop', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 4, 'tablet' => 4, 'desk' => 4,
         'it' => ['Mille livelli di logica, uno più infido dell’altro.',
             'Bugiardi e sinceri, forzieri, mini sudoku, ragionamenti assurdi e trappole per chi risponde di fretta. I livelli sono divisi in mondi e diventano sempre più difficili.',
             ['1.000 livelli', 'Sfida del giorno con classifica', 'Amici e username solo se li vuoi']],
@@ -130,7 +162,7 @@ return [
     ],
     'foodtrack' => [
         'name' => 'FoodTrack', 'cat' => 'home', 'level' => 3, 'account' => 'required', 'offline' => false, 'play' => 'com.saverio.foodtrack',
-        'url' => '/foodtrack/', 'source' => 'foodtrack', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 4,
+        'url' => '/foodtrack/', 'source' => 'foodtrack', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 4, 'tablet' => 4, 'desk' => 4,
         'it' => ['Cosa c’è in frigo, e per quanto ancora.',
             'Segna quello che hai in frigo, freezer e dispensa: FoodTrack ti avvisa prima che scada. Puoi condividere gli spazi con chi vive con te, così la lista della spesa è una sola per tutti.',
             ['Avvisi prima della scadenza', 'Spazi e liste della spesa condivisi', 'Piano dei pasti e ricette con quello che hai già']],
@@ -140,7 +172,7 @@ return [
     ],
     'sudoku' => [
         'name' => 'Sudoku', 'cat' => 'games', 'level' => 3, 'account' => 'none', 'offline' => true, 'play' => 'com.saverio.sudoku',
-        'url' => '/sudoku/', 'source' => 'sudoku', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 4,
+        'url' => '/sudoku/', 'source' => 'sudoku', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 4, 'tablet' => 3, 'desk' => 3,
         'it' => ['Il classico, con suggerimenti che insegnano.',
             'Quattro difficoltà, note a matita che diventano penna con un tocco e suggerimenti che spiegano la logica della prossima mossa. Schemi e soluzioni si generano sul tuo dispositivo.',
             ['Quattro difficoltà', 'Note a matita e a penna', 'Controllo di una sola cella, senza rovinare il resto']],
@@ -160,7 +192,7 @@ return [
     ],
     'forkville' => [
         'name' => 'Forkville', 'cat' => 'games', 'level' => 3, 'account' => 'required', 'offline' => false, 'play' => 'com.saverio.forkville',
-        'url' => '/forkville/', 'source' => 'forkville', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 4,
+        'url' => '/forkville/', 'source' => 'forkville', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 4, 'tablet' => 3, 'desk' => 3,
         'it' => ['Il tuo ristorante in 3D, dall’orto al conto.',
             'Parti da un lotto vuoto, costruisci e arreda il locale, assumi cuochi e camerieri, coltiva gli ingredienti e migliora i piatti. Poi vai a vedere come se la cavano i ristoranti degli amici.',
             ['Costruzione e arredamento in 3D', 'Personale, orto e ricette', 'Visite agli amici e classifica settimanale']],
@@ -170,13 +202,23 @@ return [
     ],
     'prism-mine' => [
         'name' => 'Prism Mine', 'cat' => 'games', 'level' => 3, 'account' => 'none', 'offline' => true, 'play' => 'com.saverio.prismmine',
-        'url' => '/prism-mine/', 'source' => 'prism-mine', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 4,
+        'url' => '/prism-mine/', 'source' => 'prism-mine', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 4, 'tablet' => 3, 'desk' => 3,
         'it' => ['Trova le gemme nascoste leggendo la luce.',
             'Spara raggi in una miniera buia, guarda da dove escono e di che colore, e deduci dove sono le gemme. Da solo, con la miniera del giorno o in duello online.',
             ['Miniere da solo a più livelli', 'Una miniera nuova ogni giorno', 'Duelli sulla stessa miniera']],
         'en' => ['Find hidden gems by reading the light.',
             'Send beams into a dark mine, see where they come out and in which colour, and work out where the gems are. Alone, with the daily mine, or in online duels.',
             ['Solo mines on several levels', 'A new mine every day', 'Duels on the same mine']],
+    ],
+    'savawards' => [
+        'name' => 'SavAwards', 'cat' => 'learn', 'level' => 1, 'account' => 'optional', 'offline' => false, 'play' => '',
+        'url' => '/savawards/', 'source' => 'savawards', 'privacy' => 'privacy.html', 'langs' => ['en'], 'shots' => 0,
+        'it' => ['Recensioni indipendenti del software europeo e libero.',
+            'Ogni prodotto è provato a mano su dispositivi dichiarati e valutato da 0 a 10 su criteri pubblici: privacy, sicurezza, apertura, sovranità europea e altro. Ogni anno gli awards ai migliori, con certificati che chiunque può verificare. Chi si registra può recensire, commentare, salvare i preferiti e proporre correzioni.',
+            ['Voti per criterio con note, storico pubblico e dispositivi del test', 'Alternative ai servizi più noti e confronto fino a 4 prodotti', 'Awards annuali, premio del pubblico e certificati con codice unico', 'Accesso con email o SavAccount, senza Google']],
+        'en' => ['Independent reviews of European and free software.',
+            'Every product is tried by hand on stated devices and scored from 0 to 10 on public criteria: privacy, security, openness, European sovereignty and more. Every year, awards for the best, with certificates anyone can verify. Members can review, comment, save favourites and propose corrections.',
+            ['Scores by criterion with notes, public history and test devices', 'Alternatives to well-known services and side-by-side comparison of up to 4 products', 'Yearly awards, People’s choice and certificates with a unique code', 'Sign in with email or SavAccount, no Google']],
     ],
     'fucina' => [
         'name' => 'Fucina', 'cat' => 'learn', 'level' => 3, 'account' => 'required', 'offline' => false, 'play' => 'com.saverio.fucina',
@@ -190,7 +232,7 @@ return [
     ],
     'connect-four' => [
         'name' => 'Connect Four', 'cat' => 'games', 'level' => 3, 'account' => 'none', 'offline' => true, 'play' => 'com.saverio.connectfour',
-        'url' => '/connect-four/', 'source' => 'connect-four', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 4,
+        'url' => '/connect-four/', 'source' => 'connect-four', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 4, 'tablet' => 3, 'desk' => 3,
         'it' => ['Quattro in fila, con i colori che vuoi.',
             'Il classico Forza Quattro: con un amico tramite codice, con un avversario a caso, sullo stesso dispositivo o contro il computer.',
             ['Online, in due o contro il computer', 'Dischi personalizzabili', 'Orologio e chat facoltativi']],
@@ -200,7 +242,7 @@ return [
     ],
     'letterhop' => [
         'name' => 'LetterHop', 'cat' => 'games', 'level' => 3, 'account' => 'none', 'offline' => true, 'play' => 'com.saverio.letterhop',
-        'url' => '/letterhop/', 'source' => 'letterhop', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 4,
+        'url' => '/letterhop/', 'source' => 'letterhop', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 4, 'tablet' => 3, 'desk' => 3,
         'it' => ['Da una parola all’altra, una lettera per volta.',
             'Hai una parola di partenza e una di arrivo: cambia una lettera alla volta, e ogni passaggio deve essere una parola vera. Meno parole usi, più punti fai.',
             ['Tre livelli', 'Dizionari in cinque lingue', 'Le parole si controllano sul dispositivo']],
@@ -210,7 +252,7 @@ return [
     ],
     'giftwise' => [
         'name' => 'Giftwise', 'cat' => 'home', 'level' => 3, 'account' => 'required', 'offline' => false, 'play' => 'com.saverio.giftwise',
-        'url' => '/giftwise/', 'source' => 'giftwise', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 4,
+        'url' => '/giftwise/', 'source' => 'giftwise', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 4, 'tablet' => 3, 'desk' => 3,
         'it' => ['Liste dei desideri che non rovinano la sorpresa.',
             'Crea una lista per ogni occasione. Chi ti segue si mette d’accordo su chi regala cosa e ne parla in una chat che tu non vedi mai.',
             ['Una lista per ogni occasione', '«Lo prendo io», visibile solo agli altri', 'Chat nascosta a chi riceve il regalo']],
@@ -220,7 +262,7 @@ return [
     ],
     'sea-battle' => [
         'name' => 'Sea Battle', 'cat' => 'games', 'level' => 3, 'account' => 'none', 'offline' => true, 'play' => 'com.saverio.seabattle',
-        'url' => '/sea-battle/', 'source' => 'sea-battle', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 4,
+        'url' => '/sea-battle/', 'source' => 'sea-battle', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 4, 'tablet' => 3, 'desk' => 3,
         'it' => ['Nascondi la flotta, affonda l’altra.',
             'La battaglia navale di sempre: online con un amico o uno sconosciuto, sullo stesso dispositivo o contro il computer.',
             ['Online, in due o contro il computer', 'La tua flotta resta nascosta fino alla fine', 'Chat durante le partite online']],
@@ -230,7 +272,7 @@ return [
     ],
     'faceguess' => [
         'name' => 'FaceGuess', 'cat' => 'games', 'level' => 3, 'account' => 'none', 'offline' => false, 'play' => 'com.saverio.faceguess',
-        'url' => '/faceguess/', 'source' => 'faceguess', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 3,
+        'url' => '/faceguess/', 'source' => 'faceguess', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 3, 'tablet' => 3, 'desk' => 3,
         'it' => ['Chi è? Con facce nuove a ogni partita.',
             'Un gioco di deduzione per due: fai domande da sì o no finché non resta una faccia sola. I personaggi si generano da capo ogni volta.',
             ['Personaggi sempre diversi', 'Online con un codice o di persona', 'Chat per fare le domande']],

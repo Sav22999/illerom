@@ -263,6 +263,7 @@ function public_user(array $u): array
         'id' => (int)$u['id'],
         'name' => $u['name'],
         'email' => $u['email'],
+        'picture' => function_exists('ident_picture') ? ident_picture($u) : null, // the profile picture of SavAccount (../identity/identity.php)
         'hasPassword' => ($u['password_hash'] ?? 'x') !== '',
         'googleLinked' => !empty($u['google_sub']),
         'savLinked' => !empty($u['sav_sub']),

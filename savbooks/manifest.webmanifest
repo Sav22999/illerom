@@ -1,0 +1,23 @@
+{
+  "name": "SavBooks",
+  "short_name": "SavBooks",
+  "description": "Write books chapter by chapter, design the cover and publish them as EPUB.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f8f4f3",
+  "theme_color": "#8a2346",
+  "lang": "en",
+  "categories": ["books", "productivity", "education"],
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ],
+  "file_handlers": [
+    {"action": "./", "accept": {"application/vnd.savbooks.book+zip": [".savboo"], "application/vnd.savdocuments.document+zip": [".savdoc"], "application/epub+zip": [".epub"], "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"]}}
+  ],
+  "launch_handler": {"client_mode": "navigate-existing"}
+}

@@ -3,9 +3,9 @@
  * cached, because tasks must always be fresh.
  *   pages, scripts and styles: network first, the kept copy when offline · icons: kept copy first
  */
-const CACHE = 'savtasks-1';
+const CACHE = 'savtasks-6';
 const SHELL = ['./', 'manifest.webmanifest', 'icons/favicon.svg', 'icons/icon-192.png', '../assets/sav/sav.css', '../assets/sav/sav.js', '../assets/savoffice/savoffice.js', '../identity/identity.css?v=2', '../identity/identity.js?v=3',
-  ...['account.js', 'app.css', 'app.js', 'board.js', 'changelog.js', 'files.js', 'hero.js', 'i18n.js', 'icons.js', 'office.js', 'options.js', 'parse.js', 'store.js', 'task.js', 'tasks.js', 'time.js', 'ui.js', 'version.js', 'zip.js'].map((f) => 'assets/' + f)];
+  ...['account.js', 'app.css', 'app.js', 'board.js', 'changelog.js', 'create.js', 'files.js', 'gantt.js', 'habits.js', 'hero.js', 'i18n.js', 'icons.js', 'office.js', 'options.js', 'parse.js', 'store.js', 'table.js', 'task.js', 'tasks.js', 'time.js', 'ui.js', 'version.js', 'zip.js'].map((f) => 'assets/' + f)];
 
 self.addEventListener('install', (e) => e.waitUntil(caches.open(CACHE).then((c) => Promise.allSettled(SHELL.map((u) => c.add(u)))).then(() => self.skipWaiting())));
 self.addEventListener('activate', (e) => e.waitUntil(caches.keys().then((k) => Promise.all(k.filter((x) => x.startsWith('savtasks-') && x !== CACHE).map((x) => caches.delete(x)))).then(() => self.clients.claim())));

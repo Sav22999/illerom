@@ -1,0 +1,5 @@
+# Real credentials: never commit them (use credentials-sample.php as a template)
+credentials.php
+# The files of the accounts
+storage/*
+!storage/.htaccess

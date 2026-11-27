@@ -14,8 +14,6 @@ $table_prefix = "sd_";
 // Master admins (account emails, once confirmed): they manage accounts, documents and reports
 $master_emails = [];
 
-// Sign in with Google (optional): OAuth client ID of type "Web application"
-$google_client_id = "";
 
 // Sign in with SavAccount (optional): a confidential service created on savaccount.eu, "Manage services", with
 //   redirect address  https://www.illerom.eu/savdocuments/api/?r=auth.sav.callback

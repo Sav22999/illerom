@@ -2,12 +2,12 @@
 /**
  * SavTasks — JSON API.  api/index.php?r=<action>
  *
- * Accounts:     the ones of SavSchedules (same users, same session): auth.config, auth.me, auth.register, auth.login, auth.google
+ * Accounts:     the ones of SavSchedules (same users, same session): auth.config, auth.me, auth.register, auth.login
  *               (and the routes of ../identity/identity.php), auth.resend, auth.verify, auth.logout, auth.password, auth.forgot,
  *               auth.reset, auth.profile, auth.export, auth.delete
  * Tasks:        tasks.init, tasks.prefs, tasks.all, tasks.list.save, tasks.list.delete, tasks.list.order, tasks.list.export,
  *               tasks.import, tasks.task.save, tasks.task.done, tasks.task.delete, tasks.task.move, tasks.task.order,
- *               tasks.done.clear, tasks.calendars
+ *               tasks.done.clear, tasks.habit.mark, tasks.calendars
  * Other apps:   tasks.cal.create (a task becomes an event of SavCalendar), tasks.sch.create (a task becomes a poll of
  *               SavSchedules), tasks.schedules (what SavSchedules asks of the account)
  *
@@ -31,7 +31,7 @@ set_exception_handler(function (Throwable $e) {
 
 $r = (string)($_GET['r'] ?? '');
 
-if ($r === 'auth.config' && !credentials()) send_json(['ok' => true, 'installed' => false, 'googleClientId' => '']);
+if ($r === 'auth.config' && !credentials()) send_json(['ok' => true, 'installed' => false]);
 if (!credentials()) fail('not_installed', 503);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && stripos((string)($_SERVER['CONTENT_TYPE'] ?? ''), 'application/json') !== 0) fail('bad_request', 415);
@@ -101,7 +101,7 @@ function require_master(): array
     return $u;
 }
 
-// ---------- Google and SavAccount: signing in and joining an account that already exists ----------
+// ---------- SavAccount: signing in and joining an account that already exists ----------
 
 require dirname(__DIR__, 2) . '/identity/identity.php';
 
@@ -128,7 +128,7 @@ switch ($r) {
     // ================================================================ accounts
 
     case 'auth.config':
-        send_json(['ok' => true, 'installed' => true, 'googleClientId' => (string)config_value('google_client_id', ''), 'savAccount' => sav_enabled(), 'mailReady' => mail_settings() !== null]);
+        send_json(['ok' => true, 'installed' => true, 'savAccount' => sav_enabled(), 'mailReady' => mail_settings() !== null]);
 
     case 'auth.me':
         only('GET');
@@ -168,7 +168,7 @@ switch ($r) {
         $st = db()->prepare('SELECT * FROM ' . t('users') . ' WHERE email = ?');
         $st->execute([$email]);
         $row = $st->fetch();
-        // One answer for an unknown address, a wrong password and a Google-only account, in about the same time
+        // One answer for an unknown address, a wrong password and an account without a password, in about the same time
         $ok = $row && $row['password_hash'] !== '' ? password_verify($pw, $row['password_hash']) : password_hash($pw, PASSWORD_DEFAULT) === '';
         if (!$ok) {
             record_attempt('login');
@@ -178,14 +178,6 @@ switch ($r) {
         clear_attempts('login');
         if (password_needs_rehash($row['password_hash'], PASSWORD_DEFAULT)) db()->prepare('UPDATE ' . t('users') . ' SET password_hash = ? WHERE id = ?')->execute([password_hash($pw, PASSWORD_DEFAULT), $row['id']]);
         signed_in((int)$row['id']);
-
-    case 'auth.google':
-        // Google already proves the address: no email check. A new account must accept the terms first ("needs_signup").
-        only('POST');
-        if (too_many_attempts('login', 20, 15)) fail('rate_limited', 429);
-        $b = body();
-        // Already linked: signs in. An address that has an account: proves it first (../identity/identity.php)
-        ident_sign_in('google', verify_google_token((string)($b['credential'] ?? '')), $b);
 
     case 'auth.resend':
         $u = writer(true);
@@ -332,7 +324,7 @@ switch ($r) {
         $name = s($b, 'name', 120);
         $lang = ($u['ui_lang'] ?? '') === 'it' ? 'it' : 'en';
         $icon = in_array($b['icon'] ?? null, LIST_ICONS, true) ? $b['icon'] : null;
-        $view = in_array($b['view'] ?? '', ['list', 'board'], true) ? $b['view'] : null;
+        $view = in_array($b['view'] ?? '', ['list', 'board', 'gantt', 'table', 'habits'], true) ? $b['view'] : null;
         if (!$l) {
             if ($name === '') fail('name_required', 422);
             if (count(lists_of($u['id'])) >= MAX_LISTS) fail('too_many_lists', 422);
@@ -395,7 +387,7 @@ switch ($r) {
             $name = mb_substr(trim((string)($src['name'] ?? '')), 0, 120) ?: (s($b, 'name', 120) ?: ($lang === 'it' ? 'Lista importata' : 'Imported list'));
             q('INSERT INTO ' . t('task_lists') . ' (lid, user_id, name, color, icon, view, columns, position, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)',
                 [new_code('task_lists', 'lid'), $u['id'], $name, valid_color($src['color'] ?? '', LIST_COLORS[array_rand(LIST_COLORS)]), in_array($src['icon'] ?? '', LIST_ICONS, true) ? (string)($src['icon'] ?? '') : '',
-                    ($src['view'] ?? '') === 'board' ? 'board' : 'list', json_out(clean_columns($src['columns'] ?? null, $lang)), 100, now_utc(), now_utc()]);
+                    in_array($src['view'] ?? '', ['board', 'gantt', 'table', 'habits'], true) ? $src['view'] : 'list', json_out(clean_columns($src['columns'] ?? null, $lang)), 100, now_utc(), now_utc()]);
             $l = list_row((int)db()->lastInsertId());
         }
         $left = MAX_TASKS - (int)q('SELECT COUNT(*) FROM ' . t('task_items') . ' WHERE list_id = ?', [$l['id']])->fetchColumn();
@@ -405,6 +397,7 @@ switch ($r) {
         foreach (array_slice($items, 0, MAX_TASKS) as $it) {
             if (!is_array($it) || $left-- <= 0) break;
             $x = clean_task($it, $l, $tz);
+            if (isset($it['log'])) $x['log'] = json_out(clean_log($it['log'], $tz));
             if ($x['title'] === '') continue;
             if (!empty($it['done'])) {
                 $x['done_at'] = utc_time($it['done']) ?? now_utc();
@@ -481,6 +474,8 @@ switch ($r) {
         $ids = array_column(columns_of($to), 'id');
         $col = in_array($b['col'] ?? null, $ids, true) ? $b['col'] : (in_array($x['col'], $ids, true) && (int)$to['id'] === (int)$x['list_id'] ? $x['col'] : ($x['done_at'] && done_col($to) ? done_col($to) : first_col($to)));
         q('UPDATE ' . t('task_items') . ' SET list_id = ?, col = ?, updated_at = ? WHERE id = ?', [$to['id'], $col, now_utc(), $x['id']]);
+        // a habit moved out of a list of habits has no due day to repeat on
+        if ($to['view'] !== 'habits' && !$x['due_date'] && $x['rrule'] !== '') q('UPDATE ' . t('task_items') . " SET rrule = '' WHERE id = ?", [$x['id']]);
         $nextTid = null;
         if (array_key_exists('col', $b) && done_col($to) !== '') {
             $x['list_id'] = $to['id'];
@@ -495,6 +490,23 @@ switch ($r) {
         $row = q('SELECT * FROM ' . t('task_items') . ' WHERE id = ?', [$x['id']])->fetch();
         $next = $nextTid ? q('SELECT * FROM ' . t('task_items') . ' WHERE tid = ?', [$nextTid])->fetch() : null;
         send_json(['ok' => true, 'task' => out_task($row, $to), 'next' => $next ? out_task($next, $to) : null]);
+
+    case 'tasks.habit.mark':
+        // A day of a habit done, or not done after all (today or a day before: never a day to come)
+        $u = writer();
+        $b = body();
+        db()->beginTransaction();
+        $x = task_of($u, $b['id'] ?? '', true);
+        if (!$x) fail('not_found', 404);
+        $day = valid_day($b['day'] ?? null);
+        $tz = valid_tz($b['tz'] ?? '', $x['tz'] ?: 'UTC');
+        if (!$day || clean_log([$day], $tz) === []) fail('bad_time', 422);
+        $log = json_decode((string)($x['log'] ?? '[]'), true) ?: [];
+        $log = !empty($b['done']) ? array_merge($log, [$day]) : array_values(array_diff($log, [$day]));
+        q('UPDATE ' . t('task_items') . ' SET log = ?, updated_at = ? WHERE id = ?', [json_out(clean_log($log, $tz)), now_utc(), $x['id']]);
+        db()->commit();
+        $row = q('SELECT * FROM ' . t('task_items') . ' WHERE id = ?', [$x['id']])->fetch();
+        send_json(['ok' => true, 'task' => out_task($row, list_row((int)$row['list_id']))]);
 
     case 'tasks.task.order':
         // The tasks of a list (or of a column of its board) in their new order

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <defs>
+        <linearGradient id="a" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#9ccc4a"/>
+            <stop offset="1" stop-color="#4d7c0f"/>
+        </linearGradient>
+        <linearGradient id="b" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#3f6212"/>
+            <stop offset="1" stop-color="#263d0b"/>
+        </linearGradient>
+        <clipPath id="c"><path d="M20.500 4H53a5 5 0 0 1 5 5v17.500a5 5 0 0 1-5 5H20.500A13.750 13.750 0 0 1 20.500 4z"/></clipPath>
+    </defs>
+    <!-- an S made of two pieces, as in the other apps of SavOffice: above, the cells of a sheet with the row of the
+         column names and the cell that is chosen, with its fill handle in the yellow of the suite; below, the sum (Σ)
+         and the lines of a formula -->
+    <path d="M20.500 4H53a5 5 0 0 1 5 5v17.500a5 5 0 0 1-5 5H20.500A13.750 13.750 0 0 1 20.500 4z" fill="url(#a)"/>
+    <g clip-path="url(#c)">
+        <rect x="0" y="4" width="64" height="7.500" fill="#fff" fill-opacity=".28"/>
+        <path d="M24 4v28M36 4v28M48 4v28M0 11.500h64M0 21.500h64" stroke="#fff" stroke-opacity=".6" stroke-width="1.300"/>
+    </g>
+    <rect x="36" y="11.500" width="12" height="10" fill="#fff" fill-opacity=".9" stroke="#ffd166" stroke-width="2.600"/>
+    <rect x="45.600" y="19.100" width="4.800" height="4.800" rx="1" fill="#ffd166" stroke="#4d7c0f" stroke-width="1"/>
+    <path d="M43.500 60H11a5 5 0 0 1-5-5V37.500a5 5 0 0 1 5-5h32.500a13.750 13.750 0 0 1 0 27.500z" fill="url(#b)"/>
+    <path d="M25 39H13.500l6.600 7.250-6.600 7.250H25" fill="none" stroke="#fff" stroke-width="3.200" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M31 42.500h15M31 50.500h9" stroke="#fff" stroke-opacity=".7" stroke-width="3.200" stroke-linecap="round"/>
+</svg>

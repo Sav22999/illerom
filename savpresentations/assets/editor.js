@@ -1,5 +1,5 @@
 /** The screen of a presentation: editing for who can, looking (with comments and personal notes) for the others. */
-import { state, api, get, h, icon, btn, iconBtn, item, tile, isApp, openLink, segmented, $, $$, clamp, uid, go, oops, ok, toast, errText, mobile, isMac, userSetting, dialog, confirmBox, promptBox, uploadPicture, copyText } from './core.js';
+import { state, api, get, h, icon, btn, iconBtn, item, tile, isApp, openLink, segmented, $, $$, clamp, uid, go, oops, ok, toast, errText, mobile, isMac, userSetting, dialog, confirmBox, promptBox, uploadPicture, copyText, fileName } from './core.js';
 import { t } from './i18n.js';
 import { brand, logo } from './auth.js';
 import { userMenu } from './home.js';
@@ -64,6 +64,8 @@ export async function deckScreen(app, deckId, q) {
   fillMenu();
   ed.options = () => dialog(t('deck_options'), optionsBody(ed), [[t('done'), true]], { width: '40rem' });
   ed.download = () => downloadMenu(ed);
+  // SavDrive: the cloud next to the grid of the apps saves this presentation into the drive (../assets/savoffice/savoffice.js)
+  if (deck.canEdit || deck.meta.opts?.download !== false) window.SavOffice?.exporter?.({ key: localId ? 'l' + localId : deckId, make: async () => ({ blob: await (await import('./files.js')).makeSavpre(ed.deck), name: fileName(ed.deck.title, 'savpre') }) });
   menu.addEventListener('sav-select', async (e) => {
     try {
       switch (e.detail.value) {
@@ -602,5 +604,5 @@ export async function deckScreen(app, deckId, q) {
   if (q.get('present')) show(ed.sid);
   // for automatic checks and the console
   window.__sp = ed;
-  return { leave: () => { ed.closeText(); saveNotes(); running?.close(); dropFeatures(); stage.leave(); deck.stop(); removeEventListener('keydown', onKey); removeEventListener('copy', onCopy); removeEventListener('cut', onCopy); removeEventListener('paste', onPaste); removeEventListener('resize', onResize); app.className = ''; $$('.ctxm,.ftb').forEach((x) => x.remove()); delete window.__sp; } };
+  return { leave: () => { window.SavOffice?.exporter?.(null); ed.closeText(); saveNotes(); running?.close(); dropFeatures(); stage.leave(); deck.stop(); removeEventListener('keydown', onKey); removeEventListener('copy', onCopy); removeEventListener('cut', onCopy); removeEventListener('paste', onPaste); removeEventListener('resize', onResize); app.className = ''; $$('.ctxm,.ftb').forEach((x) => x.remove()); delete window.__sp; } };
 }

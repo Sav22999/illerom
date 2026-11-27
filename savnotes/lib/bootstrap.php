@@ -7,8 +7,8 @@
  * Compatible with PHP 7.4+ and MySQL 5.7+ / MariaDB 10.3+.
  *
  * Errors are sent as codes: the app translates them (see err_* in assets/i18n.js).
- * Accounts: email + password (the address must be confirmed before the app opens) or Google (already confirmed by
- * Google). The email of an account is unique and can never be changed.
+ * Accounts: email + password (the address must be confirmed before the app opens) or SavAccount (../identity/). No
+ * Google sign-in: SavOffice is an independent European alternative. The email of an account is unique and can never be changed.
  */
 
 declare(strict_types=1);
@@ -46,7 +46,6 @@ function credentials(): ?array
     $localhost_db = $username_db = $password_db = $database_name = null;
     $table_prefix = 'sch_';
     $debug = false;
-    $google_client_id = '';
     $mail_config = null;
     $savaccount_client_id = $savaccount_client_secret = '';
     $master_emails = [];
@@ -61,7 +60,6 @@ function credentials(): ?array
         'name' => (string)$database_name,
         'prefix' => (string)($table_prefix ?: 'sch_'),
         'debug' => (bool)$debug,
-        'google_client_id' => trim((string)$google_client_id),
         'savaccount_client_id' => trim((string)$savaccount_client_id),
         'savaccount_client_secret' => trim((string)$savaccount_client_secret),
         'mail' => $mail_config === false ? false : (is_array($mail_config) ? $mail_config : null),
@@ -306,10 +304,10 @@ function public_user(array $u): array
         'id' => (int)$u['id'],
         'name' => $u['name'],
         'email' => $u['email'],
+        'picture' => function_exists('ident_picture') ? ident_picture($u) : null, // the profile picture of SavAccount (../identity/identity.php)
         'lang' => $u['ui_lang'] ?: 'en',
         'prefs' => json_decode((string)($u['prefs'] ?? ''), true) ?: new stdClass(),
         'hasPassword' => ($u['password_hash'] ?? '') !== '',
-        'googleLinked' => !empty($u['google_sub']),
         'savLinked' => !empty($u['sav_sub']),
         'verified' => !empty($u['email_verified_at']),
         'master' => is_master($u),
@@ -378,32 +376,6 @@ function clear_attempts(string $kind): void
     db()->prepare('DELETE FROM ' . t('attempts') . ' WHERE kind = ? AND ip = ?')->execute([$kind, client_ip()]);
 }
 
-// ---------- Sign in with Google ----------
-
-/** Verifies a Google ID token with Google's tokeninfo endpoint (audience, issuer, expiry, verified email). */
-function verify_google_token(string $credential): array
-{
-    $clientId = (string)config_value('google_client_id', '');
-    if ($clientId === '') fail('google_disabled', 400);
-    if (!preg_match('/^[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+$/', $credential) || strlen($credential) > 4096) fail('google_token', 422);
-    $url = 'https://oauth2.googleapis.com/tokeninfo?id_token=' . rawurlencode($credential);
-    $raw = false;
-    if (function_exists('curl_init')) {
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 8, CURLOPT_CONNECTTIMEOUT => 5]);
-        $raw = curl_exec($ch);
-        if ((int)curl_getinfo($ch, CURLINFO_HTTP_CODE) !== 200) $raw = false;
-    } else {
-        $raw = @file_get_contents($url, false, stream_context_create(['http' => ['timeout' => 8]]));
-    }
-    $c = $raw ? json_decode((string)$raw, true) : null;
-    if (!is_array($c) || empty($c['sub'])) fail('google_token', 401);
-    if (!hash_equals($clientId, (string)($c['aud'] ?? ''))) fail('google_token', 401);
-    if (!in_array($c['iss'] ?? '', ['accounts.google.com', 'https://accounts.google.com'], true)) fail('google_token', 401);
-    if ((int)($c['exp'] ?? 0) < time()) fail('google_token', 401);
-    if (empty($c['email']) || !in_array($c['email_verified'] ?? '', ['true', true, 1, '1'], true)) fail('google_email', 401);
-    return ['sub' => substr((string)$c['sub'], 0, 64), 'email' => mb_strtolower((string)$c['email']), 'name' => mb_substr(trim((string)($c['name'] ?? '')), 0, 80)];
-}
 
 // ---------- Small helpers ----------
 

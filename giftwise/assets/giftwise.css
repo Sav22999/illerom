@@ -906,3 +906,6 @@
 .dev-credit:hover .dev-heart {
     transform: scale(1.2);
 }
+
+/* the picture of SavAccount in the avatar (../identity/identity.php) */
+.avatar.pic { padding: 0; overflow: hidden; background: none !important; } .avatar.pic img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; display: block; }

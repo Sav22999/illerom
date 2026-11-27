@@ -2,7 +2,7 @@
 /**
  * SavForms — JSON API.  api/index.php?r=<action>
  *
- * Accounts:     the ones of SavSchedules (same users, same session): auth.config, auth.me, auth.register, auth.login, auth.google
+ * Accounts:     the ones of SavSchedules (same users, same session): auth.config, auth.me, auth.register, auth.login
  *               (and the routes of ../identity/identity.php), auth.resend, auth.verify, auth.logout, auth.password, auth.forgot,
  *               auth.reset, auth.profile, auth.export, auth.delete
  * Forms:        forms.init, forms.prefs, forms.list, forms.get, forms.create, forms.save, forms.duplicate, forms.delete,
@@ -29,7 +29,7 @@ set_exception_handler(function (Throwable $e) {
 
 $r = (string)($_GET['r'] ?? '');
 
-if ($r === 'auth.config' && !credentials()) send_json(['ok' => true, 'installed' => false, 'googleClientId' => '']);
+if ($r === 'auth.config' && !credentials()) send_json(['ok' => true, 'installed' => false]);
 if (!credentials()) fail('not_installed', 503);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && stripos((string)($_SERVER['CONTENT_TYPE'] ?? ''), 'application/json') !== 0) fail('bad_request', 415);
@@ -99,7 +99,7 @@ function require_master(): array
     return $u;
 }
 
-// ---------- Google and SavAccount: signing in and joining an account that already exists ----------
+// ---------- SavAccount: signing in and joining an account that already exists ----------
 
 require dirname(__DIR__, 2) . '/identity/identity.php';
 
@@ -126,7 +126,7 @@ switch ($r) {
     // ================================================================ accounts
 
     case 'auth.config':
-        send_json(['ok' => true, 'installed' => true, 'googleClientId' => (string)config_value('google_client_id', ''), 'savAccount' => sav_enabled(), 'mailReady' => mail_settings() !== null]);
+        send_json(['ok' => true, 'installed' => true, 'savAccount' => sav_enabled(), 'mailReady' => mail_settings() !== null]);
 
     case 'auth.me':
         only('GET');
@@ -166,7 +166,7 @@ switch ($r) {
         $st = db()->prepare('SELECT * FROM ' . t('users') . ' WHERE email = ?');
         $st->execute([$email]);
         $row = $st->fetch();
-        // One answer for an unknown address, a wrong password and a Google-only account, in about the same time
+        // One answer for an unknown address, a wrong password and an account without a password, in about the same time
         $ok = $row && $row['password_hash'] !== '' ? password_verify($pw, $row['password_hash']) : password_hash($pw, PASSWORD_DEFAULT) === '';
         if (!$ok) {
             record_attempt('login');
@@ -176,14 +176,6 @@ switch ($r) {
         clear_attempts('login');
         if (password_needs_rehash($row['password_hash'], PASSWORD_DEFAULT)) db()->prepare('UPDATE ' . t('users') . ' SET password_hash = ? WHERE id = ?')->execute([password_hash($pw, PASSWORD_DEFAULT), $row['id']]);
         signed_in((int)$row['id']);
-
-    case 'auth.google':
-        // Google already proves the address: no email check. A new account must accept the terms first ("needs_signup").
-        only('POST');
-        if (too_many_attempts('login', 20, 15)) fail('rate_limited', 429);
-        $b = body();
-        // Already linked: signs in. An address that has an account: proves it first (../identity/identity.php)
-        ident_sign_in('google', verify_google_token((string)($b['credential'] ?? '')), $b);
 
     case 'auth.resend':
         $u = writer(true);

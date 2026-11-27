@@ -23,6 +23,8 @@ body { margin: 0; min-height: 100%; background: var(--sav-color-bg); color: var(
 h1, h2, h3, p { margin: 0; }
 a { color: color-mix(in oklab, var(--sav-color-primary) 85%, var(--sav-color-text)); }
 :focus-visible { outline: 2px solid var(--sav-color-focus); outline-offset: 2px; }
+/* these SavComponents draw their own focus ring inside: a second outline around them made two loose lines across menus */
+sav-menu-item:focus-visible, sav-tree-item:focus-visible, sav-radio:focus-visible { outline: none; }
 kbd { font: 500 .74rem/1 var(--sav-font); color: var(--sav-color-text-muted); }
 .muted { color: var(--sav-color-text-muted); } .small { font-size: .82rem; } .hint { font-size: .8rem; } .center { text-align: center; } .grow { flex: 1; min-width: 0; } .spacer { flex: 1; }
 .stack { display: grid; gap: .6rem; grid-template-columns: minmax(0, 1fr); } .form { display: grid; gap: .95rem; grid-template-columns: minmax(0, 1fr); }
@@ -193,7 +195,7 @@ body.onboard { overflow: hidden; overscroll-behavior: none; position: fixed; ins
 .kb { display: flex; justify-content: space-between; gap: .6rem; padding: .25rem 0; border-bottom: 1px solid var(--sav-color-border); font-size: .9rem; } .kb kbd { font-size: .8rem; }
 @media (max-width: 900px) { .wstatus .lbl { display: none; } .mhide { display: none; } .qrow { grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: 8.6rem; overflow-x: auto; } }
 @media (max-width: 640px) {
-  .wtop { gap: 0; padding: .2rem .25rem; } .wbrand, .lookw { display: none; } .wtitle { flex: 1 1 auto; width: auto !important; max-width: none; }
+  .wtop { gap: 0; padding: .2rem .25rem; } .wbrand, .lookw [slot=trigger] { display: none; } .wtitle { flex: 1 1 auto; width: auto !important; max-width: none; }
   .zoom { top: calc(max(.6rem, env(safe-area-inset-top)) + 3.4rem); bottom: auto; right: max(.5rem, env(safe-area-inset-right)); } .zoom > sav-tooltip:first-child, .zoom > sav-tooltip:nth-child(3) { display: none; }
   .tools { justify-content: flex-start; gap: 0; padding: .2rem; } .tools sav-button { --sav-button-height: 2rem; } .tools .tsep { display: none; }
   .props { border-radius: 12px; flex-wrap: wrap; row-gap: .3rem; } .kbs { grid-template-columns: minmax(0, 1fr); }

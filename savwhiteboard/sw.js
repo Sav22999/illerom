@@ -3,7 +3,7 @@
  * cached, because boards must always be fresh.
  *   pages, scripts and styles: network first, the kept copy when offline · icons and typefaces: kept copy first
  */
-const CACHE = 'savwhiteboard-3';
+const CACHE = 'savwhiteboard-7';
 const SHELL = ['./', 'manifest.webmanifest', 'icons/favicon.svg', 'icons/icon-192.png', '../assets/sav/sav.css', '../assets/sav/sav.js', '../assets/savoffice/savoffice.js', '../identity/identity.css?v=2', '../identity/identity.js?v=3',
   ...['account.js', 'app.css', 'app.js', 'board.js', 'changelog.js', 'files.js', 'hero.js', 'home.js', 'i18n.js', 'icons.js', 'ink.js', 'model.js', 'office.js', 'options.js', 'pictures.js', 'render.js', 'store.js', 'ui.js', 'version.js', 'zip.js'].map((f) => 'assets/' + f)];
 

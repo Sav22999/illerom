@@ -1,0 +1,12 @@
+SavSpreadsheets is a free, open source spreadsheet, part of SavOffice: budgets, lists, invoices, registers and plans that compute as you type.
+
+• Workbooks with many sheets, frozen rows and columns, merged cells, filters, sorting and series fill
+• More than 250 functions (SUM, VLOOKUP, XLOOKUP, IFS, FILTER, UNIQUE…), always in the standard English of spreadsheets, with hints as you type
+• Number, currency, percentage and date formats; values shown the way your language writes them
+• Conditional formatting, data validation with lists and checkboxes, charts drawn from your cells
+• Opens and saves Excel (.xlsx and .xls), OpenDocument (.ods), CSV and its own .savspr files; print and PDF
+• 17 ready templates: budget, expenses, invoice, timesheet, project tracker, grade book, loan calculator…
+• Work together live: share with a link or by email, see who is on which cell, comments, personal notes and versions
+• Works offline: the spreadsheets you open stay on the device and are saved as soon as the connection is back
+
+No ads, no tracking, data in the European Union.

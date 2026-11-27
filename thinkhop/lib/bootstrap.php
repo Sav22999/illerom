@@ -250,6 +250,7 @@ function public_user(array $u): array
         'avatar' => $u['avatar'] ?? null,
         'ranking' => (int)($u['show_in_ranking'] ?? 1) === 1,
         'email' => $u['email'],
+        'picture' => function_exists('ident_picture') ? ident_picture($u) : null, // the profile picture of SavAccount (../identity/identity.php)
         'isAdmin' => (int)($u['role'] ?? 0) >= ROLE_ADMIN,
         'hasPassword' => ($u['password_hash'] ?? '') !== '',
         'googleLinked' => !empty($u['google_sub']),

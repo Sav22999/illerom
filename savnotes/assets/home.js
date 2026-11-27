@@ -2,7 +2,7 @@
 import { btn, confirm, dialog, drop, empty, fail, h, icon, iconBtn, item, mobile, primary, put, ask, tile, toast } from './ui.js';
 import { getLang, t, when } from './i18n.js';
 import { S, api } from './store.js';
-import { brand, credit, go, prefs, setPrefs, userMenu } from './account.js';
+import { brand, commands, credit, go, prefs, setPrefs, userMenu } from './account.js';
 import { COVERS, SIZES, TEMPLATES, defaultSettings, isDark, pageSize } from './model.js';
 import { paperSVG } from './render.js';
 import { readSavnot, saveSavnot } from './files.js';
@@ -94,6 +94,10 @@ export function homeScreen(root, view = '') {
         : [drop(h('sav-button', { caret: true, appearance: 'ghost', variant: 'neutral', size: 'sm' }, t('sort_' + sort)), ['updated', 'opened', 'title'].map((k) => ['', t('sort_' + k), () => { sort = k; setPrefs({ sort }).catch(() => {}); draw(); }, { check: sort === k }]), { placement: 'bottom-end' }),
           iconBtn(asList ? 'layout-grid' : 'list', t(asList ? 'as_grid' : 'as_list'), () => { asList = !asList; setPrefs({ list: asList }).catch(() => {}); draw(); }),
           btn(t('open_file'), { size: 'sm', icon: 'file-up', appearance: 'outline', variant: 'neutral', onclick: pickFile })]);
+    // the search of actions (⌘J / Ctrl+J)
+    commands([t('new_l'), [['plus', t('new_notebook'), () => newNotebook()], ...TEMPLATES.map(([k, ic, s]) => [ic, t('t_' + k), () => quick(k, s)]), ['file-up', t('open_file'), () => pickFile()]]],
+      [t('home'), [['notebook', t('my_notebooks'), '#/'], ['trash', t('trash'), '#/trash']]],
+      [t('recent'), S.notebooks.filter((b) => !b.trashed).slice(0, 80).map((b) => ['notebook', b.title, '#/n/' + b.id])]);
     // as in SavDocuments and SavPresentations: the title, the box to start a new one, then "Recent"
     put(list, head, trash || q ? null : starts, !trash && !q && nbs.length ? h('h2', t('recent')) : null, trash ? h('p.muted.tnote', t('trash_t', { n: S.trashDays })) : null,
       nbs.length ? h('div.' + (asList ? 'rows' : 'shelf'), nbs.map(card))

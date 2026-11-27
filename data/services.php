@@ -1,16 +1,27 @@
 <?php
 /**
  * What the status page and /api/status/ check, by project.
- *   app      database of an app with its credentials.php: [table prefix, what it keeps it, en]; its emails are checked too
+ *   app      database of an app with its credentials.php: [table prefix, what it keeps it, en]; its emails are checked too.
+ *            An app that uses the database of another one adds [credentials of that folder, key of its version in meta,
+ *            name of the constant of that version in its lib/bootstrap.php]
  *   game     database of the online games: [a table, it, en]
  *   web      more addresses of the project, besides its own page
  * Projects that are not here only have their page checked.
  */
 return [
     'savnewsletters' => ['app' => ['on_', 'Account, gruppi e iscritti', 'Accounts, groups and subscribers'], 'web' => ['widget' => ['widget.js', 'Widget di iscrizione', 'Subscription widget']]],
+    'savdrive' => ['app' => ['dr_', 'Account e file', 'Accounts and files']],
     'savdocuments' => ['app' => ['sd_', 'Account e documenti', 'Accounts and documents']],
+    'savspreadsheets' => ['app' => ['ss_', 'Account e fogli di calcolo', 'Accounts and spreadsheets']],
+    'savbooks' => ['app' => ['sb_', 'Account e libri', 'Accounts and books']],
     'savpresentations' => ['app' => ['sp_', 'Account e presentazioni', 'Accounts and presentations']],
     'savschedules' => ['app' => ['sch_', 'Account e pianificazioni', 'Accounts and schedules']],
+    // the apps of SavOffice that keep their tables (and accounts) in the database of SavSchedules
+    'savcalendar' => ['app' => ['sch_', 'Calendari ed eventi', 'Calendars and events', ['savschedules', 'cal_schema_version', 'CAL_SCHEMA_VERSION']]],
+    'savtasks' => ['app' => ['sch_', 'Liste e attività', 'Lists and tasks', ['savschedules', 'task_schema_version', 'TASK_SCHEMA_VERSION']]],
+    'savforms' => ['app' => ['sch_', 'Moduli e risposte', 'Forms and answers', ['savschedules', 'form_schema_version', 'FORM_SCHEMA_VERSION']]],
+    'savwhiteboard' => ['app' => ['sch_', 'Lavagne e immagini', 'Boards and pictures', ['savschedules', 'wb_schema_version', 'WB_SCHEMA_VERSION']]],
+    'savnotes' => ['app' => ['sch_', 'Quaderni', 'Notebooks', ['savschedules', 'nb_schema_version', 'NB_SCHEMA_VERSION']]],
     'thinkhop' => ['app' => ['th_', 'Account e classifiche', 'Accounts and rankings']],
     'foodtrack' => ['app' => ['ft_', 'Account e dispensa', 'Accounts and pantry']],
     'mycurriculum' => ['app' => ['mc_', 'Account e CV', 'Accounts and CVs']],

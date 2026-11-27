@@ -1,0 +1,790 @@
+/* The document: sheets, text and printing. The settings arrive as CSS variables from page.js. */
+@font-face {
+    font-family: 'Inter';
+    src: url(../fonts/inter-regular.ttf);
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Inter';
+    src: url(../fonts/inter-bold.ttf);
+    font-weight: 600 800;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Poppins';
+    src: url(../fonts/poppins-regular.ttf);
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Poppins';
+    src: url(../fonts/poppins-bold.ttf);
+    font-weight: 600 800;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Lora';
+    src: url(../fonts/lora/regular.ttf);
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Lora';
+    src: url(../fonts/lora/bold.ttf);
+    font-weight: 600 800;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Montserrat';
+    src: url(../fonts/montserrat/regular.ttf);
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Montserrat';
+    src: url(../fonts/montserrat/bold.ttf);
+    font-weight: 600 800;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Open Sans';
+    src: url(../fonts/opensans/regular.ttf);
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Open Sans';
+    src: url(../fonts/opensans/bold.ttf);
+    font-weight: 600 800;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Playfair Display';
+    src: url(../fonts/playfair/regular.ttf);
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Playfair Display';
+    src: url(../fonts/playfair/bold.ttf);
+    font-weight: 600 800;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Source Sans 3';
+    src: url(../fonts/sourcesans/regular.ttf);
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Source Sans 3';
+    src: url(../fonts/sourcesans/bold.ttf);
+    font-weight: 600 800;
+    font-display: swap;
+}
+
+.paper {
+    position: relative;
+    width: var(--pw);
+    margin: 0 auto;
+    color: #1c1c1c;
+    color-scheme: light;
+}
+
+.sheets {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.sheet {
+    position: absolute;
+    left: 0;
+    width: var(--pw);
+    height: var(--ph);
+    background: #fff;
+    border-radius: 2px;
+    box-shadow: 0 0 0 1px rgb(20 40 30 / .07), 0 2px 10px rgb(20 40 30 / .08);
+}
+
+.band {
+    position: absolute;
+    left: var(--ml);
+    right: var(--mr);
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    font: 9pt/1.3 var(--font);
+    color: #666;
+}
+
+.band span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.band span:nth-child(2) {
+    text-align: center;
+}
+
+.band span:nth-child(3) {
+    text-align: right;
+}
+
+.band.top {
+    top: calc(var(--mt) / 2);
+    transform: translateY(-50%);
+}
+
+.band.bottom {
+    bottom: calc(var(--mb) / 2);
+    transform: translateY(50%);
+}
+
+.flow {
+    position: relative;
+    display: flow-root;
+    box-sizing: border-box;
+    width: var(--pw);
+    padding: var(--mt) var(--mr) 0 var(--ml);
+}
+
+.fl-page {
+    float: left;
+    clear: both;
+    width: 0;
+    height: var(--hc);
+    pointer-events: none;
+}
+
+.fl-gap {
+    float: left;
+    clear: both;
+    width: 100%;
+    height: var(--between);
+    pointer-events: none;
+}
+
+.ed {
+    outline: none;
+    min-height: 1em;
+    caret-color: #d85a30;
+}
+
+.doc {
+    font: var(--fs)/var(--lh) var(--font);
+    color: var(--ink);
+    overflow-wrap: break-word;
+    text-align: start;
+    tab-size: 4;
+    -webkit-font-smoothing: antialiased;
+    font-synthesis: style weight;
+    hyphens: manual;
+}
+
+.justify .doc > p, .justify .doc > ul, .justify .doc > ol, .justify .doc > blockquote {
+    text-align: justify;
+    hyphens: auto;
+}
+
+.doc > * {
+    margin: 0 0 var(--pgap);
+}
+
+.doc p, .doc li, .doc h1, .doc h2, .doc h3, .doc h4 {
+    white-space: break-spaces;
+    min-height: 1em;
+}
+
+.doc h1, .doc h2, .doc h3, .doc h4, .doc .title, .doc .subtitle {
+    font-family: var(--hfont);
+    color: var(--hink);
+    line-height: 1.22;
+    font-weight: 700;
+    text-align: start;
+}
+
+.doc h1 {
+    font-size: 1.8em;
+    margin: 1.1em 0 .45em;
+}
+
+.doc h2 {
+    font-size: 1.4em;
+    margin: 1em 0 .4em;
+}
+
+.doc h3 {
+    font-size: 1.17em;
+    margin: .9em 0 .35em;
+}
+
+.doc h4 {
+    font-size: 1em;
+    margin: .8em 0 .3em;
+}
+
+.doc > :first-child {
+    margin-top: 0;
+}
+
+.doc .title {
+    font-size: 2.5em;
+    margin-bottom: .25em;
+    letter-spacing: -.01em;
+}
+
+.doc .subtitle {
+    font-size: 1.35em;
+    font-weight: 400;
+    opacity: .75;
+    margin-bottom: 1.2em;
+}
+
+.doc .lead {
+    font-size: 1.18em;
+}
+
+.doc .small {
+    font-size: .85em;
+}
+
+.doc [data-num]::before {
+    content: attr(data-num) '\2002';
+}
+
+.doc ul, .doc ol {
+    padding-left: 1.7em;
+}
+
+.doc li > ul, .doc li > ol {
+    margin: 0;
+}
+
+.doc li {
+    margin: 0 0 .15em;
+}
+
+.doc ul.check {
+    list-style: none;
+    padding-left: 1.9em;
+}
+
+.doc ul.check > li {
+    position: relative;
+}
+
+.doc ul.check > li::before {
+    content: '';
+    position: absolute;
+    left: -1.75em;
+    top: .28em;
+    width: 1em;
+    height: 1em;
+    box-sizing: border-box;
+    border: 1.5px solid currentColor;
+    border-radius: 3px;
+    cursor: pointer;
+    opacity: .75;
+}
+
+.doc ul.check > li[data-c="1"]::before {
+    background: #8a2346 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.500l4.500 4.500L19 7.500'/%3E%3C/svg%3E") center/80% no-repeat;
+    border-color: #8a2346;
+    opacity: 1;
+}
+
+.doc ul.check > li[data-c="1"] {
+    text-decoration: line-through;
+    text-decoration-color: rgb(0 0 0 / .3);
+}
+
+.doc ul.check > li.cont::before {
+    display: none;
+}
+
+.doc blockquote {
+    display: flow-root;
+    margin: 0 0 var(--pgap);
+    padding: .1em 0 .1em 1em;
+    border-left: 3px solid color-mix(in srgb, var(--hink) 45%, #fff);
+    font-style: italic;
+    white-space: break-spaces;
+}
+
+.doc blockquote p, .doc .callout p, .doc td p, .doc li p {
+    margin: 0;
+}
+
+.doc pre {
+    display: flow-root;
+    padding: .8em 1em;
+    background: #f3f4f1;
+    border-radius: 4px;
+    font: .88em/1.5 ui-monospace, Menlo, Consolas, 'Courier New', monospace;
+    white-space: pre-wrap;
+}
+
+.doc code {
+    font: .9em ui-monospace, Menlo, Consolas, 'Courier New', monospace;
+    background: #f0f1ee;
+    border-radius: 3px;
+    padding: .08em .3em;
+}
+
+.doc pre code {
+    all: unset;
+}
+
+.doc .callout {
+    display: flow-root;
+    padding: .7em 1em;
+    border-radius: 6px;
+    background: #eef4fb;
+    border-left: 4px solid #3b7dbf;
+}
+
+.doc .callout[data-k=tip] {
+    background: #e9f5ef;
+    border-color: #8a2346;
+}
+
+.doc .callout[data-k=warn] {
+    background: #fdf1ea;
+    border-color: #d85a30;
+}
+
+.doc .tall {
+    display: block;
+}
+
+/* what stays together has a fixed width: otherwise browsers squeeze it in the last line of a page instead of moving it */
+.doc blockquote, .doc pre, .doc .callout, .doc .beside, .doc tr, .doc figure, .doc hr {
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.doc figure {
+    display: flow-root;
+}
+
+.doc hr {
+    border: 0;
+    height: 1px;
+    background: #b9bfba;
+    margin: 1.2em 0;
+    overflow: hidden;
+}
+
+.doc a {
+    color: #0f5f8f;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.doc sub, .doc sup {
+    line-height: 0;
+}
+
+.doc sup.fn {
+    cursor: pointer;
+    color: #0f5f8f;
+    font-size: .72em;
+    vertical-align: super;
+    padding: 0 1px;
+    user-select: all;
+}
+
+.doc sup.fn::before {
+    content: attr(data-k);
+}
+
+.doc figure {
+    margin: 0 0 var(--pgap);
+    text-align: center;
+}
+
+.doc figure[data-a=l] {
+    text-align: left;
+}
+
+.doc figure[data-a=r] {
+    text-align: right;
+}
+
+.doc figure img {
+    display: inline-block;
+    max-width: 100%;
+    max-height: calc(var(--hc) - 2.5em);
+    vertical-align: top;
+    object-fit: contain;
+    border-radius: 1px;
+}
+
+.doc figcaption {
+    font-size: .85em;
+    opacity: .75;
+    margin-top: .35em;
+    min-height: 1.2em;
+    line-height: 1.35;
+}
+
+.doc figure:not(.sel) figcaption:empty, .doc figure:not(.sel) figcaption:has(> br:only-child) {
+    display: none;
+}
+
+.doc .beside {
+    display: flow-root;
+}
+
+.doc .beside figure {
+    float: left;
+    width: auto;
+    margin: .25em 1.2em .5em 0;
+}
+
+.doc .beside[data-k=r] figure {
+    float: right;
+    margin: .25em 0 .5em 1.2em;
+}
+
+.doc .beside figure img {
+    width: 100%;
+}
+
+.doc .beside > p {
+    margin: 0 0 var(--pgap);
+}
+
+/* every row is a grid: a table breaks between rows; with joined rows it stays a real table, on one page */
+.doc table {
+    display: block;
+    border-collapse: collapse;
+    width: 100%;
+    line-height: 1.4;
+}
+
+.doc tbody {
+    display: block;
+    width: 100%;
+}
+
+.doc colgroup {
+    display: none;
+}
+
+.doc tr {
+    display: grid;
+    grid-template-columns: var(--cols);
+    margin-top: -1px;
+}
+
+.doc td, .doc th {
+    border: 1px solid #b9bfba;
+    padding: .4em .6em;
+    text-align: start;
+    vertical-align: top;
+    min-width: 0;
+    min-height: 1.4em;
+    margin-left: -1px;
+    overflow-wrap: anywhere;
+    white-space: break-spaces;
+}
+
+.doc td:first-child, .doc th:first-child {
+    margin-left: 0;
+}
+
+.doc th {
+    font-weight: 700;
+    background: #eef1ee;
+}
+
+.doc table.striped tr:nth-child(even) td {
+    background: #f6f8f6;
+}
+
+.doc table.plain td, .doc table.plain th {
+    border-left: 0;
+    border-right: 0;
+}
+
+.doc table.rs {
+    display: table;
+    table-layout: fixed;
+}
+
+.doc table.rs colgroup {
+    display: table-column-group;
+}
+
+.doc table.rs tbody {
+    display: table-row-group;
+}
+
+.doc table.rs tr {
+    display: table-row;
+}
+
+.doc .toc {
+    font-size: 1em;
+}
+
+.doc .toc a {
+    display: flex;
+    gap: .5em;
+    color: inherit;
+    text-decoration: none;
+    padding: .12em 0;
+}
+
+.doc .toc a::after {
+    content: attr(data-p);
+    order: 2;
+    font-variant-numeric: tabular-nums;
+}
+
+.doc .toc a i {
+    flex: 1;
+    border-bottom: 1px dotted #999;
+    transform: translateY(-.35em);
+}
+
+.doc .toc .l2 {
+    padding-left: 1.2em;
+}
+
+.doc .toc .l3, .doc .toc .l4 {
+    padding-left: 2.4em;
+}
+
+.doc .pb {
+    margin: 0;
+    overflow: clip;
+    position: relative;
+}
+
+.notes {
+    margin-top: 1.4em;
+    font-size: .85em;
+}
+
+.notes:empty {
+    display: none;
+}
+
+.notes ol {
+    border-top: 1px solid #b9bfba;
+    padding-top: .6em;
+}
+
+/* only while editing */
+.editing .doc .pb {
+    min-height: 0;
+    overflow: visible;
+    cursor: pointer;
+}
+
+.editing .doc .pb::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 2px;
+    font: 500 11px/1 Inter, sans-serif;
+    color: #7b8a82;
+    text-align: center;
+    border-top: 1px dashed #b9c4bd;
+    padding-top: 4px;
+    pointer-events: none;
+}
+
+.editing .doc figure img, .editing .doc hr, .editing .doc .toc {
+    cursor: pointer;
+}
+
+.doc figure {
+    position: relative;
+}
+
+.editing .doc figure.sel img {
+    outline: 2px solid #d85a30;
+    outline-offset: 1px;
+}
+
+.editing .doc .sel:not(figure) {
+    outline: 2px solid #d85a30;
+    outline-offset: 3px;
+    border-radius: 2px;
+}
+
+.editing .doc td.csel, .editing .doc th.csel {
+    background: #fbe6dd !important;
+}
+
+.editing .doc.empty-hint > :only-child::before {
+    content: attr(data-hint);
+    color: #9aa59f;
+    position: absolute;
+    pointer-events: none;
+    font-style: normal;
+}
+
+.doc.focus > * {
+    opacity: .28;
+    transition: opacity .2s;
+}
+
+.doc.focus > .cur {
+    opacity: 1;
+}
+
+.print-pages {
+    display: none;
+}
+
+.psheet {
+    position: relative;
+    width: var(--pw);
+    height: calc(var(--ph) - .5px);
+    overflow: hidden;
+    break-after: page;
+    break-inside: avoid;
+    background: #fff;
+}
+
+.psheet:last-child {
+    break-after: auto;
+}
+
+@media print {
+    html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    body.printing > *:not(.print-pages) {
+        display: none !important;
+    }
+
+    .print-pages {
+        display: block;
+        color: #1c1c1c;
+    }
+
+    * {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}
+
+.fluid .doc .toc a::after {
+    display: none;
+}
+
+/* pages: colour, border, watermark */
+.sheet, .psheet { background: var(--page, #fff); }
+.pborder { position: absolute; inset: 8mm; pointer-events: none; border: 1px solid var(--bcolor); }
+.pborder.thick { border-width: 4px; }
+.pborder.double { border: 5px double var(--bcolor); }
+.pborder.dashed { border: 2px dashed var(--bcolor); }
+.wmark { position: absolute; inset: 0; display: grid; place-items: center; overflow: hidden; pointer-events: none; }
+.wmark span { font: 800 min(calc(var(--pw) * 1.15 / var(--n)), 150px)/1 var(--hfont); letter-spacing: .04em; color: rgb(0 0 0 / .075); transform: rotate(-35deg); white-space: nowrap; }
+.band.top.ln:not(:empty) { border-bottom: 1px solid #c9d0cb; padding-bottom: 5px; }
+.band.bottom.ln:not(:empty) { border-top: 1px solid #c9d0cb; padding-top: 5px; }
+/* objects, formulas, separators */
+.doc figure > [data-ui=obj] { display: inline-block; vertical-align: top; max-width: 100%; }
+.doc figure > [data-ui=obj] svg { display: block; width: 100%; height: auto; max-height: calc(var(--hc) - 2.5em); }
+.doc .beside figure > [data-ui=obj] { width: 100%; }
+.editing .doc figure > [data-ui=obj] { cursor: pointer; }
+.editing .doc figure.sel > [data-ui=obj] { outline: 2px solid #d85a30; outline-offset: 3px; border-radius: 2px; }
+.doc span.math { white-space: nowrap; }
+.doc span.math em { color: #9aa59f; }
+.doc .eq { text-align: center; }
+.editing .doc span.math { cursor: pointer; border-radius: 3px; }
+.editing .doc span.math:hover { background: rgb(216 90 48 / .12); }
+.doc math { font-size: 1.08em; }
+.doc hr { background: color-mix(in srgb, var(--accent) 40%, #b9bfba); }
+.doc hr.thick { height: 4px; background: var(--accent); border-radius: 2px; }
+.doc hr.dash { height: 0; background: none; border-top: 2px dashed color-mix(in srgb, var(--accent) 55%, #b9bfba); }
+.doc hr.dots { height: 5px; background: radial-gradient(circle, var(--accent) 2px, transparent 2.4px) center / 14px 5px repeat-x; }
+.doc hr.dbl { height: 5px; background: none; border: solid color-mix(in srgb, var(--accent) 55%, #b9bfba); border-width: 1px 0; }
+.doc hr.short { width: 22% !important; height: 3px; margin-inline: auto; background: var(--accent); border-radius: 2px; }
+.doc hr.orn { height: 12px; background: radial-gradient(circle, var(--accent) 4px, transparent 4.5px) center / 12px 12px no-repeat, linear-gradient(var(--accent), var(--accent)) calc(50% - 34px) 50% / 44px 1px no-repeat, linear-gradient(var(--accent), var(--accent)) calc(50% + 34px) 50% / 44px 1px no-repeat; }
+.doc .drop::first-letter { float: left; font: 700 3.3em/.82 var(--hfont); color: var(--accent); padding: .06em .1em 0 0; }
+.doc p[style*=background-color], .doc h1[style*=background-color], .doc h2[style*=background-color] { padding: .45em .7em; border-radius: 4px; }
+.doc table.bare td, .doc table.bare th { border: 0; padding: 0 .6em; background: none; }
+.doc table.bare td:first-child { padding-left: 0; }
+.doc table.bare td:last-child { padding-right: 0; }
+.editing .doc table.bare td { box-shadow: inset 0 0 0 1px rgb(120 140 130 / .22); }
+.doc table.headcol td:first-child { font-weight: 700; background: #f3f6f4; }
+.doc .toc a span { overflow: hidden; text-overflow: ellipsis; }
+.doc .toc .l4 { padding-left: 3.6em; }
+.doc figcaption[data-num]::before { font-weight: 700; }
+.doc.marks > p::after, .doc.marks > h1::after, .doc.marks > h2::after, .doc.marks > h3::after, .doc.marks > h4::after, .doc.marks li::after { content: '¶'; color: #8fb3a5; font-weight: 400; margin-left: .15em; }
+.doc blockquote { border-left-color: var(--accent); }
+/* rulers and margins that can be dragged */
+.ruler { z-index: 6; user-select: none; }
+.rh { position: sticky; top: 0; left: 0; height: 22px; margin: 0 -1rem .9rem; background: var(--ruler-off, #dfe6e1); border-bottom: 1px solid rgb(20 40 30 / .12); }
+.rh .rin { position: absolute; top: 0; height: 22px; }
+.rv { position: absolute; left: -30px; width: 22px; border-radius: 3px; overflow: visible; }
+.ruler canvas { display: block; border-radius: 3px; }
+.rhandle { position: absolute; touch-action: none; }
+.rh .r-ml, .rh .r-mr { top: 0; width: 10px; height: 22px; margin-left: -5px; cursor: col-resize; }
+.rh .r-ml::after, .rh .r-mr::after { content: ''; position: absolute; left: 3.5px; top: 2px; width: 3px; height: 18px; border-radius: 2px; background: #8a2346; }
+.rh .r-il, .rh .r-fl { width: 12px; height: 10px; margin-left: -6px; cursor: ew-resize; }
+.rh .r-fl { top: 0; }
+.rh .r-il { bottom: 0; }
+.rh .r-fl::after { content: ''; position: absolute; inset: 0 1px 1px; background: #d85a30; clip-path: polygon(0 0, 100% 0, 50% 100%); }
+.rh .r-il::after { content: ''; position: absolute; inset: 1px 1px 0; background: #d85a30; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.rv .rhandle { left: 0; width: 22px; height: 10px; margin-top: -5px; cursor: row-resize; }
+.rv .rhandle::after { content: ''; position: absolute; top: 3.5px; left: 2px; height: 3px; width: 18px; border-radius: 2px; background: #8a2346; }
+.rhandle:hover::after, .rhandle:focus-visible::after { filter: brightness(1.25); outline: 2px solid rgb(15 110 86 / .35); }
+.mguides { position: absolute; left: 0; width: var(--pw); pointer-events: none; }
+.mguide { position: absolute; pointer-events: auto; touch-action: none; }
+.mguide::after { content: ''; position: absolute; opacity: 0; transition: opacity .12s; }
+.mguide:hover::after { opacity: 1; }
+.g-ml, .g-mr { top: 0; bottom: 0; width: 12px; cursor: col-resize; }
+.g-ml { margin-left: -14px; }
+.g-mr { margin-left: 2px; }
+.g-ml::after, .g-mr::after { top: 0; bottom: 0; width: 0; border-left: 1.5px dashed #8a2346; }
+.g-ml::after { right: 0; }
+.g-mr::after { left: 0; }
+.g-mt, .g-mb { left: 0; right: 0; height: 10px; cursor: row-resize; }
+.g-mt { margin-top: -14px; }
+.g-mb { margin-top: 4px; }
+.g-mt::after, .g-mb::after { left: 0; right: 0; height: 0; border-top: 1.5px dashed #8a2346; }
+.g-mt::after { bottom: 0; }
+.g-mb::after { top: 0; }
+.mguides.on[data-k=ml] .g-ml::after, .mguides.on[data-k=mr] .g-mr::after, .mguides.on[data-k=mt] .g-mt::after, .mguides.on[data-k=mb] .g-mb::after { opacity: 1; }
+.rtip { position: fixed; z-index: 80; padding: 4px 9px; border-radius: 6px; background: #241619; color: #fff; font: 600 12px/1.4 Inter, sans-serif; pointer-events: none; }
+@media print { .ruler, .mguides, .rtip { display: none !important; } }
+
+/* the pages being written as PDF: laid out, out of sight */
+.print-pages.pdfwork { display: block; position: absolute; left: -100000px; top: 0; pointer-events: none; }
+
+/* footnotes at the bottom of their page (the room is kept by the floats of page.js) */
+.pnotes { position: absolute; left: var(--ml); right: var(--mr); font-size: .85em; text-align: start; }
+.pnotes ol { margin: 0; padding: .6em 0 0 1.6em; border-top: 1px solid #b9bfba; }
+.pnotes li { margin: 0 0 .15em; }
+
+/* SavBooks: chapters are centred, with the words chosen in the Book panel over them ("Chapter 3"); fiction paragraphs indent the first line */
+.doc > h1:not([style*=text-align]) { text-align: center; }
+.doc > h1[data-label]::before { content: attr(data-label); display: block; margin-bottom: .55em; font: 600 .42em/1.3 var(--font, inherit); letter-spacing: .18em; text-transform: uppercase; color: var(--accent); }
+.bk-indent .doc > p { margin-bottom: 0; }
+.bk-indent .doc > p + p { text-indent: 1.4em; }
+.bk-indent .doc > p.title + p, .bk-indent .doc > p.subtitle + p, .bk-indent .doc > p.eq + p { text-indent: 0; }
+/* the drop cap as a float is pushed under the floats that make the pages: where the browser can, initial-letter needs no float */
+@supports (initial-letter: 3) or (-webkit-initial-letter: 3) { .doc .drop::first-letter { float: none; padding: 0 .08em 0 0; font-size: 1em; line-height: 1; -webkit-initial-letter: 3; initial-letter: 3; } }

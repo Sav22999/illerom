@@ -39,7 +39,7 @@ Listed on the portal (`data/projects.php`, key `savnewsletters`) and on the stat
 
 ## Install
 
-1. Upload the folder, open `install-db.php`: database, master admin emails, optional Google client ID. It writes
+1. Upload the folder, open `install-db.php`: database, master admin emails. It writes
    `credentials.php` (git-ignored, blocked by `.htaccess`) with a new random `$secret_key`. Delete `install-db.php`
    afterwards. Alternatively import `install/savnewsletters.sql` and copy `credentials-sample.php` to `credentials.php`.
 2. **Never change `$secret_key`** once groups exist: it encrypts their SMTP passwords (AES-256-GCM, `seal()`/
@@ -52,7 +52,7 @@ Listed on the portal (`data/projects.php`, key `savnewsletters`) and on the stat
 
 ## Accounts and roles
 
-- Email + password (the address must be confirmed via `?verify=`) or Google (no check). The email is unique and never
+- Email + password (the address must be confirmed via `?verify=`) or SavAccount (no Google sign-in: SavOffice is an independent European alternative). The email is unique and never
   changes.
 - Roles in a group, each including the ones before: `user` (sees newsletters and numbers), `moderator` (writes
   newsletters

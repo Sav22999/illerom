@@ -3,7 +3,7 @@
  * dialogs, dates in a group's timezone.
  */
 
-import {getLang, t} from './i18n.js?v=23';
+import {getLang, t} from './i18n.js?v=25';
 
 export const S = {config: {}, user: null, csrf: ''};
 

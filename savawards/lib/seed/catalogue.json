@@ -1,0 +1,8440 @@
+{
+ "version": 3,
+ "note": "Starter catalogue of European alternatives: drafts to verify before publishing (facts as known in 2026, no scores).",
+ "products": [
+  {
+   "name": "Qwant",
+   "category": "search",
+   "country": "FR",
+   "website": "https://www.qwant.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Google Search",
+    "Bing"
+   ],
+   "tagline": "French search engine that does not profile its users.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Ecosia",
+   "category": "search",
+   "country": "DE",
+   "website": "https://www.ecosia.org",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Google Search",
+    "Bing"
+   ],
+   "tagline": "Search engine from Berlin that uses its profits for climate projects.",
+   "features": [
+    "green"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Startpage",
+   "category": "search",
+   "country": "NL",
+   "website": "https://www.startpage.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Google Search",
+    "Bing"
+   ],
+   "tagline": "Dutch search engine that shows Google results without tracking.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Mojeek",
+   "category": "search",
+   "country": "GB",
+   "website": "https://www.mojeek.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Google Search",
+    "Bing"
+   ],
+   "tagline": "British search engine with its own independent index.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "MetaGer",
+   "category": "search",
+   "country": "DE",
+   "website": "https://metager.org",
+   "source_url": "https://gitlab.metager.de/open-source/MetaGer",
+   "licence": "AGPL-3.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Google Search",
+    "Bing"
+   ],
+   "tagline": "Non-profit meta search engine from Hanover.",
+   "features": [
+    "green"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Swisscows",
+   "category": "search",
+   "country": "CH",
+   "website": "https://swisscows.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Google Search",
+    "Bing"
+   ],
+   "tagline": "Swiss family-friendly search engine with servers in Switzerland.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Proton Mail",
+   "category": "email",
+   "country": "CH",
+   "website": "https://proton.me/mail",
+   "source_url": "https://github.com/ProtonMail",
+   "licence": "GPL-3.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Gmail",
+    "Outlook",
+    "Yahoo Mail",
+    "iCloud Mail"
+   ],
+   "tagline": "End-to-end encrypted email from Switzerland.",
+   "features": [
+    "e2ee",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Tuta Mail",
+   "category": "email",
+   "country": "DE",
+   "website": "https://tuta.com",
+   "source_url": "https://github.com/tutao/tutanota",
+   "licence": "GPL-3.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Gmail",
+    "Outlook",
+    "Yahoo Mail"
+   ],
+   "tagline": "Encrypted email and calendar from Hanover.",
+   "features": [
+    "e2ee",
+    "no_ads",
+    "green"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "mailbox.org",
+   "category": "email",
+   "country": "DE",
+   "website": "https://mailbox.org",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Gmail",
+    "Outlook"
+   ],
+   "tagline": "Berlin email, calendar and office suite for privacy-minded people.",
+   "features": [
+    "no_ads",
+    "green"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Posteo",
+   "category": "email",
+   "country": "DE",
+   "website": "https://posteo.de",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Gmail",
+    "Outlook"
+   ],
+   "tagline": "Ad-free, sustainable email from Berlin.",
+   "features": [
+    "no_ads",
+    "green"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Infomaniak Mail",
+   "category": "email",
+   "country": "CH",
+   "website": "https://www.infomaniak.com/en/ksuite/mail",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Gmail",
+    "Outlook",
+    "Yahoo Mail"
+   ],
+   "tagline": "Swiss email in data centres run on renewable energy.",
+   "features": [
+    "green",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Mailfence",
+   "category": "email",
+   "country": "BE",
+   "website": "https://mailfence.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Gmail",
+    "Outlook"
+   ],
+   "tagline": "Belgian email with OpenPGP encryption, calendar and documents.",
+   "features": [
+    "e2ee",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "StartMail",
+   "category": "email",
+   "country": "NL",
+   "website": "https://www.startmail.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Gmail",
+    "Outlook"
+   ],
+   "tagline": "Private email from the makers of Startpage.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Runbox",
+   "category": "email",
+   "country": "NO",
+   "website": "https://runbox.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Gmail",
+    "Outlook"
+   ],
+   "tagline": "Norwegian email service powered by hydroelectric energy.",
+   "features": [
+    "green",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "GMX",
+   "category": "email",
+   "country": "DE",
+   "website": "https://www.gmx.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Gmail",
+    "Outlook",
+    "Yahoo Mail"
+   ],
+   "tagline": "Free German email with cloud storage, supported by ads.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "WEB.DE",
+   "category": "email",
+   "country": "DE",
+   "website": "https://web.de",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Gmail",
+    "Outlook"
+   ],
+   "tagline": "One of the most used German email services.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Disroot",
+   "category": "email",
+   "country": "NL",
+   "website": "https://disroot.org",
+   "source_url": "",
+   "licence": "Mixed",
+   "open_source": true,
+   "pricing": "donation",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Gmail",
+    "Google Drive"
+   ],
+   "tagline": "Volunteer-run platform of free and open-source online services from Amsterdam.",
+   "features": [
+    "no_ads",
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Kolab Now",
+   "category": "email",
+   "country": "CH",
+   "website": "https://kolabnow.com",
+   "source_url": "https://git.kolab.org",
+   "licence": "AGPL-3.0",
+   "open_source": true,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Outlook",
+    "Gmail"
+   ],
+   "tagline": "Swiss email, calendar and files built on open-source Kolab.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "FairEmail",
+   "category": "email",
+   "country": "NL",
+   "website": "https://email.faircode.eu",
+   "source_url": "https://github.com/M66B/FairEmail",
+   "licence": "GPL-3.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "android"
+   ],
+   "alternatives_to": [
+    "Gmail",
+    "Outlook"
+   ],
+   "tagline": "Privacy-friendly open-source email app for Android.",
+   "features": [
+    "no_ads",
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "eM Client",
+   "category": "email",
+   "country": "CZ",
+   "website": "https://www.emclient.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "windows",
+    "macos"
+   ],
+   "alternatives_to": [
+    "Outlook"
+   ],
+   "tagline": "Czech desktop email client with calendar, tasks and contacts.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Murena Workspace",
+   "category": "email",
+   "country": "FR",
+   "website": "https://murena.io",
+   "source_url": "",
+   "licence": "Mixed",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Gmail",
+    "Google Drive",
+    "Google Calendar"
+   ],
+   "tagline": "Email, cloud and office online from the makers of /e/OS.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "LibreOffice",
+   "category": "office",
+   "country": "DE",
+   "website": "https://www.libreoffice.org",
+   "source_url": "https://git.libreoffice.org/core",
+   "licence": "MPL-2.0",
+   "open_source": true,
+   "pricing": "donation",
+   "platforms": [
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Microsoft Word",
+    "Microsoft Excel",
+    "Microsoft PowerPoint"
+   ],
+   "tagline": "The free office suite of The Document Foundation in Berlin.",
+   "features": [
+    "no_ads",
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Collabora Online",
+   "category": "office",
+   "country": "GB",
+   "website": "https://www.collaboraonline.com",
+   "source_url": "https://github.com/CollaboraOnline/online",
+   "licence": "MPL-2.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Google Docs",
+    "Google Sheets",
+    "Google Slides",
+    "Microsoft Word"
+   ],
+   "tagline": "Online office suite based on LibreOffice, to host yourself or as a service.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": true
+  },
+  {
+   "name": "ONLYOFFICE",
+   "category": "office",
+   "country": "LV",
+   "website": "https://www.onlyoffice.com",
+   "source_url": "https://github.com/ONLYOFFICE",
+   "licence": "AGPL-3.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Microsoft Word",
+    "Microsoft Excel",
+    "Microsoft PowerPoint",
+    "Google Docs"
+   ],
+   "tagline": "Office suite from Riga, compatible with Microsoft formats.",
+   "features": [],
+   "self_host": true
+  },
+  {
+   "name": "CryptPad",
+   "category": "office",
+   "country": "FR",
+   "website": "https://cryptpad.org",
+   "source_url": "https://github.com/cryptpad/cryptpad",
+   "licence": "AGPL-3.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Google Docs",
+    "Google Sheets",
+    "Google Slides",
+    "Google Forms"
+   ],
+   "tagline": "End-to-end encrypted collaborative documents from Paris.",
+   "features": [
+    "e2ee",
+    "no_ads"
+   ],
+   "self_host": true
+  },
+  {
+   "name": "SoftMaker FreeOffice",
+   "category": "office",
+   "country": "DE",
+   "website": "https://www.freeoffice.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "windows",
+    "macos",
+    "linux",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Microsoft Word",
+    "Microsoft Excel",
+    "Microsoft PowerPoint"
+   ],
+   "tagline": "Free office suite from Nuremberg with Microsoft-compatible files.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Proton Docs",
+   "category": "office",
+   "country": "CH",
+   "website": "https://proton.me/drive/docs",
+   "source_url": "",
+   "licence": "GPL-3.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Google Docs",
+    "Microsoft Word"
+   ],
+   "tagline": "End-to-end encrypted documents inside Proton Drive.",
+   "features": [
+    "e2ee",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Calligra Suite",
+   "category": "office",
+   "country": "DE",
+   "website": "https://calligra.org",
+   "source_url": "https://invent.kde.org/office/calligra",
+   "licence": "GPL-2.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Microsoft Word",
+    "Microsoft Excel",
+    "Microsoft PowerPoint"
+   ],
+   "tagline": "Office and graphic suite of the KDE community.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Pitch",
+   "category": "office",
+   "country": "DE",
+   "website": "https://pitch.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "windows",
+    "macos",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Microsoft PowerPoint",
+    "Google Slides"
+   ],
+   "tagline": "Collaborative presentation software from Berlin.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Zettlr",
+   "category": "office",
+   "country": "DE",
+   "website": "https://www.zettlr.com",
+   "source_url": "https://github.com/Zettlr/Zettlr",
+   "licence": "GPL-3.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Microsoft Word"
+   ],
+   "tagline": "Markdown editor for academic writing.",
+   "features": [
+    "no_ads",
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Baserow",
+   "category": "office",
+   "country": "NL",
+   "website": "https://baserow.io",
+   "source_url": "https://gitlab.com/baserow/baserow",
+   "licence": "MIT",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Microsoft Excel",
+    "Google Sheets",
+    "Airtable"
+   ],
+   "tagline": "Open-source no-code database and spreadsheet from Amsterdam.",
+   "features": [],
+   "self_host": true
+  },
+  {
+   "name": "PDF24 Tools",
+   "category": "office",
+   "country": "DE",
+   "website": "https://tools.pdf24.org",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "web",
+    "windows"
+   ],
+   "alternatives_to": [
+    "Adobe Acrobat"
+   ],
+   "tagline": "Free PDF tools from Germany, online and for Windows.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Smallpdf",
+   "category": "office",
+   "country": "CH",
+   "website": "https://smallpdf.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "windows",
+    "macos",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Adobe Acrobat"
+   ],
+   "tagline": "Swiss online PDF tools.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "iLovePDF",
+   "category": "office",
+   "country": "ES",
+   "website": "https://www.ilovepdf.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "windows",
+    "macos",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Adobe Acrobat"
+   ],
+   "tagline": "PDF tools from Barcelona.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Nuclino",
+   "category": "productivity",
+   "country": "DE",
+   "website": "https://www.nuclino.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "windows",
+    "macos",
+    "linux",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Notion",
+    "Microsoft OneNote",
+    "Evernote"
+   ],
+   "tagline": "Team wiki and notes from Munich.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Anytype",
+   "category": "productivity",
+   "country": "CH",
+   "website": "https://anytype.io",
+   "source_url": "https://github.com/anyproto",
+   "licence": "Mixed",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "windows",
+    "macos",
+    "linux",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Notion",
+    "Microsoft OneNote",
+    "Evernote"
+   ],
+   "tagline": "Local-first, encrypted notes and objects by a Swiss association.",
+   "features": [
+    "e2ee"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "MeisterTask",
+   "category": "productivity",
+   "country": "AT",
+   "website": "https://www.meistertask.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "windows",
+    "macos",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Trello",
+    "Asana"
+   ],
+   "tagline": "Task management with kanban boards from Austria and Germany.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Taiga",
+   "category": "productivity",
+   "country": "ES",
+   "website": "https://taiga.io",
+   "source_url": "https://github.com/kaleidos-ventures",
+   "licence": "MPL-2.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Trello",
+    "Asana",
+    "Jira"
+   ],
+   "tagline": "Open-source agile project management from Madrid.",
+   "features": [],
+   "self_host": true
+  },
+  {
+   "name": "Stackfield",
+   "category": "productivity",
+   "country": "DE",
+   "website": "https://www.stackfield.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web",
+    "windows",
+    "macos",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Slack",
+    "Asana",
+    "Microsoft Teams"
+   ],
+   "tagline": "Collaboration platform with end-to-end encryption from Munich.",
+   "features": [
+    "e2ee"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Zenkit",
+   "category": "productivity",
+   "country": "DE",
+   "website": "https://zenkit.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "windows",
+    "macos",
+    "linux",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Trello",
+    "Asana",
+    "Notion"
+   ],
+   "tagline": "Project and task tools from Karlsruhe.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Tally",
+   "category": "productivity",
+   "country": "BE",
+   "website": "https://tally.so",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Google Forms",
+    "Typeform",
+    "Microsoft Forms"
+   ],
+   "tagline": "Form builder from Ghent, free for most uses.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "LimeSurvey",
+   "category": "productivity",
+   "country": "DE",
+   "website": "https://www.limesurvey.org",
+   "source_url": "https://github.com/LimeSurvey/LimeSurvey",
+   "licence": "GPL-2.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "SurveyMonkey",
+    "Google Forms",
+    "Microsoft Forms"
+   ],
+   "tagline": "Open-source survey tool from Hamburg.",
+   "features": [],
+   "self_host": true
+  },
+  {
+   "name": "Formbricks",
+   "category": "productivity",
+   "country": "DE",
+   "website": "https://formbricks.com",
+   "source_url": "https://github.com/formbricks/formbricks",
+   "licence": "AGPL-3.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Typeform",
+    "SurveyMonkey",
+    "Google Forms"
+   ],
+   "tagline": "Open-source surveys and forms from Berlin.",
+   "features": [],
+   "self_host": true
+  },
+  {
+   "name": "Doodle",
+   "category": "productivity",
+   "country": "CH",
+   "website": "https://doodle.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Calendly"
+   ],
+   "tagline": "Swiss scheduling polls and booking pages.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Nextcloud",
+   "category": "cloud",
+   "country": "DE",
+   "website": "https://nextcloud.com",
+   "source_url": "https://github.com/nextcloud",
+   "licence": "AGPL-3.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web",
+    "android",
+    "ios",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Google Drive",
+    "OneDrive",
+    "Dropbox",
+    "iCloud Drive"
+   ],
+   "tagline": "Self-hosted files, calendars and collaboration from Stuttgart.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": true
+  },
+  {
+   "name": "Proton Drive",
+   "category": "cloud",
+   "country": "CH",
+   "website": "https://proton.me/drive",
+   "source_url": "https://github.com/ProtonDriveApps",
+   "licence": "GPL-3.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios",
+    "windows",
+    "macos"
+   ],
+   "alternatives_to": [
+    "Google Drive",
+    "OneDrive",
+    "Dropbox",
+    "iCloud Drive",
+    "Google Photos"
+   ],
+   "tagline": "End-to-end encrypted cloud storage from Switzerland.",
+   "features": [
+    "e2ee",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "pCloud",
+   "category": "cloud",
+   "country": "CH",
+   "website": "https://www.pcloud.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Google Drive",
+    "Dropbox",
+    "OneDrive"
+   ],
+   "tagline": "Swiss cloud storage with optional client-side encryption.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Tresorit",
+   "category": "cloud",
+   "country": "CH",
+   "website": "https://tresorit.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Dropbox",
+    "Google Drive",
+    "OneDrive"
+   ],
+   "tagline": "End-to-end encrypted file sharing from Switzerland and Hungary.",
+   "features": [
+    "e2ee"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "kDrive",
+   "category": "cloud",
+   "country": "CH",
+   "website": "https://www.infomaniak.com/en/kdrive",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Google Drive",
+    "OneDrive",
+    "Dropbox"
+   ],
+   "tagline": "Infomaniak cloud storage with online office, on renewable energy.",
+   "features": [
+    "green",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Filen",
+   "category": "cloud",
+   "country": "DE",
+   "website": "https://filen.io",
+   "source_url": "https://github.com/FilenCloudDienste",
+   "licence": "AGPL-3.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Google Drive",
+    "Dropbox",
+    "OneDrive"
+   ],
+   "tagline": "End-to-end encrypted cloud storage from Germany.",
+   "features": [
+    "e2ee"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Internxt",
+   "category": "cloud",
+   "country": "ES",
+   "website": "https://internxt.com",
+   "source_url": "https://github.com/internxt",
+   "licence": "AGPL-3.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Google Drive",
+    "Dropbox",
+    "Google Photos"
+   ],
+   "tagline": "Encrypted cloud storage from Valencia.",
+   "features": [
+    "e2ee"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Koofr",
+   "category": "cloud",
+   "country": "SI",
+   "website": "https://koofr.eu",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Google Drive",
+    "Dropbox",
+    "OneDrive"
+   ],
+   "tagline": "Slovenian cloud storage that does not track its users.",
+   "features": [
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Jottacloud",
+   "category": "cloud",
+   "country": "NO",
+   "website": "https://www.jottacloud.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Google Drive",
+    "Dropbox",
+    "iCloud Drive",
+    "Google Photos"
+   ],
+   "tagline": "Norwegian cloud storage on renewable energy.",
+   "features": [
+    "green"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "MagentaCLOUD",
+   "category": "cloud",
+   "country": "DE",
+   "website": "https://cloud.telekom-dienste.de",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios",
+    "windows",
+    "macos"
+   ],
+   "alternatives_to": [
+    "Google Drive",
+    "OneDrive"
+   ],
+   "tagline": "Cloud storage of Deutsche Telekom, hosted in Germany.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Hetzner Storage Share",
+   "category": "cloud",
+   "country": "DE",
+   "website": "https://www.hetzner.com/storage/storage-share",
+   "source_url": "",
+   "licence": "AGPL-3.0",
+   "open_source": true,
+   "pricing": "paid",
+   "platforms": [
+    "web",
+    "android",
+    "ios",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Google Drive",
+    "Dropbox"
+   ],
+   "tagline": "Managed Nextcloud on Hetzner servers in Germany and Finland.",
+   "features": [
+    "green"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "luckycloud",
+   "category": "cloud",
+   "country": "DE",
+   "website": "https://luckycloud.de",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web",
+    "android",
+    "ios",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Dropbox",
+    "Google Drive"
+   ],
+   "tagline": "German cloud storage with servers in Germany.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "PhotoPrism",
+   "category": "cloud",
+   "country": "DE",
+   "website": "https://www.photoprism.app",
+   "source_url": "https://github.com/photoprism/photoprism",
+   "licence": "AGPL-3.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Google Photos",
+    "iCloud Drive"
+   ],
+   "tagline": "Self-hosted photo library with AI tagging, from Berlin.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": true
+  },
+  {
+   "name": "Vivaldi",
+   "category": "browser",
+   "country": "NO",
+   "website": "https://vivaldi.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "windows",
+    "macos",
+    "linux",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Google Chrome",
+    "Microsoft Edge",
+    "Safari"
+   ],
+   "tagline": "Feature-rich browser from Oslo, with built-in mail and calendar.",
+   "features": [
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Mullvad Browser",
+   "category": "browser",
+   "country": "SE",
+   "website": "https://mullvad.net/browser",
+   "source_url": "https://github.com/mullvad/mullvad-browser",
+   "licence": "MPL-2.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Google Chrome",
+    "Microsoft Edge",
+    "Safari"
+   ],
+   "tagline": "Privacy browser made by Mullvad with the Tor Project.",
+   "features": [
+    "no_tracking",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Ecosia Browser",
+   "category": "browser",
+   "country": "DE",
+   "website": "https://www.ecosia.org/browser",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "windows",
+    "macos",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Google Chrome",
+    "Microsoft Edge"
+   ],
+   "tagline": "Chromium browser from Ecosia with its climate-positive search.",
+   "features": [
+    "green"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Krita",
+   "category": "design",
+   "country": "NL",
+   "website": "https://krita.org",
+   "source_url": "https://invent.kde.org/graphics/krita",
+   "licence": "GPL-3.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "windows",
+    "macos",
+    "linux",
+    "android"
+   ],
+   "alternatives_to": [
+    "Adobe Photoshop"
+   ],
+   "tagline": "Free digital painting program by the Krita Foundation.",
+   "features": [
+    "no_ads",
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Photopea",
+   "category": "design",
+   "country": "CZ",
+   "website": "https://www.photopea.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Adobe Photoshop"
+   ],
+   "tagline": "Photoshop-like image editor in the browser, made in Czechia.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Penpot",
+   "category": "design",
+   "country": "ES",
+   "website": "https://penpot.app",
+   "source_url": "https://github.com/penpot/penpot",
+   "licence": "MPL-2.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Figma",
+    "Adobe Illustrator"
+   ],
+   "tagline": "Open-source design and prototyping tool from Madrid.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": true
+  },
+  {
+   "name": "Linearity Curve",
+   "category": "design",
+   "country": "DE",
+   "website": "https://www.linearity.io/curve",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "macos",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Adobe Illustrator"
+   ],
+   "tagline": "Vector design app from Berlin, formerly Vectornator.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Capture One",
+   "category": "design",
+   "country": "DK",
+   "website": "https://www.captureone.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "windows",
+    "macos",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Adobe Lightroom"
+   ],
+   "tagline": "Danish photo editing and tethering software.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Kdenlive",
+   "category": "design",
+   "country": "DE",
+   "website": "https://kdenlive.org",
+   "source_url": "https://invent.kde.org/multimedia/kdenlive",
+   "licence": "GPL-3.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Adobe Premiere Pro"
+   ],
+   "tagline": "Open-source video editor of the KDE community.",
+   "features": [
+    "no_ads",
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Lightworks",
+   "category": "design",
+   "country": "GB",
+   "website": "https://lwks.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Adobe Premiere Pro"
+   ],
+   "tagline": "Professional video editor from the United Kingdom.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Blender",
+   "category": "design",
+   "country": "NL",
+   "website": "https://www.blender.org",
+   "source_url": "https://projects.blender.org/blender/blender",
+   "licence": "GPL-3.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Autodesk Maya",
+    "Cinema 4D",
+    "Adobe Premiere Pro"
+   ],
+   "tagline": "Free 3D creation suite by the Blender Foundation in Amsterdam.",
+   "features": [
+    "no_ads",
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Le Chat",
+   "category": "ai",
+   "country": "FR",
+   "website": "https://chat.mistral.ai",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "ChatGPT",
+    "Claude",
+    "Gemini",
+    "Microsoft Copilot"
+   ],
+   "tagline": "AI assistant by Mistral AI in Paris.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Lumo",
+   "category": "ai",
+   "country": "CH",
+   "website": "https://lumo.proton.me",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "ChatGPT",
+    "Claude",
+    "Gemini"
+   ],
+   "tagline": "Private AI assistant by Proton that keeps no logs.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "DeepL Translator",
+   "category": "ai",
+   "country": "DE",
+   "website": "https://www.deepl.com/translator",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "windows",
+    "macos",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Google Translate"
+   ],
+   "tagline": "AI translation from Cologne.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "DeepL Write",
+   "category": "ai",
+   "country": "DE",
+   "website": "https://www.deepl.com/write",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "windows",
+    "macos"
+   ],
+   "alternatives_to": [
+    "Grammarly"
+   ],
+   "tagline": "AI writing assistant from DeepL.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "LanguageTool",
+   "category": "ai",
+   "country": "DE",
+   "website": "https://languagetool.org",
+   "source_url": "https://github.com/languagetool-org/languagetool",
+   "licence": "LGPL-2.1",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "windows",
+    "macos",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Grammarly"
+   ],
+   "tagline": "Grammar and style checker from Potsdam, open-source core.",
+   "features": [],
+   "self_host": true
+  },
+  {
+   "name": "Langdock",
+   "category": "ai",
+   "country": "DE",
+   "website": "https://www.langdock.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "ChatGPT",
+    "Microsoft Copilot"
+   ],
+   "tagline": "AI workspace for companies from Hamburg, with EU hosting.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Threema",
+   "category": "messaging",
+   "country": "CH",
+   "website": "https://threema.ch",
+   "source_url": "https://github.com/threema-ch",
+   "licence": "AGPL-3.0",
+   "open_source": true,
+   "pricing": "paid",
+   "platforms": [
+    "android",
+    "ios",
+    "web",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "WhatsApp",
+    "iMessage",
+    "Telegram",
+    "Facebook Messenger"
+   ],
+   "tagline": "Swiss messenger that needs no phone number.",
+   "features": [
+    "e2ee",
+    "no_ads",
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Element",
+   "category": "messaging",
+   "country": "GB",
+   "website": "https://element.io",
+   "source_url": "https://github.com/element-hq",
+   "licence": "AGPL-3.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "WhatsApp",
+    "Slack",
+    "Microsoft Teams",
+    "Telegram"
+   ],
+   "tagline": "Messenger and team chat on the open Matrix protocol.",
+   "features": [
+    "e2ee",
+    "no_ads"
+   ],
+   "self_host": true
+  },
+  {
+   "name": "Wire",
+   "category": "messaging",
+   "country": "CH",
+   "website": "https://wire.com",
+   "source_url": "https://github.com/wireapp",
+   "licence": "GPL-3.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "WhatsApp",
+    "Microsoft Teams",
+    "Slack"
+   ],
+   "tagline": "End-to-end encrypted messaging and calls from Switzerland and Germany.",
+   "features": [
+    "e2ee",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Delta Chat",
+   "category": "messaging",
+   "country": "DE",
+   "website": "https://delta.chat",
+   "source_url": "https://github.com/deltachat",
+   "licence": "MPL-2.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "android",
+    "ios",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "WhatsApp",
+    "Telegram",
+    "iMessage"
+   ],
+   "tagline": "Messenger that works over email, from Freiburg.",
+   "features": [
+    "e2ee",
+    "no_ads",
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Olvid",
+   "category": "messaging",
+   "country": "FR",
+   "website": "https://www.olvid.io",
+   "source_url": "https://github.com/olvid-io",
+   "licence": "AGPL-3.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "android",
+    "ios",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "WhatsApp",
+    "iMessage",
+    "Telegram"
+   ],
+   "tagline": "French messenger without phone numbers or central directory.",
+   "features": [
+    "e2ee",
+    "no_ads",
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "SimpleX Chat",
+   "category": "messaging",
+   "country": "GB",
+   "website": "https://simplex.chat",
+   "source_url": "https://github.com/simplex-chat",
+   "licence": "AGPL-3.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "android",
+    "ios",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "WhatsApp",
+    "Telegram",
+    "Signal"
+   ],
+   "tagline": "Messenger with no user identifiers at all, from London.",
+   "features": [
+    "e2ee",
+    "no_ads",
+    "no_tracking"
+   ],
+   "self_host": true
+  },
+  {
+   "name": "Whereby",
+   "category": "video",
+   "country": "NO",
+   "website": "https://whereby.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Zoom",
+    "Google Meet",
+    "Microsoft Teams"
+   ],
+   "tagline": "Video meetings in the browser from Oslo.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "kMeet",
+   "category": "video",
+   "country": "CH",
+   "website": "https://www.infomaniak.com/en/kmeet",
+   "source_url": "",
+   "licence": "Apache-2.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web",
+    "android",
+    "ios",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Zoom",
+    "Google Meet"
+   ],
+   "tagline": "Free video calls by Infomaniak, on renewable energy.",
+   "features": [
+    "green",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Nextcloud Talk",
+   "category": "video",
+   "country": "DE",
+   "website": "https://nextcloud.com/talk",
+   "source_url": "https://github.com/nextcloud/spreed",
+   "licence": "AGPL-3.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web",
+    "android",
+    "ios",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Zoom",
+    "Microsoft Teams",
+    "Slack"
+   ],
+   "tagline": "Chat, calls and meetings inside Nextcloud.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": true
+  },
+  {
+   "name": "Proton Calendar",
+   "category": "calendar",
+   "country": "CH",
+   "website": "https://proton.me/calendar",
+   "source_url": "",
+   "licence": "GPL-3.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Google Calendar"
+   ],
+   "tagline": "End-to-end encrypted calendar from Proton.",
+   "features": [
+    "e2ee",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Organic Maps",
+   "category": "maps",
+   "country": "EE",
+   "website": "https://organicmaps.app",
+   "source_url": "https://github.com/organicmaps/organicmaps",
+   "licence": "Apache-2.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Google Maps",
+    "Apple Maps"
+   ],
+   "tagline": "Offline maps based on OpenStreetMap, without ads or tracking.",
+   "features": [
+    "no_ads",
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "OsmAnd",
+   "category": "maps",
+   "country": "NL",
+   "website": "https://osmand.net",
+   "source_url": "https://github.com/osmandapp/OsmAnd",
+   "licence": "GPL-3.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Google Maps",
+    "Apple Maps"
+   ],
+   "tagline": "Offline maps and navigation based on OpenStreetMap.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Magic Earth",
+   "category": "maps",
+   "country": "NL",
+   "website": "https://www.magicearth.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Google Maps",
+    "Apple Maps"
+   ],
+   "tagline": "Free navigation app from the Netherlands, without ads.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "HERE WeGo",
+   "category": "maps",
+   "country": "NL",
+   "website": "https://wego.here.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Google Maps",
+    "Apple Maps"
+   ],
+   "tagline": "Maps and navigation by HERE Technologies.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Mapy.com",
+   "category": "maps",
+   "country": "CZ",
+   "website": "https://mapy.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Google Maps"
+   ],
+   "tagline": "Detailed outdoor maps from Czechia (Seznam).",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Proton Pass",
+   "category": "passwords",
+   "country": "CH",
+   "website": "https://proton.me/pass",
+   "source_url": "https://github.com/protonpass",
+   "licence": "GPL-3.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "1Password",
+    "LastPass",
+    "Google Authenticator"
+   ],
+   "tagline": "End-to-end encrypted password manager from Proton.",
+   "features": [
+    "e2ee",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "KeePass",
+   "category": "passwords",
+   "country": "DE",
+   "website": "https://keepass.info",
+   "source_url": "",
+   "licence": "GPL-2.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "windows"
+   ],
+   "alternatives_to": [
+    "1Password",
+    "LastPass"
+   ],
+   "tagline": "Long-standing free, offline password manager.",
+   "features": [
+    "no_ads",
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Passbolt",
+   "category": "passwords",
+   "country": "LU",
+   "website": "https://www.passbolt.com",
+   "source_url": "https://github.com/passbolt",
+   "licence": "AGPL-3.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "1Password",
+    "LastPass"
+   ],
+   "tagline": "Password manager for teams from Luxembourg.",
+   "features": [
+    "e2ee"
+   ],
+   "self_host": true
+  },
+  {
+   "name": "Psono",
+   "category": "passwords",
+   "country": "DE",
+   "website": "https://psono.com",
+   "source_url": "https://gitlab.com/psono",
+   "licence": "Apache-2.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "1Password",
+    "LastPass"
+   ],
+   "tagline": "Self-hostable password manager for teams from Germany.",
+   "features": [
+    "e2ee"
+   ],
+   "self_host": true
+  },
+  {
+   "name": "Aegis Authenticator",
+   "category": "passwords",
+   "country": "NL",
+   "website": "https://getaegis.app",
+   "source_url": "https://github.com/beemdevelopment/Aegis",
+   "licence": "GPL-3.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "android"
+   ],
+   "alternatives_to": [
+    "Google Authenticator"
+   ],
+   "tagline": "Open-source two-factor authentication app for Android.",
+   "features": [
+    "no_ads",
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "2FAS Auth",
+   "category": "passwords",
+   "country": "PL",
+   "website": "https://2fas.com",
+   "source_url": "https://github.com/twofas",
+   "licence": "GPL-3.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Google Authenticator"
+   ],
+   "tagline": "Open-source two-factor authentication app.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Proton VPN",
+   "category": "vpn",
+   "country": "CH",
+   "website": "https://protonvpn.com",
+   "source_url": "https://github.com/ProtonVPN",
+   "licence": "GPL-3.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "android",
+    "ios",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "NordVPN"
+   ],
+   "tagline": "Swiss VPN with a free plan without ads.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Mullvad VPN",
+   "category": "vpn",
+   "country": "SE",
+   "website": "https://mullvad.net",
+   "source_url": "https://github.com/mullvad/mullvadvpn-app",
+   "licence": "GPL-3.0",
+   "open_source": true,
+   "pricing": "paid",
+   "platforms": [
+    "android",
+    "ios",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "NordVPN"
+   ],
+   "tagline": "Swedish VPN that needs no account email.",
+   "features": [
+    "no_ads",
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "AirVPN",
+   "category": "vpn",
+   "country": "IT",
+   "website": "https://airvpn.org",
+   "source_url": "",
+   "licence": "GPL-3.0",
+   "open_source": true,
+   "pricing": "paid",
+   "platforms": [
+    "android",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "NordVPN"
+   ],
+   "tagline": "VPN run by activists from Italy.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "OVPN",
+   "category": "vpn",
+   "country": "SE",
+   "website": "https://www.ovpn.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "android",
+    "ios",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "NordVPN"
+   ],
+   "tagline": "Swedish VPN with its own servers.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Mastodon",
+   "category": "social",
+   "country": "DE",
+   "website": "https://joinmastodon.org",
+   "source_url": "https://github.com/mastodon/mastodon",
+   "licence": "AGPL-3.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "X (Twitter)"
+   ],
+   "tagline": "Decentralised social network, developed by a non-profit in Berlin.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": true
+  },
+  {
+   "name": "PeerTube",
+   "category": "media",
+   "country": "FR",
+   "website": "https://joinpeertube.org",
+   "source_url": "https://framagit.org/framasoft/peertube/PeerTube",
+   "licence": "AGPL-3.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "YouTube"
+   ],
+   "tagline": "Decentralised video platform by Framasoft.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": true
+  },
+  {
+   "name": "Dailymotion",
+   "category": "media",
+   "country": "FR",
+   "website": "https://www.dailymotion.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "YouTube"
+   ],
+   "tagline": "French video platform.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Spotify",
+   "category": "media",
+   "country": "SE",
+   "website": "https://www.spotify.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Apple Music",
+    "YouTube Music"
+   ],
+   "tagline": "Music and podcast streaming from Stockholm.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Deezer",
+   "category": "media",
+   "country": "FR",
+   "website": "https://www.deezer.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios",
+    "windows",
+    "macos"
+   ],
+   "alternatives_to": [
+    "Apple Music",
+    "YouTube Music"
+   ],
+   "tagline": "French music streaming service.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Qobuz",
+   "category": "media",
+   "country": "FR",
+   "website": "https://www.qobuz.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web",
+    "android",
+    "ios",
+    "windows",
+    "macos"
+   ],
+   "alternatives_to": [
+    "Apple Music",
+    "Tidal"
+   ],
+   "tagline": "Hi-res music streaming and downloads from France.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Codeberg",
+   "category": "dev",
+   "country": "DE",
+   "website": "https://codeberg.org",
+   "source_url": "",
+   "licence": "GPL-3.0",
+   "open_source": true,
+   "pricing": "donation",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "GitHub"
+   ],
+   "tagline": "Non-profit code hosting based on Forgejo, from Berlin.",
+   "features": [
+    "no_ads",
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Plausible Analytics",
+   "category": "dev",
+   "country": "EE",
+   "website": "https://plausible.io",
+   "source_url": "https://github.com/plausible/analytics",
+   "licence": "AGPL-3.0",
+   "open_source": true,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Google Analytics"
+   ],
+   "tagline": "Lightweight, cookie-free web analytics from Estonia.",
+   "features": [
+    "no_tracking"
+   ],
+   "self_host": true
+  },
+  {
+   "name": "Simple Analytics",
+   "category": "dev",
+   "country": "NL",
+   "website": "https://www.simpleanalytics.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Google Analytics"
+   ],
+   "tagline": "Privacy-first web analytics from the Netherlands.",
+   "features": [
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Pirsch",
+   "category": "dev",
+   "country": "DE",
+   "website": "https://pirsch.io",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Google Analytics"
+   ],
+   "tagline": "Cookie-free web analytics made in Germany.",
+   "features": [
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "etracker",
+   "category": "dev",
+   "country": "DE",
+   "website": "https://www.etracker.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Google Analytics"
+   ],
+   "tagline": "German web analytics, GDPR-compliant.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Brevo",
+   "category": "other",
+   "country": "FR",
+   "website": "https://www.brevo.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Mailchimp"
+   ],
+   "tagline": "Email marketing and CRM from Paris, formerly Sendinblue.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "CleverReach",
+   "category": "other",
+   "country": "DE",
+   "website": "https://www.cleverreach.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Mailchimp"
+   ],
+   "tagline": "Email marketing from Germany.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "MailerLite",
+   "category": "other",
+   "country": "LT",
+   "website": "https://www.mailerlite.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Mailchimp"
+   ],
+   "tagline": "Email marketing from Vilnius.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "/e/OS",
+   "category": "os",
+   "country": "FR",
+   "website": "https://e.foundation/e-os",
+   "source_url": "https://gitlab.e.foundation/e",
+   "licence": "Mixed",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "android"
+   ],
+   "alternatives_to": [
+    "Android",
+    "iOS"
+   ],
+   "tagline": "De-Googled Android by the e Foundation.",
+   "features": [
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "iodéOS",
+   "category": "os",
+   "country": "FR",
+   "website": "https://iode.tech",
+   "source_url": "https://gitlab.com/iode",
+   "licence": "Mixed",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "android"
+   ],
+   "alternatives_to": [
+    "Android"
+   ],
+   "tagline": "Privacy-focused Android with built-in tracker blocker, from France.",
+   "features": [
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Ubuntu",
+   "category": "os",
+   "country": "GB",
+   "website": "https://ubuntu.com",
+   "source_url": "https://launchpad.net/ubuntu",
+   "licence": "Mixed",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "linux"
+   ],
+   "alternatives_to": [
+    "Windows",
+    "macOS"
+   ],
+   "tagline": "Linux distribution by Canonical in London.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "openSUSE",
+   "category": "os",
+   "country": "DE",
+   "website": "https://www.opensuse.org",
+   "source_url": "https://github.com/openSUSE",
+   "licence": "Mixed",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "linux"
+   ],
+   "alternatives_to": [
+    "Windows",
+    "macOS"
+   ],
+   "tagline": "Community Linux distribution sponsored by SUSE in Nuremberg.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Zorin OS",
+   "category": "os",
+   "country": "IE",
+   "website": "https://zorin.com/os",
+   "source_url": "",
+   "licence": "Mixed",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "linux"
+   ],
+   "alternatives_to": [
+    "Windows",
+    "macOS"
+   ],
+   "tagline": "Linux distribution from Dublin designed for people coming from Windows.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "TUXEDO OS",
+   "category": "os",
+   "country": "DE",
+   "website": "https://www.tuxedocomputers.com/os",
+   "source_url": "",
+   "licence": "Mixed",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "linux"
+   ],
+   "alternatives_to": [
+    "Windows"
+   ],
+   "tagline": "Linux distribution by TUXEDO Computers in Augsburg.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Seznam",
+   "category": "search",
+   "country": "CZ",
+   "website": "https://www.seznam.cz",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Google Search"
+   ],
+   "tagline": "Czech search engine and web portal.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Marginalia Search",
+   "category": "search",
+   "country": "SE",
+   "website": "https://marginalia-search.com",
+   "source_url": "",
+   "licence": "AGPL-3.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Google Search",
+    "Bing"
+   ],
+   "tagline": "Independent search engine for the small, non-commercial web.",
+   "features": [
+    "no_ads",
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Lilo",
+   "category": "search",
+   "country": "FR",
+   "website": "https://www.lilo.org",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Google Search",
+    "Bing"
+   ],
+   "tagline": "French search engine that funds social and environmental projects.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Oscobo",
+   "category": "search",
+   "country": "GB",
+   "website": "https://www.oscobo.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Google Search",
+    "Bing"
+   ],
+   "tagline": "British search engine that does not track its users.",
+   "features": [
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "YaCy",
+   "category": "search",
+   "country": "DE",
+   "website": "https://yacy.net",
+   "source_url": "",
+   "licence": "GPL-2.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Google Search"
+   ],
+   "tagline": "Decentralised peer-to-peer search engine you run yourself.",
+   "features": [
+    "no_ads",
+    "no_tracking"
+   ],
+   "self_host": true
+  },
+  {
+   "name": "Mailo",
+   "category": "email",
+   "country": "FR",
+   "website": "https://www.mailo.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Gmail",
+    "Outlook"
+   ],
+   "tagline": "French email without ads in its paid plans, formerly Net-C.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "eclipso Mail",
+   "category": "email",
+   "country": "DE",
+   "website": "https://www.eclipso.eu",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Gmail",
+    "Outlook"
+   ],
+   "tagline": "German email service with optional encryption.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "freenet Mail",
+   "category": "email",
+   "country": "DE",
+   "website": "https://email.freenet.de",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Gmail"
+   ],
+   "tagline": "Free German email of the freenet group.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "T-Online Mail",
+   "category": "email",
+   "country": "DE",
+   "website": "https://email.t-online.de",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Gmail",
+    "Outlook"
+   ],
+   "tagline": "Email of t-online.de, hosted in Germany.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Libero Mail",
+   "category": "email",
+   "country": "IT",
+   "website": "https://mail.libero.it",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Gmail",
+    "Outlook"
+   ],
+   "tagline": "One of the most used Italian email services.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Virgilio Mail",
+   "category": "email",
+   "country": "IT",
+   "website": "https://mail.virgilio.it",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Gmail"
+   ],
+   "tagline": "Italian email service of Virgilio.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Seznam Email",
+   "category": "email",
+   "country": "CZ",
+   "website": "https://email.seznam.cz",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Gmail"
+   ],
+   "tagline": "Free email from the Czech portal Seznam.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Onet Poczta",
+   "category": "email",
+   "country": "PL",
+   "website": "https://poczta.onet.pl",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Gmail"
+   ],
+   "tagline": "Email of the Polish portal Onet.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "WP Poczta",
+   "category": "email",
+   "country": "PL",
+   "website": "https://poczta.wp.pl",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Gmail"
+   ],
+   "tagline": "Email of the Polish portal Wirtualna Polska.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Interia Poczta",
+   "category": "email",
+   "country": "PL",
+   "website": "https://poczta.interia.pl",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Gmail"
+   ],
+   "tagline": "Email of the Polish portal Interia.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "La Poste Mail",
+   "category": "email",
+   "country": "FR",
+   "website": "https://www.laposte.net",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Gmail",
+    "Outlook"
+   ],
+   "tagline": "Free email of the French La Poste group.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "mail.de",
+   "category": "email",
+   "country": "DE",
+   "website": "https://mail.de",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Gmail"
+   ],
+   "tagline": "German email with servers in Germany.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "CounterMail",
+   "category": "email",
+   "country": "SE",
+   "website": "https://countermail.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Gmail",
+    "Outlook"
+   ],
+   "tagline": "Swedish encrypted email with diskless servers.",
+   "features": [
+    "e2ee",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "KMail",
+   "category": "email",
+   "country": "DE",
+   "website": "https://apps.kde.org/kmail2",
+   "source_url": "",
+   "licence": "GPL-2.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "linux",
+    "windows"
+   ],
+   "alternatives_to": [
+    "Outlook"
+   ],
+   "tagline": "Email client of the KDE community, part of Kontact.",
+   "features": [
+    "no_ads",
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Betterbird",
+   "category": "email",
+   "country": "DE",
+   "website": "https://www.betterbird.eu",
+   "source_url": "",
+   "licence": "MPL-2.0",
+   "open_source": true,
+   "pricing": "donation",
+   "platforms": [
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Outlook"
+   ],
+   "tagline": "Improved edition of Thunderbird maintained in Germany.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "IONOS Mail",
+   "category": "email",
+   "country": "DE",
+   "website": "https://www.ionos.com/office-solutions/email",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Gmail",
+    "Outlook"
+   ],
+   "tagline": "Business email of IONOS with your own domain.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Overleaf",
+   "category": "office",
+   "country": "GB",
+   "website": "https://www.overleaf.com",
+   "source_url": "",
+   "licence": "AGPL-3.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Microsoft Word",
+    "Google Docs"
+   ],
+   "tagline": "Collaborative LaTeX editor from London.",
+   "features": [],
+   "self_host": true
+  },
+  {
+   "name": "Typst",
+   "category": "office",
+   "country": "DE",
+   "website": "https://typst.app",
+   "source_url": "",
+   "licence": "Apache-2.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Microsoft Word",
+    "LaTeX"
+   ],
+   "tagline": "Modern typesetting system and online editor from Berlin.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "SoftMaker Office",
+   "category": "office",
+   "country": "DE",
+   "website": "https://www.softmaker.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "windows",
+    "macos",
+    "linux",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Microsoft Word",
+    "Microsoft Excel",
+    "Microsoft PowerPoint"
+   ],
+   "tagline": "Full office suite from Nuremberg, compatible with Microsoft formats.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Rows",
+   "category": "office",
+   "country": "DE",
+   "website": "https://rows.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Google Sheets",
+    "Microsoft Excel"
+   ],
+   "tagline": "Spreadsheet with built-in integrations and AI, from Berlin.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "SeaTable",
+   "category": "office",
+   "country": "DE",
+   "website": "https://seatable.io",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Airtable",
+    "Microsoft Excel"
+   ],
+   "tagline": "No-code database spreadsheet from Mainz.",
+   "features": [],
+   "self_host": true
+  },
+  {
+   "name": "Ninox",
+   "category": "office",
+   "country": "DE",
+   "website": "https://ninox.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web",
+    "windows",
+    "macos",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Airtable",
+    "Microsoft Access"
+   ],
+   "tagline": "No-code database from Berlin.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Prezi",
+   "category": "office",
+   "country": "HU",
+   "website": "https://prezi.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "windows",
+    "macos"
+   ],
+   "alternatives_to": [
+    "Microsoft PowerPoint",
+    "Google Slides"
+   ],
+   "tagline": "Zooming presentations, created in Budapest.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Genially",
+   "category": "office",
+   "country": "ES",
+   "website": "https://genially.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Microsoft PowerPoint",
+    "Canva"
+   ],
+   "tagline": "Interactive presentations and content from Spain.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Mentimeter",
+   "category": "office",
+   "country": "SE",
+   "website": "https://www.mentimeter.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Microsoft PowerPoint",
+    "Slido"
+   ],
+   "tagline": "Interactive presentations and live polls from Stockholm.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Ludus",
+   "category": "office",
+   "country": "BE",
+   "website": "https://ludus.one",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Microsoft PowerPoint",
+    "Google Slides"
+   ],
+   "tagline": "Presentation tool for designers from Belgium.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Bear",
+   "category": "productivity",
+   "country": "IT",
+   "website": "https://bear.app",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "macos",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Apple Notes",
+    "Evernote",
+    "Microsoft OneNote"
+   ],
+   "tagline": "Markdown notes app by Shiny Frog in Italy.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Craft",
+   "category": "productivity",
+   "country": "HU",
+   "website": "https://www.craft.do",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "macos",
+    "ios",
+    "windows"
+   ],
+   "alternatives_to": [
+    "Notion",
+    "Microsoft OneNote"
+   ],
+   "tagline": "Documents and notes app from Budapest.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Ulysses",
+   "category": "office",
+   "country": "DE",
+   "website": "https://ulysses.app",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "macos",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Microsoft Word"
+   ],
+   "tagline": "Writing app for macOS and iOS from Leipzig.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "iA Writer",
+   "category": "office",
+   "country": "CH",
+   "website": "https://ia.net/writer",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "macos",
+    "ios",
+    "windows",
+    "android"
+   ],
+   "alternatives_to": [
+    "Microsoft Word"
+   ],
+   "tagline": "Focused writing app by Information Architects in Zurich.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Things",
+   "category": "productivity",
+   "country": "DE",
+   "website": "https://culturedcode.com/things",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "macos",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Todoist",
+    "Microsoft To Do"
+   ],
+   "tagline": "Task manager by Cultured Code in Stuttgart.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Superlist",
+   "category": "productivity",
+   "country": "DE",
+   "website": "https://www.superlist.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "windows",
+    "macos",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Todoist",
+    "Microsoft To Do",
+    "Notion"
+   ],
+   "tagline": "Task lists and notes from the Berlin makers of Wunderlist.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "MindMeister",
+   "category": "productivity",
+   "country": "AT",
+   "website": "https://www.mindmeister.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "XMind",
+    "Miro"
+   ],
+   "tagline": "Online mind mapping by Meister.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Conceptboard",
+   "category": "productivity",
+   "country": "DE",
+   "website": "https://conceptboard.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Miro",
+    "Mural"
+   ],
+   "tagline": "Online whiteboard from Halle, hosted in Germany.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Collaboard",
+   "category": "productivity",
+   "country": "CH",
+   "website": "https://www.collaboard.app",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "windows",
+    "ios",
+    "android"
+   ],
+   "alternatives_to": [
+    "Miro",
+    "Microsoft Whiteboard"
+   ],
+   "tagline": "Swiss online whiteboard.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Excalidraw",
+   "category": "productivity",
+   "country": "CZ",
+   "website": "https://excalidraw.com",
+   "source_url": "",
+   "licence": "MIT",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Miro",
+    "Microsoft Whiteboard"
+   ],
+   "tagline": "Hand-drawn style whiteboard; Excalidraw+ is run from Czechia.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": true
+  },
+  {
+   "name": "tldraw",
+   "category": "productivity",
+   "country": "GB",
+   "website": "https://www.tldraw.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Miro",
+    "Microsoft Whiteboard"
+   ],
+   "tagline": "Infinite canvas whiteboard from London.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "draw.io",
+   "category": "productivity",
+   "country": "GB",
+   "website": "https://www.drawio.com",
+   "source_url": "",
+   "licence": "Apache-2.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Lucidchart",
+    "Microsoft Visio"
+   ],
+   "tagline": "Free diagramming by JGraph in the United Kingdom.",
+   "features": [
+    "no_ads",
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "WeKan",
+   "category": "productivity",
+   "country": "FI",
+   "website": "https://wekan.github.io",
+   "source_url": "",
+   "licence": "MIT",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Trello"
+   ],
+   "tagline": "Open-source kanban board to host yourself.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": true
+  },
+  {
+   "name": "OpenProject",
+   "category": "productivity",
+   "country": "DE",
+   "website": "https://www.openproject.org",
+   "source_url": "",
+   "licence": "GPL-3.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Jira",
+    "Asana",
+    "Microsoft Project"
+   ],
+   "tagline": "Open-source project management from Berlin.",
+   "features": [],
+   "self_host": true
+  },
+  {
+   "name": "Projectplace",
+   "category": "productivity",
+   "country": "SE",
+   "website": "https://www.projectplace.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Asana",
+    "Trello"
+   ],
+   "tagline": "Swedish project and work management.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Nuudel",
+   "category": "productivity",
+   "country": "DE",
+   "website": "https://nuudel.digitalcourage.de",
+   "source_url": "",
+   "licence": "AGPL-3.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Doodle"
+   ],
+   "tagline": "Scheduling polls by the German association Digitalcourage.",
+   "features": [
+    "no_ads",
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Framadate",
+   "category": "productivity",
+   "country": "FR",
+   "website": "https://framadate.org",
+   "source_url": "",
+   "licence": "CECILL-B",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Doodle"
+   ],
+   "tagline": "Free scheduling polls by Framasoft.",
+   "features": [
+    "no_ads",
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Rallly",
+   "category": "productivity",
+   "country": "GB",
+   "website": "https://rallly.co",
+   "source_url": "",
+   "licence": "AGPL-3.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Doodle",
+    "Calendly"
+   ],
+   "tagline": "Open-source scheduling polls from the United Kingdom.",
+   "features": [],
+   "self_host": true
+  },
+  {
+   "name": "Typeform",
+   "category": "productivity",
+   "country": "ES",
+   "website": "https://www.typeform.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Google Forms",
+    "SurveyMonkey"
+   ],
+   "tagline": "Conversational forms and surveys from Barcelona.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Survio",
+   "category": "productivity",
+   "country": "CZ",
+   "website": "https://www.survio.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "SurveyMonkey",
+    "Google Forms"
+   ],
+   "tagline": "Online surveys from Brno.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "easyfeedback",
+   "category": "productivity",
+   "country": "DE",
+   "website": "https://easy-feedback.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "SurveyMonkey",
+    "Google Forms"
+   ],
+   "tagline": "German online survey tool with servers in Germany.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Heyflow",
+   "category": "productivity",
+   "country": "DE",
+   "website": "https://heyflow.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Typeform",
+    "Google Forms"
+   ],
+   "tagline": "Interactive forms and funnels from Hamburg.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Toggl Track",
+   "category": "productivity",
+   "country": "EE",
+   "website": "https://toggl.com/track",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "windows",
+    "macos",
+    "linux",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Harvest",
+    "Clockify"
+   ],
+   "tagline": "Time tracking from Tallinn.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Clockodo",
+   "category": "productivity",
+   "country": "DE",
+   "website": "https://www.clockodo.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web",
+    "windows",
+    "macos",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Harvest",
+    "Clockify"
+   ],
+   "tagline": "German time tracking for teams.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Kimai",
+   "category": "productivity",
+   "country": "AT",
+   "website": "https://www.kimai.org",
+   "source_url": "",
+   "licence": "AGPL-3.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Harvest",
+    "Clockify"
+   ],
+   "tagline": "Open-source time tracking to host yourself.",
+   "features": [],
+   "self_host": true
+  },
+  {
+   "name": "Timeular",
+   "category": "productivity",
+   "country": "AT",
+   "website": "https://timeular.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "windows",
+    "macos",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Harvest",
+    "Toggl Track"
+   ],
+   "tagline": "Time tracking with a physical tracker, from Vienna.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "BookStack",
+   "category": "productivity",
+   "country": "GB",
+   "website": "https://www.bookstackapp.com",
+   "source_url": "",
+   "licence": "MIT",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Confluence",
+    "Notion"
+   ],
+   "tagline": "Open-source wiki organised like books.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": true
+  },
+  {
+   "name": "XWiki",
+   "category": "productivity",
+   "country": "FR",
+   "website": "https://www.xwiki.org",
+   "source_url": "",
+   "licence": "LGPL-2.1",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Confluence",
+    "Notion"
+   ],
+   "tagline": "Open-source enterprise wiki from Paris.",
+   "features": [],
+   "self_host": true
+  },
+  {
+   "name": "DokuWiki",
+   "category": "productivity",
+   "country": "DE",
+   "website": "https://www.dokuwiki.org",
+   "source_url": "",
+   "licence": "GPL-2.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Confluence"
+   ],
+   "tagline": "Simple wiki that needs no database.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": true
+  },
+  {
+   "name": "Icedrive",
+   "category": "cloud",
+   "country": "GB",
+   "website": "https://icedrive.net",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "windows",
+    "macos",
+    "linux",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Google Drive",
+    "Dropbox"
+   ],
+   "tagline": "Cloud storage with client-side encryption from the United Kingdom.",
+   "features": [
+    "e2ee"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "HiDrive",
+   "category": "cloud",
+   "country": "DE",
+   "website": "https://www.strato.de/cloud-speicher",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web",
+    "windows",
+    "macos",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Dropbox",
+    "Google Drive",
+    "OneDrive"
+   ],
+   "tagline": "Cloud storage of STRATO with servers in Germany.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "TeamDrive",
+   "category": "cloud",
+   "country": "DE",
+   "website": "https://teamdrive.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "windows",
+    "macos",
+    "linux",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Dropbox",
+    "Google Drive"
+   ],
+   "tagline": "End-to-end encrypted file sync from Hamburg.",
+   "features": [
+    "e2ee"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Cryptomator",
+   "category": "cloud",
+   "country": "DE",
+   "website": "https://cryptomator.org",
+   "source_url": "",
+   "licence": "GPL-3.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "windows",
+    "macos",
+    "linux",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Boxcryptor"
+   ],
+   "tagline": "Client-side encryption for any cloud storage.",
+   "features": [
+    "e2ee",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "SwissTransfer",
+   "category": "cloud",
+   "country": "CH",
+   "website": "https://www.swisstransfer.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "WeTransfer",
+    "Google Drive"
+   ],
+   "tagline": "Free large file transfer by Infomaniak, up to 50 GB.",
+   "features": [
+    "green",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "WeTransfer",
+   "category": "cloud",
+   "country": "NL",
+   "website": "https://wetransfer.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "windows",
+    "macos",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Google Drive",
+    "Dropbox Transfer"
+   ],
+   "tagline": "File transfer service from Amsterdam.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Smash",
+   "category": "cloud",
+   "country": "FR",
+   "website": "https://fromsmash.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "windows",
+    "macos",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "WeTransfer",
+    "Dropbox Transfer"
+   ],
+   "tagline": "French file transfer without size limits.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Filemail",
+   "category": "cloud",
+   "country": "NO",
+   "website": "https://www.filemail.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "windows",
+    "macos",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "WeTransfer",
+    "Dropbox Transfer"
+   ],
+   "tagline": "Large file transfer from Norway.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Piwigo",
+   "category": "cloud",
+   "country": "FR",
+   "website": "https://piwigo.org",
+   "source_url": "",
+   "licence": "GPL-2.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Google Photos",
+    "Flickr"
+   ],
+   "tagline": "Open-source photo gallery software from France.",
+   "features": [],
+   "self_host": true
+  },
+  {
+   "name": "Swiss Backup",
+   "category": "cloud",
+   "country": "CH",
+   "website": "https://www.infomaniak.com/en/swiss-backup",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "windows",
+    "macos",
+    "linux",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Backblaze",
+    "iCloud Drive"
+   ],
+   "tagline": "Backup in Swiss data centres by Infomaniak.",
+   "features": [
+    "green"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Acronis Cyber Protect Home",
+   "category": "cloud",
+   "country": "CH",
+   "website": "https://www.acronis.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "windows",
+    "macos",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Backblaze"
+   ],
+   "tagline": "Backup and anti-malware from Acronis, headquartered in Switzerland.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Hetzner Storage Box",
+   "category": "cloud",
+   "country": "DE",
+   "website": "https://www.hetzner.com/storage/storage-box",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Backblaze",
+    "Dropbox"
+   ],
+   "tagline": "Online storage for backups on Hetzner servers.",
+   "features": [
+    "green"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "qutebrowser",
+   "category": "browser",
+   "country": "CH",
+   "website": "https://qutebrowser.org",
+   "source_url": "",
+   "licence": "GPL-3.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Google Chrome"
+   ],
+   "tagline": "Keyboard-driven browser with a minimal interface.",
+   "features": [
+    "no_ads",
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Falkon",
+   "category": "browser",
+   "country": "DE",
+   "website": "https://www.falkon.org",
+   "source_url": "",
+   "licence": "GPL-3.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "linux",
+    "windows"
+   ],
+   "alternatives_to": [
+    "Google Chrome",
+    "Microsoft Edge"
+   ],
+   "tagline": "Lightweight browser of the KDE community.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Aloha Browser",
+   "category": "browser",
+   "country": "CY",
+   "website": "https://alohabrowser.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "android",
+    "ios",
+    "windows",
+    "macos"
+   ],
+   "alternatives_to": [
+    "Google Chrome",
+    "Safari"
+   ],
+   "tagline": "Mobile browser with a built-in VPN, from Cyprus.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Sketch",
+   "category": "design",
+   "country": "NL",
+   "website": "https://www.sketch.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "macos",
+    "web"
+   ],
+   "alternatives_to": [
+    "Figma",
+    "Adobe XD"
+   ],
+   "tagline": "Design tool for macOS by Sketch B.V. in The Hague.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Framer",
+   "category": "design",
+   "country": "NL",
+   "website": "https://www.framer.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "macos",
+    "windows"
+   ],
+   "alternatives_to": [
+    "Webflow",
+    "Figma"
+   ],
+   "tagline": "Website builder and design tool from Amsterdam.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Kittl",
+   "category": "design",
+   "country": "DE",
+   "website": "https://www.kittl.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Canva",
+    "Adobe Illustrator"
+   ],
+   "tagline": "Online graphic design from Berlin.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Boxy SVG",
+   "category": "design",
+   "country": "PL",
+   "website": "https://boxy-svg.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Adobe Illustrator"
+   ],
+   "tagline": "SVG vector editor made in Poland.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "DxO PhotoLab",
+   "category": "design",
+   "country": "FR",
+   "website": "https://www.dxo.com/dxo-photolab",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "windows",
+    "macos"
+   ],
+   "alternatives_to": [
+    "Adobe Lightroom"
+   ],
+   "tagline": "Raw photo editor with optical corrections, from France.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "VEGAS Pro",
+   "category": "design",
+   "country": "DE",
+   "website": "https://www.vegascreativesoftware.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "windows"
+   ],
+   "alternatives_to": [
+    "Adobe Premiere Pro"
+   ],
+   "tagline": "Video editing software of MAGIX in Berlin.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Ableton Live",
+   "category": "design",
+   "country": "DE",
+   "website": "https://www.ableton.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "windows",
+    "macos"
+   ],
+   "alternatives_to": [
+    "Logic Pro",
+    "Pro Tools"
+   ],
+   "tagline": "Music production software from Berlin.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Bitwig Studio",
+   "category": "design",
+   "country": "DE",
+   "website": "https://www.bitwig.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Logic Pro",
+    "Pro Tools"
+   ],
+   "tagline": "Music production software from Berlin.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "FL Studio",
+   "category": "design",
+   "country": "BE",
+   "website": "https://www.image-line.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "windows",
+    "macos"
+   ],
+   "alternatives_to": [
+    "Logic Pro",
+    "GarageBand"
+   ],
+   "tagline": "Music production software by Image-Line in Ghent.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Cubase",
+   "category": "design",
+   "country": "DE",
+   "website": "https://www.steinberg.net/cubase",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "windows",
+    "macos"
+   ],
+   "alternatives_to": [
+    "Logic Pro",
+    "Pro Tools"
+   ],
+   "tagline": "Music production software by Steinberg in Hamburg.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Reason",
+   "category": "design",
+   "country": "SE",
+   "website": "https://www.reasonstudios.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "windows",
+    "macos"
+   ],
+   "alternatives_to": [
+    "Logic Pro",
+    "GarageBand"
+   ],
+   "tagline": "Music production software from Stockholm.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Stable Diffusion",
+   "category": "ai",
+   "country": "GB",
+   "website": "https://stability.ai",
+   "source_url": "",
+   "licence": "Mixed",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Midjourney",
+    "DALL·E"
+   ],
+   "tagline": "Image generation models by Stability AI in London.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "FLUX",
+   "category": "ai",
+   "country": "DE",
+   "website": "https://bfl.ai",
+   "source_url": "",
+   "licence": "Mixed",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Midjourney",
+    "DALL·E"
+   ],
+   "tagline": "Image generation models by Black Forest Labs in Freiburg.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Systran Translate",
+   "category": "ai",
+   "country": "FR",
+   "website": "https://www.systransoft.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "windows",
+    "macos",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Google Translate"
+   ],
+   "tagline": "Machine translation from one of its pioneers, in France.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "ModernMT",
+   "category": "ai",
+   "country": "IT",
+   "website": "https://www.modernmt.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Google Translate"
+   ],
+   "tagline": "Adaptive machine translation by Translated in Rome.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Reverso",
+   "category": "ai",
+   "country": "FR",
+   "website": "https://www.reverso.net",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios",
+    "windows",
+    "macos"
+   ],
+   "alternatives_to": [
+    "Google Translate"
+   ],
+   "tagline": "Translation and dictionaries in context, from France.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Duden Mentor",
+   "category": "ai",
+   "country": "DE",
+   "website": "https://mentor.duden.de",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Grammarly"
+   ],
+   "tagline": "German spelling and style checker by Duden.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Scribbr",
+   "category": "ai",
+   "country": "NL",
+   "website": "https://www.scribbr.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Grammarly",
+    "Turnitin"
+   ],
+   "tagline": "Proofreading, citations and plagiarism checks from Amsterdam.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "neuroflash",
+   "category": "ai",
+   "country": "DE",
+   "website": "https://neuroflash.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "ChatGPT",
+    "Jasper"
+   ],
+   "tagline": "AI copywriting for marketing from Hamburg.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "JetBrains AI Assistant",
+   "category": "ai",
+   "country": "CZ",
+   "website": "https://www.jetbrains.com/ai",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "GitHub Copilot"
+   ],
+   "tagline": "AI coding assistant inside the JetBrains IDEs.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Genius Scan",
+   "category": "productivity",
+   "country": "FR",
+   "website": "https://thegrizzlylabs.com/genius-scan",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Adobe Scan",
+    "CamScanner"
+   ],
+   "tagline": "Document scanner app from France.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Scanbot",
+   "category": "productivity",
+   "country": "DE",
+   "website": "https://scanbot.io",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Adobe Scan",
+    "CamScanner"
+   ],
+   "tagline": "Document scanner app from Bonn.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Skribble",
+   "category": "productivity",
+   "country": "CH",
+   "website": "https://www.skribble.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "DocuSign",
+    "Adobe Acrobat Sign"
+   ],
+   "tagline": "Legally valid electronic signatures from Switzerland.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Yousign",
+   "category": "productivity",
+   "country": "FR",
+   "website": "https://yousign.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "DocuSign",
+    "Adobe Acrobat Sign"
+   ],
+   "tagline": "Electronic signatures from France.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Teamwire",
+   "category": "messaging",
+   "country": "DE",
+   "website": "https://www.teamwire.eu",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "android",
+    "ios",
+    "web",
+    "windows",
+    "macos"
+   ],
+   "alternatives_to": [
+    "Slack",
+    "Microsoft Teams",
+    "WhatsApp"
+   ],
+   "tagline": "Secure business messenger from Munich.",
+   "features": [
+    "e2ee"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Status",
+   "category": "messaging",
+   "country": "CH",
+   "website": "https://status.app",
+   "source_url": "",
+   "licence": "MPL-2.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "android",
+    "ios",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "WhatsApp",
+    "Telegram"
+   ],
+   "tagline": "Private messenger and crypto wallet from Switzerland.",
+   "features": [
+    "e2ee"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "alfaview",
+   "category": "video",
+   "country": "DE",
+   "website": "https://alfaview.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "windows",
+    "macos",
+    "linux",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Zoom",
+    "Microsoft Teams"
+   ],
+   "tagline": "Video conferencing from Karlsruhe, hosted in Germany.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "OpenTalk",
+   "category": "video",
+   "country": "DE",
+   "website": "https://opentalk.eu",
+   "source_url": "",
+   "licence": "EUPL-1.2",
+   "open_source": true,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Zoom",
+    "Microsoft Teams",
+    "Google Meet"
+   ],
+   "tagline": "Open-source video conferencing from Berlin.",
+   "features": [],
+   "self_host": true
+  },
+  {
+   "name": "Livestorm",
+   "category": "video",
+   "country": "FR",
+   "website": "https://livestorm.co",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Zoom",
+    "GoToWebinar"
+   ],
+   "tagline": "Webinar and video event platform from Paris.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "edudip",
+   "category": "video",
+   "country": "DE",
+   "website": "https://www.edudip.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Zoom",
+    "GoToWebinar"
+   ],
+   "tagline": "Webinar software from Aachen.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Pexip",
+   "category": "video",
+   "country": "NO",
+   "website": "https://www.pexip.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Zoom",
+    "Microsoft Teams"
+   ],
+   "tagline": "Secure video meetings from Oslo.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "eyeson",
+   "category": "video",
+   "country": "AT",
+   "website": "https://www.eyeson.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Zoom"
+   ],
+   "tagline": "Video meeting platform from Graz.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Visavid",
+   "category": "video",
+   "country": "DE",
+   "website": "https://www.visavid.de",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Zoom",
+    "Microsoft Teams"
+   ],
+   "tagline": "German video conferencing for schools and organisations.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "TeamViewer",
+   "category": "other",
+   "country": "DE",
+   "website": "https://www.teamviewer.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Chrome Remote Desktop",
+    "Microsoft Remote Desktop"
+   ],
+   "tagline": "Remote access and support from Göppingen.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "AnyDesk",
+   "category": "other",
+   "country": "DE",
+   "website": "https://anydesk.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Chrome Remote Desktop",
+    "TeamViewer"
+   ],
+   "tagline": "Remote desktop software from Stuttgart.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Morgen",
+   "category": "calendar",
+   "country": "CH",
+   "website": "https://www.morgen.so",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "windows",
+    "macos",
+    "linux",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Google Calendar",
+    "Fantastical"
+   ],
+   "tagline": "Calendar and planning app from Zurich.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "DAVx⁵",
+   "category": "calendar",
+   "country": "AT",
+   "website": "https://www.davx5.com",
+   "source_url": "",
+   "licence": "GPL-3.0",
+   "open_source": true,
+   "pricing": "paid",
+   "platforms": [
+    "android"
+   ],
+   "alternatives_to": [
+    "Google Calendar"
+   ],
+   "tagline": "Sync calendars and contacts on Android with any CalDAV server.",
+   "features": [
+    "no_ads",
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "TomTom GO",
+   "category": "maps",
+   "country": "NL",
+   "website": "https://www.tomtom.com/en_gb/navigation/mobile-apps/go-navigation-app/",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Google Maps",
+    "Waze"
+   ],
+   "tagline": "Navigation app by TomTom in Amsterdam.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Sygic GPS Navigation",
+   "category": "maps",
+   "country": "SK",
+   "website": "https://www.sygic.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Google Maps",
+    "Waze"
+   ],
+   "tagline": "Offline navigation from Bratislava.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "ViaMichelin",
+   "category": "maps",
+   "country": "FR",
+   "website": "https://www.viamichelin.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Google Maps"
+   ],
+   "tagline": "Route planner and maps from Michelin.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "OpenStreetMap",
+   "category": "maps",
+   "country": "GB",
+   "website": "https://www.openstreetmap.org",
+   "source_url": "",
+   "licence": "Mixed",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Google Maps",
+    "Apple Maps"
+   ],
+   "tagline": "The free map of the world, run by a foundation in the United Kingdom.",
+   "features": [
+    "no_ads",
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Komoot",
+   "category": "maps",
+   "country": "DE",
+   "website": "https://www.komoot.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "AllTrails",
+    "Strava"
+   ],
+   "tagline": "Route planning for hiking and cycling from Potsdam.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Outdooractive",
+   "category": "maps",
+   "country": "DE",
+   "website": "https://www.outdooractive.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "AllTrails",
+    "Komoot"
+   ],
+   "tagline": "Outdoor routes and maps from Immenstadt.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Bergfex",
+   "category": "maps",
+   "country": "AT",
+   "website": "https://www.bergfex.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "AllTrails"
+   ],
+   "tagline": "Outdoor and ski information from Austria.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Windy",
+   "category": "other",
+   "country": "CZ",
+   "website": "https://www.windy.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "AccuWeather",
+    "The Weather Channel"
+   ],
+   "tagline": "Detailed weather forecast maps from Czechia.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "meteoblue",
+   "category": "other",
+   "country": "CH",
+   "website": "https://www.meteoblue.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "AccuWeather",
+    "The Weather Channel"
+   ],
+   "tagline": "Swiss weather forecasts.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Yr",
+   "category": "other",
+   "country": "NO",
+   "website": "https://www.yr.no",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "AccuWeather",
+    "The Weather Channel"
+   ],
+   "tagline": "Free weather forecasts by the Norwegian public broadcaster and meteorological institute.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "KeePassDX",
+   "category": "passwords",
+   "country": "FR",
+   "website": "https://www.keepassdx.com",
+   "source_url": "",
+   "licence": "GPL-3.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "android"
+   ],
+   "alternatives_to": [
+    "1Password",
+    "LastPass"
+   ],
+   "tagline": "Open-source KeePass app for Android.",
+   "features": [
+    "no_ads",
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Strongbox",
+   "category": "passwords",
+   "country": "IE",
+   "website": "https://strongboxsafe.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "macos",
+    "ios"
+   ],
+   "alternatives_to": [
+    "1Password"
+   ],
+   "tagline": "KeePass and Password Safe client for Apple devices, from Ireland.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "SecureSafe",
+   "category": "passwords",
+   "country": "CH",
+   "website": "https://www.securesafe.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "1Password",
+    "LastPass"
+   ],
+   "tagline": "Swiss online safe for passwords and documents.",
+   "features": [
+    "e2ee"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Steganos Password Manager",
+   "category": "passwords",
+   "country": "DE",
+   "website": "https://www.steganos.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "windows",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "1Password",
+    "LastPass"
+   ],
+   "tagline": "Password manager from Berlin.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Perfect Privacy",
+   "category": "vpn",
+   "country": "CH",
+   "website": "https://www.perfect-privacy.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "windows",
+    "macos",
+    "linux",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "NordVPN"
+   ],
+   "tagline": "Swiss VPN without logs.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "AzireVPN",
+   "category": "vpn",
+   "country": "SE",
+   "website": "https://www.azirevpn.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "windows",
+    "macos",
+    "linux",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "NordVPN"
+   ],
+   "tagline": "Swedish VPN on its own servers.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "VPN.ac",
+   "category": "vpn",
+   "country": "RO",
+   "website": "https://vpn.ac",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "windows",
+    "macos",
+    "linux",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "NordVPN"
+   ],
+   "tagline": "Romanian VPN service.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Steganos VPN",
+   "category": "vpn",
+   "country": "DE",
+   "website": "https://www.steganos.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "windows",
+    "macos",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "NordVPN"
+   ],
+   "tagline": "VPN from Berlin.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Quad9",
+   "category": "security",
+   "country": "CH",
+   "website": "https://quad9.net",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Google Public DNS",
+    "Cloudflare DNS"
+   ],
+   "tagline": "Free DNS that blocks malicious domains, run by a Swiss foundation.",
+   "features": [
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "dns0.eu",
+   "category": "security",
+   "country": "FR",
+   "website": "https://www.dns0.eu",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Google Public DNS",
+    "Cloudflare DNS"
+   ],
+   "tagline": "European public DNS resolver from France.",
+   "features": [
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "DNS4EU",
+   "category": "security",
+   "country": "CZ",
+   "website": "https://www.joindns4.eu",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Google Public DNS",
+    "Cloudflare DNS"
+   ],
+   "tagline": "Public DNS supported by the European Union.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "ESET",
+   "category": "security",
+   "country": "SK",
+   "website": "https://www.eset.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "windows",
+    "macos",
+    "linux",
+    "android"
+   ],
+   "alternatives_to": [
+    "Norton",
+    "McAfee"
+   ],
+   "tagline": "Antivirus and security software from Bratislava.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "F-Secure",
+   "category": "security",
+   "country": "FI",
+   "website": "https://www.f-secure.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "windows",
+    "macos",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Norton",
+    "McAfee"
+   ],
+   "tagline": "Security software from Helsinki.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Bitdefender",
+   "category": "security",
+   "country": "RO",
+   "website": "https://www.bitdefender.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "windows",
+    "macos",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Norton",
+    "McAfee"
+   ],
+   "tagline": "Antivirus and security from Bucharest.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "G DATA",
+   "category": "security",
+   "country": "DE",
+   "website": "https://www.gdata.de",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "windows",
+    "macos",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Norton",
+    "McAfee"
+   ],
+   "tagline": "Antivirus from Bochum.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "XING",
+   "category": "social",
+   "country": "DE",
+   "website": "https://www.xing.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "LinkedIn"
+   ],
+   "tagline": "Professional network from Hamburg.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "BeReal",
+   "category": "social",
+   "country": "FR",
+   "website": "https://bereal.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Instagram",
+    "Snapchat"
+   ],
+   "tagline": "Photo app with one daily moment, from Paris.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "nebenan.de",
+   "category": "social",
+   "country": "DE",
+   "website": "https://nebenan.de",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Nextdoor",
+    "Facebook Groups"
+   ],
+   "tagline": "Neighbourhood network from Berlin.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Spond",
+   "category": "social",
+   "country": "NO",
+   "website": "https://www.spond.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Facebook Groups",
+    "TeamSnap"
+   ],
+   "tagline": "Organising teams and groups, from Oslo.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "adidas Running",
+   "category": "social",
+   "country": "AT",
+   "website": "https://www.runtastic.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Strava",
+    "Nike Run Club"
+   ],
+   "tagline": "Running app by Runtastic in Austria, part of adidas.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "SoundCloud",
+   "category": "media",
+   "country": "DE",
+   "website": "https://soundcloud.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "YouTube Music",
+    "Apple Music"
+   ],
+   "tagline": "Audio platform for creators, from Berlin.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Mixcloud",
+   "category": "media",
+   "country": "GB",
+   "website": "https://www.mixcloud.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "SoundCloud",
+    "YouTube Music"
+   ],
+   "tagline": "DJ mixes and radio shows from London.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Podimo",
+   "category": "media",
+   "country": "DK",
+   "website": "https://podimo.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Apple Podcasts",
+    "Spotify"
+   ],
+   "tagline": "Podcasts and audiobooks from Copenhagen.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "wallabag",
+   "category": "media",
+   "country": "FR",
+   "website": "https://wallabag.org",
+   "source_url": "",
+   "licence": "MIT",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Pocket",
+    "Instapaper"
+   ],
+   "tagline": "Read-it-later app to host yourself or as a service.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": true
+  },
+  {
+   "name": "Inoreader",
+   "category": "media",
+   "country": "BG",
+   "website": "https://www.inoreader.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Feedly"
+   ],
+   "tagline": "RSS reader from Sofia.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "FreshRSS",
+   "category": "media",
+   "country": "FR",
+   "website": "https://freshrss.org",
+   "source_url": "",
+   "licence": "AGPL-3.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Feedly"
+   ],
+   "tagline": "Self-hosted RSS reader.",
+   "features": [
+    "no_ads",
+    "no_tracking"
+   ],
+   "self_host": true
+  },
+  {
+   "name": "Babbel",
+   "category": "education",
+   "country": "DE",
+   "website": "https://www.babbel.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Duolingo"
+   ],
+   "tagline": "Language learning from Berlin.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Memrise",
+   "category": "education",
+   "country": "GB",
+   "website": "https://www.memrise.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Duolingo"
+   ],
+   "tagline": "Language learning with videos of native speakers, from London.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Kahoot!",
+   "category": "education",
+   "country": "NO",
+   "website": "https://kahoot.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Quizizz",
+    "Google Forms"
+   ],
+   "tagline": "Game-based quizzes from Oslo.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "ILIAS",
+   "category": "education",
+   "country": "DE",
+   "website": "https://www.ilias.de",
+   "source_url": "",
+   "licence": "GPL-3.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Google Classroom",
+    "Moodle"
+   ],
+   "tagline": "Open-source learning management system from Germany.",
+   "features": [],
+   "self_host": true
+  },
+  {
+   "name": "OpenOlat",
+   "category": "education",
+   "country": "CH",
+   "website": "https://www.openolat.com",
+   "source_url": "",
+   "licence": "Apache-2.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Google Classroom",
+    "Moodle"
+   ],
+   "tagline": "Open-source learning platform from Zurich.",
+   "features": [],
+   "self_host": true
+  },
+  {
+   "name": "IntelliJ IDEA",
+   "category": "dev",
+   "country": "CZ",
+   "website": "https://www.jetbrains.com/idea",
+   "source_url": "",
+   "licence": "Apache-2.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Visual Studio Code",
+    "Microsoft Visual Studio"
+   ],
+   "tagline": "IDE for Java and Kotlin by JetBrains, born in Prague.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "YouTrack",
+   "category": "dev",
+   "country": "CZ",
+   "website": "https://www.jetbrains.com/youtrack",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Jira"
+   ],
+   "tagline": "Issue tracker and project management by JetBrains.",
+   "features": [],
+   "self_host": true
+  },
+  {
+   "name": "Eclipse IDE",
+   "category": "dev",
+   "country": "BE",
+   "website": "https://eclipseide.org",
+   "source_url": "",
+   "licence": "EPL-2.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Visual Studio Code",
+    "Microsoft Visual Studio"
+   ],
+   "tagline": "Open-source IDE of the Eclipse Foundation in Brussels.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Kate",
+   "category": "dev",
+   "country": "DE",
+   "website": "https://kate-editor.org",
+   "source_url": "",
+   "licence": "GPL-2.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "linux",
+    "windows",
+    "macos"
+   ],
+   "alternatives_to": [
+    "Visual Studio Code",
+    "Sublime Text"
+   ],
+   "tagline": "Text and code editor of the KDE community.",
+   "features": [
+    "no_ads",
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Tower",
+   "category": "dev",
+   "country": "DE",
+   "website": "https://www.git-tower.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "windows",
+    "macos"
+   ],
+   "alternatives_to": [
+    "GitHub Desktop",
+    "GitKraken"
+   ],
+   "tagline": "Git client from Berlin.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Hetzner Cloud",
+   "category": "hosting",
+   "country": "DE",
+   "website": "https://www.hetzner.com/cloud",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "AWS",
+    "Microsoft Azure",
+    "Google Cloud"
+   ],
+   "tagline": "Cloud servers in Germany and Finland.",
+   "features": [
+    "green"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "OVHcloud",
+   "category": "hosting",
+   "country": "FR",
+   "website": "https://www.ovhcloud.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "AWS",
+    "Microsoft Azure",
+    "Google Cloud"
+   ],
+   "tagline": "European cloud provider from Roubaix.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Scaleway",
+   "category": "hosting",
+   "country": "FR",
+   "website": "https://www.scaleway.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "AWS",
+    "Google Cloud"
+   ],
+   "tagline": "French cloud provider of the Iliad group.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "IONOS Cloud",
+   "category": "hosting",
+   "country": "DE",
+   "website": "https://cloud.ionos.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "AWS",
+    "Microsoft Azure"
+   ],
+   "tagline": "Cloud infrastructure of IONOS from Germany.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Exoscale",
+   "category": "hosting",
+   "country": "CH",
+   "website": "https://www.exoscale.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "AWS",
+    "Google Cloud"
+   ],
+   "tagline": "Swiss cloud provider with zones across Europe.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "UpCloud",
+   "category": "hosting",
+   "country": "FI",
+   "website": "https://upcloud.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "AWS",
+    "DigitalOcean"
+   ],
+   "tagline": "Cloud servers from Helsinki.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "STACKIT",
+   "category": "hosting",
+   "country": "DE",
+   "website": "https://www.stackit.de",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "AWS",
+    "Microsoft Azure",
+    "Google Cloud"
+   ],
+   "tagline": "Cloud of the Schwarz group, hosted in Germany and Austria.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Open Telekom Cloud",
+   "category": "hosting",
+   "country": "DE",
+   "website": "https://www.open-telekom-cloud.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "AWS",
+    "Microsoft Azure"
+   ],
+   "tagline": "Public cloud of Deutsche Telekom.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Infomaniak Public Cloud",
+   "category": "hosting",
+   "country": "CH",
+   "website": "https://www.infomaniak.com/en/hosting/public-cloud",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "AWS",
+    "Google Cloud"
+   ],
+   "tagline": "OpenStack cloud in Swiss data centres on renewable energy.",
+   "features": [
+    "green"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Clever Cloud",
+   "category": "hosting",
+   "country": "FR",
+   "website": "https://www.clever-cloud.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Heroku",
+    "Vercel"
+   ],
+   "tagline": "Platform as a service from Nantes.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Koyeb",
+   "category": "hosting",
+   "country": "FR",
+   "website": "https://www.koyeb.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Heroku",
+    "Vercel"
+   ],
+   "tagline": "Serverless platform for apps from Paris.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Bunny.net",
+   "category": "hosting",
+   "country": "SI",
+   "website": "https://bunny.net",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Cloudflare",
+    "Amazon CloudFront"
+   ],
+   "tagline": "CDN and edge platform from Slovenia.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Gcore",
+   "category": "hosting",
+   "country": "LU",
+   "website": "https://gcore.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Cloudflare",
+    "AWS"
+   ],
+   "tagline": "CDN, cloud and edge services from Luxembourg.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Hostinger",
+   "category": "hosting",
+   "country": "LT",
+   "website": "https://www.hostinger.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "GoDaddy",
+    "Bluehost"
+   ],
+   "tagline": "Web hosting from Kaunas.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "netcup",
+   "category": "hosting",
+   "country": "DE",
+   "website": "https://www.netcup.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "GoDaddy",
+    "DigitalOcean"
+   ],
+   "tagline": "Web hosting and servers from Karlsruhe.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Contabo",
+   "category": "hosting",
+   "country": "DE",
+   "website": "https://contabo.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "DigitalOcean",
+    "AWS"
+   ],
+   "tagline": "VPS and dedicated servers from Munich.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "STRATO",
+   "category": "hosting",
+   "country": "DE",
+   "website": "https://www.strato.de",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "GoDaddy",
+    "Bluehost"
+   ],
+   "tagline": "Web hosting and domains from Berlin.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Aruba.it",
+   "category": "hosting",
+   "country": "IT",
+   "website": "https://www.aruba.it",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "GoDaddy",
+    "AWS"
+   ],
+   "tagline": "Hosting, domains and cloud from Italy.",
+   "features": [
+    "green"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Gandi",
+   "category": "hosting",
+   "country": "FR",
+   "website": "https://www.gandi.net",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "GoDaddy",
+    "Namecheap"
+   ],
+   "tagline": "Domain names and hosting from Paris.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "INWX",
+   "category": "hosting",
+   "country": "DE",
+   "website": "https://www.inwx.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "GoDaddy",
+    "Namecheap"
+   ],
+   "tagline": "Domain registrar from Berlin.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Strapi",
+   "category": "web",
+   "country": "FR",
+   "website": "https://strapi.io",
+   "source_url": "",
+   "licence": "MIT",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Contentful",
+    "WordPress"
+   ],
+   "tagline": "Open-source headless CMS, founded in France.",
+   "features": [],
+   "self_host": true
+  },
+  {
+   "name": "Storyblok",
+   "category": "web",
+   "country": "AT",
+   "website": "https://www.storyblok.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Contentful",
+    "WordPress"
+   ],
+   "tagline": "Headless CMS with a visual editor from Linz.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Contentful",
+   "category": "web",
+   "country": "DE",
+   "website": "https://www.contentful.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "WordPress",
+    "Sanity"
+   ],
+   "tagline": "Headless content platform founded in Berlin.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Sanity",
+   "category": "web",
+   "country": "NO",
+   "website": "https://www.sanity.io",
+   "source_url": "",
+   "licence": "MIT",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Contentful",
+    "WordPress"
+   ],
+   "tagline": "Content platform founded in Oslo.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "TYPO3",
+   "category": "web",
+   "country": "CH",
+   "website": "https://typo3.org",
+   "source_url": "",
+   "licence": "GPL-2.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "WordPress",
+    "Drupal"
+   ],
+   "tagline": "Enterprise open-source CMS of the TYPO3 Association.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": true
+  },
+  {
+   "name": "Kirby",
+   "category": "web",
+   "country": "DE",
+   "website": "https://getkirby.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "WordPress"
+   ],
+   "tagline": "File-based CMS from Germany.",
+   "features": [],
+   "self_host": true
+  },
+  {
+   "name": "Contao",
+   "category": "web",
+   "country": "DE",
+   "website": "https://contao.org",
+   "source_url": "",
+   "licence": "LGPL-3.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "WordPress"
+   ],
+   "tagline": "Open-source CMS from Germany.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": true
+  },
+  {
+   "name": "Jimdo",
+   "category": "web",
+   "country": "DE",
+   "website": "https://www.jimdo.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Wix",
+    "Squarespace"
+   ],
+   "tagline": "Website builder from Hamburg.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Webnode",
+   "category": "web",
+   "country": "CZ",
+   "website": "https://www.webnode.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Wix",
+    "Squarespace"
+   ],
+   "tagline": "Website builder from Brno.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Nhost",
+   "category": "dev",
+   "country": "SE",
+   "website": "https://nhost.io",
+   "source_url": "",
+   "licence": "MIT",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Firebase"
+   ],
+   "tagline": "Open-source backend with GraphQL, from Stockholm.",
+   "features": [],
+   "self_host": true
+  },
+  {
+   "name": "PocketBase",
+   "category": "dev",
+   "country": "BG",
+   "website": "https://pocketbase.io",
+   "source_url": "",
+   "licence": "MIT",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web",
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Firebase"
+   ],
+   "tagline": "Open-source backend in one file.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": true
+  },
+  {
+   "name": "Piwik PRO",
+   "category": "dev",
+   "country": "PL",
+   "website": "https://piwik.pro",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Google Analytics"
+   ],
+   "tagline": "Privacy-focused analytics from Warsaw.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Wide Angle Analytics",
+   "category": "dev",
+   "country": "NL",
+   "website": "https://wideangle.co",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Google Analytics"
+   ],
+   "tagline": "GDPR-compliant web analytics from the Netherlands.",
+   "features": [
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Countly",
+   "category": "dev",
+   "country": "GB",
+   "website": "https://count.ly",
+   "source_url": "",
+   "licence": "AGPL-3.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Google Analytics",
+    "Firebase Analytics"
+   ],
+   "tagline": "Product analytics from London.",
+   "features": [],
+   "self_host": true
+  },
+  {
+   "name": "Rapidmail",
+   "category": "business",
+   "country": "DE",
+   "website": "https://www.rapidmail.de",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Mailchimp"
+   ],
+   "tagline": "Newsletter software from Freiburg.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "GetResponse",
+   "category": "business",
+   "country": "PL",
+   "website": "https://www.getresponse.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Mailchimp"
+   ],
+   "tagline": "Email marketing from Gdańsk.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Mailjet",
+   "category": "business",
+   "country": "FR",
+   "website": "https://www.mailjet.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Mailchimp",
+    "SendGrid"
+   ],
+   "tagline": "Email marketing and sending founded in Paris.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Keila",
+   "category": "business",
+   "country": "DE",
+   "website": "https://www.keila.io",
+   "source_url": "",
+   "licence": "AGPL-3.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Mailchimp"
+   ],
+   "tagline": "Open-source newsletters from Germany.",
+   "features": [],
+   "self_host": true
+  },
+  {
+   "name": "Steady",
+   "category": "business",
+   "country": "DE",
+   "website": "https://steadyhq.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Patreon",
+    "Substack"
+   ],
+   "tagline": "Memberships and newsletters for creators, from Berlin.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Teamleader",
+   "category": "business",
+   "country": "BE",
+   "website": "https://www.teamleader.eu",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "HubSpot",
+    "Salesforce"
+   ],
+   "tagline": "CRM, invoicing and projects from Ghent.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Odoo",
+   "category": "business",
+   "country": "BE",
+   "website": "https://www.odoo.com",
+   "source_url": "",
+   "licence": "LGPL-3.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Salesforce",
+    "Microsoft Dynamics",
+    "QuickBooks"
+   ],
+   "tagline": "Open-source business apps from Belgium.",
+   "features": [],
+   "self_host": true
+  },
+  {
+   "name": "weclapp",
+   "category": "business",
+   "country": "DE",
+   "website": "https://www.weclapp.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Salesforce",
+    "Microsoft Dynamics"
+   ],
+   "tagline": "Cloud ERP and CRM from Germany.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Axonaut",
+   "category": "business",
+   "country": "FR",
+   "website": "https://axonaut.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "HubSpot",
+    "QuickBooks"
+   ],
+   "tagline": "French management software for small companies.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "CentralStationCRM",
+   "category": "business",
+   "country": "DE",
+   "website": "https://centralstationcrm.de",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "HubSpot",
+    "Salesforce"
+   ],
+   "tagline": "Simple CRM from Cologne.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "SuiteCRM",
+   "category": "business",
+   "country": "GB",
+   "website": "https://suitecrm.com",
+   "source_url": "",
+   "licence": "AGPL-3.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Salesforce"
+   ],
+   "tagline": "Open-source CRM by SalesAgility in the United Kingdom.",
+   "features": [],
+   "self_host": true
+  },
+  {
+   "name": "lexoffice",
+   "category": "business",
+   "country": "DE",
+   "website": "https://www.lexoffice.de",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "QuickBooks"
+   ],
+   "tagline": "Accounting and invoicing from Freiburg.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "sevDesk",
+   "category": "business",
+   "country": "DE",
+   "website": "https://sevdesk.de",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "QuickBooks"
+   ],
+   "tagline": "Accounting software from Offenburg.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "FreeAgent",
+   "category": "business",
+   "country": "GB",
+   "website": "https://www.freeagent.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "QuickBooks",
+    "Xero"
+   ],
+   "tagline": "Accounting for freelancers and small businesses, from Edinburgh.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Holded",
+   "category": "business",
+   "country": "ES",
+   "website": "https://www.holded.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "QuickBooks"
+   ],
+   "tagline": "Business management software from Barcelona.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Fatture in Cloud",
+   "category": "business",
+   "country": "IT",
+   "website": "https://www.fattureincloud.it",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "QuickBooks"
+   ],
+   "tagline": "Italian invoicing and accounting.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Moneybird",
+   "category": "business",
+   "country": "NL",
+   "website": "https://www.moneybird.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "QuickBooks",
+    "Xero"
+   ],
+   "tagline": "Dutch invoicing and bookkeeping.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Mollie",
+   "category": "business",
+   "country": "NL",
+   "website": "https://www.mollie.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Stripe",
+    "PayPal"
+   ],
+   "tagline": "Online payments from Amsterdam.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Adyen",
+   "category": "business",
+   "country": "NL",
+   "website": "https://www.adyen.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Stripe",
+    "PayPal"
+   ],
+   "tagline": "Payments platform from Amsterdam.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Wero",
+   "category": "business",
+   "country": "BE",
+   "website": "https://wero-wallet.eu",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "PayPal",
+    "Apple Pay"
+   ],
+   "tagline": "European payment wallet of the European Payments Initiative.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Satispay",
+   "category": "business",
+   "country": "IT",
+   "website": "https://www.satispay.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "PayPal",
+    "Apple Pay"
+   ],
+   "tagline": "Mobile payments from Italy.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Viva.com",
+   "category": "business",
+   "country": "GR",
+   "website": "https://www.viva.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Stripe",
+    "Square"
+   ],
+   "tagline": "Payments and business accounts from Athens.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "SumUp",
+   "category": "business",
+   "country": "GB",
+   "website": "https://www.sumup.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Square"
+   ],
+   "tagline": "Card readers and payments for small businesses, from London.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Wise",
+   "category": "business",
+   "country": "GB",
+   "website": "https://wise.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "PayPal",
+    "Western Union"
+   ],
+   "tagline": "International money transfers from London.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Klarna",
+   "category": "business",
+   "country": "SE",
+   "website": "https://www.klarna.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "PayPal"
+   ],
+   "tagline": "Payments and shopping app from Stockholm.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Shopware",
+   "category": "business",
+   "country": "DE",
+   "website": "https://www.shopware.com",
+   "source_url": "",
+   "licence": "MIT",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Shopify",
+    "Magento"
+   ],
+   "tagline": "E-commerce platform from Schöppingen.",
+   "features": [],
+   "self_host": true
+  },
+  {
+   "name": "PrestaShop",
+   "category": "business",
+   "country": "FR",
+   "website": "https://www.prestashop.com",
+   "source_url": "",
+   "licence": "Mixed",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Shopify",
+    "WooCommerce"
+   ],
+   "tagline": "Open-source e-commerce from Paris.",
+   "features": [],
+   "self_host": true
+  },
+  {
+   "name": "Sylius",
+   "category": "business",
+   "country": "PL",
+   "website": "https://sylius.com",
+   "source_url": "",
+   "licence": "MIT",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Shopify",
+    "Magento"
+   ],
+   "tagline": "Open-source headless e-commerce from Łódź.",
+   "features": [],
+   "self_host": true
+  },
+  {
+   "name": "OXID eShop",
+   "category": "business",
+   "country": "DE",
+   "website": "https://www.oxid-esales.com",
+   "source_url": "",
+   "licence": "GPL-3.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Shopify",
+    "Magento"
+   ],
+   "tagline": "E-commerce software from Freiburg.",
+   "features": [],
+   "self_host": true
+  },
+  {
+   "name": "Zammad",
+   "category": "business",
+   "country": "DE",
+   "website": "https://zammad.com",
+   "source_url": "",
+   "licence": "AGPL-3.0",
+   "open_source": true,
+   "pricing": "freemium",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Zendesk",
+    "Freshdesk"
+   ],
+   "tagline": "Open-source helpdesk from Berlin.",
+   "features": [],
+   "self_host": true
+  },
+  {
+   "name": "Userlike",
+   "category": "business",
+   "country": "DE",
+   "website": "https://www.userlike.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Intercom",
+    "Zendesk"
+   ],
+   "tagline": "Customer messaging from Cologne.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Crisp",
+   "category": "business",
+   "country": "FR",
+   "website": "https://crisp.chat",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "freemium",
+   "platforms": [
+    "web",
+    "android",
+    "ios",
+    "windows",
+    "macos"
+   ],
+   "alternatives_to": [
+    "Intercom",
+    "Zendesk"
+   ],
+   "tagline": "Customer messaging platform from Nantes.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Sailfish OS",
+   "category": "os",
+   "country": "FI",
+   "website": "https://sailfishos.org",
+   "source_url": "",
+   "licence": "Mixed",
+   "open_source": true,
+   "pricing": "paid",
+   "platforms": [
+    "android"
+   ],
+   "alternatives_to": [
+    "Android",
+    "iOS"
+   ],
+   "tagline": "Mobile operating system by Jolla in Finland.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Ubuntu Touch",
+   "category": "os",
+   "country": "DE",
+   "website": "https://ubports.com",
+   "source_url": "",
+   "licence": "GPL-3.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "android"
+   ],
+   "alternatives_to": [
+    "Android",
+    "iOS"
+   ],
+   "tagline": "Mobile Linux maintained by the UBports Foundation.",
+   "features": [
+    "no_ads",
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "KDE neon",
+   "category": "os",
+   "country": "DE",
+   "website": "https://neon.kde.org",
+   "source_url": "",
+   "licence": "Mixed",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "linux"
+   ],
+   "alternatives_to": [
+    "Windows",
+    "macOS"
+   ],
+   "tagline": "Linux distribution with the latest KDE Plasma.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "SUSE Linux Enterprise",
+   "category": "os",
+   "country": "DE",
+   "website": "https://www.suse.com",
+   "source_url": "",
+   "licence": "Mixed",
+   "open_source": true,
+   "pricing": "paid",
+   "platforms": [
+    "linux"
+   ],
+   "alternatives_to": [
+    "Windows Server",
+    "Red Hat Enterprise Linux"
+   ],
+   "tagline": "Enterprise Linux by SUSE in Nuremberg.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Mageia",
+   "category": "os",
+   "country": "FR",
+   "website": "https://www.mageia.org",
+   "source_url": "",
+   "licence": "Mixed",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "linux"
+   ],
+   "alternatives_to": [
+    "Windows",
+    "macOS"
+   ],
+   "tagline": "Community Linux distribution run by a French non-profit.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Manjaro",
+   "category": "os",
+   "country": "DE",
+   "website": "https://manjaro.org",
+   "source_url": "",
+   "licence": "Mixed",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "linux"
+   ],
+   "alternatives_to": [
+    "Windows",
+    "macOS"
+   ],
+   "tagline": "User-friendly Linux based on Arch, by Manjaro GmbH.",
+   "features": [
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "F-Droid",
+   "category": "os",
+   "country": "GB",
+   "website": "https://f-droid.org",
+   "source_url": "",
+   "licence": "GPL-3.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "android",
+    "web"
+   ],
+   "alternatives_to": [
+    "Google Play"
+   ],
+   "tagline": "Catalogue of free and open-source apps for Android.",
+   "features": [
+    "no_ads",
+    "no_tracking"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Fleksy",
+   "category": "os",
+   "country": "ES",
+   "website": "https://www.fleksy.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "android",
+    "ios"
+   ],
+   "alternatives_to": [
+    "Gboard",
+    "SwiftKey"
+   ],
+   "tagline": "Keyboard app from Barcelona.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "Fairphone",
+   "category": "other",
+   "country": "NL",
+   "website": "https://www.fairphone.com",
+   "source_url": "",
+   "licence": "Proprietary",
+   "open_source": false,
+   "pricing": "paid",
+   "platforms": [
+    "android"
+   ],
+   "alternatives_to": [
+    "iPhone",
+    "Samsung Galaxy"
+   ],
+   "tagline": "Repairable, fairer smartphone from Amsterdam.",
+   "features": [],
+   "self_host": false
+  },
+  {
+   "name": "SavDocuments",
+   "category": "office",
+   "country": "IT",
+   "website": "https://www.illerom.eu/savdocuments/",
+   "source_url": "https://github.com/Sav22999/illerom/tree/main/savdocuments",
+   "licence": "MIT",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Microsoft Word",
+    "Google Docs"
+   ],
+   "tagline": "Word processor of SavOffice: real documents without the clutter, Word files included.",
+   "features": [
+    "by_author",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "SavSpreadsheets",
+   "category": "office",
+   "country": "IT",
+   "website": "https://www.illerom.eu/savspreadsheets/",
+   "source_url": "https://github.com/Sav22999/illerom/tree/main/savspreadsheets",
+   "licence": "MIT",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Microsoft Excel",
+    "Google Sheets"
+   ],
+   "tagline": "Spreadsheets of SavOffice: numbers, clear and together.",
+   "features": [
+    "by_author",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "SavPresentations",
+   "category": "office",
+   "country": "IT",
+   "website": "https://www.illerom.eu/savpresentations/",
+   "source_url": "https://github.com/Sav22999/illerom/tree/main/savpresentations",
+   "licence": "MIT",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Microsoft PowerPoint",
+    "Google Slides"
+   ],
+   "tagline": "Presentation editor of SavOffice that works with others in real time.",
+   "features": [
+    "by_author",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "SavBooks",
+   "category": "office",
+   "country": "IT",
+   "website": "https://www.illerom.eu/savbooks/",
+   "source_url": "https://github.com/Sav22999/illerom/tree/main/savbooks",
+   "licence": "MIT",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Microsoft Word",
+    "Scrivener"
+   ],
+   "tagline": "Book writing in SavOffice, from the first chapter to the e-book.",
+   "features": [
+    "by_author",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "SavNotes",
+   "category": "productivity",
+   "country": "IT",
+   "website": "https://www.illerom.eu/savnotes/",
+   "source_url": "https://github.com/Sav22999/illerom/tree/main/savnotes",
+   "licence": "MIT",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Microsoft OneNote",
+    "Evernote",
+    "Google Keep"
+   ],
+   "tagline": "Notebooks of SavOffice, handwritten or typed.",
+   "features": [
+    "by_author",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "SavTasks",
+   "category": "productivity",
+   "country": "IT",
+   "website": "https://www.illerom.eu/savtasks/",
+   "source_url": "https://github.com/Sav22999/illerom/tree/main/savtasks",
+   "licence": "MIT",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Todoist",
+    "Microsoft To Do",
+    "Google Tasks"
+   ],
+   "tagline": "Tasks of SavOffice: everything to do, in one place.",
+   "features": [
+    "by_author",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "SavForms",
+   "category": "productivity",
+   "country": "IT",
+   "website": "https://www.illerom.eu/savforms/",
+   "source_url": "https://github.com/Sav22999/illerom/tree/main/savforms",
+   "licence": "MIT",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Google Forms",
+    "Microsoft Forms",
+    "Typeform"
+   ],
+   "tagline": "Forms, surveys and quizzes of SavOffice, with charts of every answer.",
+   "features": [
+    "by_author",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "SavWhiteboard",
+   "category": "productivity",
+   "country": "IT",
+   "website": "https://www.illerom.eu/savwhiteboard/",
+   "source_url": "https://github.com/Sav22999/illerom/tree/main/savwhiteboard",
+   "licence": "MIT",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Miro",
+    "Microsoft Whiteboard"
+   ],
+   "tagline": "Collaborative whiteboard of SavOffice: a board without edges.",
+   "features": [
+    "by_author",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "SavSchedules",
+   "category": "productivity",
+   "country": "IT",
+   "website": "https://www.illerom.eu/savschedules/",
+   "source_url": "https://github.com/Sav22999/illerom/tree/main/savschedules",
+   "licence": "MIT",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Doodle",
+    "Calendly"
+   ],
+   "tagline": "Date polls and slot booking of SavOffice.",
+   "features": [
+    "by_author",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "SavCalendar",
+   "category": "calendar",
+   "country": "IT",
+   "website": "https://www.illerom.eu/savcalendar/",
+   "source_url": "https://github.com/Sav22999/illerom/tree/main/savcalendar",
+   "licence": "MIT",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Google Calendar",
+    "Outlook"
+   ],
+   "tagline": "Calendar of SavOffice, shared with Google, Outlook and Apple.",
+   "features": [
+    "by_author",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "SavNewsletters",
+   "category": "business",
+   "country": "IT",
+   "website": "https://www.illerom.eu/savnewsletters/",
+   "source_url": "https://github.com/Sav22999/illerom/tree/main/savnewsletters",
+   "licence": "MIT",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Mailchimp"
+   ],
+   "tagline": "Newsletters written, approved and sent as a team, part of SavOffice.",
+   "features": [
+    "by_author",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "SavDrive",
+   "category": "cloud",
+   "country": "IT",
+   "website": "https://www.illerom.eu/savdrive/",
+   "source_url": "",
+   "licence": "MIT",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Google Drive",
+    "OneDrive",
+    "Dropbox"
+   ],
+   "tagline": "Cloud storage of SavOffice.",
+   "features": [
+    "by_author",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "SavAccount",
+   "category": "security",
+   "country": "IT",
+   "website": "https://www.savaccount.eu",
+   "source_url": "",
+   "licence": "",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Sign in with Google",
+    "Sign in with Apple"
+   ],
+   "tagline": "One account to sign in to many services, deciding what each one gets.",
+   "features": [
+    "by_author",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Notefox",
+   "category": "productivity",
+   "country": "IT",
+   "website": "https://notefox.eu",
+   "source_url": "https://github.com/Sav22999/websites-notes",
+   "licence": "MPL-2.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "windows",
+    "macos",
+    "linux"
+   ],
+   "alternatives_to": [
+    "Google Keep",
+    "Evernote"
+   ],
+   "tagline": "Browser extension to keep notes for each website, for Firefox and Chrome.",
+   "features": [
+    "by_author",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Sav PDF Viewer",
+   "category": "office",
+   "country": "IT",
+   "website": "https://savpdfviewer.com",
+   "source_url": "https://github.com/Sav22999/sav-pdf-viewer-pro",
+   "licence": "GPL-3.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "android"
+   ],
+   "alternatives_to": [
+    "Adobe Acrobat"
+   ],
+   "tagline": "Simple open-source PDF viewer for Android that needs no permissions.",
+   "features": [
+    "by_author",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "MyCurriculum",
+   "category": "office",
+   "country": "IT",
+   "website": "https://www.illerom.eu/mycurriculum/",
+   "source_url": "https://github.com/Sav22999/illerom/tree/main/mycurriculum",
+   "licence": "MIT",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Microsoft Word",
+    "Canva",
+    "Europass"
+   ],
+   "tagline": "One CV, in every language you need.",
+   "features": [
+    "by_author",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Fucina",
+   "category": "education",
+   "country": "IT",
+   "website": "https://www.illerom.eu/fucina/",
+   "source_url": "https://github.com/Sav22999/illerom/tree/main/fucina",
+   "licence": "MIT",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web",
+    "android"
+   ],
+   "alternatives_to": [
+    "Codecademy",
+    "Duolingo"
+   ],
+   "tagline": "Learn to code one level at a time, with games and certificates.",
+   "features": [
+    "by_author",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Giftwise",
+   "category": "other",
+   "country": "IT",
+   "website": "https://www.illerom.eu/giftwise/",
+   "source_url": "https://github.com/Sav22999/illerom/tree/main/giftwise",
+   "licence": "MIT",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Amazon Wish List"
+   ],
+   "tagline": "Wish lists that keep the surprise.",
+   "features": [
+    "by_author",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "FoodTrack",
+   "category": "other",
+   "country": "IT",
+   "website": "https://www.illerom.eu/foodtrack/",
+   "source_url": "https://github.com/Sav22999/illerom/tree/main/foodtrack",
+   "licence": "MIT",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "NoWaste"
+   ],
+   "tagline": "What is in the fridge, and for how long.",
+   "features": [
+    "by_author",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Word of the Day",
+   "category": "education",
+   "country": "IT",
+   "website": "https://github.com/Sav22999/word-of-the-day",
+   "source_url": "https://github.com/Sav22999/word-of-the-day",
+   "licence": "GPL-3.0",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "android"
+   ],
+   "alternatives_to": [
+    "Merriam-Webster Word of the Day"
+   ],
+   "tagline": "Android app with a new English word to learn every day.",
+   "features": [
+    "by_author",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "savmrl.it",
+   "category": "other",
+   "country": "IT",
+   "website": "https://savmrl.it",
+   "source_url": "",
+   "licence": "",
+   "open_source": false,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Bitly"
+   ],
+   "tagline": "Anonymous, free link shortener with a browser add-on.",
+   "features": [
+    "by_author",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "SavComponents",
+   "category": "dev",
+   "country": "IT",
+   "website": "https://savcomponents.com",
+   "source_url": "",
+   "licence": "MIT",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Bootstrap",
+    "Material UI"
+   ],
+   "tagline": "Web components in five styles (Soft, Tilt, Sharp, Brutal, Glass), with no dependencies.",
+   "features": [
+    "by_author",
+    "no_ads"
+   ],
+   "self_host": false
+  },
+  {
+   "name": "Illerom Chess",
+   "category": "other",
+   "country": "IT",
+   "website": "https://www.illerom.eu/chess/",
+   "source_url": "https://github.com/Sav22999/illerom/tree/main/chess",
+   "licence": "MIT",
+   "open_source": true,
+   "pricing": "free",
+   "platforms": [
+    "web"
+   ],
+   "alternatives_to": [
+    "Chess.com"
+   ],
+   "tagline": "Chess with a friend, a stranger or the computer.",
+   "features": [
+    "by_author",
+    "no_ads"
+   ],
+   "self_host": false
+  }
+ ],
+ "categories": {
+  "productivity": [
+   "Note e produttività",
+   "Notes & productivity",
+   "list-checks"
+  ],
+  "design": [
+   "Grafica, foto e video",
+   "Design & editing",
+   "image"
+  ],
+  "media": [
+   "Musica e video",
+   "Music & video",
+   "play"
+  ],
+  "hosting": [
+   "Hosting e cloud",
+   "Hosting & cloud",
+   "server"
+  ],
+  "business": [
+   "Aziende e pagamenti",
+   "Business & payments",
+   "coins"
+  ],
+  "security": [
+   "Sicurezza",
+   "Security",
+   "shield"
+  ],
+  "education": [
+   "Formazione",
+   "Learning",
+   "book-open"
+  ],
+  "web": [
+   "Siti e CMS",
+   "Websites & CMS",
+   "layout-grid"
+  ]
+ }
+}

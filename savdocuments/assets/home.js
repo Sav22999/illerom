@@ -2,7 +2,7 @@
 import { ask, btn, confirm, copyText, dialog, drop, empty, fail, h, icon, iconBtn, item, mobile, primary, put, select, tile, toast } from './ui.js';
 import { getLang, t, when } from './i18n.js';
 import { S, api, keep, local, offline } from './store.js';
-import { brand, credit, go, prefs, setPrefs, settings, userMenu } from './account.js';
+import { brand, commands, credit, go, prefs, setPrefs, settings, userMenu } from './account.js';
 import { catName, fromTemplate, TEMPLATES, TPL_CATS, tplName } from './templates.js';
 import { LOOKS, SIZES } from './settings.js';
 import { fluidMini } from './thumbs.js';
@@ -132,6 +132,10 @@ export async function home(root, view = '', arg = '') {
 
   function draw() {
     drawSide();
+    // the search of actions (⌘J / Ctrl+J): new from a template, the views and folders, the documents to open
+    commands([t('new_l'), [['plus', t('new_doc'), () => newDialog(folders, folder?.id, 'blank', mineTpl())], ...Object.keys(TEMPLATES).map((id) => ['file-text', tplName(id), () => newDialog(folders, folder?.id, id, mineTpl()), null, catName(TEMPLATES[id].cat)]), ['file-up', t('open_file'), () => importFile(folder?.id)]]],
+      [t('home'), [...Object.keys(V).map((v) => [V[v][1], t(V[v][0]), '#/' + v]), ...folders.map((f) => ['folder', f.name, '#/f/' + f.id, null, t('folders')])]],
+      [t('recent'), docs.filter((d) => !d.deleted).slice(0, 80).map((d) => ['file-text', d.title, () => go('#/d/' + d.id), null, d.mine ? '' : d.owner || ''])]);
     let list = term ? docs.filter((d) => !d.deleted && (d.title + ' ' + (d.owner || '')).toLowerCase().includes(term)) : folder ? docs.filter((d) => d.mine && !d.deleted && d.folder === folder.id) : V[view][2]();
     list = [...list].sort(SORT[sort] || SORT.updated);
     const title = term ? t('search') : folder ? folder.name : t(V[view][0]);

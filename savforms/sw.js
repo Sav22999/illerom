@@ -3,7 +3,7 @@
  * cached, because forms and answers must always be fresh.
  *   pages, scripts and styles: network first, the kept copy when offline · icons: kept copy first
  */
-const CACHE = 'savforms-2';
+const CACHE = 'savforms-6';
 const SHELL = ['./', 'manifest.webmanifest', 'icons/favicon.svg', 'icons/icon-192.png', '../assets/sav/sav.css', '../assets/sav/sav.js', '../assets/savoffice/savoffice.js', '../identity/identity.css?v=2', '../identity/identity.js?v=3',
   ...['account.js', 'app.css', 'app.js', 'changelog.js', 'editor.js', 'files.js', 'fill.js', 'hero.js', 'home.js', 'i18n.js', 'icons.js', 'inputs.js', 'models.js', 'office.js', 'options.js', 'results.js', 'store.js', 'time.js', 'ui.js', 'version.js', 'zip.js'].map((f) => 'assets/' + f)];
 

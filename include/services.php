@@ -11,8 +11,10 @@ function services(array $projects, array $extra, array $site): array
         $out[] = ['id' => "$slug-web", 'project' => $slug, 'type' => 'web', 'it' => $p['cat'] === 'games' ? 'Gioco' : 'App web', 'en' => $p['cat'] === 'games' ? 'Game' : 'Web app', 'url' => $abs];
         foreach ($x['web'] ?? [] as $k => [$file, $it, $en]) $out[] = ['id' => "$slug-$k", 'project' => $slug, 'type' => 'web', 'it' => $it, 'en' => $en, 'url' => $abs . $file];
         if (isset($x['app'])) {
-            $out[] = ['id' => "$slug-db", 'project' => $slug, 'type' => 'app', 'it' => $x['app'][1], 'en' => $x['app'][2], 'prefix' => $x['app'][0]];
-            $out[] = ['id' => "$slug-mail", 'project' => $slug, 'type' => 'mail', 'it' => 'Email', 'en' => 'Emails'];
+            // an app may live in the database of another one (4th element: its folder, version key, version constant)
+            [$creds, $key, $const] = ($x['app'][3] ?? []) + [$slug, 'schema_version', 'SCHEMA_VERSION'];
+            $out[] = ['id' => "$slug-db", 'project' => $slug, 'type' => 'app', 'it' => $x['app'][1], 'en' => $x['app'][2], 'prefix' => $x['app'][0], 'creds' => $creds, 'key' => $key, 'const' => $const];
+            $out[] = ['id' => "$slug-mail", 'project' => $slug, 'type' => 'mail', 'it' => 'Email', 'en' => 'Emails', 'creds' => $creds];
         }
         if (isset($x['game'])) $out[] = ['id' => "$slug-db", 'project' => $slug, 'type' => 'game', 'it' => $x['game'][1], 'en' => $x['game'][2], 'table' => $x['game'][0]];
     }

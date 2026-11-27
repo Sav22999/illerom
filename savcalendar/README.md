@@ -48,7 +48,7 @@ Only the events of one's own calendars. Read-only, and the app says why and wher
 - **subscriptions** (a calendar elsewhere, read again every 3 hours when the account opens the calendar, or on request);
 - **SavSchedules**: dates chosen, dates proposed by open polls, the slots of one's sheets, places booked, polls answered;
 - **SavNewsletters**: newsletters planned in the groups of the account (only for a confirmed address).
-- **SavTasks**: the tasks with a due day (whole day, or 30 minutes from their time), in the colour of their list, done
+- **SavTasks**: the tasks with a due day (whole day, 30 minutes from their time, or every day from their start day), in the colour of their list, done
   ones too unless switched off; they can be ticked from here (through the API of SavTasks itself, same session).
 
 ## Sync with other calendars

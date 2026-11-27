@@ -475,12 +475,12 @@
                 }), 'FoodTrack', householdChip()), h('h1', v.title)),
                 v.actions || [],
                 langPill(),
-                h('button.avatar', {
+                pictured(h('button.avatar', {
                     type: 'button',
                     title: t('Profile'),
                     'aria-label': t('Profile and settings'),
                     onclick: () => go('profile')
-                }, initials(S.user.name)));
+                }, initials(S.user.name))));
         const nav = v.nav !== false;
         const main = h('main.view' + (!nav ? '.no-nav' : '') + (nav && !v.fab ? '.no-fab' : '') + (v.cls ? '.' + v.cls : ''), v.body);
         const content = h('div.content', bar, main);
@@ -571,7 +571,7 @@
                     href: '#/profile',
                     title: t('Profile and settings')
                 },
-                h('span.avatar', initials(S.user.name)), h('span.grow', h('strong', S.user.name), h('small', S.user.email)), icon('right')));
+                pictured(h('span.avatar', initials(S.user.name))), h('span.grow', h('strong', S.user.name), h('small', S.user.email)), icon('right')));
     }
 
     function bottomNav(active) {
@@ -580,6 +580,13 @@
             'aria-current': active === name ? 'page' : null
         }, h('span.pill', icon(ic)), label);
         return h('nav.bottomnav', {'aria-label': t('Sections')}, tab('lists', t('Lists'), 'list'), tab('spaces', t('Spaces'), 'spaces'), tab('recipes', t('Recipes'), 'restaurant'));
+    }
+
+    /** The avatar with the picture of SavAccount, once it has really loaded (otherwise the initials stay). */
+    function pictured(el) {
+        const url = S.user && S.user.picture;
+        if (url) { const im = new Image(); im.onload = () => { im.alt = ''; el.classList.add('pic'); el.replaceChildren(im); }; im.src = url; }
+        return el;
     }
 
     function initials(name) {

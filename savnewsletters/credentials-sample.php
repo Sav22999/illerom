@@ -21,8 +21,6 @@ $secret_key = "";
 // They see every group, but never the SMTP settings (only the sending address, read-only).
 $master_emails = [];
 
-// Sign in with Google (optional): OAuth client ID of type "Web application"
-$google_client_id = "";
 
 // Sign in with SavAccount (optional): a confidential service created on savaccount.eu, "Manage services", with
 //   redirect address  https://www.illerom.eu/savnewsletters/api/?r=auth.sav.callback

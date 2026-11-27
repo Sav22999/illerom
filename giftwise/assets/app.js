@@ -81,10 +81,13 @@
         return String(name || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
     }
 
-    function avatar(name, cls) {
+    function avatar(name, cls, picture) {
         let hash = 0;
         for (const ch of String(name || '')) hash = (hash * 31 + ch.charCodeAt(0)) % 360;
-        return h('span.avatar' + (cls ? '.' + cls : ''), {style: {background: `linear-gradient(135deg, hsl(${hash} 70% 62%), hsl(${(hash + 40) % 360} 60% 42%))`}}, initials(name));
+        const el = h('span.avatar' + (cls ? '.' + cls : ''), {style: {background: `linear-gradient(135deg, hsl(${hash} 70% 62%), hsl(${(hash + 40) % 360} 60% 42%))`}}, initials(name));
+        // the picture of SavAccount, once it has really loaded (otherwise the initials stay)
+        if (picture) { const im = new Image(); im.onload = () => { im.alt = ''; el.classList.add('pic'); el.replaceChildren(im); }; im.src = picture; }
+        return el;
     }
 
     function domain(url) {
@@ -297,7 +300,7 @@
                     title: t('Profile'),
                     'aria-label': t('Profile and settings'),
                     onclick: () => go('profile')
-                }, avatar(S.user.name)));
+                }, avatar(S.user.name, null, S.user.picture)));
         const nav = v.nav !== false;
         const main = h('main.view' + (!nav ? '.no-nav' : '') + (nav && !v.fab ? '.no-fab' : '') + (v.cls ? '.' + v.cls : ''), v.body);
         const content = h('div.content', bar, main);
@@ -357,7 +360,7 @@
                     href: '#/profile',
                     title: t('Profile and settings')
                 },
-                avatar(S.user.name), h('span.grow', h('strong', S.user.name), h('small', S.user.email)), icon('right')));
+                avatar(S.user.name, null, S.user.picture), h('span.grow', h('strong', S.user.name), h('small', S.user.email)), icon('right')));
     }
 
     // ===================================================== MY LISTS

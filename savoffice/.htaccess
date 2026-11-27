@@ -1,0 +1,8 @@
+# /savoffice/<app>/ is the page of one app of the suite (index.php?app=<app>); everything else is served as it is
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(sav[a-z]+)$ https://%{HTTP_HOST}/savoffice/$1/ [L,R=301]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(sav[a-z]+)/$ index.php?app=$1 [QSA,L]
+</IfModule>

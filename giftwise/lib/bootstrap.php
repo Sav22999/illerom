@@ -256,6 +256,7 @@ function public_user(array $u): array
         'id' => (int)$u['id'],
         'name' => $u['name'],
         'email' => $u['email'],
+        'picture' => function_exists('ident_picture') ? ident_picture($u) : null, // the profile picture of SavAccount (../identity/identity.php)
         'inviteCode' => $u['invite_code'],
         'username' => $u['username'] ?? null,
         'followPolicy' => $u['follow_policy'] ?? 'approve',

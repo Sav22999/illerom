@@ -15,7 +15,7 @@
 import { btn, colorPop, confirm, dialog, drop, fail, h, icon, iconBtn, K, keepCaret, mobile, put, tile, toast } from './ui.js';
 import { getLang, t } from './i18n.js';
 import { S, api } from './store.js';
-import { go, prefs, setPrefs, userMenu } from './account.js';
+import { commands, go, prefs, setPrefs, userMenu } from './account.js';
 import { DEFS, NS, docCSS, itemSVG, paperSVG, sheetSVG } from './render.js';
 import { bounds, cut, hits, moved, overlaps, scaled, union } from './ink.js';
 import { BACKS, COVERS, FONTS, HIGHLIGHT, PAPERS, PATTERNS, SIZES, TEXT_INKS, TEXT_MARKS, cleanDoc, cleanItems, defaultPaper, docEmpty, freshIds, freshSheet, inkOn, inksFor, isDark, newSheet, pageSize, r2, uid } from './model.js';
@@ -1110,19 +1110,23 @@ export async function notebookScreen(root, id) {
   const undoB = iconBtn('undo-2', t('undo'), () => undo(), { kbd: 'Mod+Z' }), redoB = iconBtn('redo-2', t('redo'), () => redo(), { kbd: 'Mod+Shift+Z' });
   const sideB = iconBtn('panel-left', t('toggle_sheets'), () => toggleSide(), { kbd: '' });
   const whole = () => ({ title, settings: { ...settings }, sheets: sheets.map(dataOf) });
+  // SavDrive: the cloud next to the grid of the apps saves this notebook into the drive (../assets/savoffice/savoffice.js)
+  window.SavOffice?.exporter?.({ key: id, make: async () => { const b = whole(), f = await import('./files.js'); return { blob: await f.makeSavnot(b), name: f.fileName(b.title, 'savnot') }; } });
   const exp = async (fn, ...a) => { try { await fn(whole(), ...a); } catch (e) { fail(e); } };
-  const downloadB = drop(h('sav-button', { icon: 'download', label: t('download_as'), title: t('download_as'), appearance: 'ghost', variant: 'neutral', size: 'sm', square: true }), [
+  const dlList = [
     ['file-down', t('save_savnot'), () => exp(saveSavnot)], '-', ['printer', t('save_pdf'), () => exp(printNotebook)], ['image', t('save_png'), () => exp(savePng, cur)],
-  ], { placement: 'bottom-end', label: t('download_as') });
+  ];
+  const downloadB = drop(h('sav-button', { icon: 'download', label: t('download_as'), title: t('download_as'), appearance: 'ghost', variant: 'neutral', size: 'sm', square: true }), dlList, { placement: 'bottom-end', label: t('download_as') });
   const fullscreen = () => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.())?.catch?.(() => {});
-  const moreB = drop(h('sav-button', { icon: 'ellipsis-vertical', label: t('more_tools'), title: t('more_tools'), appearance: 'ghost', variant: 'neutral', size: 'sm', square: true }), () => [
+  const moreList = () => [
     ['file-plus', t('add_sheet_after'), () => addSheet(cur + 1)], ['copy-plus', t('sheet_dup'), () => dupSheet(sheets[cur])],
     mobile() ? ['notebook', t('sheet_paper'), () => paperB.button.click()] : null,
     ['settings', t('nb_settings'), () => notebookSettings()],
     '-', mobile() ? ['file-down', t('save_savnot'), () => exp(saveSavnot)] : null, mobile() ? ['printer', t('save_pdf'), () => exp(printNotebook)] : null,
     ['scan', t('zoom_fit'), () => fit(), { kbd: 'Shift+1' }], document.documentElement.requestFullscreen ? ['maximize', t(document.fullscreenElement ? 'exit_full' : 'full_screen'), fullscreen] : null,
     '-', ['info', t('shortcuts'), () => shortcuts()],
-  ], { placement: 'bottom-end', label: t('more_tools') });
+  ];
+  const moreB = drop(h('sav-button', { icon: 'ellipsis-vertical', label: t('more_tools'), title: t('more_tools'), appearance: 'ghost', variant: 'neutral', size: 'sm', square: true }), moreList, { placement: 'bottom-end', label: t('more_tools') });
 
   const titleIn = h('sav-input.dtitle', { value: title, maxlength: 160, size: 'sm', 'aria-label': t('rename'), spellcheck: 'false' });
   titleIn.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') titleIn.blur(); });
@@ -1135,6 +1139,11 @@ export async function notebookScreen(root, id) {
   const dock = h('div.dock', props, h('div.dockrow', modeSel, tools, docbar));
   wrap.append(top, side, dock, zoom, h('div.sidescrim', { onclick: () => toggleSide(false) }));
   put(root, wrap);
+  // the search of actions (⌘J / Ctrl+J): the tools, the menu and the downloads, as in the bar
+  const asCmd = (list) => list.filter(Array.isArray).map(([ic, l, fn, o]) => [ic, l, fn, o?.kbd || null]);
+  commands([t('tools'), TOOLS.map(([k, ic, key]) => [ic, t('tool_' + k), () => setTool(k), key])],
+    [t('more_tools'), [['undo-2', t('undo'), () => undo(), 'Mod+Z'], ['redo-2', t('redo'), () => redo(), 'Mod+Shift+Z'], ['notebook', t('sheet_paper'), () => paperB.button.click()], ...asCmd(moreList())]],
+    [t('download_as'), asCmd(dlList)]);
   document.title = title + ' – SavNotes';
   setStatus('saved');
 
@@ -1239,6 +1248,7 @@ export async function notebookScreen(root, id) {
   });
 
   return () => {
+    window.SavOffice?.exporter?.(null);
     gone = true;
     flush(true);
     removeEventListener('keydown', onKey);

@@ -3,7 +3,7 @@
  * feed are never cached, because events must always be fresh.
  *   pages, scripts and styles: network first, the kept copy when offline · icons: kept copy first
  */
-const CACHE = 'savcalendar-4';
+const CACHE = 'savcalendar-8';
 const SHELL = ['./', 'manifest.webmanifest', 'icons/favicon.svg', 'icons/icon-192.png', '../assets/sav/sav.css', '../assets/sav/sav.js', '../assets/savoffice/savoffice.js', '../identity/identity.css?v=2', '../identity/identity.js?v=3',
   ...['account.js', 'app.css', 'app.js', 'calendar.js', 'changelog.js', 'event.js', 'files.js', 'hero.js', 'i18n.js', 'icons.js', 'office.js', 'options.js', 'rrule.js', 'sources.js', 'store.js', 'time.js', 'ui.js', 'version.js', 'week.js', 'zip.js'].map((f) => 'assets/' + f)];
 

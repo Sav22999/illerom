@@ -2,7 +2,7 @@
 import { btn, confirm, copyText, dialog, drop, empty, fail, h, icon, iconBtn, item, primary, put, tile, toast, ask } from './ui.js';
 import { t, when, getLang } from './i18n.js';
 import { S, api } from './store.js';
-import { brand, credit, go, prefs, setPrefs, userMenu } from './account.js';
+import { brand, commands, credit, go, prefs, setPrefs, userMenu } from './account.js';
 import { COLORS, KINDS, PRESETS } from './plan.js';
 import { download, fileName, readSavsch, toSavsch } from './files.js';
 
@@ -106,7 +106,9 @@ export async function home(root, view = '') {
   }
   function card(s, own = true) {
     const meta = own ? [t('k_' + s.kind), s.deadline && !s.closed ? t('until', { d: shortDate(s.deadline) }) : s.lastAnswer ? t('last_answer', { w: when(s.lastAnswer) }) : t('created_w', { w: when(s.created) })].join(' · ') : t('by_owner', { n: s.owner }) + ' · ' + when(s.at);
-    const more = own ? drop(h('sav-button', { icon: 'ellipsis-vertical', label: t('more'), appearance: 'ghost', size: 'sm', square: true, onclick: (e) => e.stopPropagation() }), menuOf(s), { placement: 'bottom-end' }) : null;
+    // the click stops at the menu, not at its button: the menu listens inside itself, after the button, and the card must not open
+    const more = own ? drop(h('sav-button', { icon: 'ellipsis-vertical', label: t('more'), appearance: 'ghost', size: 'sm', square: true }), menuOf(s), { placement: 'bottom-end' }) : null;
+    more?.addEventListener('click', (e) => e.stopPropagation());
     // the favourite button of SavComponents, as in SavDocuments and SavPresentations: the star fills when it is on
     const star = own && !s.deleted ? h('sav-favourite-button.starb', { icon: 'star', appearance: 'ghost', size: 'sm', label: t('starred'), pressed: !!s.starred, class: s.starred ? 'on' : '', onclick: (e) => e.stopPropagation(), onkeydown: (e) => e.stopPropagation() }) : null;
     star?.addEventListener('change', async (e) => { const on = !!e.detail?.pressed; star.classList.toggle('on', on); try { await api('sch.star', { id: s.id, on }); } catch (x) { fail(x); } setTimeout(reload, 300); });
@@ -132,6 +134,10 @@ export async function home(root, view = '') {
     const grid = h('div.' + (mode() === 'grid' ? 'grid' : 'rows'), shown.map((s) => card(s, view !== 'answered')));
     const none = view === 'trash' ? empty('trash', t('trash_empty'), t('trash_t')) : view === 'answered' ? empty('user-check', t('answered_empty'), t('answered_t')) : term ? empty('search', t('nothing_found'), '') : empty('calendar-plus', t('none_yet'), t('none_yet_t'), primary(t('new_l'), { icon: 'plus', onclick: () => newDialog() }));
     // as in SavDocuments and SavPresentations: the title, the box to start a new one, then "Recent"
+    // the search of actions (⌘J / Ctrl+J)
+    commands([t('new_l'), [['plus', t('new_schedule'), () => newDialog()], ...['poll', 'slots', 'assign'].map((k) => [KINDS[k].icon, t('k_' + k), '#/new/' + k]), ...Object.keys(PRESETS).map((k) => [PRESETS[k].icon, t('p_' + k), '#/new/' + k, null, t('k_' + PRESETS[k].kind)]), ['file-up', t('open_file'), () => pickFile()]]],
+      [t('home'), Object.keys(V).map((v) => [V[v][1], t(V[v][0]), '#/' + v])],
+      [t('recent'), list.filter((s) => !s.deleted).slice(0, 80).map((s) => [KINDS[s.kind].icon, s.title, '#/r/' + s.id, null, t('k_' + s.kind)])]);
     put(main, head, view === '' && !term ? quick() : null, view === '' && !term && shown.length ? h('h2', t('recent')) : null, view === 'trash' && shown.length ? h('p.muted.tnote', t('trash_t')) : null, shown.length ? grid : none);
   }
   draw();

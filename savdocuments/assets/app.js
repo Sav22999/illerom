@@ -3,7 +3,7 @@ import { btn, empty, errText, fail, h, primary, put } from './ui.js';
 import { registerIcons } from './icons.js';
 import { getLang, setLang, t } from './i18n.js';
 import { S, api, offline } from './store.js';
-import { applyTheme, go, googleButton, land, reset, setUser, unverified, verify } from './account.js';
+import { commands, applyTheme, go, land, reset, setUser, unverified, verify } from './account.js';
 import { openFile } from './actions.js';
 
 const root = document.getElementById('app');
@@ -26,13 +26,16 @@ async function boot() {
   addEventListener('online', back);
   addEventListener('offline', () => { S.offline = true; document.documentElement.classList.add('is-offline'); });
   document.documentElement.classList.toggle('is-offline', !!S.offline);
-  window.Identity?.setup({ name: 'SavDocuments', lang: getLang, accent: '#0F6E56', accept: 'acceptTerms', acceptUrl: () => 'terms.html', google: (slot, cb) => googleButton(slot, cb), body: () => ({ lang: getLang() }) });
-  // signed in with Google or SavAccount (the page was left and came back): on to the document that was asked for
+  window.Identity?.setup({ name: 'SavDocuments', lang: getLang, accent: '#0F6E56', accept: 'acceptTerms', acceptUrl: () => 'terms.html', body: () => ({ lang: getLang() }) });
+  // signed in with SavAccount (the page was left and came back): on to the document that was asked for
   const next = sessionStorage.getItem('savdocuments-next');
   if (S.user?.verified && next) { sessionStorage.removeItem('savdocuments-next'); if (/^(#\/?(signin|signup|welcome)?)?$/.test(location.hash)) history.replaceState(null, '', next); }
   addEventListener('hashchange', route);
   // a .savdoc or .docx opened from the files of the device
-  window.launchQueue?.setConsumer(async (p) => { for (const f of p.files || []) await openFile(await f.getFile()); });
+  { const take = async (p) => { for (const f of p.files || []) await openFile(await f.getFile()); };
+    window.launchQueue?.setConsumer(take);
+    window.SavOffice?.fromDrive?.(take); // a file opened from SavDrive (?savdrive=<id>), given like a file of the device
+  }
   // … or with the Android app: {name, data} in base64
   const pend = S.user?.verified && window.SavDocumentsAndroid?.pendingFile?.();
   if (pend) { const f = JSON.parse(pend); openFile(new File([Uint8Array.from(atob(f.data), (x) => x.charCodeAt(0))], f.name)).catch(() => {}); }
@@ -45,6 +48,7 @@ async function route() {
   if (writer) { const w = writer; writer = null; w.close(); }
   leave?.();
   leave = null;
+  commands(); // the search of actions (⌘J / Ctrl+J): the screen adds its own
   document.querySelectorAll('sav-dialog').forEach((d) => d.hide?.());
   try {
     if (a === 'verify') return verify(root, b);

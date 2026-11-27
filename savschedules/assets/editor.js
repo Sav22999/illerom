@@ -6,7 +6,7 @@
 import { ask, btn, confirm, copyText, dialog, drop, fail, h, icon, iconBtn, mobile, put, select, segmented, toast, toggle } from './ui.js';
 import { t, tn } from './i18n.js';
 import { S, api } from './store.js';
-import { go, prefs, userMenu } from './account.js';
+import { commands, go, prefs, userMenu } from './account.js';
 import { BASE, COLORS, KINDS, PRESETS, genSlots } from './plan.js';
 import { download, fileName, toSavsch } from './files.js';
 import { addDays, byDay, byTime, dayKey, dayLabel, hm, keyParts, LOCAL_TZ, longDay, mondayOf, monthLabel, parts, place, span, todayKey, weekday, zoned, ZONES, zoneName } from './time.js';
@@ -35,7 +35,7 @@ export async function editor(root, pid, start) {
   const tz = () => set.tz;
   let anchor = s.options.length ? (s.options[0].day || dayKey(Date.parse([...s.options].sort(byTime)[0].start), tz())) : todayKey(tz());
   let view = !slots && s.options.length && s.options.every((o) => o.day) ? 'month' : 'week';
-  let edits = 0, saving = null, timer = 0, gone = false;
+  let edits = 0, saving = null, timer = 0, gone = false, setCmds = () => {};
 
   // ------------------------------------------------------------------ saving
   // as in SavDocuments and SavPresentations: an icon and a word
@@ -58,7 +58,7 @@ export async function editor(root, pid, start) {
         for (const o of s.options) if (!o.id) { const i = free.findIndex((x) => x.start === o.start && x.end === o.end && x.day === o.day && x.label === o.label); if (i >= 0) { o.id = free[i].id; free.splice(i, 1); } }
         for (const o of s.options) { const x = r.schedule.options.find((y) => y.id === o.id); if (x) { o.yes = x.yes; o.maybe = x.maybe; } }
         Object.assign(s, { status: r.schedule.status, closed: r.schedule.closed, responses: r.schedule.responses });
-        if (fresh && !gone) { history.replaceState(null, '', '#/e/' + s.id); drawTop(); }
+        if (fresh && !gone) { history.replaceState(null, '', '#/e/' + s.id); drawTop(); setCmds(); }
         setStatus(edits ? 'saving' : 'saved');
       } catch (e) { edits += mark; setStatus('error'); fail(e); }
     })();
@@ -331,6 +331,11 @@ export async function editor(root, pid, start) {
   drawCal();
   drawSide();
   if (named) changed();
+  // the search of actions (⌘J / Ctrl+J): the panels, then what the bar and its menu do (again once a new schedule is saved)
+  setCmds = () => commands([t('panels'), TABS.map(([k, ic, label]) => [ic, label(), () => { tab = k; drawSide(); }])],
+    [t('more'), [['user-plus', t('share'), async () => { await flush(); if (!s.options.length) toast(t('add_first'), 'warning'); shareDialog({ ...s, settings: set }); }], ['eye', t('preview'), async () => { await flush(); if (s.id) window.open('#/s/' + s.id, '_blank', 'noopener'); }],
+      ['wand-sparkles', t('series'), () => seriesDialog()], ['calendar-range', t('week'), () => { view = 'week'; drawCal(); }], ['calendar-days', t('month'), () => { view = 'month'; drawCal(); }], ...moreItems().filter(Array.isArray).map(([ic, l, fn]) => [ic, l, fn])]]);
+  setCmds();
   document.title = (s.title || t('k_' + s.kind)) + ' – SavSchedules';
   let lastMobile = mobile();
   const onResize = () => { if (mobile() !== lastMobile) { lastMobile = mobile(); drawCal(); } };

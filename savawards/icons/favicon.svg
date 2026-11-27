@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <defs>
+        <linearGradient id="b" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#3b62e6"/>
+            <stop offset="1" stop-color="#14287a"/>
+        </linearGradient>
+        <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#ffe08a"/>
+            <stop offset="1" stop-color="#d49a12"/>
+        </linearGradient>
+    </defs>
+    <!-- a leaning tile (Tilt style) with a laurel wreath, a star and a score bar under it: an award given after measuring -->
+    <rect x="5" y="5" width="54" height="54" rx="15" fill="url(#b)" transform="rotate(-6 32 32)"/>
+    <g fill="url(#g)">
+        <path d="M32 13.5l3.2 6.6 7.2 1-5.2 5.1 1.2 7.2L32 30l-6.4 3.4 1.2-7.2-5.2-5.1 7.2-1z"/>
+        <g transform="translate(32 28)">
+            <ellipse cx="-14.5" cy="-6" rx="2.2" ry="4.4" transform="rotate(-20 -14.5 -6)"/>
+            <ellipse cx="-16.4" cy="1" rx="2.2" ry="4.4" transform="rotate(-48 -16.4 1)"/>
+            <ellipse cx="-14.6" cy="8" rx="2.2" ry="4.4" transform="rotate(-76 -14.6 8)"/>
+            <ellipse cx="-9.6" cy="13" rx="2.1" ry="4.2" transform="rotate(-104 -9.6 13)"/>
+            <ellipse cx="14.5" cy="-6" rx="2.2" ry="4.4" transform="rotate(20 14.5 -6)"/>
+            <ellipse cx="16.4" cy="1" rx="2.2" ry="4.4" transform="rotate(48 16.4 1)"/>
+            <ellipse cx="14.6" cy="8" rx="2.2" ry="4.4" transform="rotate(76 14.6 8)"/>
+            <ellipse cx="9.6" cy="13" rx="2.1" ry="4.2" transform="rotate(104 9.6 13)"/>
+        </g>
+    </g>
+    <rect x="18" y="47" width="28" height="4.4" rx="2.2" fill="#fff" fill-opacity=".28"/>
+    <rect x="18" y="47" width="22" height="4.4" rx="2.2" fill="#fff"/>
+</svg>

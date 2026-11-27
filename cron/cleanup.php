@@ -8,7 +8,7 @@
  * sessions from older versions. It never touches the users' own data.
  * SavNewsletters also deletes the subscriptions never confirmed within PENDING_SUBSCRIBER_DAYS (as its terms promise)
  * and the expired email-confirmation links of accounts.
- * SavDocuments also deletes the documents left in the trash for TRASH_DAYS, the accounts never confirmed within 7 days (as
+ * SavDocuments, SavSpreadsheets and SavBooks also delete the documents (workbooks, books) left in the trash for TRASH_DAYS, the accounts never confirmed within 7 days (as
  * its privacy notice promises), expired links and who was present in a document.
  * SavPresentations also deletes what its privacy notice promises: the trash after TRASH_DAYS, the accounts never confirmed,
  * the log of the live changes after 2 days, reports and admin log after 2 years, expired links.
@@ -19,10 +19,11 @@
 
 const ROOM_RETENTION_HOURS = 24;
 const GAMES = ['c4' => 'connect-four', 'chess' => 'chess', 'fg' => 'faceguess', 'sb' => 'sea-battle', 'pm' => 'prism-mine']; // table prefix => project
-const APPS = ['foodtrack' => 'ft_', 'giftwise' => 'gw_', 'fucina' => 'fc_', 'thinkhop' => 'th_', 'forkville' => 'fv_', 'mycurriculum' => 'mc_', 'savnewsletters' => 'on_', 'savdocuments' => 'sd_', 'savpresentations' => 'sp_', 'savschedules' => 'sch_']; // project => default table prefix
-const NO_SESSION_DETAILS = ['thinkhop', 'forkville', 'mycurriculum', 'savnewsletters', 'savdocuments', 'savpresentations', 'savschedules']; // these apps never stored the IP and browser on their sessions: no such columns
+const APPS = ['foodtrack' => 'ft_', 'giftwise' => 'gw_', 'fucina' => 'fc_', 'thinkhop' => 'th_', 'forkville' => 'fv_', 'mycurriculum' => 'mc_', 'savnewsletters' => 'on_', 'savdocuments' => 'sd_', 'savbooks' => 'sb_', 'savspreadsheets' => 'ss_', 'savpresentations' => 'sp_', 'savschedules' => 'sch_', 'savdrive' => 'dr_']; // project => default table prefix
+const NO_SESSION_DETAILS = ['thinkhop', 'forkville', 'mycurriculum', 'savnewsletters', 'savdocuments', 'savbooks', 'savspreadsheets', 'savpresentations', 'savschedules', 'savdrive']; // these apps never stored the IP and browser on their sessions: no such columns
+const BORROWED = ['savbooks' => 'savdocuments', 'savdrive' => 'savdocuments']; // without a credentials.php of their own, SavBooks and SavDrive use the database of SavDocuments, always with their own prefix
 const ATTEMPT_RETENTION_HOURS = 2; // the longest rate limit looks back 60 minutes: older IPs serve no purpose
-const TRASH_DAYS = 30; // SavDocuments, SavPresentations and SavSchedules: what is in the trash
+const TRASH_DAYS = 30; // SavDocuments, SavSpreadsheets, SavPresentations and SavSchedules: what is in the trash
 const PENDING_SUBSCRIBER_DAYS = 7; // SavNewsletters: a confirmation link works 7 days, then the address is forgotten
 
 header('Content-Type: application/json');
@@ -61,9 +62,12 @@ function validPrefix($prefix, $default)
 function cleanApp($project, $defaultPrefix)
 {
     $file = __DIR__ . "/../$project/credentials.php";
+    $borrowed = !is_file($file) && isset(BORROWED[$project]);
+    if ($borrowed) $file = __DIR__ . '/../' . BORROWED[$project] . '/credentials.php';
     if (!is_file($file)) throw new RuntimeException("$project/credentials.php not found");
     $table_prefix = $defaultPrefix;
     require $file;
+    if ($borrowed) $table_prefix = $defaultPrefix;
     $host = (string)$localhost_db;
     $port = 3306;
     if (preg_match('/^(.+):(\d+)$/', $host, $m)) {
@@ -77,7 +81,7 @@ function cleanApp($project, $defaultPrefix)
         $result['pending_subscribers'] = $db->exec("DELETE FROM `{$prefix}subscribers` WHERE status = 'pending' AND COALESCE(confirm_sent_at, created_at) < UTC_TIMESTAMP() - INTERVAL " . PENDING_SUBSCRIBER_DAYS . " DAY");
         $result['email_links'] = $db->exec("DELETE FROM `{$prefix}email_tokens` WHERE expires_at < UTC_TIMESTAMP()");
     }
-    if ($project === 'savdocuments') {
+    if ($project === 'savdocuments' || $project === 'savspreadsheets' || $project === 'savbooks') { // SavSpreadsheets and SavBooks keep their workbooks and books in tables made the same way
         $result['trash'] = $db->exec("DELETE FROM `{$prefix}documents` WHERE deleted_at < UTC_TIMESTAMP() - INTERVAL " . TRASH_DAYS . " DAY");
         $result['unconfirmed'] = $db->exec("DELETE FROM `{$prefix}users` WHERE email_verified_at IS NULL AND status = 'active' AND created_at < UTC_TIMESTAMP() - INTERVAL 7 DAY");
         $result['links'] = $db->exec("DELETE FROM `{$prefix}email_tokens` WHERE expires_at < UTC_TIMESTAMP()") + $db->exec("DELETE FROM `{$prefix}invites` WHERE expires_at < UTC_TIMESTAMP()");
@@ -94,6 +98,25 @@ function cleanApp($project, $defaultPrefix)
         $db->exec("DELETE FROM `{$prefix}presence` WHERE seen_at < UTC_TIMESTAMP() - INTERVAL 1 HOUR");
         $db->exec("DELETE FROM `{$prefix}cache` WHERE expires_at < UTC_TIMESTAMP()");
         if ($db->query("SHOW TABLES LIKE " . $db->quote(addcslashes($prefix, '_%') . 'identity'))->fetchColumn()) $result['sign_in_requests'] = $db->exec("DELETE FROM `{$prefix}identity` WHERE expires_at < UTC_TIMESTAMP()"); // made at the first SavAccount or Google sign-in
+    }
+    if ($project === 'savdrive') {
+        // as its privacy notice promises: trash 30 days (the files on disk too), uploads left half-way 24 hours,
+        // accounts never confirmed 7 days. Files live in <storage>/<user id>/<bkey> ($storage_dir of its credentials.php)
+        $store = rtrim((string)($storage_dir ?? '') ?: __DIR__ . '/../savdrive/storage', '/\\');
+        $old = "UTC_TIMESTAMP() - INTERVAL " . TRASH_DAYS . " DAY";
+        $gone = 0;
+        foreach ($db->query("SELECT user_id, bkey FROM `{$prefix}nodes` WHERE trashed_at < $old AND bkey IS NOT NULL")->fetchAll(PDO::FETCH_ASSOC) as $f) {
+            if (preg_match('/^[a-f0-9]{32}$/', (string)$f['bkey']) && @unlink($store . '/' . (int)$f['user_id'] . '/' . $f['bkey'])) $gone++;
+        }
+        $result['trash'] = $db->exec("DELETE FROM `{$prefix}nodes` WHERE trash_root = 1 AND trashed_at < $old");
+        $result['trash_files'] = $gone;
+        foreach ($db->query("SELECT id, user_id FROM `{$prefix}uploads` WHERE expires_at < UTC_TIMESTAMP()")->fetchAll(PDO::FETCH_ASSOC) as $u) {
+            if (preg_match('/^[a-f0-9]{32}$/', (string)$u['id'])) @unlink($store . '/' . (int)$u['user_id'] . '/' . $u['id'] . '.part');
+        }
+        $result['uploads'] = $db->exec("DELETE FROM `{$prefix}uploads` WHERE expires_at < UTC_TIMESTAMP()");
+        $result['unconfirmed'] = $db->exec("DELETE FROM `{$prefix}users` WHERE email_verified_at IS NULL AND status = 'active' AND created_at < UTC_TIMESTAMP() - INTERVAL 7 DAY");
+        $result['links'] = $db->exec("DELETE FROM `{$prefix}email_tokens` WHERE expires_at < UTC_TIMESTAMP()");
+        if ($db->query("SHOW TABLES LIKE " . $db->quote(addcslashes($prefix, '_%') . 'identity'))->fetchColumn()) $result['sign_in_requests'] = $db->exec("DELETE FROM `{$prefix}identity` WHERE expires_at < UTC_TIMESTAMP()"); // made at the first SavAccount sign-in
     }
     if ($project === 'savschedules') {
         // as its privacy notice promises: trash 30 days, accounts never confirmed 7 (the answers go with their schedule)

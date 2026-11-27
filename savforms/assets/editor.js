@@ -7,7 +7,7 @@ import { btn, colorPop, confirm, copyText, dialog, drop, dropBtn, empty, fail, h
 import { getLang, t } from './i18n.js';
 import { S, api, drop as dropForm, formLink, keep } from './store.js';
 import { appsButton } from './office.js';
-import { go, userMenu } from './account.js';
+import { commands, go, userMenu } from './account.js';
 import { CHOICE, KINDS, OTHER, STATIC, kindIcon, kindName, newItem, uid } from './models.js';
 import { control, reqMark } from './inputs.js';
 import { headCard, richText, themed } from './fill.js';
@@ -88,20 +88,24 @@ export async function editorScreen(root, id, tab = 'questions') {
   const refreshHead = () => { put(badge, stateBadge(F)); tabs.querySelector('[value="answers"]')?.replaceChildren(...[icon('chart-column'), ' ', t('tab_answers'), F.responses ? h('span.tcount', String(F.responses)) : null].filter(Boolean)); };
   const tabs = segmented(t('tabs'), tab, [['questions', 'clipboard-list', t('tab_questions')], ['answers', 'chart-column', t('tab_answers')], ['settings', 'settings', t('tab_settings')]], (v) => { history.replaceState(null, '', '#/e/' + F.id + '/' + v); show(v); }, { class: 'etabs' });
   tabs.querySelectorAll('sav-radio').forEach((x) => x.append(' ', t('tab_' + x.getAttribute('value'))));
-  const shareBtn = btn(t('share'), { icon: 'send', variant: 'primary', appearance: 'solid', size: 'sm', onclick: () => shareDialog() });
-  const bar = h('header.etop', iconBtn('arrow-left', t('back_forms'), () => go('#/')), h('img.elogo', { src: 'icons/favicon.svg', width: 30, height: 30, alt: '' }),
-    h('div.etitlebox', title, h('div.emeta', badge, status)), h('div.spacer'),
-    iconBtn('eye', t('preview'), () => { flush(); window.open(formLink(F.id), '_blank', 'noopener'); }), shareBtn,
-    dropBtn('ellipsis-vertical', t('more'), () => [
+  const moreList = () => [
       ['copy-plus', t('duplicate'), async () => { await flush(); const x = await api('forms.duplicate', { id: F.id }); keep(x.form); go('#/e/' + x.form.id); }],
       ['download', t('download_savfor'), async () => { await flush(); (await import('./files.js')).saveSavfor(F.id, false); }],
       ['printer', t('print_form'), () => { flush(); window.open(formLink(F.id), '_blank', 'noopener'); }],
       '-', ['trash', t('delete_form'), async () => { if (!(await confirm(t('delete_form'), F.responses ? t('delete_form_answers', { n: F.responses }) : t('delete_form_text'), t('delete')))) return; pending = {}; await api('forms.delete', { id: F.id }); dropForm(F.id); go('#/'); }, { danger: true }],
-    ], { caret: false, placement: 'bottom-end' }), appsButton(), userMenu());
+  ];
+  const shareBtn = btn(t('share'), { icon: 'send', variant: 'primary', appearance: 'solid', size: 'sm', onclick: () => shareDialog() });
+  const bar = h('header.etop', iconBtn('arrow-left', t('back_forms'), () => go('#/')), h('img.elogo', { src: 'icons/favicon.svg', width: 30, height: 30, alt: '' }),
+    h('div.etitlebox', title, h('div.emeta', badge, status)), h('div.spacer'),
+    iconBtn('eye', t('preview'), () => { flush(); window.open(formLink(F.id), '_blank', 'noopener'); }), shareBtn,
+    dropBtn('ellipsis-vertical', t('more'), moreList, { caret: false, placement: 'bottom-end' }), appsButton(), userMenu());
   const syncTitle = () => { document.title = (F.title || t('untitled')) + ' – SavForms'; const h1 = body.querySelector('.fhead .ftitle'); if (h1 && h1 !== document.activeElement) h1.value = F.title; };
   const body = h('div.ebody');
   put(root, h('div.editor', bar, h('div.etabbar', tabs), body));
   refreshHead();
+  // the search of actions (⌘J / Ctrl+J): the tabs, then what the bar and its menu do
+  commands([t('tabs'), [['clipboard-list', t('tab_questions'), () => { tabs.value = 'questions'; history.replaceState(null, '', '#/e/' + F.id + '/questions'); show('questions'); }], ['chart-column', t('tab_answers'), () => { tabs.value = 'answers'; history.replaceState(null, '', '#/e/' + F.id + '/answers'); show('answers'); }], ['settings', t('tab_settings'), () => { tabs.value = 'settings'; history.replaceState(null, '', '#/e/' + F.id + '/settings'); show('settings'); }]]],
+    [t('more'), [['send', t('share'), () => shareDialog()], ['eye', t('preview'), () => { flush(); window.open(formLink(F.id), '_blank', 'noopener'); }], ...moreList().filter(Array.isArray).map(([ic, l, fn]) => [ic, l, fn]), ['arrow-left', t('back_forms'), '#/']]]);
   syncTitle();
 
   function show(v) {

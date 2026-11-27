@@ -4,7 +4,7 @@
  * never cached, except the pictures of the documents (they never change).
  *   pages, scripts and styles: network first, the kept copy when offline · fonts and icons: kept copy first
  */
-const CACHE = 'savdocuments-8';
+const CACHE = 'savdocuments-12';
 const SHELL = ['./', 'manifest.webmanifest', 'icons/favicon.svg', 'icons/icon-192.png', '../assets/sav/sav.css', '../assets/sav/sav.js', '../assets/savoffice/savoffice.js', '../identity/identity.css?v=2', '../identity/identity.js?v=3',
     ...['account.js', 'actions.js', 'admin.js', 'app.css', 'app.js', 'changelog.js', 'cfb.js', 'clean.js', 'doc.css', 'docx.js', 'editor.js', 'files.js', 'fonts.css', 'fonts.js', 'hero.js', 'home.js', 'i18n.js', 'icons-lib.js', 'icons.js', 'inserts.js', 'math.js', 'objects.js', 'odf.js', 'options.js', 'page.js', 'panels.js', 'pdf.js', 'qr.js', 'ruler.js', 'settings.js', 'shapes.js', 'share.js', 'store.js', 'sync.js', 'templates.js', 'thumbs.js', 'ui.js', 'version.js', 'write.js', 'zip.js'].map((f) => 'assets/' + f)];
 

@@ -14,8 +14,6 @@ $table_prefix = "sch_";
 // Master admins (account emails, once confirmed): they see every account and schedule, and can block them
 $master_emails = [];
 
-// Sign in with Google (optional): OAuth client ID of type "Web application"
-$google_client_id = "";
 
 // Sign in with SavAccount (optional): a confidential service created on savaccount.eu, "Manage services", with
 //   redirect address  https://www.illerom.eu/savschedules/api/?r=auth.sav.callback

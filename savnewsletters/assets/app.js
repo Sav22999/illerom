@@ -10,7 +10,7 @@
  * The newsletter editor is assets/editor.js; texts are in assets/i18n.js.
  */
 
-import {getLang, setLang, t, UI_LANGS} from './i18n.js?v=23';
+import {getLang, setLang, t, UI_LANGS} from './i18n.js?v=25';
 import {
     alert,
     api,
@@ -44,12 +44,12 @@ import {
     select,
     textarea,
     toast
-} from './ui.js?v=23';
-import {editorView, previewDialog, slotDialog} from './editor.js?v=23';
-import {registerIcons} from './icons.js?v=23';
-import {heroDeck} from './hero.js?v=23';
-import {openSavnew, pickSavnew, saveSavnew} from './files.js?v=23';
-import {CHANGES, VERSION} from './version.js?v=23';
+} from './ui.js?v=25';
+import {editorView, previewDialog, slotDialog} from './editor.js?v=25';
+import {registerIcons} from './icons.js?v=25';
+import {heroDeck} from './hero.js?v=25';
+import {openSavnew, pickSavnew, saveSavnew} from './files.js?v=25';
+import {CHANGES, VERSION} from './version.js?v=25';
 
 const app = document.getElementById('app');
 const STATUS_ORDER = ['pending', 'scheduled', 'sending', 'draft', 'rejected', 'expired', 'sent', 'failed', 'cancelled'];
@@ -57,14 +57,13 @@ let cache = {group: null, groups: null};
 
 // ---------------------------------------------------------------- boot
 
-// Google and SavAccount: joining an account that already exists, new accounts, ways of signing in (../identity/)
+// SavAccount: joining an account that already exists, new accounts, ways of signing in (../identity/)
 if (window.Identity) Identity.setup({
     name: 'SavNewsletters',
     lang: getLang,
     accent: '#C2307A',
     accept: 'acceptTerms',
     acceptUrl: () => 'terms.php?lang=' + getLang(),
-    google: (slot, cb) => googleButton(slot, cb),
     body: () => ({lang: getLang()}),
 });
 
@@ -121,6 +120,7 @@ let leaveLanding = null;
 
 function route() {
     document.title = 'SavNewsletters';
+    commands(); // the search of actions (⌘J / Ctrl+J): the screen adds its own
     leaveLanding?.();
     leaveLanding = null;
     const parts = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
@@ -206,6 +206,8 @@ function officeApps() {
 function userMenu() {
     const u = S.user;
     const av = h('sav-avatar', {label: u.name, title: u.name, button: '', style: 'background:hsl(' + hue(u.name) + ' 48% 38%);color:#fff;border-radius:50%;--sav-avatar-size:36px', slot: 'trigger'});
+    // the picture of SavAccount, once it has really loaded (a service disconnected there keeps the initials)
+    if (u.picture) { const im = new Image(); im.onload = () => av.setAttribute('image', u.picture); im.src = u.picture; }
     const items = [
         ['user', t('account'), () => go('#/account')],
         u.master ? ['shield', t('master'), () => go('#/master')] : null,
@@ -251,6 +253,17 @@ function changelogPage() {
         window.scrollTo(0, 0);
     }
     document.title = t('changelog') + ' – SavNewsletters';
+}
+
+/**
+ * The search of actions (⌘J or Ctrl+J, the same in every app of SavOffice: ../assets/savoffice/savoffice.js): what this
+ * screen can do, as groups [label, [[icon, label, run or '#/address', shortcut, description]…]], then the pages of the app.
+ */
+function commands(...groups) {
+    const item = ([ic, label, to, shortcut, description]) => ({icon: ic ? ico(ic) : '', label, shortcut, description, run: typeof to === 'function' ? to : () => go(to)});
+    const pages = S.user ? [['layout-grid', t('my_groups'), '#/'], ['user', t('account'), '#/account'], S.user.master ? ['shield', t('master'), '#/master'] : null, ['sparkles', t('changelog'), '#/changelog'], ['log-out', t('logout'), () => logout()]]
+        : [['', t('sign_in'), '#/signin'], ['sparkles', t('changelog'), '#/changelog']];
+    window.SavOffice?.commands([...groups.filter(Boolean).map(([label, list]) => ({label, items: list.filter(Boolean).map(item)})), {label: 'SavNewsletters', items: pages.filter(Boolean).map(item)}]);
 }
 
 function shell(content, side = {}) {
@@ -311,51 +324,6 @@ async function logout() {
 
 // ---------------------------------------------------------------- sign in / sign up
 
-let gisLoaded = null;
-
-function loadGoogle() {
-    if (!gisLoaded) gisLoaded = new Promise((resolve, reject) => {
-        const s = document.createElement('script');
-        s.src = 'https://accounts.google.com/gsi/client';
-        s.async = true;
-        s.onload = resolve;
-        s.onerror = reject;
-        document.head.append(s);
-    });
-    return gisLoaded;
-}
-
-function googleButton(box, onCredential) {
-    if (!S.config.googleClientId) return;
-    // inside the Android app Google signs in natively (the page of Google does not work in a WebView)
-    if (/SavNewslettersApp\/Android/.test(navigator.userAgent) && window.SavNewslettersAndroid && window.SavNewslettersAndroid.googleSignIn) {
-        window.SavNewslettersNative = Object.assign({}, window.SavNewslettersNative, {
-            result: (kind, value, err) => {
-                if (kind !== 'google') return;
-                if (value) onCredential(value);
-                else if (err !== 'cancelled') failToast({code: 'google_token'});
-            }
-        });
-        put(box, h('sav-button', {appearance: 'outline', block: true, onclick: () => window.SavNewslettersAndroid.googleSignIn(S.config.googleClientId)}, t('google_continue')));
-        return;
-    }
-    loadGoogle().then(() => {
-        google.accounts.id.initialize({
-            client_id: S.config.googleClientId,
-            callback: (r) => onCredential(r.credential),
-            ux_mode: 'popup'
-        });
-        google.accounts.id.renderButton(box, {
-            theme: 'outline',
-            size: 'large',
-            text: 'continue_with',
-            width: Math.min(360, box.clientWidth || 320),
-            locale: getLang()
-        });
-    }).catch(() => {
-    });
-}
-
 function signedIn(r) {
     setUser(r.user, r.csrf);
     route();
@@ -402,26 +370,11 @@ function authCard(mode) {
         const seg = h('sav-radio-group', {appearance: 'buttons', size: 'sm', value: mode, 'aria-label': t('sign_in'), class: 'segm wide'},
             h('sav-radio', {value: 'signin'}, t('sign_in')), h('sav-radio', {value: 'signup'}, t('create_account')));
         seg.addEventListener('change', () => go('#/' + seg.value));
-        const g = h('div.gbox');
         const sav = window.Identity ? Identity.button(S.config.savAccount) : null;
         put(inner, seg, form,
             !S.config.mailReady && mode === 'signup' ? h('p.muted.small', t('mail_not_ready')) : null,
-            S.config.googleClientId || sav ? [h('sav-divider', t('or')), S.config.googleClientId ? g : null, sav,
+            sav ? [h('sav-divider', t('or')), sav,
                 h('p.muted.small.center', t('google_terms'), ' ', h('a', {href: 'terms.php?lang=' + getLang(), target: '_blank'}, t('terms_link')))] : null);
-        if (S.config.googleClientId) setTimeout(() => googleButton(g, async (credential) => {
-            try {
-                let r = await api('auth.google', {credential, lang: getLang()});
-                if (r.error === 'needs_signup') {
-                    const ok = await confirmDialog(t('google_new_title'), t('google_new_text'), t('create_account'));
-                    if (!ok) return;
-                    r = await api('auth.google', {credential, acceptTerms: true, lang: getLang()});
-                }
-                signedIn(r);
-            } catch (e) {
-                if (window.Identity && Identity.handle(e)) return;
-                showErr(e);
-            }
-        }));
     };
     draw();
     return box;
@@ -541,14 +494,17 @@ async function openFromDevice(file) {
     ]);
 }
 
-if (window.launchQueue) window.launchQueue.setConsumer(async (p) => {
+{ const take = async (p) => {
     const f = p.files && p.files[0];
     if (!f) return;
     const file = await f.getFile();
     // after signing in, if needed: the app boots first
     const wait = () => S.user && S.user.verified ? openFromDevice(file) : setTimeout(wait, 500);
     wait();
-});
+};
+  window.launchQueue?.setConsumer(take);
+  window.SavOffice?.fromDrive?.(take); // a file opened from SavDrive (?savdrive=<id>), given like a file of the device
+}
 
 // ---------------------------------------------------------------- shared pieces
 
@@ -640,6 +596,8 @@ async function dashboard() {
     search.addEventListener('sav-clear', () => { q = ''; draw(); });
     shell(box, {current: 'home', search});
     draw();
+    commands([t('new_group'), [['plus', t('new_group'), () => createGroup()], ['file-up', t('open_file'), () => openFile()]]],
+        [t('my_groups'), groups.map((g) => ['users', g.name, '#/g/' + g.id, null, t('n_subscribers', {n: g.subscribers})])]);
 }
 
 /** The languages subscribers can choose: chips, at least one stays on. */
@@ -760,6 +718,8 @@ async function groupPage(id, tab) {
             ? h('span', t('setup_sending_long'), ' ', h('a', {href: '#/g/' + g.id + '/settings'}, t('open_settings'))) : t('sending_not_ready'), 'warning', {icon: 'mail'}) : null,
         bar,
     ], {current: 'g:' + g.id, action: groupAction(g)});
+    commands([g.name, [atLeast(g.role, 'moderator') && g.status === 'active' ? ['plus', t('new_newsletter'), () => newNewsletter(g)] : null, ...tabs.map(([k, ic]) => [ic, t('tab_' + k), '#/g/' + g.id + '/' + k])]],
+        [t('my_groups'), (cache.groups || []).filter((x) => x.id !== g.id).map((x) => ['users', x.name, '#/g/' + x.id])]);
     const views = {newsletters: tabNewsletters, subscribers: tabSubscribers, templates: tabTemplates, members: tabMembers, share: tabShare, settings: tabSettings};
     try {
         await views[tab](g, body);
@@ -1650,7 +1610,7 @@ function accountPage() {
                         toast(t('saved'));
                     }
                 }), window.Identity ? btn(Identity.text('methods'), {icon: 'shield', onclick: Identity.methods}) : null),
-                !window.Identity && u.googleLinked ? h('p.muted.small', t('google_linked')) : null),
+                null),
             scard('shield', t(u.hasPassword ? 'change_password' : 'set_password'), u.hasPassword ? null : t('set_password_text'),
                 u.hasPassword ? field(t('current_password'), cur) : null,
                 field(t('new_password'), pw, t('password_hint')),

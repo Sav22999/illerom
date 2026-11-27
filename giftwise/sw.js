@@ -1,5 +1,5 @@
 /* Giftwise — service worker: the app shell works offline, data always comes from the network. */
-const CACHE = 'giftwise-1.2.4';
+const CACHE = 'giftwise-1.2.5';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'assets/app.css?v=1.2.4', 'assets/giftwise.css?v=1.2.4', 'assets/i18n.js?v=1.2.4', 'assets/api.js?v=1.2.4', 'assets/ui.js?v=1.2.4', 'assets/app.js?v=1.2.4', 'assets/icons/icon-192.png', 'assets/fonts/inter-latin-wght-normal.woff2'];
 
 self.addEventListener('install', e => {

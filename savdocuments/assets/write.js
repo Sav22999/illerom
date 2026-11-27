@@ -632,6 +632,8 @@ export async function openWriter(root, pid, opt = {}) {
     return { title: ed.title, settings: snap.settings, blocks: snap.blocks, images };
   }
   W.bundle = bundle;
+  // SavDrive: the cloud next to the grid of the apps saves this file into the drive (../assets/savoffice/savoffice.js)
+  if (!lim.noDownload) window.SavOffice?.exporter?.({ key: pid, make: async () => { const b = await bundle(); return { blob: await toSavdoc(b), name: fileName(b.title, 'savdoc') }; } });
   async function save(kind) {
     const n = toast(t('preparing'), 'neutral', { duration: 0 });
     try {
@@ -707,10 +709,12 @@ export async function openWriter(root, pid, opt = {}) {
     const L = [[t('bold'), 'Mod+B'], [t('italic'), 'Mod+I'], [t('underline'), 'Mod+U'], [t('strike'), 'Mod+Shift+X'], [t('code'), 'Mod+E'], [t('link'), 'Mod+K'], [t('clear'), 'Mod+\\'], [t('s_h1') + '…4', 'Mod+Alt+1…4'], [t('s_p'), 'Mod+Alt+0'], [t('s_ol'), 'Mod+Shift+7'], [t('s_ul'), 'Mod+Shift+8'], [t('s_check'), 'Mod+Shift+9'], [t('left') + ' / ' + t('center') + ' / ' + t('right') + ' / ' + t('justify'), 'Mod+Shift+L E R J'], [t('indent'), 'Mod+]'], [t('copy_format'), 'Mod+Alt+C'], [t('paste_format'), 'Mod+Alt+V'], [t('paste_plain'), 'Mod+Shift+V'], [t('page_break'), 'Mod+Enter'], [t('c_add'), 'Mod+Alt+M'], [t('find'), 'Mod+F'], [t('palette_l'), 'Mod+J'], [t('insert'), '/'], [t('undo'), 'Mod+Z'], [t('redo'), 'Mod+Shift+Z'], [t('print'), 'Mod+P']];
     dialog({ title: t('shortcuts'), width: '34rem', body: h('div.keys', L.map(([l, k]) => [h('span', l), h('kbd', K(k))])) });
   }
+  /** SavBooks, next door, makes a new book from this document (it reads it with the same sign-in): the document does not change. */
+  const toBook = async () => { await W.sync?.flush(); window.open(new URL('../savbooks/#/from/' + pid, location.href.split('#')[0]).href, '_blank', 'noopener'); };
   const duplicate = async () => { await W.sync?.flush(); const r = await api('doc.duplicate', { doc: pid, title: `${t('copy_of')} ${ed.title}`.slice(0, 160) }); location.hash = '#/d/' + r.doc.id; };
   const owner = data.doc.role === 'owner';
   function moreItems() {
-    return [...(mobile() && !S.user ? [['log-in', t('sign_in'), () => { location.hash = '#/signin'; }], '-'] : []), ['search', t('find'), () => setTab('find', true), { kbd: 'Mod+F' }], editable && !isLocal ? ['history', t('history'), () => setTab('history', true)] : null, ['volume-2', speaking() ? t('stop_reading') : t('read_aloud'), () => speak()], editable ? ['maximize', t('focus'), () => focusMode()] : null, ['tally-5', t('counts'), () => countsDialog()], '-', ...dlItems(), lim.noDownload ? null : ['printer', t('print'), () => printDoc(), { kbd: 'Mod+P' }], ['file-up', t('open_'), () => importFile()], !isLocal && S.user && !data.doc.review && !lim.noCopy ? ['copy', t('duplicate'), () => duplicate()] : null, owner && !isLocal ? ['layout-template', t('as_template'), async () => { await setPrefs({ templates: [...new Set([...(prefs().templates || []), pid])].slice(-30) }); toast(t('as_template_done'), 'success'); }] : null, editable && !mobile() ? ['settings-2', t('toolbar_edit'), () => toolsDialog()] : null, ['keyboard', t('shortcuts'), () => shortcuts()], !isLocal ? ['link', t('copy_link'), () => copyText(location.href)] : null, !isLocal && !owner && !data.doc.review ? ['flag', t('report'), () => reportDialog(pid)] : null, owner && !isLocal && !data.doc.deleted ? '-' : null, owner && !isLocal && !data.doc.deleted ? ['trash', t('to_trash'), async () => { await W.sync?.flush(); await api('doc.trash', { doc: pid }); toast(t('moved_trash')); location.hash = '#/'; }, { danger: true }] : null];
+    return [...(mobile() && !S.user ? [['log-in', t('sign_in'), () => { location.hash = '#/signin'; }], '-'] : []), ['search', t('find'), () => setTab('find', true), { kbd: 'Mod+F' }], editable && !isLocal ? ['history', t('history'), () => setTab('history', true)] : null, ['volume-2', speaking() ? t('stop_reading') : t('read_aloud'), () => speak()], editable ? ['maximize', t('focus'), () => focusMode()] : null, ['tally-5', t('counts'), () => countsDialog()], '-', ...dlItems(), !isLocal && S.user && !data.doc.review && !lim.noCopy ? ['book-open', t('to_book'), () => toBook()] : null, lim.noDownload ? null : ['printer', t('print'), () => printDoc(), { kbd: 'Mod+P' }], ['file-up', t('open_'), () => importFile()], !isLocal && S.user && !data.doc.review && !lim.noCopy ? ['copy', t('duplicate'), () => duplicate()] : null, owner && !isLocal ? ['layout-template', t('as_template'), async () => { await setPrefs({ templates: [...new Set([...(prefs().templates || []), pid])].slice(-30) }); toast(t('as_template_done'), 'success'); }] : null, editable && !mobile() ? ['settings-2', t('toolbar_edit'), () => toolsDialog()] : null, ['keyboard', t('shortcuts'), () => shortcuts()], !isLocal ? ['link', t('copy_link'), () => copyText(location.href)] : null, !isLocal && !owner && !data.doc.review ? ['flag', t('report'), () => reportDialog(pid)] : null, owner && !isLocal && !data.doc.deleted ? '-' : null, owner && !isLocal && !data.doc.deleted ? ['trash', t('to_trash'), async () => { await W.sync?.flush(); await api('doc.trash', { doc: pid }); toast(t('moved_trash')); location.hash = '#/'; }, { danger: true }] : null];
   }
 
   // command palette
@@ -748,6 +752,7 @@ export async function openWriter(root, pid, opt = {}) {
   const unload = (e) => { flushSettings(); ed.scan(); if (W.sync?.pending || saveT) { W.sync?.flush(); e.preventDefault(); } };
   addEventListener('beforeunload', unload);
   W.close = () => {
+    window.SavOffice?.exporter?.(null);
     flushSettings();
     ed.scan();
     if (saveT) saveLocal();

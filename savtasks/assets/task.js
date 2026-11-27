@@ -12,13 +12,14 @@ import { S, api, drop as forget, inbox, keep, listById, taskById } from './store
 import { go, prefs } from './account.js';
 import { addDays, dayLabel, longDay, relDay, todayKey, weekday } from './time.js';
 import { PRIO, PRIO_COLOR, defaultRemind, toggleDone, whenText, zonedMs } from './tasks.js';
+import { streaks } from './habits.js';
 
 const tz = () => prefs().tz || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 const today = () => todayKey(tz());
 const pad = (n) => String(n).padStart(2, '0');
 const stop = (n) => { n.addEventListener('keydown', (e) => e.stopPropagation()); return n; };
 export const LIST_COLORS = ['#0b7a87', '#1f56d1', '#6a2cf0', '#c2307a', '#c93a2f', '#e0532f', '#c27a06', '#0f8a63', '#4a5875', '#7a5c3e'];
-export const LIST_ICONS = ['', 'list-checks', 'square-kanban', 'briefcase', 'house', 'shopping-cart', 'book-open', 'heart', 'plane', 'graduation-cap', 'dumbbell', 'lightbulb', 'users', 'star', 'flag', 'inbox'];
+export const LIST_ICONS = ['', 'list-checks', 'square-kanban', 'chart-gantt', 'grid-2x2', 'calendar-days', 'repeat', 'flame', 'table', 'briefcase', 'house', 'shopping-cart', 'book-open', 'heart', 'plane', 'graduation-cap', 'dumbbell', 'lightbulb', 'users', 'star', 'flag', 'inbox'];
 
 // ------------------------------------------------------------------ repetitions
 
@@ -64,10 +65,10 @@ export function openTask(id, ctx, init = {}) {
   const real = id ? taskById(id) : null;
   if (id && !real) return toast(t('err_not_found'), 'danger');
   const isNew = !real;
-  const x = real ? { ...real, checklist: real.checklist.map((c) => ({ ...c })), tags: [...real.tags] } : { title: '', notes: '', checklist: [], tags: init.tags || [], priority: 0, starred: !!init.starred, due: init.due || null, time: null, rrule: '', remind: null, list: init.list || inbox().id, col: null };
+  const x = real ? { ...real, checklist: real.checklist.map((c) => ({ ...c })), tags: [...real.tags] } : { title: '', notes: '', checklist: [], tags: init.tags || [], priority: 0, starred: !!init.starred, start: null, due: init.due || null, time: null, rrule: '', remind: null, list: init.list || inbox().id, col: null };
   if (isNew && x.due) x.remind = defaultRemind(x.due, null);
   let remindKind = kindOf(x);
-  const drawer = h('sav-drawer.tdet', { label: t(isNew ? 'new_task' : 'task'), placement: mobile() ? 'bottom' : 'end' });
+  const drawer = h('sav-drawer.tdet', { label: t(isNew ? 'new_task' : listById(x.list)?.view === 'habits' ? 'habit' : 'task'), placement: mobile() ? 'bottom' : 'end' });
   open = drawer;
 
   /** Saves some fields of an existing task (and keeps the copy of the app); a new one only remembers them. */
@@ -81,7 +82,8 @@ export function openTask(id, ctx, init = {}) {
   const title = stop(h('sav-textarea.dtitle', { value: x.title, placeholder: t('title_ph'), rows: 1, resize: 'auto', maxlength: 255, 'aria-label': t('title_l'), autofocus: isNew || null }));
   title.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (isNew) addBtn.click(); else title.blur(); } });
   title.addEventListener('change', () => { const v = String(title.value).replace(/\s+/g, ' ').trim(); if (!v && !isNew) { title.value = x.title; return; } if (v !== x.title) save({ title: v }); });
-  const tick = isNew ? null : h('sav-checkbox.tcheck.big', { checked: !!x.done || null, 'aria-label': t('mark_done'), style: x.priority ? `--p:${PRIO_COLOR[x.priority]}` : null });
+  const habit = listById(x.list)?.view === 'habits';
+  const tick = isNew || habit ? null : h('sav-checkbox.tcheck.big', { checked: !!x.done || null, 'aria-label': t('mark_done'), style: x.priority ? `--p:${PRIO_COLOR[x.priority]}` : null });
   tick?.addEventListener('change', async () => { await toggleDone(taskById(x.id), tick.checked, ctx); Object.assign(x, taskById(x.id)); });
 
   // list and column
@@ -104,6 +106,8 @@ export function openTask(id, ctx, init = {}) {
   // due day, time, repetition, reminder
   const datePick = stop(h('sav-date-picker', { label: t('due'), value: x.due || '', size: 'sm', clearable: true }));
   const timePick = stop(h('sav-time-picker', { label: t('time'), value: x.time || '', size: 'sm', step: 5, clearable: true }));
+  // the start day (optional): the bar of the Gantt goes from it to the due day
+  const startPick = stop(h('sav-date-picker', { label: t('start_day'), value: x.start || '', size: 'sm', clearable: true, help: t('start_day_t') }));
   const quick = h('div.dquick');
   const ruleBox = h('div'), remindBox = h('div.dremind');
   const setDue = (due, time = x.time) => {
@@ -115,12 +119,21 @@ export function openTask(id, ctx, init = {}) {
     if (!next.due) { f.remind = null; remindKind = 'none'; } else if (c && c[2] !== undefined) f.remind = c[2] > Date.now() ? new Date(c[2]).toISOString() : null;
     else if (remindKind === 'none' && !x.due && isNew) { f.remind = defaultRemind(next.due, next.time); remindKind = kindOf({ ...next, remind: f.remind }); }
     if (!next.due) f.rrule = '';
+    if (x.start && (!next.due || next.due <= x.start)) { f.start = null; startPick.value = ''; }
     datePick.value = f.due || '';
     timePick.value = f.time || '';
     save(f);
     paintDue();
   };
   datePick.addEventListener('change', () => setDue(datePick.value || null));
+  startPick.addEventListener('change', () => {
+    let v = startPick.value || null;
+    if (v && !x.due) { setDue(v); v = null; } // a start alone is the due day
+    if (v && v === x.due) v = null;
+    if (v && v > x.due) { toast(t('start_after_due'), 'warning'); startPick.value = x.start || ''; return; }
+    startPick.value = v || '';
+    save({ start: v });
+  });
   timePick.addEventListener('change', () => { if (!x.due && timePick.value) return setDue(today(), timePick.value); setDue(x.due, timePick.value || null); });
   const paintDue = () => {
     const k = today(), nextMon = addDays(k, 7 - weekday(k));
@@ -206,7 +219,7 @@ export function openTask(id, ctx, init = {}) {
   const addBtn = primary(t('add'), { slot: 'footer', icon: 'plus', onclick: async () => {
     const v = String(title.value).replace(/\s+/g, ' ').trim();
     if (!v) { title.focus(); throw Object.assign(new Error(), { code: 'title_required' }); }
-    const r = await api('tasks.task.save', { title: v, notes: notes.value, list: x.list, col: x.col || undefined, due: x.due, time: x.time, rrule: x.rrule, remind: x.remind, priority: x.priority, starred: x.starred, tags: x.tags, checklist: x.checklist, tz: tz() });
+    const r = await api('tasks.task.save', { title: v, notes: notes.value, list: x.list, col: x.col || undefined, start: x.start, due: x.due, time: x.time, rrule: x.rrule, remind: x.remind, priority: x.priority, starred: x.starred, tags: x.tags, checklist: x.checklist, tz: tz() });
     keep(r.task);
     drawer.hide();
     ctx.redraw();
@@ -214,14 +227,14 @@ export function openTask(id, ctx, init = {}) {
   } });
   const foot = isNew ? [btn(t('cancel'), { slot: 'footer', onclick: () => drawer.hide() }), addBtn] : [
     btn(t('delete'), { slot: 'footer', icon: 'trash', variant: 'danger', appearance: 'ghost', onclick: async () => { if (!(await confirm(t('delete_task'), t('delete_task_t', { t: x.title }), t('delete')))) return; await api('tasks.task.delete', { id: x.id }); forget(x.id); drawer.hide(); ctx.redraw(); toast(t('deleted'), 'success'); } }),
-    btn(t('duplicate'), { slot: 'footer', icon: 'copy', appearance: 'ghost', onclick: async () => { const r = await api('tasks.task.save', { title: x.title, notes: x.notes, list: x.list, due: x.due, time: x.time, rrule: x.rrule, priority: x.priority, starred: x.starred, tags: x.tags, checklist: x.checklist.map((c) => ({ t: c.t, d: false })), tz: tz() }); keep(r.task); ctx.redraw(); openTask(r.task.id, ctx); } }),
+    btn(t('duplicate'), { slot: 'footer', icon: 'copy', appearance: 'ghost', onclick: async () => { const r = await api('tasks.task.save', { title: x.title, notes: x.notes, list: x.list, start: x.start, due: x.due, time: x.time, rrule: x.rrule, priority: x.priority, starred: x.starred, tags: x.tags, checklist: x.checklist.map((c) => ({ t: c.t, d: false })), tz: tz() }); keep(r.task); ctx.redraw(); openTask(r.task.id, ctx); } }),
     primary(t('done'), { slot: 'footer', onclick: () => drawer.hide() })];
 
   const sec = (label, ...kids) => h('section.dsec', label ? h('sav-label', { appearance: 'plain', case: 'normal', variant: 'neutral' }, label) : null, kids);
   drawer.append(h('div.dbody',
     h('div.dhead', tick, title),
     h('div.grid2', listSel, colBox),
-    sec(t('when'), quick, h('div.grid2', datePick, timePick), ruleBox, remindBox),
+    habit ? habitSection(x, save) : sec(t('when'), quick, h('div.grid2', datePick, timePick), startPick, ruleBox, remindBox),
     sec(null, prio, star),
     sec(null, tags),
     sec(t('subtasks'), clBox, addCl),
@@ -238,6 +251,33 @@ export function openTask(id, ctx, init = {}) {
   });
   customElements.whenDefined('sav-drawer').then(() => drawer.show());
   return drawer;
+}
+
+// ------------------------------------------------------------------ a habit
+
+/** The days a habit asks for (every day, the weekdays, or the days chosen) and how it is going. */
+function habitSection(x, save) {
+  const by = () => /BYDAY=([A-Z,]+)/.exec(x.rrule || '')?.[1]?.split(',') || [];
+  const kind = () => (!x.rrule || x.rrule === 'FREQ=DAILY' ? 'daily' : x.rrule === 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR' ? 'weekdays' : 'days');
+  const box = h('div.dsec');
+  const paint = () => {
+    const k = kind(), sel = by();
+    const days = h('div.hdays', DAYS.map((d, i) => h('button.hdaybtn' + (sel.includes(d) ? '.on' : ''), { type: 'button', 'aria-pressed': String(sel.includes(d)), title: wdName(i, 'long'), onclick: () => {
+      const next = sel.includes(d) ? sel.filter((y) => y !== d) : [...sel, d];
+      if (!next.length) return;
+      save({ rrule: 'FREQ=WEEKLY;BYDAY=' + DAYS.filter((y) => next.includes(y)).join(',') }).then(paint);
+    } }, wdName(i, 'narrow'))));
+    const s = streaks(x);
+    put(box, h('sav-label', { appearance: 'plain', case: 'normal', variant: 'neutral' }, t('h_when')),
+      segmented(t('h_when'), k, [['daily', '=' + t('r_every_day'), t('r_every_day')], ['weekdays', '=' + t('h_weekdays'), t('h_weekdays')], ['days', '=' + t('h_days'), t('h_days')]], (v) => {
+        const r = v === 'daily' ? '' : v === 'weekdays' ? 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR' : 'FREQ=WEEKLY;BYDAY=' + (by().length ? by().join(',') : DAYS[weekday(todayKey(prefs().tz || 'UTC'))]);
+        save({ rrule: r }).then(paint);
+      }, { class: 'wide' }),
+      k === 'days' ? days : null,
+      h('div.hstats', h('div', h('b', String(s.cur)), h('small', t('h_streak'))), h('div', h('b', String(s.best)), h('small', t('h_best'))), h('div', h('b', s.rate + '%'), h('small', t('h_rate30')))));
+  };
+  paint();
+  return box;
 }
 
 // ------------------------------------------------------------------ SavCalendar
@@ -305,11 +345,11 @@ export function listDialog(l, ctx, asNew = false) {
   const base = l;
   if (asNew) l = null;
   const name = stop(h('sav-input', { label: t('name'), value: l?.name || '', maxlength: 120, autofocus: true, placeholder: t('list_ph') }));
-  let color = l?.color || LIST_COLORS[S.lists.length % LIST_COLORS.length], ic = l?.icon || (base?.view === 'board' ? 'square-kanban' : ''), view = l?.view || base?.view || 'list';
+  let color = l?.color || LIST_COLORS[S.lists.length % LIST_COLORS.length], ic = l?.icon || (base?.view === 'board' ? 'square-kanban' : base?.view === 'gantt' ? 'chart-gantt' : ''), view = l?.view || base?.view || 'list';
   const col = colorPop(t('color'), color, (v) => { if (v) color = v; }, { list: LIST_COLORS });
   const icons = h('div.icons', LIST_ICONS.map((n) => h('button.icb' + (n === ic ? '.on' : ''), { type: 'button', title: n || t('no_icon'), 'aria-pressed': String(n === ic), onclick: (e) => { ic = n; icons.querySelectorAll('.icb').forEach((b) => { b.classList.toggle('on', b === e.currentTarget); b.setAttribute('aria-pressed', String(b === e.currentTarget)); }); } }, n ? icon(n) : h('i.ldot', { style: `--c:${color}` }))));
-  const as = segmented(t('show_as'), view, [['list', '=' + t('as_list'), t('as_list')], ['board', '=' + t('as_board'), t('as_board')]], (v) => { view = v; }, { show: true, class: 'wide' });
-  dialog({ title: t(l ? 'edit_list' : base?.view === 'board' ? 'new_board' : 'new_list'), width: '28rem', body: h('div.form', name, h('div.cf', h('span.flabel', t('color')), col), h('div', h('span.flabel', t('icon')), icons), as), actions: [{ label: t('cancel') }, { label: t(l ? 'save' : 'create'), primary: true, run: async () => {
+  const as = segmented(t('show_as'), view, [['list', '=' + t('as_list'), t('as_list')], ['board', '=' + t('as_board'), t('as_board')], ['gantt', '=' + t('as_gantt'), t('as_gantt')]], (v) => { view = v; }, { show: true, class: 'wide' });
+  dialog({ title: t(l ? 'edit_list' : base?.view === 'board' ? 'new_board' : base?.view === 'gantt' ? 'new_gantt' : 'new_list'), width: '28rem', body: h('div.form', name, h('div.cf', h('span.flabel', t('color')), col), h('div', h('span.flabel', t('icon')), icons), as), actions: [{ label: t('cancel') }, { label: t(l ? 'save' : 'create'), primary: true, run: async () => {
     if (!name.value.trim()) throw Object.assign(new Error(), { code: 'name_required' });
     const r = await api('tasks.list.save', { ...(l ? { id: l.id } : {}), name: name.value.trim(), color, icon: ic, view });
     if (l) Object.assign(l, r.list); else S.lists.push(r.list);

@@ -6,7 +6,7 @@
  */
 'use strict';
 
-const CACHE = 'foodtrack-1.6.25';
+const CACHE = 'foodtrack-1.6.26';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'assets/app.css?v=1.6.25', 'assets/i18n.js?v=1.6.25', 'assets/img/icons.js?v=1.6.25', 'assets/img/icons.svg?v=4', 'assets/api.js?v=1.6.25', 'assets/ui.js?v=1.6.25', 'assets/app.js?v=1.6.25', 'assets/vendor/zxing-0.21.3.min.js', 'assets/icons/icon-192.png', 'assets/icons/icon-color.png', 'assets/fonts/inter-latin-wght-normal.woff2'];
 
 self.addEventListener('install', event => {

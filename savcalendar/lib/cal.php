@@ -341,8 +341,8 @@ function newsletter_items(array $u, string $from, string $to, array $prefs): arr
 // ------------------------------------------------------------------ SavTasks
 
 /**
- * The tasks of the account in SavTasks (the same database: its tables sch_task_*) with a due day in [from, to): a whole
- * day, or 30 minutes from its time. Done ones too (done: true). Read-only here, never in the feed: a task is something to
+ * The tasks of the account in SavTasks (the same database: its tables sch_task_*) that touch [from, to): a whole day, 30
+ * minutes from its time, or every day from its start day to its due day. Done ones too (done: true). Read-only here, never in the feed: a task is something to
  * do, not a time when one is busy. The app ticks them through the API of SavTasks itself (same session). [] when SavTasks
  * never ran on this database.
  */
@@ -351,19 +351,23 @@ function task_items(array $u, string $from, string $to, array $prefs): array
     if (($prefs['tasks'] ?? true) === false) return [];
     $tasks = rtrim(dirname(rtrim(app_url(), '/')), '/') . '/savtasks/';
     try {
-        $rows = q('SELECT i.tid, i.title, i.notes, i.due_date, i.due_time, i.due_at, i.tz, i.done_at, i.priority, i.rrule, l.name list_name, l.color FROM ' . t('task_items') . ' i
+        // i.*: start_date exists from version 2 of SavTasks on (a database not migrated yet still answers)
+        $rows = q('SELECT i.*, l.name list_name, l.color FROM ' . t('task_items') . ' i
             JOIN ' . t('task_lists') . ' l ON l.id = i.list_id WHERE l.user_id = ? AND l.archived = 0 AND i.due_date IS NOT NULL AND i.due_date >= ? AND i.due_date <= ? ORDER BY i.due_date, i.due_time LIMIT 3000',
-            [$u['id'], gmdate('Y-m-d', strtotime($from . ' UTC') - 86400), gmdate('Y-m-d', strtotime($to . ' UTC') + 86400)])->fetchAll();
+            [$u['id'], gmdate('Y-m-d', strtotime($from . ' UTC') - 86400), gmdate('Y-m-d', strtotime($to . ' UTC') + 400 * 86400)])->fetchAll();
     } catch (PDOException $e) {
         return [];
     }
     $out = [];
     foreach ($rows as $r) {
         if ($r['done_at'] !== null && ($prefs['tasksDone'] ?? true) === false) continue;
-        $timed = $r['due_time'] !== null && $r['due_at'] !== null;
+        $start = $r['start_date'] ?? null;
+        $lastDay = gmdate('Y-m-d', strtotime($to . ' UTC') + 86400);
+        if (($start ?? $r['due_date']) > $lastDay) continue; // starts after the range
+        $timed = !$start && $r['due_time'] !== null && $r['due_at'] !== null; // a task over several days is shown as whole days
         $out[] = [
             'id' => 'task-' . $r['tid'], 'source' => 'tasks', 'tid' => $r['tid'], 'title' => $r['title'], 'descr' => (string)$r['notes'], 'place' => '', 'list' => $r['list_name'],
-            'allDay' => !$timed, 'start' => $timed ? iso($r['due_at']) : $r['due_date'], 'end' => $timed ? iso(gmdate('Y-m-d H:i:s', strtotime($r['due_at'] . ' UTC') + 1800)) : gmdate('Y-m-d', strtotime($r['due_date'] . ' UTC') + 86400),
+            'allDay' => !$timed, 'start' => $timed ? iso($r['due_at']) : ($start ?? $r['due_date']), 'end' => $timed ? iso(gmdate('Y-m-d H:i:s', strtotime($r['due_at'] . ' UTC') + 1800)) : gmdate('Y-m-d', strtotime($r['due_date'] . ' UTC') + 86400),
             'tz' => $r['tz'], 'color' => $r['color'], 'readOnly' => true, 'why' => $r['done_at'] ? 'task_done' : 'task', 'done' => $r['done_at'] !== null, 'priority' => (int)$r['priority'], 'repeats' => $r['rrule'] !== '',
             'status' => 'confirmed', 'busy' => false, 'link' => $tasks . '#/t/' . $r['tid'],
         ];

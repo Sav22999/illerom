@@ -22,6 +22,10 @@
  *   GET  auth.methods           the ways of signing in of the signed-in account
  *   POST auth.methods.link      {provider: google, credential}
  *   POST auth.methods.unlink    {provider}
+ *
+ * The profile picture of SavAccount (the standard "picture" claim, an address of savaccount.eu that is different for
+ * every service) is kept in users.sav_picture at every sign-in or link with SavAccount and dropped when it is unlinked:
+ * public_user() of the project gives it to the page as `picture` (ident_picture()), the avatar shows it.
  */
 
 declare(strict_types=1);
@@ -71,7 +75,7 @@ function ident_schema(): void
     static $done = false;
     if ($done) return;
     $done = true;
-    if (ident_q('SELECT v FROM ' . t('meta') . " WHERE k = 'identity'")->fetchColumn() === '1') return;
+    if (ident_q('SELECT v FROM ' . t('meta') . " WHERE k = 'identity'")->fetchColumn() === '2') return;
     db()->exec('CREATE TABLE IF NOT EXISTS ' . t('identity') . " (
         `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
         `kind` VARCHAR(10) NOT NULL COMMENT 'flow: gone to SavAccount; link: to be joined; signup: to be created',
@@ -85,6 +89,7 @@ function ident_schema(): void
         `user_id` INT UNSIGNED NULL,
         `nonce` VARCHAR(64) NOT NULL DEFAULT '',
         `verifier` VARCHAR(128) NOT NULL DEFAULT '',
+        `picture` VARCHAR(400) NOT NULL DEFAULT '',
         `code_hash` CHAR(64) NULL,
         `code_sent_at` DATETIME NULL,
         `tries` TINYINT UNSIGNED NOT NULL DEFAULT 0,
@@ -95,7 +100,25 @@ function ident_schema(): void
     $users = trim(t('users'), '`');
     $has = ident_q("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = 'sav_sub'", [$users])->fetchColumn();
     if (!$has) db()->exec('ALTER TABLE ' . t('users') . ' ADD COLUMN `sav_sub` VARCHAR(190) CHARACTER SET ascii COLLATE ascii_bin NULL, ADD UNIQUE KEY `uq_sav` (`sav_sub`)');
-    ident_q('INSERT INTO ' . t('meta') . " (k, v) VALUES ('identity', '1') ON DUPLICATE KEY UPDATE v = '1'");
+    // 2: the profile picture of SavAccount
+    $col = fn(string $table, string $name) => (int)ident_q('SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?', [trim(t($table), '`'), $name])->fetchColumn();
+    if (!$col('users', 'sav_picture')) db()->exec('ALTER TABLE ' . t('users') . ' ADD COLUMN `sav_picture` VARCHAR(400) NULL');
+    if (!$col('identity', 'picture')) db()->exec('ALTER TABLE ' . t('identity') . " ADD COLUMN `picture` VARCHAR(400) NOT NULL DEFAULT ''");
+    ident_q('INSERT INTO ' . t('meta') . " (k, v) VALUES ('identity', '2') ON DUPLICATE KEY UPDATE v = '2'");
+}
+
+/** The picture of SavAccount of an account, for public_user() of the project: an address of savaccount.eu, or null. */
+function ident_picture(array $u): ?string
+{
+    $p = (string)($u['sav_picture'] ?? '');
+    return $p !== '' && !empty($u['sav_sub']) ? $p : null;
+}
+
+/** Keeps the picture SavAccount gave (none: the account has no picture there, the avatar shows the initials). */
+function ident_set_picture(int $uid, ?string $url): void
+{
+    ident_schema();
+    ident_q('UPDATE ' . t('users') . ' SET sav_picture = ? WHERE id = ?', [$url !== null && $url !== '' ? $url : null, $uid]);
 }
 
 // ---------- cookies and rows of what is in progress
@@ -209,6 +232,7 @@ function ident_create(string $provider, array $who, array $body): void
     $uid = (ident('create'))($who, $body);
     record_attempt('register');
     ident_q('UPDATE ' . t('users') . ' SET ' . IDENT_COLUMNS[$provider] . ' = ?, email_verified_at = COALESCE(email_verified_at, ?) WHERE id = ?', [$who['sub'], now_utc(), $uid]);
+    if ($provider === 'savaccount') ident_set_picture($uid, $who['picture'] ?? '');
     if (ident('created')) (ident('created'))(ident_user('id = ?', [$uid]), $provider);
     ident_done($uid, $body);
 }
@@ -237,6 +261,7 @@ function ident_join(array $row, array $u): void
     // a SavAccount id left by an older service of SavAccount is replaced (the account has just been proved)
     $st = ident_q('UPDATE ' . t('users') . " SET $col = ? WHERE id = ? AND ($col IS NULL OR $col = ? OR ? = 'savaccount')", [$row['sub'], $u['id'], $row['sub'], $row['provider']]);
     if (!ident_user("id = ? AND $col = ?", [$u['id'], $row['sub']])) ident_fail('identity_other', 409);
+    if ($row['provider'] === 'savaccount') ident_set_picture((int)$u['id'], (string)($row['picture'] ?? ''));
     ident_forget('ident');
     ident_notice($u, $row['provider'], true);
 }
@@ -346,7 +371,10 @@ function sav_identity(array $flow, string $code): ?array
         error_log(ident('name') . ' SavAccount: the ID token is not valid');
         return null;
     }
-    return ['sub' => $c['sub'], 'email' => mb_strtolower((string)$c['email']), 'name' => trim((string)(($c['nickname'] ?? '') !== '' ? $c['nickname'] : ($c['name'] ?? '')))];
+    // the picture: only an https address of SavAccount itself (it is shown as an image in the pages of the project)
+    $pic = is_string($c['picture'] ?? null) ? $c['picture'] : '';
+    if ($pic !== '' && (strlen($pic) > 400 || !str_starts_with($pic, sav_issuer() . '/picture/') || !filter_var($pic, FILTER_VALIDATE_URL))) $pic = '';
+    return ['sub' => $c['sub'], 'email' => mb_strtolower((string)$c['email']), 'name' => trim((string)(($c['nickname'] ?? '') !== '' ? $c['nickname'] : ($c['name'] ?? ''))), 'picture' => $pic];
 }
 
 /** The page of the project with this name (for example the administration); the app itself for any other. */
@@ -390,6 +418,7 @@ function sav_callback(): void
         $full = ident_user('id = ?', [$u['id']]);
         // signed in already: a SavAccount id of an older service is replaced (and the account is told, as for a new link)
         ident_q('UPDATE ' . t('users') . ' SET sav_sub = ? WHERE id = ?', [$who['sub'], $u['id']]);
+        ident_set_picture((int)$u['id'], $who['picture']);
         if ($full['sav_sub'] !== $who['sub']) ident_notice($full, 'savaccount', true);
         sav_back('connected');
     }
@@ -402,17 +431,19 @@ function sav_callback(): void
         $col = IDENT_COLUMNS[$row['provider']];
         if (!empty($u[$col]) || ident_user("$col = ?", [$row['sub']])) sav_back('taken');
         ident_join($row, $u);
+        ident_set_picture((int)$u['id'], $who['picture']);
         ident_session((int)$u['id'], []);
         sav_back('linked');
     }
 
     [$what, $u] = ident_resolve('savaccount', $who);
     if ($what === 'in') {
+        ident_set_picture((int)$u['id'], $who['picture']);
         ident_session((int)$u['id'], []);
         sav_back('in');
     }
     if ($what === 'disabled' || $what === 'other') sav_back($what);
-    ident_new_row('ident', ['kind' => $what === 'link' ? 'link' : 'signup', 'provider' => 'savaccount', 'sub' => $who['sub'], 'email' => $who['email'], 'name' => mb_substr($who['name'], 0, 190), 'user_id' => $u['id'] ?? null]);
+    ident_new_row('ident', ['kind' => $what === 'link' ? 'link' : 'signup', 'provider' => 'savaccount', 'sub' => $who['sub'], 'email' => $who['email'], 'name' => mb_substr($who['name'], 0, 190), 'picture' => $who['picture'], 'user_id' => $u['id'] ?? null]);
     sav_back($what === 'link' ? 'link' : 'signup');
 }
 
@@ -449,7 +480,7 @@ function identity_route(string $r): void
             $row = ident_row('ident');
             if (!$row || $row['kind'] !== 'signup') ident_fail('link_expired', 410);
             // things may have changed since: the same rules again
-            ident_sign_in($row['provider'], ['sub' => $row['sub'], 'email' => $row['email'], 'name' => $row['name']], body());
+            ident_sign_in($row['provider'], ['sub' => $row['sub'], 'email' => $row['email'], 'name' => $row['name'], 'picture' => (string)($row['picture'] ?? '')], body());
 
         case 'auth.link':
             if (!$post) {
@@ -473,6 +504,7 @@ function identity_route(string $r): void
                     ident_fail('bad_code', 422);
                 }
             } elseif ($method === 'google') {
+                if (!function_exists('verify_google_token')) ident_fail('bad_request', 422); // apps without Google (SavOffice)
                 $g = verify_google_token((string)($b['credential'] ?? ''));
                 if (empty($u['google_sub']) || !hash_equals((string)$u['google_sub'], (string)$g['sub'])) ident_fail('identity_mismatch', 422);
             } else ident_fail('bad_request', 422);
@@ -511,6 +543,7 @@ function identity_route(string $r): void
             $me = (ident('writer'))();
             ident_schema();
             if ((body()['provider'] ?? '') !== 'google') ident_fail('bad_request', 422);
+            if (!function_exists('verify_google_token')) ident_fail('bad_request', 422);
             $g = verify_google_token((string)(body()['credential'] ?? ''));
             $u = ident_user('id = ?', [$me['id']]);
             if (ident_user('google_sub = ? AND id <> ?', [$g['sub'], $u['id']])) ident_fail('identity_taken', 409);
@@ -529,7 +562,7 @@ function identity_route(string $r): void
             $other = $provider === 'google' ? 'sav_sub' : 'google_sub';
             if (($u['password_hash'] ?? '') === '' && empty($u[$other])) ident_fail('last_method', 422);
             if (!empty($u[$col])) {
-                ident_q('UPDATE ' . t('users') . " SET $col = NULL WHERE id = ?", [$u['id']]);
+                ident_q('UPDATE ' . t('users') . " SET $col = NULL" . ($provider === 'savaccount' ? ', sav_picture = NULL' : '') . ' WHERE id = ?', [$u['id']]);
                 ident_notice($u, $provider, false);
             }
             send_json(['ok' => true] + ident_methods((int)$u['id']));
