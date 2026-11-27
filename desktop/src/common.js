@@ -24,6 +24,44 @@ const isGoogle = (u) => /(^|\.)google\.com$|(^|\.)gstatic\.com$/.test(u.hostname
 const isSavAccount = (u) => /(^|\.)savaccount\.eu$/.test(u.hostname);
 
 /**
+ * Signing in with SavAccount happens in a window of its own, in a session of its own (persist:signin) where serve.js does
+ * not answer: there the pages of savaccount.eu are asked by the browser itself, with the headers it adds (Sec-Fetch-Site,
+ * Origin), which SavAccount checks — passed through serve.js they would come from "another site" and SavAccount refuses
+ * them ("Not allowed"). When SavAccount sends back to the app (its callback, on the site of the apps), that window closes
+ * and the window of the app opens the callback: the session of the suite is born there, with the cookies of the app.
+ */
+const SIGNIN_PARTITION = 'persist:signin';
+function openProvider(url, owner) {
+  const parent = BrowserWindow.fromWebContents(owner);
+  const win = new BrowserWindow({
+    width: 520, height: 760, minWidth: 380, minHeight: 520, parent: parent || undefined, show: false, autoHideMenuBar: true, title: 'SavAccount',
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#14171c' : '#ffffff',
+    webPreferences: { partition: SIGNIN_PARTITION, contextIsolation: true, sandbox: true },
+  });
+  win.once('ready-to-show', () => win.show());
+  // back to the site of the apps: in the window of the app, not here
+  const back = (e, to) => {
+    let u;
+    try { u = new URL(to); } catch { return false; }
+    if (u.origin !== ORIGIN) return false;
+    e.preventDefault();
+    if (!owner.isDestroyed()) owner.loadURL(to);
+    setTimeout(() => { if (!win.isDestroyed()) win.close(); }, 50);
+    return true;
+  };
+  win.webContents.on('will-redirect', back);
+  win.webContents.on('will-navigate', (e, to) => {
+    if (back(e, to)) return;
+    let u;
+    try { u = new URL(to); } catch { e.preventDefault(); return; }
+    if (!isSavAccount(u) && !isGoogle(u)) { e.preventDefault(); if (/^https?:/.test(u.protocol)) shell.openExternal(to); }
+  });
+  win.webContents.setWindowOpenHandler(({ url: to }) => { if (/^https?:/.test(to)) shell.openExternal(to); return { action: 'deny' }; });
+  win.loadURL(url);
+  return win;
+}
+
+/**
  * What the pages of the apps lose on the Mac: the footer of the site at the bottom of every app (footer.credit: Privacy,
  * Terms, Illerom, the version, the language) and of the forms to fill in (footer.ffoot). The site stays as it is.
  */
@@ -95,7 +133,8 @@ function makeWindows({ store, openOther }) {
         if (!openOther(to, url)) openApp(to, url);
         return { action: 'deny' };
       }
-      if (isGoogle(u) || isSavAccount(u)) return { action: 'allow', overrideBrowserWindowOptions: { width: 520, height: 720, autoHideMenuBar: true } };
+      if (isSavAccount(u)) { openProvider(url, wc); return { action: 'deny' }; }
+      if (isGoogle(u)) return { action: 'allow', overrideBrowserWindowOptions: { width: 520, height: 720, autoHideMenuBar: true } };
       if (/^https?:|^mailto:/.test(u.protocol)) shell.openExternal(url);
       return { action: 'deny' };
     });
@@ -109,7 +148,8 @@ function makeWindows({ store, openOther }) {
         if (from && to !== from && openOther(to, url)) e.preventDefault();
         return;
       }
-      if (isGoogle(u) || isSavAccount(u)) return;
+      if (isSavAccount(u)) { e.preventDefault(); openProvider(url, wc); return; } // in its own session (openProvider)
+      if (isGoogle(u)) return;
       e.preventDefault();
       if (/^https?:|^mailto:/.test(u.protocol)) shell.openExternal(url);
     });
