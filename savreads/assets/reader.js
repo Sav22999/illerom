@@ -250,7 +250,7 @@ export async function readerScreen(root, kind, id) {
   text.addEventListener('click', (e) => { const m = e.target.closest('mark.hl'); if (m && String(getSelection()).length === 0) { const x = hls.find((y) => String(y.id) === m.dataset.hl); if (x) editHl(x); } });
   text.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.matches('mark.hl')) e.target.click(); });
 
-  // the side panel of highlights and notes
+  // the highlights and notes of the article: a dialog in the middle (a sheet from the bottom on phones), as the details of the other apps
   let drawer = null;
   const panelList = h('div.hpanel');
   function paintPanel() {
@@ -259,8 +259,8 @@ export async function readerScreen(root, kind, id) {
   }
   function openPanel() {
     paintPanel();
-    if (!drawer) { drawer = h('sav-drawer.hdrawer', { label: t('hl_panel'), placement: matchMedia('(max-width: 700px)').matches ? 'bottom' : 'end' }, panelList); document.body.append(drawer); }
-    customElements.whenDefined('sav-drawer').then(() => drawer.show());
+    if (drawer?.isConnected) return;
+    drawer = dialog({ title: t('hl_panel'), width: '34rem', cls: 'hdlg', body: panelList, onclose: () => { drawer = null; } });
   }
 
   // ------------------------------------------------------------- where the reading got to
@@ -307,7 +307,7 @@ export async function readerScreen(root, kind, id) {
     removeEventListener('keydown', onKey);
     document.removeEventListener('selectionchange', selLater);
     document.removeEventListener('visibilitychange', leaveVisible);
-    drawer?.remove();
+    drawer?.hide?.();
     hlBar.remove();
   };
 }

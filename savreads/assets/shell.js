@@ -1,8 +1,9 @@
 /**
  * The frame of every page once signed in, as in SavDrive and the other apps of SavOffice: the bar at the top (brand, the
  * pill search, SavOffice, the account), the side with the big "New" menu, the places with their counts, the feeds in their
- * folders and the tags; the page in the middle and the footer. On phones the side becomes rows, as in SavDrive: "New",
- * then the places scrolling sideways (never a bar at the bottom); the feeds are chosen on the page of the feeds.
+ * folders and the tags; the page in the middle and the footer. On phones, as in SavTasks, a bar at the bottom holds the
+ * main places (to read, feeds, favourites, archive); the side becomes a row with "New" and the places the bar does not
+ * have (highlights); the feeds are chosen on the page of the feeds. The reader has no frame, so no bar: the text has the room.
  */
 import { h, icon, item, put } from './ui.js';
 import { t } from './i18n.js';
@@ -10,6 +11,8 @@ import { S } from './store.js';
 import { brand, credit, go, userMenu } from './account.js';
 import { addFeed, importDialog, saveDialog } from './actions.js';
 
+/** The places of the bar at the bottom on phones. */
+const BAR = ['unread', 'feeds', 'starred', 'archive'];
 const PLACES = [['unread', 'inbox', 'nav_unread', '#/'], ['starred', 'star', 'nav_starred', '#/starred'], ['archive', 'archive', 'nav_archive', '#/archive'], ['highlights', 'highlighter', 'nav_highlights', '#/highlights'], ['feeds', 'rss', 'nav_feeds', '#/feeds']];
 
 const n99 = (n) => (n > 999 ? '999+' : String(n));
@@ -69,6 +72,7 @@ export function frame(root, active, ...content) {
   const menu = h('sav-menu.dnav', { label: 'SavReads', selectable: true }, PLACES.map(([k, ic, label]) => {
     const x = item(k, ic, t(label));
     x.toggleAttribute('current', k === place);
+    if (BAR.includes(k)) x.classList.add('inbar');
     const n = countOf(k);
     if (n) x.append(h('sav-badge', { slot: 'suffix', pill: true, size: 'sm', variant: k === 'feeds' ? 'primary' : 'neutral', appearance: k === 'feeds' ? 'soft' : null }, n99(n)));
     return x;
@@ -78,16 +82,18 @@ export function frame(root, active, ...content) {
   const main = h('main.hmain', content);
   const feeds = place === 'feeds';
   const q = location.hash.startsWith('#/search/') ? decodeURIComponent(location.hash.slice(9)) : location.hash.startsWith('#/feeds/q/') ? decodeURIComponent(location.hash.slice(10)) : '';
-  put(root, h('div.home', h('header.htop', brand(), searchBox(q, feeds), h('div.spacer'), userMenu()), h('div.hbody', side, main), credit()));
+  const bar = h('sav-bottom-nav.rbottom', { fixed: true, label: 'SavReads' });
+  const paintBar = () => put(bar, BAR.map((k) => { const [, ic, label, to] = PLACES.find((p) => p[0] === k); const n = k === 'unread' || k === 'feeds' ? countOf(k) : 0; return h('sav-bottom-nav-item', { icon: ic, label: t(label === 'nav_feeds' ? 'feeds' : label), href: to, value: k, current: k === place || null, badge: n ? n99(n) : null }); }));
+  paintBar();
+  put(root, h('div.home', h('header.htop', brand(), searchBox(q, feeds), h('div.spacer'), userMenu()), h('div.hbody', side, main), credit(), bar));
   // the side follows the counts while the page stays
   const again = () => {
     if (!side.isConnected) { removeEventListener('rd-counts', again); return; }
     for (const [k] of PLACES) { const mi = menu.querySelector(`sav-menu-item[value="${k}"]`); mi?.querySelector('sav-badge')?.remove(); const n = countOf(k); if (n) mi?.append(h('sav-badge', { slot: 'suffix', pill: true, size: 'sm', variant: k === 'feeds' ? 'primary' : 'neutral', appearance: k === 'feeds' ? 'soft' : null }, n99(n))); }
     put(side.querySelector('.side-more'), feedsList(active), tagsList(active));
+    paintBar();
   };
   addEventListener('rd-counts', again);
-  // on phones the places are a row that scrolls: the current one in view
-  if (matchMedia('(max-width: 900px)').matches) customElements.whenDefined('sav-menu').then(() => setTimeout(() => { const cur = menu.querySelector('sav-menu-item[current]'); if (cur && place !== 'unread') menu.scrollLeft = Math.max(0, cur.getBoundingClientRect().left - menu.getBoundingClientRect().left - 16); }, 60));
   return main;
 }
 
