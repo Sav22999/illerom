@@ -6,8 +6,7 @@ Libero, or any IMAP mailbox) in one place. Every address with its own folders, a
 mailbox itself, a name and a signature for each address. The same account as **SavSchedules** and the other apps of
 SavOffice. <https://www.illerom.eu/savmail/>
 
-**Not listed yet** (for testing): it is not among the apps of SavOffice, and it tells search engines to keep away
-(`X-Robots-Tag` in `index.php`, `api/` and `.htaccess`, `<meta name="robots">`). See *Publishing* below.
+**Listed** among the apps of SavOffice (the SavOffice button, its page and the portal), and open to search engines.
 
 ## How a person uses it
 

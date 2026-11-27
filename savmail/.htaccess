@@ -30,8 +30,3 @@ RedirectMatch 404 ^/savmail/(lib|tools|tests)(/|$)
   RewriteCond %{HTTP:X-Forwarded-Proto} !=https
   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 </IfModule>
-
-<IfModule mod_headers.c>
-  # not listed yet among the apps of SavOffice: kept out of search engines until it is
-  Header set X-Robots-Tag "noindex, nofollow"
-</IfModule>

@@ -6,8 +6,7 @@ directories of the big platforms. Follow podcasts, the new episodes in one list,
 and history; the position follows you on every device. The same account as **SavSchedules**, **SavCalendar** and
 **SavNotes**. <https://www.illerom.eu/savpodcasts/>
 
-> **Not public yet.** It works at `/savpodcasts/` but it is listed nowhere and search engines are asked to stay away:
-> see [Going public](#going-public).
+> **Public**: listed in SavOffice and in the portal, open to search engines (see [Going public](#going-public)).
 
 ## Stack
 

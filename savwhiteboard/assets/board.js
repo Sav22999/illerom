@@ -17,6 +17,7 @@ import { LINE, bounds, cut, hits, layoutNote, measure, moved, overlaps, scaled, 
 import { BACKS, FONTS, HIGHLIGHT, PAPERS, cleanItems, freshIds, inkOn, inksFor, isDark, r2, uid } from './model.js';
 import { readSavwhi, savePdf, savePng, saveSavwhi, saveSvg, thumbnail, toServer } from './files.js';
 import { pickPicture, uploadPicture } from './pictures.js';
+import { keep as keepOff, take as takeOff, drop as dropOff } from '../../assets/savoffice/offline-keep.js';
 
 const DEF = {
   pen: { c: '#1c1c1c', s: 4 }, pencil: { c: '#5f6660', s: 3 }, marker: { c: '#ffe14d', s: 24 }, eraser: { s: 28, mode: 'partial' },
@@ -35,6 +36,11 @@ export async function boardScreen(root, id) {
   const r = await api('wb.get', undefined, { id });
   const B = r.board;
   if (B.trashed) { const e = new Error('not_found'); e.code = 'not_found'; throw e; }
+  // changes made here without a network and kept in this browser (offline-keep.js): the board opens as it was left, and
+  // they leave as soon as they can (below, after the saving is ready)
+  if (window.SavOffice) window.SavOffice.offlineEdit = true;
+  const kept = await takeOff('savwhiteboard', B.id), server = kept ? { list: B.list } : null;
+  if (kept) Object.assign(B, { list: kept.list, title: kept.title, settings: kept.settings });
   let P = prefs();
   const opt = (k) => ({ ...DEF[k], ...(P.tools?.[k] || {}) });
   const setOpt = (k, patch) => { P = prefs(); setPrefs({ tools: { ...(P.tools || {}), [k]: { ...opt(k), ...patch } } }).catch(() => {}); P = prefs(); };
@@ -196,6 +202,7 @@ export async function boardScreen(root, id) {
       const res = await api('wb.save', body);
       version = res.version;
       fails = 0;
+      if (!dirty.size && !orderDirty && !titleDirty && !lookDirty) dropOff('savwhiteboard', B.id); // everything left
       setStatus(dirty.size ? 'wait' : 'saved');
       const card = S.boards.find((b) => b.id === B.id);
       if (card) Object.assign(card, { title, version, items: items.size, bg: settings.bg, pat: settings.pat, updated: res.updated || card.updated }, body.thumb !== undefined ? { thumb: body.thumb } : {});
@@ -206,6 +213,7 @@ export async function boardScreen(root, id) {
       if (body.thumb !== undefined) thumbDirty = true;
       fails++;
       setStatus(e.code === 'network' ? 'offline' : 'error');
+      if (e.code === 'network') keepHere(); // no network: a copy stays in this browser, even if the page is closed
       if (e.code === 'board_big' || e.code === 'not_found' || e.code === 'unauthenticated') { fail(e); if (e.code !== 'board_big') return; }
       if (!gone) timer = setTimeout(() => flush(), Math.min(30000, 1500 * 2 ** fails));
     } finally {
@@ -213,6 +221,8 @@ export async function boardScreen(root, id) {
       if (again) { again = false; flush(leaving); }
     }
   }
+  /** The board as it is here, kept in this browser until it can be saved. */
+  const keepHere = () => keepOff('savwhiteboard', B.id, { title, settings: { ...settings }, list: order.map((x) => items.get(x)).filter(Boolean) });
   /** Another window saved this board: its items come here (nothing is waiting to leave from this window). */
   async function refresh() {
     const r2_ = await api('wb.get', undefined, { id: B.id, quiet: 1 });
@@ -923,8 +933,17 @@ export async function boardScreen(root, id) {
   wrap.addEventListener('dragover', (e) => e.preventDefault());
   wrap.addEventListener('drop', onDrop);
   const onResize = () => { drawPattern(); drawOverlay(); };
-  const onHide = () => { if (document.visibilityState === 'hidden') flush(true); };
-  const onUnload = (e) => { if (dirty.size || orderDirty || titleDirty || lookDirty) { flush(true); e.preventDefault(); e.returnValue = ''; } };
+  const busy = () => dirty.size || orderDirty || titleDirty || lookDirty;
+  const onHide = () => { if (document.visibilityState === 'hidden') { if (busy()) keepHere(); flush(true); } };
+  const onUnload = (e) => { if (busy()) { keepHere(); flush(true); e.preventDefault(); e.returnValue = ''; } };
+  // what was kept offline goes now: every item as it is here, and what the server has more is taken away
+  if (server) {
+    for (const x of items.keys()) dirty.add(x);
+    for (const i of server.list) if (!items.has(i.id)) dirty.add(i.id);
+    orderDirty = titleDirty = lookDirty = true;
+    toast(getLang() === 'it' ? 'Le modifiche fatte senza rete vengono salvate ora.' : 'The changes made without a network are being saved now.', 'neutral');
+    queueSave(400);
+  }
   addEventListener('keydown', onKey);
   addEventListener('keyup', onKeyUp);
   addEventListener('blur', onKeyUp);

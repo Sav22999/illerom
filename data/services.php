@@ -22,6 +22,11 @@ return [
     'savforms' => ['app' => ['sch_', 'Moduli e risposte', 'Forms and answers', ['savschedules', 'form_schema_version', 'FORM_SCHEMA_VERSION']]],
     'savwhiteboard' => ['app' => ['sch_', 'Lavagne e immagini', 'Boards and pictures', ['savschedules', 'wb_schema_version', 'WB_SCHEMA_VERSION']]],
     'savnotes' => ['app' => ['sch_', 'Quaderni', 'Notebooks', ['savschedules', 'nb_schema_version', 'NB_SCHEMA_VERSION']]],
+    'savmail' => ['app' => ['sch_', 'Indirizzi e posta', 'Addresses and mail', ['savschedules', 'ml_schema_version', 'ML_SCHEMA_VERSION']]],
+    'savpodcasts' => ['app' => ['sch_', 'Podcast seguiti', 'Podcasts followed', ['savschedules', 'pod_schema_version', 'POD_SCHEMA_VERSION']]],
+    'savsplits' => ['app' => ['sch_', 'Gruppi e spese', 'Groups and expenses', ['savschedules', 'split_schema_version', 'SPLIT_SCHEMA_VERSION']]],
+    // SavPhotos keeps its tables in the database of SavDrive (savdrive/lib/photos.php)
+    'savphotos' => ['app' => ['dr_', 'Foto e album', 'Photos and albums', ['savdrive', 'photos_schema', 'PHOTOS_SCHEMA']]],
     'thinkhop' => ['app' => ['th_', 'Account e classifiche', 'Accounts and rankings']],
     'foodtrack' => ['app' => ['ft_', 'Account e dispensa', 'Accounts and pantry']],
     'mycurriculum' => ['app' => ['mc_', 'Account e CV', 'Accounts and CVs']],

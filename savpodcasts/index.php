@@ -10,7 +10,6 @@ declare(strict_types=1);
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: strict-origin-when-cross-origin');
 header('X-Frame-Options: SAMEORIGIN');
-header('X-Robots-Tag: noindex, nofollow');
 // media-src: the audio plays from the publishers' own addresses (any); pictures only from here (the artwork passes through api/?r=img)
 header("Content-Security-Policy: default-src 'self'; script-src 'self' https://www.savaccount.eu; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://www.savaccount.eu https://savcomponents.com https://www.savcomponents.com; media-src https: http:; font-src 'self' data:; connect-src 'self' https://www.savaccount.eu; object-src 'none'; base-uri 'self'; form-action 'self' https://www.savaccount.eu; frame-ancestors 'self'");
 $v = static fn(string $f): string => $f . '?v=' . (@filemtime(__DIR__ . '/' . $f) ?: 1);
@@ -20,7 +19,6 @@ $v = static fn(string $f): string => $f . '?v=' . (@filemtime(__DIR__ . '/' . $f
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
     <title>SavPodcasts</title>
-    <meta name="robots" content="noindex, nofollow">
     <meta name="description" content="Free, open podcast player: podcasts from their own public feeds, found in open catalogues, with your queue and the position synced on every device. Part of SavOffice.">
     <meta name="theme-color" content="#3b4b63">
     <meta name="referrer" content="strict-origin-when-cross-origin">

@@ -42,6 +42,8 @@ async function boot() {
   const next = sessionStorage.getItem('savsplits-next');
   if (S.user?.verified && next) { sessionStorage.removeItem('savsplits-next'); if (/^(#\/?(signin|signup|welcome)?)?$/.test(location.hash)) history.replaceState(null, '', next); }
   addEventListener('hashchange', route);
+  // the expenses written offline have left (assets/store.js): the group again from the server, with its balances
+  addEventListener('savoffice-synced', () => { if (S.user || S.G) route(); });
   // a .savspl opened from the files of the device (installed app) or from SavDrive: it becomes a new group
   const take = async (p) => { const f = p.files?.[0]; if (!f) return; S.pendingFile = await f.getFile(); if (S.user?.verified) { if (S.ready) import('./files.js').then((m) => m.openPending()); else location.hash = '#/'; } };
   window.launchQueue?.setConsumer(take);

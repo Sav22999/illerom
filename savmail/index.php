@@ -1,12 +1,11 @@
 <?php
-/** SavMail — entry point: the app, all in assets/app.js. API: api/. Not listed yet among the apps of SavOffice: noindex until it is. */
+/** SavMail — entry point: the app, all in assets/app.js. API: api/. */
 
 declare(strict_types=1);
 
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: strict-origin-when-cross-origin');
 header('X-Frame-Options: SAMEORIGIN');
-header('X-Robots-Tag: noindex, nofollow');
 // img-src https: only for the pictures of a message the person asked to see (each message is shown in a sandboxed iframe
 // without scripts, which inherits this policy); blob: for the preview of an attachment (a PDF in a frame, video, audio,
 // read as data by the app); everything else stays on this site
@@ -18,7 +17,6 @@ $v = static fn(string $f): string => $f . '?v=' . (@filemtime(__DIR__ . '/' . $f
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
     <title>SavMail</title>
-    <meta name="robots" content="noindex, nofollow">
     <meta name="description" content="Your mail, from any provider, in one place: Gmail, Outlook, Yahoo, iCloud, Aruba or any IMAP mailbox. Encrypted settings, no trackers. Part of SavOffice.">
     <meta name="theme-color" content="#8f6500">
     <meta name="referrer" content="strict-origin-when-cross-origin">

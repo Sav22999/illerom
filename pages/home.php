@@ -13,8 +13,8 @@ foreach ($projects as $s => $p) {
         'name' => 'SavOffice', 'cat' => 'work', 'level' => 2, 'account' => 'required',
         'offline' => false, 'play' => '', // only some of the apps work offline: their own pages say which
         'url' => '/savoffice/' . ($lang === 'it' ? '?lang=it' : '?lang=en'), 'page' => '/savoffice/?lang=' . $lang, 'apps' => array_keys($suite),
-        'it' => ['Un ufficio libero, aperto, tuo: ' . count($suite) . ' app che lavorano insieme.', 'File, documenti, fogli di calcolo, libri, presentazioni, calendario, sondaggi, attività, moduli, lavagna, quaderni e newsletter. ' . implode(' ', $members), [$words('it')]],
-        'en' => ['A free, open office of your own: ' . count($suite) . ' apps that work together.', 'Files, documents, spreadsheets, books, presentations, calendar, polls, tasks, forms, whiteboard, notebooks and newsletters. ' . implode(' ', $members), [$words('en')]],
+        'it' => ['Un ufficio libero, aperto, tuo: ' . count($suite) . ' app che lavorano insieme.', 'File, foto, documenti, fogli di calcolo, libri, presentazioni, calendario, sondaggi, attività, moduli, lavagna, quaderni, posta, podcast, spese condivise e newsletter. ' . implode(' ', $members), [$words('it')]],
+        'en' => ['A free, open office of your own: ' . count($suite) . ' apps that work together.', 'Files, photos, documents, spreadsheets, books, presentations, calendar, polls, tasks, forms, whiteboard, notebooks, email, podcasts, shared expenses and newsletters. ' . implode(' ', $members), [$words('en')]],
     ];
 }
 $projects = $home;

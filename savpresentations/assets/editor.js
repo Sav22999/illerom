@@ -64,6 +64,8 @@ export async function deckScreen(app, deckId, q) {
   fillMenu();
   ed.options = () => dialog(t('deck_options'), optionsBody(ed), [[t('done'), true]], { width: '40rem' });
   ed.download = () => downloadMenu(ed);
+  ed.share = () => shareDialog(deck.uid, deck.title, ed); // also from the palette (⌘J)
+  ed.copyLink = () => copyText(deckUrl(deck.uid));
   // SavDrive: the cloud next to the grid of the apps saves this presentation into the drive (../assets/savoffice/savoffice.js)
   if (deck.canEdit || deck.meta.opts?.download !== false) window.SavOffice?.exporter?.({ key: localId ? 'l' + localId : deckId, make: async () => ({ blob: await (await import('./files.js')).makeSavpre(ed.deck), name: fileName(ed.deck.title, 'savpre') }) });
   menu.addEventListener('sav-select', async (e) => {

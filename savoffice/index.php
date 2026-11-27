@@ -24,6 +24,12 @@ $lang = $it ? 'it' : 'en';
 $h = fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
 $L = fn(string $i, string $e): string => $h($it ? $i : $e);
 $projects = require dirname(__DIR__) . '/data/projects.php';
+$contact = (require dirname(__DIR__) . '/data/site.php')['contact'];
+/** Whether a screenshot is there: until it is, the place shows the icon of the app on its colour. */
+$has = fn(string $slug, string $file): bool => is_file(dirname(__DIR__) . "/assets/projects/$slug/$file");
+/** An app only for the accounts the administrators turn on: says so, with where to ask. */
+$invite = fn(string $slug): string => empty($projects[$slug]['invite']) ? '' : '<p class="invite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>'
+    . ($it ? 'Per il momento a uso limitato: per provarla <a href="' . htmlspecialchars($contact, ENT_QUOTES) . '">contatta l’amministratore</a>.' : 'For now limited: to try it, <a href="' . htmlspecialchars($contact, ENT_QUOTES) . '">contact the administrator</a>.') . '</span></p>';
 $strings = (require dirname(__DIR__) . '/data/strings.php')[$lang];
 
 /** A screenshot with its date as version, so a new picture is never served from an old cache. */
@@ -45,6 +51,10 @@ $apps = [
     'savforms' => ['#86329e', 'd3.jpg', '2.jpg', 'Quattordici tipi di domande, un grafico per ognuna, e il modulo si chiude da solo alla scadenza, segnata in SavCalendar.', 'Fourteen kinds of questions, a chart for each, and the form closes by itself at its deadline, marked in SavCalendar.'],
     'savwhiteboard' => ['#c45a0c', 'd2.jpg', '2.jpg', 'La penna sente la pressione e, con il pennino, il palmo non disegna: come scrivere su una lavagna vera, ma senza bordi.', 'The pen feels the pressure and, with a stylus, the palm does not draw: like writing on a real board, but without edges.'],
     'savnotes' => ['#7b5434', 'd1.jpg', '2.jpg', 'Fogli veri, di formato fisso: sullo stesso foglio scrivi a mano e digiti, e il testo continua sul foglio successivo.', 'Real sheets of a fixed size: on the same sheet you write by hand and type, and the text carries on to the next sheet.'],
+    'savmail' => ['#2563eb', 'd1.jpg', '1.jpg', 'Gmail, Outlook, Aruba o qualsiasi casella IMAP nella stessa posta in arrivo, e le password delle caselle restano cifrate sui tuoi dispositivi.', 'Gmail, Outlook, Aruba or any IMAP mailbox in the same inbox, and the passwords of the mailboxes stay encrypted on your devices.'],
+    'savphotos' => ['#b7791f', 'd1.jpg', '1.jpg', 'Il backup salta le foto che hai già e tiene la data di scatto; una cartella intera diventa un album con il suo nome.', 'The backup skips the photos you already have and keeps the date they were taken; a whole folder becomes an album with its name.'],
+    'savpodcasts' => ['#3b4b63', 'd1.jpg', '1.jpg', 'I podcast arrivano dai loro feed e dai cataloghi aperti, mai dalle grandi piattaforme; il punto di ascolto ti segue su ogni dispositivo.', 'Podcasts come from their own feeds and open catalogues, never from the big platforms; where you stopped follows you on every device.'],
+    'savsplits' => ['#1a7f37', 'd1.jpg', '1.jpg', 'Chi ha il link entra senza account; i saldi si pareggiano con il minor numero di pagamenti, anche per i millesimi di un condominio.', 'Whoever has the link joins without an account; balances are settled with the fewest payments, even by the thousandths of a condominium.'],
     'savnewsletters' => ['#c2307a', 'd3.jpg', '3.jpg', 'Ogni gruppo ha i suoi ruoli: qualcuno scrive, qualcun altro approva, e niente parte per sbaglio a centinaia di persone.', 'Each group has its roles: someone writes, someone else approves, and nothing goes out by mistake to hundreds of people.'],
 ];
 ksort($apps); // alphabetical: the same order as the SavOffice button in the apps
@@ -54,11 +64,13 @@ $nw = fn(string $l): string => $words[$l][$n] ?? (string)$n; // the number of th
 // what each app is, for the small screens where the whole names do not fit (the same words as the SavOffice button)
 $short = ['savdrive' => ['File e cartelle', 'Files and folders'], 'savdocuments' => ['Documenti', 'Documents'], 'savspreadsheets' => ['Fogli di calcolo', 'Spreadsheets'], 'savbooks' => ['Libri', 'Books'], 'savpresentations' => ['Presentazioni', 'Presentations'], 'savschedules' => ['Sondaggi e posti', 'Polls and slots'],
     'savcalendar' => ['Calendario', 'Calendar'], 'savtasks' => ['Attività', 'Tasks'], 'savforms' => ['Moduli', 'Forms'], 'savwhiteboard' => ['Lavagna', 'Whiteboard'],
-    'savnotes' => ['Quaderni', 'Notebooks'], 'savnewsletters' => ['Newsletter', 'Newsletters']];
+    'savnotes' => ['Quaderni', 'Notebooks'], 'savnewsletters' => ['Newsletter', 'Newsletters'], 'savmail' => ['Posta', 'Email'], 'savphotos' => ['Foto e video', 'Photos and videos'],
+    'savpodcasts' => ['Podcast', 'Podcasts'], 'savsplits' => ['Spese condivise', 'Shared expenses']];
 // what each app reads and writes
 $files = ['savdrive' => ['Ogni file', '.savdoc', '.savspr', '.savpre', '.savwhi', '.savnot'], 'savdocuments' => ['.savdoc', '.docx', 'PDF', 'EPUB', 'Markdown', 'HTML'], 'savspreadsheets' => ['.savspr', '.xlsx', '.xls', '.ods', 'CSV', 'PDF'], 'savbooks' => ['.savboo', '.savdoc', 'EPUB', 'PDF', '.docx', 'FB2'], 'savpresentations' => ['.pptx', '.odp', 'PDF'], 'savschedules' => ['.savsch', '.ics', 'CSV'],
     'savcalendar' => ['.savcal', '.ics', 'CSV'], 'savtasks' => ['.savtas', 'CSV', 'Markdown'], 'savforms' => ['.savfor', 'CSV'], 'savwhiteboard' => ['.savwhi', 'PNG', 'SVG', 'PDF'],
-    'savnotes' => ['.savnot', 'PDF', 'PNG'], 'savnewsletters' => ['.savnew']];
+    'savnotes' => ['.savnot', 'PDF', 'PNG'], 'savnewsletters' => ['.savnew'], 'savmail' => ['EML', 'Allegati'], 'savphotos' => ['JPEG', 'PNG', 'HEIC', 'MP4', 'ZIP'],
+    'savpodcasts' => ['RSS', 'OPML'], 'savsplits' => ['.savspl', 'CSV']];
 // what each app does with the others: [other app, it, en]
 $works = [
     'savdrive' => [['savdocuments', 'Nuovi documenti creati nel drive, aperti in SavDocuments con un tocco.', 'New documents created in the drive, opened in SavDocuments with one press.'], ['savspreadsheets', 'Fogli di calcolo nuovi accanto ai file che contano.', 'New spreadsheets next to the files that matter.'], ['savpresentations', 'Le presentazioni nella stessa cartella delle immagini che usano.', 'Presentations in the same folder as the pictures they use.']],
@@ -73,6 +85,10 @@ $works = [
     'savwhiteboard' => [['savnotes', 'Stessi strumenti di scrittura a mano, ma su fogli di quaderno.', 'The same handwriting tools, but on notebook sheets.'], ['savpresentations', 'Dallo schizzo alla slide.', 'From the sketch to the slide.']],
     'savnotes' => [['savwhiteboard', 'Quando un foglio non basta, una lavagna senza bordi.', 'When a sheet is not enough, a board without edges.'], ['savdocuments', 'Il testo che diventa un documento vero.', 'The text that becomes a real document.']],
     'savnewsletters' => [['savcalendar', 'Gli invii programmati compaiono nel calendario.', 'Planned sendings show in the calendar.'], ['savforms', 'Un modulo per raccogliere iscrizioni o opinioni dai lettori.', 'A form to gather sign-ups or opinions from readers.']],
+    'savmail' => [['savcalendar', 'Lo stesso account di calendario, attività e sondaggi: un accesso per tutti.', 'The same account as the calendar, tasks and polls: one sign-in for all.'], ['savdrive', 'Gli allegati da conservare trovano posto nel drive.', 'The attachments worth keeping find a place in the drive.']],
+    'savphotos' => [['savdrive', 'Le foto sono file del drive, nella cartella SavPhotos: stesso account, stesso spazio.', 'The photos are files of the drive, in the SavPhotos folder: same account, same space.'], ['savpresentations', 'Le foto migliori finiscono nelle slide.', 'The best photos end up in the slides.']],
+    'savpodcasts' => [['savnotes', 'Gli appunti di un episodio, scritti a mano su un quaderno.', 'Notes on an episode, handwritten in a notebook.'], ['savtasks', 'Un episodio da ascoltare dopo diventa un’attività.', 'An episode to listen to later becomes a task.']],
+    'savsplits' => [['savcalendar', 'Lo stesso account del calendario: il viaggio è lì, le sue spese qui.', 'The same account as the calendar: the trip is there, its expenses here.'], ['savforms', 'Un modulo per raccogliere le quote di un evento.', 'A form to collect the shares of an event.']],
 ];
 $app = (string)($_GET['app'] ?? '');
 if (!isset($apps[$app])) $app = '';
@@ -89,7 +105,7 @@ $ico = fn(string $slug, int $size = 48): string => '<img src="/' . $slug . '/ico
     <meta name="description" content="<?= $h($pa[0] . ' ' . $pa[1]) ?>">
 <?php else: ?>
     <title>SavOffice — <?= $L('Un ufficio libero, aperto, tuo', 'A free, open office of your own') ?></title>
-    <meta name="description" content="<?= $L('SavOffice: ' . $n . ' app gratuite e open source per file, documenti, fogli di calcolo, libri, presentazioni, calendario, sondaggi, attività, moduli, lavagna, quaderni e newsletter. Lavorano insieme, senza pubblicità, con i dati nell’Unione europea.', 'SavOffice: ' . $n . ' free, open-source apps for files, documents, spreadsheets, books, presentations, calendar, polls, tasks, forms, whiteboard, notebooks and newsletters. They work together, with no ads and the data in the European Union.') ?>">
+    <meta name="description" content="<?= $L('SavOffice: ' . $n . ' app gratuite e open source per file, foto, documenti, fogli di calcolo, libri, presentazioni, calendario, sondaggi, attività, moduli, lavagna, quaderni, posta, podcast, spese condivise e newsletter. Lavorano insieme, senza pubblicità, con i dati nell’Unione europea.', 'SavOffice: ' . $n . ' free, open-source apps for files, photos, documents, spreadsheets, books, presentations, calendar, polls, tasks, forms, whiteboard, notebooks, email, podcasts, shared expenses and newsletters. They work together, with no ads and the data in the European Union.') ?>">
 <?php endif; ?>
     <meta name="theme-color" content="#f6f5f3" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#121214" media="(prefers-color-scheme: dark)">
@@ -251,13 +267,18 @@ $graph = $app
         /* together */
         .together { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2.5rem; align-items: center; }
         /* the hub: a ring of 4 × 4 around SavAccount (2 × 2 in the middle), 3 columns on a phone */
-        .hub { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .6rem; padding: 1.2rem; border-radius: 28px; background: var(--card); border: 1px solid var(--line); }
+        .hub { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .6rem; padding: 1.2rem; border-radius: 28px; background: var(--card); border: 1px solid var(--line); }
         .hub .n { display: grid; justify-items: center; align-content: center; gap: .25rem; min-width: 0; text-align: center; padding: .55rem .2rem; }
         .hub .n img { width: 46px; height: 46px; border-radius: 11px; }
+        /* an app for now only for some accounts; a place waiting for its screenshots */
+        .invite { display: flex; gap: .5rem; align-items: flex-start; margin: .2rem 0 1rem; padding: .65rem .85rem; border-radius: 12px; font-size: .92rem; line-height: 1.45; background: color-mix(in oklab, var(--c, #0a6fb0) 9%, var(--card)); border: 1px solid color-mix(in oklab, var(--c, #0a6fb0) 26%, transparent); }
+        .invite svg { flex: none; width: 18px; height: 18px; margin-top: .1rem; color: var(--c, #0a6fb0); } .invite a { color: inherit; font-weight: 650; }
+        .shots .desk.noshot { display: grid; place-items: center; aspect-ratio: 1440 / 900; background: radial-gradient(120% 120% at 30% 20%, color-mix(in oklab, var(--c) 22%, var(--bg2)), color-mix(in oklab, var(--c) 8%, var(--bg2))); }
+        .shots .desk.noshot img { width: 22%; height: auto; border-radius: 24%; filter: drop-shadow(0 14px 24px rgb(0 0 0 / .18)); }
         .hub .n b { color: var(--text); font-size: .8rem; letter-spacing: -.01em; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .hub .n small { font-size: .74rem; color: var(--muted); line-height: 1.25; }
         .hub .short { display: none; }
-        .hub .core { grid-column: 2 / 4; grid-row: 2 / 4; background: color-mix(in oklab, #66cbff 12%, var(--card)); border-radius: 22px; border: 1px dashed color-mix(in oklab, #3a9fd6 55%, transparent); }
+        .hub .core { grid-column: 2 / 5; grid-row: 2 / 5; background: color-mix(in oklab, #66cbff 12%, var(--card)); border-radius: 22px; border: 1px dashed color-mix(in oklab, #3a9fd6 55%, transparent); }
         .hub .core img { width: 72px; height: 72px; } .hub .core b { font-size: 1rem; } .hub .core small { font-size: .85rem; }
         @media (max-width: 560px) { .hub { grid-template-columns: repeat(3, minmax(0, 1fr)); padding: .9rem; } .hub .core { grid-column: 1 / -1; grid-row: 2; padding: 1rem; } .hub .full { display: none; } .hub .short { display: inline; } .hub .n b { white-space: normal; line-height: 1.2; } }
         .flows { list-style: none; padding: 0; margin: 1.4rem 0 0; display: grid; gap: .7rem; }
@@ -365,7 +386,7 @@ $graph = $app
             <div>
                 <p class="eyebrow"><img src="/savoffice/icons/favicon.svg" alt=""><?= $L($n . ' app · un solo stile', $n . ' apps · one style') ?></p>
                 <h1><?= $it ? 'Un ufficio <em>libero</em>, aperto, tuo.' : 'A <em>free</em>, open office of your own.' ?></h1>
-                <p class="lead"><?= $L('File e cartelle, documenti, fogli di calcolo, libri, presentazioni, calendario, sondaggi, attività, moduli, lavagna, quaderni e newsletter. Non ' . $nw('it') . ' programmi separati: app pensate per lavorare insieme, gratuite, open source e rispettose dei tuoi dati.', 'Files and folders, documents, spreadsheets, books, presentations, calendar, polls, tasks, forms, whiteboard, notebooks and newsletters. Not ' . $nw('en') . ' separate programs: apps made to work together, free, open source and respectful of your data.') ?></p>
+                <p class="lead"><?= $L('File e cartelle, foto, documenti, fogli di calcolo, libri, presentazioni, calendario, sondaggi, attività, moduli, lavagna, quaderni, posta, podcast, spese condivise e newsletter. Non ' . $nw('it') . ' programmi separati: app pensate per lavorare insieme, gratuite, open source e rispettose dei tuoi dati.', 'Files and folders, photos, documents, spreadsheets, books, presentations, calendar, polls, tasks, forms, whiteboard, notebooks, email, podcasts, shared expenses and newsletters. Not ' . $nw('en') . ' separate programs: apps made to work together, free, open source and respectful of your data.') ?></p>
                 <div class="ctas">
                     <a class="btn main" href="#apps"><?= $L('Scopri le app', 'Discover the apps') ?> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12l7 7 7-7"/></svg></a>
                     <a class="btn ghost" href="https://github.com/Sav22999/illerom"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.71 1.26 3.37.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.4-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5z"/></svg><?= $L('Codice sorgente', 'Source code') ?></a>
@@ -420,14 +441,16 @@ $graph = $app
                                 <p class="desc"><?= $h(preg_replace(['/\s*(Fa parte di SavOffice|Part of SavOffice)[^.]*\.?\s*$/u', '/,? (e|and) (fa parte di|is part of) SavOffice/u', '/ (e|and) (fa parte di|is part of) SavOffice\./u'], ['', '', '.'], $p[1])) ?></p>
                                 <ul class="feat"><?php foreach ($p[2] as $f): ?><li><?= $h($f) ?></li><?php endforeach; ?></ul>
                                 <p class="edge"><b><?= $L('In più', 'The extra') ?></b><span><?= $L($eit, $een) ?></span></p>
+                                <?= $invite($slug) ?>
                                 <div class="acts">
                                     <a class="btn main" href="/<?= $slug ?>/"><?= $L('Apri', 'Open') ?> <?= $h($projects[$slug]['name']) ?></a>
                                     <a class="btn ghost" href="/savoffice/<?= $slug ?>/<?= $q !== '' ? '?lang=' . $lang : '' ?>"><?= $L('Scheda e schermate', 'Details and screenshots') ?></a>
                                 </div>
                             </div>
                             <div class="shots">
-                                <div class="desk"><sav-image zoom src="<?= $shot($slug, $desk) ?>" alt="<?= $h($projects[$slug]['name'] . ($it ? ' su un computer' : ' on a computer')) ?>" ratio="1440:900"></sav-image></div>
-                                <div class="phone"><sav-image zoom src="<?= $shot($slug, $phone) ?>" alt="<?= $h($projects[$slug]['name'] . ($it ? ' su un telefono' : ' on a phone')) ?>" ratio="562:1000"></sav-image></div>
+                                <?php if ($has($slug, $desk)): ?><div class="desk"><sav-image zoom src="<?= $shot($slug, $desk) ?>" alt="<?= $h($projects[$slug]['name'] . ($it ? ' su un computer' : ' on a computer')) ?>" ratio="1440:900"></sav-image></div>
+                                <?php else: ?><div class="desk noshot" aria-hidden="true"><?= $ico($slug, 112) ?></div><?php endif; ?>
+                                <?php if ($has($slug, $phone)): ?><div class="phone"><sav-image zoom src="<?= $shot($slug, $phone) ?>" alt="<?= $h($projects[$slug]['name'] . ($it ? ' su un telefono' : ' on a phone')) ?>" ratio="562:1000"></sav-image></div><?php endif; ?>
                             </div>
                         </article>
                     <?php endforeach; ?>
@@ -439,7 +462,7 @@ $graph = $app
                 <div>
                     <p class="kicker"><?= $L('Insieme', 'Together') ?></p>
                     <h2 id="tog-h"><?= $L('Un solo account, tutto al suo posto.', 'One account, everything in its place.') ?></h2>
-                    <p style="color:var(--muted);font-size:1.06rem;margin:0"><?= $L('SavSchedules, SavCalendar, SavTasks, SavForms, SavWhiteboard e SavNotes condividono lo stesso account; con SavAccount entri in tutte e ' . $nw('it') . ' con un solo accesso. E il pulsante a griglia, in ogni app, ti porta alle altre.', 'SavSchedules, SavCalendar, SavTasks, SavForms, SavWhiteboard and SavNotes share the same account; with SavAccount you get into all ' . $nw('en') . ' with a single sign-in. And the grid button, in every app, takes you to the others.') ?></p>
+                    <p style="color:var(--muted);font-size:1.06rem;margin:0"><?= $L('SavSchedules, SavCalendar, SavTasks, SavForms, SavWhiteboard, SavNotes, SavMail, SavPodcasts e SavSplits condividono lo stesso account, e SavPhotos quello di SavDrive; con SavAccount entri in tutte e ' . $nw('it') . ' con un solo accesso. E il pulsante a griglia, in ogni app, ti porta alle altre.', 'SavSchedules, SavCalendar, SavTasks, SavForms, SavWhiteboard, SavNotes, SavMail, SavPodcasts and SavSplits share the same account, and SavPhotos the one of SavDrive; with SavAccount you get into all ' . $nw('en') . ' with a single sign-in. And the grid button, in every app, takes you to the others.') ?></p>
                     <ul class="flows">
                         <li><span class="ic"><?= $ico('savschedules', 26) ?><span>→</span><?= $ico('savcalendar', 26) ?></span><span><?= $L('La data scelta e i posti prenotati entrano nel calendario; e dal calendario nasce un nuovo sondaggio.', 'The chosen date and booked slots go into the calendar; and a new poll can start from the calendar.') ?></span></li>
                         <li><span class="ic"><?= $ico('savtasks', 26) ?><span>→</span><?= $ico('savcalendar', 26) ?></span><span><?= $L('Le attività con scadenza compaiono nel calendario; un’attività può diventare un evento o un sondaggio.', 'Tasks with a due day show in the calendar; a task can become an event or a poll.') ?></span></li>
@@ -447,10 +470,11 @@ $graph = $app
                         <li><span class="ic"><?= $ico('savnewsletters', 26) ?><span>→</span><?= $ico('savcalendar', 26) ?></span><span><?= $L('Le newsletter programmate si vedono nel giorno in cui partiranno.', 'Planned newsletters show on the day they will go out.') ?></span></li>
                     </ul>
                 </div>
-                <?php // SavAccount in the middle, the one sign-in of all of them; the twelve apps all around, in alphabetical order
+                <?php // SavAccount in the middle, the one sign-in of all of them; all the apps around, in alphabetical order
                 $hub = ['savbooks' => ['EPUB · PDF', 'EPUB · PDF'], 'savcalendar' => ['date e scadenze', 'dates and deadlines'], 'savdocuments' => ['.docx · PDF', '.docx · PDF'], 'savdrive' => ['i tuoi file', 'your files'], 'savforms' => ['chiusure', 'deadlines'],
                     'savnewsletters' => ['invii', 'sendings'], 'savnotes' => ['PDF · PNG', 'PDF · PNG'], 'savpresentations' => ['.pptx · .odp', '.pptx · .odp'], 'savschedules' => ['date e posti', 'dates and slots'],
-                    'savspreadsheets' => ['.xlsx · .ods', '.xlsx · .ods'], 'savtasks' => ['scadenze', 'due days'], 'savwhiteboard' => ['PNG · SVG · PDF', 'PNG · SVG · PDF']]; ?>
+                    'savspreadsheets' => ['.xlsx · .ods', '.xlsx · .ods'], 'savtasks' => ['scadenze', 'due days'], 'savwhiteboard' => ['PNG · SVG · PDF', 'PNG · SVG · PDF'],
+                    'savmail' => ['IMAP · SMTP', 'IMAP · SMTP'], 'savphotos' => ['backup e album', 'backup and albums'], 'savpodcasts' => ['RSS · OPML', 'RSS · OPML'], 'savsplits' => ['saldi', 'balances']]; ?>
                 <div class="hub" aria-hidden="true">
                     <div class="n core"><img src="/assets/projects/savaccount.png" alt="" width="72" height="72"><b>SavAccount</b><small><?= $L('un solo accesso per tutte', 'one sign-in for all of them') ?></small></div>
                     <?php foreach ($apps as $slug => $a): ?>

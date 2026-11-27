@@ -171,7 +171,7 @@ function expenseRow(e, me) {
   const hue = tr ? 150 : inc ? 140 : catHue(e.category);
   const n = h('div.erow', { tabindex: 0, role: 'button', 'aria-label': (e.title || t('k_' + e.kind)) + ', ' + money(e.amount, e.currency), onclick: () => openExpense(e), onkeydown: (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); openExpense(e); } } },
     h('span.eic' + (tr ? '.tr' : ''), { style: `--h:${hue}` }, icon(ic)),
-    h('div.emid', title, h('small.muted', sub, e.repeat ? [' · ', icon('repeat', { class: 'rep' }), ' ', t('rep_' + e.repeat)] : null, e.repeatOf ? [' · ', icon('repeat', { class: 'rep' })] : null, e.photos?.length ? [' · ', icon('camera', { class: 'rep', label: t('n_photos', { n: e.photos.length }) }), ' ', String(e.photos.length)] : null)),
+    h('div.emid', title, h('small.muted', sub, e.waiting ? [' · ', icon('clock', { class: 'rep' }), ' ', t('waiting_net')] : null, e.repeat ? [' · ', icon('repeat', { class: 'rep' }), ' ', t('rep_' + e.repeat)] : null, e.repeatOf ? [' · ', icon('repeat', { class: 'rep' })] : null, e.photos?.length ? [' · ', icon('camera', { class: 'rep', label: t('n_photos', { n: e.photos.length }) }), ' ', String(e.photos.length)] : null)),
     h('div.eamt', h('strong' + (inc ? '.inc' : ''), (inc ? '+' : '') + money(e.amount, e.currency)), e.currency !== cur() ? h('small.muted', fmt(e.base)) : null, impact));
   return n;
 }

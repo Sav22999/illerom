@@ -5,8 +5,7 @@ for whom, the balances of everyone and the fewest payments to settle up. The oth
 an account (to look, or to add expenses too). The same account as **SavSchedules**, **SavCalendar**, **SavTasks**…
 <https://www.illerom.eu/savsplits/>
 
-> **Not public yet.** SavSplits is complete but in testing: it is not listed in SavOffice, in the portal or in the
-> sitemap, and its pages ask search engines not to index them. See [Making it public](#making-it-public).
+> **Public**: listed in SavOffice, in the portal and in the sitemap (the steps are below, in [Making it public](#making-it-public)).
 
 ## Stack
 

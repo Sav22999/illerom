@@ -193,6 +193,8 @@ const T = {
   up_stopped: ['Backup stopped', 'Backup interrotto'],
   up_quota: ['The space is full', 'Lo spazio è pieno'],
   up_count: ['{done} of {n}', '{done} di {n}'],
+  up_elapsed: ['{t} elapsed', '{t} trascorsi'],
+  up_left: ['about {t} left', 'circa {t} alla fine'],
   up_skip: ['{n} already there', '{n} già presenti'],
   up_fail: ['{n} did not arrive', '{n} non arrivate'],
   up_keep: ['Keep this page open until it ends ({size} to go).', 'Tieni aperta questa pagina finché finisce (mancano {size}).'],

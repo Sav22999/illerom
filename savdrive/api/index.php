@@ -618,6 +618,13 @@ switch ($r) {
         }, out_items($u, $rows, $extra));
         // My drive also holds a folder for each app of SavOffice that keeps something for this person (office.get)
         $office = $where === 'root' && $q === '' ? office_summary($u) : [];
+        // the folder of SavPhotos (lib/photos.php: "SavPhotos" in My drive) is shown as the folder of that app, for who can use it
+        if ($where === 'root' && $q === '') {
+            require_once __DIR__ . '/../lib/photos.php';
+            $can = false;
+            try { $can = photo_allowed($u); } catch (Throwable $e) { /* SavPhotos not installed yet */ }
+            if ($can) foreach ($items as $i => $x) if ($x['kind'] === 'folder' && mb_strtolower($x['name']) === mb_strtolower(PHOTO_ROOT) && ($x['role'] ?? 'owner') === 'owner') { $items[$i]['special'] = 'savphotos'; break; }
+        }
         // a search finds what the apps keep too
         $officeHits = [];
         if ($q !== '') foreach (office_catalogs($u) as $app => $c) foreach ($c['items'] as $d) {
@@ -739,19 +746,22 @@ switch ($r) {
         $u = writer();
         db()->beginTransaction();
         // into the trash of the owner (who can restore it); who is not the owner needs "delete"
+        $files = []; // the files of SavOffice that go: the apps put their linked documents in their trash too (savoffice.js)
         foreach (reach_nodes($u, 'delete') as $n) {
             if ($n['trashed_at']) continue;
             $ids = implode(',', subtree_ids((int)$n['user_id'], (int)$n['id']));
+            $files = array_merge($files, office_uids((int)$n['user_id'], $ids, true));
             db()->prepare('UPDATE ' . t('nodes') . " SET trashed_at = ?, trash_root = 0, share_token = NULL WHERE user_id = ? AND id IN ($ids) AND trashed_at IS NULL")->execute([now_utc(), $n['user_id']]);
             db()->prepare('UPDATE ' . t('nodes') . ' SET trash_root = 1 WHERE id = ?')->execute([$n['id']]);
         }
         db()->commit();
-        send_json(['ok' => true]);
+        send_json(['ok' => true, 'files' => $files]);
 
     case 'node.restore':
         // Back where it was; if that folder is gone (or still in the trash), to My drive
         $u = writer();
         db()->beginTransaction();
+        $files = []; // the files of SavOffice that come back: their linked documents come back in the apps too
         foreach (own_nodes($u) as $n) {
             if (!$n['trash_root']) continue;
             $pid = $n['parent_id'] === null ? null : (int)$n['parent_id'];
@@ -762,11 +772,12 @@ switch ($r) {
                 if (!$p || $p['trashed_at']) $pid = null;
             }
             $ids = implode(',', subtree_ids((int)$u['id'], (int)$n['id']));
+            $files = array_merge($files, office_uids((int)$u['id'], $ids, false));
             db()->prepare('UPDATE ' . t('nodes') . " SET trashed_at = NULL, trash_root = 0 WHERE user_id = ? AND id IN ($ids)")->execute([$u['id']]);
             db()->prepare('UPDATE ' . t('nodes') . ' SET parent_id = ?, name = ? WHERE id = ?')->execute([$pid, free_name((int)$u['id'], $pid, (string)$n['name'], (int)$n['id']), $n['id']]);
         }
         db()->commit();
-        send_json(['ok' => true] + drive_space($u));
+        send_json(['ok' => true, 'files' => $files] + drive_space($u));
 
     case 'node.delete':
         // For ever: only what is in the trash

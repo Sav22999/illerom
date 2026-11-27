@@ -20,6 +20,7 @@ import { DEFS, NS, docCSS, itemSVG, paperSVG, sheetSVG } from './render.js';
 import { bounds, cut, hits, moved, overlaps, scaled, union } from './ink.js';
 import { BACKS, COVERS, FONTS, HIGHLIGHT, PAPERS, PATTERNS, SIZES, TEXT_INKS, TEXT_MARKS, cleanDoc, cleanItems, defaultPaper, docEmpty, freshIds, freshSheet, inkOn, inksFor, isDark, newSheet, pageSize, r2, uid } from './model.js';
 import { printNotebook, readImage, saveSavnot, savePng } from './files.js';
+import { keep as keepOff, take as takeOff, drop as dropOff } from '../../assets/savoffice/offline-keep.js';
 
 const DEF = {
   pen: { c: '#1c1c1c', s: 3 }, pencil: { c: '#5f6660', s: 2.5 }, marker: { c: '#ffe14d', s: 18 }, eraser: { s: 24, mode: 'partial' },
@@ -39,6 +40,11 @@ export async function notebookScreen(root, id) {
   const r = await api('nb.get', undefined, { id });
   const N = r.notebook;
   if (N.trashed) { const e = new Error('not_found'); e.code = 'not_found'; throw e; }
+  // changes made here without a network and kept in this browser (offline-keep.js): the notebook opens as it was left,
+  // and they leave as soon as they can (below, after the saving is ready)
+  if (window.SavOffice) window.SavOffice.offlineEdit = true;
+  const kept = await takeOff('savnotes', N.id), server = kept ? { list: N.list } : null;
+  if (kept) Object.assign(N, { list: kept.list, title: kept.title, settings: kept.settings });
   let P = prefs();
   const opt = (k) => ({ ...DEF[k], ...(P.tools?.[k] || {}) });
   const setOpt = (k, patch) => { P = prefs(); setPrefs({ tools: { ...(P.tools || {}), [k]: { ...opt(k), ...patch } } }).catch(() => {}); P = prefs(); };
@@ -230,6 +236,7 @@ export async function notebookScreen(root, id) {
       const res = await api('nb.save', body);
       version = res.version;
       fails = 0;
+      if (!pending()) dropOff('savnotes', N.id); // everything left: nothing to keep in this browser
       setStatus(pending() ? 'wait' : 'saved');
       const card = S.notebooks.find((b) => b.id === N.id);
       if (card) Object.assign(card, { title, version, sheets: sheets.length, cover: settings.cover, size: settings.size, orient: settings.orient, paper: settings.paper, updated: res.updated || card.updated });
@@ -242,6 +249,7 @@ export async function notebookScreen(root, id) {
       orderDirty ||= sent.orderDirty; titleDirty ||= sent.titleDirty; setDirty ||= sent.setDirty; viewDirty ||= sent.viewDirty;
       fails++;
       setStatus(e.code === 'network' ? 'offline' : 'error');
+      if (e.code === 'network') keepHere(); // no network: a copy stays in this browser, even if the page is closed
       if (e.code === 'notebook_big' || e.code === 'not_found' || e.code === 'unauthenticated') { fail(e); if (e.code !== 'notebook_big') return; }
       if (!gone) timer = setTimeout(() => flush(), Math.min(30000, 1500 * 2 ** fails));
     } finally {
@@ -249,6 +257,8 @@ export async function notebookScreen(root, id) {
       if (again) { again = false; flush(leaving); }
     }
   }
+  /** The notebook as it is here, kept in this browser until it can be saved. */
+  const keepHere = () => keepOff('savnotes', N.id, { title, settings: { ...settings }, list: sheets.map(dataOf) });
   /** Another window saved this notebook: its sheets come here (nothing is waiting to leave from this window). */
   async function refresh() {
     const x = await api('nb.get', undefined, { id: N.id, quiet: 1 });
@@ -1211,8 +1221,17 @@ export async function notebookScreen(root, id) {
   wrap.addEventListener('dragover', (e) => { if (e.dataTransfer?.types?.includes('Files')) e.preventDefault(); });
   wrap.addEventListener('drop', onDrop);
   const onResize = () => { drawOverlay(); onScroll(); };
-  const onHide = () => { if (document.visibilityState === 'hidden') flush(true); };
-  const onUnload = (e) => { if (pending()) { flush(true); e.preventDefault(); e.returnValue = ''; } };
+  const onHide = () => { if (document.visibilityState === 'hidden') { if (pending()) keepHere(); flush(true); } };
+  const onUnload = (e) => { if (pending()) { keepHere(); flush(true); e.preventDefault(); e.returnValue = ''; } };
+  // what was kept offline goes now: every sheet and item as they are here, and what the server has more is taken away
+  if (server) {
+    const mine = new Map(sheets.map((x) => [x.id, x]));
+    for (const sh of sheets) { dirtyMeta.add(sh.id); iorderDirty.add(sh.id); for (const iid of sh.items.keys()) mark(sh.id, iid); }
+    for (const x of server.list) { const m = mine.get(x.id); if (!m) { dropped.add(x.id); continue; } for (const i of x.items || []) if (!m.items.has(i.id)) mark(x.id, i.id); }
+    orderDirty = titleDirty = setDirty = true;
+    toast(getLang() === 'it' ? 'Le modifiche fatte senza rete vengono salvate ora.' : 'The changes made without a network are being saved now.', 'neutral');
+    queueSave(400);
+  }
   addEventListener('keydown', onKey);
   document.addEventListener('copy', onCopy);
   document.addEventListener('cut', onCopy);

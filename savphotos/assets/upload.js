@@ -71,6 +71,7 @@ export function startUpload(items, album = null) {
 }
 
 async function run(j) {
+  j.at = Date.now();
   draw();
   wake(true);
   addEventListener('beforeunload', guard);
@@ -343,13 +344,15 @@ function paint() {
   if (!panel) { panel = h('sav-card.upanel', { appearance: 'elevated', role: 'status', 'aria-live': 'polite' }); document.body.append(panel); }
   const n = count(j), pc = n.size ? Math.min(100, (n.sent / n.size) * 100) : 100;
   const title = j.running ? (j.list.some((e) => !e.checked && e.state === 'wait') && !j.list.some((e) => e.state === 'send') ? t('up_checking') : t('up_running')) : j.quota ? t('up_quota') : j.ctrl.signal.aborted ? t('up_stopped') : t('up_done');
-  const rows = j.list.filter((e) => e.state === 'send' || e.state === 'fail').slice(0, 60);
+  const rows = [...j.list.filter((e) => e.state === 'send'), ...j.list.filter((e) => e.state === 'fail')].slice(0, 60); // what is being sent first, then what failed
   put(panel,
     h('div.uhead', h('b', title), h('span.grow'), j.running ? btn(t('stop'), { size: 'sm', appearance: 'ghost', onclick: () => j.ctrl.abort() }) : iconBtn('x', t('close'), () => { job = null; paint(); })),
     h('sav-progress-bar', { value: Math.round(pc), max: 100, variant: n.fail || j.quota ? 'warning' : j.running ? 'primary' : 'success', 'aria-label': title }),
     // the hosting asked for a pause (too many requests): when it goes on
     j.running && waitLeft() > 0 ? h('small.uwait', icon('clock'), ' ', t('up_wait', { s: Math.ceil(waitLeft() / 1000) })) : null,
     h('small.usum', t('up_count', { done: n.done + n.skip, n: n.n }) + (n.skip ? ' · ' + t('up_skip', { n: n.skip }) : '') + (n.fail ? ' · ' + t('up_fail', { n: n.fail }) : '')),
+    // how long it has been going, and how long it still needs at the speed so far
+    j.running && j.at ? h('small.utime.muted', timing(j, n)) : null,
     rows.length ? h('div.ulist', rows.map((e) => h('div.urow', { 'data-state': e.state === 'fail' ? 'error' : 'run' },
       h('span.uic', icon(e.state === 'fail' ? 'alert-circle' : isVideo(e.file) ? 'film' : 'image')),
       h('div.uinfo', h('span.uname', { title: e.file.name }, e.file.name), e.state === 'fail' ? h('small.uerr', errText(e.err)) : h('sav-progress-bar', { value: e.sent, max: e.file.size || 1, 'aria-label': e.file.name }))))) : null,
@@ -363,6 +366,19 @@ function paint() {
       j.quota ? btn(t('space_drive'), { size: 'sm', icon: 'hard-drive', href: '../savdrive/#/settings' }) : null) : null);
 }
 const fails = (j) => j.list.filter((e) => e.state === 'fail');
+/** A length of time, short: "45 s", "3 min 20 s", "1 h 05 min". */
+function duration(sec) {
+  sec = Math.max(0, Math.round(sec));
+  if (sec < 60) return sec + ' s';
+  if (sec < 3600) return Math.floor(sec / 60) + ' min' + (sec % 60 && sec < 600 ? ' ' + (sec % 60) + ' s' : '');
+  return Math.floor(sec / 3600) + ' h ' + String(Math.floor((sec % 3600) / 60)).padStart(2, '0') + ' min';
+}
+function timing(j, n) {
+  const secs = (Date.now() - j.at) / 1000, parts = [t('up_elapsed', { t: duration(secs) })];
+  if (secs > 3 && n.sent > 0 && n.size > n.sent) parts.push(t('up_left', { t: duration(((n.size - n.sent) / n.sent) * secs) }));
+  return parts.join(' · ');
+}
+setInterval(() => { if (job?.running && panel) panel.querySelector('.utime')?.replaceChildren(timing(job, count(job))); }, 1000);
 
 // ---------------------------------------------------------------- the screen stays on, the page is not left by mistake
 

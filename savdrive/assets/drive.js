@@ -64,18 +64,49 @@ function askConflict(name) {
       onclose: () => { if (all.checked) sameForAll = pick; res(pick); } });
   });
 }
+/** A length of time, short: "45 s", "3 min 20 s", "1 h 05 min". */
+export function duration(sec) {
+  sec = Math.max(0, Math.round(sec));
+  if (sec < 60) return sec + ' s';
+  if (sec < 3600) return Math.floor(sec / 60) + ' min' + (sec % 60 && sec < 600 ? ' ' + (sec % 60) + ' s' : '');
+  return Math.floor(sec / 3600) + ' h ' + String(Math.floor((sec % 3600) / 60)).padStart(2, '0') + ' min';
+}
+let batchStart = 0;
+/** How long the uploads have been going and, from the speed so far, how long they still need ("" at the start). */
+function timing() {
+  const live = queue.filter((q) => q.state !== 'error'), total = live.reduce((n, q) => n + q.size, 0);
+  const sent = live.reduce((n, q) => n + (q.state === 'done' ? q.size : q.state === 'run' ? q.sent : 0), 0), secs = (Date.now() - batchStart) / 1000;
+  const parts = [t('up_elapsed', { t: duration(secs) })];
+  if (secs > 3 && sent > 0 && total > sent) parts.push(t('up_left', { t: duration(((total - sent) / sent) * secs) }));
+  return parts.join(' · ');
+}
+setInterval(() => { if (panel && queue.some((q) => q.state === 'run')) panel.querySelector('.utime')?.replaceChildren(timing()); }, 1000);
 function drawPanel() {
-  if (!queue.length) { panel?.remove(); panel = null; return; }
+  if (!queue.length) { panel?.remove(); panel = null; batchStart = 0; return; }
   if (!panel) { panel = h('sav-card.upanel', { appearance: 'elevated' }); document.body.append(panel); }
   const done = queue.filter((q) => q.state === 'done').length, active = queue.some((q) => q.state === 'wait' || q.state === 'run');
-  put(panel, h('div.uhead', h('b', active ? t('uploading', { n: queue.length - done }) : t('uploaded', { n: done })), h('span.grow'), active ? null : iconBtn('x', t('close'), () => { queue.length = 0; drawPanel(); })),
-    h('div.ulist', queue.map((q) => h('div.urow', { 'data-state': q.state },
+  // while it uploads: one button stops everything (what is done stays); then the panel can be closed
+  const stopAll = () => { for (const q of queue) if (q.state === 'run' || q.state === 'wait') { q.abort.abort(); q.state = 'error'; q.error = t('cancelled'); } drawPanel(); };
+  if (active && !batchStart) batchStart = Date.now();
+  if (!active) batchStart = 0;
+  put(panel, h('div.uhead', h('div.utitle', h('b', active ? t('uploading', { n: queue.length - done }) : t('uploaded', { n: done })), active ? h('small.utime.muted', timing()) : null), h('span.grow'),
+    active ? btn(t('cancel_all'), { size: 'sm', appearance: 'ghost', onclick: stopAll }) : iconBtn('x', t('close'), () => { queue.length = 0; drawPanel(); })),
+    // what is still going on at the top (the one being sent, then those waiting), what is over under them
+    h('div.ulist', [...queue].sort((a, b) => ORDER[a.state] - ORDER[b.state]).map((q) => h('div.urow', { 'data-state': q.state },
       h('span.uic', icon(q.state === 'done' ? 'check-circle' : q.state === 'error' ? 'alert-circle' : kindOf({ name: q.name, mime: q.file?.type || '' }).ic)),
       h('div.uinfo', h('span.uname', { title: q.name }, q.name), q.state === 'error' ? h('small.uerr', q.error) : q.state === 'done' ? h('small', bytes(q.size)) : h('sav-progress-bar', { value: q.sent, max: q.size || 1, 'aria-label': q.name })),
       q.state === 'run' || q.state === 'wait' ? iconBtn('x', t('cancel'), () => { q.abort.abort(); q.state = 'error'; q.error = t('cancelled'); drawPanel(); }) : null))));
 }
+// a reload or a closed tab while files are uploading: the browser asks first (what is not sent yet would be lost)
+addEventListener('beforeunload', (e) => { if (queue.some((q) => q.state === 'run' || q.state === 'wait')) { e.preventDefault(); e.returnValue = ''; } });
+
+const ORDER = { run: 0, wait: 1, error: 2, done: 3 };
+/** Files the systems leave in folders (macOS, Windows): never uploaded. */
+const JUNK = /^(\.DS_Store|Thumbs\.db|desktop\.ini|\._.*|\.localized|\.Spotlight-V100|\.Trashes|\.fseventsd)$/i;
 /** items: [{file, folder, name}] */
 function enqueue(items) {
+  items = items.filter((x) => !JUNK.test(x.name || x.file.name));
+  if (!items.length) return;
   for (const x of items) queue.push({ ...x, name: x.name || x.file.name, size: x.file.size, sent: 0, state: 'wait', abort: new AbortController() });
   drawPanel();
   run();
@@ -138,6 +169,8 @@ async function makeFolders(paths, parent) {
   return ids;
 }
 async function uploadAll(list, folder) {
+  // the files the systems leave in folders, and the folders of them (__MACOSX), stay out: no empty folder made for them
+  list = list.filter((x) => !JUNK.test(x.file.name) && !/(^|\/)(__MACOSX|\.Spotlight-V100|\.Trashes|\.fseventsd)(\/|$)/.test(x.path || ''));
   if (!list.length) return;
   try {
     const ids = await makeFolders(list.map((x) => x.path), folder);
@@ -437,10 +470,10 @@ export async function home(root, a, b, c) {
     setCommands(items);
     drawInfo();
     // My drive: a folder for each app of SavOffice that keeps something; a search: what the apps keep, too
-    const apps = (data.office && typeof data.office !== 'string' ? data.office : []).map(appFolder);
+    const apps = [...items.filter((x) => x.special), ...(data.office && typeof data.office !== 'string' ? data.office : []).map(appFolder)];
     const hits = (data.officeHits || []).map((d) => officeFile(d.app, [d.id, d.title, d.folder, d.size, d.updated, d.open]));
     data.extra = [...apps, ...hits];
-    const folders = items.filter((x) => x.kind === 'folder'), files = [...items.filter((x) => x.kind === 'file'), ...hits];
+    const folders = items.filter((x) => x.kind === 'folder' && !x.special), files = [...items.filter((x) => x.kind === 'file'), ...hits];
     // header: the path or the name of the view, or what can be done with the chosen items
     if (sel.size) {
       const chosen = data.items.filter((x) => sel.has(x.id)), allStar = chosen.every((x) => x.starred);
@@ -469,7 +502,7 @@ export async function home(root, a, b, c) {
     }
     const note = where === 'trash' ? h('sav-alert.tnote', { variant: 'neutral' }, t('trash_note')) : null;
     if (view() === 'list') {
-      put(body, note, !VIEWS[where] && !office && !data.q && !data.path?.length ? officeRow() : null, h('div.dlist', { role: 'list' }, h('div.lhead', h('span'), h('span', t('name')), h('span.lc-m', t(where === 'trash' ? 'trashed' : 'modified')), h('span.lc-s', t('size')), h('span')), [...apps, ...items, ...hits].map(row)));
+      put(body, note, !VIEWS[where] && !office && !data.q && !data.path?.length ? officeRow() : null, h('div.dlist', { role: 'list' }, h('div.lhead', h('span'), h('span', t('name')), h('span.lc-m', t(where === 'trash' ? 'trashed' : 'modified')), h('span.lc-s', t('size')), h('span')), [...apps, ...items.filter((x) => !x.special), ...hits].map(row)));
     } else {
       put(body, note, !VIEWS[where] && !office && !data.q && !data.path?.length ? officeRow() : null,
         apps.length ? [h('h2.dsec', t('office_apps')), h('div.dgrid.fgrid', { role: 'list' }, apps.map(card))] : null,
@@ -603,7 +636,7 @@ export async function home(root, a, b, c) {
     if (x.kind === 'folder') {
       const peek = big && !x.trashed ? (x.peek || []).slice(0, 2) : [];
       return h('span.fic.fstack' + (peek.length ? '.haspeek' : ''), { style: `--fc:${k.c}` }, peek.length ? [peekSheet(peek[0], 0, x), peekSheet(peek[1], 1, x)] : [h('i.fs.fs1'), h('i.fs.fs2')],
-        h('span.ftile' + (x.office?.root ? '.apptile' : ''), x.office?.root ? appIcon(x.office.app, big ? 44 : 22) : icon('folder')));
+        h('span.ftile' + (x.office?.root || x.special ? '.apptile' : ''), x.office?.root || x.special ? appIcon(x.office?.app || x.special, big ? 44 : 22) : icon('folder')));
     }
     const plainIcon = () => (app ? h('span.tic.app', appIcon(app, big ? 56 : 30)) : h('span.tic', { style: `--fc:${k.c}` }, icon(k.ic), big && e ? h('em', e.slice(0, 5)) : null));
     // what an app keeps: its small picture comes from the app (its session in this browser)
@@ -651,7 +684,7 @@ export async function home(root, a, b, c) {
     n.addEventListener('keydown', (e) => { if (e.target !== n) return; if (e.key === 'Enter') open(x); else if (e.key === ' ' && !x.office) { e.preventDefault(); if (sel.has(x.id)) sel.delete(x.id); else sel.add(x.id); draw(); } });
     // dragged onto a folder (a card, the path, My drive): moved there
     if (where !== 'trash' && !mobile() && can(x, 'move')) {
-      n.draggable = true;
+      n.draggable = !x.special; // the folder of SavPhotos stays in My drive (things can still be dropped into it)
       n.addEventListener('dragstart', (e) => { getSelection()?.removeAllRanges(); dragging = sel.has(x.id) ? [...sel] : [x.id]; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', x.name); });
       n.addEventListener('dragend', () => { dragging = null; });
       if (x.kind === 'folder') dropTarget(n, () => x.id, x.id);
@@ -690,13 +723,14 @@ export async function home(root, a, b, c) {
     const owner = can(x, 'owner');
     return [
       x.kind === 'folder' ? ['folder-open', t('open'), () => go('#/f/' + x.id)] : app ? ['external', t('open_in', { app: NAMES[app] }), () => openInApp(x)] : ['eye', t('preview'), () => preview(x)],
+      x.special === 'savphotos' ? ['external', t('open_in', { app: 'SavPhotos' }), () => window.open('../savphotos/', '_blank', 'noopener')] : null,
       x.kind === 'file' && app ? ['eye', t('details'), () => preview(x)] : null,
       x.kind === 'file' ? ['download', t('download'), () => download(x)] : ['download', t('download_zip'), () => download(x)],
       ['message-circle', t('comments'), () => commentsDialog(x)],
       owner ? ['users', t('people'), () => peopleDialog(x)] : null,
       '-',
-      can(x, 'write') ? ['edit', t('rename'), () => rename(x)] : null,
-      can(x, 'move') ? ['folder-input', t('move'), () => moveDialog([x.id])] : null,
+      can(x, 'write') && !x.special ? ['edit', t('rename'), () => rename(x)] : null, // the folder of SavPhotos keeps its name and place: SavPhotos finds it so
+      can(x, 'move') && !x.special ? ['folder-input', t('move'), () => moveDialog([x.id])] : null,
       x.kind === 'file' && can(x, 'write') ? ['copy', t('make_copy'), () => copy(x)] : null,
       owner ? [x.starred ? 'star-off' : 'star', t(x.starred ? 'unstar' : 'star'), () => star([x.id], !x.starred)] : null,
       x.kind === 'file' && owner ? ['link', t('share_link'), () => shareDialog(x)] : null,
@@ -783,17 +817,18 @@ export async function home(root, a, b, c) {
   }
   async function trash(ids) {
     try {
-      await api('node.trash', { ids });
+      const r = await api('node.trash', { ids });
+      window.SavOffice?.driveFiles?.(r.files, true); // the documents of the apps opened from these files go to their trash too
       sel.clear();
       const tt = toast(t('trashed_n', { n: ids.length }), 'neutral', { duration: 6000 });
       const undo = h('sav-button.undo', { size: 'sm', appearance: 'outline', variant: 'neutral' }, t('undo'));
-      undo.addEventListener('click', async () => { tt.remove?.(); await api('node.restore', { ids }).catch(fail); load(search.value.trim(), true); });
+      undo.addEventListener('click', async () => { tt.remove?.(); const b = await api('node.restore', { ids }).catch(fail); window.SavOffice?.driveFiles?.(b?.files, false); load(search.value.trim(), true); });
       tt.append?.(undo);
       load(search.value.trim(), true);
     } catch (e) { fail(e); }
   }
   async function restore(ids) {
-    try { const r = await api('node.restore', { ids }); setSpace(r.used, r.quota, r.parts); sel.clear(); toast(t('restored', { n: ids.length }), 'success'); load('', true); } catch (e) { fail(e); }
+    try { const r = await api('node.restore', { ids }); window.SavOffice?.driveFiles?.(r.files, false); setSpace(r.used, r.quota, r.parts); sel.clear(); toast(t('restored', { n: ids.length }), 'success'); load('', true); } catch (e) { fail(e); }
   }
   async function destroy(ids) {
     if (!(await confirm(t('delete_forever'), t('delete_forever_t', { n: ids.length }), t('delete_forever')))) return;

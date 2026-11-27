@@ -15,6 +15,8 @@
  *   desk       optional: how many from a computer (d1.jpg, d2.jpg…, 1440 × 900)
  *   suite      optional: 'savoffice' = an app of SavOffice: the home page shows one card for the whole suite instead of
  *              one per app (pages/home.php); its own page stays where it is
+ *   invite     optional: true = for now only for the accounts the administrators turn on (the pages say so, with the
+ *              address to ask for it: $site['contact'])
  */
 $five = ['en', 'it', 'fr', 'de', 'es'];
 $two = ['en', 'it'];
@@ -31,7 +33,7 @@ return [
             ['Drag-and-drop editor with ready templates or the group’s own', 'Proposal, approval and sending at the chosen time, also in SavCalendar', 'Subscribers in several languages, a subscription page and a widget for any website', 'Each group sends from its own email address; newsletters saved as .savnew files']],
     ],
     'savdrive' => [
-        'name' => 'SavDrive', 'suite' => 'savoffice', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '',
+        'name' => 'SavDrive', 'suite' => 'savoffice', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '', 'invite' => true,
         'url' => '/savdrive/', 'source' => 'savdrive', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 2, 'tablet' => 2, 'desk' => 2,
         'it' => ['I tuoi file, in un drive tutto tuo.',
             'Un posto per foto, documenti e cartelle, da ritrovare su qualsiasi dispositivo: carichi file di ogni dimensione, anche intere cartelle trascinandole, li guardi senza scaricarli e li condividi con un link. Ogni account ha 500 MB gratis. Fa parte di SavOffice: documenti, fogli di calcolo e presentazioni si creano nel drive e si aprono nella loro app.',
@@ -81,7 +83,7 @@ return [
             ['Polls with yes, if need be and no, and the choice of the final date', 'Unique slots or slots for several people, and a limit of places per person', 'Answers without an account, or only for signed-in people', 'Deadline, hidden answers, QR code, .ics, CSV and .savsch files']],
     ],
     'savcalendar' => [
-        'name' => 'SavCalendar', 'suite' => 'savoffice', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '',
+        'name' => 'SavCalendar', 'suite' => 'savoffice', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => true, 'play' => '',
         'url' => '/savcalendar/', 'source' => 'savcalendar', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 3, 'tablet' => 4, 'desk' => 4,
         'it' => ['Il tuo tempo, in un calendario.',
             'Un calendario libero con giorno, settimana, mese e agenda, più calendari, ripetizioni e fusi orari. Ha lo stesso account di SavSchedules: le date scelte e i posti prenotati compaiono da soli, e dal calendario nasce un sondaggio. Fa parte di SavOffice: si vede anche in Google, Outlook e Apple, e porta qui i loro calendari.',
@@ -91,7 +93,7 @@ return [
             ['Draw, drag and stretch events; repetitions with exceptions', 'A week of your own: first day and days shown', 'Private link for Google Calendar, Outlook and Apple; subscriptions to .ics calendars', '.savcal, .ics and CSV files; planned newsletters of SavNewsletters']],
     ],
     'savtasks' => [
-        'name' => 'SavTasks', 'suite' => 'savoffice', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '',
+        'name' => 'SavTasks', 'suite' => 'savoffice', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => true, 'play' => '',
         'url' => '/savtasks/', 'source' => 'savtasks', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 3, 'tablet' => 3, 'desk' => 3,
         'it' => ['Tutto da fare, in un posto solo.',
             'Attività, liste e bacheche kanban in un’unica app, con scadenze, promemoria e ripetizioni. Ha lo stesso account di SavSchedules e SavCalendar: le attività con scadenza compaiono nel calendario, un’attività può diventare un evento o un sondaggio, e i sondaggi da decidere arrivano qui. Fa parte di SavOffice.',
@@ -111,7 +113,7 @@ return [
             ['Fourteen kinds of questions: texts, choices, scales, stars, grids, rankings, numbers and dates, on several pages', 'One answer per person, answers that can be changed, a limit of answers, opening and deadline', 'A chart for every question, the answers one by one, CSV; quizzes with points', 'Colours and fonts of your own; .savfor files; the deadline in SavCalendar']],
     ],
     'savwhiteboard' => [
-        'name' => 'SavWhiteboard', 'suite' => 'savoffice', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '',
+        'name' => 'SavWhiteboard', 'suite' => 'savoffice', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => true, 'play' => '',
         'url' => '/savwhiteboard/', 'source' => 'savwhiteboard', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 3, 'tablet' => 3, 'desk' => 3,
         'it' => ['Una lavagna senza bordi.',
             'Una lavagna libera che cresce in ogni direzione mentre lavori: scrivi a mano o digita, disegna, attacca foglietti e immagini. Sotto, una filigrana di puntini, quadretti o righe su qualsiasi colore, anche nera come una lavagna di scuola. Ha lo stesso account di SavSchedules e SavCalendar e fa parte di SavOffice.',
@@ -121,7 +123,7 @@ return [
             ['Pressure-sensitive pen, pencil, highlighter, eraser and laser pointer', 'Typed text, sticky notes, shapes, arrows and pictures to move and resize', 'Two fingers to move and zoom; with a stylus the palm does not draw', '.savwhi, PNG, SVG and PDF files']],
     ],
     'savnotes' => [
-        'name' => 'SavNotes', 'suite' => 'savoffice', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '',
+        'name' => 'SavNotes', 'suite' => 'savoffice', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => true, 'play' => '',
         'url' => '/savnotes/', 'source' => 'savnotes', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 3, 'tablet' => 3, 'desk' => 3,
         'it' => ['I tuoi quaderni, a mano o a tastiera.',
             'Quaderni digitali divisi in fogli veri, di formato fisso: a quadretti, a righe, con il margine, appunti Cornell o puntini, del colore che preferisci. Scrivi a mano con penna, matita, evidenziatore, forme e immagini, oppure digita come in un documento, con titoli, elenchi e liste di controllo che si appoggiano sulle righe. Ha lo stesso account di SavSchedules e SavCalendar e fa parte di SavOffice.',
@@ -139,6 +141,46 @@ return [
         'en' => ['Presentations, without the weight.',
             'An open alternative to Google Slides and PowerPoint Online: it opens at once, its themes already look good, and several people can work on the same slide. Presentations stay private, by link or with the people you choose, and download as PDF, PowerPoint and OpenDocument. Part of SavOffice.',
             ['Themes and templates, from plain to bold, in 16:9, A4, A3 and other formats', 'Live editing together, comments and personal notes', 'Charts, tables, icons and a search for free pictures and videos', 'Permissions for each person and single-use links']],
+    ],
+    'savmail' => [
+        'name' => 'SavMail', 'suite' => 'savoffice', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '',
+        'url' => '/savmail/', 'source' => 'savmail', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 0, 'tablet' => 0, 'desk' => 0,
+        'it' => ['Tutta la tua posta, in un posto solo.',
+            'Gli indirizzi email di qualsiasi provider, Gmail, Outlook, Yahoo, iCloud, Aruba, Libero o qualsiasi casella IMAP, in un’unica app: ogni indirizzo con le sue cartelle, e le cartelle di tutti insieme. Leggi, rispondi e inoltri con gli allegati; le bozze restano nella casella stessa. Le password delle caselle sono cifrate sui tuoi dispositivi. Ha lo stesso account delle altre app di SavOffice.',
+            ['Fino a 10 indirizzi di qualsiasi provider, anche con l’accesso di Microsoft', 'Posta in arrivo di tutti gli indirizzi insieme, bozze, inviata, archivio, spam e cestino', 'Rispondi, rispondi a tutti e inoltra, con allegati, un nome e una firma per ogni indirizzo', 'Password cifrate sui tuoi dispositivi, con un codice di recupero']],
+        'en' => ['All your email, in one place.',
+            'The email addresses of any provider, Gmail, Outlook, Yahoo, iCloud, Aruba, Libero or any IMAP mailbox, in one app: each address with its own folders, and the folders of all of them together. Read, reply and forward with attachments; drafts stay in the mailbox itself. The passwords of the mailboxes are encrypted on your devices. It shares the account with the other apps of SavOffice.',
+            ['Up to 10 addresses from any provider, Microsoft sign-in too', 'The inbox of every address together, drafts, sent, archive, spam and trash', 'Reply, reply all and forward, with attachments, a name and a signature for each address', 'Passwords encrypted on your devices, with a recovery code']],
+    ],
+    'savphotos' => [
+        'name' => 'SavPhotos', 'suite' => 'savoffice', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '', 'invite' => true,
+        'url' => '/savphotos/', 'source' => 'savphotos', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 0, 'tablet' => 0, 'desk' => 0,
+        'it' => ['Le tue foto e i tuoi video, giorno per giorno.',
+            'Le foto e i video di SavDrive in una galleria ordinata per giorno: il backup del telefono o del computer salta i doppioni e tiene la data di scatto, un visore a tutto schermo li mostra uno dopo l’altro, e gli album si condividono con un link. Usa l’account e lo spazio di SavDrive. Fa parte di SavOffice.',
+            ['Backup di foto e video, anche di intere cartelle che diventano album', 'Galleria per giorno, preferiti, video e ricerca', 'Album con copertina, link da condividere e download in ZIP', 'Nello spazio di SavDrive, senza un altro account']],
+        'en' => ['Your photos and videos, day by day.',
+            'The photos and videos of SavDrive in a gallery sorted by day: the backup of a phone or a computer skips the duplicates and keeps the date they were taken, a full-screen viewer shows them one after another, and albums are shared with a link. It uses the account and the space of SavDrive. Part of SavOffice.',
+            ['Backup of photos and videos, whole folders too, which become albums', 'Gallery by day, favourites, videos and search', 'Albums with a cover, a link to share them and a ZIP download', 'In the space of SavDrive, no other account']],
+    ],
+    'savpodcasts' => [
+        'name' => 'SavPodcasts', 'suite' => 'savoffice', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => false, 'play' => '',
+        'url' => '/savpodcasts/', 'source' => 'savpodcasts', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 0, 'tablet' => 0, 'desk' => 0,
+        'it' => ['I tuoi podcast, dai loro feed.',
+            'Un lettore di podcast libero: i podcast arrivano dai loro feed RSS pubblici, trovati in cataloghi aperti o aggiunti con l’indirizzo del feed, mai dalle grandi piattaforme. I nuovi episodi in un’unica lista, una coda nel tuo ordine, gli episodi preferiti e la cronologia; il punto di ascolto ti segue su ogni dispositivo. Ha lo stesso account delle altre app di SavOffice.',
+            ['Ricerca nei cataloghi aperti, o il podcast aggiunto con il suo feed RSS', 'Nuovi episodi, coda, preferiti e cronologia', 'Il punto di ascolto si ritrova su ogni dispositivo', 'Velocità, salti avanti e indietro, timer e abbonamenti in OPML']],
+        'en' => ['Your podcasts, from their own feeds.',
+            'A free podcast player: podcasts come from their public RSS feeds, found in open catalogues or added by the address of the feed, never from the big platforms. The new episodes in one list, a queue in your order, starred episodes and the history; where you stopped follows you on every device. It shares the account with the other apps of SavOffice.',
+            ['Search in open catalogues, or a podcast added by its RSS feed', 'New episodes, queue, favourites and history', 'Where you stopped, on every device', 'Speed, skips back and forward, a sleep timer and subscriptions in OPML']],
+    ],
+    'savsplits' => [
+        'name' => 'SavSplits', 'suite' => 'savoffice', 'cat' => 'work', 'level' => 2, 'account' => 'optional', 'offline' => true, 'play' => '',
+        'url' => '/savsplits/', 'source' => 'savsplits', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 0, 'tablet' => 0, 'desk' => 0,
+        'it' => ['Spese condivise, senza far conti.',
+            'Viaggi, coinquilini, coppie, associazioni e condomini: scrivi chi ha pagato e per chi, SavSplits calcola i saldi e il minor numero di pagamenti per pareggiare. Gli altri entrano con un link, senza account. Ha lo stesso account delle altre app di SavOffice.',
+            ['In parti uguali, per quote, per percentuali, per importi o per millesimi', 'Saldi e pagamenti per pareggiare, segnati come fatti con un tocco', 'Un link per guardare o per aggiungere spese, senza account', 'Ogni valuta con i cambi BCE, spese che si ripetono, file .savspl e CSV']],
+        'en' => ['Shared expenses, settled without fuss.',
+            'Trips, flatmates, couples, clubs and condominiums: write who paid and for whom, SavSplits works out the balances and the fewest payments to settle up. The others join with a link, no account needed. It shares the account with the other apps of SavOffice.',
+            ['Equally, by shares, by percentages, by amounts or by thousandths', 'Balances and payments to settle up, marked as done with one press', 'A link to look or to add expenses, no account needed', 'Any currency with ECB rates, repeated expenses, .savspl and CSV files']],
     ],
     'chess' => [
         'name' => 'Chess', 'cat' => 'games', 'level' => 3, 'account' => 'none', 'offline' => true, 'play' => 'com.saverio.chess',

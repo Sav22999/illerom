@@ -292,3 +292,5 @@ summary.ar { list-style: none; cursor: pointer; border-radius: 0; } summary.ar::
 .tic.cwrap { position: absolute; inset: 0; } .appbadge { position: absolute; left: .45rem; bottom: .45rem; display: grid; padding: 3px; border-radius: 8px; background: var(--card); box-shadow: var(--sav-shadow-sm); } .appbadge img { border-radius: 5px; }
 /* a space: a number and its unit, side by side and of the same height */
 .sizef { display: flex; align-items: flex-end; gap: .5rem; } .sizef .unitsel { width: 6.5rem; flex: none; } .fhelp { margin: .35rem 0 0; }
+/* the upload panel: how long it has taken and how long it still needs */
+.upanel .utitle { display: grid; gap: .1rem; min-width: 0; } .upanel .utime { font-size: .78rem; font-variant-numeric: tabular-nums; }

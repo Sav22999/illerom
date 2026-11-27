@@ -47,6 +47,8 @@ async function boot() {
   const next = sessionStorage.getItem('savtasks-next');
   if (S.user?.verified && next) { sessionStorage.removeItem('savtasks-next'); if (/^(#\/?(signin|signup|welcome)?)?$/.test(location.hash)) history.replaceState(null, '', next); }
   addEventListener('hashchange', route);
+  // the changes made offline have left (assets/store.js): everything again from the server, which has the last word
+  addEventListener('savoffice-synced', async () => { if (!S.user) return; try { await loadAll(); route(); } catch { /* the next time */ } });
   // a .savtas opened from the files of the device (installed app): it becomes a new list
   { const take = async (p) => { const f = p.files?.[0]; if (!f) return; S.pendingFile = await f.getFile(); if (S.user?.verified) { if (S.ready) import('./files.js').then((m) => m.openPending()); else location.hash = '#/'; } };
     window.launchQueue?.setConsumer(take);

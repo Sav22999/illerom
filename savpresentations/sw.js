@@ -5,12 +5,14 @@
  * Other API calls always go to the network: the data offline come from IndexedDB (local.js).
  */
 'use strict';
-const CACHE = 'savpresentations-13';
+importScripts('../assets/savoffice/offline-sw.js'); // the last answers of the API, for when there is no connection (SavOfficeData)
+const CACHE = 'savpresentations-14';
 const SHELL = ['./', 'manifest.webmanifest', 'icons/favicon.svg', 'icons/icon-192.png', '../assets/sav/sav.css', '../assets/sav/sav.js', '../assets/savoffice/savoffice.js', '../identity/identity.css?v=2', '../identity/identity.js?v=3',
     ...['admin.js', 'app.css', 'auth.js', 'cfb.js', 'changelog.js', 'core.js', 'editor.js', 'export-odp.js', 'export-pdf.js', 'export-pptx.js', 'features.js', 'files.js', 'fonts.js', 'grid.js', 'hero.js', 'home.js', 'i18n.js', 'icons-lib.js', 'icons.js', 'import-odp.js', 'import-ppt.js', 'import-pptx.js', 'layouts.js', 'local.js', 'main.js', 'marks.js', 'media.js', 'model.js', 'pages.js', 'panels.js', 'parts.js', 'present.js', 'render.js', 'richtext.js', 'settings.js', 'shapes.js', 'share.js', 'speaker.js', 'stage.js', 'templates.js', 'textedit.js', 'themes.js', 'ttf.js', 'version.js', 'zip.js'].map((f) => 'assets/' + f)];
 self.addEventListener('install', (e) => e.waitUntil(caches.open(CACHE).then((c) => Promise.allSettled(SHELL.map((u) => c.add(u)))).then(() => self.skipWaiting())));
 self.addEventListener('activate', (e) => e.waitUntil(caches.keys().then((k) => Promise.all(k.filter((x) => x.startsWith('savpresentations-') && x !== CACHE && !x.endsWith('-media')).map((x) => caches.delete(x)))).then(() => self.clients.claim())));
 self.addEventListener('fetch', (e) => {
+  if (self.SavOfficeData?.handle(e)) return; // the API: network first, the kept answer when offline (../assets/savoffice/offline-sw.js)
     const u = new URL(e.request.url);
     if (e.request.method !== 'GET' || u.origin !== location.origin || !u.pathname.includes('/savpresentations/') && !u.pathname.includes('/assets/sav/') && !u.pathname.includes('/identity/') && !u.pathname.includes('/assets/savoffice/')) return;
     // pictures and videos of the presentations: an id never changes its content (videos are asked in ranges: those go to the network)

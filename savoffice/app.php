@@ -31,11 +31,13 @@ $next = $order[($i + 1) % count($order)];
                 <a class="btn main app-c" href="<?= $h($open) ?>"><?= $L('Apri', 'Open') ?> <?= $h($P['name']) ?></a>
                 <?php if ($src): ?><a class="btn ghost" href="<?= $h($src) ?>"><?= $L('Codice sorgente', 'Source code') ?></a><?php endif; ?>
             </div>
+            <?= $invite($app) ?>
             <ul class="pills"><li><?= $h($strings['levels'][$P['level']]) ?></li><li><?= $L('Gratis', 'Free') ?></li><li>Open source</li><?php if ($P['offline']): ?><li><?= $L('Anche offline', 'Works offline') ?></li><?php endif; ?></ul>
         </div>
         <div class="shots">
-            <div class="desk"><sav-image zoom eager src="<?= $shot($app, $desk) ?>" alt="<?= $h($P['name'] . ($it ? ' su un computer' : ' on a computer')) ?>" ratio="1440:900"></sav-image></div>
-            <div class="phone"><sav-image zoom eager src="<?= $shot($app, $phone) ?>" alt="<?= $h($P['name'] . ($it ? ' su un telefono' : ' on a phone')) ?>" ratio="562:1000"></sav-image></div>
+            <?php if ($has($app, $desk)): ?><div class="desk"><sav-image zoom eager src="<?= $shot($app, $desk) ?>" alt="<?= $h($P['name'] . ($it ? ' su un computer' : ' on a computer')) ?>" ratio="1440:900"></sav-image></div>
+            <?php else: ?><div class="desk noshot" aria-hidden="true"><?= $ico($app, 128) ?></div><?php endif; ?>
+            <?php if ($has($app, $phone)): ?><div class="phone"><sav-image zoom eager src="<?= $shot($app, $phone) ?>" alt="<?= $h($P['name'] . ($it ? ' su un telefono' : ' on a phone')) ?>" ratio="562:1000"></sav-image></div><?php endif; ?>
         </div>
     </section>
 

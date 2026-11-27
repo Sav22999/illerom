@@ -1,5 +1,6 @@
 /** The API, and the state of the app. */
 import { getLang } from './i18n.js';
+import { offlineQueue, tmp } from '../../assets/savoffice/offline-queue.js';
 import { todayKey } from './time.js';
 
 /**
@@ -9,7 +10,8 @@ import { todayKey } from './time.js';
  */
 export const S = { user: null, csrf: '', config: {}, prefs: {}, groups: [], G: null, ready: false };
 
-export async function api(r, body, query = {}) {
+/** The API as it is (the network): changes made offline go through the queue below first. */
+async function send(r, body, query = {}) {
   const q = Object.entries(query).filter(([, v]) => v !== undefined && v !== null && v !== '').map(([k, v]) => `&${k}=${encodeURIComponent(v)}`).join('');
   const headers = { 'X-Lang': getLang() };
   if (body) { headers['Content-Type'] = 'application/json'; if (S.csrf) headers['X-CSRF-Token'] = S.csrf; }
@@ -20,6 +22,37 @@ export async function api(r, body, query = {}) {
   if (d.csrf) S.csrf = d.csrf;
   return d;
 }
+
+// ------------------------------------------------------------------ without a network (../assets/savoffice/offline-queue.js)
+// An expense written, changed or deleted offline shows at once in the open group and waits in this browser; the balances
+// are worked out by the server, so they follow when the network is back (then the group is read again).
+function local(r, b) {
+  const G = S.G;
+  if (!G?.expenses) return null;
+  if (r === 'splits.expense.delete') { G.expenses = G.expenses.filter((e) => e.id !== b.eid); return { ok: true }; }
+  if (r === 'splits.expense.save') {
+    const old = b.eid ? G.expenses.find((e) => e.id === b.eid) : null;
+    if (b.eid && !old) return null;
+    const cur = G.group?.currency;
+    const e = { ...(old || { id: tmp(), kind: 'expense', title: '', category: '', day: b.today || new Date().toISOString().slice(0, 10), amount: 0, currency: cur, rate: 1, base: 0, payers: {}, split: { mode: 'equal', parts: {}, table: '' }, paid: {}, alloc: {}, notes: '', repeat: '', repeatNext: null, repeatOf: null, by: '', created: new Date().toISOString(), photos: [] }) };
+    for (const k of ['kind', 'title', 'category', 'day', 'amount', 'currency', 'payers', 'split', 'notes', 'repeat']) if (k in b) e[k] = b[k];
+    if (e.currency === cur) e.base = e.amount;
+    // who paid and for whom, as written (the exact shares are worked out by the server)
+    if ('payers' in b) e.paid = { ...b.payers };
+    if (b.split?.parts && Object.keys(b.split.parts).length) e.alloc = { ...b.split.parts };
+    e.updated = new Date().toISOString();
+    e.waiting = true; // shown, not yet in the balances
+    if (old) Object.assign(old, e); else G.expenses.unshift(e);
+    return { ok: true, _tmp: old ? null : e.id };
+  }
+  return null;
+}
+const Q = offlineQueue('savsplits', {
+  send, local, routes: ['splits.expense.save', 'splits.expense.delete'],
+  done: () => dispatchEvent(new CustomEvent('savoffice-synced')),
+});
+export const api = (r, body, query) => Q.api(r, body, query);
+if (window.SavOffice) window.SavOffice.offlineEdit = true;
 
 // ------------------------------------------------------------------ the group open now
 
@@ -35,6 +68,7 @@ export const src = () => (S.G?.src?.code ? { code: S.G.src.code, as: guestAs(S.G
 export async function loadGroup(where) {
   const d = await api('splits.group', undefined, { ...where, today: todayKey() });
   S.G = { ...d, src: where };
+  await Q.replay(); // the expenses still waiting to leave from this browser
   return S.G;
 }
 

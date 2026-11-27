@@ -41,6 +41,8 @@ async function boot() {
   const next = sessionStorage.getItem('savcalendar-next');
   if (S.user?.verified && next) { sessionStorage.removeItem('savcalendar-next'); if (/^(#\/?(signin|signup|welcome)?)?$/.test(location.hash)) history.replaceState(null, '', next); }
   addEventListener('hashchange', route);
+  // the changes made offline have left (assets/store.js): the screen again from the server, which has the last word
+  addEventListener('savoffice-synced', () => { if (S.user) route(); });
   // a .savcal or .ics opened from the files of the device (installed app): the calendar offers to import it
   { const take = async (p) => { const f = p.files?.[0]; if (!f) return; S.pendingFile = await f.getFile(); if (S.user?.verified) { if (/^#\/(day|week|month|agenda)?/.test(location.hash) || !location.hash) dispatchEvent(new HashChangeEvent('hashchange')); else location.hash = '#/'; } };
     window.launchQueue?.setConsumer(take);

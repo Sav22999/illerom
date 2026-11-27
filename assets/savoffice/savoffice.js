@@ -1,5 +1,5 @@
 /*
- * SavOffice — the apps of the suite (SavBooks, SavCalendar, SavDocuments, SavDrive, SavForms, SavNewsletters, SavNotes, SavPresentations, SavSchedules, SavSpreadsheets, SavTasks, SavWhiteboard) from inside each one:
+ * SavOffice — the apps of the suite (SavBooks, SavCalendar, SavDocuments, SavDrive, SavForms, SavMail, SavNewsletters, SavNotes, SavPhotos, SavPodcasts, SavPresentations, SavSchedules, SavSplits, SavSpreadsheets, SavTasks, SavWhiteboard) from inside each one:
  * <savoffice-apps current="savcalendar"></savoffice-apps> is a button with a grid that opens the list of the apps and the
  * page of SavOffice. Plain script, no build: it needs SavComponents (sav-button, sav-popover), which every app loads.
  * The apps live in folders next to each other (../savdocuments/ …): the links are relative, so it works anywhere.
@@ -24,10 +24,14 @@
     ['savdocuments', 'SavDocuments', 'Documenti', 'Documents'],
     ['savdrive', 'SavDrive', 'File e cartelle', 'Files and folders'],
     ['savforms', 'SavForms', 'Moduli e sondaggi', 'Forms and surveys'],
+    ['savmail', 'SavMail', 'Posta', 'Email'],
     ['savnewsletters', 'SavNewsletters', 'Newsletter', 'Newsletters'],
     ['savnotes', 'SavNotes', 'Quaderni', 'Notebooks'],
+    ['savphotos', 'SavPhotos', 'Foto e video', 'Photos and videos'],
+    ['savpodcasts', 'SavPodcasts', 'Podcast', 'Podcasts'],
     ['savpresentations', 'SavPresentations', 'Presentazioni', 'Presentations'],
     ['savschedules', 'SavSchedules', 'Sondaggi e posti', 'Polls and slots'],
+    ['savsplits', 'SavSplits', 'Spese condivise', 'Shared expenses'],
     ['savspreadsheets', 'SavSpreadsheets', 'Fogli di calcolo', 'Spreadsheets'],
     ['savtasks', 'SavTasks', 'Attività', 'Tasks'],
     ['savwhiteboard', 'SavWhiteboard', 'Lavagna', 'Whiteboard'],
@@ -52,7 +56,10 @@ savoffice-apps { display: inline-flex; }
   background: var(--sav-color-surface, #fff); color: var(--sav-color-text, #222); border: 1px solid var(--sav-color-border, rgba(127,127,127,.25)); box-shadow: 0 12px 34px rgb(0 0 0 / .16); font-size: .88rem; line-height: 1.45; }
 .so-ask b { display: flex; align-items: center; gap: .4rem; font-size: .92rem; margin-bottom: .25rem; } .so-ask p { margin: 0 0 .7rem; color: var(--sav-color-text-muted, #666); }
 .so-ask .so-row { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; } .so-ask .so-x { position: absolute; top: .35rem; right: .35rem; }
-@media (prefers-reduced-motion: no-preference) { .so-ask { animation: so-in .35s ease-out; } @keyframes so-in { from { opacity: 0; transform: translateY(10px); } } }`;
+@media (prefers-reduced-motion: no-preference) { .so-ask { animation: so-in .35s ease-out; } @keyframes so-in { from { opacity: 0; transform: translateY(10px); } } }
+.so-off { position: fixed; left: 50%; bottom: max(.9rem, env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 60; display: flex; align-items: center; gap: .6rem; max-width: calc(100vw - 1.5rem); padding: .5rem .55rem .5rem .85rem; border-radius: 999px; font: 500 .84rem/1.3 var(--sav-font, system-ui, sans-serif); color: var(--sav-color-text, #222); background: var(--sav-color-surface, #fff); border: 1px solid var(--sav-color-border, rgba(127,127,127,.25)); box-shadow: 0 8px 24px -10px rgb(0 0 0 / .3); }
+.so-off svg { flex: none; width: 17px; height: 17px; color: var(--sav-color-warning, #b45309); } .so-off.on svg { color: var(--sav-color-success, #15803d); }
+.so-off button { border: 0; border-radius: 999px; padding: .3rem .7rem; font: inherit; font-weight: 650; cursor: pointer; color: var(--sav-color-on-primary, #fff); background: var(--sav-color-primary, #36c); }`;
   const it = () => (document.documentElement.lang || navigator.language || 'en').startsWith('it');
   const root = () => new URL('../', location.href.split('#')[0]);
   const DONATE = 'https://www.saveriomorelli.com/donate/';
@@ -264,6 +271,32 @@ savoffice-apps { display: inline-flex; }
       paintAll();
     },
     saveToDrive,
+    /**
+     * SavDrive moved files to its trash (gone) or back: the documents of the apps linked to them in this browser go to
+     * the trash of their app too, or come back from it. uids: the files of SavDrive (node.trash / node.restore say which).
+     */
+    async driveFiles(uids, gone) {
+      const want = new Set(uids || []), csrf = {};
+      const TRASH = {
+        savdocuments: (k) => ['doc.' + (gone ? 'trash' : 'restore'), { doc: k }],
+        savspreadsheets: (k) => ['doc.' + (gone ? 'trash' : 'restore'), { doc: k }],
+        savbooks: (k) => ['doc.' + (gone ? 'trash' : 'restore'), { doc: k }],
+        savpresentations: (k) => (k.startsWith('l') ? null : ['deck.' + (gone ? 'trash' : 'restore'), { d: k }]), // "l…": only in that browser
+        savwhiteboard: (k) => ['wb.' + (gone ? 'trash' : 'restore'), { ids: [k] }],
+        savnotes: (k) => ['nb.' + (gone ? 'trash' : 'restore'), { ids: [k] }],
+      };
+      for (const [key, v] of Object.entries(links())) {
+        if (!want.has(v.id)) continue;
+        const i = key.indexOf(':'), app = key.slice(0, i), call = TRASH[app]?.(key.slice(i + 1));
+        if (!call) continue;
+        try {
+          const url = (r) => new URL(app + '/api/?r=' + r, root()).href;
+          csrf[app] ??= await fetch(url('auth.me'), { credentials: 'same-origin', cache: 'no-store' }).then((r) => r.json()).then((d) => d.csrf || '').catch(() => '');
+          if (!csrf[app]) continue; // not signed in to that app here
+          await fetch(url(call[0]), { method: 'POST', credentials: 'same-origin', cache: 'no-store', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf[app] }, body: JSON.stringify(call[1]) });
+        } catch { /* the document stays: never in the way of SavDrive */ }
+      }
+    },
     /** for the search of actions */
     driveCommands() {
       if (!exp) return [];
@@ -272,6 +305,41 @@ savoffice-apps { display: inline-flex; }
     },
   });
   paintAll();
+
+  // ---------------------------------------------------------------- without a connection
+  // The service worker gives back the last answers of the API (../assets/savoffice/offline-sw.js) and says so: a note at the
+  // bottom tells what is shown and, for the apps that edit offline, that the changes will leave later; when the network is
+  // back, one press reloads what changed meanwhile. The four editors have their own notes. An app that queues its changes
+  // offline says so with SavOffice.offlineEdit = true.
+  const OWN = ['savdocuments', 'savspreadsheets', 'savbooks', 'savpresentations'];
+  let off = null, wasOff = false;
+  const WIFI = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h.01"/><path d="M8.5 16.4a5 5 0 0 1 7 0"/><path d="M5 12.9a10 10 0 0 1 5.2-2.8"/><path d="M19 12.9a10 10 0 0 0-2-1.5"/><path d="M2 8.8a15 15 0 0 1 4.2-2.7"/><path d="M22 8.8a15 15 0 0 0-11.3-3.8"/><path d="m2 2 20 20"/></svg>';
+  function offNote(state) {
+    if (OWN.includes(appId)) return;
+    const l = it();
+    if (state === 'off') {
+      wasOff = true;
+      off ||= Object.assign(document.createElement('div'), { className: 'so-off', role: 'status' });
+      off.className = 'so-off';
+      off.innerHTML = WIFI + '<span></span>';
+      off.querySelector('span').textContent = window.SavOffice?.offlineEdit
+        ? (l ? 'Sei offline: vedi i dati dell’ultima visita, e le modifiche partiranno al ritorno della rete.' : 'You are offline: you see the data of your last visit, and changes will go out when the network is back.')
+        : (l ? 'Sei offline: vedi i dati dell’ultima visita, in sola lettura.' : 'You are offline: you see the data of your last visit, read only.');
+      if (!off.isConnected) document.body.append(off);
+    } else if (state === 'on' && off?.isConnected && wasOff) {
+      off.className = 'so-off on';
+      off.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span></span><button type="button"></button>';
+      off.querySelector('span').textContent = l ? 'Di nuovo online.' : 'Back online.';
+      const b = off.querySelector('button');
+      b.textContent = l ? 'Aggiorna' : 'Refresh';
+      b.addEventListener('click', () => location.reload());
+      setTimeout(() => { if (off?.classList.contains('on')) off.remove(); }, 12000);
+    }
+  }
+  navigator.serviceWorker?.addEventListener('message', (e) => { if (e.data?.savoffice === 'offline') offNote('off'); });
+  addEventListener('offline', () => offNote('off'));
+  addEventListener('online', () => offNote('on'));
+  if (navigator.onLine === false) addEventListener('DOMContentLoaded', () => offNote('off'));
 
   // ---------------------------------------------------------------- a rare invitation to support SavOffice
   // Shown at most once every 4 months (one year after "I already donated" or a press on "Support"), only to whoever has
@@ -323,11 +391,72 @@ savoffice-apps { display: inline-flex; }
   const IS_MAC = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
   const it = () => (document.documentElement.lang || navigator.language || 'en').startsWith('it');
   const APPS = [['savbooks', 'SavBooks', 'Libri ed e-book', 'Books and e-books'], ['savcalendar', 'SavCalendar', 'Calendario', 'Calendar'], ['savdocuments', 'SavDocuments', 'Documenti', 'Documents'], ['savdrive', 'SavDrive', 'File e cartelle', 'Files and folders'],
-    ['savforms', 'SavForms', 'Moduli e sondaggi', 'Forms and surveys'], ['savnewsletters', 'SavNewsletters', 'Newsletter', 'Newsletters'], ['savnotes', 'SavNotes', 'Quaderni', 'Notebooks'], ['savpresentations', 'SavPresentations', 'Presentazioni', 'Presentations'],
-    ['savschedules', 'SavSchedules', 'Sondaggi e posti', 'Polls and slots'], ['savspreadsheets', 'SavSpreadsheets', 'Fogli di calcolo', 'Spreadsheets'], ['savtasks', 'SavTasks', 'Attività', 'Tasks'], ['savwhiteboard', 'SavWhiteboard', 'Lavagna', 'Whiteboard']];
+    ['savforms', 'SavForms', 'Moduli e sondaggi', 'Forms and surveys'], ['savmail', 'SavMail', 'Posta', 'Email'], ['savnewsletters', 'SavNewsletters', 'Newsletter', 'Newsletters'], ['savnotes', 'SavNotes', 'Quaderni', 'Notebooks'],
+    ['savphotos', 'SavPhotos', 'Foto e video', 'Photos and videos'], ['savpodcasts', 'SavPodcasts', 'Podcast', 'Podcasts'], ['savpresentations', 'SavPresentations', 'Presentazioni', 'Presentations'],
+    ['savschedules', 'SavSchedules', 'Sondaggi e posti', 'Polls and slots'], ['savsplits', 'SavSplits', 'Spese condivise', 'Shared expenses'], ['savspreadsheets', 'SavSpreadsheets', 'Fogli di calcolo', 'Spreadsheets'], ['savtasks', 'SavTasks', 'Attività', 'Tasks'], ['savwhiteboard', 'SavWhiteboard', 'Lavagna', 'Whiteboard']];
   const GRIP = '<circle cx="12" cy="5" r="1"/><circle cx="19" cy="5" r="1"/><circle cx="5" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/><circle cx="12" cy="19" r="1"/><circle cx="19" cy="19" r="1"/><circle cx="5" cy="19" r="1"/>';
   let groups = [], pal = null;
   const fns = new Map();
+  /*
+   * Words that mean the same thing, in Italian and English: an action is found by any of them ("link" finds "Condividi",
+   * "scarica" finds "Download", "settings" finds "Impostazioni"). Each line is a group; an action whose name, description
+   * or keywords hold a word of a group gets all the words of that group as keywords. The palettes of the editors too.
+   */
+  const SYN = [
+    'condividi condivisione share sharing link collegamento url invita invite persone people accesso access pubblica publish',
+    'link collegamento collegamenti url hyperlink indirizzo',
+    'scarica download esporta export pdf docx pptx xlsx odt epub',
+    'stampa print stampante printer pdf',
+    'elimina delete cancella rimuovi remove cestino trash butta',
+    'impostazioni settings opzioni options preferenze preferences configura',
+    'impostazioni settings tema theme', // the theme and the language are in the settings of every app
+    'impostazioni settings lingua language',
+    'tema theme stile style aspetto appearance',
+    'nuovo nuova new crea create aggiungi add',
+    'inserisci insert aggiungi add',
+    'cerca search trova find sostituisci replace',
+    'tema theme aspetto appearance colori colors scuro dark chiaro light',
+    'copia copy duplica duplicate clona clone',
+    'rinomina rename',
+    'immagine immagini image images foto photo photos picture',
+    'tabella table tabelle tables',
+    'grafico chart grafici charts diagramma diagram',
+    'commenti commento comment comments',
+    'note nota notes appunti',
+    'versioni versione versions version cronologia history ripristina restore',
+    'esci logout disconnetti signout',
+    'accedi login signin',
+    'aiuto help scorciatoie shortcuts tasti keys tastiera keyboard guida',
+    'annulla undo',
+    'ripeti redo',
+    'presenta present presentazione slideshow proietta avvia',
+    'importa import apri open carica upload',
+    'cartella cartelle folder folders',
+    'preferiti favorites favourite speciali starred stella star',
+    'account profilo profile',
+    'lingua language',
+    'amministrazione admin amministratore',
+    'video filmato movie',
+    'elenco lista list puntato bullet',
+    'pagina pagine page pages',
+    'diapositiva diapositive slide slides',
+    'carattere caratteri font fonts typeface',
+    'archivio archivia archive',
+    'spazio space quota memoria storage',
+    'email mail posta messaggio messages',
+    'calendario calendar evento event',
+    'attivita task tasks todo',
+    'home inizio principale',
+    'novita changelog aggiornamenti updates',
+    'esci chiudi close',
+  ].map((g) => g.split(' '));
+  const fold = (x) => String(x || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  /** The keywords an action gets from the groups above (plus its own). */
+  function synonyms(text, own = '') {
+    const words = new Set(fold(text + ' ' + own).split(/[^a-z0-9]+/).filter(Boolean)), add = new Set();
+    for (const g of SYN) if (g.some((w) => words.has(w))) g.forEach((w) => add.add(w));
+    return [own, ...add].filter(Boolean).join(' ');
+  }
   const base = () => new URL('../', location.href.split('#')[0].split('?')[0]);
   const current = () => location.pathname.split('/').filter(Boolean).find((p) => APPS.some((a) => a[0] === p)) || '';
   function build() {
@@ -346,19 +475,67 @@ savoffice-apps { display: inline-flex; }
     const l = it(), cur = current(), list = [];
     const apps = { label: 'SavOffice', items: (window.SavOffice?.apps || APPS).filter((a) => a[0] !== cur).map(([id, name, itx, en]) => ({ icon: 'grip', label: name, description: l ? itx : en, keywords: 'app savoffice', href: new URL(id + '/', base()).href })) };
     let n = 0;
-    for (const g of [...(window.SavOffice?.driveCommands?.() || []), ...groups, apps]) for (const c of (g?.items || []).filter(Boolean)) {
+    for (const g of [...(window.SavOffice?.driveCommands?.() || []), ...groups, ...pageCommands(), apps]) for (const c of (g?.items || []).filter(Boolean)) {
       const id = 'c' + n++;
       fns.set(id, c.run || (() => { if (c.href) location.href = c.href; }));
-      list.push({ label: c.label, value: id, icon: c.icon || '', shortcut: c.shortcut || '', description: c.description || '', keywords: c.keywords || '', group: g.label || '', disabled: !!c.disabled });
+      list.push({ label: c.label, value: id, icon: c.icon || '', shortcut: c.shortcut || '', description: c.description || '', keywords: synonyms(c.label + ' ' + (c.description || ''), c.keywords || ''), group: g.label || '', disabled: !!c.disabled });
     }
     pal.commands = list;
   }
+  /** What every page offers: the home of the app, and its search field when there is one. */
+  function pageCommands() {
+    const l = it(), cur = current(), app = (window.SavOffice?.apps || APPS).find((a) => a[0] === cur), items = [];
+    if (app) items.push({ icon: 'home', label: l ? 'Home di ' + app[1] : app[1] + ' home', keywords: 'home inizio principale', href: new URL(cur + '/', base()).href });
+    const field = [...document.querySelectorAll('sav-search, input[type="search"], sav-input[type="search"]')].find((x) => x.offsetParent !== null && !x.closest('sav-command, sav-dialog'));
+    if (field) items.push({ icon: 'search', label: l ? 'Cerca in questa pagina' : 'Search this page', keywords: 'cerca search trova find', run: () => { field.focus(); field.shadowRoot?.querySelector('input')?.focus(); } });
+    return items.length ? [{ label: l ? 'Questa pagina' : 'This page', items }] : [];
+  }
   /** the palette of an editor (SavDocuments, SavPresentations), when there is one on the page */
   const own = () => [...document.querySelectorAll('sav-command')].find((x) => !('savoffice' in x.dataset));
+  /**
+   * The palette of an editor gets what the palette of SavOffice has: the synonyms on its actions, saving into SavDrive
+   * and the other apps of the suite (each time it opens: the editor may change its actions).
+   */
+  function dress(o) {
+    if (!o || o._soDressed) return;
+    o._soDressed = true;
+    const show = o.show.bind(o);
+    o.show = (...a) => { extend(o); return show(...a); };
+    o.addEventListener('sav-select', (e) => { const fn = fns.get(e.detail?.value); if (fn) setTimeout(() => { try { const r = fn(); if (r?.catch) r.catch((x) => console.error(x)); } catch (x) { console.error(x); } }, 60); });
+  }
+  function extend(o) {
+    o.querySelectorAll('optgroup[data-savoffice]').forEach((g) => g.remove());
+    for (const op of o.querySelectorAll('option')) {
+      op.dataset.ownKeywords ??= op.dataset.keywords || '';
+      op.dataset.keywords = synonyms(op.textContent + ' ' + (op.dataset.description || ''), op.dataset.ownKeywords);
+    }
+    const l = it(), cur = current();
+    const add = (label, items) => {
+      if (!items.length) return;
+      const g = document.createElement('optgroup');
+      g.label = label; g.dataset.savoffice = '';
+      for (const c of items) {
+        const op = document.createElement('option'), id = 'so' + fns.size + '-' + Math.random().toString(36).slice(2, 6);
+        op.value = id; op.textContent = c.label;
+        if (c.icon) op.dataset.icon = c.icon;
+        if (c.description) op.dataset.description = c.description;
+        if (c.href) op.dataset.href = c.href; else fns.set(id, c.run);
+        op.dataset.keywords = synonyms(c.label + ' ' + (c.description || ''), c.keywords || '');
+        g.append(op);
+      }
+      o.append(g);
+    };
+    for (const g of [...(window.SavOffice?.driveCommands?.() || []), ...pageCommands()]) add(g.label, g.items || []);
+    add('SavOffice', (window.SavOffice?.apps || APPS).filter((a) => a[0] !== cur).map(([id, name, itx, en]) => ({ icon: 'grip', label: name, description: l ? itx : en, keywords: 'app savoffice', href: new URL(id + '/', base()).href })));
+  }
+  // the palettes of the editors, as soon as they are on the page
+  const seen = () => document.querySelectorAll('sav-command:not([data-savoffice])').forEach(dress);
+  new MutationObserver(seen).observe(document.body || document.documentElement, { childList: true }); // they are added to <body>
+  seen();
   function open() {
     if (!customElements.get('sav-command')) return;
     const o = own();
-    if (o) return o.show();
+    if (o) { dress(o); return o.show(); }
     pal ||= build();
     fill();
     pal.show();
@@ -368,9 +545,11 @@ savoffice-apps { display: inline-flex; }
     e.preventDefault();
     if (pal?.open) return pal.hide();
     const o = own();
-    if (o) { if (!o.open) o.show(); return; }
+    if (o) { dress(o); if (!o.open) o.show(); return; }
     open();
   });
+  // an editor whose palette opens with its own shortcut: dressed just before (this listener runs first)
+  addEventListener('keydown', (e) => { if ((IS_MAC ? e.metaKey : e.ctrlKey) && e.key.toLowerCase() === 'j') { const o = own(); if (o) { dress(o); if (!o.open) extend(o); } } }, true);
   window.SavOffice = Object.assign(window.SavOffice || {}, {
     commands(list) { groups = (list || []).filter(Boolean); if (pal?.open) fill(); },
     palette: open,

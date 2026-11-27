@@ -3,9 +3,9 @@
 The photos and videos of SavDrive, day by day: the backup of a phone or a computer, a viewer on the whole screen, albums
 and links to share them. Part of SavOffice, inside SavDrive. <https://www.illerom.eu/savphotos/>
 
-**Being tried:** SavPhotos is complete but not public yet. It is not in the list of the apps of SavOffice, search engines
-are told to leave it out (`noindex`), and only the master admins and the accounts turned on in its admin panel can use
-it. See [Opening it to everybody](#opening-it-to-everybody).
+**Listed, for now limited:** SavPhotos is among the apps of SavOffice and on the portal, but only the master admins and
+the accounts turned on in its admin panel can use it (the pages say so, with the address to ask for it). See
+[Opening it to everybody](#opening-it-to-everybody) for the last steps.
 
 ## How it is made
 

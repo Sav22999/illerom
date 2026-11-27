@@ -130,6 +130,7 @@ const T = {
   percent_left: ['{n}% still to give out', 'Resta da assegnare il {n}%'], percent_over: ['{n}% over 100', '{n}% oltre il 100'],
   repeat: ['Repeat', 'Ripeti'], rep_none: ['Does not repeat', 'Non si ripete'], rep_week: ['every week', 'ogni settimana'], rep_month: ['every month', 'ogni mese'], rep_quarter: ['every three months', 'ogni tre mesi'], rep_year: ['every year', 'ogni anno'],
   rep_t: ['A copy is added by itself on each date (rent, bills, instalments).', 'Una copia si aggiunge da sola a ogni scadenza (affitto, bollette, rate).'], rep_next: ['Next copy: {d}', 'Prossima copia: {d}'],
+  waiting_net: ['waiting for the network', 'in attesa della rete'],
   expense_added: ['Expense added', 'Spesa aggiunta'], expense_saved: ['Expense saved', 'Spesa salvata'], expense_deleted: ['“{n}” deleted', '«{n}» eliminata'], expense_back: ['Expense back', 'Spesa ripristinata'], created_by: ['Written by {n}, {w}', 'Scritta da {n}, {w}'],
   cat_none: ['No category', 'Nessuna categoria'], cat_food: ['Restaurants', 'Ristoranti'], cat_groceries: ['Groceries', 'Spesa'], cat_drinks: ['Drinks and coffee', 'Bar e caffè'], cat_transport: ['Transport', 'Trasporti'], cat_fuel: ['Fuel and tolls', 'Carburante e pedaggi'],
   cat_stay: ['Accommodation', 'Alloggio'], cat_rent: ['Rent', 'Affitto'], cat_bills: ['Bills', 'Bollette'], cat_shopping: ['Shopping', 'Acquisti'], cat_fun: ['Fun', 'Svago'], cat_tickets: ['Tickets', 'Biglietti'], cat_health: ['Health', 'Salute'],
