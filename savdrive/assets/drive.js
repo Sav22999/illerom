@@ -1,7 +1,7 @@
 /**
  * The drive: a side menu (New, My drive, Recent, Starred, Shared, Trash, the space used), the folder with its path, files
  * and folders as cards or rows, selection, menus, moving, uploads with their progress, previews.
- *   #/  My drive · #/f/<id> a folder · #/recent · #/starred · #/shared · #/trash · #/search/<words>
+ *   #/  My drive · #/f/<id> a folder · #/recent · #/starred · #/shared · #/trash · #/search/<words> · #/vault[/<id>] (vault.js)
  */
 import { ask, btn, bytes, confirm, copyText, dialog, drop, empty, errText, face, fail, h, icon, iconBtn, item, menuAt, mobile, primary, put, segmented, select, toast } from './ui.js';
 import { getLang, t, when } from './i18n.js';
@@ -121,7 +121,8 @@ async function run() {
     try {
       const opts = { name: q.name, signal: q.abort.signal, onProgress: (n) => { q.sent = n; if (Date.now() - last > 150) { last = Date.now(); drawPanel(); } } };
       let r;
-      try { r = await upload(q.file, q.folder, opts); } catch (e) {
+      // q.send: another way to send it (the Vault encrypts it first, vault.js)
+      try { r = await (q.send || upload)(q.file, q.folder, opts); } catch (e) {
         if (e.code !== 'name_taken') throw e;
         const what = await askConflict(q.name);
         if (what === 'skip') { q.state = 'error'; q.error = t('conflict_skipped'); drawPanel(); continue; }
@@ -135,7 +136,7 @@ async function run() {
     }
     drawPanel();
     // the file appears in the folder at once (from the answer of the upload, no other request); the whole list once at the end
-    if (q.state === 'done') afterUpload?.(q);
+    if (q.state === 'done') (q.after || afterUpload)?.(q);
   }
   running = false;
   afterUpload?.(null);
@@ -179,6 +180,8 @@ async function uploadAll(list, folder) {
     enqueue(list.map((x) => ({ file: x.file, folder: ids[x.path] || null, top: x.path ? ids[x.path.split('/')[0]] || null : null })));
   } catch (e) { fail(e); }
 }
+// the Vault (vault.js) sends its files through the same panel, with its own q.send and q.after
+export { enqueue as queueUploads, walkDrop, pick as pickFiles, setSpace as showSpace };
 const pick = (o = {}) => new Promise((res) => {
   const i = h('input', { type: 'file', multiple: true, webkitdirectory: o.dir || null });
   i.addEventListener('change', () => res([...i.files]));
@@ -240,7 +243,7 @@ function officePlace(c, folder) {
 export async function home(root, a, b, c) {
   // #/o/<app>[/<folder>]: the folder of an app of SavOffice
   const office = a === 'o' && /^sav[a-z]+$/.test(b || '') ? { app: b, folder: c ? decodeURIComponent(c) : null } : null;
-  const where = office ? 'office' : a === 'f' && b ? b : VIEWS[a] ? a : a === 'search' ? 'search' : 'root';
+  const where = office ? 'office' : a === 'f' && b ? b : VIEWS[a] ? a : a === 'search' ? 'search' : a === 'vault' ? 'vault' : 'root';
   const q = a === 'search' ? decodeURIComponent(b || '') : '';
   const sel = new Set();
   let data = { items: [], path: [] }, alive = true, dragging = null;
@@ -248,7 +251,7 @@ export async function home(root, a, b, c) {
   // --- header
   const search = h('sav-input.hsearch', { type: 'search', placeholder: t('search_drive'), value: q, clearable: true, pill: true, 'aria-label': t('search_drive') }, icon('search', { slot: 'prefix' }));
   let to;
-  search.addEventListener('input', () => { clearTimeout(to); to = setTimeout(() => { const v = search.value.trim(); if (v) history.replaceState(null, '', '#/search/' + encodeURIComponent(v)); else if (where === 'search') history.replaceState(null, '', '#/'); load(v); }, 300); });
+  search.addEventListener('input', () => { clearTimeout(to); to = setTimeout(() => { const v = search.value.trim(); if (where === 'vault') { if (v) go('#/search/' + encodeURIComponent(v)); return; } if (v) history.replaceState(null, '', '#/search/' + encodeURIComponent(v)); else if (where === 'search') history.replaceState(null, '', '#/'); load(v); }, 300); });
   search.addEventListener('keydown', (e) => { if (e.key === 'Escape') { search.value = ''; go('#/'); } });
 
   // --- side menu
@@ -272,7 +275,7 @@ export async function home(root, a, b, c) {
     return d;
   };
   const nav = h('sav-menu.dnav', { label: t('my_drive'), selectable: true },
-    [['root', 'hard-drive', t('my_drive')], ['withme', 'users', t('withme')], ['recent', 'clock', t('recent')], ['starred', 'star', t('starred')], ['shared', 'link', t('shared')], ['trash', 'trash-2', t('trash')]].map(([k, ic, l]) => { const x = item(k, ic, l); x.toggleAttribute('current', where === k || (k === 'root' && (where === 'root' || (!VIEWS[where] && where !== 'search')))); return x; }));
+    [['root', 'hard-drive', t('my_drive')], ['withme', 'users', t('withme')], ['recent', 'clock', t('recent')], ['starred', 'star', t('starred')], ['shared', 'link', t('shared')], ['trash', 'trash-2', t('trash')], ['vault', 'lock', t('vault')]].map(([k, ic, l]) => { const x = item(k, ic, l); x.toggleAttribute('current', where === k || (k === 'root' && (where === 'root' || (!VIEWS[where] && where !== 'search' && where !== 'vault')))); return x; }));
   nav.addEventListener('sav-select', (e) => go(e.detail.value === 'root' ? '#/' : '#/' + e.detail.value));
   spaceBox = h('div.quota');
   setSpace(S.user.used || 0, S.user.quota || 0, S.user.parts);
@@ -286,9 +289,16 @@ export async function home(root, a, b, c) {
   const sortBy = () => prefs().sort || 'name';
 
   const ipanel = h('aside.ipanel', { 'aria-label': t('details') });
-  const hbody = h('div.hbody' + (prefs().info && !mobile() ? '.withinfo' : ''), h('nav.hside', newMenu(), nav, spaceBox), main, ipanel);
+  const newSlot = where === 'vault' ? h('div.newd') : newMenu(); // the Vault puts its own New there
+  const hbody = h('div.hbody' + (prefs().info && !mobile() && where !== 'vault' ? '.withinfo' : ''), h('nav.hside', newSlot, nav, spaceBox), main, ipanel);
   put(root, h('div.home.drive', h('header.htop', brand(), search, h('div.spacer'), userMenu()), hbody, credit()));
   document.title = 'SavDrive';
+  // the Vault: the same side menu, everything else of its own (encrypted in the browser, vault.js)
+  if (where === 'vault') {
+    const { vaultHome } = await import('./vault.js');
+    const stop = await vaultHome({ page: root.firstElementChild, hbody, head, body, main, newSlot, folder: b ? decodeURIComponent(b) : null });
+    return () => { stop?.(); spaceBox = null; };
+  }
 
   // files dropped from the device anywhere on the page body (side menu, folder, empty space down to the bottom): into
   // the folder that is open, or the folder card under them
@@ -366,7 +376,7 @@ export async function home(root, a, b, c) {
     if (!writable()) return [all, '-', ...viewSort, '-', refresh];
     return [...upHere(here()), '-', { head: 'SavOffice' }, ...Object.entries(KINDS).map(([k, x]) => ['file-plus', t(x.k), () => newOffice(k)]), '-', all, '-', ...viewSort, '-', refresh];
   };
-  const placesMenu = () => [['hard-drive', t('my_drive'), () => go('#/')], ['users', t('withme'), () => go('#/withme')], ['clock', t('recent'), () => go('#/recent')], ['star', t('starred'), () => go('#/starred')], ['link', t('shared'), () => go('#/shared')], ['trash-2', t('trash'), () => go('#/trash')],
+  const placesMenu = () => [['hard-drive', t('my_drive'), () => go('#/')], ['users', t('withme'), () => go('#/withme')], ['clock', t('recent'), () => go('#/recent')], ['star', t('starred'), () => go('#/starred')], ['link', t('shared'), () => go('#/shared')], ['trash-2', t('trash'), () => go('#/trash')], ['lock', t('vault'), () => go('#/vault')],
     '-', ['settings', t('settings'), () => go('#/settings')], S.user.master ? ['shield', t('admin'), () => go('#/admin')] : null, ['refresh', t('refresh'), () => load(search.value.trim(), true)]];
   const onMenu = (e) => {
     if (editable(e) || e.target.closest('sav-dialog, sav-popover, sav-dropdown, .ctxm')) return;
@@ -517,7 +527,7 @@ export async function home(root, a, b, c) {
     const upDir = () => pick({ dir: true }).then((fs) => uploadAll(fs.map((file) => ({ file, path: (file.webkitRelativePath || '').split('/').slice(0, -1).join('/') })), here()));
     commands(where === 'trash' || !writable() ? null : [t('new'), [['folder-plus', t('new_folder'), () => newFolder()], ['upload', t('upload_files'), upFiles], ['folder-up', t('upload_folder'), upDir],
         ...Object.entries(KINDS).map(([k, x]) => ['file-plus', t('new_kind', { kind: t(x.k) }), () => newOffice(k), null, x.name])]],
-      [t('places'), [['hard-drive', t('my_drive'), '#/'], ['users', t('withme'), '#/withme'], ['clock', t('recent'), '#/recent'], ['star', t('starred'), '#/starred'], ['link', t('shared'), '#/shared'], ['trash-2', t('trash'), '#/trash'],
+      [t('places'), [['hard-drive', t('my_drive'), '#/'], ['users', t('withme'), '#/withme'], ['clock', t('recent'), '#/recent'], ['star', t('starred'), '#/starred'], ['link', t('shared'), '#/shared'], ['trash-2', t('trash'), '#/trash'], ['lock', t('vault'), '#/vault'],
         where === 'trash' && items.length ? ['trash-2', t('empty_trash'), emptyTrash] : null]],
       items.length ? [t('in_here'), items.slice(0, 60).map((x) => [x.kind === 'folder' ? 'folder' : kindOf(x).ic, x.name, () => open(x), null, x.kind === 'folder' ? t('folder_l') : bytes(x.size)])] : null);
   }

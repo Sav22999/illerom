@@ -20,8 +20,10 @@ SavOffice opened in their app. <https://www.illerom.eu/savdrive/>
 | `lib/files.php`              | Storage on disk, the tree of folders, names, trash, sending files with ranges        |
 | `lib/photos.php`             | The API of SavPhotos (`api/?r=photos.*`, pages in `../savphotos/`): what is read from photos, albums, who can use it |
 | `lib/archive.php`            | What is inside ZIP, TAR, TAR.GZ and RAR archives, read from their index (plain PHP)   |
+| `lib/vault.php`              | The Vault: encrypted folders and files it cannot read (`api/?r=vault.*`)              |
 | `assets/drive.js`            | The drive: side menu, folders, cards and rows, selection, uploads, moving, previews   |
 | `assets/admin.js`            | The panel of the master admins                                                        |
+| `assets/vault.js`            | The Vault: PIN, keys and encryption in the browser (Web Crypto), its screen           |
 | `assets/preview.js`          | What a file contains, drawn small (cards) or large (preview): text, JSON, SavOffice files, archives |
 | `assets/office.js`           | Empty files of SavOffice (.savdoc, .savspr, .savpre, .savboo, .savwhi, .savnot)       |
 | `assets/store.js`            | API and uploads in pieces                                                             |
@@ -101,6 +103,25 @@ SavOffice opened in their app. <https://www.illerom.eu/savdrive/>
 - **Files sent**: only safe types are shown inline (pictures, PDF, video, audio, plain text); everything else is a
   download, always with `nosniff` and a CSP sandbox.
 
+- **Vault** (`#/vault`, `assets/vault.js`, `lib/vault.php`, tables `vault_keys`, `vault_nodes`, `uploads.vault_id`):
+  a place of the side menu where files **and names** are encrypted in the browser (Web Crypto, no library). A random
+  master key is wrapped (AES-GCM) with a key derived from a **numeric PIN** of 6 or 8 digits (PBKDF2-SHA-256, 600 000
+  rounds, salt) and, optionally, with a **recovery key** (20 random bytes shown once as 32 characters, HKDF; it survives a
+  change of PIN). From the master key (HKDF): the key of the names and a proof the server keeps only as SHA-256 and asks
+  (`X-Vault-Proof`) for every change, so a stolen session cannot empty or lock the Vault. Each file has its own random key
+  (inside its encrypted name, padded to 32 bytes) and is encrypted in pieces with AES-256-GCM: one piece per upload piece
+  (`CHUNK_BYTES` − 16), nonce = number of the piece + a mark on the last one (no reordering, cutting or swapping). The
+  pieces travel through `vault.upload` → `upload.chunk` (the last piece calls `vault_upload_done`: the file never becomes a
+  node of the drive); `vault.get` gives the encrypted bytes back and the browser decrypts them as a stream (downloads,
+  folder ZIPs made in the browser, previews of pictures, videos, music and text from memory). The PIN is asked every time
+  the person comes into the Vault (OTP boxes, `sav-otp`); "Remember for 30 minutes" keeps it open meanwhile, only in the
+  memory of the page (a reload, Lock, sign-out or closing the page close it; otherwise after 5–60 minutes without
+  activity). The Vault has no trash, no previews or thumbnails on the server, no search, no links or people, and its files
+  are not in My drive, Recent, the search or SavPhotos; they count in the space (`vault_bytes`, part `savdrive`). A lost
+  PIN without a recovery key: `vault.reset` (with the password of the account) deletes the Vault. Limits worth knowing: a
+  PIN is short, so whoever holds the database can try all of them offline (8 digits take 100× longer than 6); the server
+  sees how many items there are, their encrypted sizes, their folders and dates. No Argon2 (not in Web Crypto, and no
+  library is vendored): `kdf` and `iterations` are stored, so it can change later.
 - **SavPhotos** (`../savphotos/`, being tried): the photos and videos of the drive by day, backups, albums. Its routes are
   `photos.*` in `lib/photos.php`, its tables `photo_users`, `photo_meta`, `albums`, `album_items` (made there). It signs in
   here: `sessionStorage` `savdrive-next = ../savphotos/…` sends the person back after the sign-in (`assets/app.js`,
