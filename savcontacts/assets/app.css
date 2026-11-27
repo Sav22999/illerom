@@ -205,10 +205,6 @@ sav-avatar.cav { flex: none; color: #fff; }
   .cpanes { grid-template-columns: minmax(0, 1fr); }
   .clist, .cread { border-radius: 0; border-left: 0; border-right: 0; position: static; max-height: none; }
   .dhead.sel { border-radius: 0; } .crows { overflow: visible; }
-  .cpanes[data-pane="list"] .cread, .cpanes[data-pane="read"] .clist { display: none; }
-  .cpanes[data-pane="read"] .cread { border-top: 1px solid var(--sav-color-border); }
-  .home:has(.cpanes[data-pane="read"]) .hside, .home:has(.cpanes[data-pane="read"]) .hsearch { display: none; }
-  .cback { display: inline-flex; } .cscroll { padding: 1.2rem 1rem 2rem; }
   .chero sav-avatar { --size: 4.6rem !important; } .chero h2 { font-size: 1.35rem; }
   .cfield { grid-template-columns: 2.2rem minmax(0, 1fr) auto; } .cfield .fa { opacity: 1; position: static; transform: none; background: none; padding: 0; }
   .cpick .csel { display: none; } .selecting .cpick .csel { display: grid; } .selecting .cpick sav-avatar { opacity: 0; } .crow:hover .cpick sav-avatar { opacity: 1; }
@@ -221,3 +217,24 @@ sav-avatar.cav { flex: none; color: #fff; }
 .dpw { font-size: 1.25rem; letter-spacing: .06em; padding: .6rem .9rem; flex: 1; text-align: center; }
 .dsum .orow { padding: .5rem 0; } .dtest:empty { display: none; }
 .osec .prow h2 { margin: 0; } .osec + .osec { margin-top: 1.4rem; }
+
+/* the contact in a dialog in the middle (a sheet from the bottom on phones), as "New" */
+.cdlg .card { min-height: 0; } .cdlg .cscroll { padding: .3rem 0 .6rem; gap: 1.2rem; }
+.cdlg .ctool { border: 0; min-height: 0; padding: 0; gap: 0; }
+.cdlg .chero sav-avatar { --size: 5.5rem !important; }
+.cpanes.single .crow { grid-template-columns: auto minmax(0, 1fr) auto auto; }
+.cmore { display: none; }
+@media (min-width: 1100px) {
+  .cpanes.single .crow { grid-template-columns: auto minmax(0, 1.1fr) minmax(0, 1.4fr) auto; }
+  .cmore { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 1rem; font-size: .86rem; color: var(--sav-color-text-muted); }
+  .cmore span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .csub.plain { display: none; }
+}
+/* phones and tablets: the bar at the bottom (as SavTasks), the places live there; never on a computer */
+.cbottom { display: none; }
+@media (max-width: 900px) {
+  .cbottom { display: block; }
+  .home.cont { padding-bottom: calc(4.4rem + env(safe-area-inset-bottom)); }
+  .hside > sav-menu.dnav { display: none; }
+  .cdrawer sav-menu { width: 100%; }
+}

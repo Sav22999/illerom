@@ -1,7 +1,7 @@
 /**
  * The address book: the frame of SavDrive (header with the pill search, the apps and the account; the side menu with the
- * big "New", the places and the groups), and in the page the list and the card side by side as in SavMail (on phones one
- * at a time, the card with a way back).
+ * big "New", the places and the groups), the list in the page, and a contact in a dialog in the middle (a sheet from the
+ * bottom on phones), as "New" opens. On phones a bar at the bottom (as SavTasks): contacts, favourites, birthdays, groups.
  *   places: #/ all · #/fav · #/birthdays · #/duplicates · #/trash · #/g/<group>; a contact open: <place>/c/<id>
  * The screen stays while only the open contact changes, so the list keeps its scroll and its selection.
  */
@@ -55,8 +55,7 @@ function build(root, view, key) {
     const soon = S.contacts.filter((c) => { const n = nextBirthday(c); return n && n.days <= 7; }).length;
     const places = h('sav-menu.dnav', { label: t('all_contacts'), selectable: true },
       mi('all:', 'contact', t('all_contacts'), 0), mi('fav:', 'star', t('favorites'), 0), mi('birthdays:', 'cake', t('birthdays'), soon), mi('duplicates:', 'merge', t('duplicates'), 0), mi('trash:', 'trash', t('trash'), S.trash),
-      // on phones the groups follow the places in the same row that scrolls
-      mobile() ? S.groups.map((g) => mi('group:' + g.id, h('span.gdot', { slot: 'prefix', style: `--g:${g.color}` }), g.name, 0)) : null);
+);
     places.addEventListener('sav-select', (e) => nav(String(e.detail.value)));
     const groups = h('sav-menu', { label: t('groups'), selectable: true }, S.groups.map((g) => mi('group:' + g.id, h('span.gdot', { slot: 'prefix', style: `--g:${g.color}` }), g.name, S.contacts.filter((c) => c.groups.includes(g.id)).length)));
     groups.addEventListener('sav-select', (e) => nav(String(e.detail.value)));
@@ -70,11 +69,29 @@ function build(root, view, key) {
   const list = h('div.crows', { role: 'listbox', 'aria-label': t('all_contacts'), 'aria-multiselectable': 'true' });
   const head = h('div.dhead');
   const clist = h('section.clist', head, list);
-  const cread = h('section.cread', { 'aria-live': 'polite' });
-  const panes = h('div.cpanes', { 'data-pane': 'list' }, clist, cread);
+  const panes = h('div.cpanes.single', clist);
   const main = h('main.hmain', panes);
-  const page = h('div.home.cont', h('header.htop', brand(), search, h('div.spacer'), userMenu()), h('div.hbody', side, main), credit());
+  // phones: the bar at the bottom (as SavTasks); its last place opens every place and group in a drawer
+  const bottom = h('sav-bottom-nav.cbottom', { label: t('all_contacts'), fixed: true });
+  const drawer = h('sav-drawer.cdrawer', { label: t('groups'), placement: 'bottom', style: '--size:min(70dvh, 34rem)' });
+  const page = h('div.home.cont', h('header.htop', brand(), search, h('div.spacer'), userMenu()), h('div.hbody', side, main), credit(), bottom, drawer);
   put(root, page);
+  const drawBottom = () => {
+    const soon = S.contacts.filter((c) => { const n = nextBirthday(c); return n && n.days <= 7; }).length;
+    const it = (k, ic, label, badge) => h('sav-bottom-nav-item', { icon: ic, label, href: k ? placeHash({ kind: k }) : null, value: k || 'more', current: (k ? view.kind === k : !['all', 'fav', 'birthdays'].includes(view.kind)) || null, badge: badge || null });
+    put(bottom, it('all', 'contact', t('all_contacts')), it('fav', 'star', t('favorites')), it('birthdays', 'cake', t('birthdays'), soon), it('', 'tag', t('groups')));
+  };
+  bottom.addEventListener('click', (e) => { const i = e.target.closest('sav-bottom-nav-item'); if (i && !i.getAttribute('href')) openDrawer(); });
+  /** Every group, and the places that are not in the bar (duplicates, trash), in a drawer from the bottom. */
+  function openDrawer() {
+    const mi = (value, ic, label, count) => { const x = h('sav-menu-item', { value }, typeof ic === 'string' ? icon(ic, { slot: 'prefix' }) : ic, h('span.mlab', label), count ? h('sav-badge', { slot: 'suffix', variant: 'neutral', appearance: 'soft', pill: true }, String(count)) : null); if (value === key) x.setAttribute('current', ''); return x; };
+    const m = h('sav-menu', { label: t('groups'), selectable: true },
+      S.groups.map((g) => mi('group:' + g.id, h('span.gdot', { slot: 'prefix', style: `--g:${g.color}` }), g.name, S.contacts.filter((c) => c.groups.includes(g.id)).length)),
+      S.groups.length ? h('sav-divider') : null, mi('duplicates:', 'merge', t('duplicates'), 0), mi('trash:', 'trash', t('trash'), S.trash));
+    m.addEventListener('sav-select', (e) => { drawer.hide(); nav(String(e.detail.value)); });
+    put(drawer, m, h('div.prow', { style: 'margin-top:.8rem' }, btn(t('new_group'), { icon: 'tag-plus', size: 'sm', onclick: () => { drawer.hide(); groupDialog(); } })));
+    drawer.show();
+  }
 
   // files dropped on the page are imported
   const over = (e) => { if (!e.dataTransfer?.types?.includes('Files')) return; e.preventDefault(); page.classList.add('drop-over'); };
@@ -169,7 +186,8 @@ function build(root, view, key) {
     const nb = view.kind === 'birthdays' ? nextBirthday(c) : null;
     const r = h('div.crow', { role: 'option', tabindex: -1, 'data-id': c.id, 'aria-selected': String(open === c.id), class: (open === c.id ? 'active ' : '') + (sel.has(c.id) ? 'sel' : '') },
       h('div.cpick', avatar(c, 38), box),
-      h('div.cbody', h('div.cname', nameNode(c)), h('div.csub', nb ? birthdayText(c) + (nb.age ? ' · ' + t('turns', { n: nb.age }) : '') : view.kind === 'trash' ? t('changed', { w: when(c.deleted) }) : subline(c))),
+      h('div.cbody', h('div.cname', nameNode(c)), h('div.csub' + (!nb && view.kind !== 'trash' && !c.title && !c.company ? '.plain' : ''), nb ? birthdayText(c) + (nb.age ? ' · ' + t('turns', { n: nb.age }) : '') : view.kind === 'trash' ? t('changed', { w: when(c.deleted) }) : subline(c))),
+      view.kind !== 'birthdays' && view.kind !== 'trash' ? h('div.cmore', h('span', c.emails[0]?.value || ''), h('span', c.phones[0]?.value || '')) : null,
       h('div.cside', nb ? h('span.cdays' + (nb.days <= 7 ? '.soon' : ''), daysText(nb.days) || nb.date.toLocaleDateString(getLang(), { day: 'numeric', month: 'short' })) : null, c.favorite && view.kind !== 'trash' ? icon('star-full', { class: 'cstar', label: t('favorite') }) : null));
     r.addEventListener('click', (e) => {
       if (e.metaKey || e.ctrlKey || panes.classList.contains('selecting')) { box.checked = !box.checked; box.dispatchEvent(new Event('change')); return; }
@@ -190,17 +208,32 @@ function build(root, view, key) {
   const mark = () => list.querySelectorAll('.crow').forEach((r) => { const on = r.dataset.id === open; r.classList.toggle('active', on); r.setAttribute('aria-selected', String(on)); });
 
   // ---------------------------------------------------------------- the card
+  let dlg = null;
+  const cread = h('div.cardbox');
+  /** The dialog of the open contact: made once, its content changes while moving from one contact to the next. */
+  function cardDialog(c) {
+    if (!dlg) {
+      dlg = h('sav-dialog.cdlg.keep', { 'sheet-on-mobile': true, style: '--width:min(42rem, calc(100vw - 2rem))' }, cread);
+      dlg.addEventListener('sav-after-hide', (e) => {
+        if (e.target !== dlg) return;
+        dlg.remove(); dlg = null;
+        if (open) go(hashOf(view, null)); // closed with ×, Escape or a tap outside: back to the list
+      });
+      document.body.append(dlg);
+      customElements.whenDefined('sav-dialog').then(() => dlg?.show());
+    }
+    dlg.setAttribute('label', fullName(c));
+    return dlg;
+  }
   function show(cid) {
     open = cid || null;
-    panes.dataset.pane = open ? 'read' : 'list';
     mark();
     if (view.kind === 'duplicates') return;
     const c = open ? (view.kind === 'trash' ? (trash || []).find((x) => x.id === open) : contact(open)) : null;
-    if (!c) { put(cread, empty('contact', t('pick_contact'), t('pick_contact_t'))); document.title = title() + ' – SavContacts'; if (open && view.kind !== 'trash') open = null; return; }
+    if (!c) { open = null; dlg?.hide(); document.title = title() + ' – SavContacts'; return; }
     document.title = fullName(c) + ' – SavContacts';
     drawCard(c);
-    if (!mobile()) list.querySelector(`.crow[data-id="${c.id}"]`)?.scrollIntoView({ block: 'nearest' });
-    else scrollTo(0, 0);
+    list.querySelector(`.crow[data-id="${c.id}"]`)?.scrollIntoView({ block: 'nearest' });
   }
   function drawCard(c) {
     const inTrash = !!c.deleted;
@@ -215,15 +248,19 @@ function build(root, view, key) {
       ['copy', t('copy_v'), () => copyText([fullName(c), ...c.emails.map((x) => x.value), ...c.phones.map((x) => x.value)].join('\n'))],
       ['printer', t('print'), () => print()], '-',
       ['trash', t('delete_contact'), () => remove([c.id]), { danger: true, kbd: 'Delete' }]], { placement: 'bottom-end', label: t('more') });
-    const tool = h('div.ctool', iconBtn('arrow-left', t('all_contacts'), () => go(hashOf(view, null)), { class: 'cback' }), h('span.spacer'),
+    const tool = h('div.ctool', { slot: 'header-actions' },
       inTrash ? [btn(t('restore'), { size: 'sm', icon: 'rotate-ccw', onclick: () => restore([c.id]) }), btn(t('delete_forever'), { size: 'sm', variant: 'danger', appearance: 'soft', onclick: () => purge([c.id]) })]
         : [star, groupMenu([c.id], c), iconBtn('pencil', t('edit_contact'), () => edit(c), { kbd: 'E' }), moreMenu]);
     const email = c.emails[0]?.value, phone = c.phones.find((p) => p.label === 'mobile')?.value || c.phones[0]?.value;
     const groups = c.groups.map(group).filter(Boolean);
     const sub = [c.title, c.department, c.company].filter(Boolean).join(' · ');
-    put(cread, h('article.card', tool, h('div.cscroll',
-      h('div.chero', avatar(c, 96), h('div', h('h2', fullName(c)), c.nickname ? h('div.cnick', '“' + c.nickname + '”') : null, sub ? h('div.muted', sub) : null,
-        groups.length ? h('div.cchips', groups.map((g) => h('a.gchip', { href: placeHash({ kind: 'group', id: g.id }), style: `--g:${g.color}` }, h('span.gdot'), g.name))) : null)),
+    const d = cardDialog(c);
+    d.querySelector(':scope > .ctool')?.remove();
+    d.append(tool);
+    put(cread, h('article.card', h('div.cscroll',
+      h('div.chero', avatar(c, 88), h('div', c.nickname ? h('div.cnick', '“' + c.nickname + '”') : null, sub ? h('div.muted', sub) : null,
+        groups.length ? h('div.cchips', groups.map((g) => h('a.gchip', { href: placeHash({ kind: 'group', id: g.id }), style: `--g:${g.color}` }, h('span.gdot'), g.name))) : null,
+        !c.nickname && !sub && !groups.length ? h('div.muted', fullName(c)) : null)),
       !inTrash && (email || phone) ? h('div.cact', email ? btn(t('send_email'), { icon: 'mail', size: 'sm', href: 'mailto:' + email }) : null, email ? btn(t('write_savmail'), { icon: 'send', size: 'sm', href: '../savmail/#/compose?to=' + enc(`${fullName(c)} <${email}>`), target: '_blank' }) : null,
         phone ? btn(t('call'), { icon: 'phone', size: 'sm', href: 'tel:' + phone.replace(/[^\d+]/g, '') }) : null) : null,
       sec(t('emails'), c.emails.map((x) => field('mail', labelText(x.label), x.value, 'mailto:' + x.value))),
@@ -244,7 +281,6 @@ function build(root, view, key) {
   // ---------------------------------------------------------------- duplicates
   async function drawDups() {
     head.classList.remove('sel');
-    panes.classList.add('single');
     document.title = t('duplicates') + ' – SavContacts';
     put(list, h('div.wait', h('sav-spinner', { style: 'font-size:1.6rem' })));
     if (!sets) { try { sets = (await api('con.duplicates')).sets; } catch (e) { fail(e); sets = []; } }
@@ -277,7 +313,7 @@ function build(root, view, key) {
   }
 
   // ---------------------------------------------------------------- actions
-  const refresh = () => { drawSide(); drawList(); show(open); };
+  const refresh = () => { drawSide(); drawBottom(); drawList(); show(open); };
   async function toggleStar(c) {
     const r = await api('con.contact.star', { id: c.id, on: !c.favorite });
     putContact(r.contact); refresh();
@@ -367,7 +403,8 @@ function build(root, view, key) {
 
   // ---------------------------------------------------------------- keys and the search of actions
   const onKey = (e) => {
-    if (e.defaultPrevented || e.target.closest?.('sav-input, input, textarea, sav-dialog, sav-textarea, [contenteditable]') || document.querySelector('sav-dialog[open]')) return;
+    const other = [...document.querySelectorAll('sav-dialog[open], sav-drawer[open], sav-dropdown[open]')].some((d) => d !== dlg);
+    if (e.defaultPrevented || other || e.target.closest?.('sav-input, input, textarea, sav-textarea, [contenteditable]')) return;
     const c = open ? contact(open) : null;
     if (e.key === '/' && !e.metaKey && !e.ctrlKey) { e.preventDefault(); search.focus(); }
     else if ((e.key === 'n' || e.key === 'N') && !e.metaKey && !e.ctrlKey) { e.preventDefault(); newContact(); }
@@ -377,7 +414,7 @@ function build(root, view, key) {
     else if ((e.key === 'ArrowDown' || e.key === 'j') && view.kind !== 'duplicates') { e.preventDefault(); step(1); }
     else if ((e.key === 'ArrowUp' || e.key === 'k') && view.kind !== 'duplicates') { e.preventDefault(); step(-1); }
     else if ((e.metaKey || e.ctrlKey) && e.key === 'a' && view.kind !== 'duplicates') { e.preventDefault(); shown.forEach((x) => sel.add(x.id)); drawList(); }
-    else if (e.key === 'Escape') { if (sel.size) { sel.clear(); drawList(); } else if (open) go(hashOf(view, null)); }
+    else if (e.key === 'Escape' && !dlg) { if (sel.size) { sel.clear(); drawList(); } }
   };
   addEventListener('keydown', onKey);
   commands([t('all_contacts'), [['user-plus', t('new_contact'), () => newContact(), 'N'], ['tag-plus', t('new_group'), () => groupDialog()], ['file-up', t('import_file'), () => import('./files.js').then((m) => m.importDialog())],
@@ -387,6 +424,7 @@ function build(root, view, key) {
   const redrawAll = () => { sets = null; trash = view.kind === 'trash' ? null : trash; start(); };
   async function start() {
     drawSide();
+    drawBottom();
     if (view.kind === 'trash' && !trash) { put(list, h('div.wait', h('sav-spinner'))); try { trash = (await api('con.trash')).contacts; } catch (e) { fail(e); trash = []; } }
     drawList();
     show(open);
@@ -395,7 +433,7 @@ function build(root, view, key) {
   const onResize = () => { if (mobile() !== wasMobile) { wasMobile = mobile(); drawSide(); } };
   addEventListener('resize', onResize);
   start();
-  return { key, page, show, redrawAll, leave: () => { removeEventListener('keydown', onKey); removeEventListener('resize', onResize); io?.disconnect(); if (cur?.page === page) cur = null; } };
+  return { key, page, show, redrawAll, leave: () => { open = null; dlg?.hide(); removeEventListener('keydown', onKey); removeEventListener('resize', onResize); io?.disconnect(); if (cur?.page === page) cur = null; } };
 }
 
 /** The keys of the address book. */

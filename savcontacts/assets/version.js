@@ -6,6 +6,7 @@ export const CHANGES = [
     v: '1.1.0', date: '2026-11-27', items: [
       ['Your contacts in sync with the phone, the computer and Thunderbird (CardDAV): iPhone, Android with DAVx⁵, Mac', 'I contatti in sincronia con il telefono, il computer e Thunderbird (CardDAV): iPhone, Android con DAVx⁵, Mac'],
       ['A password for each device, never the one of the account, and a button to try the connection', 'Una password per ogni dispositivo, mai quella dell’account, e un pulsante per provare la connessione'],
+      ['A contact opens in a window in the middle (a sheet from the bottom on phones); on phones a bar at the bottom with contacts, favourites, birthdays and groups', 'Un contatto si apre in una finestra al centro (un foglio dal basso sul telefono); sul telefono una barra in basso con contatti, preferiti, compleanni e gruppi'],
     ],
   },
   {

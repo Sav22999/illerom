@@ -50,7 +50,7 @@ async function route() {
   const book = S.user?.verified && !['settings', 'verify', 'reset', 'changelog', 'signin', 'signup', 'welcome'].includes(a);
   const prev = leave;
   if (!book) { leave?.(); leave = null; }
-  document.querySelectorAll('sav-dialog, sav-drawer').forEach((d) => d.hide?.());
+  document.querySelectorAll('sav-dialog:not(.keep), sav-drawer').forEach((d) => d.hide?.()); // the dialog of a contact stays while moving to the next one
   try {
     if (a === 'verify') { commands(); return verify(root, parts[1]); }
     if (a === 'reset') { commands(); return reset(root, parts[1]); }
