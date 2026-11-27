@@ -2,7 +2,9 @@
 
 Free, open shared expenses, part of **SavOffice**: trips, flatmates, couples, events, clubs and condominiums. Who paid,
 for whom, the balances of everyone and the fewest payments to settle up. The others open a group with its link, without
-an account (to look, or to add expenses too). The same account as **SavSchedules**, **SavCalendar**, **SavTasks**…
+an account (to look, or to add expenses too). Beside them, a light **personal budget**: "My spending" (your share of every
+group, with a personal group for private expenses), monthly caps per category and the import of a bank statement (CSV).
+The same account as **SavSchedules**, **SavCalendar**, **SavTasks**…
 <https://www.illerom.eu/savsplits/>
 
 > **Public**: listed in SavOffice, in the portal and in the sitemap (the steps are below, in [Making it public](#making-it-public)).
@@ -20,7 +22,8 @@ an account (to look, or to add expenses too). The same account as **SavSchedules
 |------|------|
 | `api/index.php` | JSON API (the actions are listed at its top) |
 | `lib/splits.php` | Money, splits, balances, who pays whom, repetitions, access (account or link), the rates of the ECB |
-| `lib/schema.php` | The tables `sch_split_profiles`, `_groups`, `_members`, `_expenses`, `_log`, `_photos`, `_rates` |
+| `lib/schema.php` | The tables `sch_split_profiles`, `_groups`, `_members`, `_expenses`, `_log`, `_photos`, `_budget`, `_rates` |
+| `lib/budget.php` | My spending (the share of the account in all its groups), monthly caps, keywords, the rows of a bank statement |
 | `lib/photos.php` | The photos of the expenses: re-encoded, kept in the storage folder, served to whoever can open the group |
 | `lib/mail.php` | Emails of the account |
 | `assets/home.js` | The groups of the account, a new group from a template, a link to open |
@@ -28,6 +31,8 @@ an account (to look, or to add expenses too). The same account as **SavSchedules
 | `assets/expense.js` | An expense being written: kind, amount (also a sum: "12,50 + 8"), currency and rate, payers, split |
 | `assets/money.js` | Amounts in minor units, formats, the split preview (the same rounding as the server), categories |
 | `assets/files.js` | `.savspl` and `.csv` |
+| `assets/budget.js` | My spending (`#/spending`, inside the home): filters, charts, caps, keywords, its CSV, the note when a cap is passed |
+| `assets/bankcsv.js` | A bank statement (CSV), read in the browser: columns, separators, date format, preview, duplicates, categories |
 | `assets/account.js`, `hero.js`, `options.js`, `changelog.js`, `version.js`, `ui.js`, `time.js`, `i18n.js` | First page and accounts, settings, what's new, helpers |
 | `sw.js` | Shell for installing the app: bump `CACHE` when the list of files changes |
 
@@ -65,6 +70,34 @@ an account (to look, or to add expenses too). The same account as **SavSchedules
   grid with the total of each table); an expense "by table" follows them.
 - **History**: every change, who made it and when (the last 3000 per group). A deleted expense can come back for 30 days.
 - People who paid or owe something are never deleted: they stay as "no longer in the group".
+
+## My spending (a light personal budget)
+
+Only to look at what was spent: **no bank accounts, no assets, no investments, no advice**.
+
+- **My spending** (`#/spending`, `splits.mine`) adds up the **share** of the account in the expenses of every group where
+  it is one of the people (what it owes, `alloc`, not what it paid: that is settled by the balances), by month and by
+  category, for a period (this month, last month, 3 or 12 months, this year, all) and a group (all, personal, shared,
+  one). Only expenses count, never paybacks or money in. Groups in other currencies are converted at today's rates of the
+  ECB into the currency of the view (chosen with the caps). The view goes out as CSV (one row per expense, the share in
+  the currency of the group and of the view).
+- **Personal group** (kind `personal`, the template "Personal"): one person, its owner. It has **no link** and nobody can
+  be added or join (`personal_group`), so it never has balances; its page shows no balances, no people, no sharing, and
+  an expense needs no payer or split. It cannot become shared, and a shared group cannot become personal.
+- **Monthly caps** for some of the categories of SavSplits (no new ones were needed): a bar for each, green, yellow from
+  80 %, red once passed; a red alert in the view, a red mark on "My spending" in the side menu (`capsOver` of
+  `splits.groups`) and a note when an expense pushes a category over its cap. Only in the app: SavSplits sends no
+  notifications by email (its emails are only those of the account).
+- **Bank statement** (`assets/bankcsv.js`): a CSV is **read in the browser** and never sent. The columns (date,
+  description, one amount with its sign or two columns money out / money in), separator, decimal mark, date order and the
+  rows to skip are guessed from the file and can be changed; the way of reading is remembered for the next statement with
+  the same header. The preview marks the rows already in the group (same day, same amount: left out unless chosen), leaves
+  out money in and unreadable rows, and gives each row the category of the longest **keyword** its description contains.
+  Changing a category by hand remembers its keyword (two words of the description, without codes, numbers and the words
+  every bank adds). Only the rows chosen are sent (`splits.expense.import`, at most 1000 at a time): expenses paid by the
+  account, in the chosen group, for itself alone or equally among everyone (a shared group).
+- `sch_split_budget` keeps, per account: the currency of the view, the caps, the keywords (500 at most) and how the last
+  CSV was read. It is in the export of the account and goes away with it.
 
 ## Photos
 
@@ -112,7 +145,7 @@ Today SavSplits works at `/savsplits/` for whoever knows the address, and is lis
    (after SavSpreadsheets… check the order there), and to the comment at the top:
    `['savsplits', 'SavSplits', 'Spese condivise', 'Shared expenses'],`
 3. **The page of SavOffice** (`../savoffice/index.php`): in `$apps`
-   `'savsplits' => ['#1a7f37', 'd1.jpg', '1.jpg', 'Chi ha il link entra senza account; i saldi si pareggiano con il minor numero di pagamenti, anche per i millesimi di un condominio.', 'Whoever has the link joins without an account; balances are settled with the fewest payments, thousandths of a condominium included.'],`
+   `'savsplits' => ['#1a7f37', 'd1.jpg', '1.jpg', 'Chi ha il link entra senza account; i saldi si pareggiano con il minor numero di pagamenti, anche per i millesimi di un condominio. E in «Le mie spese» la tua quota di ogni gruppo, con le spese personali e l’estratto conto della banca.', 'Whoever has the link joins without an account; balances are settled with the fewest payments, even by the thousandths of a condominium. And in “My spending”, your share of every group, with your personal expenses and your bank statement.'],`
    in `$short` `'savsplits' => ['Spese condivise', 'Shared expenses'],`, in `$files`
    `'savsplits' => ['.savspl', 'CSV'],` and, if wanted, pairs with SavCalendar/SavTasks in `$pairs`.
 4. **The portal** (`../data/projects.php`), after SavTasks:

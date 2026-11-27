@@ -17,13 +17,16 @@
  *
  * Access: the account that owns the group, the accounts joined to one of its people (as editor or viewer), and whoever
  * has its link (code), without an account, to look or also to add (link_role).
+ *
+ * A personal group (kind "personal") is for private expenses: one person, its owner, no link, nobody else can join, so
+ * there is never a balance to settle. Its expenses enter "My spending" with the shares of the other groups (lib/budget.php).
  */
 
 declare(strict_types=1);
 
-const GROUP_KINDS = ['generic', 'trip', 'home', 'couple', 'event', 'team', 'condo'];
+const GROUP_KINDS = ['generic', 'trip', 'home', 'couple', 'event', 'team', 'condo', 'personal'];
 const GROUP_COLORS = ['#1a7f37', '#0b7a87', '#1f56d1', '#6a2cf0', '#c2307a', '#c93a2f', '#e0532f', '#0f8a63', '#4a5875', '#7a5c3e'];
-const GROUP_ICONS = ['', 'wallet', 'plane', 'house', 'heart', 'party-popper', 'users', 'building', 'utensils', 'car', 'tent', 'gift', 'shopping-cart', 'graduation-cap', 'dumbbell', 'music', 'briefcase', 'coffee', 'globe', 'star'];
+const GROUP_ICONS = ['', 'user', 'wallet', 'plane', 'house', 'heart', 'party-popper', 'users', 'building', 'utensils', 'car', 'tent', 'gift', 'shopping-cart', 'graduation-cap', 'dumbbell', 'music', 'briefcase', 'coffee', 'globe', 'star'];
 const CATEGORIES = ['', 'food', 'groceries', 'drinks', 'transport', 'fuel', 'stay', 'rent', 'bills', 'shopping', 'fun', 'tickets', 'health', 'gifts', 'home', 'maintenance', 'cleaning', 'insurance', 'fees', 'other'];
 const REPEATS = ['', 'week', 'month', 'quarter', 'year'];
 const MAX_REPEAT_COPIES = 60;      // copies made in one go when a group is opened after a long time
@@ -575,13 +578,19 @@ function groups_of(array $u): array
         $members = members_of((int)$g['id']);
         $me = null;
         foreach ($members as $m) if ((int)$m['user_id'] === $u['id']) $me = $m;
-        $expenses = q('SELECT kind, base, paid, alloc FROM ' . t('split_expenses') . ' WHERE group_id = ? AND deleted_at IS NULL', [$g['id']])->fetchAll();
+        $expenses = q('SELECT kind, day, base, paid, alloc FROM ' . t('split_expenses') . ' WHERE group_id = ? AND deleted_at IS NULL', [$g['id']])->fetchAll();
         $b = balances($members, $expenses);
         $total = 0;
-        foreach ($expenses as $e) if ($e['kind'] === 'expense') $total += (int)$e['base'];
+        $month = 0; // the share of the account in the expenses of this month (UTC)
+        $now = gmdate('Y-m');
+        foreach ($expenses as $e) {
+            if ($e['kind'] !== 'expense') continue;
+            $total += (int)$e['base'];
+            if ($me && substr((string)$e['day'], 0, 7) === $now) $month += (int)(jdec($e['alloc'])[$me['mid']] ?? 0);
+        }
         $out[] = ['id' => $g['gid'], 'name' => $g['name'], 'kind' => $g['kind'], 'icon' => $g['icon'], 'color' => $g['color'], 'currency' => $g['currency'],
             'people' => count(array_filter($members, fn($m) => $m['active'])), 'names' => array_slice(array_map(fn($m) => $m['name'], array_filter($members, fn($m) => $m['active'])), 0, 6),
-            'expenses' => count($expenses), 'total' => $total, 'me' => $me['mid'] ?? null, 'balance' => $me ? $b['balance'][$me['mid']] : null,
+            'expenses' => count($expenses), 'total' => $total, 'month' => $month, 'me' => $me['mid'] ?? null, 'balance' => $me ? $b['balance'][$me['mid']] : null,
             'owner' => (int)$g['owner_id'] === $u['id'], 'archived' => (bool)($me['archived'] ?? false), 'updated' => iso($g['updated_at'])];
     }
     return $out;
@@ -606,11 +615,18 @@ function create_group(array $u, array $b, array $expenses = [], bool $import = f
             'quotas' => clean_quotas($m['quotas'] ?? [], $tables), 'pay' => s($m, 'pay', 300), 'key' => is_string($m['id'] ?? null) ? $m['id'] : null];
     }
     if (!$import && !array_filter($people, fn($p) => $p['me'])) array_unshift($people, ['name' => mb_substr((string)$u['name'], 0, 80) ?: 'Me', 'me' => true, 'weight' => 1, 'quotas' => [], 'pay' => '', 'key' => null]);
+    // a personal group: only the account, no link (a file of one comes back as a group of the account alone too)
+    $personal = pick($b, 'kind', GROUP_KINDS, 'generic') === 'personal';
+    if ($personal) {
+        $first = array_values(array_filter($people, fn($p) => $p['me']))[0] ?? $people[0] ?? null;
+        $people = [['name' => $first['name'] ?? (mb_substr((string)$u['name'], 0, 80) ?: 'Me'), 'me' => true, 'weight' => 1, 'quotas' => [], 'pay' => '', 'key' => $first['key'] ?? null]];
+        $tables = [];
+    }
     db()->beginTransaction();
     $gid = new_code('split_groups', 'gid');
     q('INSERT INTO ' . t('split_groups') . ' (gid, owner_id, name, kind, icon, color, currency, notes, tables, link_code, link_role, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',
         [$gid, $u['id'], $name, pick($b, 'kind', GROUP_KINDS, 'generic'), pick($b, 'icon', GROUP_ICONS),
-            valid_color($b['color'] ?? ''), $cur, multiline($b, 'notes', 2000), json_out($tables), new_link_code(), ($b['linkRole'] ?? '') === 'view' ? 'view' : 'edit', now_utc(), now_utc()]);
+            valid_color($b['color'] ?? ''), $cur, multiline($b, 'notes', 2000), json_out($tables), $personal ? null : new_link_code(), ($b['linkRole'] ?? '') === 'view' ? 'view' : 'edit', now_utc(), now_utc()]);
     $id = (int)db()->lastInsertId();
     $map = [];
     $meDone = false;
@@ -653,5 +669,6 @@ function split_bytes(int $uid): int
     $n = (int)$st->fetchColumn();
     $n += (int)q('SELECT COALESCE(SUM(LENGTH(name) + COALESCE(LENGTH(notes), 0) + COALESCE(LENGTH(tables), 0) + 300), 0) FROM ' . t('split_groups') . ' WHERE owner_id = ?', [$uid])->fetchColumn();
     $n += (int)q('SELECT COALESCE(SUM(p.bytes), 0) FROM ' . t('split_photos') . ' p JOIN ' . t('split_groups') . ' g ON g.id = p.group_id WHERE g.owner_id = ?', [$uid])->fetchColumn();
+    $n += (int)q('SELECT COALESCE(SUM(COALESCE(LENGTH(caps), 0) + COALESCE(LENGTH(rules), 0) + COALESCE(LENGTH(csv), 0)), 0) FROM ' . t('split_budget') . ' WHERE user_id = ?', [$uid])->fetchColumn();
     return $n;
 }

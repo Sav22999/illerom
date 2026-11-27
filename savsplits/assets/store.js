@@ -8,7 +8,7 @@ import { todayKey } from './time.js';
  * groups of the account, for the home · G: the group open now, as the server sends it (splits.group), with `src`: how it
  * is reached ({id} for an account, {code, as} for its link)
  */
-export const S = { user: null, csrf: '', config: {}, prefs: {}, groups: [], G: null, ready: false };
+export const S = { user: null, csrf: '', config: {}, prefs: {}, groups: [], G: null, ready: false, mine: null, capsOver: 0 };
 
 /** The API as it is (the network): changes made offline go through the queue below first. */
 async function send(r, body, query = {}) {
@@ -103,8 +103,18 @@ export const meId = () => S.G?.me || (S.G?.src?.code ? guestAs(S.G.src.code) : '
 export const canWrite = () => !!S.G && S.G.role !== 'viewer';
 
 export async function loadGroups() {
-  const r = await api('splits.groups');
+  const r = await api('splits.groups', undefined, { month: todayKey().slice(0, 7) });
   S.groups = r.groups;
+  S.capsOver = r.capsOver || 0; // categories over their monthly cap (My spending)
+  S.capCats = r.capCats || []; // the categories with a cap
   S.ready = true;
   return S.groups;
 }
+
+/** My spending: the share of the account in the expenses of all its groups, its caps and keywords (lib/budget.php). */
+export async function loadMine() {
+  const r = await api('splits.mine');
+  S.mine = r;
+  return r;
+}
+export const hasPersonal = () => S.groups.some((g) => g.kind === 'personal' && g.owner);

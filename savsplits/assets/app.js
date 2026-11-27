@@ -18,6 +18,7 @@ let leave = null, turn = 0;
 async function start() {
   const r = await api('splits.init');
   S.prefs = r.prefs && !Array.isArray(r.prefs) ? r.prefs : {};
+  S.capCats = r.capCats || []; // the categories with a monthly cap (My spending)
   setCurrencies(r.currencies);
   applyTheme();
 }

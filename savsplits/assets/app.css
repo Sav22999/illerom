@@ -259,6 +259,31 @@ sav-dialog h3 { font-size: .98rem; } .dlg-err { margin-top: .8rem; } .segm.wide 
 .phadd { aspect-ratio: 1; display: grid; place-items: center; align-content: center; gap: .25rem; border-radius: 12px; border: 1.5px dashed var(--sav-color-border); background: transparent; color: var(--sav-color-text-muted); font: 600 .8rem var(--sav-font); cursor: pointer; }
 .phadd sav-icon { font-size: 1.3rem; } .phadd:hover { border-color: var(--sav-color-primary); color: var(--sav-color-primary); } .phadd:focus-visible { outline: 2px solid var(--sav-color-focus); outline-offset: 2px; }
 
+/* a personal group: the expenses alone, without the cards of the balances */
+.rbody.solo { grid-template-columns: minmax(0, 1fr); }
+
+/* My spending (assets/budget.js): inside the home, beside the side menu */
+.bsub { margin: -.6rem 0 1rem; max-width: 52rem; } .bfilters { margin-bottom: 1rem; } .bfilters .efilter { flex: 0 1 14rem; }
+.hmain > sav-alert { display: block; margin-bottom: .9rem; } .hmain > .stats { margin-bottom: 1.1rem; }
+.bgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.1rem; margin-bottom: 1.1rem; align-items: start; }
+.bcard2 { --sav-card-padding: 1rem 1.1rem 1.1rem; min-width: 0; } .bcard2::part(body) { display: grid; gap: .7rem; min-width: 0; } .bcard2 h2, .hmain .bcard2 h2 { font-size: 1rem; margin: 0; }
+.bcard2 .catbox { grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); justify-items: stretch; } .bcard2 sav-chart-pie { justify-self: center; width: 100%; max-width: 15rem; }
+.blist2 .elist { max-height: 34rem; overflow-y: auto; margin: 0 -.3rem; padding: 0 .3rem; } .bmore { padding-top: .5rem; }
+.gdot { display: inline-block; width: .55rem; height: .55rem; border-radius: 50%; background: var(--c); margin-right: .35rem; vertical-align: 1px; }
+.caps { display: grid; gap: .9rem; } .caprow { display: grid; gap: .35rem; } .caphead { display: flex; align-items: center; gap: .55rem; } .caphead small { font-variant-numeric: tabular-nums; } .caprow sav-progress-bar { font-variant-numeric: tabular-nums; }
+.caprow.over .caphead b { color: var(--neg); }
+.capgrid { display: grid; gap: .15rem; } .capedit { display: flex; align-items: center; gap: .6rem; padding: .2rem 0; } .capin { width: 8rem; flex: none; }
+.kwrow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 12rem) auto; gap: .5rem; align-items: center; }
+/* a bank statement: the columns and the preview */
+.csvf h3 { font-size: .95rem; margin-bottom: .2rem; } .csvmap { display: grid; gap: .7rem; } .csvmap:empty, .csvprev:empty { display: none; } .grid2.tight { gap: .5rem; }
+.csvprev { display: grid; gap: .4rem; } .pnote { display: block; }
+.plist3 { display: grid; max-height: 26rem; overflow-y: auto; border: 1px solid var(--sav-color-border); border-radius: 14px; }
+.prow3 { display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(9rem, 12rem) minmax(5.5rem, auto); gap: .6rem; align-items: center; padding: .45rem .7rem; border-bottom: 1px solid var(--grid); }
+.prow3:last-child { border-bottom: 0; } .prow3.off { opacity: .55; } .prow3.no .pmid b, .prow3.no .pamt { color: var(--sav-color-text-muted); }
+.pmid { display: grid; min-width: 0; } .pmid b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .9rem; } .pmid small { font-size: .78rem; }
+.prow3 .pamt { text-align: right; font-size: .95rem; } .cbx { width: 1.1rem; } .prow3.off .pcat { visibility: hidden; }
+.dupb { color: var(--sun-ink); background: var(--sun); border-radius: 99px; padding: 0 .4rem; font-weight: 600; }
+
 /* phones and small tablets */
 @media (max-width: 900px) { .rbody { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 760px) {
@@ -267,6 +292,12 @@ sav-dialog h3 { font-size: .98rem; } .dlg-err { margin-top: .8rem; } .segm.wide 
   .amtrow { grid-template-columns: minmax(0, 1fr) 7.5rem; } .ekind .lbl, .emode .lbl { display: none; } .pin { width: 6.5rem; }
   .sr { gap: .45rem; padding: .3rem .2rem; } .sr > sav-avatar { display: none; } .sr .pin { width: 5.6rem; } .sr .part { min-width: 4.4rem; font-size: .88rem; } .esplit { padding: .6rem; }
   .ftr { grid-template-columns: 1fr; } .farr { display: none; }
+  .bgrid { grid-template-columns: minmax(0, 1fr); } .bfilters .efilter { flex: 1 1 9rem; } .bcard2 .catbox { grid-template-columns: minmax(0, 1fr); }
+  .csvmap .grid3 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .kwrow { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+  .prow3 { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "c m a" "c s s"; gap: .3rem .55rem; padding: .5rem .6rem; }
+  .prow3 > :first-child { grid-area: c; } .prow3 .pmid { grid-area: m; } .prow3 .pamt { grid-area: a; } .prow3 .pcat { grid-area: s; }
+  .prow3.off .pcat { display: none; } .capin { width: 6.5rem; }
 }
+@media (max-width: 480px) { .csvmap .grid3 { grid-template-columns: minmax(0, 1fr); } }
 
 @media print { .htop, .rhead, .gtabs::part(nav), .fab, .credit, .etools, .gban, .pact, sav-dropdown { display: none !important; } body, .resp { background: #fff !important; } .rbody { grid-template-columns: 1fr; } sav-card, .erow, .brow { break-inside: avoid; } }
