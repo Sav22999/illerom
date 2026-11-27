@@ -76,7 +76,10 @@ savoffice-apps { display: inline-flex; }
   // (standalone) there is no grid: another app could only open inside this window, or in the browser.
   const DESK = window.SavOfficeDesktop || null;
   const STANDALONE = !DESK && (['standalone', 'fullscreen', 'minimal-ui', 'window-controls-overlay'].some((m) => matchMedia(`(display-mode: ${m})`).matches) || navigator.standalone === true);
-  const reachable = (id) => (DESK ? DESK.installed.includes(id) : !STANDALONE);
+  // the apps installed on the Mac now (asked again every time: one may have been removed meanwhile); an older SavOffice for
+  // Mac gives only the list of when the page opened
+  const installedNow = () => (DESK ? (typeof DESK.installedNow === 'function' ? DESK.installedNow() : DESK.installed) || [] : []);
+  const reachable = (id) => (DESK ? installedNow().includes(id) : !STANDALONE);
 
   class SavOfficeApps extends HTMLElement {
     connectedCallback() {
@@ -107,7 +110,7 @@ savoffice-apps { display: inline-flex; }
       grid.className = 'so-grid';
       Object.entries({ columns: '4', gap: '.15rem', keep: '' }).forEach(([k, v]) => grid.setAttribute(k, v));
       const items = [];
-      for (const [id, name, itx, en] of APPS.filter(([id]) => !DESK || id === cur || reachable(id))) {
+      for (const [id, name, itx, en] of APPS) { // on the Mac all of them, shown or not at every opening (shown(), below)
         const a = document.createElement('a');
         a.className = 'so-app';
         a.href = new URL(id + '/', base).href;
@@ -121,21 +124,25 @@ savoffice-apps { display: inline-flex; }
         img.loading = 'lazy';
         a.append(img, Object.assign(document.createElement('b'), { textContent: name.replace(/^Sav(?=[A-Z])/, '') }));
         grid.append(a);
-        items.push([a, fold([name, itx, en].join(' '))]);
+        items.push([a, fold([name, itx, en].join(' ')), id]);
       }
+      // SavOffice for Mac: only the apps installed when the panel opens (this one always)
+      let shown = null;
+      const refresh = () => { if (DESK) shown = new Set([cur, ...installedNow()]); };
+      refresh();
       const none = Object.assign(document.createElement('p'), { className: 'so-none', hidden: true, textContent: lang ? 'Nessuna app con questo nome' : 'No app with this name' });
       grid.append(none);
       const filter = () => {
         const w = fold(String(q.value || '').trim()).split(/\s+/).filter(Boolean);
         let n = 0;
-        for (const [a, text] of items) { a.hidden = !w.every((x) => text.includes(x)); n += !a.hidden; }
+        for (const [a, text, id] of items) { a.hidden = (shown && !shown.has(id)) || !w.every((x) => text.includes(x)); n += !a.hidden; }
         none.hidden = n > 0;
       };
       q.addEventListener('input', filter);
       q.addEventListener('sav-clear', () => setTimeout(filter));
       q.addEventListener('keydown', (e) => { if (e.key === 'Enter') { const first = items.find(([a]) => !a.hidden); if (first) { e.preventDefault(); if (DESK) first[0].click(); else location.href = first[0].href; } } });
       // every time it opens: the field empty, and focused only where a keyboard is likely (not to open the keyboard of a phone)
-      pop.addEventListener('sav-show', () => { q.value = ''; filter(); if (matchMedia('(hover: hover) and (pointer: fine)').matches) setTimeout(() => q.focus(), 60); });
+      pop.addEventListener('sav-show', () => { q.value = ''; refresh(); filter(); if (matchMedia('(hover: hover) and (pointer: fine)').matches) setTimeout(() => q.focus(), 60); });
       const foot = document.createElement('div');
       foot.className = 'so-foot';
       const hub = Object.assign(document.createElement('a'), { href: new URL('savoffice/', base).href, textContent: lang ? 'Cos’è SavOffice →' : 'About SavOffice →' });
@@ -678,7 +685,10 @@ savoffice-apps { display: inline-flex; }
   // the other apps: as in the grid above (only the installed ones in SavOffice for Mac, none in an installed web app)
   const DESK = window.SavOfficeDesktop || null;
   const STANDALONE = !DESK && (['standalone', 'fullscreen', 'minimal-ui', 'window-controls-overlay'].some((m) => matchMedia(`(display-mode: ${m})`).matches) || navigator.standalone === true);
-  const reachable = (id) => (DESK ? DESK.installed.includes(id) : !STANDALONE);
+  // the apps installed on the Mac now (asked again every time: one may have been removed meanwhile); an older SavOffice for
+  // Mac gives only the list of when the page opened
+  const installedNow = () => (DESK ? (typeof DESK.installedNow === 'function' ? DESK.installedNow() : DESK.installed) || [] : []);
+  const reachable = (id) => (DESK ? installedNow().includes(id) : !STANDALONE);
   const it = () => (document.documentElement.lang || navigator.language || 'en').startsWith('it');
   const APPS = [['savbooks', 'SavBooks', 'Libri ed e-book', 'Books and e-books'], ['savcalendar', 'SavCalendar', 'Calendario', 'Calendar'], ['savcontacts', 'SavContacts', 'Contatti', 'Contacts'], ['savdiagrams', 'SavDiagrams', 'Diagrammi', 'Diagrams'], ['savdocuments', 'SavDocuments', 'Documenti', 'Documents'], ['savdrive', 'SavDrive', 'File e cartelle', 'Files and folders'],
     ['savforms', 'SavForms', 'Moduli e sondaggi', 'Forms and surveys'], ['savmail', 'SavMail', 'Posta', 'Email'], ['savnewsletters', 'SavNewsletters', 'Newsletter', 'Newsletters'], ['savnotes', 'SavNotes', 'Quaderni', 'Notebooks'],

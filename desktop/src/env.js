@@ -25,6 +25,6 @@ const APP = (key('SavOfficeApp') || arg('savoffice-app') || '').replace(/[^a-z]/
 const HOME = process.env.SAVOFFICE_USERDATA || key('SavOfficeHome') || path.join(app.getPath('appData'), 'SavOffice');
 const ORIGIN = (process.env.SAVOFFICE_ORIGIN || key('SavOfficeOrigin') || 'https://www.illerom.eu').replace(/\/+$/, '');
 const PROFILE = APP ? path.join(HOME, 'Profiles', APP) : HOME;
-const TOOLBOX_ID = 'eu.illerom.savoffice';
+const TOOLBOX_ID = 'eu.illerom.savoffice'; // (a test Toolbox runs from its own copy: see bundles.js for the apps it makes)
 
 module.exports = { APP, HOME, ORIGIN, PROFILE, TOOLBOX_ID, testing: !!(process.env.SAVOFFICE_USERDATA || key('SavOfficeHome')) };

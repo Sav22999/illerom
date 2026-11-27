@@ -17,9 +17,10 @@ const { app } = require('electron');
 const env = require('./env');
 const { catalog } = require('./store');
 
-const BID = 'eu.illerom.savoffice.app.';
+// tests (env.testing): the apps in a folder and with identifiers of their own, never mixed with the real ones of this Mac
+const BID = env.testing ? 'eu.illerom.savoffice.test.app.' : 'eu.illerom.savoffice.app.';
 const LSREGISTER = '/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister';
-const dir = () => path.join(os.homedir(), 'Applications', 'SavOffice');
+const dir = () => path.join(os.homedir(), 'Applications', env.testing ? 'SavOffice-test' : 'SavOffice');
 const nameOf = (slug) => catalog.find((a) => a.slug === slug)?.name || slug;
 const bundleOf = (slug) => path.join(dir(), nameOf(slug) + '.app');
 const run = (cmd, args) => new Promise((resolve, reject) => execFile(cmd, args, { maxBuffer: 1 << 20 }, (err, out, errOut) => (err ? reject(new Error(`${cmd}: ${String(errOut || err.message).trim()}`)) : resolve(out))));
@@ -35,7 +36,18 @@ const keyOf = (bundle, k) => { try { return (fs.readFileSync(path.join(bundle, '
 
 /** Whether this SavOffice can make apps of their own (a packaged SavOffice.app). */
 const supported = () => !!toolbox();
-const exists = (slug) => fs.existsSync(bundleOf(slug));
+// an app is there when its Info.plist is (a copy stopped halfway has none)
+const exists = (slug) => fs.existsSync(path.join(bundleOf(slug), 'Contents', 'Info.plist'));
+
+/** Copies left halfway by an interrupted making (older than ten minutes): removed. */
+async function tidy() {
+  let names = [];
+  try { names = await fsp.readdir(dir()); } catch { return; }
+  for (const n of names.filter((x) => /\.making-\d+\.app$/.test(x))) {
+    const p = path.join(dir(), n);
+    try { if (Date.now() - (await fsp.stat(p)).mtimeMs > 10 * 60e3) await fsp.rm(p, { recursive: true, force: true }); } catch { /* gone */ }
+  }
+}
 
 const making = new Map();
 /** Makes (or makes again) the app of a slug; true when it is there and up to date. */
@@ -114,7 +126,14 @@ function markStopped(slug) { try { fs.unlinkSync(pidFile(slug)); } catch { /* go
 
 /** Opens an app (an address of it, when given: then a running app gets it too, through its single-instance lock). */
 async function launch(slug, url) {
-  if (!(await ensure(slug))) return false;
+  if (env.APP) {
+    // an app opening another (its SavOffice button, a link): it never makes apps — inside a clone the stamp of SavOffice is
+    // not its own, and it would clone itself. The app is there: opened; it is not: the Toolbox opens it (and makes it).
+    if (!exists(slug)) {
+      await run('/usr/bin/open', ['-b', env.TOOLBOX_ID, `savoffice://open/${slug}` + (url ? `?u=${encodeURIComponent(url)}` : '')]);
+      return true;
+    }
+  } else if (!(await ensure(slug))) return false;
   const args = url ? ['--args', `--savoffice-url=${url}`] : [];
   await run('/usr/bin/open', [...(url && running(slug) ? ['-n'] : []), '-b', BID + slug, ...args]);
   return true;
@@ -125,4 +144,4 @@ const quit = (slug) => run('/usr/bin/osascript', ['-e', `tell application id "${
 
 const openToolbox = () => run('/usr/bin/open', ['-b', env.TOOLBOX_ID]).catch(() => run('/usr/bin/open', ['-a', 'SavOffice']).catch(() => {}));
 
-module.exports = { supported, ensure, remove, exists, launch, quit, running, markRunning, markStopped, openToolbox, dir, bundleOf, BID };
+module.exports = { supported, ensure, remove, exists, tidy, launch, quit, running, markRunning, markStopped, openToolbox, dir, bundleOf, BID };

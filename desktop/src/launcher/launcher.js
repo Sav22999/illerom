@@ -343,7 +343,7 @@ function settingsView() {
   return [
     h('div.dhead', h('h1', t('settings'))),
     section(t('account'), null, S.account
-      ? row(t('acc_in', { name: S.account.name }), t('acc_in_t', { email: S.account.email }), btn(t('signout'), { icon: 'log-out', onclick: () => act.signout() }))
+      ? h('div.orow', h('sav-avatar', { label: S.account.name, image: S.account.picture || null, style: '--sav-avatar-size:44px;flex:none' }), h('div.orow-t', h('b', t('acc_in', { name: S.account.name })), h('small', t('acc_in_t', { email: S.account.email }))), h('div.orow-c', btn(t('signout'), { icon: 'log-out', onclick: () => act.signout() })))
       : row(t('acc_out'), t('acc_out_t') + ' ' + t('sav_browser_t'), ...signinButtons())),
     section(t('s_upd'), t('s_upd_p'),
       row(t('auto'), t('auto_t'), toggle(t('auto'), st.autoUpdate, (v) => set({ autoUpdate: v }))),

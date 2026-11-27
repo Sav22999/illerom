@@ -225,6 +225,7 @@ store.on('removed', (slug) => { bundles.remove(slug).catch(() => {}); try { shor
 
 /** The icons in ~/Applications/SavOffice: the apps of their own, or (apps as windows) the little apps that open them here. */
 async function syncIcons() {
+  await bundles.tidy();
   const list = installedSlugs();
   if (separate()) {
     shortcuts.sync(false, list);
@@ -322,7 +323,10 @@ function openAddress(url) {
   try { u = new URL(url); } catch { return; }
   if (u.hostname === 'signed-in') { redeemHandoff(u); return; } // the browser, after SavAccount
   const slug = (u.hostname === 'open' ? u.pathname.split('/')[1] : u.hostname) || '';
-  if (SLUGS.has(slug) && store.installed(slug)) open(slug);
+  // ?u=: an address of that app (an app asked for it: a document opened from SavDrive…), only of the site of the apps
+  let address = null;
+  try { const a = new URL(u.searchParams.get('u') || ''); if (a.origin === ORIGIN) address = a.href; } catch { /* none */ }
+  if (SLUGS.has(slug) && store.installed(slug)) open(slug, address || undefined);
   else showLauncher();
 }
 

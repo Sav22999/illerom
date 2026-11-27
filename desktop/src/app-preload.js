@@ -3,6 +3,7 @@
  * (../../assets/savoffice/savoffice.js). Its grid then lists only the apps installed here and opens each in its own
  * window; "All the apps" opens the Toolbox.
  *   installed  slugs of the apps installed on this Mac (when the page loaded)
+ *   installedNow()  the same, now (an app may have been removed meanwhile)
  *   open(slug) opens (or brings forward) the window of an installed app
  *   toolbox()  shows the Toolbox
  * It also puts the style of SavComponents chosen in the Toolbox on the pages (sav-style-soft | tilt | glass).
@@ -29,7 +30,8 @@ document.addEventListener('DOMContentLoaded', applyStyle, { once: true });
 ipcRenderer.on('desk-style', (e, s) => { style = s || 'soft'; applyStyle(); });
 
 contextBridge.exposeInMainWorld('SavOfficeDesktop', {
-  installed: ipcRenderer.sendSync('desk-installed'),
+  installed: ipcRenderer.sendSync('desk-installed'), // when the page loaded (for an older SavOffice button)
+  installedNow: () => ipcRenderer.sendSync('desk-installed'), // now: the button asks at every opening
   open: (slug) => ipcRenderer.invoke('desk-open', String(slug)),
   toolbox: () => ipcRenderer.invoke('desk-toolbox'),
 });
