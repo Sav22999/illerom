@@ -41,6 +41,7 @@ export function userMenu() {
   return h('span.umenu', h('savoffice-apps', { current: 'savdrive' }), drop(av, [{ head: u.email }, u.activated ? ['settings', t('settings'), () => go('#/settings')] : null, u.master ? ['shield', t('admin'), () => go('#/admin')] : null, '-', ['log-out', t('sign_out'), signOut]], { placement: 'bottom-end', label: u.name }));
 }
 export async function signOut() {
+  S.vaultLock?.(); // the key of the Vault (vault.js) is forgotten at once
   await api('auth.logout', {}).catch(() => {});
   S.user = null; S.csrf = '';
   forgetThumbs();

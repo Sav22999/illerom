@@ -53,6 +53,21 @@
     <p>Solo tu, e chi riceve un link che hai attivato. Gli amministratori vedono il nome e l’email degli account, se
         sono attivati, quanto spazio usano e quanti file hanno: mai i nomi né il contenuto dei file.</p>
 
+    <h2>Il Vault (cifrato nel tuo browser)</h2>
+    <p>Ciò che metti nel Vault viene cifrato nel tuo browser prima di essere inviato: il contenuto dei file e i loro nomi
+        (con tipo e dimensione) arrivano al server solo cifrati (AES-256-GCM) e il server non ha la chiave per leggerli. La
+        chiave si ottiene dal PIN del Vault, che non viene mai inviato, e resta solo nella memoria della pagina finché il
+        Vault è aperto. Del Vault conserviamo: i dati cifrati, la chiave principale cifrata con il PIN e con la password di
+        ripristino (generata alla creazione e mostrata una sola volta), un valore di controllo derivato dalla chiave, il numero di file e cartelle, le loro
+        dimensioni cifrate, in quali cartelle si trovano e le date di modifica. I file del Vault non hanno anteprime né
+        miniature sul server, non si possono condividere e non compaiono nella ricerca né in SavPhotos; contano nel tuo
+        spazio. Un PIN è corto: protegge da chi ottenesse i file, un backup o la tua sessione, ma chi gestisce il database
+        potrebbe in teoria provare tutti i PIN; un PIN di 8 cifre rende la cosa molto più lunga. Se perdi il PIN e la password
+        di ripristino, nessuno, nemmeno noi, può recuperare i file del Vault: puoi avviare un ripristino che, se non lo annulli
+        entro 30 giorni (ti avvisiamo via email all’inizio e qualche giorno prima), elimina tutto il contenuto del Vault e ti
+        permette di crearne uno nuovo. L’esportazione dei dati dell’account non include
+        il Vault: i suoi file si scaricano, decifrati, dal Vault stesso.</p>
+
     <h2>Le app di SavOffice</h2>
     <p>Quando apri un file di SavOffice dal drive (un documento, un foglio di calcolo…), la sua app lo legge dal tuo
         SavDrive nel tuo browser e lo apre nel tuo account di quell’app, che ha la sua informativa. Con il pulsante a forma di
@@ -114,6 +129,20 @@
         <p>Only you, and whoever gets a link you turned on. Administrators see the name and email of accounts, whether
             they are activated, how much space they use and how many files they have: never the names or contents of
             the files.</p>
+        <h2>The Vault (encrypted in your browser)</h2>
+        <p>What you put in the Vault is encrypted in your browser before it is sent: the contents of the files and their names
+            (with type and size) reach the server only encrypted (AES-256-GCM), and the server has no key to read them. The key
+            comes from the PIN of the Vault, which is never sent, and stays only in the memory of the page while the Vault is
+            open. Of the Vault we keep: the encrypted data, the master key encrypted with the PIN and with the recovery password
+            (made when the Vault is created and shown only once), a check value derived from the key, how many files and folders there are, their encrypted
+            sizes, the folders they are in and when they changed. Files of the Vault have no previews or small pictures on the
+            server, cannot be shared and do not appear in the search or in SavPhotos; they count in your space. A PIN is
+            short: it protects against whoever got the files, a backup or your session, but whoever runs the database could
+            in theory try every PIN; a PIN of 8 digits makes that much longer. If you lose the PIN and the recovery password,
+            nobody, not even us, can recover the files of the Vault: you can start a reset that, unless you stop it within 30
+            days (we tell you by email at the start and a few days before), deletes everything in the Vault and lets you make
+            a new one. The export of the account data does not include the
+            Vault: its files are downloaded, decrypted, from the Vault itself.</p>
         <h2>The apps of SavOffice</h2>
         <p>When you open a SavOffice file from the drive, its app reads it from your SavDrive in your browser and opens
             it in your account of that app, which has its own notice. With the cloud button the app saves the file back into your

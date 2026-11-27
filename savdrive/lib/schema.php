@@ -14,7 +14,12 @@
  *              one space for the whole suite, the space of SavDrive
  * quotas       the space of its own of a person (by email: also people who use other apps without an account here)
  * uploads      uploads under way, in pieces: what was received is in <storage>/<user_id>/<id>.part; replace_id: the file
- *              they become the new content of (an app of SavOffice saving back), instead of a new file
+ *              they become the new content of (an app of SavOffice saving back), instead of a new file; vault_id: the
+ *              file of the Vault they fill (lib/vault.php)
+ * vault_keys   the Vault of an account: how the browser unlocks it (digits of the PIN, salt, iterations, the master key
+ *              wrapped with the PIN and with the recovery password; a reset under way) — the server never sees the PIN
+ *              (lib/vault.php)
+ * vault_nodes  files and folders of the Vault, names encrypted in the browser (meta); the files on disk are encrypted too
  */
 
 declare(strict_types=1);
@@ -141,10 +146,43 @@ function schema_statements(string $p): array
             `size` BIGINT UNSIGNED NOT NULL,
             `received` BIGINT UNSIGNED NOT NULL DEFAULT 0,
             `replace_id` INT UNSIGNED NULL,
+            `vault_id` INT UNSIGNED NULL,
             `created_at` DATETIME NOT NULL,
             `expires_at` DATETIME NOT NULL,
             KEY `ix_user` (`user_id`),
             " . $fk('upl_user', 'user_id', 'users') . "
+        ) $e",
+        "CREATE TABLE IF NOT EXISTS `{$p}vault_keys` (
+            `user_id` INT UNSIGNED NOT NULL PRIMARY KEY,
+            `kdf` VARCHAR(20) NOT NULL,
+            `digits` TINYINT UNSIGNED NOT NULL DEFAULT 6,
+            `iterations` INT UNSIGNED NOT NULL,
+            `salt` VARCHAR(64) NOT NULL,
+            `wrap_pass` VARCHAR(400) NOT NULL,
+            `wrap_recovery` VARCHAR(400) NULL,
+            `proof` CHAR(64) NOT NULL,
+            `reset_started` DATETIME NULL,
+            `reset_at` DATETIME NULL,
+            `reset_notice` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+            `created_at` DATETIME NOT NULL,
+            `updated_at` DATETIME NOT NULL,
+            " . $fk('vk_user', 'user_id', 'users') . "
+        ) $e",
+        "CREATE TABLE IF NOT EXISTS `{$p}vault_nodes` (
+            `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `uid` CHAR(16) NOT NULL,
+            `user_id` INT UNSIGNED NOT NULL,
+            `parent_id` INT UNSIGNED NULL,
+            `kind` ENUM('folder','file') NOT NULL,
+            `meta` TEXT NOT NULL,
+            `size` BIGINT UNSIGNED NOT NULL DEFAULT 0,
+            `bkey` CHAR(32) NULL,
+            `created_at` DATETIME NOT NULL,
+            `updated_at` DATETIME NOT NULL,
+            UNIQUE KEY `uq_uid` (`uid`),
+            KEY `ix_parent` (`user_id`, `parent_id`),
+            " . $fk('vn_user', 'user_id', 'users') . ",
+            " . $fk('vn_parent', 'parent_id', 'vault_nodes') . "
         ) $e",
     ];
 }
@@ -153,6 +191,7 @@ function install_schema(PDO $pdo, string $prefix): void
 {
     foreach (schema_statements($prefix) as $sql) $pdo->exec($sql);
     if (!$pdo->query("SHOW COLUMNS FROM `{$prefix}uploads` LIKE 'replace_id'")->fetch()) $pdo->exec("ALTER TABLE `{$prefix}uploads` ADD COLUMN `replace_id` INT UNSIGNED NULL AFTER `received`");
+    if (!$pdo->query("SHOW COLUMNS FROM `{$prefix}uploads` LIKE 'vault_id'")->fetch()) $pdo->exec("ALTER TABLE `{$prefix}uploads` ADD COLUMN `vault_id` INT UNSIGNED NULL AFTER `replace_id`");
     if (!$pdo->query("SHOW COLUMNS FROM `{$prefix}nodes` LIKE 'created_by'")->fetch()) $pdo->exec("ALTER TABLE `{$prefix}nodes` ADD COLUMN `created_by` INT UNSIGNED NULL AFTER `opened_at`");
     // 3: the spaces of their own move to quotas (by email), where the other apps read them too
     $pdo->exec("INSERT IGNORE INTO `{$prefix}quotas` (email, quota, updated_at) SELECT email, quota, UTC_TIMESTAMP() FROM `{$prefix}users` WHERE quota IS NOT NULL");

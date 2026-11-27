@@ -294,3 +294,24 @@ summary.ar { list-style: none; cursor: pointer; border-radius: 0; } summary.ar::
 .sizef { display: flex; align-items: flex-end; gap: .5rem; } .sizef .unitsel { width: 6.5rem; flex: none; } .fhelp { margin: .35rem 0 0; }
 /* the upload panel: how long it has taken and how long it still needs */
 .upanel .utitle { display: grid; gap: .1rem; min-width: 0; } .upanel .utime { font-size: .78rem; font-variant-numeric: tabular-nums; }
+/* the Vault (vault.js): encrypted in the browser */
+.vwrap { display: grid; justify-items: center; padding: .4rem 0 2rem; }
+.vlcard { width: min(40rem, 100%); } .vlcard.vsmall { width: min(31rem, 100%); }
+.vlcard::part(body) { padding: clamp(1rem, 3vw, 1.6rem); }
+.vhero { display: flex; gap: 1rem; align-items: flex-start; margin-bottom: 1.1rem; } .vhero h2 { font-size: 1.3rem; letter-spacing: -.02em; margin: .1rem 0 .3rem; } .vhero p { margin: 0; line-height: 1.5; }
+.vbig { flex: none; display: grid; place-items: center; width: 3.2rem; height: 3.2rem; border-radius: 16px; font-size: 1.6rem; color: var(--sav-color-primary); background: color-mix(in oklab, var(--sav-color-primary) 13%, var(--sav-color-surface)); transform: rotate(-3deg); }
+.vfacts { list-style: none; margin: 0 0 1.6rem; padding: 0; display: grid; gap: .75rem; }
+.vfacts li { display: flex; gap: .7rem; align-items: flex-start; } .vfacts li > div { display: grid; gap: .1rem; min-width: 0; } .vfacts small { color: var(--sav-color-text-muted); line-height: 1.45; }
+.vfi { flex: none; display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 10px; color: var(--sav-color-primary); background: var(--sav-color-surface-2); }
+.vform { display: grid; gap: .9rem; } .verr[hidden] { display: none; }
+.vabout { margin-top: 1rem; border-top: 1px solid var(--sav-color-border); padding-top: .6rem; } .vabout .vfacts { margin: .6rem 0 0; }
+.vcode { display: block; padding: .9rem 1rem; border-radius: 12px; background: var(--sav-color-surface-2); border: 1px dashed var(--sav-color-border); font: 600 1.05rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .04em; text-align: center; word-break: break-all; user-select: all; -webkit-user-select: all; }
+.vnote { margin-bottom: 1rem; }
+.venc sav-icon, .lvl sav-icon { margin-right: .25rem; }
+.vtprog { display: flex; align-items: center; gap: .6rem; margin-top: .5rem; } .vtprog sav-progress-bar { flex: 1; min-width: 8rem; }
+.vtext { margin: 0; width: 100%; max-height: 70vh; overflow: auto; padding: 1rem; font: .85rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; word-break: break-word; background: var(--sav-color-surface-2); border-radius: 12px; text-align: left; }
+@media (max-width: 640px) { .vhero { flex-direction: column; gap: .7rem; } .vlcard::part(body) { padding: 1rem; } .venc .vbt { display: none; } }
+.vpin { justify-self: start; max-width: 100%; } .vlen { justify-self: start; } .vuntil sav-icon { margin-right: .25rem; }
+@media (max-width: 640px) { .vuntil { display: none; } }
+.vsteps { margin: 0; padding-left: 1.2rem; display: grid; gap: .45rem; line-height: 1.45; }
+.vreset p { margin: 0 0 .6rem; }

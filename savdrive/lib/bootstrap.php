@@ -18,7 +18,7 @@ declare(strict_types=1);
 
 const APP_NAME = 'SavDrive';
 const AUTH_COOKIE = 'savdrive_auth';
-const SCHEMA_VERSION = 4; // 2: uploads.replace_id (an app of SavOffice saves its file back into the drive) · 3: usage (the space used by the other apps) · 4: shares, comments, nodes.created_by
+const SCHEMA_VERSION = 6; // 2: uploads.replace_id (an app of SavOffice saves its file back into the drive) · 3: usage (the space used by the other apps) · 4: shares, comments, nodes.created_by · 6: the Vault (vault_keys, vault_nodes, uploads.vault_id)
 const LANGS = ['en', 'it'];
 const GB = 1073741824;
 const DEFAULT_QUOTA = 500 * 1048576;   // 500 MB, until the admins choose another one
@@ -347,12 +347,12 @@ function email_quota(string $email): ?int
     return $q === false ? null : (int)$q;
 }
 
-/** Bytes used by an account: its files (the trash too, as in every drive) and the uploads that are under way. */
+/** Bytes used by an account: its files (the trash and the Vault too, as in every drive) and the uploads that are under way. */
 function user_used(int $uid, bool $withUploads = false): int
 {
     $st = db()->prepare('SELECT COALESCE(SUM(size),0) FROM ' . t('nodes') . " WHERE user_id = ? AND kind = 'file'");
     $st->execute([$uid]);
-    $n = (int)$st->fetchColumn() + array_sum(other_apps($uid));
+    $n = (int)$st->fetchColumn() + vault_bytes($uid) + array_sum(other_apps($uid));
     if ($withUploads) {
         $st = db()->prepare('SELECT COALESCE(SUM(size),0) FROM ' . t('uploads') . ' WHERE user_id = ? AND expires_at > ?');
         $st->execute([$uid, now_utc()]);
@@ -411,12 +411,12 @@ function office_summary(array $u): array
     return $out;
 }
 
-/** The space of an account, app by app: ['savdrive' => its files, 'savdocuments' => …] */
+/** The space of an account, app by app: ['savdrive' => its files (the Vault too), 'savdocuments' => …] */
 function space_parts(int $uid): array
 {
     $st = db()->prepare('SELECT COALESCE(SUM(size),0) FROM ' . t('nodes') . " WHERE user_id = ? AND kind = 'file'");
     $st->execute([$uid]);
-    return array_filter(['savdrive' => (int)$st->fetchColumn()] + other_apps($uid));
+    return array_filter(['savdrive' => (int)$st->fetchColumn() + vault_bytes($uid)] + other_apps($uid));
 }
 
 /** A space without a limit. */
@@ -519,3 +519,4 @@ require_once __DIR__ . '/mail.php';
 require_once __DIR__ . '/files.php';
 require_once __DIR__ . '/access.php';
 require_once __DIR__ . '/archive.php';
+require_once __DIR__ . '/vault.php';

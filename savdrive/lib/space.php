@@ -110,6 +110,8 @@ function savspace_apps(string $email): array
     $out = [];
     $st = savspace_q("SELECT COALESCE(SUM(n.size),0) FROM `{p}nodes` n JOIN `{p}users` u ON u.id = n.user_id WHERE u.email = ? AND n.kind = 'file'", [$email]);
     $drive = $st ? (int)$st->fetchColumn() : 0;
+    $st = savspace_q("SELECT COALESCE(SUM(n.size),0) FROM `{p}vault_nodes` n JOIN `{p}users` u ON u.id = n.user_id WHERE u.email = ? AND n.kind = 'file' AND n.bkey IS NOT NULL", [$email]); // the Vault (lib/vault.php)
+    $drive += $st ? (int)$st->fetchColumn() : 0;
     $st = savspace_q('SELECT COALESCE(SUM(p.size),0) FROM `{p}uploads` p JOIN `{p}users` u ON u.id = p.user_id WHERE u.email = ? AND p.expires_at > UTC_TIMESTAMP()', [$email]);
     $drive += $st ? (int)$st->fetchColumn() : 0;
     if ($drive) $out['savdrive'] = $drive;

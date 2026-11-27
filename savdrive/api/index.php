@@ -14,6 +14,7 @@
  * Shared links: pub.info, pub.get (anyone with the link, files only)
  * Master admin: master.overview, master.settings, master.users, master.activate, master.quota, master.delete
  * SavPhotos:    photos.* (lib/photos.php)
+ * Vault:        vault.* (lib/vault.php: encrypted in the browser; its files travel through upload.chunk too)
  *
  * Every POST of a signed-in user needs the X-CSRF-Token header (given at sign-in).
  */
@@ -181,7 +182,7 @@ $ctype = (string)($_SERVER['CONTENT_TYPE'] ?? '');
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && stripos($ctype, 'application/json') !== 0 && !(($r === 'upload.chunk' || $r === 'photos.thumbset') && stripos($ctype, 'application/octet-stream') === 0)
     && !($r === 'photos.upload' && stripos($ctype, 'multipart/form-data') === 0)) fail('bad_request', 415); // SavPhotos sends a photo, its data and its small picture in one request
 remember_app_url();
-if (random_int(1, 60) === 1) purge_old();
+if (random_int(1, 60) === 1) { purge_old(); vault_resets_due(); }
 
 function only(string $method): void
 {
@@ -314,6 +315,9 @@ if (strncmp($r, 'photos.', 7) === 0) {
     require __DIR__ . '/../lib/photos.php';
     photos_route($r);
 }
+
+// The Vault: encrypted in the browser, its routes are in lib/vault.php
+if (strncmp($r, 'vault.', 6) === 0) vault_route($r);
 
 switch ($r) {
 
@@ -1070,6 +1074,7 @@ switch ($r) {
         // complete: the folder may have gone to the trash meanwhile, then the file lands in My drive
         clearstatcache(true, $part);
         if (filesize($part) !== (int)$up['size']) fail('bad_chunk', 422);
+        if (!empty($up['vault_id'])) vault_upload_done($u, $up, $part); // a file of the Vault (lib/vault.php): it never becomes a node of the drive
         // the folder (of this person, or shared with them, still with "write") may have gone meanwhile: then My drive
         $pid = $up['parent_id'] === null ? null : (int)$up['parent_id'];
         $owner = (int)$u['id'];
@@ -1123,7 +1128,7 @@ switch ($r) {
         $n = fn(string $sql) => (int)db()->query($sql)->fetchColumn();
         send_json(['ok' => true, 'users' => $n('SELECT COUNT(*) FROM ' . t('users')), 'active' => $n('SELECT COUNT(*) FROM ' . t('users') . ' WHERE activated = 1'),
             'waiting' => $n('SELECT COUNT(*) FROM ' . t('users') . ' WHERE activated = 0'), 'files' => $n('SELECT COUNT(*) FROM ' . t('nodes') . " WHERE kind = 'file'"),
-            'folders' => $n('SELECT COUNT(*) FROM ' . t('nodes') . " WHERE kind = 'folder'"), 'bytes' => $n('SELECT COALESCE(SUM(size),0) FROM ' . t('nodes') . " WHERE kind = 'file'") + $n('SELECT COALESCE(SUM(bytes),0) FROM ' . t('usage') . " WHERE app <> 'savdrive'"),
+            'folders' => $n('SELECT COUNT(*) FROM ' . t('nodes') . " WHERE kind = 'folder'"), 'bytes' => $n('SELECT COALESCE(SUM(size),0) FROM ' . t('nodes') . " WHERE kind = 'file'") + $n('SELECT COALESCE(SUM(size),0) FROM ' . t('vault_nodes') . " WHERE kind = 'file' AND bkey IS NOT NULL") + $n('SELECT COALESCE(SUM(bytes),0) FROM ' . t('usage') . " WHERE app <> 'savdrive'"),
             'driveBytes' => $n('SELECT COALESCE(SUM(size),0) FROM ' . t('nodes') . " WHERE kind = 'file'"), 'people' => $n('SELECT COUNT(*) FROM (SELECT email FROM ' . t('users') . ' UNION SELECT email FROM ' . t('usage') . ') x'),
             'given' => $n('SELECT COALESCE(SUM(COALESCE(q.quota, ' . default_quota() . ')),0) FROM ' . t('users') . ' u LEFT JOIN ' . t('quotas') . ' q ON q.email = u.email WHERE u.activated = 1 AND (q.quota IS NULL OR q.quota < ' . UNLIMITED . ')'),
             'unlimited' => $n('SELECT COUNT(*) FROM ' . t('quotas') . ' WHERE quota >= ' . UNLIMITED),
@@ -1150,7 +1155,7 @@ switch ($r) {
         $q = '%' . addcslashes(s($_GET, 'q', 80), '%_\\') . '%';
         $show = (string)($_GET['show'] ?? 'all');
         $extra = $show === 'waiting' ? ' AND u.activated = 0' : ($show === 'active' ? ' AND u.activated = 1' : '');
-        $st = db()->prepare('SELECT u.*, (SELECT COALESCE(SUM(n.size),0) FROM ' . t('nodes') . " n WHERE n.user_id = u.id AND n.kind = 'file') used, (SELECT COUNT(*) FROM " . t('nodes') . " n WHERE n.user_id = u.id AND n.kind = 'file') files
+        $st = db()->prepare('SELECT u.*, (SELECT COALESCE(SUM(n.size),0) FROM ' . t('nodes') . " n WHERE n.user_id = u.id AND n.kind = 'file') + (SELECT COALESCE(SUM(v.size),0) FROM " . t('vault_nodes') . " v WHERE v.user_id = u.id AND v.kind = 'file' AND v.bkey IS NOT NULL) used, (SELECT COUNT(*) FROM " . t('nodes') . " n WHERE n.user_id = u.id AND n.kind = 'file') files
             FROM " . t('users') . " u WHERE (u.name LIKE ? OR u.email LIKE ?)$extra ORDER BY u.activated, u.id DESC LIMIT 500");
         $st->execute([$q, $q]);
         $rows = $st->fetchAll();
