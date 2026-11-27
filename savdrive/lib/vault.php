@@ -7,17 +7,21 @@
  * Recent, the search or SavPhotos; the files count in the space like every other file.
  *
  *   vault_keys   one row per account: how the browser derives the key from the PIN (digits: 6 or 8, kdf, iterations,
- *                salt), the master key wrapped with that key (wrap_pass) and, if the person wanted it, with a recovery key
- *                (wrap_recovery); proof: the SHA-256 of a value only the master key gives (HKDF "auth"), asked for every
- *                change, so a stolen session alone cannot empty or lock the Vault
+ *                salt), the master key wrapped with that key (wrap_pass) and with the recovery password shown once at the
+ *                start (wrap_recovery); proof: the SHA-256 of a value only the master key gives (HKDF), asked for every
+ *                change, so a stolen session alone cannot empty or lock the Vault; reset_at: when a reset asked by somebody
+ *                who remembers neither the PIN nor the recovery password deletes everything (reset_notice: emails sent)
  *   vault_nodes  files and folders as a tree; meta: the name (and, for a file, its type, size and own key) encrypted
  *                with the master key; size: the bytes kept on disk (encrypted, a little more than the file); a file is
  *                kept as <storage>/<user id>/<bkey> like the others; bkey NULL: an upload still under way
  *
  * Routes (api/?r=vault.*): vault.state, vault.list, vault.get (GET: the encrypted bytes), vault.setup, vault.rekey,
- * vault.folder, vault.rename, vault.move, vault.delete, vault.upload (then upload.chunk, as every upload), vault.reset.
- * Every POST needs X-CSRF-Token and, once the Vault exists, X-Vault-Proof (except vault.reset, which asks for the
- * password of the account instead: it is the way out when the PIN is lost).
+ * vault.folder, vault.rename, vault.move, vault.delete, vault.upload (then upload.chunk, as every upload), vault.reset,
+ * vault.forget, vault.keep. Every POST needs X-CSRF-Token and, once the Vault exists, X-Vault-Proof, except:
+ *   - vault.forget (PIN and recovery password both lost): with the password of the account it starts a reset that deletes
+ *     the Vault after VAULT_RESET_DAYS, unless it is stopped meanwhile (an email at the start and VAULT_REMIND_DAYS before);
+ *     a stolen session can never delete the Vault at once
+ *   - vault.keep: stops that reset (the browser calls it by itself when the Vault is opened).
  *
  * A PIN of a few digits is easy to try out by whoever holds the database (offline, without limits): the Vault keeps what it
  * holds away from people who reach the files on disk, a backup or a session, and from the admins in the normal course of
@@ -29,6 +33,54 @@ declare(strict_types=1);
 const VAULT_MAX_NODES = 20000;
 const VAULT_META_MAX = 8000;       // characters of an encrypted name (base64)
 const VAULT_WRAP_MAX = 400;        // characters of a wrapped key (base64)
+const VAULT_RESET_DAYS = 30;       // a reset without PIN nor recovery password deletes the Vault after this
+const VAULT_REMIND_DAYS = 3;       // ... and reminds by email this many days before
+
+/** The whole Vault of an account, for ever: files, folders, uploads under way, keys. */
+function vault_wipe(int $uid): void
+{
+    $st = db()->prepare('SELECT id FROM ' . t('vault_nodes') . ' WHERE user_id = ? AND parent_id IS NULL');
+    $st->execute([$uid]);
+    vault_delete_forever($uid, $st->fetchAll(PDO::FETCH_COLUMN));
+    $st = db()->prepare('SELECT id FROM ' . t('uploads') . ' WHERE user_id = ? AND vault_id IS NOT NULL');
+    $st->execute([$uid]);
+    foreach ($st->fetchAll(PDO::FETCH_COLUMN) as $id) @unlink(storage_dir($uid) . "/$id.part");
+    db()->prepare('DELETE FROM ' . t('uploads') . ' WHERE user_id = ? AND vault_id IS NOT NULL')->execute([$uid]);
+    db()->prepare('DELETE FROM ' . t('vault_keys') . ' WHERE user_id = ?')->execute([$uid]);
+}
+
+/** An email about the reset of a Vault ('start', 'remind', 'done'), when email is set up. */
+function vault_mail(int $uid, string $what, ?string $due = null): void
+{
+    if (!mail_settings()) return;
+    $st = db()->prepare('SELECT name, email, ui_lang FROM ' . t('users') . ' WHERE id = ?');
+    $st->execute([$uid]);
+    $x = $st->fetch();
+    if (!$x) return;
+    $L = in_array($x['ui_lang'], LANGS, true) ? $x['ui_lang'] : 'en';
+    $T = mail_t($L);
+    $date = $due ? (new DateTime($due . ' UTC'))->format($L === 'it' ? 'd/m/Y H:i' : 'Y-m-d H:i') . ' UTC' : '';
+    send_notice((string)$x['email'], (string)$x['name'], $L, $T["vreset_{$what}_subject"], $T["vreset_{$what}_title"],
+        [fill($T['hello'], ['name' => $x['name']]), fill($T["vreset_{$what}_body"], ['date' => $date, 'days' => VAULT_RESET_DAYS])], app_url() . '#/vault', $T['vreset_button']);
+}
+
+/** Resets whose time has come are carried out, reminders are sent ($uid: only that account; otherwise a few). */
+function vault_resets_due(?int $uid = null, int $limit = 20): void
+{
+    try {
+        $only = $uid ? ' AND user_id = ' . (int)$uid : '';
+        $st = db()->prepare('SELECT user_id FROM ' . t('vault_keys') . " WHERE reset_at IS NOT NULL AND reset_at <= ?$only LIMIT " . (int)$limit);
+        $st->execute([now_utc()]);
+        foreach ($st->fetchAll(PDO::FETCH_COLUMN) as $id) { vault_wipe((int)$id); vault_mail((int)$id, 'done'); }
+        $st = db()->prepare('SELECT user_id, reset_at FROM ' . t('vault_keys') . " WHERE reset_at IS NOT NULL AND reset_notice < 2 AND reset_at <= ?$only LIMIT " . (int)$limit);
+        $st->execute([gmdate('Y-m-d H:i:s', time() + VAULT_REMIND_DAYS * 86400)]);
+        foreach ($st->fetchAll() as $r) {
+            db()->prepare('UPDATE ' . t('vault_keys') . ' SET reset_notice = 2 WHERE user_id = ?')->execute([$r['user_id']]);
+            vault_mail((int)$r['user_id'], 'remind', (string)$r['reset_at']);
+        }
+    } catch (PDOException $e) { /* before the tables of version 6 */
+    }
+}
 
 /** Bytes the Vault of an account keeps on disk (they count in the space). */
 function vault_bytes(int $uid): int
@@ -56,6 +108,15 @@ function vault_b64(array $b, string $key, int $max, bool $optional = false): ?st
     if ($optional && ($v === null || $v === '')) return null;
     if (!is_string($v) || $v === '' || strlen($v) > $max || !preg_match('#^[A-Za-z0-9+/]+={0,2}$#', $v)) fail('bad_request', 422);
     return $v;
+}
+
+/** The password of the account (true for an account that signs in only with SavAccount, which has none). */
+function vault_password_ok(array $u): bool
+{
+    $row = db()->prepare('SELECT password_hash FROM ' . t('users') . ' WHERE id = ?');
+    $row->execute([$u['id']]);
+    $hash = (string)$row->fetchColumn();
+    return $hash === '' || password_verify((string)(body()['password'] ?? ''), $hash);
 }
 
 /** The writes of an existing Vault need the proof (the browser has the master key, i.e. it was unlocked). */
@@ -175,14 +236,16 @@ function vault_route(string $r): void
         case 'vault.state':
             // Whether the Vault exists and what the browser needs to unlock it (nothing of this opens it without the PIN)
             $u = reader();
+            vault_resets_due((int)$u['id']);
             $k = vault_keys((int)$u['id']);
             $st = db()->prepare("SELECT COUNT(*) FROM $T WHERE user_id = ? AND (kind = 'folder' OR bkey IS NOT NULL)");
             $st->execute([$u['id']]);
             send_json(['ok' => true, 'setup' => (bool)$k, 'count' => (int)$st->fetchColumn(), 'chunk' => CHUNK_BYTES,
-                'key' => $k ? ['kdf' => $k['kdf'], 'digits' => (int)$k['digits'], 'iterations' => (int)$k['iterations'], 'salt' => $k['salt'], 'wrapPass' => $k['wrap_pass'], 'wrapRecovery' => $k['wrap_recovery'], 'created' => iso($k['created_at']), 'updated' => iso($k['updated_at'])] : null] + vault_space($u));
+                'key' => $k ? ['kdf' => $k['kdf'], 'digits' => (int)$k['digits'], 'iterations' => (int)$k['iterations'], 'salt' => $k['salt'], 'wrapPass' => $k['wrap_pass'], 'wrapRecovery' => $k['wrap_recovery'], 'created' => iso($k['created_at']), 'updated' => iso($k['updated_at'])] : null,
+                'reset' => $k && $k['reset_at'] ? ['started' => iso($k['reset_started']), 'due' => iso($k['reset_at'])] : null, 'resetDays' => VAULT_RESET_DAYS] + vault_space($u));
 
         case 'vault.setup':
-            // {kdf, digits, iterations, salt, wrapPass, wrapRecovery?, proof}: the first time; the browser made everything
+            // {kdf, digits, iterations, salt, wrapPass, wrapRecovery, proof}: the first time; the browser made everything
             $u = writer();
             if (vault_keys((int)$u['id'])) fail('vault_exists', 409);
             $b = body();
@@ -193,12 +256,12 @@ function vault_route(string $r): void
             $proof = (string)($b['proof'] ?? '');
             if (!preg_match('/^[a-f0-9]{64}$/', $proof)) fail('bad_request', 422);
             db()->prepare('INSERT INTO ' . t('vault_keys') . ' (user_id, kdf, digits, iterations, salt, wrap_pass, wrap_recovery, proof, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)')
-                ->execute([$u['id'], $kdf, $digits, $it, vault_b64($b, 'salt', 64), vault_b64($b, 'wrapPass', VAULT_WRAP_MAX), vault_b64($b, 'wrapRecovery', VAULT_WRAP_MAX, true), hash('sha256', $proof), now_utc(), now_utc()]);
+                ->execute([$u['id'], $kdf, $digits, $it, vault_b64($b, 'salt', 64), vault_b64($b, 'wrapPass', VAULT_WRAP_MAX), vault_b64($b, 'wrapRecovery', VAULT_WRAP_MAX), hash('sha256', $proof), now_utc(), now_utc()]);
             send_json(['ok' => true]);
 
         case 'vault.rekey':
-            // A new PIN ({digits, iterations, salt, wrapPass}) and/or recovery key ({wrapRecovery}: a new one, or null =
-            // none): the master key and the files stay the same
+            // A new PIN ({digits, iterations, salt, wrapPass}) and/or recovery password ({wrapRecovery}): the master key
+            // and the files stay the same
             $u = writer();
             vault_proof($u);
             $b = body();
@@ -213,7 +276,7 @@ function vault_route(string $r): void
             }
             if (array_key_exists('wrapRecovery', $b)) {
                 $set[] = 'wrap_recovery = ?';
-                $args[] = vault_b64($b, 'wrapRecovery', VAULT_WRAP_MAX, true);
+                $args[] = vault_b64($b, 'wrapRecovery', VAULT_WRAP_MAX);
             }
             if (!$set) fail('bad_request', 422);
             $args[] = now_utc();
@@ -222,21 +285,34 @@ function vault_route(string $r): void
             send_json(['ok' => true]);
 
         case 'vault.reset':
-            // The whole Vault, for ever (a lost PIN): the password of the account, when it has one
+            // The whole Vault at once and for ever: only from an open Vault (the proof) and with the password of the account
             $u = writer();
-            $row = db()->prepare('SELECT password_hash FROM ' . t('users') . ' WHERE id = ?');
-            $row->execute([$u['id']]);
-            $hash = (string)$row->fetchColumn();
-            if ($hash !== '' && !password_verify((string)(body()['password'] ?? ''), $hash)) fail('bad_password', 422);
-            $st = db()->prepare("SELECT id FROM $T WHERE user_id = ? AND parent_id IS NULL");
-            $st->execute([$u['id']]);
-            vault_delete_forever((int)$u['id'], $st->fetchAll(PDO::FETCH_COLUMN));
-            $st = db()->prepare('SELECT id FROM ' . t('uploads') . ' WHERE user_id = ? AND vault_id IS NOT NULL');
-            $st->execute([$u['id']]);
-            foreach ($st->fetchAll(PDO::FETCH_COLUMN) as $id) @unlink(storage_dir((int)$u['id']) . "/$id.part");
-            db()->prepare('DELETE FROM ' . t('uploads') . ' WHERE user_id = ? AND vault_id IS NOT NULL')->execute([$u['id']]);
-            db()->prepare('DELETE FROM ' . t('vault_keys') . ' WHERE user_id = ?')->execute([$u['id']]);
+            vault_proof($u);
+            if (!vault_password_ok($u)) fail('bad_password', 422);
+            vault_wipe((int)$u['id']);
             send_json(['ok' => true] + vault_space($u));
+
+        case 'vault.forget':
+            // {password}: PIN and recovery password both lost. The Vault is deleted after VAULT_RESET_DAYS unless the reset
+            // is stopped meanwhile (vault.keep, or simply opening the Vault)
+            $u = writer();
+            $k = vault_keys((int)$u['id']);
+            if (!$k) fail('vault_none', 409);
+            if (too_many_attempts('vforget', 5, 60)) fail('rate_limited', 429);
+            if (!vault_password_ok($u)) { record_attempt('vforget'); fail('bad_password', 422); }
+            if (!$k['reset_at']) {
+                $due = gmdate('Y-m-d H:i:s', time() + VAULT_RESET_DAYS * 86400);
+                db()->prepare('UPDATE ' . t('vault_keys') . ' SET reset_started = ?, reset_at = ?, reset_notice = 1 WHERE user_id = ?')->execute([now_utc(), $due, $u['id']]);
+                vault_mail((int)$u['id'], 'start', $due);
+            }
+            $k = vault_keys((int)$u['id']);
+            send_json(['ok' => true, 'reset' => ['started' => iso($k['reset_started']), 'due' => iso($k['reset_at'])]]);
+
+        case 'vault.keep':
+            // The reset stops: the Vault stays as it is
+            $u = writer();
+            db()->prepare('UPDATE ' . t('vault_keys') . ' SET reset_started = NULL, reset_at = NULL, reset_notice = 0 WHERE user_id = ?')->execute([$u['id']]);
+            send_json(['ok' => true, 'reset' => null]);
 
         case 'vault.list':
             // Everything of the Vault at once: only the browser can read the names, so it builds the tree itself

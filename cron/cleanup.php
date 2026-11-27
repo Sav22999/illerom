@@ -114,6 +114,18 @@ function cleanApp($project, $defaultPrefix)
             if (preg_match('/^[a-f0-9]{32}$/', (string)$u['id'])) @unlink($store . '/' . (int)$u['user_id'] . '/' . $u['id'] . '.part');
         }
         $result['uploads'] = $db->exec("DELETE FROM `{$prefix}uploads` WHERE expires_at < UTC_TIMESTAMP()");
+        // the Vault: a reset (PIN and recovery password lost) not stopped within its 30 days deletes it (the app sends the emails)
+        if ($db->query("SHOW TABLES LIKE " . $db->quote(addcslashes($prefix, '_%') . 'vault_keys'))->fetchColumn()) {
+            $due = $db->query("SELECT user_id FROM `{$prefix}vault_keys` WHERE reset_at IS NOT NULL AND reset_at <= UTC_TIMESTAMP()")->fetchAll(PDO::FETCH_COLUMN);
+            foreach ($due as $uid) {
+                $uid = (int)$uid;
+                foreach ($db->query("SELECT bkey FROM `{$prefix}vault_nodes` WHERE user_id = $uid AND bkey IS NOT NULL")->fetchAll(PDO::FETCH_COLUMN) as $k) if (preg_match('/^[a-f0-9]{32}$/', (string)$k)) @unlink($store . '/' . $uid . '/' . $k);
+                $db->exec("UPDATE `{$prefix}vault_nodes` SET parent_id = NULL WHERE user_id = $uid");
+                $db->exec("DELETE FROM `{$prefix}vault_nodes` WHERE user_id = $uid");
+                $db->exec("DELETE FROM `{$prefix}vault_keys` WHERE user_id = $uid");
+            }
+            $result['vaults_reset'] = count($due);
+        }
         $result['unconfirmed'] = $db->exec("DELETE FROM `{$prefix}users` WHERE email_verified_at IS NULL AND status = 'active' AND created_at < UTC_TIMESTAMP() - INTERVAL 7 DAY");
         $result['links'] = $db->exec("DELETE FROM `{$prefix}email_tokens` WHERE expires_at < UTC_TIMESTAMP()");
         if ($db->query("SHOW TABLES LIKE " . $db->quote(addcslashes($prefix, '_%') . 'identity'))->fetchColumn()) $result['sign_in_requests'] = $db->exec("DELETE FROM `{$prefix}identity` WHERE expires_at < UTC_TIMESTAMP()"); // made at the first SavAccount sign-in

@@ -313,3 +313,5 @@ summary.ar { list-style: none; cursor: pointer; border-radius: 0; } summary.ar::
 @media (max-width: 640px) { .vhero { flex-direction: column; gap: .7rem; } .vlcard::part(body) { padding: 1rem; } .venc .vbt { display: none; } }
 .vpin { justify-self: start; max-width: 100%; } .vlen { justify-self: start; } .vuntil sav-icon { margin-right: .25rem; }
 @media (max-width: 640px) { .vuntil { display: none; } }
+.vsteps { margin: 0; padding-left: 1.2rem; display: grid; gap: .45rem; line-height: 1.45; }
+.vreset p { margin: 0 0 .6rem; }

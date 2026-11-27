@@ -182,7 +182,7 @@ $ctype = (string)($_SERVER['CONTENT_TYPE'] ?? '');
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && stripos($ctype, 'application/json') !== 0 && !(($r === 'upload.chunk' || $r === 'photos.thumbset') && stripos($ctype, 'application/octet-stream') === 0)
     && !($r === 'photos.upload' && stripos($ctype, 'multipart/form-data') === 0)) fail('bad_request', 415); // SavPhotos sends a photo, its data and its small picture in one request
 remember_app_url();
-if (random_int(1, 60) === 1) purge_old();
+if (random_int(1, 60) === 1) { purge_old(); vault_resets_due(); }
 
 function only(string $method): void
 {

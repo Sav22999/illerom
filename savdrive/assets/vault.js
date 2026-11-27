@@ -9,8 +9,9 @@
  * Keys (Web Crypto, nothing else):
  *   - the master key: 32 random bytes made here the first time, never sent in clear and never kept anywhere but in memory
  *     while the Vault is open (as keys that cannot be read back); it is sent wrapped (AES-GCM) with a key derived from the
- *     PIN (PBKDF2-SHA-256, 600 000 rounds, random salt) and, if the person wants one, with a recovery key (20 random
- *     bytes shown once, HKDF-SHA-256; it stays valid when the PIN changes)
+ *     PIN (PBKDF2-SHA-256, 600 000 rounds, random salt) and with a recovery password (20 random bytes shown once, at the
+ *     start, as 32 letters and digits; HKDF-SHA-256; it stays valid when the PIN changes)
+ *   - PIN and recovery password both lost: a reset deletes the Vault after 30 days unless it is stopped (lib/vault.php)
  *   - from the master key (HKDF): the key of the names, and a proof the server asks for every change (it keeps only its
  *     SHA-256: a stolen session alone cannot empty, rename or lock the Vault)
  *   - every file has its own random key, kept inside its encrypted name; the file is encrypted in pieces (AES-256-GCM, one
@@ -40,7 +41,7 @@ const unb64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 const hex = (buf) => [...new Uint8Array(buf)].map((x) => x.toString(16).padStart(2, '0')).join('');
 const gcm = (iv, aad) => (aad ? { name: 'AES-GCM', iv, additionalData: aad } : { name: 'AES-GCM', iv });
 
-// the recovery key: 20 bytes as 32 letters and digits (Crockford's base 32), in groups of four
+// the recovery password: 20 bytes as 32 letters and digits (Crockford's base 32), in groups of four
 const B32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 function toB32(bytes) {
   let bits = 0, v = 0, out = '';
@@ -60,7 +61,7 @@ async function passKey(pass, salt, iterations) {
   const base = await subtle.importKey('raw', te.encode(pass.normalize('NFC')), 'PBKDF2', false, ['deriveKey']);
   return subtle.deriveKey({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
 }
-/** The key of a recovery key (160 random bits: no salt or slow derivation is needed, and it stays valid when the PIN changes). */
+/** The key of the recovery password (160 random bits: no salt or slow derivation is needed, and it stays valid when the PIN changes). */
 async function recoveryKey(raw) {
   const base = await subtle.importKey('raw', raw, 'HKDF', false, ['deriveKey']);
   return subtle.deriveKey({ name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(32), info: te.encode('savdrive-vault-recovery-v1') }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
@@ -298,11 +299,11 @@ const no = (code) => Object.assign(new Error(code), { code });
 /** 6 or 8 digits: changes the boxes of the fields given. */
 const digitsChoice = (value, fields, onpick) => segmented(t('vault_pin_len'), value, DIGITS.map((d) => [d, '=' + t('vault_digits', { n: d }), t('vault_digits', { n: d })]), (v) => { for (const f of fields) f.setAttribute('length', v); onpick(+v); }, { show: true, class: 'vlen' });
 
-/** Shows a recovery key once: it can be copied or saved as a text file, and the person says they kept it. */
+/** Shows the recovery password once: it can be copied or saved as a text file, and the person says they kept it. */
 function showRecovery(code) {
   return new Promise((res) => {
     const kept = h('sav-checkbox', {}, t('vault_rec_kept'));
-    const file = () => save(new Blob([`${t('vault_rec_file', { email: S.user?.email || '' })}\n\n${code}\n`], { type: 'text/plain' }), 'savdrive-vault-recovery-key.txt');
+    const file = () => save(new Blob([`${t('vault_rec_file', { email: S.user?.email || '' })}\n\n${code}\n`], { type: 'text/plain' }), 'savdrive-vault-recovery-password.txt');
     dialog({ title: t('vault_rec_title'), width: '32rem', body: h('div.form', h('p', t('vault_rec_text')), h('code.vcode', code), h('div.prow.wrap', btn(t('copy'), { icon: 'copy', size: 'sm', onclick: () => copyText(code, t('vault_rec_copied')) }), btn(t('vault_rec_save'), { icon: 'download', size: 'sm', onclick: file })),
       h('sav-alert', { variant: 'warning' }, t('vault_rec_warn')), kept),
     actions: [{ label: t('done'), primary: true, run: () => { if (!kept.checked) throw no('vault_rec_confirm'); } }], onclose: res });
@@ -342,7 +343,7 @@ export async function vaultHome({ page, hbody, head, body, main, newSlot, folder
   }
   onLock.add(redraw);
 
-  // ---------------------------------------------------------------- first time: a PIN (and a recovery key)
+  // ---------------------------------------------------------------- first time: a PIN (and the recovery password, shown once)
 
   function setupView() {
     commands([t('places'), [['hard-drive', t('my_drive'), '#/'], ['trash-2', t('trash'), '#/trash']]]);
@@ -350,7 +351,6 @@ export async function vaultHome({ page, hbody, head, body, main, newSlot, folder
     let digits = 6;
     const pin = pinField(t('vault_pin'), digits), again = pinField(t('vault_pin_again'), digits);
     const len = digitsChoice(digits, [pin, again], (d) => { digits = d; });
-    const rec = h('sav-switch', { checked: true }, t('vault_rec_switch'));
     const understood = h('sav-checkbox', {}, t('vault_understand'));
     const box = err();
     const create = primary(t('vault_create'), { icon: 'lock', onclick: async () => {
@@ -361,25 +361,39 @@ export async function vaultHome({ page, hbody, head, body, main, newSlot, folder
       const mk = rand(32);
       try {
         const w = await pinWrap(pin.value, digits, mk);
-        const r = rec.checked ? await newRecovery(mk) : null;
+        const r = await newRecovery(mk);
         const keys = await keysOf(mk);
-        await vapi('vault.setup', { kdf: 'pbkdf2-sha256', ...w, wrapRecovery: r?.wrap || null, proof: keys.proof });
+        await vapi('vault.setup', { kdf: 'pbkdf2-sha256', ...w, wrapRecovery: r.wrap, proof: keys.proof });
         K = keys;
         nodes.clear();
         st = await vapi('vault.state');
         touch();
-        if (r) await showRecovery(r.code);
+        await showRecovery(r.code);
         toast(t('vault_ready'), 'success');
         redraw();
       } catch (e) { showErr(box, errText(e)); } finally { mk.fill(0); }
     } });
     put(body, h('div.vwrap', h('sav-card.vlcard', { appearance: 'outlined' },
       h('div.vhero', h('span.vbig', icon('lock')), h('div', h('h2', t('vault_setup_title')), h('p.muted', t('vault_setup_text')))), facts(),
-      h('div.form.vform', len, pin, again, h('small.muted', t('vault_pin_help')), rec, h('small.muted', t('vault_rec_switch_t')), h('sav-alert', { variant: 'warning', heading: t('vault_warn_title') }, t('vault_warn_text')), understood, box, h('div.prow', h('span.grow'), create)))));
+      h('div.form.vform', len, pin, again, h('small.muted', t('vault_pin_help')), h('sav-alert', { variant: 'neutral', heading: t('vault_rec_next') }, icon('key', { slot: 'icon' }), t('vault_rec_next_t', { days: st.resetDays || 30 })),
+        understood, box, h('div.prow', h('span.grow'), create)))));
   }
 
   // ---------------------------------------------------------------- locked: the PIN, every time the Vault is opened
 
+  const longDate = (iso) => new Date(iso).toLocaleString(getLang(), { dateStyle: 'long', timeStyle: 'short' });
+  /** A reset under way (PIN and recovery password lost): when it deletes everything, and the way to stop it. */
+  function resetAlert() {
+    if (!st.reset) return null;
+    return h('sav-alert.vreset', { variant: 'danger', heading: t('vault_reset_on') }, icon('alert-triangle', { slot: 'icon' }),
+      h('p', t('vault_reset_on_t', { date: longDate(st.reset.due) })), btn(t('vault_reset_stop'), { size: 'sm', icon: 'undo-2', onclick: () => keepVault(true) }));
+  }
+  async function keepVault(say) {
+    const r = await vapi('vault.keep', {});
+    st.reset = r.reset;
+    if (say) toast(t('vault_reset_stopped'), 'success');
+    redraw();
+  }
   function unlockView() {
     commands([t('places'), [['hard-drive', t('my_drive'), '#/'], ['trash-2', t('trash'), '#/trash']]]);
     put(head, h('h1', t('vault')), h('span.grow'), h('sav-badge', { variant: 'neutral', appearance: 'soft', pill: true }, icon('lock'), t('vault_locked')));
@@ -402,42 +416,60 @@ export async function vaultHome({ page, hbody, head, body, main, newSlot, folder
     } });
     put(body, h('div.vwrap', h('sav-card.vlcard.vsmall', { appearance: 'outlined' },
       h('div.vhero', h('span.vbig', icon('lock')), h('div', h('h2', t('vault_unlock_title')), h('p.muted', t('vault_unlock_text', { n: st.count, d: digitsOf() })))),
-      h('div.form.vform', pin, remember, box, h('div.prow.wrap', btn(t('vault_forgot'), { appearance: 'ghost', size: 'sm', onclick: forgot }), h('span.grow'), go2)),
+      h('div.form.vform', resetAlert(), pin, remember, box, h('div.prow.wrap', btn(t('vault_forgot'), { appearance: 'ghost', size: 'sm', onclick: forgot }), h('span.grow'), go2)),
       h('sav-details.vabout', { summary: t('vault_about'), appearance: 'plain' }, facts()))));
     setTimeout(() => pin.focus?.(), 80);
   }
+  /** Open: whoever opens the Vault remembers it, so a reset under way stops by itself. */
   async function openWith(mk, remember = false) {
     try { K = await keysOf(mk); } finally { mk.fill(0); }
     rememberUntil = remember ? Date.now() + REMEMBER : 0;
     touch();
+    if (st.reset) { try { await keepVault(false); toast(t('vault_reset_stopped'), 'success'); } catch (e) { fail(e); } }
     try { await loadAll(); } catch (e) { fail(e); }
     redraw();
   }
-  /** A lost PIN: the recovery key sets a new one; without it the only way is to empty the Vault and start again. */
+  /** A lost PIN: the recovery password sets a new one (and opens the Vault). */
   function forgot() {
-    if (!st.key.wrapRecovery) {
-      dialog({ title: t('vault_forgot'), width: '30rem', body: h('div.form', h('p', t('vault_forgot_none'))), actions: [{ label: t('close') }, { label: t('vault_delete'), danger: true, run: () => { setTimeout(resetVault, 300); } }] });
-      return;
-    }
     let digits = digitsOf();
     const code = h('sav-input', { label: t('vault_rec_key'), placeholder: 'XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX', autocomplete: 'off', spellcheck: 'false' });
     const pin = pinField(t('vault_pin_new'), digits), again = pinField(t('vault_pin_again'), digits);
-    dialog({ title: t('vault_forgot'), width: '32rem', body: h('div.form', h('p.muted', t('vault_forgot_text')), code, digitsChoice(digits, [pin, again], (d) => { digits = d; }), pin, again), actions: [{ label: t('cancel') }, { label: t('vault_unlock'), primary: true, run: async () => {
-      if (!pinOk(pin.value, digits)) throw no('vault_pin_short');
-      if (pin.value !== again.value) throw no('vault_pin_differ');
-      const mk = await masterFromRecovery(st, code.value);
-      if (!mk) throw no('vault_rec_wrong');
-      try {
-        K = await keysOf(mk);
-        await vapi('vault.rekey', await pinWrap(pin.value, digits, mk));
-        st = await vapi('vault.state'); // the recovery key keeps working (a new one can be made in the settings of the Vault)
-      } catch (e) { K = null; throw e; } finally { mk.fill(0); }
-      rememberUntil = 0;
-      touch();
-      await loadAll().catch(fail);
-      toast(t('vault_pin_changed'), 'success');
-      redraw();
-    } }] });
+    const lost = btn(t('vault_lost_all'), { appearance: 'ghost', size: 'sm', icon: 'help-circle', onclick: () => { d.hide(); setTimeout(forgetAll, 300); } });
+    const d = dialog({ title: t('vault_forgot'), width: '32rem', body: h('div.form', h('p.muted', t('vault_forgot_text')), code, digitsChoice(digits, [pin, again], (x) => { digits = x; }), pin, again, st.reset ? null : h('div.prow', lost)),
+      actions: [{ label: t('cancel') }, { label: t('vault_unlock'), primary: true, run: async () => {
+        if (!pinOk(pin.value, digits)) throw no('vault_pin_short');
+        if (pin.value !== again.value) throw no('vault_pin_differ');
+        const mk = await masterFromRecovery(st, code.value);
+        if (!mk) throw no('vault_rec_wrong');
+        try {
+          K = await keysOf(mk);
+          await vapi('vault.rekey', await pinWrap(pin.value, digits, mk));
+          st = await vapi('vault.state'); // the recovery password keeps working (a new one can be made in the settings of the Vault)
+        } catch (e) { K = null; throw e; } finally { mk.fill(0); }
+        rememberUntil = 0;
+        touch();
+        if (st.reset) await keepVault(false).catch(fail);
+        await loadAll().catch(fail);
+        toast(t('vault_pin_changed'), 'success');
+        redraw();
+      } }] });
+  }
+  /**
+   * PIN and recovery password both lost: nobody can open the Vault, so the only way is to empty it. It is not done at once
+   * (a stolen session must never destroy it): it starts a countdown, told by email, that opening the Vault or a press
+   * stops; at its end the server deletes everything and a new Vault can be made.
+   */
+  function forgetAll() {
+    const days = st.resetDays || 30, due = longDate(new Date(Date.now() + days * 86400000).toISOString());
+    const pw = S.user.hasPassword ? pwInput(t('vault_account_pw')) : null, sure = h('sav-checkbox', {}, t('vault_lost_sure', { date: due }));
+    dialog({ title: t('vault_lost_title'), width: '32rem', body: h('div.form', h('p', t('vault_lost_t', { days })), h('ul.vsteps', ['vault_lost_1', 'vault_lost_2', 'vault_lost_3'].map((k) => h('li', t(k, { days, date: due })))), pw, sure),
+      actions: [{ label: t('cancel') }, { label: t('vault_lost_go'), danger: true, run: async () => {
+        if (!sure.checked) throw no('vault_lost_confirm');
+        const r = await vapi('vault.forget', { password: pw?.value || '' });
+        st.reset = r.reset;
+        toast(t('vault_reset_started', { date: longDate(r.reset.due) }), 'neutral', { duration: 8000 });
+        redraw();
+      } }] });
   }
 
   // ---------------------------------------------------------------- settings of the Vault
@@ -457,22 +489,21 @@ export async function vaultHome({ page, hbody, head, body, main, newSlot, folder
     withMaster(t('vault_change_pin'), t('vault_change_pin_t'), [digitsChoice(digits, [pin, again], (d) => { digits = d; }), pin, again], async (mk) => {
       if (!pinOk(pin.value, digits)) throw no('vault_pin_short');
       if (pin.value !== again.value) throw no('vault_pin_differ');
-      await vapi('vault.rekey', await pinWrap(pin.value, digits, mk)); // the recovery key, if there is one, keeps working
+      await vapi('vault.rekey', await pinWrap(pin.value, digits, mk)); // the recovery password keeps working
       st = await vapi('vault.state');
       toast(t('vault_pin_changed'), 'success');
     });
   }
-  function recoverySettings(remove) {
-    if (remove) return withMaster(t('vault_rec_remove'), t('vault_rec_remove_t'), null, async () => { await vapi('vault.rekey', { wrapRecovery: null }); st = await vapi('vault.state'); toast(t('vault_rec_removed'), 'success'); });
-    withMaster(st.key.wrapRecovery ? t('vault_rec_new') : t('vault_rec_make'), t('vault_rec_new_t'), null, async (mk) => {
-      const r = await newRecovery(mk);
-      await vapi('vault.rekey', { wrapRecovery: r.wrap });
-      st = await vapi('vault.state');
-      setTimeout(() => showRecovery(r.code), 300);
-    });
-  }
+  /** A new recovery password (the old one stops working), shown once. */
+  const newRecoveryPassword = () => withMaster(t('vault_rec_new'), t('vault_rec_new_t'), null, async (mk) => {
+    const r = await newRecovery(mk);
+    await vapi('vault.rekey', { wrapRecovery: r.wrap });
+    st = await vapi('vault.state');
+    setTimeout(() => showRecovery(r.code), 300);
+  });
+  /** At once, from an open Vault only (the server asks the proof) and with the password of the account. */
   function resetVault() {
-    const pw = S.user.hasPassword ? pwInput(t('password')) : null, sure = h('sav-checkbox', {}, t('vault_delete_sure'));
+    const pw = S.user.hasPassword ? pwInput(t('vault_account_pw')) : null, sure = h('sav-checkbox', {}, t('vault_delete_sure'));
     dialog({ title: t('vault_delete'), width: '30rem', body: h('div.form', h('p', t('vault_delete_t')), pw, sure), actions: [{ label: t('cancel') }, { label: t('vault_delete'), danger: true, run: async () => {
       if (!sure.checked) throw no('vault_delete_confirm');
       const r = await vapi('vault.reset', { password: pw?.value || '' });
@@ -484,9 +515,7 @@ export async function vaultHome({ page, hbody, head, body, main, newSlot, folder
     } }] });
   }
   const aboutVault = () => dialog({ title: t('vault_about'), width: '34rem', body: h('div.form', h('p.muted', t('vault_setup_text')), facts(), h('p.small.muted', t('vault_tech'))), actions: [{ label: t('close'), primary: true }] });
-  const settingsItems = () => [{ head: t('vault') }, ['key', t('vault_change_pin'), changePin],
-    st.key?.wrapRecovery ? ['refresh', t('vault_rec_new'), () => recoverySettings(false)] : ['key', t('vault_rec_make'), () => recoverySettings(false)],
-    st.key?.wrapRecovery ? ['x', t('vault_rec_remove'), () => recoverySettings(true)] : null,
+  const settingsItems = () => [{ head: t('vault') }, ['key', t('vault_change_pin'), changePin], ['refresh', t('vault_rec_new'), newRecoveryPassword],
     { head: t('vault_auto') }, ...AUTO.map((m) => ['', t('vault_auto_n', { n: m }), () => { setPrefs({ vaultLock: m }).catch(() => {}); touch(); }, { check: autoMin() === m }]),
     '-', ['info', t('vault_about'), aboutVault], ['trash-2', t('vault_delete'), resetVault, { danger: true }]];
 

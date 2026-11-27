@@ -17,7 +17,8 @@
  *              they become the new content of (an app of SavOffice saving back), instead of a new file; vault_id: the
  *              file of the Vault they fill (lib/vault.php)
  * vault_keys   the Vault of an account: how the browser unlocks it (digits of the PIN, salt, iterations, the master key
- *              wrapped with the PIN and maybe a recovery key); the server never sees the PIN (lib/vault.php)
+ *              wrapped with the PIN and with the recovery password; a reset under way) — the server never sees the PIN
+ *              (lib/vault.php)
  * vault_nodes  files and folders of the Vault, names encrypted in the browser (meta); the files on disk are encrypted too
  */
 
@@ -160,6 +161,9 @@ function schema_statements(string $p): array
             `wrap_pass` VARCHAR(400) NOT NULL,
             `wrap_recovery` VARCHAR(400) NULL,
             `proof` CHAR(64) NOT NULL,
+            `reset_started` DATETIME NULL,
+            `reset_at` DATETIME NULL,
+            `reset_notice` TINYINT UNSIGNED NOT NULL DEFAULT 0,
             `created_at` DATETIME NOT NULL,
             `updated_at` DATETIME NOT NULL,
             " . $fk('vk_user', 'user_id', 'users') . "
