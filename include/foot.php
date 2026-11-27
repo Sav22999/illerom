@@ -7,9 +7,11 @@
             <li><a href="<?= $base ?>about/"><?= e($t['nav_about']) ?></a></li>
             <li><a href="<?= $base ?>typeface/"<?= $page === 'typeface' ? ' aria-current="page"' : '' ?>><?= e($t['tf_nav']) ?></a></li>
             <li><a href="<?= $base ?>status/"><?= e($t['st_title']) ?></a></li>
+            <li><a href="<?= $base ?>terms/"<?= $page === 'terms' ? ' aria-current="page"' : '' ?>><?= e($t['terms_nav']) ?></a></li>
             <li><a href="<?= $base ?>privacy/"><?= e($t['privacy_title']) ?></a></li>
             <li><a href="<?= e($site['repo']) ?>"><?= e($t['foot_code']) ?></a></li>
             <li><a href="<?= e($site['contact']) ?>"><?= e($t['foot_contact']) ?></a></li>
+            <li><a href="https://www.saveriomorelli.com/donate/" target="_blank" rel="noopener"><?= e($t['foot_donate']) ?></a></li>
         </ul>
     </div>
 </footer>

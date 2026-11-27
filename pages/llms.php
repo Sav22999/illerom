@@ -49,7 +49,8 @@ echo "- [About]($u/en/about/): what Illerom is, the name, the rules, the status 
 echo "- [SavOffice]($u/savoffice/?lang=en): the suite of " . count($suite) . " apps (also at https://savoffice.eu)\n";
 echo "- [Illerom Bars]($u/en/typeface/): the typeface made from the mark, free to download\n";
 echo "- [Status]($u/en/status/): whether the services and their databases are working\n";
-echo "- [Privacy]($u/en/privacy/): the portal sets no cookies and has no analytics\n\n";
+echo "- [Privacy]($u/en/privacy/): the portal sets no cookies and has no analytics\n";
+echo "- [Terms of use]($u/en/terms/): the common terms of the portal, its projects and SavOffice, with how to report illegal content (Digital Services Act); only the Italian text is legally binding\n\n";
 
 echo "## SavOffice\n\n";
 foreach ($suite as $s => $p) echo $item($s, $p);

@@ -42,9 +42,17 @@ savoffice-apps { display: inline-flex; }
 .so-app[aria-current] { background: color-mix(in oklab, var(--sav-color-primary, #36c) 12%, transparent); }
 .so-foot { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-top: .6rem; padding-top: .6rem; border-top: 1px solid var(--sav-color-border, rgba(127,127,127,.25)); font-size: .8rem; }
 .so-foot a { color: inherit; font-weight: 600; text-decoration: none; } .so-foot a:hover { text-decoration: underline; }
-.so-foot span { color: var(--sav-color-text-muted, #777); display: inline-flex; align-items: center; gap: .45rem; } .so-foot img { width: 20px; height: 20px; flex: none; }`;
+.so-foot span { color: var(--sav-color-text-muted, #777); display: inline-flex; align-items: center; gap: .45rem; } .so-foot img { width: 20px; height: 20px; flex: none; }
+.so-give { display: flex; align-items: center; gap: .4rem; margin-top: .5rem; font-size: .76rem; color: var(--sav-color-text-muted, #777); }
+.so-give svg, .so-ask svg { width: 14px; height: 14px; flex: none; fill: #d6378a; } .so-give a { color: inherit; font-weight: 600; margin-left: auto; text-decoration: none; } .so-give a:hover { text-decoration: underline; }
+.so-ask { position: fixed; left: max(1rem, env(safe-area-inset-left)); bottom: max(1rem, env(safe-area-inset-bottom)); z-index: 55; width: min(22rem, calc(100vw - 2rem)); padding: .9rem 1rem .8rem; border-radius: 16px;
+  background: var(--sav-color-surface, #fff); color: var(--sav-color-text, #222); border: 1px solid var(--sav-color-border, rgba(127,127,127,.25)); box-shadow: 0 12px 34px rgb(0 0 0 / .16); font-size: .88rem; line-height: 1.45; }
+.so-ask b { display: flex; align-items: center; gap: .4rem; font-size: .92rem; margin-bottom: .25rem; } .so-ask p { margin: 0 0 .7rem; color: var(--sav-color-text-muted, #666); }
+.so-ask .so-row { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; } .so-ask .so-x { position: absolute; top: .35rem; right: .35rem; }
+@media (prefers-reduced-motion: no-preference) { .so-ask { animation: so-in .35s ease-out; } @keyframes so-in { from { opacity: 0; transform: translateY(10px); } } }`;
   const it = () => (document.documentElement.lang || navigator.language || 'en').startsWith('it');
   const root = () => new URL('../', location.href.split('#')[0]);
+  const DONATE = 'https://www.saveriomorelli.com/donate/';
 
   class SavOfficeApps extends HTMLElement {
     connectedCallback() {
@@ -82,7 +90,12 @@ savoffice-apps { display: inline-flex; }
       const note = document.createElement('span');
       note.append(mark, lang ? 'Libere, aperte, senza pubblicità' : 'Free, open, no ads');
       foot.append(note, hub);
-      pop.append(btn, grid, foot);
+      // the invitation to support SavOffice: one quiet line, only in this panel
+      const give = document.createElement('div');
+      give.className = 'so-give';
+      give.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.6 1.2 4.3 2.4h2c.7-1.2 2.2-2.4 4.3-2.4 3.7 0 5.8 3.9 4.3 7.2C19.5 16.4 12 21 12 21z"/></svg>';
+      give.append(lang ? 'Gratis per tutti, grazie a chi dona.' : 'Free for everyone, thanks to those who donate.', Object.assign(document.createElement('a'), { href: DONATE, target: '_blank', rel: 'noopener', textContent: lang ? 'Sostieni →' : 'Support →' }));
+      pop.append(btn, grid, foot, give);
       this.append(pop);
       window.SavOffice?.paintDrive?.(this);
     }
@@ -199,6 +212,43 @@ savoffice-apps { display: inline-flex; }
     },
   });
   paintAll();
+
+  // ---------------------------------------------------------------- a rare invitation to support SavOffice
+  // Shown at most once every 4 months (one year after "I already donated" or a press on "Support"), only to whoever has
+  // used the apps of SavOffice on at least 10 different days (in this browser, all the apps together), never while a
+  // document is open, a dialog is open or something is being typed, never on the first pages. A small note in a corner,
+  // nothing to close before going on.
+  const DAY = 86400000, store = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch { return null; } return null; };
+  (() => {
+    const today = new Date().toISOString().slice(0, 10);
+    let days = [];
+    try { days = JSON.parse(store('savoffice-days') || '[]'); } catch { days = []; }
+    if (!days.includes(today)) { days = [...days, today].slice(-30); store('savoffice-days', JSON.stringify(days)); }
+    const next = +store('savoffice-give-next') || 0;
+    if (days.length < 10 || Date.now() < next) return;
+    const later = (ms) => store('savoffice-give-next', String(Date.now() + ms));
+    setTimeout(function ask() {
+      const busy = exp || document.querySelector('sav-dialog[open], .landing, .authp, .so-ask') || document.visibilityState !== 'visible'
+        || (document.activeElement && (/^(input|textarea|select)$/i.test(document.activeElement.localName) || document.activeElement.isContentEditable || /^sav-(input|textarea|select)$/.test(document.activeElement.localName)));
+      if (busy) return;
+      later(120 * DAY); // seen: not again for 4 months, whatever is pressed
+      const l = it(), box = document.createElement('aside');
+      box.className = 'so-ask';
+      box.setAttribute('role', 'status');
+      box.setAttribute('aria-label', l ? 'Sostieni SavOffice' : 'Support SavOffice');
+      box.innerHTML = '<b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.6 1.2 4.3 2.4h2c.7-1.2 2.2-2.4 4.3-2.4 3.7 0 5.8 3.9 4.3 7.2C19.5 16.4 12 21 12 21z"/></svg></b><p></p><div class="so-row"></div>';
+      box.querySelector('b').append(l ? 'Ti è utile SavOffice?' : 'Is SavOffice useful to you?');
+      box.querySelector('p').textContent = l ? 'È gratis e senza pubblicità per tutti grazie a chi dona. Se puoi, anche un piccolo contributo aiuta; se no, va benissimo così.' : 'It is free and without ads for everyone thanks to those who donate. If you can, even a small contribution helps; if not, that is perfectly fine.';
+      const mk = (label, attrs, run) => { const b = document.createElement('sav-button'); Object.entries({ size: 'sm', ...attrs }).forEach(([k, v]) => b.setAttribute(k, v)); b.textContent = label; b.addEventListener('click', () => { run?.(); box.remove(); }); return b; };
+      const x = mk('', { icon: 'x', appearance: 'ghost', variant: 'neutral', square: '', label: l ? 'Chiudi' : 'Close', class: 'so-x' });
+      box.querySelector('.so-row').append(
+        mk(l ? 'Sostieni' : 'Support', { variant: 'primary', appearance: 'solid' }, () => { window.open(DONATE, '_blank', 'noopener'); later(365 * DAY); }),
+        mk(l ? 'Non ora' : 'Not now', { appearance: 'ghost', variant: 'neutral' }),
+        mk(l ? 'Ho già donato' : 'I already donated', { appearance: 'ghost', variant: 'neutral' }, () => later(365 * DAY)));
+      box.append(x);
+      document.body.append(box);
+    }, 25000);
+  })();
 })();
 
 /*

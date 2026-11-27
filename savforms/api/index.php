@@ -67,7 +67,7 @@ function space_allows_id(int $uid, int $more): bool
 function space_out(array $u, int $used, int $quota): array
 {
     $i = savspace_info((string)$u['email']);
-    return $i ? ['used' => $i['used'], 'quota' => $i['quota'], 'spaceApps' => (object)$i['apps']] : ['used' => $used, 'quota' => $quota];
+    return $i ? ['used' => $i['used'], 'quota' => $i['quota'], 'unlimited' => $i['unlimited'], 'spaceApps' => (object)$i['apps']] : ['used' => $used, 'quota' => $quota];
 }
 
 function writer(bool $unverifiedOk = false): array

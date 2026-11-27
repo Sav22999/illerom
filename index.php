@@ -40,7 +40,7 @@ function preferred_lang(): string
 }
 
 // without the language: the same page, in the language of the browser
-if (preg_match('#^/((?:projects/[a-z0-9-]+|about|privacy|status|typeface)/?)?$#', $path, $m)) {
+if (preg_match('#^/((?:projects/[a-z0-9-]+|about|privacy|terms|status|typeface)/?)?$#', $path, $m)) {
     $rest = isset($m[1]) ? rtrim($m[1], '/') . '/' : '';
     header('Vary: Accept-Language');
     header('Cache-Control: no-cache');
@@ -48,7 +48,7 @@ if (preg_match('#^/((?:projects/[a-z0-9-]+|about|privacy|status|typeface)/?)?$#'
     return;
 }
 // without the final slash, or the list of projects (which is the home page)
-if (preg_match('#^/(it|en)((?:/projects/[a-z0-9-]+|/about|/privacy|/status|/typeface)?)$#', $path, $m)) {
+if (preg_match('#^/(it|en)((?:/projects/[a-z0-9-]+|/about|/privacy|/terms|/status|/typeface)?)$#', $path, $m)) {
     header('Location: /' . $m[1] . $m[2] . '/', true, 301);
     return;
 }
@@ -66,7 +66,7 @@ $page = 'not-found';
 $lang = preg_match('#^/(it|en)/#', $path, $m) ? $m[1] : preferred_lang();
 $rest = '';
 $slug = '';
-if (preg_match('#^/(it|en)/(?:(about|privacy|status|typeface)/|projects/([a-z0-9-]+)/)?$#', $path, $m)) {
+if (preg_match('#^/(it|en)/(?:(about|privacy|terms|status|typeface)/|projects/([a-z0-9-]+)/)?$#', $path, $m)) {
     $slug = $m[3] ?? '';
     if ($slug !== '') {
         if (isset($projects[$slug])) {
@@ -88,6 +88,7 @@ if ($page === 'not-found') http_response_code(404);
     'about' => [$t['about_title'] . ' · Illerom', $t['about_desc']],
     'status' => [$t['st_title'] . ' · Illerom', $t['st_desc']],
     'privacy' => [$t['privacy_title'] . ' · Illerom', $t['privacy_desc']],
+    'terms' => [$t['terms_title'] . ' · Illerom', $t['terms_desc']],
     'typeface' => [$t['tf_title'] . ' · Illerom', $t['tf_desc']],
     'project' => [$projects[$slug]['name'] . ' · Illerom', $projects[$slug][$lang][0] . ' ' . $projects[$slug][$lang][1]],
     default => [$t['nf_title'] . ' · Illerom', $t['nf_p']],

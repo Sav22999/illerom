@@ -22,7 +22,8 @@ const SCHEMA_VERSION = 4; // 2: uploads.replace_id (an app of SavOffice saves it
 const LANGS = ['en', 'it'];
 const GB = 1073741824;
 const DEFAULT_QUOTA = 2 * GB;          // until the admins choose another one
-const MAX_QUOTA = 10240 * GB;          // what an admin can give at most (10 TB)
+const MAX_QUOTA = 10240 * GB;          // what an admin can give at most as a number (10 TB)
+const UNLIMITED = PHP_INT_MAX;         // a space without a limit (an admin's choice, by person)
 const CHUNK_BYTES = 4194304;           // a piece of an upload (4 MB: under the usual post_max_size of PHP)
 const MAX_NODES = 50000;               // files and folders of one account
 const MAX_DEPTH = 30;                  // folders inside folders
@@ -381,6 +382,12 @@ function space_parts(int $uid): array
     return array_filter(['savdrive' => (int)$st->fetchColumn()] + other_apps($uid));
 }
 
+/** A space without a limit. */
+function is_unlimited(int $q): bool
+{
+    return $q >= UNLIMITED;
+}
+
 function public_user(array $u): array
 {
     return [
@@ -398,6 +405,7 @@ function public_user(array $u): array
         'quota' => user_quota($u),
         'used' => user_used((int)$u['id']),
         'parts' => (object)space_parts((int)$u['id']),
+        'unlimited' => is_unlimited(user_quota($u)),
         'mailReady' => mail_settings() !== null,
     ];
 }

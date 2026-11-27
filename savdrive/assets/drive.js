@@ -126,12 +126,13 @@ let spaceBox = null;
 /** The space of the whole of SavOffice (one for each person): the bar, and what each app keeps, largest first. */
 export const spaceParts = (parts) => Object.entries(parts || {}).filter(([, b]) => b > 0).sort((a, b) => b[1] - a[1])
   .map(([app, b]) => h('li', h('img', { src: `../${app}/icons/favicon.svg`, alt: '', width: 16, height: 16 }), h('span', NAMES[app] || (app === 'savdrive' ? 'SavDrive' : app)), h('b', bytes(b))));
+export const unlimited = (quota) => quota >= 1e18; // the server sends the largest number it has
 function setSpace(used, quota, parts) {
   if (S.user) { S.user.used = used; S.user.quota = quota; if (parts) S.user.parts = parts; }
   if (!spaceBox) return;
-  const pc = quota ? Math.min(100, (used / quota) * 100) : 0, list = spaceParts(parts || S.user?.parts);
-  put(spaceBox, h('div.qhead', icon('hard-drive'), h('b', t('space'))), h('sav-progress-bar', { value: Math.max(pc, used ? 1 : 0), max: 100, variant: pc > 95 ? 'danger' : pc > 85 ? 'warning' : 'primary', 'aria-label': t('space') }),
-    h('small', t('space_used', { used: bytes(used), quota: bytes(quota) })), pc > 85 ? h('small.qwarn', t(pc >= 100 ? 'space_full' : 'space_low')) : null,
+  const pc = unlimited(quota) ? 0 : quota ? Math.min(100, (used / quota) * 100) : 0, list = spaceParts(parts || S.user?.parts);
+  put(spaceBox, h('div.qhead', icon('hard-drive'), h('b', t('space'))), unlimited(quota) ? null : h('sav-progress-bar', { value: Math.max(pc, used ? 1 : 0), max: 100, variant: pc > 95 ? 'danger' : pc > 85 ? 'warning' : 'primary', 'aria-label': t('space') }),
+    h('small', unlimited(quota) ? t('space_used_unl', { used: bytes(used) }) + ' · ' + t('unlimited').toLowerCase() : t('space_used', { used: bytes(used), quota: bytes(quota) })), pc > 85 ? h('small.qwarn', t(pc >= 100 ? 'space_full' : 'space_low')) : null,
     list.length > 1 || (list.length === 1 && !Object.keys(parts || S.user?.parts || {}).includes('savdrive')) ? h('ul.qparts', { 'aria-label': t('space_apps') }, list) : null);
 }
 
@@ -150,7 +151,7 @@ export async function home(root, a, b) {
   let data = { items: [], path: [] }, alive = true, dragging = null;
 
   // --- header
-  const search = h('sav-input.hsearch', { type: 'search', placeholder: t('search_drive'), value: q, clearable: true, 'aria-label': t('search_drive') }, icon('search', { slot: 'prefix' }));
+  const search = h('sav-input.hsearch', { type: 'search', placeholder: t('search_drive'), value: q, clearable: true, pill: true, 'aria-label': t('search_drive') }, icon('search', { slot: 'prefix' }));
   let to;
   search.addEventListener('input', () => { clearTimeout(to); to = setTimeout(() => { const v = search.value.trim(); if (v) history.replaceState(null, '', '#/search/' + encodeURIComponent(v)); else if (where === 'search') history.replaceState(null, '', '#/'); load(v); }, 300); });
   search.addEventListener('keydown', (e) => { if (e.key === 'Escape') { search.value = ''; go('#/'); } });
@@ -607,11 +608,11 @@ export async function home(root, a, b) {
    */
   function peopleDialog(x) {
     const box = h('div.pbox'), opts = (from, inherited) => [...(inherited ? [['', from ? t('lv_inherit') + ' · ' + t('lv_' + from) : t('lv_inherit')]] : []), ['none', t('lv_none')], ...ROLES.map((r) => [r, t('lv_' + r)])];
-    const roleSel = (value, onpick, inherited, from) => select(null, opts(from, inherited), value, onpick, { size: 'sm', class: 'lvsel', 'aria-label': t('level') });
+    const roleSel = (value, onpick, inherited, from, size = 'sm') => select(null, opts(from, inherited), value, onpick, { size, class: 'lvsel', 'aria-label': t('level') });
     const set = async (email, role, notify = false) => { try { const r = await api('people.set', { id: x.id, email, role, notify }); drawPeople(r.people); load(search.value.trim(), true); } catch (e) { fail(e); } };
     const email = h('sav-input', { type: 'email', placeholder: t('people_email'), 'aria-label': t('people_email'), class: 'grow' });
     let newRole = 'read';
-    const addRole = roleSel('read', (v) => { newRole = v || 'read'; }, false);
+    const addRole = roleSel('read', (v) => { newRole = v || 'read'; }, false, null, 'md'); // the height of the email field next to it
     const notify = h('sav-switch', { checked: true }, t('people_notify'));
     const add = btn(t('add'), { icon: 'plus', variant: 'primary', appearance: 'solid', onclick: async () => { const v = email.value.trim(); if (!v) return; await set(v, newRole, notify.checked); email.value = ''; } });
     email.addEventListener('keydown', (e) => { if (e.key === 'Enter') add.click(); });

@@ -2400,24 +2400,18 @@ a, button {
     line-height: 1.5;
 }
 
-/* the apps of a suite: little icons that overlap */
+/* the apps of a suite: little icons side by side, each whole (they used to overlap, which hid half of each) */
 .pj-apps {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(6, 1.6rem); /* 12 apps: two even rows */
+    gap: .35rem;
     margin-top: .55rem;
-    padding-left: .3rem;
-}
-
-.pj-apps li {
-    margin-left: -.3rem;
 }
 
 .pj-apps img {
     display: block;
-    width: 1.65rem;
-    height: 1.65rem;
-    background: var(--sav-color-surface);
-    box-shadow: 0 0 0 2px var(--sav-color-surface);
+    width: 1.6rem;
+    height: 1.6rem;
 }
 
 .pj-foot {

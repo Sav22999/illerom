@@ -155,7 +155,8 @@ function savspace_info(string $email): ?array
 {
     if (!savspace_db()) return null;
     $apps = savspace_apps($email);
-    return ['used' => array_sum($apps), 'quota' => savspace_quota($email), 'apps' => $apps];
+    $q = savspace_quota($email);
+    return ['used' => array_sum($apps), 'quota' => $q, 'unlimited' => $q >= PHP_INT_MAX, 'apps' => $apps];
 }
 
 /**

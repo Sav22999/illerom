@@ -164,10 +164,10 @@ export async function homeScreen(app, q) {
                 variant: 'neutral'
             }, t('folders')), iconBtn('folder-plus', t('new_folder'), () => newFolder(), {size: 'sm'})), data.folders.length ? tree : h('small.muted.nofold', t('folders_hint')),
             h('div.quota', h('sav-progress-bar', {
-                value: Math.min(100, data.used / data.quota * 100),
+                value: data.unlimited ? 0 : Math.min(100, data.used / data.quota * 100), // unlimited: the space of SavOffice has no limit
                 style: '--height:6px',
                 label: t('space')
-            }), h('small', t('space_used', {a: fmtBytes(data.used), b: fmtBytes(data.quota)}))));
+            }), h('small', t('space_used', {a: fmtBytes(data.used), b: data.unlimited ? '∞' : fmtBytes(data.quota)}))));
         for (const el of tree.querySelectorAll('[data-folder]')) drop(el, +el.dataset.folder);
         drop(menu.firstChild, 0);
     }

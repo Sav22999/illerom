@@ -81,7 +81,7 @@ export async function home(root, view = '', arg = '') {
     }
     docs.splice(0, docs.length, ...d.docs);
     folders.splice(0, folders.length, ...d.folders);
-    Object.assign(space, { used: d.used || 0, quota: d.quota || 0 });
+    Object.assign(space, { used: d.used || 0, quota: d.quota || 0, unlimited: !!d.unlimited }); // the space of SavOffice (SavDrive); unlimited = no limit
     if (S.offline) { const have = new Set(await offline.docs()); for (const x of docs) x.away = !have.has(x.id); }
   }
   const reload = async () => { await load(); draw(); };
@@ -121,10 +121,10 @@ export async function home(root, view = '', arg = '') {
     menu.addEventListener('sav-select', (e) => go('#/' + e.detail.value));
     const tree = h('sav-tree', { label: t('folders'), selectable: true }, folders.map((f) => h('sav-tree-item', { label: f.name, value: f.id, icon: 'folder', 'icon-open': 'folder-open', selected: folder?.id === f.id || null, 'data-folder': f.id })));
     tree.addEventListener('sav-select', (e) => go('#/f/' + e.detail.value));
-    const pct = space.quota ? Math.min(100, (space.used / space.quota) * 100) : 0;
+    const pct = space.unlimited ? 0 : space.quota ? Math.min(100, (space.used / space.quota) * 100) : 0;
     put(side, primary(t('new_l'), { icon: 'plus', size: 'lg', block: true, class: 'newbtn', onclick: () => { newDialog(folders, folder?.id, 'blank', mineTpl()); } }), menu,
       h('div.navh', h('sav-label', { appearance: 'plain', case: 'normal', variant: 'neutral' }, t('folders')), S.offline ? null : iconBtn('folder-plus', t('new_folder'), () => newFolder())), folders.length ? tree : h('small.muted.nofold', t('folders_empty')),
-      space.quota ? h('div.quota', h('sav-progress-bar', { value: pct, style: '--height:6px', label: t('space') }), h('small', t('space_used', { a: bytes(space.used), b: bytes(space.quota) }))) : null);
+      space.quota ? h('div.quota', h('sav-progress-bar', { value: pct, style: '--height:6px', label: t('space') }), h('small', t('space_used', { a: bytes(space.used), b: space.unlimited ? '∞' : bytes(space.quota) }))) : null);
     for (const el of tree.querySelectorAll('[data-folder]')) dropOn(el, +el.dataset.folder);
     dropOn(menu.firstElementChild, null);
   }

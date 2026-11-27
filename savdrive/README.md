@@ -39,7 +39,7 @@ SavOffice opened in their app. <https://www.illerom.eu/savdrive/>
 
 - **One space for the whole of SavOffice**: a person (the same email) has one space, the one of SavDrive: the default one
   (meta `default_quota`, 2 GB at the start) or one of their own (`quotas`, by email, also for people without an account
-  here). It counts the files of SavDrive (the trash and the uploads under way too) and what the person keeps in every other
+  here; `PHP_INT_MAX` = unlimited, chosen with a switch in the admin panel). It counts the files of SavDrive (the trash and the uploads under way too) and what the person keeps in every other
   app, even if their account of SavDrive is not activated or does not exist. `lib/space.php` is required by the API of
   every app: its `writer()` refuses (`quota`, 413) a write that would go beyond the space (deleting, trash, sign-in and admin
   always pass) and then reports what the app keeps for that person into `usage`; its `reader()` keeps that count fresh. The

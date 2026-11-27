@@ -335,6 +335,11 @@ $graph = $app
         .pager a { justify-self: start; } .pager a.next { justify-self: end; text-align: right; } .pager a.all { display: inline-flex; padding: .7rem 1.1rem; font-weight: 650; }
         @media (max-width: 640px) { .pager { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .pager a.all { grid-column: 1 / -1; grid-row: 1; justify-self: center; } }
         footer { border-top: 1px solid var(--line); }
+        /* supporting SavOffice: an invitation, not a request */
+        .support { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1.2rem 2.5rem; align-items: center; padding: clamp(1.4rem, 3.5vw, 2.4rem); border-radius: var(--r); background: var(--card); border: 1px solid var(--line); }
+        .support h2 { margin: 0 0 .6rem; } .support p { margin: 0; color: var(--muted); max-width: 46rem; } .support p + p { margin-top: .6rem; font-size: .95rem; }
+        .support .btn svg { width: 18px; height: 18px; fill: var(--pink); stroke: none; }
+        @media (max-width: 760px) { .support { grid-template-columns: minmax(0, 1fr); } .support .btn { justify-self: start; } }
         footer .wrap { display: flex; flex-wrap: wrap; gap: .5rem 1.4rem; padding: 1.4rem 0 2rem; color: var(--muted); font-size: .88rem; }
         footer .wrap span:last-child { margin-left: auto; }
     </style>
@@ -504,6 +509,18 @@ $graph = $app
             </div>
         </section>
 
+        <section class="block" id="support" aria-labelledby="sup-h">
+            <div class="support">
+                <div>
+                    <p class="kicker"><?= $L('Sostieni SavOffice', 'Support SavOffice') ?></p>
+                    <h2 id="sup-h"><?= $L('Gratis per tutti, grazie a chi può.', 'Free for everyone, thanks to those who can.') ?></h2>
+                    <p><?= $L('SavOffice non ha pubblicità, abbonamenti né funzioni a pagamento, e non vende i tuoi dati. I server e il tempo per migliorarlo li coprono le donazioni di chi lo usa: se ti è utile e puoi, anche un piccolo contributo fa la differenza.', 'SavOffice has no ads, no subscriptions and no paid features, and it does not sell your data. The servers and the time to make it better are covered by the donations of those who use it: if it helps you and you can, even a small contribution makes a difference.') ?></p>
+                    <p><?= $L('Se non puoi, va benissimo così: usalo, e consiglialo a chi potrebbe servire.', 'If you cannot, that is perfectly fine: use it, and tell whoever might need it.') ?></p>
+                </div>
+                <a class="btn main" href="https://www.saveriomorelli.com/donate/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.6 1.2 4.3 2.4h2c.7-1.2 2.2-2.4 4.3-2.4 3.7 0 5.8 3.9 4.3 7.2C19.5 16.4 12 21 12 21z"/></svg><?= $L('Fai una donazione', 'Make a donation') ?></a>
+            </div>
+        </section>
+
         <section class="end" aria-labelledby="end-h">
             <h2 id="end-h"><?= $L('Comincia da quella che ti serve oggi.', 'Start with the one you need today.') ?></h2>
             <p><?= $L('Sono gratuite e non serve installare nulla. Le altre saranno lì, quando ti serviranno.', 'They are free and there is nothing to install. The others will be there when you need them.') ?></p>
@@ -521,6 +538,7 @@ $graph = $app
         <a href="https://www.illerom.eu/<?= $lang ?>/">Illerom</a>
         <a href="https://www.illerom.eu/<?= $lang ?>/status/"><?= $L('Stato dei servizi', 'Service status') ?></a>
         <a href="https://github.com/Sav22999/illerom"><?= $L('Codice', 'Code') ?></a>
+        <a href="https://www.saveriomorelli.com/donate/" target="_blank" rel="noopener"><?= $L('Sostieni', 'Support') ?></a>
         <span><?= $L('Un progetto di', 'A project by') ?> <a href="https://www.saveriomorelli.com">Saverio Morelli</a></span>
     </div>
 </footer>

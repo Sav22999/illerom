@@ -96,7 +96,7 @@ export function libraryPanel(onpick) {
   const draw = async () => {
     try {
       const r = await api('media.list');
-      info.textContent = t('space_used', { a: fmt(r.used), b: fmt(r.quota) });
+      info.textContent = t('space_used', { a: fmt(r.used), b: r.unlimited ? '∞' : fmt(r.quota) });
       grid.replaceChildren(...r.media.map((m) => tile(m.name || t('tool_image'), (e) => { if (!e.composedPath().some((x) => x.localName === 'sav-tooltip')) onpick(m); }, { class: 'mcell own', style: `--ar:${Math.max(.6, Math.min(2.2, m.w / m.h))}` },
         h('img', { src: mediaUrl(m.src), alt: m.name, loading: 'lazy', draggable: 'false' }),
         iconBtn('trash', t('delete'), async () => { if (await confirm(t('delete_picture'), t('delete_picture_t'), t('delete'))) { try { await api('media.delete', { id: m.id }); draw(); } catch (e) { fail(e); } } }, { size: 'sm', place: 'left' }))));

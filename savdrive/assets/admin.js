@@ -29,7 +29,7 @@ export async function admin(root, tab) {
         .map(([k, v, ic]) => h('sav-stat', { label: t(k), value: v, icon: ic }))),
       h('sav-card.acard', h('div.stack', h('h2', t('a_new_accounts')),
         h('p', t('a_default_quota_is', { q: bytes(o.defaultQuota) })), h('p', t(o.defaultActive ? 'a_default_on' : 'a_default_off')),
-        h('p.muted.small', t('a_given', { q: bytes(o.given) }) + (o.disk ? ' · ' + t('a_disk', { q: bytes(o.disk) }) : '')),
+        h('p.muted.small', t('a_given', { q: bytes(o.given) }) + (o.unlimited ? ' · ' + t('a_unlimited_n', { n: o.unlimited }) : '') + (o.disk ? ' · ' + t('a_disk', { q: bytes(o.disk) }) : '')),
         h('div.prow.wrap', btn(t('a_settings'), { icon: 'settings', size: 'sm', onclick: () => go('#/admin/settings') }), o.waiting ? btn(t('a_see_waiting', { n: o.waiting }), { icon: 'clock', size: 'sm', variant: 'primary', appearance: 'soft', onclick: () => go('#/admin/users') }) : null))),
       h('sav-alert', { variant: 'neutral' }, t('a_privacy')));
     return;
@@ -62,17 +62,22 @@ export async function admin(root, tab) {
   let to;
   searchBox.addEventListener('input', () => { clearTimeout(to); to = setTimeout(() => { q = searchBox.value.trim(); load().catch(fail); }, 300); });
   const filter = segmented(t('a_show'), show, [['all', '=' + t('a_all'), t('a_all')], ['waiting', '=' + t('a_waiting'), t('a_waiting')], ['active', '=' + t('a_active'), t('a_active')]], (v) => { show = v; load().catch(fail); }, { class: 'afilter' });
+  filter.setAttribute('size', 'md'); // the height of the search next to it
 
   const quotaDialog = (u) => {
+    // a space of its own (a number, or without a limit: "Unlimited" switches the number off), or the space of everybody
     const own = h('sav-switch', { checked: u.ownQuota || null }, t('a_own_quota'));
-    const n = h('sav-number-input', { label: t('a_space'), value: gb(u.quota), min: 0, max: 10240, step: 0.5, size: 'md', disabled: !u.ownQuota || null }, h('span', { slot: 'suffix' }, 'GB'));
-    own.addEventListener('change', () => { n.disabled = !own.checked; if (!own.checked) n.value = gb(defaultQuota); });
+    const unl = h('sav-switch', { checked: u.unlimited || null, disabled: !u.ownQuota || null }, t('a_unlimited'));
+    const n = h('sav-number-input', { label: t('a_space'), value: u.unlimited ? gb(defaultQuota) : gb(u.quota), min: 0, max: 10240, step: 0.5, size: 'md', disabled: !u.ownQuota || u.unlimited || null }, h('span', { slot: 'suffix' }, 'GB'));
+    const sync = () => { unl.disabled = !own.checked; n.disabled = !own.checked || unl.checked; if (!own.checked) { unl.checked = false; n.value = gb(defaultQuota); } };
+    own.addEventListener('change', sync);
+    unl.addEventListener('change', sync);
     dialog({ title: t('a_quota_of', { name: u.name }), width: '26rem',
-      body: h('div.form', h('p.muted', t('a_quota_used', { used: bytes(u.used), files: num(u.files) })), own, n, h('p.muted.small', t('a_quota_def', { q: bytes(defaultQuota) }))),
+      body: h('div.form', h('p.muted', t('a_quota_used', { used: bytes(u.used), files: num(u.files) })), own, unl, n, h('p.muted.small', t('a_quota_def', { q: bytes(defaultQuota) }))),
       actions: [{ label: t('cancel') }, { label: t('save'), primary: true, run: async () => {
         const v = parseFloat(String(n.value).replace(',', '.'));
-        if (own.checked && (!Number.isFinite(v) || v < 0)) throw Object.assign(new Error('bad_quota'), { code: 'bad_quota' });
-        await api('master.quota', { id: u.id, email: u.email, quota: own.checked ? Math.round(v * GBY) : null });
+        if (own.checked && !unl.checked && (!Number.isFinite(v) || v < 0)) throw Object.assign(new Error('bad_quota'), { code: 'bad_quota' });
+        await api('master.quota', own.checked && unl.checked ? { id: u.id, email: u.email, unlimited: true } : { id: u.id, email: u.email, quota: own.checked ? Math.round(v * GBY) : null });
         toast(t('settings_saved'), 'success');
         load().catch(fail);
       } }] });
@@ -84,14 +89,14 @@ export async function admin(root, tab) {
   };
 
   const userCard = (u) => {
-    const pc = u.quota ? Math.min(100, (u.used / u.quota) * 100) : 0;
+    const pc = u.unlimited ? 0 : u.quota ? Math.min(100, (u.used / u.quota) * 100) : 0;
     return h('sav-card.ucard', { appearance: 'outlined' }, h('div.urow2',
       face(u.name, null, 40),
       h('div.uwho', h('b', u.name, u.master ? badge('primary', t('admin')) : null), u.account ? h('small', u.email) : null, h('small.muted', u.account ? t('a_joined', { when: when(u.created) }) + (u.login ? ' · ' + t('a_last', { when: when(u.login) }) : '') : t('a_other_only'))),
       h('div.ustate', !u.account ? badge('neutral', t('a_no_account')) : u.activated ? badge('success', t('a_is_active')) : badge('warning', t('a_is_waiting')), u.account && !u.verified ? badge('neutral', t('a_unverified')) : null),
-      h('div.uspace', h('sav-progress-bar', { value: Math.max(pc, u.used ? 1 : 0), max: 100, variant: pc > 95 ? 'danger' : pc > 85 ? 'warning' : 'primary', 'aria-label': t('a_space') }),
-        h('small', t('space_used', { used: bytes(u.used), quota: bytes(u.quota) }), u.ownQuota ? ' · ' + t('a_custom') : ''), Object.keys(u.parts || {}).length ? h('ul.qparts.row', spaceParts(u.parts)) : null),
-      h('div.uact', u.master ? h('small.muted', t('a_master_fixed')) : !u.account ? btn(t('a_space'), { size: 'sm', icon: 'hard-drive', onclick: () => quotaDialog(u) })
+      h('div.uspace', u.unlimited ? null : h('sav-progress-bar', { value: Math.max(pc, u.used ? 1 : 0), max: 100, variant: pc > 95 ? 'danger' : pc > 85 ? 'warning' : 'primary', 'aria-label': t('a_space') }),
+        h('small', u.unlimited ? [t('space_used_unl', { used: bytes(u.used) }), ' ', h('sav-badge', { variant: 'primary', appearance: 'soft', pill: true }, t('unlimited'))] : [t('space_used', { used: bytes(u.used), quota: bytes(u.quota) }), u.ownQuota ? ' · ' + t('a_custom') : '']), Object.keys(u.parts || {}).length ? h('ul.qparts.row', spaceParts(u.parts)) : null),
+      h('div.uact', u.master ? [h('small.muted', t('a_master_fixed')), btn(t('a_space'), { size: 'sm', icon: 'hard-drive', onclick: () => quotaDialog(u) })] : !u.account ? btn(t('a_space'), { size: 'sm', icon: 'hard-drive', onclick: () => quotaDialog(u) })
         : [btn(t(u.activated ? 'a_deactivate_one' : 'a_activate_one'), { size: 'sm', icon: u.activated ? 'user-x' : 'user-check', variant: u.activated ? 'neutral' : 'primary', appearance: u.activated ? 'outline' : 'solid', onclick: () => setActive([u.id], !u.activated) }),
           btn(t('a_space'), { size: 'sm', icon: 'hard-drive', onclick: () => quotaDialog(u) }),
           btn('', { size: 'sm', icon: 'trash-2', variant: 'danger', appearance: 'ghost', label: t('a_delete'), title: t('a_delete'), onclick: () => del(u) })])));

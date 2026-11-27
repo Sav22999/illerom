@@ -82,7 +82,7 @@ export function libraryPanel(onpick, only = '') {
   const draw = async () => {
     try {
       const r = await get('media.list');
-      info.textContent = t('space_used', { a: fmtBytes(r.used), b: fmtBytes(r.quota) });
+      info.textContent = t('space_used', { a: fmtBytes(r.used), b: r.unlimited ? '∞' : fmtBytes(r.quota) });
       grid.replaceChildren(...r.media.filter((m) => !only || m.video === (only === 'video')).map((m) => tile(m.name || t('image'), (e) => { if (!e.target.closest?.('sav-tooltip')) onpick(m.video ? { ...ofVideo(m), isVideo: true } : m); }, { class: 'mcell own', style: `--ar:${Math.max(.6, Math.min(2.2, m.w / m.h))}` }, m.video && !m.poster ? icon('film', { class: 'vnone' }) : h('img', { src: mediaUrl(m.video ? m.poster : m.src), alt: m.name, loading: 'lazy' }), m.video && h('span.vb', icon('play')), iconBtn('trash', t('delete'), async () => { if (await confirmBox(t('delete_picture'), t('delete_picture_t'), t('delete'))) try { await api('media.delete', { id: m.id }); draw(); } catch (e) { oops(e); } }, { size: 'sm' }))));
       if (!grid.children.length) grid.replaceChildren(h('p.muted', t(only === 'video' ? 'no_videos' : 'no_pictures')));
     } catch (e) { oops(e); }

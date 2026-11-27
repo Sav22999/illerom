@@ -172,7 +172,7 @@ function reach_nodes(array $u, string $need): array
 function drive_space(array $u): array
 {
     $row = user_row((int)$u['id']);
-    return ['used' => user_used((int)$u['id']), 'quota' => user_quota($row), 'parts' => (object)space_parts((int)$u['id'])];
+    return ['used' => user_used((int)$u['id']), 'quota' => user_quota($row), 'unlimited' => is_unlimited(user_quota($row)), 'parts' => (object)space_parts((int)$u['id'])];
 }
 
 // ---------------------------------------------------------------- SavAccount: signing in and joining an account that already exists
@@ -834,7 +834,8 @@ switch ($r) {
             'waiting' => $n('SELECT COUNT(*) FROM ' . t('users') . ' WHERE activated = 0'), 'files' => $n('SELECT COUNT(*) FROM ' . t('nodes') . " WHERE kind = 'file'"),
             'folders' => $n('SELECT COUNT(*) FROM ' . t('nodes') . " WHERE kind = 'folder'"), 'bytes' => $n('SELECT COALESCE(SUM(size),0) FROM ' . t('nodes') . " WHERE kind = 'file'") + $n('SELECT COALESCE(SUM(bytes),0) FROM ' . t('usage') . " WHERE app <> 'savdrive'"),
             'driveBytes' => $n('SELECT COALESCE(SUM(size),0) FROM ' . t('nodes') . " WHERE kind = 'file'"), 'people' => $n('SELECT COUNT(*) FROM (SELECT email FROM ' . t('users') . ' UNION SELECT email FROM ' . t('usage') . ') x'),
-            'given' => $n('SELECT COALESCE(SUM(COALESCE(q.quota, ' . default_quota() . ')),0) FROM ' . t('users') . ' u LEFT JOIN ' . t('quotas') . ' q ON q.email = u.email WHERE u.activated = 1'),
+            'given' => $n('SELECT COALESCE(SUM(COALESCE(q.quota, ' . default_quota() . ')),0) FROM ' . t('users') . ' u LEFT JOIN ' . t('quotas') . ' q ON q.email = u.email WHERE u.activated = 1 AND (q.quota IS NULL OR q.quota < ' . UNLIMITED . ')'),
+            'unlimited' => $n('SELECT COUNT(*) FROM ' . t('quotas') . ' WHERE quota >= ' . UNLIMITED),
             'defaultQuota' => default_quota(), 'defaultActive' => default_active(), 'disk' => @disk_free_space(storage_dir()) ?: null]);
 
     case 'master.settings':
@@ -871,7 +872,7 @@ switch ($r) {
             $e = mb_strtolower($x['email']);
             $parts = array_filter(['savdrive' => (int)$x['used']] + ($other[$e] ?? []));
             return ['id' => (int)$x['id'], 'name' => $x['name'], 'email' => $x['email'], 'account' => true, 'verified' => !empty($x['email_verified_at']),
-                'activated' => is_activated($x), 'master' => is_master($x), 'used' => array_sum($parts), 'parts' => (object)$parts, 'files' => (int)$x['files'], 'quota' => $quotas[$e] ?? default_quota(), 'ownQuota' => isset($quotas[$e]),
+                'activated' => is_activated($x), 'master' => is_master($x), 'used' => array_sum($parts), 'parts' => (object)$parts, 'files' => (int)$x['files'], 'quota' => $quotas[$e] ?? default_quota(), 'unlimited' => is_unlimited($quotas[$e] ?? 0), 'ownQuota' => isset($quotas[$e]),
                 'created' => iso($x['created_at']), 'login' => iso($x['last_login_at'])];
         }, $rows);
         // people who use other apps of SavOffice without an account of SavDrive: they use this space too
@@ -881,7 +882,7 @@ switch ($r) {
             foreach ($other as $e => $parts) {
                 if (isset($have[$e]) || ($needle !== '' && mb_strpos($e, $needle) === false)) continue;
                 $out[] = ['id' => null, 'name' => $e, 'email' => $e, 'account' => false, 'verified' => false, 'activated' => false, 'master' => false, 'used' => array_sum($parts), 'parts' => (object)$parts, 'files' => 0,
-                    'quota' => $quotas[$e] ?? default_quota(), 'ownQuota' => isset($quotas[$e]), 'created' => null, 'login' => null];
+                    'quota' => $quotas[$e] ?? default_quota(), 'unlimited' => is_unlimited($quotas[$e] ?? 0), 'ownQuota' => isset($quotas[$e]), 'created' => null, 'login' => null];
             }
         }
         send_json(['ok' => true, 'defaultQuota' => default_quota(), 'users' => $out]);
@@ -919,14 +920,16 @@ switch ($r) {
         $x = !empty(body()['id']) ? user_row((int)body()['id']) : [];
         $email = $x ? mb_strtolower((string)$x['email']) : mb_strtolower(s(body(), 'email', 190));
         if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) fail('not_found', 404);
-        $q = body()['quota'] ?? null;
+        // {unlimited: true}: a space without a limit
+        $q = !empty(body()['unlimited']) ? UNLIMITED : (body()['quota'] ?? null);
         if ($q !== null) {
             $q = (int)$q;
-            if ($q < 0 || $q > MAX_QUOTA) fail('bad_quota', 422);
+            if ($q < 0 || ($q > MAX_QUOTA && $q !== UNLIMITED)) fail('bad_quota', 422);
             db()->prepare('INSERT INTO ' . t('quotas') . ' (email, quota, updated_at) VALUES (?,?,?) ON DUPLICATE KEY UPDATE quota = VALUES(quota), updated_at = VALUES(updated_at)')->execute([$email, $q, now_utc()]);
         } else db()->prepare('DELETE FROM ' . t('quotas') . ' WHERE email = ?')->execute([$email]);
         db()->prepare('UPDATE ' . t('users') . ' SET quota = NULL WHERE email = ?')->execute([$email]);
-        send_json(['ok' => true, 'quota' => email_quota($email) ?? default_quota()]);
+        $now = email_quota($email) ?? default_quota();
+        send_json(['ok' => true, 'quota' => $now, 'unlimited' => is_unlimited($now)]);
 
     case 'master.delete':
         // An account and all its files, for ever (never a master)
