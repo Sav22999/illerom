@@ -147,6 +147,7 @@ not_ready: ['Not ready yet', 'Non ancora pronto'],
 
   // errors (codes of the server)
   err_server: ['Something went wrong. Try again in a moment.', 'Qualcosa è andato storto. Riprova tra poco.'], err_network: ['No connection.', 'Nessuna connessione.'], err_not_installed: ['The database is not configured yet.', 'Il database non è ancora configurato.'],
+  err_quota: ['Your space of SavOffice is full (one for every app, the space of SavDrive): free some to save more.', 'Il tuo spazio di SavOffice è pieno (uno per tutte le app, quello di SavDrive): liberane un po’ per salvare altro.'],
   err_unauthenticated: ['Sign in again.', 'Accedi di nuovo.'], err_disabled: ['This account is blocked.', 'Questo account è bloccato.'], err_email_unverified: ['Confirm your email first.', 'Prima conferma la tua email.'], err_csrf: ['The session expired: reload the page.', 'La sessione è scaduta: ricarica la pagina.'],
   err_rate_limited: ['Too many attempts: wait a little.', 'Troppi tentativi: aspetta un po’.'], err_bad_credentials: ['Wrong email or password.', 'Email o password errate.'], err_name_required: ['Write a name.', 'Scrivi un nome.'], err_email_invalid: ['That email does not look right.', 'Questa email non sembra corretta.'],
   err_password_short: ['The password needs at least 8 characters.', 'La password deve avere almeno 8 caratteri.'], err_password_long: ['The password is too long.', 'La password è troppo lunga.'], err_terms_required: ['Accept the terms to go on.', 'Accetta i termini per continuare.'],

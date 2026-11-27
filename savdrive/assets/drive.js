@@ -3,7 +3,7 @@
  * and folders as cards or rows, selection, menus, moving, uploads with their progress, previews.
  *   #/  My drive · #/f/<id> a folder · #/recent · #/starred · #/shared · #/trash · #/search/<words>
  */
-import { ask, btn, confirm, copyText, dialog, drop, empty, errText, fail, h, icon, iconBtn, item, menuAt, mobile, primary, put, segmented, toast } from './ui.js';
+import { ask, btn, confirm, copyText, dialog, drop, empty, errText, face, fail, h, icon, iconBtn, item, menuAt, mobile, primary, put, segmented, select, toast } from './ui.js';
 import { getLang, t, when } from './i18n.js';
 import { S, api, fileUrl, upload } from './store.js';
 import { brand, commands, credit, go, prefs, setPrefs, userMenu } from './account.js';
@@ -137,7 +137,11 @@ function setSpace(used, quota, parts) {
 
 // ------------------------------------------------------------------ the screen
 
-const VIEWS = { recent: ['clock', 'recent'], starred: ['star', 'starred'], shared: ['link', 'shared'], trash: ['trash-2', 'trash'] };
+const VIEWS = { withme: ['users', 'withme'], recent: ['clock', 'recent'], starred: ['star', 'starred'], shared: ['link', 'shared'], trash: ['trash-2', 'trash'] };
+/** The levels on something of somebody else (lib/access.php), from the weakest; the owner can do everything. */
+export const ROLES = ['view', 'read', 'comment', 'write', 'move', 'delete'];
+const LV = { view: 1, read: 2, comment: 3, write: 4, move: 5, delete: 6, owner: 9 };
+const can = (x, need) => (LV[x?.role || 'owner'] || 0) >= LV[need];
 
 export async function home(root, a, b) {
   const where = a === 'f' && b ? b : VIEWS[a] ? a : a === 'search' ? 'search' : 'root';
@@ -152,7 +156,9 @@ export async function home(root, a, b) {
   search.addEventListener('keydown', (e) => { if (e.key === 'Escape') { search.value = ''; go('#/'); } });
 
   // --- side menu
-  const here = () => (where === 'root' || where === 'search' ? null : VIEWS[where] ? null : where);
+  // the folder new things go into: the open one when this person can write there, otherwise their own My drive
+  const here = () => (where === 'root' || where === 'search' || VIEWS[where] ? null : can(data, 'write') ? where : null);
+  const writable = () => where === 'root' || (!VIEWS[where] && where !== 'search' && can(data, 'write'));
   const newMenu = () => {
     const trig = primary(t('new'), { icon: 'plus', size: 'lg', block: true, slot: 'trigger', class: 'newb' });
     const d = h('sav-dropdown.newd', { placement: 'bottom-start', 'sheet-on-mobile': true, label: t('new') }, trig,
@@ -170,7 +176,7 @@ export async function home(root, a, b) {
     return d;
   };
   const nav = h('sav-menu.dnav', { label: t('my_drive'), selectable: true },
-    [['root', 'hard-drive', t('my_drive')], ['recent', 'clock', t('recent')], ['starred', 'star', t('starred')], ['shared', 'link', t('shared')], ['trash', 'trash-2', t('trash')]].map(([k, ic, l]) => { const x = item(k, ic, l); x.toggleAttribute('current', where === k || (k === 'root' && (where === 'root' || (!VIEWS[where] && where !== 'search')))); return x; }));
+    [['root', 'hard-drive', t('my_drive')], ['withme', 'users', t('withme')], ['recent', 'clock', t('recent')], ['starred', 'star', t('starred')], ['shared', 'link', t('shared')], ['trash', 'trash-2', t('trash')]].map(([k, ic, l]) => { const x = item(k, ic, l); x.toggleAttribute('current', where === k || (k === 'root' && (where === 'root' || (!VIEWS[where] && where !== 'search')))); return x; }));
   nav.addEventListener('sav-select', (e) => go(e.detail.value === 'root' ? '#/' : '#/' + e.detail.value));
   spaceBox = h('div.quota');
   setSpace(S.user.used || 0, S.user.quota || 0, S.user.parts);
@@ -188,7 +194,7 @@ export async function home(root, a, b) {
   document.title = 'SavDrive';
 
   // files dropped from the device anywhere on the main area: into the folder that is open (or the folder card under them)
-  main.addEventListener('dragover', (e) => { if (dragging || !e.dataTransfer.types.includes('Files') || where === 'trash') return; e.preventDefault(); main.classList.add('dropping'); });
+  main.addEventListener('dragover', (e) => { if (dragging || !e.dataTransfer.types.includes('Files') || where === 'trash' || (!writable() && !VIEWS[where])) return; e.preventDefault(); main.classList.add('dropping'); });
   main.addEventListener('dragleave', (e) => { if (!main.contains(e.relatedTarget)) main.classList.remove('dropping'); });
   main.addEventListener('drop', async (e) => {
     main.classList.remove('dropping');
@@ -244,10 +250,10 @@ export async function home(root, a, b) {
   // the right button: a menu of SavDrive that depends on where it is pressed (text fields keep the menu of the browser)
   const editable = (e) => e.composedPath().some((n) => n.localName && (/^(input|textarea|sav-input|sav-textarea|sav-search)$/.test(n.localName) || n.isContentEditable));
   const selMenu = () => {
-    const chosen = data.items.filter((x) => sel.has(x.id)), ids = [...sel], allStar = chosen.every((x) => x.starred);
+    const chosen = data.items.filter((x) => sel.has(x.id)), ids = [...sel], allStar = chosen.every((x) => x.starred), all = (need) => chosen.every((x) => can(x, need));
     return [{ head: t('n_selected', { n: ids.length }) }, ...(where === 'trash'
       ? [['undo-2', t('restore'), () => restore(ids)], ['trash-2', t('delete_forever'), () => destroy(ids), { danger: true }]]
-      : [['folder-input', t('move'), () => moveDialog(ids)], [allStar ? 'star-off' : 'star', t(allStar ? 'unstar' : 'star'), () => star(ids, !allStar)], '-', ['trash-2', t('to_trash'), () => trash(ids), { danger: true }]]),
+      : [all('move') ? ['folder-input', t('move'), () => moveDialog(ids)] : null, all('owner') ? [allStar ? 'star-off' : 'star', t(allStar ? 'unstar' : 'star'), () => star(ids, !allStar)] : null, all('delete') ? '-' : null, all('delete') ? ['trash-2', t('to_trash'), () => trash(ids), { danger: true }] : null]),
     '-', ['x', t('clear_sel'), () => { sel.clear(); draw(); }]];
   };
   const upHere = (folder) => [['folder-plus', t('new_folder'), () => newFolder(folder)], ['upload', t('upload_files'), () => pick().then((fs) => uploadAll(fs.map((file) => ({ file, path: '' })), folder))],
@@ -259,9 +265,10 @@ export async function home(root, a, b) {
     const refresh = ['refresh', t('refresh'), () => load(search.value.trim(), true)];
     if (where === 'trash') return [data.items.length ? ['trash-2', t('empty_trash'), emptyTrash, { danger: true }] : null, all, '-', refresh];
     if (VIEWS[where] || data.q) return [all, '-', ...viewSort, '-', refresh];
+    if (!writable()) return [all, '-', ...viewSort, '-', refresh];
     return [...upHere(here()), '-', { head: 'SavOffice' }, ...Object.entries(KINDS).map(([k, x]) => ['file-plus', t(x.k), () => newOffice(k)]), '-', all, '-', ...viewSort, '-', refresh];
   };
-  const placesMenu = () => [['hard-drive', t('my_drive'), () => go('#/')], ['clock', t('recent'), () => go('#/recent')], ['star', t('starred'), () => go('#/starred')], ['link', t('shared'), () => go('#/shared')], ['trash-2', t('trash'), () => go('#/trash')],
+  const placesMenu = () => [['hard-drive', t('my_drive'), () => go('#/')], ['users', t('withme'), () => go('#/withme')], ['clock', t('recent'), () => go('#/recent')], ['star', t('starred'), () => go('#/starred')], ['link', t('shared'), () => go('#/shared')], ['trash-2', t('trash'), () => go('#/trash')],
     '-', ['settings', t('settings'), () => go('#/settings')], S.user.master ? ['shield', t('admin'), () => go('#/admin')] : null, ['refresh', t('refresh'), () => load(search.value.trim(), true)]];
   const onMenu = (e) => {
     if (editable(e) || e.target.closest('sav-dialog, sav-popover, sav-dropdown, .ctxm')) return;
@@ -275,7 +282,11 @@ export async function home(root, a, b) {
       return at(menuOf(x), x.name);
     }
     const crumb = e.target.closest('[data-crumb]');
-    if (crumb) { const id = crumb.dataset.crumb === 'root' ? null : crumb.dataset.crumb; return at([['folder-open', t('open'), () => go(id ? '#/f/' + id : '#/')], '-', ...upHere(id)], crumb.textContent); }
+    if (crumb) {
+      if (crumb.dataset.crumb === 'withme') return at([['folder-open', t('open'), () => go('#/withme')]], crumb.textContent);
+      const id = crumb.dataset.crumb === 'root' ? null : crumb.dataset.crumb, mine = !data.sharedRoot;
+      return at([['folder-open', t('open'), () => go(id ? '#/f/' + id : '#/')], ...(mine || (id === where && writable()) ? ['-', ...upHere(id)] : [])], crumb.textContent);
+    }
     const place = e.target.closest('sav-menu-item[value]');
     if (place && nav.contains(place)) {
       const v = place.getAttribute('value'), to = v === 'root' ? '#/' : '#/' + v;
@@ -303,6 +314,8 @@ export async function home(root, a, b) {
       data.q = qq;
       if (!alive) return;
       setSpace(data.used, data.quota, data.parts);
+      // inside somebody else's folder the place is "Shared with me"
+      if (!VIEWS[where] && where !== 'search') nav.querySelectorAll('sav-menu-item').forEach((m) => m.toggleAttribute('current', m.getAttribute('value') === (data.sharedRoot ? 'withme' : 'root')));
       for (const id of [...sel]) if (!data.items.some((x) => x.id === id)) sel.delete(id);
       draw();
     } catch (e) {
@@ -315,9 +328,11 @@ export async function home(root, a, b) {
   function title() {
     if (data.q) return h('h1', t('results_for', { q: data.q }));
     if (VIEWS[where]) return h('h1', t(VIEWS[where][1]));
-    const crumbs = [{ id: null, name: t('my_drive') }, ...(data.path || [])];
-    const bc = h('sav-breadcrumb.crumbs', { label: t('path') }, crumbs.map((c, i) => { const x = h('sav-breadcrumb-item', { href: i === crumbs.length - 1 ? null : c.id ? '#/f/' + c.id : '#/', 'data-crumb': c.id || 'root' }, c.name); if (i < crumbs.length - 1) dropTarget(x, () => c.id); return x; }));
-    return h('div.crumbwrap', bc);
+    // somebody else's folder starts from "Shared with me"
+    const crumbs = [data.sharedRoot ? { id: 'withme', name: t('withme') } : { id: null, name: t('my_drive') }, ...(data.path || [])];
+    const bc = h('sav-breadcrumb.crumbs', { label: t('path') }, crumbs.map((c, i) => { const x = h('sav-breadcrumb-item', { href: i === crumbs.length - 1 ? null : c.id === 'withme' ? '#/withme' : c.id ? '#/f/' + c.id : '#/', 'data-crumb': c.id || 'root' }, c.name); if (i < crumbs.length - 1 && c.id !== 'withme' && (!data.sharedRoot || can(data, 'move'))) dropTarget(x, () => c.id); return x; }));
+    const lvl = data.sharedRoot && data.role && data.role !== 'owner' ? h('sav-badge.lvl', { variant: 'neutral', appearance: 'soft', pill: true, title: t('lv_' + data.role + '_t') }, icon('users'), t('lv_' + data.role)) : null;
+    return h('div.crumbwrap', bc, lvl);
   }
 
   function draw() {
@@ -329,7 +344,8 @@ export async function home(root, a, b) {
       const chosen = data.items.filter((x) => sel.has(x.id)), allStar = chosen.every((x) => x.starred), oneFile = chosen.length === 1 && chosen[0].kind === 'file';
       put(head, h('div.selbar', iconBtn('x', t('clear_sel'), () => { sel.clear(); draw(); }), h('b', t('n_selected', { n: sel.size })), h('span.grow'),
         where === 'trash' ? [btn(t('restore'), { icon: 'undo-2', size: 'sm', onclick: () => restore([...sel]) }), btn(t('delete_forever'), { icon: 'trash-2', size: 'sm', variant: 'danger', onclick: () => destroy([...sel]) })]
-          : [oneFile ? iconBtn('download', t('download'), () => download(chosen[0])) : null, iconBtn('folder-input', t('move'), () => moveDialog([...sel])), iconBtn(allStar ? 'star-off' : 'star', t(allStar ? 'unstar' : 'star'), () => star([...sel], !allStar)), iconBtn('trash-2', t('to_trash'), () => trash([...sel]))]));
+          : [oneFile && can(chosen[0], 'read') ? iconBtn('download', t('download'), () => download(chosen[0])) : null, chosen.every((x) => can(x, 'move')) ? iconBtn('folder-input', t('move'), () => moveDialog([...sel])) : null,
+            chosen.every((x) => can(x, 'owner')) ? iconBtn(allStar ? 'star-off' : 'star', t(allStar ? 'unstar' : 'star'), () => star([...sel], !allStar)) : null, chosen.every((x) => can(x, 'delete')) ? iconBtn('trash-2', t('to_trash'), () => trash([...sel])) : null]));
     } else {
       put(head, title(), h('span.grow'),
         where === 'trash' && items.length ? btn(t('empty_trash'), { icon: 'trash-2', size: 'sm', variant: 'danger', appearance: 'soft', onclick: emptyTrash }) : null,
@@ -340,6 +356,8 @@ export async function home(root, a, b) {
         : where === 'trash' ? empty('trash-2', t('trash_empty'), t('trash_empty_t'))
           : where === 'starred' ? empty('star', t('no_starred'), t('no_starred_t'))
             : where === 'shared' ? empty('link', t('no_shared'), t('no_shared_t'))
+              : where === 'withme' ? empty('users', t('no_withme'), t('no_withme_t'))
+                : !writable() ? empty('folder', t('folder_empty'), '')
               : where === 'recent' ? empty('clock', t('no_recent'), t('no_recent_t'))
                 : empty('upload', t('folder_empty'), t('folder_empty_t'), h('div.prow.wrap.cen', primary(t('upload_files'), { icon: 'upload', onclick: () => pick().then((fs) => uploadAll(fs.map((file) => ({ file, path: '' })), here())) }), btn(t('new_folder'), { icon: 'folder-plus', onclick: () => newFolder() })));
       put(body, where === 'trash' ? null : officeRow(), h('div.dempty', e));
@@ -359,9 +377,9 @@ export async function home(root, a, b) {
   function setCommands(items) {
     const upFiles = () => pick().then((fs) => uploadAll(fs.map((file) => ({ file, path: '' })), here()));
     const upDir = () => pick({ dir: true }).then((fs) => uploadAll(fs.map((file) => ({ file, path: (file.webkitRelativePath || '').split('/').slice(0, -1).join('/') })), here()));
-    commands(where === 'trash' ? null : [t('new'), [['folder-plus', t('new_folder'), () => newFolder()], ['upload', t('upload_files'), upFiles], ['folder-up', t('upload_folder'), upDir],
+    commands(where === 'trash' || !writable() ? null : [t('new'), [['folder-plus', t('new_folder'), () => newFolder()], ['upload', t('upload_files'), upFiles], ['folder-up', t('upload_folder'), upDir],
         ...Object.entries(KINDS).map(([k, x]) => ['file-plus', t('new_kind', { kind: t(x.k) }), () => newOffice(k), null, x.name])]],
-      [t('places'), [['hard-drive', t('my_drive'), '#/'], ['clock', t('recent'), '#/recent'], ['star', t('starred'), '#/starred'], ['link', t('shared'), '#/shared'], ['trash-2', t('trash'), '#/trash'],
+      [t('places'), [['hard-drive', t('my_drive'), '#/'], ['users', t('withme'), '#/withme'], ['clock', t('recent'), '#/recent'], ['star', t('starred'), '#/starred'], ['link', t('shared'), '#/shared'], ['trash-2', t('trash'), '#/trash'],
         where === 'trash' && items.length ? ['trash-2', t('empty_trash'), emptyTrash] : null]],
       items.length ? [t('in_here'), items.slice(0, 60).map((x) => [x.kind === 'folder' ? 'folder' : kindOf(x).ic, x.name, () => open(x), null, x.kind === 'folder' ? t('folder_l') : bytes(x.size)])] : null);
   }
@@ -389,7 +407,10 @@ export async function home(root, a, b) {
     if (x.kind === 'folder') return x.count ? `${t('n_items', { n: x.count })} · ${bytes(x.size)}` : t('folder_empty');
     return `${bytes(x.size)} · ${when(x.updated)}`;
   };
-  const where2 = (x) => (data.q || ['starred', 'recent', 'shared'].includes(where)) ? h('small.inf', icon('folder'), x.parent?.name || t('my_drive')) : null;
+  const where2 = (x) => where === 'withme' && x.owner ? h('small.inf', icon('user'), x.owner) : (data.q || ['starred', 'recent', 'shared'].includes(where)) ? h('small.inf', icon('folder'), x.parent?.name || t('my_drive')) : null;
+  /** The mark of what is shared: the people of the owner, or the level of this person on something of somebody else. */
+  const tag = (x) => x.role && x.role !== 'owner' ? h('span.rtag', { title: t('lv_' + x.role + '_t') + (x.owner ? ' · ' + t('owned_by', { name: x.owner }) : '') }, icon(x.role === 'view' ? 'eye' : 'users'), h('span', t('lv_' + x.role)))
+    : x.people ? h('span.ptag', { title: t('shared_n', { n: x.people }) }, icon('users')) : null;
   function thumb(x, big) {
     const k = kindOf(x), app = x.app || appOf(x.name);
     if (x.kind === 'folder') return h('span.fic', { style: `--fc:${k.c}` }, icon('folder'));
@@ -404,7 +425,19 @@ export async function home(root, a, b) {
     return c;
   }
   const more = (x) => { const b = drop(h('sav-button', { icon: 'more-vertical', label: t('more'), appearance: 'ghost', variant: 'neutral', square: true, size: 'sm' }), () => menuOf(x), { placement: 'bottom-end', label: x.name }); b.addEventListener('click', (e) => e.stopPropagation()); return b; };
-  const starBtn = (x) => { if (where === 'trash') return null; const b = iconBtn(x.starred ? 'star' : 'star', t(x.starred ? 'unstar' : 'star'), () => star([x.id], !x.starred)); b.classList.add('starb'); b.classList.toggle('on', x.starred); b.addEventListener('click', (e) => e.stopPropagation()); return b; };
+  // the star is the favourite button of SavComponents: it fills at once when pressed, and goes back if saving fails
+  const starBtn = (x) => {
+    if (where === 'trash' || !can(x, 'owner')) return null;
+    const b = h('sav-favourite-button.starb', { icon: 'star', pressed: x.starred || null, appearance: 'ghost', size: 'sm', label: t('star'), title: t(x.starred ? 'unstar' : 'star') });
+    b.classList.toggle('on', !!x.starred);
+    b.addEventListener('click', (e) => e.stopPropagation());
+    b.addEventListener('change', async (e) => {
+      const on = !!e.detail?.pressed;
+      b.classList.toggle('on', on); b.title = t(on ? 'unstar' : 'star');
+      try { await api('node.star', { ids: [x.id], on }); x.starred = on; if (where === 'starred') load(search.value.trim(), true); } catch (err) { b.toggleAttribute('pressed', !on); b.classList.toggle('on', !on); fail(err); } // back, without a new change
+    });
+    return b;
+  };
   function wire(n, x) {
     n.tabIndex = 0;
     n.setAttribute('role', 'listitem');
@@ -419,12 +452,13 @@ export async function home(root, a, b) {
     });
     n.addEventListener('keydown', (e) => { if (e.target !== n) return; if (e.key === 'Enter') open(x); else if (e.key === ' ') { e.preventDefault(); if (sel.has(x.id)) sel.delete(x.id); else sel.add(x.id); draw(); } });
     // dragged onto a folder (a card, the path, My drive): moved there
-    if (where !== 'trash' && !mobile()) {
+    if (where !== 'trash' && !mobile() && can(x, 'move')) {
       n.draggable = true;
       n.addEventListener('dragstart', (e) => { getSelection()?.removeAllRanges(); dragging = sel.has(x.id) ? [...sel] : [x.id]; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', x.name); });
       n.addEventListener('dragend', () => { dragging = null; });
       if (x.kind === 'folder') dropTarget(n, () => x.id, x.id);
     }
+    n.classList.toggle('viewonly', x.role === 'view');
     return n;
   }
   function rangeTo(x) {
@@ -439,28 +473,33 @@ export async function home(root, a, b) {
     n.addEventListener('drop', (e) => { n.classList.remove('over'); if (!dragging) return; e.preventDefault(); e.stopPropagation(); const ids = dragging; dragging = null; move(ids, idOf()); });
   }
   const card = (x) => wire(h('div.dcard' + (x.kind === 'folder' ? '.isf' : ''), check(x), x.kind === 'folder'
-    ? [thumb(x), h('div.dname', h('b', { title: x.name }, x.name), h('small', meta(x)), where2(x)), starBtn(x), more(x)]
-    : [h('div.dthumb', thumb(x, true), x.shared ? h('span.cglobe', { title: t('has_link') }, icon('link')) : null), h('div.dinfo', h('div.dname', h('b', { title: x.name }, x.name), h('small', meta(x)), where2(x)), starBtn(x), more(x))]), x);
-  const row = (x) => wire(h('div.drow', check(x), h('div.rname', thumb(x), h('div', h('b', { title: x.name }, x.name), where2(x) || h('small.rmeta', meta(x))), x.shared ? h('span.lnk', { title: t('has_link') }, icon('link')) : null),
+    ? [thumb(x), h('div.dname', h('b', { title: x.name }, x.name), h('small', meta(x)), where2(x), tag(x)), starBtn(x), more(x)]
+    : [h('div.dthumb', thumb(x, true), x.shared ? h('span.cglobe', { title: t('has_link') }, icon('link')) : null), h('div.dinfo', h('div.dname', h('b', { title: x.name }, x.name), h('small', meta(x)), where2(x), tag(x)), starBtn(x), more(x))]), x);
+  const row = (x) => wire(h('div.drow', check(x), h('div.rname', thumb(x), h('div', h('b', { title: x.name }, x.name), where2(x) || h('small.rmeta', meta(x))), x.shared ? h('span.lnk', { title: t('has_link') }, icon('link')) : null, tag(x)),
     h('span.lc-m', when(where === 'trash' ? x.trashed : x.updated)), h('span.lc-s', x.kind === 'folder' ? (x.count ? bytes(x.size) : '—') : bytes(x.size)), h('span.ract', starBtn(x), more(x))), x);
 
   function menuOf(x) {
     const app = x.app || appOf(x.name), k = kindOf(x);
     if (where === 'trash') return [['undo-2', t('restore'), () => restore([x.id])], '-', ['trash-2', t('delete_forever'), () => destroy([x.id]), { danger: true }]];
+    // only what the level of this person allows (the owner can do everything)
+    if (!can(x, 'read')) return [{ head: t('lv_view_t') }, x.owner ? ['user', t('owned_by', { name: x.owner }), null, { disabled: true }] : null];
+    const owner = can(x, 'owner');
     return [
       x.kind === 'folder' ? ['folder-open', t('open'), () => go('#/f/' + x.id)] : app ? ['external', t('open_in', { app: NAMES[app] }), () => openInApp(x)] : ['eye', t('preview'), () => preview(x)],
       x.kind === 'file' && app ? ['eye', t('details'), () => preview(x)] : null,
       x.kind === 'file' ? ['download', t('download'), () => download(x)] : null,
+      ['message-circle', t('comments'), () => commentsDialog(x)],
+      owner ? ['users', t('people'), () => peopleDialog(x)] : null,
       '-',
-      ['edit', t('rename'), () => rename(x)],
-      ['folder-input', t('move'), () => moveDialog([x.id])],
-      x.kind === 'file' ? ['copy', t('make_copy'), () => copy(x)] : null,
-      [x.starred ? 'star-off' : 'star', t(x.starred ? 'unstar' : 'star'), () => star([x.id], !x.starred)],
-      x.kind === 'file' ? ['link', t('share_link'), () => shareDialog(x)] : null,
-      x.kind === 'folder' ? ['palette', t('color'), () => colorDialog(x)] : null,
-      x.parent && (data.q || VIEWS[where]) ? ['folder', t('show_in_folder'), () => go(x.parent.id ? '#/f/' + x.parent.id : '#/')] : null,
-      '-',
-      ['trash-2', t('to_trash'), () => trash([x.id]), { danger: true }],
+      can(x, 'write') ? ['edit', t('rename'), () => rename(x)] : null,
+      can(x, 'move') ? ['folder-input', t('move'), () => moveDialog([x.id])] : null,
+      x.kind === 'file' && can(x, 'write') ? ['copy', t('make_copy'), () => copy(x)] : null,
+      owner ? [x.starred ? 'star-off' : 'star', t(x.starred ? 'unstar' : 'star'), () => star([x.id], !x.starred)] : null,
+      x.kind === 'file' && owner ? ['link', t('share_link'), () => shareDialog(x)] : null,
+      x.kind === 'folder' && can(x, 'write') ? ['palette', t('color'), () => colorDialog(x)] : null,
+      x.parent && (data.q || (VIEWS[where] && where !== 'withme')) ? ['folder', t('show_in_folder'), () => go(x.parent.id ? '#/f/' + x.parent.id : '#/')] : null,
+      can(x, 'delete') ? '-' : null,
+      can(x, 'delete') ? ['trash-2', t('to_trash'), () => trash([x.id]), { danger: true }] : null,
     ];
   }
 
@@ -468,6 +507,7 @@ export async function home(root, a, b) {
 
   function open(x) {
     if (where === 'trash') return preview(x);
+    if (!can(x, 'read')) return toast(t('lv_view_t'), 'neutral');
     if (x.kind === 'folder') return go('#/f/' + x.id);
     if (!openInApp(x)) preview(x);
     x.opened = new Date().toISOString();
@@ -535,21 +575,22 @@ export async function home(root, a, b) {
 
   /** Where to move: the tree of the folders, the ones being moved (and what is inside them) cannot be chosen. */
   async function moveDialog(ids) {
-    let folders;
-    try { folders = (await api('drive.folders')).folders; } catch (e) { return fail(e); }
+    let folders, mine = true;
+    const others = data.items.filter((x) => ids.includes(x.id) && !can(x, 'owner'));
+    try { const r = await api('drive.folders', undefined, others.length ? { in: others[0].id } : {}); folders = r.folders; mine = r.mine; } catch (e) { return fail(e); }
     const kids = {}, moving = new Set(ids);
     for (const f of folders) (kids[f.parent || ''] ||= []).push(f);
     let target = null;
     const list = h('sav-menu.mtree', { label: t('move_to'), selectable: true });
     const add = (parent, depth, blocked) => {
       for (const f of (kids[parent] || []).sort((a, b) => a.name.localeCompare(b.name, getLang(), { numeric: true }))) {
-        const no = blocked || moving.has(f.id);
+        const no = blocked || moving.has(f.id) || f.can === false;
         list.append(h('sav-menu-item', { value: f.id, disabled: no || null, style: `padding-left:${0.4 + depth * 1.1}rem` }, h('span', { slot: 'prefix', class: 'mfi', style: `--fc:${f.color || '#5f7d95'}` }, icon('folder')), f.name));
         add(f.id, depth + 1, no);
       }
     };
-    list.append(h('sav-menu-item', { value: '' }, icon('hard-drive', { slot: 'prefix' }), t('my_drive')));
-    add('', 1, false);
+    if (mine) list.append(h('sav-menu-item', { value: '' }, icon('hard-drive', { slot: 'prefix' }), t('my_drive')));
+    add('', mine ? 1 : 0, false);
     list.addEventListener('sav-select', (e) => { target = e.detail.value || null; list.querySelectorAll('sav-menu-item').forEach((m) => m.toggleAttribute('current', m.getAttribute('value') === (target || ''))); });
     dialog({ title: t('move_n', { n: ids.length }), width: '28rem', body: h('div.mbox', list), actions: [{ label: t('cancel') }, { label: t('move_here'), primary: true, run: () => move(ids, target) }] });
   }
@@ -557,6 +598,50 @@ export async function home(root, a, b) {
   function colorDialog(x) {
     const grid = h('div.swatches', FOLDER_COLORS.map((c) => h('button.swatch', { type: 'button', style: `--fc:${c || '#5f7d95'}`, 'aria-label': c || t('color_default'), 'aria-pressed': String((x.color || '') === c), onclick: async () => { d.hide(); try { await api('node.color', { ids: [x.id], color: c }); load(search.value.trim(), true); } catch (e) { fail(e); } } }, icon('folder'))));
     const d = dialog({ title: t('color'), width: '22rem', body: grid, actions: [{ label: t('close') }] });
+  }
+
+  /**
+   * People and levels of a file or folder (only its owner): who has a level here, and who gets one from a folder above.
+   * Changing the level of somebody who gets it from above (also to "No access") makes an exception here, for this and
+   * everything inside; "As above" takes the exception away.
+   */
+  function peopleDialog(x) {
+    const box = h('div.pbox'), opts = (from, inherited) => [...(inherited ? [['', from ? t('lv_inherit') + ' · ' + t('lv_' + from) : t('lv_inherit')]] : []), ['none', t('lv_none')], ...ROLES.map((r) => [r, t('lv_' + r)])];
+    const roleSel = (value, onpick, inherited, from) => select(null, opts(from, inherited), value, onpick, { size: 'sm', class: 'lvsel', 'aria-label': t('level') });
+    const set = async (email, role, notify = false) => { try { const r = await api('people.set', { id: x.id, email, role, notify }); drawPeople(r.people); load(search.value.trim(), true); } catch (e) { fail(e); } };
+    const email = h('sav-input', { type: 'email', placeholder: t('people_email'), 'aria-label': t('people_email'), class: 'grow' });
+    let newRole = 'read';
+    const addRole = roleSel('read', (v) => { newRole = v || 'read'; }, false);
+    const notify = h('sav-switch', { checked: true }, t('people_notify'));
+    const add = btn(t('add'), { icon: 'plus', variant: 'primary', appearance: 'solid', onclick: async () => { const v = email.value.trim(); if (!v) return; await set(v, newRole, notify.checked); email.value = ''; } });
+    email.addEventListener('keydown', (e) => { if (e.key === 'Enter') add.click(); });
+    const drawPeople = (people) => {
+      const rows = people.map((p) => h('div.prow2', face(p.name || p.email, null, 34), h('div.pwho', h('b', p.name || p.email), p.name ? h('small', p.email) : null,
+        h('small.muted', p.here ? t('people_here') : t('people_from', { name: p.from?.name || '' }))),
+        roleSel(p.here ? p.role : '', (v) => set(p.email, v === '' ? null : v), true, p.here ? null : p.role)));
+      put(box, h('p.muted.small', t(x.kind === 'folder' ? 'people_folder_t' : 'people_file_t')), h('div.padd', email, addRole), h('div.prow', notify, h('span.grow'), add),
+        h('h3.ph', t('people_with')), rows.length ? h('div.plist2', rows) : h('p.muted', t('people_none')));
+    };
+    dialog({ title: t('people') + ': ' + x.name, width: '34rem', body: box, actions: [{ label: t('done'), primary: true }] });
+    put(box, h('sav-spinner'));
+    api('people.get', undefined, { id: x.id }).then((r) => drawPeople(r.people)).catch(fail);
+  }
+
+  /** Comments on a file or folder: everyone who can read sees them; from "comment" up they can write. */
+  function commentsDialog(x) {
+    const list = h('div.clist'), text = h('sav-textarea', { placeholder: t('comment_ph'), rows: 2, maxlength: 4000, 'aria-label': t('comment_ph') });
+    const loadC = async () => {
+      try {
+        const r = await api('comment.list', undefined, { id: x.id });
+        put(list, r.comments.length ? r.comments.map((c) => h('div.cm', face(c.by || '?', null, 30), h('div.cmb', h('div.cmh', h('b', c.by || t('someone')), h('small.muted', when(c.at)), h('span.grow'),
+          c.canDelete ? iconBtn('trash-2', t('delete'), async () => { await api('comment.delete', { id: c.id }); loadC(); }) : null), h('p', c.body)))) : h('p.muted', t('no_comments')));
+        text.hidden = sendB.hidden = (LV[r.role] || 0) < LV.comment;
+      } catch (e) { fail(e); }
+    };
+    const sendB = btn(t('comment_send'), { icon: 'send', variant: 'primary', appearance: 'solid', size: 'sm', onclick: async () => { const v = String(text.value || '').trim(); if (!v) return; await api('comment.add', { id: x.id, body: v }); text.value = ''; loadC(); } });
+    dialog({ title: t('comments') + ': ' + x.name, width: '32rem', body: h('div.form', list, text, h('div.prow', h('span.grow'), sendB)), actions: [{ label: t('close') }] });
+    put(list, h('sav-spinner'));
+    loadC();
   }
 
   function shareDialog(x) {

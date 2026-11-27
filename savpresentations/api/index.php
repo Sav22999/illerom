@@ -41,18 +41,55 @@ function only(string $method): void
     if ($_SERVER['REQUEST_METHOD'] !== $method) fail('bad_request', 405);
 }
 
+
+// ---------- One space for the whole of SavOffice: the space of SavDrive (../savdrive/lib/space.php)
+
+require_once dirname(__DIR__, 2) . '/savdrive/lib/space.php';
+const SPACE_APP = 'savpresentations';
+
+/** What a person keeps in SavPresentations: presentations (slides, versions, small pictures), pictures and videos, typefaces from file. It counts in their space of SavOffice. */
+function space_bytes(array $u): int
+{
+    $q = function (string $sql) use ($u): int { $st = db()->prepare($sql); $st->execute([$u['id']]); return (int)$st->fetchColumn(); };
+    return $q('SELECT COALESCE(SUM(COALESCE(LENGTH(meta),0) + COALESCE(LENGTH(thumb),0)),0) FROM ' . t('decks') . ' WHERE owner_id = ?')
+        + $q('SELECT COALESCE(SUM(LENGTH(s.data)),0) FROM ' . t('slides') . ' s JOIN ' . t('decks') . ' d ON d.id = s.deck_id WHERE d.owner_id = ?')
+        + $q('SELECT COALESCE(SUM(COALESCE(LENGTH(v.meta),0) + COALESCE(LENGTH(v.slides),0)),0) FROM ' . t('versions') . ' v JOIN ' . t('decks') . ' d ON d.id = v.deck_id WHERE d.owner_id = ?')
+        + $q('SELECT COALESCE(SUM(bytes),0) FROM ' . t('media') . ' WHERE user_id = ?')
+        + $q('SELECT COALESCE(SUM(bytes),0) FROM ' . t('fonts') . ' WHERE user_id = ?');
+}
+
+/** Whether the account $uid (the owner of what grows, also when someone else is writing) can keep $more bytes more. */
+function space_allows_id(int $uid, int $more): bool
+{
+    $st = db()->prepare('SELECT * FROM ' . t('users') . ' WHERE id = ?');
+    $st->execute([$uid]);
+    $o = $st->fetch();
+    return !$o || savspace_allows((string)$o['email'], SPACE_APP, $more, space_bytes($o));
+}
+
+/** The space the app shows: the one of SavOffice (used in every app, out of the space of SavDrive); without SavDrive, its old limit. */
+function space_out(array $u, int $used, int $quota): array
+{
+    $i = savspace_info((string)$u['email']);
+    return $i ? ['used' => $i['used'], 'quota' => $i['quota'], 'spaceApps' => (object)$i['apps']] : ['used' => $used, 'quota' => $quota];
+}
+
 function writer(bool $unverifiedOk = false): array
 {
     only('POST');
     $u = require_user($unverifiedOk);
     require_csrf($u);
+    // a write that would go beyond the space of SavOffice is refused; then what the app keeps is counted again
+    savspace_gate($u, SPACE_APP, (string)($GLOBALS['r'] ?? ''), fn() => space_bytes($u), fn() => fail('quota', 413));
     return $u;
 }
 
 function reader(): array
 {
     only('GET');
-    return require_user();
+    $u = require_user();
+    savspace_touch($u, SPACE_APP, fn() => space_bytes($u));
+    return $u;
 }
 
 /** Signed-in and confirmed person, or null for an anonymous visitor (public links). */
@@ -428,7 +465,7 @@ switch ($r) {
         $st = db()->prepare('SELECT id, parent_id, name FROM ' . t('folders') . ' WHERE user_id = ? ORDER BY name');
         $st->execute([$u['id']]);
         $folders = array_map(fn($f) => ['id' => (int)$f['id'], 'parent' => $f['parent_id'] ? (int)$f['parent_id'] : null, 'name' => $f['name']], $st->fetchAll());
-        send_json(['ok' => true, 'decks' => $decks, 'shared' => $shared, 'folders' => $folders, 'used' => media_used((int)$u['id']), 'quota' => (int)config_value('quota')]);
+        send_json(['ok' => true, 'decks' => $decks, 'shared' => $shared, 'folders' => $folders, ] + space_out($u, media_used((int)$u['id']), (int)config_value('quota')));
 
     case 'folder.create':
         $u = writer();
@@ -949,7 +986,7 @@ switch ($r) {
         $u = reader();
         $st = db()->prepare('SELECT * FROM ' . t('media') . " WHERE user_id = ? AND mime <> 'upload' AND id NOT IN (SELECT poster FROM (SELECT poster FROM " . t('media') . " WHERE user_id = ? AND poster <> '') x) ORDER BY created_at DESC LIMIT 200");
         $st->execute([$u['id'], $u['id']]);
-        send_json(['ok' => true, 'media' => array_map('media_out', $st->fetchAll()), 'used' => media_used((int)$u['id']), 'quota' => (int)config_value('quota')]);
+        send_json(['ok' => true, 'media' => array_map('media_out', $st->fetchAll()), ] + space_out($u, media_used((int)$u['id']), (int)config_value('quota')));
 
     case 'media.delete':
         $u = writer();

@@ -76,7 +76,7 @@ function store_picture(int $userId, string $bytes, string $name, string $credit 
         $bytes = (string)ob_get_clean();
     }
     if (strlen($bytes) > MAX_IMAGE_BYTES) fail('image_big', 413);
-    if (media_used($userId) + strlen($bytes) > (int)config_value('quota')) fail('quota', 413);
+    if (function_exists('space_allows_id') ? !space_allows_id($userId, strlen($bytes)) : media_used($userId) + strlen($bytes) > (int)config_value('quota')) fail('quota', 413); // the space of SavOffice
     $id = bin2hex(random_bytes(16));
     $file = media_path($id);
     if (!is_dir(dirname($file)) && !@mkdir(dirname($file), 0755, true) && !is_dir(dirname($file))) throw new RuntimeException('storage folder not writable');
@@ -148,7 +148,7 @@ function video_begin(int $userId, string $name, int $size): array
     $st = db()->prepare('SELECT id FROM ' . t('media') . " WHERE user_id = ? AND mime = 'upload' AND created_at < ?");
     $st->execute([$userId, gmdate('Y-m-d H:i:s', time() - 86400)]);
     foreach ($st->fetchAll(PDO::FETCH_COLUMN) as $old) video_drop($userId, (string)$old);
-    if (media_used($userId) + $size > (int)config_value('quota')) fail('quota', 413);
+    if (function_exists('space_allows_id') ? !space_allows_id($userId, $size) : media_used($userId) + $size > (int)config_value('quota')) fail('quota', 413); // the space of SavOffice
     $id = bin2hex(random_bytes(16));
     $dir = dirname(media_path($id));
     if (!is_dir($dir) && !@mkdir($dir, 0755, true) && !is_dir($dir)) throw new RuntimeException('storage folder not writable');

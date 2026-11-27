@@ -171,7 +171,7 @@ const T = {
   drop_pictures: ['Drop pictures here', 'Trascina qui le immagini'], max_picture: ['Up to 15 MB each', 'Fino a 15 MB l’una'], space_used: ['{a} of {b}', '{a} di {b}'], no_pictures: ['No pictures yet.', 'Ancora nessuna immagine.'],
   delete_picture: ['Delete picture', 'Elimina immagine'], delete_picture_t: ['It disappears from every board that uses it.', 'Sparisce da tutte le lavagne che la usano.'], uploading: ['Sending the picture…', 'Invio dell’immagine…'],
   err_image_big: ['This picture is too big: 15 MB at most', 'Questa immagine è troppo grande: al massimo 15 MB'], err_image_type: ['This is not a picture we can use', 'Questa non è un’immagine utilizzabile'],
-  err_import_failed: ['It could not be downloaded: try another one', 'Non si riesce a scaricare: provane un’altra'], err_quota: ['Your space is full: delete some pictures', 'Lo spazio è pieno: elimina qualche immagine'],
+  err_import_failed: ['It could not be downloaded: try another one', 'Non si riesce a scaricare: provane un’altra'], err_quota: ['Your space of SavOffice is full (one for every app, the space of SavDrive): free some to save more.', 'Il tuo spazio di SavOffice è pieno (uno per tutte le app, quello di SavDrive): liberane un po’ per salvare altro.'],
   err_search_expired: ['Search again, please', 'Ripeti la ricerca'], err_search_failed: ['The portal does not answer: try another one', 'Il portale non risponde: provane un altro'], err_text_required: ['Write at least two letters.', 'Scrivi almeno due lettere.'],
 };
 

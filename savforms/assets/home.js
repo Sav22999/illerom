@@ -76,8 +76,10 @@ export function homeScreen(root, wantNew = false) {
   const V = { all: ['your_forms', 'layout-grid'], open: ['f_open', 'door-open'], closed: ['f_closed', 'door-closed'], starred: ['f_starred', 'star'], archived: ['f_archived', 'archive'] };
 
   const card = (f) => {
-    const star = iconBtn('star', t(f.starred ? 'unstar' : 'star'), async () => { const r = await api('forms.save', { id: f.id, starred: !f.starred }); keep(r.form); draw(); }, { class: 'starb' + (f.starred ? ' on' : '') });
-    star.on(f.starred);
+    // the favourite button of SavComponents, as in the other apps of SavOffice: the star fills at once when it is pressed
+    const star = h('sav-favourite-button.starb' + (f.starred ? '.on' : ''), { icon: 'star', pressed: f.starred || null, label: t(f.starred ? 'unstar' : 'star'), appearance: 'ghost', size: 'sm' });
+    star.addEventListener('click', (e) => e.stopPropagation());
+    star.addEventListener('change', async (e) => { const on = !!e.detail?.pressed; star.classList.toggle('on', on); try { keep((await api('forms.save', { id: f.id, starred: on })).form); } catch (err) { star.toggleAttribute('pressed', !on); star.classList.toggle('on', !on); fail(err); } setTimeout(draw, 300); });
     return h('sav-card.card.formc' + (f.archived ? '.away' : ''), { style: `--c:${f.color}` },
       h('a.cthumb', { href: '#/e/' + f.id, 'aria-label': f.title || t('untitled') },
         h('div.fsheet', h('i.fband'), h('span', { style: 'width:72%' }), h('span', { style: 'width:46%' }), h('span.fopt'), h('span.fopt'), h('span', { style: 'width:58%' })),

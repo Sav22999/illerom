@@ -8,6 +8,8 @@
  *              can use the app (an admin decides, or the default of new accounts)
  * nodes        files and folders of an account, as a tree (parent_id NULL = My drive). A file is kept on disk under
  *              <storage>/<user_id>/<bkey>; share_token: a link anyone can open (files only)
+ * shares       the levels of other people (by email) on a file or folder, inherited below until another row (lib/access.php)
+ * comments     comments on a file or folder, by whoever can comment on it
  * usage        what each other app of SavOffice keeps for a person (by email), reported by the app (lib/space.php):
  *              one space for the whole suite, the space of SavDrive
  * quotas       the space of its own of a person (by email: also people who use other apps without an account here)
@@ -89,12 +91,34 @@ function schema_statements(string $p): array
             `created_at` DATETIME NOT NULL,
             `updated_at` DATETIME NOT NULL,
             `opened_at` DATETIME NULL,
+            `created_by` INT UNSIGNED NULL,
             UNIQUE KEY `uq_uid` (`uid`),
             UNIQUE KEY `uq_share` (`share_token`),
             KEY `ix_parent` (`user_id`, `parent_id`, `trashed_at`),
             KEY `ix_user_kind` (`user_id`, `kind`),
             " . $fk('node_user', 'user_id', 'users') . ",
             " . $fk('node_parent', 'parent_id', 'nodes') . "
+        ) $e",
+        "CREATE TABLE IF NOT EXISTS `{$p}shares` (
+            `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `node_id` INT UNSIGNED NOT NULL,
+            `email` VARCHAR(190) NOT NULL,
+            `role` ENUM('none','view','read','comment','write','move','delete') NOT NULL DEFAULT 'read',
+            `created_by` INT UNSIGNED NULL,
+            `created_at` DATETIME NOT NULL,
+            UNIQUE KEY `uq_node_email` (`node_id`, `email`),
+            KEY `ix_email` (`email`),
+            " . $fk('sha_node', 'node_id', 'nodes') . "
+        ) $e",
+        "CREATE TABLE IF NOT EXISTS `{$p}comments` (
+            `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `node_id` INT UNSIGNED NOT NULL,
+            `user_id` INT UNSIGNED NULL,
+            `body` TEXT NOT NULL,
+            `created_at` DATETIME NOT NULL,
+            KEY `ix_node` (`node_id`),
+            " . $fk('com_node', 'node_id', 'nodes') . ",
+            " . $fk('com_user', 'user_id', 'users', 'SET NULL') . "
         ) $e",
         "CREATE TABLE IF NOT EXISTS `{$p}usage` (
             `email` VARCHAR(190) NOT NULL,
@@ -129,6 +153,7 @@ function install_schema(PDO $pdo, string $prefix): void
 {
     foreach (schema_statements($prefix) as $sql) $pdo->exec($sql);
     if (!$pdo->query("SHOW COLUMNS FROM `{$prefix}uploads` LIKE 'replace_id'")->fetch()) $pdo->exec("ALTER TABLE `{$prefix}uploads` ADD COLUMN `replace_id` INT UNSIGNED NULL AFTER `received`");
+    if (!$pdo->query("SHOW COLUMNS FROM `{$prefix}nodes` LIKE 'created_by'")->fetch()) $pdo->exec("ALTER TABLE `{$prefix}nodes` ADD COLUMN `created_by` INT UNSIGNED NULL AFTER `opened_at`");
     // 3: the spaces of their own move to quotas (by email), where the other apps read them too
     $pdo->exec("INSERT IGNORE INTO `{$prefix}quotas` (email, quota, updated_at) SELECT email, quota, UTC_TIMESTAMP() FROM `{$prefix}users` WHERE quota IS NOT NULL");
     $pdo->exec("UPDATE `{$prefix}users` SET quota = NULL WHERE quota IS NOT NULL");

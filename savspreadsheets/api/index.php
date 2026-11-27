@@ -43,18 +43,52 @@ function only(string $method): void
     if ($_SERVER['REQUEST_METHOD'] !== $method) fail('bad_request', 405);
 }
 
+
+// ---------- One space for the whole of SavOffice: the space of SavDrive (../savdrive/lib/space.php)
+
+require_once dirname(__DIR__, 2) . '/savdrive/lib/space.php';
+const SPACE_APP = 'savspreadsheets';
+
+/** What a person keeps in SavSpreadsheets: workbooks and their versions. It counts in their space of SavOffice. */
+function space_bytes(array $u): int
+{
+    $q = function (string $sql) use ($u): int { $st = db()->prepare($sql); $st->execute([$u['id']]); return (int)$st->fetchColumn(); };
+    return $q('SELECT COALESCE(SUM(LENGTH(doc) + COALESCE(LENGTH(preview),0)),0) FROM ' . t('documents') . ' WHERE owner_id = ?')
+        + $q('SELECT COALESCE(SUM(LENGTH(v.doc)),0) FROM ' . t('versions') . ' v JOIN ' . t('documents') . ' d ON d.id = v.doc_id WHERE d.owner_id = ?');
+}
+
+/** Whether the account $uid (the owner of what grows, also when someone else is writing) can keep $more bytes more. */
+function space_allows_id(int $uid, int $more): bool
+{
+    $st = db()->prepare('SELECT * FROM ' . t('users') . ' WHERE id = ?');
+    $st->execute([$uid]);
+    $o = $st->fetch();
+    return !$o || savspace_allows((string)$o['email'], SPACE_APP, $more, space_bytes($o));
+}
+
+/** The space the app shows: the one of SavOffice (used in every app, out of the space of SavDrive); without SavDrive, its old limit. */
+function space_out(array $u, int $used, int $quota): array
+{
+    $i = savspace_info((string)$u['email']);
+    return $i ? ['used' => $i['used'], 'quota' => $i['quota'], 'spaceApps' => (object)$i['apps']] : ['used' => $used, 'quota' => $quota];
+}
+
 function writer(bool $unverifiedOk = false): array
 {
     only('POST');
     $u = require_user($unverifiedOk);
     require_csrf($u);
+    // a write that would go beyond the space of SavOffice is refused; then what the app keeps is counted again
+    savspace_gate($u, SPACE_APP, (string)($GLOBALS['r'] ?? ''), fn() => space_bytes($u), fn() => fail('quota', 413));
     return $u;
 }
 
 function reader(): array
 {
     only('GET');
-    return require_user();
+    $u = require_user();
+    savspace_touch($u, SPACE_APP, fn() => space_bytes($u));
+    return $u;
 }
 
 function validate_password(string $pw): void

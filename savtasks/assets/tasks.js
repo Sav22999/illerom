@@ -282,8 +282,11 @@ export function taskRow(x, ctx, o = {}) {
   const cb = h('sav-checkbox.tcheck', { checked: !!x.done || null, 'aria-label': t(x.done ? 'mark_open' : 'mark_done'), style: x.priority ? `--p:${PRIO_COLOR[x.priority]}` : null });
   cb.addEventListener('click', (e) => e.stopPropagation());
   cb.addEventListener('change', () => toggleDone(x, cb.checked, ctx, row));
-  const star = h('sav-button.tstar' + (x.starred ? '.on' : ''), { icon: 'star', label: t(x.starred ? 'unstar' : 'star'), appearance: 'ghost', variant: x.starred ? 'warning' : 'neutral', size: 'sm', square: true });
-  star.addEventListener('click', async (e) => { e.stopPropagation(); const v = !x.starred; x.starred = v; ctx.redraw(); try { keep((await api('tasks.task.save', { id: x.id, starred: v })).task); } catch (err) { x.starred = !v; fail(err); ctx.redraw(); } });
+  // the favourite button of SavComponents, as in the other apps of SavOffice: the star fills at once when it is pressed
+  const star = h('sav-favourite-button.tstar' + (x.starred ? '.on' : ''), { icon: 'star', pressed: x.starred || null, label: t(x.starred ? 'unstar' : 'star'), appearance: 'ghost', size: 'sm' });
+  star.addEventListener('click', (e) => e.stopPropagation());
+  star.addEventListener('keydown', (e) => e.stopPropagation());
+  star.addEventListener('change', async (e) => { const v = !!e.detail?.pressed; x.starred = v; star.classList.toggle('on', v); try { keep((await api('tasks.task.save', { id: x.id, starred: v })).task); } catch (err) { x.starred = !v; star.toggleAttribute('pressed', !v); star.classList.toggle('on', !v); fail(err); } setTimeout(() => ctx.redraw(), 300); });
   const meta = metaOf(x, o);
   const row = h('div.trow' + (x.done ? '.done' : '') + (x.priority ? '.p' + x.priority : ''), { 'data-id': x.id, tabindex: 0, role: 'button', 'aria-label': x.title,
     onclick: () => openTask(x.id, ctx), onkeydown: (e) => { if (e.key === 'Enter' && e.target === e.currentTarget) openTask(x.id, ctx); if (e.key === ' ' && e.target === e.currentTarget) { e.preventDefault(); cb.checked = !cb.checked; toggleDone(x, cb.checked, ctx, row); } } },

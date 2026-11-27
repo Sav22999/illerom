@@ -94,7 +94,7 @@ sav-menu-item.over, sav-breadcrumb-item.over { outline: 2px dashed var(--sav-col
 .tic.img { position: absolute; inset: 0; } .tic.img img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .tic.app img { border-radius: 11px; filter: drop-shadow(0 4px 10px rgb(10 40 70 / .18)); }
 .cglobe { position: absolute; right: .45rem; bottom: .45rem; width: 1.7rem; height: 1.7rem; display: grid; place-items: center; border-radius: 50%; background: rgb(255 255 255 / .94); color: #14202b; box-shadow: var(--sav-shadow-sm); font-size: .9rem; }
-.starb { opacity: 0; transition: opacity .15s; } .dcard:hover .starb, .drow:hover .starb, .starb.on, .starb:focus-within { opacity: 1; } .starb.on sav-button { color: #e0a100; }
+.starb { opacity: 0; transition: opacity .15s; } .dcard:hover .starb, .drow:hover .starb, .starb.on, .starb:focus-within { opacity: 1; } .starb:focus-visible { opacity: 1; }
 /* rows */
 .dlist { display: grid; background: var(--card); border: 1px solid var(--sav-color-border); border-radius: 16px; overflow: hidden; }
 .lhead, .drow { display: grid; grid-template-columns: 2.4rem minmax(0, 1fr) 9.5rem 6.5rem 5.2rem; align-items: center; gap: .6rem; padding: 0 .5rem 0 .8rem; }
@@ -178,3 +178,21 @@ sav-menu-item.over, sav-breadcrumb-item.over { outline: 2px dashed var(--sav-col
   .urow2 { grid-template-columns: auto minmax(0, 1fr); } .ustate { grid-column: 2; flex-direction: row; }
   .credit .langs { margin-left: 0; }
 }
+/* the space, app by app (one space for the whole of SavOffice) */
+.qparts { list-style: none; margin: .3rem 0 0; padding: 0; display: grid; gap: .25rem; font-size: .78rem; color: var(--sav-color-text-muted); }
+.qparts li { display: flex; align-items: center; gap: .4rem; min-width: 0; } .qparts img { border-radius: 4px; flex: none; } .qparts span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .qparts b { font-weight: 600; color: var(--sav-color-text); }
+.qparts.row { display: flex; flex-wrap: wrap; gap: .2rem .8rem; } .qparts.row span { flex: none; }
+@media (max-width: 900px) { .quota .qparts { display: none; } }
+/* sharing: levels, people, comments */
+.rtag, .ptag { display: inline-flex; align-items: center; gap: .25rem; flex: none; font-size: .72rem; font-weight: 600; color: var(--sav-color-text-muted); padding: .1rem .45rem; border-radius: 99px; background: var(--sav-color-surface-2); white-space: nowrap; }
+.ptag { padding: .25rem; color: var(--sav-color-primary); }
+.rtag sav-icon, .ptag sav-icon { font-size: .8rem; }
+.dcard.viewonly, .drow.viewonly { opacity: .62; } .dcard.viewonly .dthumb { filter: grayscale(.6); }
+.crumbwrap { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; } .lvl { flex: none; }
+.pbox { display: grid; gap: .8rem; } .padd { display: flex; gap: .5rem; align-items: center; } .padd .lvsel, .prow2 .lvsel { width: 10.5rem; flex: none; }
+.ph { font-size: .9rem; margin: .4rem 0 0; } .plist2 { display: grid; gap: .1rem; max-height: 46vh; overflow: auto; }
+.prow2 { display: flex; align-items: center; gap: .7rem; padding: .45rem 0; border-bottom: 1px solid var(--sav-color-border); } .prow2:last-child { border-bottom: 0; }
+.pwho { flex: 1; min-width: 0; display: grid; line-height: 1.3; } .pwho b, .pwho small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .pwho b { font-weight: 600; }
+.clist { display: grid; gap: .7rem; max-height: 46vh; overflow: auto; } .cm { display: flex; gap: .6rem; align-items: flex-start; } .cmb { flex: 1; min-width: 0; } .cmh { display: flex; align-items: center; gap: .5rem; } .cmb p { margin: .15rem 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (max-width: 640px) { .padd { flex-wrap: wrap; } .padd .lvsel, .prow2 .lvsel { width: 100%; } .prow2 { flex-wrap: wrap; } .rtag span { display: none; } }
+.dname .rtag, .dname .ptag { justify-self: start; margin-top: .2rem; }

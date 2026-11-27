@@ -3,7 +3,7 @@ import { btn, dialog, fail, h, mobile, put, select, toast } from './ui.js';
 import { getLang, setLang, t } from './i18n.js';
 import { S, api } from './store.js';
 import { brand, credit, go, prefs, setPrefs, setUser, signOut, userMenu } from './account.js';
-import { bytes } from './drive.js';
+import { bytes, spaceParts } from './drive.js';
 
 export function settingsScreen(root, want = '') {
   const u = S.user, p = prefs(), md = { size: 'sm' };
@@ -28,7 +28,7 @@ export function settingsScreen(root, want = '') {
   const space = () => {
     const pc = u.quota ? Math.min(100, (u.used / u.quota) * 100) : 0;
     return section(t('space'), t('space_t'),
-      h('div.orow', h('div.orow-t', h('b', t('space_used', { used: bytes(u.used), quota: bytes(u.quota) })), h('sav-progress-bar', { value: Math.max(pc, u.used ? 1 : 0), max: 100, 'aria-label': t('space') }), h('small', t('space_more')))),
+      h('div.orow', h('div.orow-t', h('b', t('space_used', { used: bytes(u.used), quota: bytes(u.quota) })), h('sav-progress-bar', { value: Math.max(pc, u.used ? 1 : 0), max: 100, 'aria-label': t('space') }), Object.keys(u.parts || {}).length ? h('ul.qparts', spaceParts(u.parts)) : null, h('small', t('space_more')))),
       row(t('trash'), t('space_trash'), small(t('trash'), { icon: 'trash-2', onclick: () => go('#/trash') })));
   };
 

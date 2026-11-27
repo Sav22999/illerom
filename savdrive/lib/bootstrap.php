@@ -18,7 +18,7 @@ declare(strict_types=1);
 
 const APP_NAME = 'SavDrive';
 const AUTH_COOKIE = 'savdrive_auth';
-const SCHEMA_VERSION = 3; // 2: uploads.replace_id (an app of SavOffice saves its file back into the drive) · 3: usage (the space used by the other apps)
+const SCHEMA_VERSION = 4; // 2: uploads.replace_id (an app of SavOffice saves its file back into the drive) · 3: usage (the space used by the other apps) · 4: shares, comments, nodes.created_by
 const LANGS = ['en', 'it'];
 const GB = 1073741824;
 const DEFAULT_QUOTA = 2 * GB;          // until the admins choose another one
@@ -472,3 +472,4 @@ function iso(?string $utc): ?string
 
 require_once __DIR__ . '/mail.php';
 require_once __DIR__ . '/files.php';
+require_once __DIR__ . '/access.php';

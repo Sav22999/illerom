@@ -75,6 +75,7 @@ const T = {
   current_v: ["current version","versione attuale"],
   err_server: ["Something went wrong. Try again in a moment.","Qualcosa è andato storto. Riprova tra poco."],
   err_network: ["No connection.","Nessuna connessione."],
+  err_quota: ["Your space of SavOffice is full (one for every app, the space of SavDrive): free some to save more.","Il tuo spazio di SavOffice è pieno (uno per tutte le app, quello di SavDrive): liberane un po’ per salvare altro."],
   err_not_installed: ["The database is not configured yet.","Il database non è ancora configurato."],
   err_unauthenticated: ["Sign in again.","Accedi di nuovo."],
   err_disabled: ["This account is blocked.","Questo account è bloccato."],

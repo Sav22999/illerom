@@ -74,6 +74,10 @@ const MAIL_TEXT = [
         'hello' => 'Hi {name},', 'hello_plain' => 'Hi,',
         'active_subject' => 'Your SavDrive account is active', 'active_title' => 'Your account is active',
         'active_body' => 'An administrator has activated your account: your {quota} of space are ready.', 'active_button' => 'Open SavDrive',
+        'dshare_subject' => '{by} shared “{name}” with you', 'dshare_title' => 'Something shared with you',
+        'dshare_body' => '{by} shared “{name}” with you in SavDrive. You can: {role}.', 'dshare_button' => 'Open in SavDrive',
+        'dshare_signup' => 'Sign in, or create an account of SavDrive with this email address, to open it.',
+        'levels' => ['view' => 'see that it exists', 'read' => 'open and download it', 'comment' => 'open it and comment', 'write' => 'open, comment and change it', 'move' => 'open, comment, change and move', 'delete' => 'open, comment, change, move and delete'],
     ],
     'it' => [
         'footer' => 'Email automatica inviata da SavDrive. Non rispondere a questo messaggio.',
@@ -86,6 +90,10 @@ const MAIL_TEXT = [
         'hello' => 'Ciao {name},', 'hello_plain' => 'Ciao,',
         'active_subject' => 'Il tuo account SavDrive è attivo', 'active_title' => 'Il tuo account è attivo',
         'active_body' => 'Un amministratore ha attivato il tuo account: i tuoi {quota} di spazio sono pronti.', 'active_button' => 'Apri SavDrive',
+        'dshare_subject' => '{by} ha condiviso con te «{name}»', 'dshare_title' => 'Qualcosa condiviso con te',
+        'dshare_body' => '{by} ha condiviso con te «{name}» in SavDrive. Puoi: {role}.', 'dshare_button' => 'Apri in SavDrive',
+        'dshare_signup' => 'Accedi, o crea un account SavDrive con questo indirizzo email, per aprirlo.',
+        'levels' => ['view' => 'vedere che esiste', 'read' => 'aprirlo e scaricarlo', 'comment' => 'aprirlo e commentarlo', 'write' => 'aprirlo, commentarlo e modificarlo', 'move' => 'aprirlo, commentarlo, modificarlo e spostarlo', 'delete' => 'aprirlo, commentarlo, modificarlo, spostarlo ed eliminarlo'],
     ],
 ];
 

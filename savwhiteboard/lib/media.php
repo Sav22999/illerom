@@ -76,7 +76,7 @@ function store_picture(int $userId, string $bytes, string $name, string $credit 
         $bytes = (string)ob_get_clean();
     }
     if (strlen($bytes) > MAX_IMAGE_BYTES) fail('image_big', 413);
-    if (media_used($userId) + strlen($bytes) > (int)config_value('quota')) fail('quota', 413);
+    if (function_exists('space_allows_id') ? !space_allows_id($userId, strlen($bytes)) : media_used($userId) + strlen($bytes) > (int)config_value('quota')) fail('quota', 413); // the space of SavOffice
     $id = bin2hex(random_bytes(16));
     $file = media_path($id);
     if (!is_dir(dirname($file)) && !@mkdir(dirname($file), 0755, true) && !is_dir(dirname($file))) throw new RuntimeException('storage folder not writable');

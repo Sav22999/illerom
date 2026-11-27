@@ -93,23 +93,51 @@ $ico = fn(string $slug, int $size = 48): string => '<img src="/' . $slug . '/ico
 <?php endif; ?>
     <meta name="theme-color" content="#f6f5f3" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#121214" media="(prefers-color-scheme: dark)">
-    <link rel="canonical" href="<?= $pageUrl ?>">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <link rel="canonical" href="<?= $pageUrl ?>?lang=<?= $lang ?>">
     <link rel="alternate" hreflang="it" href="<?= $pageUrl ?>?lang=it">
     <link rel="alternate" hreflang="en" href="<?= $pageUrl ?>?lang=en">
+    <link rel="alternate" hreflang="x-default" href="<?= $pageUrl ?>">
     <link rel="icon" href="<?= $app ? "/$app/icons/favicon.svg" : '/savoffice/icons/favicon.svg' ?>" type="image/svg+xml">
     <link rel="icon" href="/savoffice/icons/favicon-32.png" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="/savoffice/icons/apple-touch-icon.png">
-    <!-- the picture of a shared link: 1200 × 630, the mark, the words of the hero and the icons of the apps -->
+    <!-- the picture of a shared link: 1200 × 630, one per language (tools/og.sh): the mark, the words of the hero and the icons of the apps -->
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Illerom">
     <meta property="og:title" content="<?= $app ? $h($projects[$app]['name']) . ' · SavOffice' : 'SavOffice' ?>">
     <meta property="og:description" content="<?= $L('Un ufficio libero, aperto, tuo: ' . $n . ' app gratuite e open source che lavorano insieme.', 'A free, open office of your own: ' . $n . ' free, open-source apps that work together.') ?>">
-    <meta property="og:url" content="<?= $pageUrl ?>">
-    <meta property="og:image" content="https://www.illerom.eu/savoffice/og.png?v=2">
+    <meta property="og:url" content="<?= $pageUrl ?>?lang=<?= $lang ?>">
+    <meta property="og:image" content="https://www.illerom.eu/savoffice/og-<?= $lang ?>.png?v=<?= @filemtime(__DIR__ . "/og-$lang.png") ?>">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:alt" content="SavOffice: <?= $L('un ufficio libero, aperto, tuo', 'a free, open office of your own') ?>">
     <meta name="twitter:card" content="summary_large_image">
+<?php
+// structured data for search engines and AI assistants: the suite and its apps, or one app with its breadcrumb
+$site = 'https://www.illerom.eu';
+$person = ['@type' => 'Person', '@id' => 'https://www.saveriomorelli.com/#person', 'name' => 'Saverio Morelli', 'url' => 'https://www.saveriomorelli.com/'];
+$appLd = function (string $s) use ($projects, $lang, $site, $person, $files): array {
+    $P = $projects[$s];
+    $x = ['@type' => 'WebApplication', '@id' => "$site/savoffice/$s/#app", 'name' => $P['name'], 'url' => $site . $P['url'], 'headline' => $P[$lang][0],
+        'description' => $P[$lang][1], 'featureList' => $P[$lang][2], 'applicationCategory' => 'BusinessApplication', 'applicationSuite' => 'SavOffice',
+        'operatingSystem' => 'Web', 'inLanguage' => $P['langs'], 'isAccessibleForFree' => true, 'image' => is_file(dirname(__DIR__) . "/assets/projects/$s.png") ? "$site/assets/projects/$s.png" : "$site/$s/icons/favicon.svg",
+        'offers' => ['@type' => 'Offer', 'price' => '0', 'priceCurrency' => 'EUR'], 'author' => $person, 'sameAs' => ['https://github.com/Sav22999/illerom/tree/main/' . $P['source']],
+        'mainEntityOfPage' => "$site/savoffice/$s/?lang=$lang"];
+    if (!empty($files[$s])) $x['fileFormat'] = $files[$s];
+    if (($d = (int)($P['desk'] ?? 0)) > 0) $x['screenshot'] = array_map(fn($j) => "$site/assets/projects/$s/d$j.jpg", range(1, $d));
+    return $x;
+};
+$graph = $app
+    ? [$appLd($app), ['@type' => 'BreadcrumbList', 'itemListElement' => [
+        ['@type' => 'ListItem', 'position' => 1, 'name' => 'Illerom', 'item' => "$site/$lang/"],
+        ['@type' => 'ListItem', 'position' => 2, 'name' => 'SavOffice', 'item' => "$site/savoffice/?lang=$lang"],
+        ['@type' => 'ListItem', 'position' => 3, 'name' => $projects[$app]['name'], 'item' => "$site/savoffice/$app/?lang=$lang"]]]]
+    : [['@type' => 'CollectionPage', 'url' => "$site/savoffice/?lang=$lang", 'name' => 'SavOffice', 'inLanguage' => $lang, 'isPartOf' => ['@type' => 'WebSite', '@id' => "$site/#website", 'name' => 'Illerom', 'url' => "$site/"],
+        'description' => $it ? "SavOffice: $n app gratuite e open source che lavorano insieme, con un solo account e i dati nell’Unione europea." : "SavOffice: $n free, open-source apps that work together, with one account and the data in the European Union.",
+        'primaryImageOfPage' => "$site/savoffice/og-$lang.png", 'author' => $person,
+        'mainEntity' => ['@type' => 'ItemList', 'name' => 'SavOffice', 'numberOfItems' => $n, 'itemListElement' => array_map(fn($i, $s) => ['@type' => 'ListItem', 'position' => $i + 1, 'item' => $appLd($s)], array_keys(array_keys($apps)), array_keys($apps))]]];
+?>
+    <script type="application/ld+json"><?= json_encode(['@context' => 'https://schema.org', '@graph' => $graph], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?></script>
     <!-- SavComponents (the same copy as Illerom): sav-image enlarges the screenshots -->
 <?php $v = fn(string $f) => '/assets/sav/' . $f . '?v=' . @filemtime(dirname(__DIR__) . '/assets/sav/' . $f); ?>
     <link rel="stylesheet" href="<?= $v('sav.css') ?>">

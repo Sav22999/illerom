@@ -138,6 +138,11 @@ function copy_images(array $doc, int $fromDoc, int $toDoc, int $owner): array
 
 function check_image_quota(int $owner, int $bytes): void
 {
+    // one space for the whole of SavOffice, the space of SavDrive (../savdrive/lib/space.php), of the owner of the document
+    if (function_exists('space_allows_id')) {
+        if (!space_allows_id($owner, $bytes)) fail('quota', 413);
+        return;
+    }
     $st = db()->prepare('SELECT COALESCE(SUM(i.bytes),0) FROM ' . t('images') . ' i JOIN ' . t('documents') . ' d ON d.id = i.doc_id WHERE d.owner_id = ?');
     $st->execute([$owner]);
     if ((int)$st->fetchColumn() + $bytes > MAX_USER_IMAGE_BYTES) fail('image_quota', 413);

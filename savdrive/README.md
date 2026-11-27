@@ -15,6 +15,8 @@ SavOffice opened in their app. <https://www.illerom.eu/savdrive/>
 |------------------------------|---------------------------------------------------------------------------------------|
 | `api/index.php`              | JSON API (the actions are listed at its top)                                          |
 | `lib/bootstrap.php`          | Configuration, sessions, space (`user_quota`, `user_used`) and activation             |
+| `lib/access.php`             | Who can do what: levels by folder, inherited below, with exceptions                    |
+| `lib/space.php`              | One space for the whole of SavOffice: required by the API of every app                |
 | `lib/files.php`              | Storage on disk, the tree of folders, names, trash, sending files with ranges        |
 | `assets/drive.js`            | The drive: side menu, folders, cards and rows, selection, uploads, moving, previews   |
 | `assets/admin.js`            | The panel of the master admins                                                        |
@@ -35,9 +37,20 @@ SavOffice opened in their app. <https://www.illerom.eu/savdrive/>
 
 ## How it works
 
-- **Space**: every account has the default space (meta `default_quota`, 2 GB at the start) or one of its own
-  (`users.quota`). Files in the trash and uploads under way count. `upload.start` refuses a file that does not fit before
-  anything travels; an account that is already over its space keeps its files but cannot upload or copy.
+- **One space for the whole of SavOffice**: a person (the same email) has one space, the one of SavDrive: the default one
+  (meta `default_quota`, 2 GB at the start) or one of their own (`quotas`, by email, also for people without an account
+  here). It counts the files of SavDrive (the trash and the uploads under way too) and what the person keeps in every other
+  app, even if their account of SavDrive is not activated or does not exist. `lib/space.php` is required by the API of
+  every app: its `writer()` refuses (`quota`, 413) a write that would go beyond the space (deleting, trash, sign-in and admin
+  always pass) and then reports what the app keeps for that person into `usage`; its `reader()` keeps that count fresh. The
+  apps show this space instead of their old limits; SavDrive shows it app by app (sidebar, settings, admin panel).
+  If SavDrive cannot be reached nothing is refused.
+- **People and levels** (`lib/access.php`): the owner gives people (by email, also without an account yet) a level on a
+  file or folder: view (sees it exists, cannot open it), read, comment, write, move, delete; or none, an exception. A level
+  on a folder holds for everything inside it until a nearer level for the same person changes it (`shares`). What people
+  create in a folder of somebody else belongs to its owner and counts in the owner's space (`nodes.created_by` says who made
+  it); what they delete goes to the owner's trash. Only the owner manages people, links, stars and the trash.
+  "Shared with me" lists the highest things a person can reach. Comments (`comments`) from the level "comment" up.
 - **Activation**: `users.activated`. New accounts are activated at once or wait, as the admins choose (meta
   `default_active`). Waiting accounts can sign in, see that they wait and delete themselves; an activated account gets an
   email. Deactivating signs the account out everywhere. Masters (`$master_emails`) are always activated.

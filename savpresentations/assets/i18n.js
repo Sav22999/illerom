@@ -569,7 +569,7 @@ sort_title|Title|Titolo
 sort_updated|Last change|Ultima modifica
 source|Source|Fonte
 source_site|Where to search (one or more)|Dove cercare (uno o più)
-space|Total space for pictures and videos|Spazio totale per immagini e video
+space|Space of SavOffice (shared with SavDrive)|Spazio di SavOffice (condiviso con SavDrive)
 space_used|{a} of {b}|{a} di {b}
 speaker_notes|Speaker notes|Note del relatore
 speaker_notes_t|Seen by editors and in the presenter view.|Le vedono gli editor, e tu nella vista relatore.
@@ -965,7 +965,7 @@ err_network|No connection|Nessuna connessione
 err_not_installed|The app is not configured yet|L’app non è ancora configurata
 err_password_long|The password is too long|La password è troppo lunga
 err_password_short|The password needs at least 8 characters|La password deve avere almeno 8 caratteri
-err_quota|Your space is full: delete some pictures|Lo spazio è pieno: elimina qualche immagine
+err_quota|Your space of SavOffice is full (one for every app, the space of SavDrive): free some to save more.|Il tuo spazio di SavOffice è pieno (uno per tutte le app, quello di SavDrive): liberane un po’ per salvare altro.
 err_rate_limited|Too many attempts: wait a little|Troppi tentativi: aspetta un po’
 err_search_expired|Search again, please|Ripeti la ricerca
 err_search_failed|The portal does not answer: try another one|Il portale non risponde: provane un altro

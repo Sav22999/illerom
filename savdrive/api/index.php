@@ -8,6 +8,8 @@
  *               node.trash, node.restore, node.delete, trash.empty, node.share
  * Files:        file.get (GET: the file itself; inline=1 shows it in the page when it is safe), upload.start,
  *               upload.chunk (the piece is the body), upload.cancel
+ * People:       people.get, people.set (levels by folder, inherited below, with exceptions: lib/access.php), drive.list?in=withme
+ * Comments:     comment.list, comment.add, comment.delete
  * Shared links: pub.info, pub.get (anyone with the link, files only)
  * Master admin: master.overview, master.settings, master.users, master.activate, master.quota, master.delete
  *
@@ -37,11 +39,13 @@ if (!credentials()) fail('not_installed', 503);
 if ($r === 'file.get') {
     $u = current_user();
     $n = $u && $u['status'] === 'active' && is_activated($u) ? node_by_uid((string)($_GET['id'] ?? '')) : null;
-    if (!$n || (int)$n['user_id'] !== (int)$u['id'] || $n['kind'] !== 'file') {
+    // the owner, or who can at least read it (lib/access.php), while it is not in the trash
+    $role = $n && $n['kind'] === 'file' ? node_role($u, $n) : null;
+    if (!$role || ($role !== 'owner' && ($n['trashed_at'] || level($role) < level('read') || !owner_active((int)$n['user_id'])))) {
         http_response_code(404);
         exit;
     }
-    if (empty($_GET['inline']) || !empty($_GET['open'])) db()->prepare('UPDATE ' . t('nodes') . ' SET opened_at = ? WHERE id = ?')->execute([now_utc(), $n['id']]);
+    if ($role === 'owner' && (empty($_GET['inline']) || !empty($_GET['open']))) db()->prepare('UPDATE ' . t('nodes') . ' SET opened_at = ? WHERE id = ?')->execute([now_utc(), $n['id']]);
     stream_file(blob_path((int)$n['user_id'], (string)$n['bkey']), (string)$n['name'], (string)$n['mime'], !empty($_GET['inline']));
 }
 
@@ -139,6 +143,30 @@ function own_nodes(array $u): array
     $ids = body()['ids'] ?? (isset(body()['id']) ? [body()['id']] : []);
     if (!is_array($ids) || !$ids || count($ids) > 500) fail('bad_request', 422);
     return array_map(fn($id) => own_node($u, $id), array_values(array_unique(array_filter($ids, 'is_string'))));
+}
+
+/** Items for the browser, with what this person can do: role and owner for what belongs to others, people for the owner. */
+function out_items(array $u, array $rows, array $extra = []): array
+{
+    $counts = share_counts(array_map(fn($n) => (int)$n['id'], array_filter($rows, fn($n) => (int)$n['user_id'] === (int)$u['id'])));
+    $names = names_by_id(array_merge(array_column($rows, 'user_id'), array_column($rows, 'created_by')));
+    return array_map(function ($n) use ($u, $counts, $names, $extra) {
+        $mine = (int)$n['user_id'] === (int)$u['id'];
+        $x = out_node($n, $extra[(int)$n['id']] ?? []);
+        $x['role'] = $mine ? 'owner' : ($n['role'] ?? node_role($u, $n));
+        if (!$mine) $x['owner'] = $names[(int)$n['user_id']] ?? '';
+        if ($mine) $x['people'] = $counts[(int)$n['id']] ?? 0;
+        if (!empty($n['created_by']) && (int)$n['created_by'] !== (int)$n['user_id']) $x['by'] = $names[(int)$n['created_by']] ?? '';
+        return $x;
+    }, $rows);
+}
+
+/** The ids of a request (one or many) that this person can reach with at least $need (lib/access.php). */
+function reach_nodes(array $u, string $need): array
+{
+    $ids = body()['ids'] ?? (isset(body()['id']) ? [body()['id']] : []);
+    if (!is_array($ids) || !$ids || count($ids) > 500) fail('bad_request', 422);
+    return array_map(fn($id) => reach_node($u, $id, $need), array_values(array_unique(array_filter($ids, 'is_string'))));
 }
 
 function drive_space(array $u): array
@@ -361,16 +389,47 @@ switch ($r) {
         } elseif ($where === 'trash') {
             $st = db()->prepare("SELECT * FROM $T WHERE user_id = ? AND trash_root = 1 AND trashed_at IS NOT NULL ORDER BY trashed_at DESC LIMIT 2000");
             $st->execute([$u['id']]);
+        } elseif ($where === 'withme') {
+            // what other people share with this person: the highest things they can reach (what is inside is reached from there)
+            $st = db()->prepare("SELECT n.*, s.role FROM " . t('shares') . " s JOIN $T n ON n.id = s.node_id JOIN " . t('users') . " o ON o.id = n.user_id
+                WHERE s.email = ? AND s.role <> 'none' AND n.trashed_at IS NULL AND n.user_id <> ? AND o.status = 'active' AND o.activated = 1 ORDER BY n.kind = 'file', n.name LIMIT 2000");
+            $st->execute([mb_strtolower((string)$u['email']), $u['id']]);
         } else {
-            $f = target_folder($u, $where);
-            if ($f) $path = array_map(fn($p) => ['id' => $p['uid'], 'name' => $p['name']], node_path($f));
+            $f = $where === 'root' ? null : reach_folder($u, $where, 'read');
+            $owner = $f ? (int)$f['user_id'] : (int)$u['id'];
+            $folderRole = $f ? $f['role'] : 'owner';
+            if ($f && $owner === (int)$u['id']) $path = array_map(fn($p) => ['id' => $p['uid'], 'name' => $p['name']], node_path($f));
+            elseif ($f) {
+                // somebody else's folder: the path from the highest folder this person can open
+                $roles = tree_roles($u, $owner);
+                $path = [];
+                foreach (array_reverse(node_path($f)) as $p) {
+                    if (level($roles[(int)$p['id']] ?? null) < level('read')) break;
+                    array_unshift($path, ['id' => $p['uid'], 'name' => $p['name']]);
+                }
+            }
             $st = db()->prepare("SELECT * FROM $T WHERE user_id = ? AND parent_id " . ($f ? '= ' . (int)$f['id'] : 'IS NULL') . " AND trashed_at IS NULL ORDER BY kind = 'file', name LIMIT 5000");
-            $st->execute([$u['id']]);
+            $st->execute([$owner]);
         }
         $rows = $st->fetchAll();
+        if (!empty($roles) || (isset($owner) && $owner !== (int)$u['id'])) {
+            // inside a folder of somebody else: only what this person has a level on (an exclusion hides it)
+            $roles ??= tree_roles($u, $owner);
+            $rows = array_values(array_filter(array_map(function ($n) use ($roles) { $n['role'] = $roles[(int)$n['id']] ?? null; return $n; }, $rows), fn($n) => $n['role'] !== null));
+        }
+        if ($where === 'withme') {
+            // a thing inside another shared thing is reached from there
+            $rows = array_values(array_filter($rows, function ($n) use ($u) {
+                if ($n['parent_id'] === null) return true;
+                $st = db()->prepare('SELECT * FROM ' . t('nodes') . ' WHERE id = ?');
+                $st->execute([$n['parent_id']]);
+                $p = $st->fetch();
+                return !$p || level(node_role($u, $p)) < level('read');
+            }));
+        }
         // where each item is, for the views that mix folders
         $parents = [];
-        if ($q !== '' || in_array($where, ['starred', 'recent', 'shared', 'trash'], true)) {
+        if ($q !== '' || in_array($where, ['starred', 'recent', 'shared', 'trash', 'withme'], true)) {
             $ids = array_values(array_unique(array_filter(array_map(fn($n) => $n['parent_id'], $rows))));
             if ($ids) {
                 $s2 = db()->query("SELECT id, uid, name FROM $T WHERE id IN (" . implode(',', array_map('intval', $ids)) . ')');
@@ -379,9 +438,9 @@ switch ($r) {
         }
         // the size of the folders: what is inside them, at any depth (one query for the whole account)
         $sizes = [];
-        if (array_filter($rows, fn($n) => $n['kind'] === 'folder')) {
+        foreach (array_unique(array_map(fn($n) => (int)$n['user_id'], array_filter($rows, fn($n) => $n['kind'] === 'folder'))) as $treeOwner) {
             $s3 = db()->prepare("SELECT id, parent_id, kind, size FROM $T WHERE user_id = ? AND trashed_at IS NULL" . ($where === 'trash' ? ' OR (user_id = ? AND trashed_at IS NOT NULL)' : ''));
-            $s3->execute($where === 'trash' ? [$u['id'], $u['id']] : [$u['id']]);
+            $s3->execute($where === 'trash' ? [$treeOwner, $treeOwner] : [$treeOwner]);
             $kids = [];
             $own = [];
             foreach ($s3->fetchAll() as $n) {
@@ -398,59 +457,75 @@ switch ($r) {
                 }
                 return [$b, $c];
             };
-            foreach ($rows as $n) if ($n['kind'] === 'folder') $sizes[(int)$n['id']] = $sum((int)$n['id']);
+            foreach ($rows as $n) if ($n['kind'] === 'folder' && (int)$n['user_id'] === $treeOwner) $sizes[(int)$n['id']] = $sum((int)$n['id']);
         }
-        $items = array_map(function ($n) use ($parents, $sizes) {
-            $x = out_node($n, $n['parent_id'] !== null && isset($parents[(int)$n['parent_id']]) ? ['parent' => $parents[(int)$n['parent_id']]] : []);
-            if ($n['kind'] === 'folder') [$x['size'], $x['count']] = $sizes[(int)$n['id']] ?? [0, 0];
+        $extra = [];
+        foreach ($rows as $n) if ($n['parent_id'] !== null && isset($parents[(int)$n['parent_id']]) && (int)$n['user_id'] === (int)$u['id']) $extra[(int)$n['id']] = ['parent' => $parents[(int)$n['parent_id']]];
+        $items = array_map(function ($x) use ($sizes, $rows) {
+            if ($x['kind'] === 'folder') { $row = array_values(array_filter($rows, fn($n) => $n['uid'] === $x['id']))[0] ?? null; [$x['size'], $x['count']] = $row ? ($sizes[(int)$row['id']] ?? [0, 0]) : [0, 0]; }
             return $x;
-        }, $rows);
-        send_json(['ok' => true, 'items' => $items, 'path' => $path] + drive_space($u));
+        }, out_items($u, $rows, $extra));
+        send_json(['ok' => true, 'items' => $items, 'path' => $path, 'role' => $folderRole ?? 'owner', 'sharedRoot' => isset($owner) && $owner !== (int)$u['id']] + drive_space($u));
 
     case 'drive.folders':
         // Every folder of the account, for choosing where to move things
+        // ?in=<id of a thing of somebody else>: the folders of that tree where this person can move things
         $u = reader();
-        $st = db()->prepare('SELECT n.uid, n.name, n.color, p.uid parent FROM ' . t('nodes') . ' n LEFT JOIN ' . t('nodes') . " p ON p.id = n.parent_id WHERE n.user_id = ? AND n.kind = 'folder' AND n.trashed_at IS NULL ORDER BY n.name LIMIT 5000");
-        $st->execute([$u['id']]);
-        send_json(['ok' => true, 'folders' => array_map(fn($f) => ['id' => $f['uid'], 'name' => $f['name'], 'color' => $f['color'], 'parent' => $f['parent']], $st->fetchAll())]);
+        $ctx = !empty($_GET['in']) ? reach_node($u, (string)$_GET['in'], 'view') : null;
+        $owner = $ctx ? (int)$ctx['user_id'] : (int)$u['id'];
+        $st = db()->prepare('SELECT n.id, n.uid, n.name, n.color, p.uid parent FROM ' . t('nodes') . ' n LEFT JOIN ' . t('nodes') . " p ON p.id = n.parent_id WHERE n.user_id = ? AND n.kind = 'folder' AND n.trashed_at IS NULL ORDER BY n.name LIMIT 5000");
+        $st->execute([$owner]);
+        $list = $st->fetchAll();
+        if ($owner !== (int)$u['id']) {
+            $roles = tree_roles($u, $owner);
+            $list = array_map(function ($f) use ($roles) { $f['can'] = level($roles[(int)$f['id']] ?? null) >= level('move'); $f['seen'] = isset($roles[(int)$f['id']]); return $f; }, $list);
+            $list = array_values(array_filter($list, fn($f) => $f['seen']));
+            $ids = array_column($list, 'uid');
+            $list = array_map(function ($f) use ($ids) { if (!in_array($f['parent'], $ids, true)) $f['parent'] = null; return $f; }, $list);
+        }
+        send_json(['ok' => true, 'mine' => $owner === (int)$u['id'], 'folders' => array_map(fn($f) => ['id' => $f['uid'], 'name' => $f['name'], 'color' => $f['color'], 'parent' => $f['parent'], 'can' => $f['can'] ?? true], $list)]);
 
     case 'folder.create':
         $u = writer();
         $name = clean_name(body()['name'] ?? '');
         if ($name === '') fail('name_required', 422);
-        $parent = target_folder($u, body()['parent'] ?? null);
+        $parent = reach_folder($u, body()['parent'] ?? null, 'write');
+        $owner = $parent ? (int)$parent['user_id'] : (int)$u['id']; // inside a shared folder it belongs to its owner
         if ($parent && count(node_path($parent)) >= MAX_DEPTH) fail('too_deep', 422);
-        if (count_nodes((int)$u['id']) >= MAX_NODES) fail('too_many', 422);
+        if (count_nodes($owner) >= MAX_NODES) fail('too_many', 422);
         $pid = $parent ? (int)$parent['id'] : null;
         $uid = new_uid();
-        db()->prepare('INSERT INTO ' . t('nodes') . " (uid, user_id, parent_id, kind, name, created_at, updated_at) VALUES (?,?,?,'folder',?,?,?)")
-            ->execute([$uid, $u['id'], $pid, free_name((int)$u['id'], $pid, $name), now_utc(), now_utc()]);
+        db()->prepare('INSERT INTO ' . t('nodes') . " (uid, user_id, parent_id, kind, name, created_by, created_at, updated_at) VALUES (?,?,?,'folder',?,?,?,?)")
+            ->execute([$uid, $owner, $pid, free_name($owner, $pid, $name), $u['id'], now_utc(), now_utc()]);
         send_json(['ok' => true, 'item' => out_node(node_by_uid($uid), ['size' => 0, 'count' => 0])]);
 
     case 'node.rename':
         $u = writer();
-        $n = own_node($u, body()['id'] ?? '');
+        $n = reach_node($u, body()['id'] ?? '', 'write');
         $name = clean_name(body()['name'] ?? '');
         if ($name === '') fail('name_required', 422);
         $pid = $n['parent_id'] === null ? null : (int)$n['parent_id'];
-        $name = free_name((int)$u['id'], $pid, $name, (int)$n['id']);
+        $name = free_name((int)$n['user_id'], $pid, $name, (int)$n['id']);
         $mime = $n['kind'] === 'file' ? guess_mime($name, (string)$n['mime']) : '';
         db()->prepare('UPDATE ' . t('nodes') . ' SET name = ?, mime = ?, updated_at = ? WHERE id = ?')->execute([$name, $mime, now_utc(), $n['id']]);
         send_json(['ok' => true, 'item' => out_node(node_by_uid($n['uid']))]);
 
     case 'node.move':
         $u = writer();
-        $nodes = own_nodes($u);
-        $to = target_folder($u, body()['to'] ?? null);
+        // things move inside the tree of their owner: who is not the owner needs "move" on them and on the folder they go to
+        $nodes = reach_nodes($u, 'move');
+        $to = reach_folder($u, body()['to'] ?? null, 'move');
         $toId = $to ? (int)$to['id'] : null;
+        $toOwner = $to ? (int)$to['user_id'] : (int)$u['id'];
         $depth = $to ? count(node_path($to)) : 0;
         db()->beginTransaction();
         foreach ($nodes as $n) {
             if ($n['trashed_at']) fail('in_trash', 409);
-            if ($n['kind'] === 'folder' && $to && in_array((int)$to['id'], subtree_ids((int)$u['id'], (int)$n['id']), true)) fail('move_inside', 422);
+            if ((int)$n['user_id'] !== $toOwner) fail('move_owner', 422);
+            if ($n['kind'] === 'folder' && $to && in_array((int)$to['id'], subtree_ids($toOwner, (int)$n['id']), true)) fail('move_inside', 422);
             if ($n['kind'] === 'folder' && $depth >= MAX_DEPTH) fail('too_deep', 422);
             if ($n['parent_id'] === null ? $toId === null : (int)$n['parent_id'] === $toId) continue;
-            db()->prepare('UPDATE ' . t('nodes') . ' SET parent_id = ?, name = ?, updated_at = ? WHERE id = ?')->execute([$toId, free_name((int)$u['id'], $toId, (string)$n['name'], (int)$n['id']), now_utc(), $n['id']]);
+            db()->prepare('UPDATE ' . t('nodes') . ' SET parent_id = ?, name = ?, updated_at = ? WHERE id = ?')->execute([$toId, free_name($toOwner, $toId, (string)$n['name'], (int)$n['id']), now_utc(), $n['id']]);
         }
         db()->commit();
         send_json(['ok' => true]);
@@ -458,16 +533,18 @@ switch ($r) {
     case 'node.copy':
         // A copy of a file next to it, "Name (2).ext": it counts in the space like any other file
         $u = writer();
-        $n = own_node($u, body()['id'] ?? '', 'file');
+        // next to it, so in the tree (and the space) of its owner
+        $n = reach_node($u, body()['id'] ?? '', 'write', 'file');
         if ($n['trashed_at']) fail('in_trash', 409);
-        if (user_used((int)$u['id'], true) + (int)$n['size'] > user_quota(user_row((int)$u['id']))) fail('quota', 413);
-        if (count_nodes((int)$u['id']) >= MAX_NODES) fail('too_many', 422);
+        $owner = (int)$n['user_id'];
+        if (user_used($owner, true) + (int)$n['size'] > user_quota(user_row($owner))) fail('quota', 413);
+        if (count_nodes($owner) >= MAX_NODES) fail('too_many', 422);
         $key = new_key();
-        if (!@copy(blob_path((int)$u['id'], (string)$n['bkey']), blob_path((int)$u['id'], $key))) throw new RuntimeException('copy failed');
+        if (!@copy(blob_path($owner, (string)$n['bkey']), blob_path($owner, $key))) throw new RuntimeException('copy failed');
         $pid = $n['parent_id'] === null ? null : (int)$n['parent_id'];
         $uid = new_uid();
-        db()->prepare('INSERT INTO ' . t('nodes') . " (uid, user_id, parent_id, kind, name, mime, size, bkey, created_at, updated_at) VALUES (?,?,?,'file',?,?,?,?,?,?)")
-            ->execute([$uid, $u['id'], $pid, free_name((int)$u['id'], $pid, (string)$n['name']), $n['mime'], $n['size'], $key, now_utc(), now_utc()]);
+        db()->prepare('INSERT INTO ' . t('nodes') . " (uid, user_id, parent_id, kind, name, mime, size, bkey, created_by, created_at, updated_at) VALUES (?,?,?,'file',?,?,?,?,?,?,?)")
+            ->execute([$uid, $owner, $pid, free_name($owner, $pid, (string)$n['name']), $n['mime'], $n['size'], $key, $u['id'], now_utc(), now_utc()]);
         send_json(['ok' => true, 'item' => out_node(node_by_uid($uid))] + drive_space($u));
 
     case 'node.star':
@@ -481,17 +558,18 @@ switch ($r) {
         $u = writer();
         $c = (string)(body()['color'] ?? '');
         if ($c !== '' && !preg_match('/^#[0-9a-f]{6}$/', $c)) fail('bad_request', 422);
-        foreach (own_nodes($u) as $n) if ($n['kind'] === 'folder') db()->prepare('UPDATE ' . t('nodes') . ' SET color = ? WHERE id = ?')->execute([$c, $n['id']]);
+        foreach (reach_nodes($u, 'write') as $n) if ($n['kind'] === 'folder') db()->prepare('UPDATE ' . t('nodes') . ' SET color = ? WHERE id = ?')->execute([$c, $n['id']]);
         send_json(['ok' => true]);
 
     case 'node.trash':
         // Into the trash with everything inside; it stays there TRASH_DAYS, still counted in the space
         $u = writer();
         db()->beginTransaction();
-        foreach (own_nodes($u) as $n) {
+        // into the trash of the owner (who can restore it); who is not the owner needs "delete"
+        foreach (reach_nodes($u, 'delete') as $n) {
             if ($n['trashed_at']) continue;
-            $ids = implode(',', subtree_ids((int)$u['id'], (int)$n['id']));
-            db()->prepare('UPDATE ' . t('nodes') . " SET trashed_at = ?, trash_root = 0, share_token = NULL WHERE user_id = ? AND id IN ($ids) AND trashed_at IS NULL")->execute([now_utc(), $u['id']]);
+            $ids = implode(',', subtree_ids((int)$n['user_id'], (int)$n['id']));
+            db()->prepare('UPDATE ' . t('nodes') . " SET trashed_at = ?, trash_root = 0, share_token = NULL WHERE user_id = ? AND id IN ($ids) AND trashed_at IS NULL")->execute([now_utc(), $n['user_id']]);
             db()->prepare('UPDATE ' . t('nodes') . ' SET trash_root = 1 WHERE id = ?')->execute([$n['id']]);
         }
         db()->commit();
@@ -557,6 +635,80 @@ switch ($r) {
         send_json(['ok' => true, 'file' => ['name' => $n['name'], 'mime' => $n['mime'], 'size' => (int)$n['size'], 'updated' => iso($n['updated_at']), 'owner' => $n['owner'],
             'app' => out_node($n)['app']]]);
 
+    // ================================================================ people and their levels (lib/access.php)
+
+    case 'people.get':
+        // ?id=: who can reach a file or folder of this person, here or from a folder above (only the owner manages them)
+        $u = reader();
+        $n = reach_node($u, (string)($_GET['id'] ?? ''), 'owner');
+        send_json(['ok' => true, 'people' => node_people($n)]);
+
+    case 'people.set':
+        // {id, email, role | null, notify}: a level here for a person (none = excluded here and below); null = as from above
+        $u = writer();
+        $b = body();
+        $n = reach_node($u, $b['id'] ?? '', 'owner');
+        if ($n['trashed_at']) fail('in_trash', 409);
+        $email = mb_strtolower(s($b, 'email', 190));
+        valid_email($email);
+        if ($email === mb_strtolower((string)$u['email'])) fail('share_self', 422);
+        $role = $b['role'] ?? null;
+        if ($role !== null && !in_array($role, SHARE_ROLES, true)) fail('bad_request', 422);
+        if ($role === null) db()->prepare('DELETE FROM ' . t('shares') . ' WHERE node_id = ? AND email = ?')->execute([$n['id'], $email]);
+        else {
+            $st = db()->prepare('SELECT COUNT(*) FROM ' . t('shares') . ' WHERE node_id = ?');
+            $st->execute([$n['id']]);
+            if ((int)$st->fetchColumn() >= 200) fail('too_many', 422);
+            $had = node_role(['id' => 0, 'email' => $email], $n);
+            db()->prepare('INSERT INTO ' . t('shares') . ' (node_id, email, role, created_by, created_at) VALUES (?,?,?,?,?) ON DUPLICATE KEY UPDATE role = VALUES(role)')->execute([$n['id'], $email, $role, $u['id'], now_utc()]);
+            // an email to who gets in (not for a change of level or an exclusion)
+            if (!empty($b['notify']) && $role !== 'none' && $had === null && mail_settings() && !too_many_attempts('share_mail', 60, 60)) {
+                record_attempt('share_mail');
+                $st = db()->prepare('SELECT name, ui_lang FROM ' . t('users') . ' WHERE email = ?');
+                $st->execute([$email]);
+                $to = $st->fetch() ?: ['name' => '', 'ui_lang' => (string)($u['ui_lang'] ?? 'en')];
+                $L = in_array($to['ui_lang'], LANGS, true) ? $to['ui_lang'] : 'en';
+                $T = mail_t($L);
+                send_notice($email, (string)$to['name'], $L, fill($T['dshare_subject'], ['by' => $u['name'], 'name' => $n['name']]), $T['dshare_title'],
+                    [$to['name'] ? fill($T['hello'], ['name' => $to['name']]) : $T['hello_plain'], fill($T['dshare_body'], ['by' => $u['name'], 'name' => $n['name'], 'role' => $T['levels'][$role] ?? $role]), $T['dshare_signup']],
+                    app_url() . '#/' . ($n['kind'] === 'folder' ? 'f/' . $n['uid'] : 'withme'), $T['dshare_button']);
+            }
+        }
+        send_json(['ok' => true, 'people' => node_people($n)]);
+
+    // ================================================================ comments (who can at least comment)
+
+    case 'comment.list':
+        $u = reader();
+        $n = reach_node($u, (string)($_GET['id'] ?? ''), 'read');
+        $st = db()->prepare('SELECT c.id, c.user_id, c.body, c.created_at, u.name FROM ' . t('comments') . ' c LEFT JOIN ' . t('users') . ' u ON u.id = c.user_id WHERE c.node_id = ? ORDER BY c.id LIMIT 500');
+        $st->execute([$n['id']]);
+        send_json(['ok' => true, 'role' => $n['role'], 'comments' => array_map(fn($c) => ['id' => (int)$c['id'], 'by' => $c['name'] ?? '', 'body' => $c['body'], 'at' => iso($c['created_at']),
+            'mine' => (int)$c['user_id'] === (int)$u['id'], 'canDelete' => (int)$c['user_id'] === (int)$u['id'] || $n['role'] === 'owner'], $st->fetchAll())]);
+
+    case 'comment.add':
+        $u = writer();
+        $n = reach_node($u, body()['id'] ?? '', 'comment');
+        $text = trim(str_replace(["\r\n", "\r"], "\n", (string)(body()['body'] ?? '')));
+        $text = mb_substr(preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $text) ?? '', 0, 4000);
+        if ($text === '') fail('comment_empty', 422);
+        if (too_many_attempts('comment', 120, 60)) fail('rate_limited', 429);
+        record_attempt('comment');
+        db()->prepare('INSERT INTO ' . t('comments') . ' (node_id, user_id, body, created_at) VALUES (?,?,?,?)')->execute([$n['id'], $u['id'], $text, now_utc()]);
+        send_json(['ok' => true]);
+
+    case 'comment.delete':
+        // its author, or the owner of the file or folder
+        $u = writer();
+        $st = db()->prepare('SELECT c.*, n.uid FROM ' . t('comments') . ' c JOIN ' . t('nodes') . ' n ON n.id = c.node_id WHERE c.id = ?');
+        $st->execute([(int)(body()['id'] ?? 0)]);
+        $c = $st->fetch();
+        if (!$c) fail('not_found', 404);
+        $n = reach_node($u, (string)$c['uid'], 'read');
+        if ((int)$c['user_id'] !== (int)$u['id'] && $n['role'] !== 'owner') fail('forbidden', 403);
+        db()->prepare('DELETE FROM ' . t('comments') . ' WHERE id = ?')->execute([$c['id']]);
+        send_json(['ok' => true]);
+
     // ================================================================ uploads, in pieces
 
     case 'upload.start':
@@ -571,13 +723,15 @@ switch ($r) {
         if ($size < 0) fail('bad_request', 422);
         // replace: the id of a file whose content this upload becomes (its name, folder, star and link stay); the old
         // content stops counting when the new one arrives
-        $old = isset($b['replace']) && $b['replace'] !== null ? own_node($u, $b['replace'], 'file') : null;
+        $old = isset($b['replace']) && $b['replace'] !== null ? reach_node($u, $b['replace'], 'write', 'file') : null;
         if ($old && $old['trashed_at']) fail('in_trash', 409);
-        $parent = $old ? null : target_folder($u, $b['folder'] ?? null);
-        $row = user_row((int)$u['id']);
+        $parent = $old ? null : reach_folder($u, $b['folder'] ?? null, 'write');
+        // what goes into a folder of somebody else belongs to them and counts in their space
+        $owner = $old ? (int)$old['user_id'] : ($parent ? (int)$parent['user_id'] : (int)$u['id']);
+        $row = user_row($owner);
         $quota = user_quota($row);
-        if (user_used((int)$u['id'], true) + $size - ($old ? (int)$old['size'] : 0) > $quota) send_json(['ok' => false, 'error' => 'quota', 'used' => user_used((int)$u['id']), 'quota' => $quota], 413);
-        if (!$old && count_nodes((int)$u['id']) >= MAX_NODES) fail('too_many', 422);
+        if (user_used($owner, true) + $size - ($old ? (int)$old['size'] : 0) > $quota) send_json(['ok' => false, 'error' => 'quota', 'used' => user_used($owner), 'quota' => $quota], 413);
+        if (!$old && count_nodes($owner) >= MAX_NODES) fail('too_many', 422);
         $id = new_key();
         db()->prepare('INSERT INTO ' . t('uploads') . ' (id, user_id, parent_id, name, mime, size, replace_id, created_at, expires_at) VALUES (?,?,?,?,?,?,?,?,?)')
             ->execute([$id, $u['id'], $parent ? $parent['id'] : null, $name, guess_mime($name, (string)($b['mime'] ?? '')), $size, $old ? $old['id'] : null, now_utc(), gmdate('Y-m-d H:i:s', time() + UPLOAD_HOURS * 3600)]);
@@ -625,32 +779,38 @@ switch ($r) {
         // complete: the folder may have gone to the trash meanwhile, then the file lands in My drive
         clearstatcache(true, $part);
         if (filesize($part) !== (int)$up['size']) fail('bad_chunk', 422);
+        // the folder (of this person, or shared with them, still with "write") may have gone meanwhile: then My drive
         $pid = $up['parent_id'] === null ? null : (int)$up['parent_id'];
+        $owner = (int)$u['id'];
         if ($pid !== null) {
-            $s2 = db()->prepare('SELECT trashed_at FROM ' . t('nodes') . ' WHERE id = ? AND user_id = ?');
-            $s2->execute([$pid, $u['id']]);
+            $s2 = db()->prepare('SELECT * FROM ' . t('nodes') . ' WHERE id = ?');
+            $s2->execute([$pid]);
             $p = $s2->fetch();
-            if (!$p || $p['trashed_at']) $pid = null;
+            if (!$p || $p['trashed_at'] || level(node_role($u, $p)) < level('write')) $pid = null;
+            else $owner = (int)$p['user_id'];
+        }
+        $old = null;
+        if ($up['replace_id'] !== null) {
+            $s3 = db()->prepare('SELECT * FROM ' . t('nodes') . " WHERE id = ? AND kind = 'file' AND trashed_at IS NULL FOR UPDATE");
+            $s3->execute([$up['replace_id']]);
+            $old = $s3->fetch() ?: null;
+            if ($old && level(node_role($u, $old)) < level('write')) $old = null;
+            if ($old) $owner = (int)$old['user_id'];
         }
         $key = new_key();
-        if (!@rename($part, blob_path((int)$u['id'], $key))) throw new RuntimeException('cannot store the file');
+        if (!@rename($part, blob_path($owner, $key))) throw new RuntimeException('cannot store the file');
         // the new content of a file that is still there (and not in the trash): same id, name, folder, star and link
-        if ($up['replace_id'] !== null) {
-            $s3 = db()->prepare('SELECT * FROM ' . t('nodes') . " WHERE id = ? AND user_id = ? AND kind = 'file' AND trashed_at IS NULL FOR UPDATE");
-            $s3->execute([$up['replace_id'], $u['id']]);
-            $old = $s3->fetch();
-            if ($old) {
-                db()->prepare('UPDATE ' . t('nodes') . ' SET bkey = ?, size = ?, updated_at = ? WHERE id = ?')->execute([$key, $up['size'], now_utc(), $old['id']]);
-                db()->prepare('DELETE FROM ' . t('uploads') . ' WHERE id = ?')->execute([$id]);
-                db()->commit();
-                if ($old['bkey']) @unlink(blob_path((int)$u['id'], (string)$old['bkey']));
-                send_json(['ok' => true, 'done' => true, 'replaced' => true, 'item' => out_node(node_by_uid((string)$old['uid']))] + drive_space($u));
-            }
-            // gone meanwhile: it becomes a new file in My drive
+        if ($old) {
+            db()->prepare('UPDATE ' . t('nodes') . ' SET bkey = ?, size = ?, updated_at = ? WHERE id = ?')->execute([$key, $up['size'], now_utc(), $old['id']]);
+            db()->prepare('DELETE FROM ' . t('uploads') . ' WHERE id = ?')->execute([$id]);
+            db()->commit();
+            if ($old['bkey']) @unlink(blob_path($owner, (string)$old['bkey']));
+            send_json(['ok' => true, 'done' => true, 'replaced' => true, 'item' => out_node(node_by_uid((string)$old['uid']))] + drive_space($u));
         }
+        // a file to replace that is gone meanwhile (or no longer writable) becomes a new file
         $uid = new_uid();
-        db()->prepare('INSERT INTO ' . t('nodes') . " (uid, user_id, parent_id, kind, name, mime, size, bkey, created_at, updated_at) VALUES (?,?,?,'file',?,?,?,?,?,?)")
-            ->execute([$uid, $u['id'], $pid, free_name((int)$u['id'], $pid, (string)$up['name']), $up['mime'], $up['size'], $key, now_utc(), now_utc()]);
+        db()->prepare('INSERT INTO ' . t('nodes') . " (uid, user_id, parent_id, kind, name, mime, size, bkey, created_by, created_at, updated_at) VALUES (?,?,?,'file',?,?,?,?,?,?,?)")
+            ->execute([$uid, $owner, $pid, free_name($owner, $pid, (string)$up['name']), $up['mime'], $up['size'], $key, $u['id'], now_utc(), now_utc()]);
         db()->prepare('DELETE FROM ' . t('uploads') . ' WHERE id = ?')->execute([$id]);
         db()->commit();
         send_json(['ok' => true, 'done' => true, 'item' => out_node(node_by_uid($uid))] + drive_space($u));

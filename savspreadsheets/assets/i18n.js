@@ -284,6 +284,7 @@ const T = {
   err_image_too_big: ["The image is too big.", "L’immagine è troppo grande."],
   err_name_required: ["Write a name.", "Scrivi un nome."],
   err_network: ["No connection. Try again.", "Connessione assente. Riprova."],
+  err_quota: ["Your space of SavOffice is full (one for every app, the space of SavDrive): free some to save more.", "Il tuo spazio di SavOffice è pieno (uno per tutte le app, quello di SavDrive): liberane un po’ per salvare altro."],
   err_not_installed: ["SavSpreadsheets is not configured on this server yet: credentials.php is missing (see credentials-sample.php).", "SavSpreadsheets non è ancora configurato su questo server: manca credentials.php (vedi credentials-sample.php)."],
   err_offline_missing: ["This spreadsheet is not on this device: open it once with a connection.", "Questo foglio di calcolo non è su questo dispositivo: aprilo una volta con la connessione."],
   err_password_long: ["The password is too long.", "La password è troppo lunga."],

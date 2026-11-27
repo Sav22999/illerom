@@ -9,6 +9,8 @@
     <?php if ($page === 'not-found'): ?>
         <meta name="robots" content="noindex">
     <?php else: ?>
+        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+        <link rel="alternate" type="text/markdown" href="/llms.txt" title="Illerom for language models">
         <link rel="canonical" href="<?= e($site['url'] . $base . $rest) ?>">
         <link rel="alternate" hreflang="it" href="<?= e($site['url'] . '/it/' . $rest) ?>">
         <link rel="alternate" hreflang="en" href="<?= e($site['url'] . '/en/' . $rest) ?>">
@@ -19,7 +21,8 @@
     <meta property="og:site_name" content="Illerom">
     <meta property="og:title" content="<?= e($title) ?>">
     <meta property="og:description" content="<?= e($description) ?>">
-    <meta property="og:image" content="<?= e($site['url']) ?>/assets/brand/og.png">
+    <meta property="og:image" content="<?= e($site['url'] . asset("brand/og-$lang.png")) ?>">
+    <meta property="og:image:alt" content="<?= e('Illerom: ' . str_replace('*', '', $t['h1'])) ?>">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:locale" content="<?= $t['locale'] ?>">
@@ -39,16 +42,7 @@
     <?php if ($page === 'status'): ?>
         <script src="<?= asset('status.js') ?>" defer></script>
     <?php endif; ?>
-    <?php if ($page === 'project' && ($p = $projects[$slug])['url'] !== ''): ?>
-        <script type="application/ld+json"><?= json_encode([
-                    '@context' => 'https://schema.org', '@type' => $p['cat'] === 'games' ? 'VideoGame' : 'WebApplication',
-                    'name' => $p['name'], 'description' => $p[$lang][0], 'inLanguage' => $p['langs'],
-                    'url' => is_external(app_url($slug, $p)) ? app_url($slug, $p) : $site['url'] . app_url($slug, $p),
-                    'author' => ['@type' => 'Person', 'name' => 'Saverio Morelli', 'url' => $site['personal']],
-                    'offers' => ['@type' => 'Offer', 'price' => '0', 'priceCurrency' => 'EUR'],
-                    'operatingSystem' => $p['play'] ? 'Web, Android' : 'Web', 'applicationCategory' => $p['cat'] === 'games' ? 'GameApplication' : 'UtilitiesApplication',
-            ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?></script>
-    <?php endif; ?>
+    <?php if ($page !== 'not-found') require ROOT . '/include/ld.php'; ?>
 </head>
 <body class="sav-base page-<?= $page ?>">
 <a class="skip" href="#main"><?= e($t['skip']) ?></a>

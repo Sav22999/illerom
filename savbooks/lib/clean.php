@@ -206,7 +206,7 @@ function clean_book($b): array
         'cf' => preg_match('/^[A-Za-z0-9][A-Za-z0-9 \-]{0,59}$/', $font) ? $font : '',
         'titlePage' => !array_key_exists('titlePage', $b) || !empty($b['titlePage']), 'copyPage' => !array_key_exists('copyPage', $b) || !empty($b['copyPage']),
         'tocPage' => !array_key_exists('tocPage', $b) || !empty($b['tocPage']),
-        'chap' => in_array($b['chap'] ?? '', ['', 'n', 'w', 'r', 'o'], true) ? $b['chap'] : '', 'indent' => !empty($b['indent']),
+        'chap' => in_array($b['chap'] ?? '', ['n', 'w', 'r', 'o'], true) ? $b['chap'] : '', 'indent' => !empty($b['indent']),
         'uid' => is_string($b['uid'] ?? null) && preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', $b['uid']) ? $b['uid'] : '',
     ];
 }

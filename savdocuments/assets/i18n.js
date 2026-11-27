@@ -100,7 +100,7 @@ const T = {
     on_device_t: ['Documents written in this browser without an account: save them in yours from their menu (⋮), or delete them.', 'Documenti scritti in questo browser senza account: salvali nel tuo dal loro menu (⋮), oppure eliminali.'],
     my_docs: ['My documents', 'I miei documenti'], start_doc: ['Start a document', 'Inizia un documento'], empty_shared: ['Nothing shared with you yet', 'Ancora niente condiviso con te'], my_templates_hint: ['Turn one of your documents into a template from its menu (⋮).', 'Trasforma un tuo documento in modello dal suo menu (⋮).'],
     sort_opened: ['Last opened', 'Ultima apertura'], move_to: ['Move to…', 'Sposta in…'], moved: ['Moved', 'Spostato'], in_trash: ['In the trash', 'Nel cestino'], in_trash_t: ['This document is in the trash. Restore it to open it.', 'Questo documento è nel cestino. Ripristinalo per aprirlo.'],
-    space: ['Space for images', 'Spazio per le immagini'], space_used: ['{a} of {b}', '{a} di {b}'],
+    space: ['Space of SavOffice (shared with SavDrive)', 'Spazio di SavOffice (condiviso con SavDrive)'], space_used: ['{a} of {b}', '{a} di {b}'],
     offline_title: ['Offline', 'Offline'], offline_text: ['Documents opened recently stay on this device: without a connection you can open and change them, and the changes are saved as soon as the connection is back.', 'I documenti aperti di recente restano su questo dispositivo: senza connessione puoi aprirli e modificarli, e le modifiche si salvano appena torna la connessione.'],
     offline_keep: ['Keep my recent documents on this device', 'Tieni i documenti recenti su questo dispositivo'], offline_help: ['At most the last 30. They are removed when you sign out.', 'Al massimo gli ultimi 30. Si tolgono quando esci.'], offline_n: ['{n} documents on this device', '{n} documenti su questo dispositivo'], offline_clear: ['Remove them from this device', 'Toglili da questo dispositivo'],
     offline_on: ['You are offline', 'Sei offline'], offline_on_t: ['You can open and change the documents kept on this device; the changes are saved when the connection is back.', 'Puoi aprire e modificare i documenti tenuti su questo dispositivo; le modifiche si salvano quando torna la connessione.'], not_offline: ['not on this device', 'non su questo dispositivo'], waiting_net: ['Waiting for the connection', 'In attesa della connessione'],
@@ -443,6 +443,7 @@ const T = {
     tp_invoice: ['Quote', 'Preventivo'],
     // errors
     err_network: ['No connection. Try again.', 'Connessione assente. Riprova.'],
+    err_quota: ['Your space of SavOffice is full (one for every app, the space of SavDrive): free some to save more.', 'Il tuo spazio di SavOffice è pieno (uno per tutte le app, quello di SavDrive): liberane un po’ per salvare altro.'],
     err_server: ['Something went wrong. Try again.', 'Qualcosa non ha funzionato. Riprova.'],
     err_bad_credentials: ['Wrong email or password.', 'Email o password non corretti.'],
     err_disabled: ['This account has been blocked.', 'Questo account è stato bloccato.'],

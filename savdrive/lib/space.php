@@ -19,6 +19,8 @@
 declare(strict_types=1);
 
 const SAVSPACE_DEFAULT = 2147483648; // 2 GB, until the admins of SavDrive choose another space
+const SAVSPACE_PAUSE = 60;           // after a failed connection, seconds without trying again (in every app, every request)
+const SAVSPACE_TIMEOUT = 2;          // seconds to wait for the database of SavDrive
 
 /** [PDO, prefix] of the database of SavDrive, or null. */
 function savspace_db(): ?array
@@ -40,11 +42,20 @@ function savspace_db(): ?array
         [$host, $user, $pass, $name, $prefix] = $read($file);
         if (!$env && !is_file($own)) $prefix = 'dr_'; // borrowed from SavDocuments: always the tables of SavDrive
         if (!$host || !$user || !$name || !preg_match('/^[A-Za-z0-9_]{0,20}$/', $prefix)) return null;
+        // a database that did not answer is not asked again for a minute: the apps must not wait at every request
+        $mark = rtrim(sys_get_temp_dir(), '/\\') . '/savoffice-space-' . substr(hash('sha256', "$host|$name|$prefix"), 0, 16) . '.down';
+        if (is_file($mark) && time() - (int)@filemtime($mark) < SAVSPACE_PAUSE) return null;
         $port = 3306;
         if (preg_match('/^(.+):(\d+)$/', $host, $m)) [$host, $port] = [$m[1], (int)$m[2]];
-        $pdo = new PDO(sprintf('mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4', $host, $port, $name), $user, $pass, [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, PDO::ATTR_EMULATE_PREPARES => false, PDO::ATTR_TIMEOUT => 5,
-        ]);
+        try {
+            $pdo = new PDO(sprintf('mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4', $host, $port, $name), $user, $pass, [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, PDO::ATTR_EMULATE_PREPARES => false, PDO::ATTR_TIMEOUT => SAVSPACE_TIMEOUT,
+            ]);
+        } catch (PDOException $e) {
+            @touch($mark);
+            throw $e;
+        }
+        if (is_file($mark)) @unlink($mark);
         $pdo->exec("SET time_zone = '+00:00'");
         $pdo->exec("CREATE TABLE IF NOT EXISTS `{$prefix}usage` (
             `email` VARCHAR(190) NOT NULL,

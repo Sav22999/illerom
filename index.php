@@ -1,6 +1,6 @@
 <?php
 /**
- * The only entry point: /it/, /en/, /<lang>/projects/<slug>/, /<lang>/about/, /<lang>/privacy/, /<lang>/typeface/, /sitemap.xml
+ * The only entry point: /it/, /en/, /<lang>/projects/<slug>/, /<lang>/about/, /<lang>/privacy/, /<lang>/typeface/, /sitemap.xml, /llms.txt, /llms-full.txt
  * Locally: php -S localhost:8100 index.php
  */
 define('ROOT', __DIR__);
@@ -20,6 +20,12 @@ $strings = require ROOT . '/data/strings.php';
 
 if ($path === '/sitemap.xml') {
     require ROOT . '/pages/sitemap.php';
+    return;
+}
+// for language models and AI assistants (llmstxt.org): the portal and every project in Markdown
+if ($path === '/llms.txt' || $path === '/llms-full.txt') {
+    $full = $path === '/llms-full.txt';
+    require ROOT . '/pages/llms.php';
     return;
 }
 
