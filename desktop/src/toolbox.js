@@ -15,7 +15,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { app, BrowserWindow, Menu, ipcMain, protocol, session, shell, net, nativeTheme } = require('electron');
-const { Store, ORIGIN, SLUGS, catalog } = require('./store');
+const { Store, ORIGIN, SLUGS, catalog, keyOf } = require('./store');
 const { serve, cut } = require('./serve');
 const settings = require('./settings');
 const shortcuts = require('./shortcuts');
@@ -56,6 +56,25 @@ updater.beforeInstall = async () => {
   for (let i = 0; i < 20 && installedSlugs().some((s) => bundles.running(s)); i++) await new Promise((r) => setTimeout(r, 250));
 };
 updater.on('change', () => store.changed());
+
+/** The files an installed app opens: the file_handlers of its manifest (bundles.js writes them into its Info.plist). */
+bundles.setTypesProvider(async (slug) => {
+  const b = store.installed(slug);
+  const f = b && (await b.read(keyOf(`${ORIGIN}/${slug}/manifest.webmanifest`)));
+  if (!f) return [];
+  const seen = new Map();
+  try {
+    for (const h of JSON.parse(f.body.toString('utf8')).file_handlers || []) {
+      for (const [mime, exts] of Object.entries(h.accept || {})) for (const e of exts) {
+        const ext = String(e).replace(/^\./, '').toLowerCase();
+        if (/^[a-z0-9]{1,10}$/.test(ext) && !seen.has(ext)) seen.set(ext, { ext, mime: /^[\w.+-]+\/[\w.+-]+$/.test(mime) ? mime : '' });
+      }
+    }
+  } catch { return []; }
+  return [...seen.values()].sort((a, b) => a.ext.localeCompare(b.ext));
+});
+// a new version may open other files: its app of its own is made again (only when it is not running)
+store.on('updated', (slug) => { if (separate() && !bundles.running(slug)) bundles.ensure(slug).catch(() => {}); });
 
 /** Opens an installed app: its own app, or a window here. */
 async function open(slug, url) {

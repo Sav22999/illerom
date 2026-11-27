@@ -1,7 +1,7 @@
 {
   "name": "savoffice-desktop",
   "productName": "SavOffice",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "SavOffice for Mac: the apps of the suite, installed one by one, working offline",
   "main": "src/main.js",
   "private": true,

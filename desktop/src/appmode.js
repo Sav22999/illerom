@@ -60,6 +60,37 @@ ipcMain.handle('desk-open', (e, to) => { if (to === slug) show(); else if (SLUGS
 ipcMain.handle('desk-toolbox', () => bundles.openToolbox());
 ipcMain.on('desk-style', (e) => { e.returnValue = require('./settings').style(); });
 
+/*
+ * Files of the Mac opened with this app ("Open With", a double click on its own format): macOS gives them here, also before
+ * the start. Each one goes to the window of the app, whose page takes it as an installed web app does (launchQueue,
+ * app-preload.js) and opens it as a file of the device.
+ */
+const MIME = { docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation', xls: 'application/vnd.ms-excel', ods: 'application/vnd.oasis.opendocument.spreadsheet',
+  csv: 'text/csv', ics: 'text/calendar', vcf: 'text/vcard', vcard: 'text/vcard', epub: 'application/epub+zip', pdf: 'application/pdf', md: 'text/markdown', json: 'application/json' };
+const MAX_FILE = 500 * 1048576;
+const toOpen = [];
+let appReady = false;
+async function openFiles() {
+  if (!appReady || !toOpen.length) return;
+  const win = windows.windowsOf(slug)[0] || show();
+  if (win.isMinimized()) win.restore();
+  win.focus();
+  const send = async () => {
+    while (toOpen.length) {
+      const file = toOpen.shift();
+      try {
+        const st = await fs.promises.stat(file);
+        if (!st.isFile() || st.size > MAX_FILE) continue;
+        const ext = path.extname(file).slice(1).toLowerCase();
+        win.webContents.send('desk-open-file', { name: path.basename(file), type: MIME[ext] || '', mtime: st.mtimeMs, bytes: await fs.promises.readFile(file) });
+      } catch { /* gone, or not readable */ }
+    }
+  };
+  if (win.webContents.isLoading()) win.webContents.once('did-finish-load', send); else send();
+}
+app.on('open-file', (e, file) => { e.preventDefault(); toOpen.push(file); openFiles(); });
+
 if (!app.requestSingleInstanceLock()) app.quit(); // one process per app (its profile)
 else {
   app.on('second-instance', (e, argv) => {
@@ -84,7 +115,10 @@ else {
     buildMenu();
     // the session of the others first, then the window (it opens already signed in)
     await Promise.race([sync.start({ onSignedOut: () => { for (const w of BrowserWindow.getAllWindows()) w.webContents.reload(); } }), new Promise((r) => setTimeout(r, 1500))]);
+    // a file opened at the start: the window opens anyway, then gets it
     show(urlOf(process.argv));
+    appReady = true;
+    openFiles();
     // the Toolbox switched version (asked to "update and reload"), or installed / removed an app: read it again
     fs.watch(path.join(env.HOME, 'apps'), { recursive: true }, (ev, name) => {
       if (!name || !name.endsWith('state.json')) return;

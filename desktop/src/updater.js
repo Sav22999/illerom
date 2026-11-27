@@ -13,7 +13,9 @@
  * With automatic updates on, the new version is downloaded as soon as it is out and installed when SavOffice quits; any
  * time with "Update and restart".
  */
-const fs = require('fs');
+// original-fs, not fs: the fs of Electron takes every app.asar for a folder, so it could not delete or copy an app
+// (an app of its own left half made) and it gives app.asar a made-up date
+const fs = require('original-fs');
 const fsp = fs.promises;
 const path = require('path');
 const crypto = require('crypto');

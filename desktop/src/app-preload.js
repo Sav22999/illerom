@@ -29,6 +29,26 @@ if (document.documentElement) keep(); else document.addEventListener('DOMContent
 document.addEventListener('DOMContentLoaded', applyStyle, { once: true });
 ipcRenderer.on('desk-style', (e, s) => { style = s || 'soft'; applyStyle(); });
 
+// files of the Mac opened with this app (appmode.js, "open-file"): given to the page as an installed web app gets them, through
+// window.launchQueue (the apps already read it: launchQueue.setConsumer); kept until the page asks for them
+const waiting = [];
+let consumer = null;
+const handOver = (f) => {
+  const params = { files: [{ kind: 'file', name: f.name, getFile: async () => new File([f.bytes], f.name, { type: f.type || '', lastModified: f.mtime || Date.now() }) }] };
+  if (consumer) consumer(params); else waiting.push(params);
+};
+ipcRenderer.on('desk-open-file', (e, f) => handOver(f));
+// Chromium has a launchQueue of its own, which never gets these files: replaced in the page, before its scripts run
+contextBridge.exposeInMainWorld('SavOfficeDesktopFiles', { setConsumer: (fn) => { consumer = fn; while (waiting.length) fn(waiting.shift()); } });
+try {
+  contextBridge.executeInMainWorld({
+    func: () => {
+      const queue = { setConsumer: (fn) => window.SavOfficeDesktopFiles.setConsumer(fn) };
+      Object.defineProperty(window, 'launchQueue', { configurable: true, enumerable: true, get: () => queue });
+    },
+  });
+} catch { /* an older Electron: the files then do not arrive this way */ }
+
 contextBridge.exposeInMainWorld('SavOfficeDesktop', {
   installed: ipcRenderer.sendSync('desk-installed'), // when the page loaded (for an older SavOffice button)
   installedNow: () => ipcRenderer.sendSync('desk-installed'), // now: the button asks at every opening

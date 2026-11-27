@@ -8,11 +8,14 @@
  * Only from a packaged SavOffice.app: while developing the apps open as windows of SavOffice.
  * Whether an app is open: it writes HOME/Profiles/<slug>/running.json with its pid while it runs.
  */
-const fs = require('fs');
+// original-fs, not fs: the fs of Electron takes every app.asar for a folder, so it could not delete or copy an app
+// (an app of its own left half made) and it gives app.asar a made-up date
+const fs = require('original-fs');
 const fsp = fs.promises;
 const os = require('os');
 const path = require('path');
 const { execFile } = require('child_process');
+const crypto = require('crypto');
 const { app } = require('electron');
 const env = require('./env');
 const { catalog } = require('./store');
@@ -32,10 +35,43 @@ function stamp() {
   let t = 0;
   // original-fs: the fs of Electron sees app.asar as a folder and gives it a made-up date, different at every start (that
   // made every app again at every start)
-  try { t = Math.floor(require('original-fs').statSync(path.join(process.resourcesPath, 'app.asar')).mtimeMs); } catch { /* development */ }
+  try { t = Math.floor(fs.statSync(path.join(process.resourcesPath, 'app.asar')).mtimeMs); } catch { /* development */ }
   return `${app.getVersion()}+${t}`;
 }
 const keyOf = (bundle, k) => { try { return (fs.readFileSync(path.join(bundle, 'Contents', 'Info.plist'), 'utf8').match(new RegExp('<key>' + k + '</key>\\s*<string>([^<]*)</string>')) || [])[1] || null; } catch { return null; } };
+
+/*
+ * The files an app opens ("Open With" in the Finder): the file_handlers of its manifest, written into its Info.plist.
+ * Its own format (".sav" + three letters of its name: .savdoc for SavDocuments, .savspr…) it owns: a double click opens it
+ * there and the file shows its icon. The common ones (.docx, .xlsx, .csv…) it only offers (LSHandlerRank Alternate): the
+ * double click stays with the app the person chose, unless they choose this one.
+ */
+const SYSTEM_UTI = {
+  docx: 'org.openxmlformats.wordprocessingml.document', xlsx: 'org.openxmlformats.spreadsheetml.sheet', pptx: 'org.openxmlformats.presentationml.presentation',
+  xls: 'com.microsoft.excel.xls', ods: 'org.oasis-open.opendocument.spreadsheet', odt: 'org.oasis-open.opendocument.text', odp: 'org.oasis-open.opendocument.presentation',
+  csv: 'public.comma-separated-values-text', ics: 'com.apple.ical.ics', vcf: 'public.vcard', vcard: 'public.vcard', epub: 'org.idpf.epub-container',
+  md: 'net.daringfireball.markdown', pdf: 'com.adobe.pdf', html: 'public.html', txt: 'public.plain-text', json: 'public.json',
+};
+const ownExt = (slug) => 'sav' + slug.slice(3, 6); // savdocuments → savdoc
+/** [{ext, mime}] → the keys of the Info.plist (CFBundleDocumentTypes and the types it declares). */
+function documentTypes(slug, types) {
+  const docs = [], exported = [], imported = [];
+  for (const { ext, mime } of types) {
+    const own = ext === ownExt(slug);
+    let uti = SYSTEM_UTI[ext];
+    if (!uti) {
+      uti = ext.startsWith('sav') ? `eu.illerom.savoffice.${ext}` : `eu.illerom.savoffice.ext.${ext}`;
+      const decl = { UTTypeIdentifier: uti, UTTypeDescription: `${ext.toUpperCase()} file`, UTTypeConformsTo: ['public.data', 'public.content'],
+        UTTypeTagSpecification: { 'public.filename-extension': [ext], ...(mime ? { 'public.mime-type': [mime] } : {}) } };
+      if (own) exported.push({ ...decl, UTTypeDescription: `${nameOf(slug)} (.${ext})`, UTTypeIconFile: 'app-icon' });
+      else imported.push(decl); // declared by its own app (SavDocuments for .savdoc), known here too when that app is not installed
+    }
+    docs.push({ CFBundleTypeName: own ? `${nameOf(slug)} (.${ext})` : `.${ext}`, CFBundleTypeRole: 'Editor', LSHandlerRank: own ? 'Owner' : 'Alternate',
+      LSItemContentTypes: [uti], CFBundleTypeExtensions: [ext], ...(own ? { CFBundleTypeIconFile: 'app-icon' } : {}) });
+  }
+  return { docs, exported, imported };
+}
+const typesKey = (types) => crypto.createHash('sha1').update(JSON.stringify(types)).digest('hex').slice(0, 12);
 
 /** Whether this SavOffice can make apps of their own (a packaged SavOffice.app). */
 const supported = () => !!toolbox();
@@ -54,9 +90,16 @@ async function tidy() {
 
 const making = new Map();
 /** Makes (or makes again) the app of a slug; true when it is there and up to date. */
-function ensure(slug, force = false) {
-  if (!supported()) return Promise.resolve(false);
-  if (!force && keyOf(bundleOf(slug), 'SavOfficeToolbox') === stamp()) return Promise.resolve(true);
+/** The files an app opens, [{ext, mime}]: given by toolbox.js, which reads the manifest of the installed app. */
+let typesOf = async () => [];
+const setTypesProvider = (fn) => { typesOf = fn; };
+
+async function ensure(slug, force = false) {
+  if (!supported()) return false;
+  if (making.has(slug)) return making.get(slug);
+  const types = await typesOf(slug).catch(() => []);
+  // made again when SavOffice changed, or the files the app opens did (a new version of its manifest)
+  if (!force && keyOf(bundleOf(slug), 'SavOfficeToolbox') === stamp() && (keyOf(bundleOf(slug), 'SavOfficeTypes') || '') === typesKey(types)) return true;
   if (making.has(slug)) return making.get(slug);
   console.log('SavOffice: making the app', slug, force ? '(forced)' : `(${keyOf(bundleOf(slug), 'SavOfficeToolbox') || 'new'} → ${stamp()})`);
   const job = (async () => {
@@ -75,6 +118,12 @@ function ensure(slug, force = false) {
       if (env.testing) { await set('SavOfficeHome', env.HOME); await set('SavOfficeOrigin', env.ORIGIN); }
       if (fs.existsSync(icnsOf(slug))) { await fsp.copyFile(icnsOf(slug), path.join(tmp, 'Contents', 'Resources', 'app-icon.icns')); await set('CFBundleIconFile', 'app-icon.icns'); }
       for (const k of ['CFBundleURLTypes', 'CFBundleIconName']) await run('/usr/bin/plutil', ['-remove', k, plist]).catch(() => {}); // savoffice:// stays with the Toolbox
+      // the files it opens ("Open With"), from the manifest of the app
+      const { docs, exported, imported } = documentTypes(slug, types);
+      await set('SavOfficeTypes', typesKey(types));
+      if (docs.length) await run('/usr/bin/plutil', ['-replace', 'CFBundleDocumentTypes', '-json', JSON.stringify(docs), plist]);
+      if (exported.length) await run('/usr/bin/plutil', ['-replace', 'UTExportedTypeDeclarations', '-json', JSON.stringify(exported), plist]);
+      if (imported.length) await run('/usr/bin/plutil', ['-replace', 'UTImportedTypeDeclarations', '-json', JSON.stringify(imported), plist]);
       // Electron finds its helpers by the name of the app ("<CFBundleName> Helper (GPU).app"…): renamed as electron-builder does
       const fw = path.join(tmp, 'Contents', 'Frameworks');
       for (const h of (await fsp.readdir(fw)).filter((n) => /^SavOffice Helper.*\.app$/.test(n))) {
@@ -129,6 +178,13 @@ function markRunning(slug) {
 function markStopped(slug) { try { fs.unlinkSync(pidFile(slug)); } catch { /* gone */ } }
 
 /** Opens an app (an address of it, when given: then a running app gets it too, through its single-instance lock). */
+/** Opens files of the Mac with an app of its own (its "open-file", appmode.js). */
+async function openFiles(slug, files) {
+  if (!exists(slug)) return false;
+  await run('/usr/bin/open', ['-b', BID + slug, ...files]);
+  return true;
+}
+
 async function launch(slug, url) {
   if (env.APP) {
     // an app opening another (its SavOffice button, a link): it never makes apps — inside a clone the stamp of SavOffice is
@@ -148,4 +204,4 @@ const quit = (slug) => run('/usr/bin/osascript', ['-e', `tell application id "${
 
 const openToolbox = () => run('/usr/bin/open', ['-b', env.TOOLBOX_ID]).catch(() => run('/usr/bin/open', ['-a', 'SavOffice']).catch(() => {}));
 
-module.exports = { supported, ensure, remove, exists, tidy, launch, quit, running, markRunning, markStopped, openToolbox, dir, bundleOf, BID };
+module.exports = { supported, ensure, setTypesProvider, remove, exists, tidy, openFiles, ownExt, launch, quit, running, markRunning, markStopped, openToolbox, dir, bundleOf, BID };

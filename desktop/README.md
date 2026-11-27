@@ -98,13 +98,22 @@ macOS does not question them.
 - **Other apps of the suite**: a link to an installed app opens that app (`open -b eu.illerom.savoffice.app.<slug>`; with an
   address, `--savoffice-url=`, given to an app already open through its single-instance lock); in the SavOffice button
   (`../assets/savoffice/savoffice.js`) the grid lists only the installed apps, and "All the apps" opens the Toolbox.
+- **Files of the Mac** ("Open With"): each app of its own declares in its Info.plist the files of the `file_handlers` of its
+  manifest (`bundles.js`, read from the installed manifest by `toolbox.js`, made again when they change). Its own format
+  (`.sav` + three letters: `.savdoc`, `.savspr`…) it **owns**: exported type `eu.illerom.savoffice.<ext>`, a double click
+  opens it there, the file shows its icon. The common ones (`.docx`, `.xlsx`, `.csv`, `.ics`, `.vcf`…) it only **offers**
+  (`LSHandlerRank` Alternate): the double click stays with the app chosen on the Mac. macOS gives the file to the app
+  (`open-file`, `appmode.js`, also before the start), which hands it to the page through `window.launchQueue`
+  (`app-preload.js` replaces the one of Chromium, which never gets these files): the apps already open files that way.
+  The file is opened (imported); saving goes through the app (Download, SavDrive), not back into the same file.
 - **SavOffice itself** (`updater.js`): Squirrel.Mac would want a Developer ID, so the update is done here. At the start and
   every `checkHours` it reads `latest-mac.json`, refuses it unless its Ed25519 signature matches `src/update-key.pem`,
   downloads the ZIP of this Mac into `HOME/updates`, checks size and SHA-256, unpacks it with `ditto` and checks it is
   `eu.illerom.savoffice` of that version. Installed with *Update and restart*, or by itself when SavOffice quits (automatic
   updates on): the apps of their own quit, a small script waits for SavOffice to quit, swaps the bundle (putting the old one
   back if anything fails) and, after *Update and restart*, opens it again. The new SavOffice makes the apps of their own
-  again, once (`bundles.js`: the stamp is the version and the date of `app.asar`, read with `original-fs`).
+  again, once (`bundles.js`: the stamp is the version and the date of `app.asar`). `bundles.js` and `updater.js` use
+  `original-fs`: the `fs` of Electron takes every `app.asar` for a folder, gives it a made-up date and cannot delete it.
 - **Tests**: `SAVOFFICE_USERDATA=<folder>` uses a separate `HOME` (a file `offline-test` in it cuts the network; the apps it makes go to `~/Applications/SavOffice-test` with identifiers of their own);
   `SAVOFFICE_ORIGIN=http://localhost:8100` uses the site run locally (`php -S localhost:8100 index.php` in the root); the
   apps made meanwhile keep both in their Info.plist. While developing, `electron . --savoffice-app=<slug>` runs one app.
