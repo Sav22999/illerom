@@ -294,3 +294,40 @@ summary.ar { list-style: none; cursor: pointer; border-radius: 0; } summary.ar::
 .sizef { display: flex; align-items: flex-end; gap: .5rem; } .sizef .unitsel { width: 6.5rem; flex: none; } .fhelp { margin: .35rem 0 0; }
 /* the upload panel: how long it has taken and how long it still needs */
 .upanel .utitle { display: grid; gap: .1rem; min-width: 0; } .upanel .utime { font-size: .78rem; font-variant-numeric: tabular-nums; }
+/* temporary files (assets/temp.js): the dialog, the place "Temporary", the page of who receives a link */
+.tdlg .texp::part(base), .texp { flex-wrap: wrap; } .texp sav-radio { flex: 1 1 auto; }
+.tfiles { display: grid; gap: .1rem; max-height: 14rem; overflow: auto; } .tfiles:empty { display: none; }
+.tfile { display: flex; align-items: center; gap: .6rem; min-height: 2.4rem; padding: .15rem .3rem; border-radius: 8px; } .tfile:hover { background: var(--sav-color-surface-2); }
+.tfile .tic { font-size: 1.15rem; flex: none; } .tname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .tfile small { flex: none; }
+.tdone { display: flex; align-items: center; gap: .8rem; } .tdone > div { display: grid; gap: .1rem; min-width: 0; } .tdone b { overflow-wrap: anywhere; }
+.tdoneic { width: 2.6rem; height: 2.6rem; flex: none; display: grid; place-items: center; border-radius: 50%; background: color-mix(in oklab, #13a079 16%, transparent); color: #13a079; font-size: 1.3rem; }
+.tdoneic.run { background: color-mix(in oklab, var(--sav-color-primary) 14%, transparent); color: var(--sav-color-primary); }
+.tfacts { list-style: none; margin: 0; padding: 0; display: grid; gap: .35rem; font-size: .9rem; } .tfacts li { display: flex; align-items: center; gap: .5rem; } .tfacts sav-icon { color: var(--sav-color-text-muted); flex: none; }
+.tlist { display: grid; background: var(--card); border: 1px solid var(--sav-color-border); border-radius: 16px; overflow: hidden; }
+.tcard { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: .9rem; padding: .8rem 1rem; border-bottom: 1px solid var(--sav-color-border); } .tcard:last-child { border-bottom: 0; }
+.tcic { width: 2.6rem; height: 2.6rem; border-radius: 12px; background: color-mix(in oklab, var(--fc) 12%, transparent); font-size: 1.3rem; }
+.tmain { display: grid; gap: .2rem; min-width: 0; } .tmain .tname { font-size: .98rem; }
+.tstate { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; margin-top: .15rem; } .tstate sav-badge sav-icon { margin-right: .25rem; font-size: .85em; vertical-align: -.1em; }
+.tflag { color: var(--sav-color-text-muted); display: inline-grid; place-items: center; padding: 0 .15rem; }
+.tact { display: flex; align-items: center; gap: .15rem; }
+@media (max-width: 640px) {
+  .tcard { grid-template-columns: auto minmax(0, 1fr); padding: .8rem; } .tact { grid-column: 1 / -1; justify-content: flex-end; } .tact .tcopy { margin-right: auto; }
+}
+.tpub .tpm { width: 100%; max-width: 40rem; margin: 0 auto; padding: clamp(1rem, 5vh, 3.5rem) clamp(.8rem, 3vw, 1.5rem) 2rem; }
+.tbox { display: block; } .tbox::part(body) { display: grid; gap: 1.1rem; padding: clamp(1.1rem, 4vw, 1.8rem); }
+.tbox > * + * { margin-top: 1.1rem; }
+.thead { display: flex; align-items: center; gap: 1rem; min-width: 0; } .tht { min-width: 0; display: grid; gap: .15rem; }
+.tht h1 { font-size: 1.45rem; letter-spacing: -.02em; line-height: 1.2; overflow-wrap: anywhere; margin: 0; } .tht p { margin: 0; }
+.tbig { --fc: var(--sav-color-primary); width: 3.6rem; height: 3.6rem; flex: none; display: grid; place-items: center; border-radius: 16px; background: color-mix(in oklab, var(--fc) 13%, transparent); color: var(--fc); font-size: 1.8rem; }
+.tmsg { margin: 0; padding: .8rem 1rem; border-left: 3px solid var(--sav-color-primary); background: var(--sav-color-surface-2); border-radius: 0 10px 10px 0; display: grid; gap: .25rem; } .tmsg p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.tplist { display: grid; border: 1px solid var(--sav-color-border); border-radius: 12px; overflow: hidden; }
+.tprow { display: flex; align-items: center; gap: .7rem; padding: .5rem .7rem; border-bottom: 1px solid var(--sav-color-border); } .tprow:last-child { border-bottom: 0; } .tprow .tic { font-size: 1.2rem; flex: none; }
+.tpn { flex: 1; min-width: 0; display: grid; } .tpn b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.tfoot { text-align: center; margin-bottom: 0; }
+.tlock { justify-items: center; text-align: center; } .tlock h1 { font-size: 1.35rem; margin: 0; } .tlock p { margin: 0; } .tlock sav-password, .tlock sav-button { width: 100%; }
+/* phones: the main places at the bottom (sav-bottom-nav, as in SavTasks); the row of places at the top is left out */
+.dbottom { display: none; }
+@media (max-width: 900px) {
+  .dbottom { display: block; } .home.drive { padding-bottom: calc(4.4rem + env(safe-area-inset-bottom)); }
+  .hside > sav-menu.dnav { display: none; } .upanel { bottom: calc(4.8rem + env(safe-area-inset-bottom)); }
+}

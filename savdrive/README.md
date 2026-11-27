@@ -20,7 +20,9 @@ SavOffice opened in their app. <https://www.illerom.eu/savdrive/>
 | `lib/files.php`              | Storage on disk, the tree of folders, names, trash, sending files with ranges        |
 | `lib/photos.php`             | The API of SavPhotos (`api/?r=photos.*`, pages in `../savphotos/`): what is read from photos, albums, who can use it |
 | `lib/archive.php`            | What is inside ZIP, TAR, TAR.GZ and RAR archives, read from their index (plain PHP)   |
-| `assets/drive.js`            | The drive: side menu, folders, cards and rows, selection, uploads, moving, previews   |
+| `lib/temp.php`               | Temporary links ("File temporaneo"): expiry, password, downloads, cleanup             |
+| `assets/drive.js`            | The drive: side menu (a bottom bar on phones), folders, cards and rows, selection, uploads, moving, previews |
+| `assets/temp.js`             | Temporary files: the dialog that makes a link, the place Temporary, the page `#/t/<token>` |
 | `assets/admin.js`            | The panel of the master admins                                                        |
 | `assets/preview.js`          | What a file contains, drawn small (cards) or large (preview): text, JSON, SavOffice files, archives |
 | `assets/office.js`           | Empty files of SavOffice (.savdoc, .savspr, .savpre, .savboo, .savwhi, .savnot)       |
@@ -36,7 +38,9 @@ SavOffice opened in their app. <https://www.illerom.eu/savdrive/>
 3. Files go to `savdrive/storage/` (its `.htaccess` refuses every request). Better: set `$storage_dir` in a
    `credentials.php` of SavDrive to a folder outside the web root. The web server must be able to write there.
 4. PHP must accept pieces of 4 MB (`post_max_size` ≥ 8M, set to 16M by `.htaccess` under mod_php).
-5. `cron/cleanup.php` already cleans this project every day (trash after 30 days, from the disk too; uploads left half-way).
+5. `cron/cleanup.php` already cleans this project every day (trash after 30 days, from the disk too; uploads left half-way;
+   temporary links that are over, with the files uploaded for them). Hourly is better for the temporary links, though
+   SavDrive also ends them by itself whenever they, or the list or space of their owner, are reached.
 
 ## How it works
 
@@ -71,6 +75,20 @@ SavOffice opened in their app. <https://www.illerom.eu/savdrive/>
   last piece makes the file. A wrong offset answers with what the server has, and the browser goes on from there.
 - **Trash**: a folder goes there with everything inside (`trash_root` marks what was chosen); 30 days.
 - **Share links**: `share_token` on a file; `#/s/<token>` and `api/?r=pub.get` work without an account.
+- **Temporary files** (`lib/temp.php`, `assets/temp.js`), as with WeTransfer: a link (`temp_links`) that expires (1 hour,
+  1 day, 7 days, 30 days or a date, at most a year), with an optional password (hash; the page sends it once to
+  `tmp.unlock` and gets a key, an HMAC of the token with the hash, carried by the download addresses), limit of
+  downloads, email to the owner at each download (at most one a minute) and message. Two ways: files uploaded only for
+  the link (New → Temporary file: `temp.create` mode `upload`, then `upload.start` with `temp`, in pieces as every upload,
+  then `temp.finish`; they are `temp_items` with a `bkey`, never nodes, and count in the space while the link lasts), or
+  files and folders already in the drive (their menu, or many chosen: mode `drive`, `temp_items.node_id`; in the trash
+  they are left out). Who receives it opens `#/t/<token>` without an account (`tmp.info`, `tmp.get` one item, a folder as
+  a ZIP, `tmp.zip` everything). Each download counts (not the next pieces of a resumed one); the last one allowed ends the
+  link once it is sent. A link that is over (expired, out of downloads, revoked, files never finished in 24 hours, nothing
+  of the drive left) is ended by `temp_delete`: the uploaded files are deleted from the disk, the files of the drive stay.
+  This happens when the link is reached, when the list (`temp.list`) or space of its owner is read, at random with the
+  other clean-ups of the API, and in `cron/cleanup.php`. The place Temporary (`#/temp`) lists the links that work: time
+  left, downloads, copy, extend (`temp.extend`), revoke (`temp.revoke`).
 - **SavOffice files**: made empty in the browser (the same ZIP each app writes) and uploaded. "Open in …" opens
   `../<app>/?savdrive=<id>`: `../assets/savoffice/savoffice.js` (`SavOffice.fromDrive`) reads the file from
   `api/?r=file.get` (same site, the cookie of SavDrive) and gives it to the app as a file opened from the device. The app

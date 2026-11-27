@@ -77,6 +77,9 @@ const MAIL_TEXT = [
         'dshare_subject' => '{by} shared “{name}” with you', 'dshare_title' => 'Something shared with you',
         'dshare_body' => '{by} shared “{name}” with you in SavDrive. You can: {role}.', 'dshare_button' => 'Open in SavDrive',
         'dshare_signup' => 'Sign in, or create an account of SavDrive with this email address, to open it.',
+        'temp_subject' => '“{name}” was downloaded', 'temp_title' => 'Your temporary link was used',
+        'temp_body' => 'Somebody downloaded “{name}” from your temporary link of SavDrive ({count}).', 'temp_button' => 'See your temporary links',
+        'temp_count' => 'downloads so far: {n}', 'temp_count_of' => '{n} of {max} downloads',
         'levels' => ['view' => 'see that it exists', 'read' => 'open and download it', 'comment' => 'open it and comment', 'write' => 'open, comment and change it', 'move' => 'open, comment, change and move', 'delete' => 'open, comment, change, move and delete'],
     ],
     'it' => [
@@ -93,6 +96,9 @@ const MAIL_TEXT = [
         'dshare_subject' => '{by} ha condiviso con te «{name}»', 'dshare_title' => 'Qualcosa condiviso con te',
         'dshare_body' => '{by} ha condiviso con te «{name}» in SavDrive. Puoi: {role}.', 'dshare_button' => 'Apri in SavDrive',
         'dshare_signup' => 'Accedi, o crea un account SavDrive con questo indirizzo email, per aprirlo.',
+        'temp_subject' => '«{name}» è stato scaricato', 'temp_title' => 'Il tuo link temporaneo è stato usato',
+        'temp_body' => 'Qualcuno ha scaricato «{name}» dal tuo link temporaneo di SavDrive ({count}).', 'temp_button' => 'Vedi i tuoi link temporanei',
+        'temp_count' => 'download finora: {n}', 'temp_count_of' => '{n} download su {max}',
         'levels' => ['view' => 'vedere che esiste', 'read' => 'aprirlo e scaricarlo', 'comment' => 'aprirlo e commentarlo', 'write' => 'aprirlo, commentarlo e modificarlo', 'move' => 'aprirlo, commentarlo, modificarlo e spostarlo', 'delete' => 'aprirlo, commentarlo, modificarlo, spostarlo ed eliminarlo'],
     ],
 ];

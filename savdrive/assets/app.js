@@ -34,7 +34,7 @@ async function boot() {
     if (e.defaultPrevented || e.composedPath().some((n) => n.localName && (/^(input|textarea|sav-input|sav-textarea|sav-search|a)$/.test(n.localName) || n.isContentEditable))) return;
     e.preventDefault();
     const u = S.user, ok = u?.verified && u.activated;
-    menuAt(e.clientX, e.clientY, ok ? [['hard-drive', t('my_drive'), () => go('#/')], ['clock', t('recent'), () => go('#/recent')], ['star', t('starred'), () => go('#/starred')], ['trash-2', t('trash'), () => go('#/trash')], '-',
+    menuAt(e.clientX, e.clientY, ok ? [['hard-drive', t('my_drive'), () => go('#/')], ['clock', t('recent'), () => go('#/recent')], ['star', t('starred'), () => go('#/starred')], ['timer', t('temp'), () => go('#/temp')], ['trash-2', t('trash'), () => go('#/trash')], '-',
       ['settings', t('settings'), () => go('#/settings')], u.master ? ['shield', t('admin'), () => go('#/admin')] : null, ['sparkles', t('changelog'), () => go('#/changelog')], '-', ['refresh', t('refresh'), () => route()], ['log-out', t('sign_out'), () => signOut()]]
       : u ? [['refresh', t('refresh'), () => location.reload()], ['log-out', t('sign_out'), () => signOut()]]
         : [['log-in', t('sign_in'), () => go('#/signin')], ['user-plus', t('sign_up'), () => go('#/signup')], ['sparkles', t('changelog'), () => go('#/changelog')]], { label: 'SavDrive' });
@@ -53,6 +53,7 @@ async function route() {
     if (a === 'verify') return verify(root, b);
     if (a === 'reset') return reset(root, b);
     if (a === 's' && b) return await shared(b);
+    if (a === 't' && b) { const { tempPage } = await import('./temp.js'); return await tempPage(root, b); } // a temporary link: no account needed
     document.title = 'SavDrive';
     if (a === 'changelog') return changelog();
     if (a === 'signin' || a === 'signup') return S.user ? go('#/') : land(root, a);

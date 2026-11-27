@@ -170,10 +170,11 @@ export const pubUrl = (tok, inline = false) => `api/?r=pub.get&t=${encodeURIComp
  * Sends one file. onProgress(bytes sent). signal: an AbortSignal (the upload is cancelled on the server too).
  * Returns {item, used, quota}.
  */
-export async function upload(file, folder, { onProgress, signal, name, replace, conflict } = {}) {
+export async function upload(file, folder, { onProgress, signal, name, replace, conflict, temp } = {}) {
   // replace: the id of the file it becomes the new content of; conflict: 'rename' keeps both when the name is taken
-  // (otherwise a name already there answers name_taken, with the id of that file in e.data.existing)
-  const start = await api('upload.start', { name: name || file.name, size: file.size, mime: file.type, folder: folder || null, replace: replace || null, conflict: conflict || null });
+  // (otherwise a name already there answers name_taken, with the id of that file in e.data.existing); temp: the id of a
+  // temporary link waiting for its files (assets/temp.js): the file becomes part of the link, not of the drive
+  const start = await api('upload.start', { name: name || file.name, size: file.size, mime: file.type, folder: folder || null, replace: replace || null, conflict: conflict || null, temp: temp || null });
   if (start.done) return start;
   const id = start.upload, size = start.chunk || S.config.chunk || 4194304;
   let offset = 0, tries = 0;

@@ -13,6 +13,9 @@
   account-confirmation links.
 - **SavDrive:** also deletes the files left in the trash for 30 days (from the disk too, in the `$storage_dir` of its
   `credentials.php`), uploads left half-way for 24 hours, accounts never confirmed within 7 days and expired links.
+  Temporary links that are over (expired, out of downloads, revoked) end with the files uploaded only for them, deleted
+  from the disk; the files of the drive they pointed to stay. SavDrive also does this by itself whenever such a link, or
+  the list or space of its owner, is reached; scheduling `cleanup.php` hourly makes the deletion of unreached links tighter.
 - **SavDocuments and SavBooks:** also delete documents (books) left in the trash for 30 days, accounts never confirmed
   within 7 days and expired links. SavBooks without its own `credentials.php` uses the database of SavDocuments with its
   `sb_` tables.
