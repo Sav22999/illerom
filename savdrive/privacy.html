@@ -40,6 +40,10 @@
             le date in cui li hai caricati, modificati o aperti.</li>
         <li><b>Link di condivisione:</b> se attivi il link di un file, chi ha l’indirizzo può vederlo e scaricarlo,
             anche senza account, insieme al tuo nome.</li>
+        <li><b>File temporanei:</b> se crei un link temporaneo, chi ha l’indirizzo scarica i file senza account fino alla
+            scadenza che scegli, insieme al tuo nome e al messaggio che scrivi. Conserviamo la password del link solo come
+            hash, il numero dei download e il momento dell’ultimo; non registriamo chi scarica. Se chiedi l’avviso, a ogni
+            download ti arriva un’email (al massimo una al minuto).</li>
         <li><b>Persone e permessi:</b> le email delle persone con cui condividi file e cartelle e il loro livello; chi
             riceve una condivisione vede il tuo nome e, se lo scegli, riceve un’email. I commenti scritti su file e cartelle,
             con il nome di chi li scrive. Ciò che altre persone caricano nelle tue cartelle condivise è tuo e occupa il tuo
@@ -80,7 +84,10 @@
 
     <h2>Basi giuridiche e conservazione</h2>
     <p>Fornire il servizio richiesto (art. 6.1.b) e proteggerlo da abusi (art. 6.1.f). I dati restano finché esiste
-        l’account; i file nel cestino si eliminano dopo 30 giorni; i caricamenti interrotti dopo 24 ore. Eliminando
+        l’account; i file nel cestino si eliminano dopo 30 giorni; i caricamenti interrotti dopo 24 ore. I file caricati
+        per un link temporaneo si eliminano per sempre, dal disco, appena il link finisce (alla scadenza, raggiunto il numero
+        massimo di download o quando lo revochi), e fino ad allora occupano il tuo spazio; i file del drive collegati a un
+        link temporaneo restano, se ne va solo il link. Eliminando
         l’account si cancellano subito tutti i file. Il servizio è ospitato nell’Unione europea.</p>
 
     <h2>Chi risponde dei contenuti</h2>
@@ -117,6 +124,10 @@
                 stars and when you uploaded, changed or opened them.</li>
             <li><b>Share links:</b> when you turn on the link of a file, whoever has the address can see and download
                 it, without an account, together with your name.</li>
+            <li><b>Temporary files:</b> when you make a temporary link, whoever has the address downloads the files
+                without an account until the expiry you choose, together with your name and the message you write. We keep
+                the password of the link only as a hash, the number of downloads and the time of the last one; we do not
+                record who downloads. If you ask for it, you get an email at each download (at most one a minute).</li>
             <li><b>People and levels:</b> the emails of the people you share files and folders with and their level; who
                 gets something shared sees your name and, if you choose, gets an email. Comments written on files and
                 folders, with the name of who wrote them. What other people upload into your shared folders is yours and
@@ -150,6 +161,9 @@
         <h2>Legal bases and retention</h2>
         <p>Providing the service you ask for (art. 6.1.b) and protecting it from abuse (art. 6.1.f). Data stays as long
             as the account exists; files in the trash are deleted after 30 days, interrupted uploads after 24 hours.
+            Files uploaded for a temporary link are deleted for good, from the disk, as soon as the link ends (when it
+            expires, reaches its downloads or you revoke it), and until then they use your space; files of the drive
+            linked by a temporary link stay, only the link goes.
             Deleting the account deletes all its files at once. The service is hosted in the European Union.</p>
         <h2>Who answers for the content</h2>
         <p>What you write, upload or share in SavDrive, including other people’s data, is your decision and your responsibility: you must have the right to put it in and to share it. Saverio Morelli stores and processes it only to make the service work, does not use it for anything else and is not liable for what users do with or within the service: everyone takes responsibility for their own actions. The details are in the <a href="terms.html">terms of use</a>.</p>

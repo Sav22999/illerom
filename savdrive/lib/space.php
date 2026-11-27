@@ -114,6 +114,9 @@ function savspace_apps(string $email): array
     $drive += $st ? (int)$st->fetchColumn() : 0;
     $st = savspace_q('SELECT COALESCE(SUM(p.size),0) FROM `{p}uploads` p JOIN `{p}users` u ON u.id = p.user_id WHERE u.email = ? AND p.expires_at > UTC_TIMESTAMP()', [$email]);
     $drive += $st ? (int)$st->fetchColumn() : 0;
+    // the files uploaded only for a temporary link, while it lasts
+    $st = savspace_q('SELECT COALESCE(SUM(i.size),0) FROM `{p}temp_items` i JOIN `{p}users` u ON u.id = i.user_id WHERE u.email = ? AND i.bkey IS NOT NULL', [$email]);
+    $drive += $st ? (int)$st->fetchColumn() : 0;
     if ($drive) $out['savdrive'] = $drive;
     $st = savspace_q('SELECT app, bytes FROM `{p}usage` WHERE email = ? AND bytes > 0 ORDER BY bytes DESC', [$email]);
     foreach ($st ? $st->fetchAll() : [] as $r) $out[$r['app']] = (int)$r['bytes'];

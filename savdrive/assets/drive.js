@@ -1,7 +1,7 @@
 /**
  * The drive: a side menu (New, My drive, Recent, Starred, Shared, Trash, the space used), the folder with its path, files
  * and folders as cards or rows, selection, menus, moving, uploads with their progress, previews.
- *   #/  My drive · #/f/<id> a folder · #/recent · #/starred · #/shared · #/trash · #/search/<words> · #/vault[/<id>] (vault.js)
+ *   #/  My drive · #/f/<id> a folder · #/recent · #/starred · #/shared · #/temp (temporary links: assets/temp.js) · #/trash · #/search/<words> · #/vault[/<id>] (vault.js)
  */
 import { ask, btn, bytes, confirm, copyText, dialog, drop, empty, errText, face, fail, h, icon, iconBtn, item, menuAt, mobile, primary, put, segmented, select, toast } from './ui.js';
 import { getLang, t, when } from './i18n.js';
@@ -9,6 +9,7 @@ import { S, api, fileUrl, lazyImg, thumbFor, thumbUrl, upload } from './store.js
 import { brand, commands, credit, go, prefs, setPrefs, userMenu } from './account.js';
 import { APPS, KINDS, NAMES, appOf, blankFile, openInApp } from './office.js';
 import { APP_PREVIEW, OFFICE_PREVIEW, contentView, isArchive, lazyApp, lazyFill } from './preview.js';
+import { tempDialog, tempView } from './temp.js';
 
 // ------------------------------------------------------------------ small helpers
 
@@ -207,7 +208,7 @@ function setSpace(used, quota, parts) {
 
 // ------------------------------------------------------------------ the screen
 
-const VIEWS = { withme: ['users', 'withme'], recent: ['clock', 'recent'], starred: ['star', 'starred'], shared: ['link', 'shared'], trash: ['trash-2', 'trash'] };
+const VIEWS = { withme: ['users', 'withme'], recent: ['clock', 'recent'], starred: ['star', 'starred'], shared: ['link', 'shared'], temp: ['timer', 'temp'], trash: ['trash-2', 'trash'] };
 /** The levels on something of somebody else (lib/access.php), from the weakest; the owner can do everything. */
 export const ROLES = ['view', 'read', 'comment', 'write', 'move', 'delete'];
 const LV = { view: 1, read: 2, comment: 3, write: 4, move: 5, delete: 6, owner: 9 };
@@ -261,7 +262,7 @@ export async function home(root, a, b, c) {
   const newMenu = () => {
     const trig = primary(t('new'), { icon: 'plus', size: 'lg', block: true, slot: 'trigger', class: 'newb' });
     const d = h('sav-dropdown.newd', { placement: 'bottom-start', 'sheet-on-mobile': true, label: t('new') }, trig,
-      item('folder', 'folder-plus', t('new_folder')), item('files', 'upload', t('upload_files')), item('dir', 'folder-up', t('upload_folder')), h('sav-divider'), h('sav-menu-label', 'SavOffice'),
+      item('folder', 'folder-plus', t('new_folder')), item('files', 'upload', t('upload_files')), item('dir', 'folder-up', t('upload_folder')), item('temp', 'send', t('temp_new_item')), h('sav-divider'), h('sav-menu-label', 'SavOffice'),
       Object.entries(KINDS).map(([k, x]) => h('sav-menu-item', { value: 'k:' + k }, h('img', { slot: 'prefix', src: `../${x.app}/icons/favicon.svg`, alt: '', width: 20, height: 20, class: 'mimg' }), t(x.k), h('small', { slot: 'suffix', class: 'muted' }, '.' + k))));
     d.addEventListener('sav-select', (e) => {
       const v = String(e.detail.value);
@@ -269,14 +270,28 @@ export async function home(root, a, b, c) {
         if (v === 'folder') newFolder();
         else if (v === 'files') pick().then((fs) => uploadAll(fs.map((file) => ({ file, path: '' })), here()));
         else if (v === 'dir') pick({ dir: true }).then((fs) => uploadAll(fs.map((file) => ({ file, path: (file.webkitRelativePath || '').split('/').slice(0, -1).join('/') })), here()));
+        else if (v === 'temp') newTemp();
         else if (v.startsWith('k:')) newOffice(v.slice(2));
       }, 20);
     });
     return d;
   };
   const nav = h('sav-menu.dnav', { label: t('my_drive'), selectable: true },
-    [['root', 'hard-drive', t('my_drive')], ['withme', 'users', t('withme')], ['recent', 'clock', t('recent')], ['starred', 'star', t('starred')], ['shared', 'link', t('shared')], ['trash', 'trash-2', t('trash')], ['vault', 'lock', t('vault')]].map(([k, ic, l]) => { const x = item(k, ic, l); x.toggleAttribute('current', where === k || (k === 'root' && (where === 'root' || (!VIEWS[where] && where !== 'search' && where !== 'vault')))); return x; }));
+    [['root', 'hard-drive', t('my_drive')], ['withme', 'users', t('withme')], ['recent', 'clock', t('recent')], ['starred', 'star', t('starred')], ['shared', 'link', t('shared')], ['temp', 'timer', t('temp')], ['trash', 'trash-2', t('trash')], ['vault', 'lock', t('vault')]].map(([k, ic, l]) => { const x = item(k, ic, l); x.toggleAttribute('current', where === k || (k === 'root' && (where === 'root' || (!VIEWS[where] && where !== 'search' && where !== 'vault')))); return x; }));
   nav.addEventListener('sav-select', (e) => go(e.detail.value === 'root' ? '#/' : '#/' + e.detail.value));
+  // phones: the main places in a bar at the bottom (as in SavTasks); the others under "More"
+  const MORE = ['withme', 'shared', 'trash', 'vault'];
+  const bnav = h('sav-bottom-nav.dbottom', { label: t('places'), fixed: true },
+    [['root', 'hard-drive', t('my_drive')], ['recent', 'clock', t('recent')], ['starred', 'star', t('starred')], ['temp', 'timer', t('temp')], ['more', 'more-horizontal', t('more')]].map(([v, ic, l]) =>
+      h('sav-bottom-nav-item', { icon: ic, label: l, value: v, href: v === 'more' ? null : v === 'root' ? '#/' : '#/' + v })));
+  const bcurrent = (v) => bnav.querySelectorAll('sav-bottom-nav-item').forEach((x) => x.toggleAttribute('current', x.getAttribute('value') === v));
+  bcurrent(MORE.includes(where) ? 'more' : VIEWS[where] ? where : where === 'search' ? null : 'root');
+  bnav.addEventListener('sav-select', (e) => {
+    if (e.detail.value !== 'more') return;
+    const r = e.detail.item.getBoundingClientRect();
+    menuAt(r.left, r.top - 8, [['users', t('withme'), () => go('#/withme')], ['link', t('shared'), () => go('#/shared')], ['trash-2', t('trash'), () => go('#/trash')], ['lock', t('vault'), () => go('#/vault')], '-', ['settings', t('settings'), () => go('#/settings')]], { label: t('more') });
+    setTimeout(() => bcurrent(MORE.includes(where) ? 'more' : VIEWS[where] ? where : 'root'), 0); // the menu is not a place
+  });
   spaceBox = h('div.quota');
   setSpace(S.user.used || 0, S.user.quota || 0, S.user.parts);
   // things dragged onto "My drive" move there
@@ -291,7 +306,7 @@ export async function home(root, a, b, c) {
   const ipanel = h('aside.ipanel', { 'aria-label': t('details') });
   const newSlot = where === 'vault' ? h('div.newd') : newMenu(); // the Vault puts its own New there
   const hbody = h('div.hbody' + (prefs().info && !mobile() && where !== 'vault' ? '.withinfo' : ''), h('nav.hside', newSlot, nav, spaceBox), main, ipanel);
-  put(root, h('div.home.drive', h('header.htop', brand(), search, h('div.spacer'), userMenu()), hbody, credit()));
+  put(root, h('div.home.drive', h('header.htop', brand(), search, h('div.spacer'), userMenu()), hbody, credit(), bnav));
   document.title = 'SavDrive';
   // the Vault: the same side menu, everything else of its own (encrypted in the browser, vault.js)
   if (where === 'vault') {
@@ -308,6 +323,7 @@ export async function home(root, a, b, c) {
     main.classList.remove('dropping');
     if (dragging || !e.dataTransfer.types.includes('Files') || where === 'trash') return;
     e.preventDefault();
+    if (where === 'temp') return newTemp([...(e.dataTransfer.files || [])]); // dropped on "Temporary": files of a new temporary link
     const card = e.target.closest?.('[data-folder]');
     uploadAll(await walkDrop(e.dataTransfer), card ? card.dataset.folder : here());
   });
@@ -361,7 +377,8 @@ export async function home(root, a, b, c) {
     const chosen = data.items.filter((x) => sel.has(x.id)), ids = [...sel], allStar = chosen.every((x) => x.starred), all = (need) => chosen.every((x) => can(x, need));
     return [{ head: t('n_selected', { n: ids.length }) }, ...(where === 'trash'
       ? [['undo-2', t('restore'), () => restore(ids)], ['trash-2', t('delete_forever'), () => destroy(ids), { danger: true }]]
-      : [all('move') ? ['folder-input', t('move'), () => moveDialog(ids)] : null, all('owner') ? [allStar ? 'star-off' : 'star', t(allStar ? 'unstar' : 'star'), () => star(ids, !allStar)] : null, all('delete') ? '-' : null, all('delete') ? ['trash-2', t('to_trash'), () => trash(ids), { danger: true }] : null]),
+      : [all('move') ? ['folder-input', t('move'), () => moveDialog(ids)] : null, all('owner') ? [allStar ? 'star-off' : 'star', t(allStar ? 'unstar' : 'star'), () => star(ids, !allStar)] : null,
+        all('owner') && !chosen.some((x) => x.special) ? ['send', t('temp_link'), () => tempLinkOf(chosen)] : null, all('delete') ? '-' : null, all('delete') ? ['trash-2', t('to_trash'), () => trash(ids), { danger: true }] : null]),
     '-', ['x', t('clear_sel'), () => { sel.clear(); draw(); }]];
   };
   const upHere = (folder) => [['folder-plus', t('new_folder'), () => newFolder(folder)], ['upload', t('upload_files'), () => pick().then((fs) => uploadAll(fs.map((file) => ({ file, path: '' })), folder))],
@@ -372,11 +389,12 @@ export async function home(root, a, b, c) {
     const all = data.items.length ? ['check', t('select_all'), () => { data.items.forEach((x) => sel.add(x.id)); draw(); }, { kbd: 'Mod+A' }] : null;
     const refresh = ['refresh', t('refresh'), () => load(search.value.trim(), true)];
     if (where === 'trash') return [data.items.length ? ['trash-2', t('empty_trash'), emptyTrash, { danger: true }] : null, all, '-', refresh];
+    if (where === 'temp' && !data.q) return [['send', t('temp_new'), () => newTemp()], '-', refresh];
     if (VIEWS[where] || data.q) return [all, '-', ...viewSort, '-', refresh];
     if (!writable()) return [all, '-', ...viewSort, '-', refresh];
     return [...upHere(here()), '-', { head: 'SavOffice' }, ...Object.entries(KINDS).map(([k, x]) => ['file-plus', t(x.k), () => newOffice(k)]), '-', all, '-', ...viewSort, '-', refresh];
   };
-  const placesMenu = () => [['hard-drive', t('my_drive'), () => go('#/')], ['users', t('withme'), () => go('#/withme')], ['clock', t('recent'), () => go('#/recent')], ['star', t('starred'), () => go('#/starred')], ['link', t('shared'), () => go('#/shared')], ['trash-2', t('trash'), () => go('#/trash')], ['lock', t('vault'), () => go('#/vault')],
+  const placesMenu = () => [['hard-drive', t('my_drive'), () => go('#/')], ['users', t('withme'), () => go('#/withme')], ['clock', t('recent'), () => go('#/recent')], ['star', t('starred'), () => go('#/starred')], ['link', t('shared'), () => go('#/shared')], ['timer', t('temp'), () => go('#/temp')], ['trash-2', t('trash'), () => go('#/trash')], ['lock', t('vault'), () => go('#/vault')],
     '-', ['settings', t('settings'), () => go('#/settings')], S.user.master ? ['shield', t('admin'), () => go('#/admin')] : null, ['refresh', t('refresh'), () => load(search.value.trim(), true)]];
   const onMenu = (e) => {
     if (editable(e) || e.target.closest('sav-dialog, sav-popover, sav-dropdown, .ctxm')) return;
@@ -402,9 +420,10 @@ export async function home(root, a, b, c) {
       const items = [['folder-open', t('open'), () => go(to)]];
       if (v === 'root') items.push('-', ...upHere(null));
       if (v === 'trash') items.push('-', ['trash-2', t('empty_trash'), emptyIt, { danger: true }]);
+      if (v === 'temp') items.push('-', ['send', t('temp_new'), () => newTemp()]);
       return at(items, place.textContent.trim());
     }
-    if (e.target.closest('.newd')) return at(upHere(here()).concat(['-', { head: 'SavOffice' }], Object.entries(KINDS).map(([k, x]) => ['file-plus', t(x.k), () => newOffice(k)])), t('new'));
+    if (e.target.closest('.newd')) return at(upHere(here()).concat([['send', t('temp_new_item'), () => newTemp()], '-', { head: 'SavOffice' }], Object.entries(KINDS).map(([k, x]) => ['file-plus', t(x.k), () => newOffice(k)])), t('new'));
     if (spaceBox && spaceBox.contains(e.target)) return at([['trash-2', t('trash'), () => go('#/trash')], ['settings', t('space'), () => go('#/settings/space')]], t('space'));
     if (main.contains(e.target)) { if (sel.size > 1) return at(selMenu(), t('n_selected', { n: sel.size })); return at(areaMenu(), t('my_drive')); }
     return at(placesMenu(), 'SavDrive');
@@ -441,6 +460,8 @@ export async function home(root, a, b, c) {
   // ---------------------------------------------------------------- loading and drawing
 
   async function load(qq = q, quiet = false) {
+    // "Temporary": the temporary links, drawn by assets/temp.js
+    if (where === 'temp' && !qq) { data = { items: [], path: [] }; sel.clear(); setCommands([]); return tempView({ head, body, reload: () => load('', true), space: spaceOf }); }
     if (!quiet) put(body, h('div.dwait', h('sav-spinner', { style: 'font-size:2rem' })));
     try {
       if (office && !qq) data = officePlace(await api('office.get', undefined, { app: office.app }), office.folder);
@@ -449,7 +470,7 @@ export async function home(root, a, b, c) {
       if (!alive) return;
       if (typeof data.office !== 'string') setSpace(data.used, data.quota, data.parts);
       // inside somebody else's folder the place is "Shared with me"
-      if (!VIEWS[where] && where !== 'search') nav.querySelectorAll('sav-menu-item').forEach((m) => m.toggleAttribute('current', m.getAttribute('value') === (data.sharedRoot ? 'withme' : 'root')));
+      if (!VIEWS[where] && where !== 'search') { nav.querySelectorAll('sav-menu-item').forEach((m) => m.toggleAttribute('current', m.getAttribute('value') === (data.sharedRoot ? 'withme' : 'root'))); bcurrent(data.sharedRoot ? 'more' : 'root'); }
       for (const id of [...sel]) if (!data.items.some((x) => x.id === id)) sel.delete(id);
       draw();
     } catch (e) {
@@ -476,6 +497,7 @@ export async function home(root, a, b, c) {
   }
 
   function draw() {
+    if (where === 'temp' && !data.q) return; // assets/temp.js draws it
     const items = sorted(data.items);
     setCommands(items);
     drawInfo();
@@ -490,7 +512,8 @@ export async function home(root, a, b, c) {
       put(head, h('div.selbar', iconBtn('x', t('clear_sel'), () => { sel.clear(); draw(); }), h('b', t('n_selected', { n: sel.size })), h('span.grow'), infoBtn(),
         where === 'trash' ? [btn(t('restore'), { icon: 'undo-2', size: 'sm', onclick: () => restore([...sel]) }), btn(t('delete_forever'), { icon: 'trash-2', size: 'sm', variant: 'danger', onclick: () => destroy([...sel]) })]
           : [chosen.every((x) => can(x, 'read')) ? iconBtn('download', chosen.length > 1 ? t('download_n', { n: chosen.length }) : t('download'), () => downloadAll(chosen)) : null, chosen.every((x) => can(x, 'move')) ? iconBtn('folder-input', t('move'), () => moveDialog([...sel])) : null,
-            chosen.every((x) => can(x, 'owner')) ? iconBtn(allStar ? 'star-off' : 'star', t(allStar ? 'unstar' : 'star'), () => star([...sel], !allStar)) : null, chosen.every((x) => can(x, 'delete')) ? iconBtn('trash-2', t('to_trash'), () => trash([...sel])) : null]));
+            chosen.every((x) => can(x, 'owner')) ? iconBtn(allStar ? 'star-off' : 'star', t(allStar ? 'unstar' : 'star'), () => star([...sel], !allStar)) : null,
+            chosen.every((x) => can(x, 'owner') && !x.special) ? iconBtn('send', t('temp_link'), () => tempLinkOf(chosen)) : null, chosen.every((x) => can(x, 'delete')) ? iconBtn('trash-2', t('to_trash'), () => trash([...sel])) : null]));
     } else {
       put(head, title(), h('span.grow'),
         where === 'trash' && items.length ? btn(t('empty_trash'), { icon: 'trash-2', size: 'sm', variant: 'danger', appearance: 'soft', onclick: emptyTrash }) : null,
@@ -525,9 +548,9 @@ export async function home(root, a, b, c) {
   function setCommands(items) {
     const upFiles = () => pick().then((fs) => uploadAll(fs.map((file) => ({ file, path: '' })), here()));
     const upDir = () => pick({ dir: true }).then((fs) => uploadAll(fs.map((file) => ({ file, path: (file.webkitRelativePath || '').split('/').slice(0, -1).join('/') })), here()));
-    commands(where === 'trash' || !writable() ? null : [t('new'), [['folder-plus', t('new_folder'), () => newFolder()], ['upload', t('upload_files'), upFiles], ['folder-up', t('upload_folder'), upDir],
+    commands(where === 'trash' || (!writable() && where !== 'temp') ? null : [t('new'), [['folder-plus', t('new_folder'), () => newFolder()], ['upload', t('upload_files'), upFiles], ['folder-up', t('upload_folder'), upDir], ['send', t('temp_new_item'), () => newTemp()],
         ...Object.entries(KINDS).map(([k, x]) => ['file-plus', t('new_kind', { kind: t(x.k) }), () => newOffice(k), null, x.name])]],
-      [t('places'), [['hard-drive', t('my_drive'), '#/'], ['users', t('withme'), '#/withme'], ['clock', t('recent'), '#/recent'], ['star', t('starred'), '#/starred'], ['link', t('shared'), '#/shared'], ['trash-2', t('trash'), '#/trash'], ['lock', t('vault'), '#/vault'],
+      [t('places'), [['hard-drive', t('my_drive'), '#/'], ['users', t('withme'), '#/withme'], ['clock', t('recent'), '#/recent'], ['star', t('starred'), '#/starred'], ['link', t('shared'), '#/shared'], ['timer', t('temp'), '#/temp'], ['trash-2', t('trash'), '#/trash'], ['lock', t('vault'), '#/vault'],
         where === 'trash' && items.length ? ['trash-2', t('empty_trash'), emptyTrash] : null]],
       items.length ? [t('in_here'), items.slice(0, 60).map((x) => [x.kind === 'folder' ? 'folder' : kindOf(x).ic, x.name, () => open(x), null, x.kind === 'folder' ? t('folder_l') : bytes(x.size)])] : null);
   }
@@ -744,6 +767,7 @@ export async function home(root, a, b, c) {
       x.kind === 'file' && can(x, 'write') ? ['copy', t('make_copy'), () => copy(x)] : null,
       owner ? [x.starred ? 'star-off' : 'star', t(x.starred ? 'unstar' : 'star'), () => star([x.id], !x.starred)] : null,
       x.kind === 'file' && owner ? ['link', t('share_link'), () => shareDialog(x)] : null,
+      owner && !x.special ? ['send', t('temp_link'), () => tempLinkOf([x])] : null,
       x.kind === 'folder' && can(x, 'write') ? ['palette', t('color'), () => colorDialog(x)] : null,
       x.parent && (data.q || (VIEWS[where] && where !== 'withme')) ? ['folder', t('show_in_folder'), () => go(x.parent.id ? '#/f/' + x.parent.id : '#/')] : null,
       can(x, 'delete') ? '-' : null,
@@ -788,6 +812,11 @@ export async function home(root, a, b, c) {
       await download(x, true);
     }
   };
+  // temporary links (assets/temp.js): files uploaded only for the link, or files and folders of the drive
+  const spaceOf = (r) => { if (r && r.used !== undefined) setSpace(r.used, r.quota, r.parts); };
+  const afterTemp = (r) => { spaceOf(r); if (where === 'temp') load('', true); };
+  function newTemp(files = []) { tempDialog({ files, onDone: afterTemp }); }
+  function tempLinkOf(list) { tempDialog({ items: list, onDone: afterTemp }); }
   async function newFolder(parent = here()) {
     const name = await ask(t('new_folder'), t('name'), t('untitled_folder'), t('create'));
     if (!name) return;

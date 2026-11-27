@@ -15,11 +15,16 @@
  * quotas       the space of its own of a person (by email: also people who use other apps without an account here)
  * uploads      uploads under way, in pieces: what was received is in <storage>/<user_id>/<id>.part; replace_id: the file
  *              they become the new content of (an app of SavOffice saving back), instead of a new file; vault_id: the
- *              file of the Vault they fill (lib/vault.php)
+ *              file of the Vault they fill (lib/vault.php); temp_id: the temporary link it is uploaded for (the file
+ *              becomes an item of that link, never a node)
  * vault_keys   the Vault of an account: how the browser unlocks it (digits of the PIN, salt, iterations, the master key
  *              wrapped with the PIN and with the recovery password; a reset under way) — the server never sees the PIN
  *              (lib/vault.php)
  * vault_nodes  files and folders of the Vault, names encrypted in the browser (meta); the files on disk are encrypted too
+ * temp_links   temporary links (lib/temp.php): a token anyone can open until expires_at, with an optional password,
+ *              limit of downloads, notice to the owner at each download and message; ready = 0 while its files upload
+ * temp_items   what a temporary link gives: a file or folder of the drive (node_id, it stays when the link ends) or a
+ *              file uploaded only for the link (bkey, under <storage>/<user_id>/, deleted with the link, counted in the space)
  */
 
 declare(strict_types=1);
@@ -147,6 +152,7 @@ function schema_statements(string $p): array
             `received` BIGINT UNSIGNED NOT NULL DEFAULT 0,
             `replace_id` INT UNSIGNED NULL,
             `vault_id` INT UNSIGNED NULL,
+            `temp_id` INT UNSIGNED NULL,
             `created_at` DATETIME NOT NULL,
             `expires_at` DATETIME NOT NULL,
             KEY `ix_user` (`user_id`),
@@ -184,6 +190,43 @@ function schema_statements(string $p): array
             " . $fk('vn_user', 'user_id', 'users') . ",
             " . $fk('vn_parent', 'parent_id', 'vault_nodes') . "
         ) $e",
+        "CREATE TABLE IF NOT EXISTS `{$p}temp_links` (
+            `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `token` CHAR(32) NOT NULL,
+            `user_id` INT UNSIGNED NOT NULL,
+            `mode` ENUM('upload','drive') NOT NULL,
+            `message` TEXT NULL,
+            `pass_hash` VARCHAR(255) NULL,
+            `max_downloads` INT UNSIGNED NULL,
+            `downloads` INT UNSIGNED NOT NULL DEFAULT 0,
+            `notify` TINYINT(1) NOT NULL DEFAULT 0,
+            `ready` TINYINT(1) NOT NULL DEFAULT 0,
+            `created_at` DATETIME NOT NULL,
+            `expires_at` DATETIME NOT NULL,
+            `last_download_at` DATETIME NULL,
+            `notified_at` DATETIME NULL,
+            UNIQUE KEY `uq_token` (`token`),
+            KEY `ix_user` (`user_id`, `expires_at`),
+            KEY `ix_expires` (`expires_at`),
+            " . $fk('tl_user', 'user_id', 'users') . "
+        ) $e",
+        "CREATE TABLE IF NOT EXISTS `{$p}temp_items` (
+            `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `link_id` INT UNSIGNED NOT NULL,
+            `user_id` INT UNSIGNED NOT NULL,
+            `node_id` INT UNSIGNED NULL,
+            `name` VARCHAR(255) NOT NULL DEFAULT '',
+            `mime` VARCHAR(100) NOT NULL DEFAULT '',
+            `size` BIGINT UNSIGNED NOT NULL DEFAULT 0,
+            `bkey` CHAR(32) NULL,
+            `created_at` DATETIME NOT NULL,
+            KEY `ix_link` (`link_id`),
+            KEY `ix_user` (`user_id`),
+            KEY `ix_node` (`node_id`),
+            " . $fk('ti_link', 'link_id', 'temp_links') . ",
+            " . $fk('ti_user', 'user_id', 'users') . ",
+            " . $fk('ti_node', 'node_id', 'nodes') . "
+        ) $e",
     ];
 }
 
@@ -192,6 +235,7 @@ function install_schema(PDO $pdo, string $prefix): void
     foreach (schema_statements($prefix) as $sql) $pdo->exec($sql);
     if (!$pdo->query("SHOW COLUMNS FROM `{$prefix}uploads` LIKE 'replace_id'")->fetch()) $pdo->exec("ALTER TABLE `{$prefix}uploads` ADD COLUMN `replace_id` INT UNSIGNED NULL AFTER `received`");
     if (!$pdo->query("SHOW COLUMNS FROM `{$prefix}uploads` LIKE 'vault_id'")->fetch()) $pdo->exec("ALTER TABLE `{$prefix}uploads` ADD COLUMN `vault_id` INT UNSIGNED NULL AFTER `replace_id`");
+    if (!$pdo->query("SHOW COLUMNS FROM `{$prefix}uploads` LIKE 'temp_id'")->fetch()) $pdo->exec("ALTER TABLE `{$prefix}uploads` ADD COLUMN `temp_id` INT UNSIGNED NULL AFTER `replace_id`");
     if (!$pdo->query("SHOW COLUMNS FROM `{$prefix}nodes` LIKE 'created_by'")->fetch()) $pdo->exec("ALTER TABLE `{$prefix}nodes` ADD COLUMN `created_by` INT UNSIGNED NULL AFTER `opened_at`");
     // 3: the spaces of their own move to quotas (by email), where the other apps read them too
     $pdo->exec("INSERT IGNORE INTO `{$prefix}quotas` (email, quota, updated_at) SELECT email, quota, UTC_TIMESTAMP() FROM `{$prefix}users` WHERE quota IS NOT NULL");

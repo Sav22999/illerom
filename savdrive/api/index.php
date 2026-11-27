@@ -12,6 +12,8 @@
  * People:       people.get, people.set (levels by folder, inherited below, with exceptions: lib/access.php), drive.list?in=withme
  * Comments:     comment.list, comment.add, comment.delete
  * Shared links: pub.info, pub.get (anyone with the link, files only)
+ * Temporary:    temp.create, temp.finish, temp.list, temp.extend, temp.revoke (the owner; files uploaded for a link: upload.start
+ *               with temp), tmp.info, tmp.unlock, tmp.get, tmp.zip (anyone with the link: lib/temp.php)
  * Master admin: master.overview, master.settings, master.users, master.activate, master.quota, master.delete
  * SavPhotos:    photos.* (lib/photos.php)
  * Vault:        vault.* (lib/vault.php: encrypted in the browser; its files travel through upload.chunk too)
@@ -177,12 +179,37 @@ if ($r === 'pub.get') {
     stream_file(blob_path((int)$n['user_id'], (string)$n['bkey']), (string)$n['name'], (string)$n['mime'], !empty($_GET['inline']));
 }
 
+// A temporary link (lib/temp.php): one of its items (?i=, a folder as a ZIP) or all of them in a ZIP. ?k=: the key given by
+// tmp.unlock when the link has a password. Each download counts (the last one allowed ends the link).
+if ($r === 'tmp.get' || $r === 'tmp.zip') {
+    require_once __DIR__ . '/../lib/zipstream.php';
+    $l = temp_by_token((string)($_GET['t'] ?? ''));
+    if ($l && temp_over($l)) { temp_delete($l); $l = null; }
+    $items = $l && (int)$l['ready'] && temp_unlocked($l, (string)($_GET['k'] ?? '')) ? temp_items($l) : [];
+    if ($r === 'tmp.get') $items = array_values(array_filter($items, fn($i) => $i['id'] === (int)($_GET['i'] ?? 0)));
+    if (!$items) {
+        http_response_code(404);
+        exit;
+    }
+    if ($r === 'tmp.get' && $items[0]['kind'] === 'file') {
+        $path = blob_path((int)$l['user_id'], (string)$items[0]['bkey']);
+        if (!is_file($path) || !temp_count($l)) { http_response_code(404); exit; }
+        stream_file($path, (string)$items[0]['name'], (string)$items[0]['mime'], false);
+    }
+    $entries = temp_entries($l, $items);
+    if (zip_check($entries) || !temp_count($l)) {
+        http_response_code(422);
+        exit;
+    }
+    zip_send(count($items) === 1 ? clean_name($items[0]['name']) . '.zip' : 'SavDrive ' . gmdate('Y-m-d') . '.zip', $entries);
+}
+
 // POST is JSON (a form of another site cannot send it); only a piece of an upload travels as itself, with the X-CSRF-Token header
 $ctype = (string)($_SERVER['CONTENT_TYPE'] ?? '');
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && stripos($ctype, 'application/json') !== 0 && !(($r === 'upload.chunk' || $r === 'photos.thumbset') && stripos($ctype, 'application/octet-stream') === 0)
     && !($r === 'photos.upload' && stripos($ctype, 'multipart/form-data') === 0)) fail('bad_request', 415); // SavPhotos sends a photo, its data and its small picture in one request
 remember_app_url();
-if (random_int(1, 60) === 1) { purge_old(); vault_resets_due(); }
+if (random_int(1, 60) === 1) { purge_old(); vault_resets_due(); temp_purge(); } // temporary links that are over (lib/temp.php)
 
 function only(string $method): void
 {
@@ -492,6 +519,7 @@ switch ($r) {
     case 'drive.list':
         // One place: a folder (uid or root), or a view: starred, recent, trash; ?q= searches every folder
         $u = reader();
+        if (random_int(1, 5) === 1) temp_purge((int)$u['id']); // its temporary links that are over stop counting in the space
         $where = (string)($_GET['in'] ?? 'root');
         $q = s($_GET, 'q', 120);
         $T = t('nodes');
@@ -823,6 +851,104 @@ switch ($r) {
         send_json(['ok' => true, 'file' => ['name' => $n['name'], 'mime' => $n['mime'], 'size' => (int)$n['size'], 'updated' => iso($n['updated_at']), 'owner' => $n['owner'],
             'app' => out_node($n)['app']]]);
 
+    // ================================================================ temporary links (lib/temp.php)
+
+    case 'temp.create':
+        // {mode: upload | drive, ids (drive: files and folders of this account), expires (1h, 1d, 7d, 30d) or at (a date),
+        // password, maxDownloads, notify, message}. Mode upload: the link waits (ready = 0) while its files upload with
+        // upload.start {temp: id}, then temp.finish.
+        $u = writer();
+        $b = body();
+        temp_purge((int)$u['id']);
+        $mode = ($b['mode'] ?? '') === 'drive' ? 'drive' : 'upload';
+        $st = db()->prepare('SELECT COUNT(*) FROM ' . t('temp_links') . ' WHERE user_id = ?');
+        $st->execute([$u['id']]);
+        if ((int)$st->fetchColumn() >= TEMP_MAX_LINKS) fail('temp_too_many', 422);
+        $expires = temp_expiry($b['expires'] ?? null, $b['at'] ?? null);
+        $pass = (string)($b['password'] ?? '');
+        if ($pass !== '' && (mb_strlen($pass) < 4 || mb_strlen($pass) > 200)) fail('temp_password', 422);
+        $max = isset($b['maxDownloads']) && $b['maxDownloads'] !== null && $b['maxDownloads'] !== '' ? (int)$b['maxDownloads'] : null;
+        if ($max !== null && ($max < 1 || $max > 100000)) fail('temp_max', 422);
+        $msg = trim(mb_substr(str_replace("\r", '', (string)($b['message'] ?? '')), 0, TEMP_MESSAGE_MAX));
+        $nodes = [];
+        if ($mode === 'drive') {
+            $ids = $b['ids'] ?? [];
+            if (!is_array($ids) || !$ids || count($ids) > TEMP_MAX_ITEMS) fail('bad_request', 422);
+            foreach (array_values(array_unique(array_filter($ids, 'is_string'))) as $id) {
+                $n = own_node($u, $id);
+                if ($n['trashed_at']) fail('in_trash', 409);
+                $nodes[] = $n;
+            }
+        }
+        db()->beginTransaction();
+        $tok = new_temp_token();
+        db()->prepare('INSERT INTO ' . t('temp_links') . ' (token, user_id, mode, message, pass_hash, max_downloads, notify, ready, created_at, expires_at) VALUES (?,?,?,?,?,?,?,?,?,?)')
+            ->execute([$tok, $u['id'], $mode, $msg !== '' ? $msg : null, $pass !== '' ? password_hash($pass, PASSWORD_DEFAULT) : null, $max, empty($b['notify']) ? 0 : 1, $mode === 'drive' ? 1 : 0, now_utc(), $expires]);
+        $lid = (int)db()->lastInsertId();
+        foreach ($nodes as $n) db()->prepare('INSERT INTO ' . t('temp_items') . ' (link_id, user_id, node_id, name, created_at) VALUES (?,?,?,?,?)')->execute([$lid, $u['id'], $n['id'], $n['name'], now_utc()]);
+        db()->commit();
+        send_json(['ok' => true, 'link' => temp_out(own_temp($u, $lid))]);
+
+    case 'temp.finish':
+        // {id}: the files of a link of mode upload have all arrived: the link starts working
+        $u = writer();
+        $l = own_temp($u, body()['id'] ?? 0);
+        $st = db()->prepare('SELECT COUNT(*) FROM ' . t('temp_items') . ' WHERE link_id = ?');
+        $st->execute([$l['id']]);
+        if (!(int)$st->fetchColumn()) fail('temp_empty', 422);
+        db()->prepare('UPDATE ' . t('temp_links') . ' SET ready = 1 WHERE id = ?')->execute([$l['id']]);
+        send_json(['ok' => true, 'link' => temp_out(own_temp($u, (int)$l['id']))] + drive_space($u));
+
+    case 'temp.list':
+        // The links of this account that still work (the ended ones are cleaned up first)
+        $u = reader();
+        temp_purge((int)$u['id']);
+        $st = db()->prepare('SELECT * FROM ' . t('temp_links') . ' WHERE user_id = ? AND ready = 1 ORDER BY expires_at LIMIT ' . TEMP_MAX_LINKS);
+        $st->execute([$u['id']]);
+        send_json(['ok' => true, 'links' => array_map('temp_out', $st->fetchAll())] + drive_space($u));
+
+    case 'temp.extend':
+        // {id, expires | at}: a new expiry (from now, or a date)
+        $u = writer();
+        $b = body();
+        $l = own_temp($u, $b['id'] ?? 0);
+        if (temp_over($l)) { temp_delete($l); fail('not_found', 404); }
+        db()->prepare('UPDATE ' . t('temp_links') . ' SET expires_at = ? WHERE id = ?')->execute([temp_expiry($b['expires'] ?? null, $b['at'] ?? null), $l['id']]);
+        send_json(['ok' => true, 'link' => temp_out(own_temp($u, (int)$l['id']))]);
+
+    case 'temp.revoke':
+        // {id}: the link stops working at once; the files uploaded for it are deleted (those of the drive stay)
+        $u = writer();
+        temp_delete(own_temp($u, body()['id'] ?? 0));
+        send_json(['ok' => true] + drive_space($u));
+
+    case 'tmp.info':
+        // ?t=&k=: what a temporary link gives, for the page of who receives it (no account). With a password and no key:
+        // only {locked: true}
+        only('GET');
+        require_once __DIR__ . '/../lib/zipstream.php';
+        $l = temp_by_token((string)($_GET['t'] ?? ''));
+        if ($l && temp_over($l)) { temp_delete($l); $l = null; }
+        $items = $l && (int)$l['ready'] ? temp_items($l) : [];
+        if (!$items) fail('not_found', 404);
+        header('Cache-Control: private, no-store');
+        if (!temp_unlocked($l, (string)($_GET['k'] ?? ''))) send_json(['ok' => true, 'locked' => true]);
+        send_json(['ok' => true, 'locked' => false, 'owner' => $l['owner'], 'message' => $l['message'], 'expires' => iso($l['expires_at']),
+            'left' => $l['max_downloads'] === null ? null : (int)$l['max_downloads'] - (int)$l['downloads'],
+            'items' => array_map(fn($i) => ['id' => $i['id'], 'name' => $i['name'], 'kind' => $i['kind'], 'size' => $i['size'], 'mime' => $i['mime'], 'files' => $i['files']], $items),
+            'size' => array_sum(array_column($items, 'size')), 'files' => array_sum(array_column($items, 'files')), 'zip' => zip_check(temp_entries($l, $items)) === null]);
+
+    case 'tmp.unlock':
+        // {t, password}: the key of a link with a password (the download addresses carry it)
+        only('POST');
+        if (too_many_attempts('temp_pass', 20, 15)) fail('rate_limited', 429);
+        $b = body();
+        $l = temp_by_token((string)($b['t'] ?? ''));
+        if (!$l || temp_over($l) || !(int)$l['ready']) fail('not_found', 404);
+        if (!$l['pass_hash']) send_json(['ok' => true, 'key' => '']);
+        if (!password_verify((string)($b['password'] ?? ''), (string)$l['pass_hash'])) { record_attempt('temp_pass'); fail('temp_bad_password', 422); }
+        send_json(['ok' => true, 'key' => temp_key($l)]);
+
     case 'node.info':
         // ?id=: everything about a file or folder for the panel of details
         $u = reader();
@@ -1011,11 +1137,20 @@ switch ($r) {
         if ($size < 0) fail('bad_request', 422);
         // replace: the id of a file whose content this upload becomes (its name, folder, star and link stay); the old
         // content stops counting when the new one arrives
-        $old = isset($b['replace']) && $b['replace'] !== null ? reach_node($u, $b['replace'], 'write', 'file') : null;
+        // temp: the id of a temporary link of this account still waiting for its files (lib/temp.php): the file becomes an
+        // item of the link, not a node of the drive (no folder, no names to compare)
+        $temp = isset($b['temp']) && $b['temp'] !== null ? own_temp($u, $b['temp']) : null;
+        if ($temp && ($temp['mode'] !== 'upload' || (int)$temp['ready'] || temp_over($temp))) fail('temp_gone', 410);
+        if ($temp) {
+            $st = db()->prepare('SELECT COUNT(*) FROM ' . t('temp_items') . ' WHERE link_id = ?');
+            $st->execute([$temp['id']]);
+            if ((int)$st->fetchColumn() >= TEMP_MAX_ITEMS) fail('temp_too_many_files', 422);
+        }
+        $old = !$temp && isset($b['replace']) && $b['replace'] !== null ? reach_node($u, $b['replace'], 'write', 'file') : null;
         if ($old && $old['trashed_at']) fail('in_trash', 409);
-        $parent = $old ? null : reach_folder($u, $b['folder'] ?? null, 'write');
+        $parent = $old || $temp ? null : reach_folder($u, $b['folder'] ?? null, 'write');
         // a file with the same name in that folder: the app asks whether to replace it or keep both (conflict: rename)
-        if (!$old && ($b['conflict'] ?? '') !== 'rename') {
+        if (!$old && !$temp && ($b['conflict'] ?? '') !== 'rename') {
             $st = db()->prepare('SELECT uid FROM ' . t('nodes') . " WHERE user_id = ? AND parent_id " . ($parent ? '= ' . (int)$parent['id'] : 'IS NULL') . " AND kind = 'file' AND trashed_at IS NULL AND LOWER(name) = LOWER(?) LIMIT 1");
             $st->execute([$parent ? (int)$parent['user_id'] : (int)$u['id'], $name]);
             $same = $st->fetchColumn();
@@ -1026,10 +1161,10 @@ switch ($r) {
         $row = user_row($owner);
         $quota = user_quota($row);
         if (user_used($owner, true) + $size - ($old ? (int)$old['size'] : 0) > $quota) send_json(['ok' => false, 'error' => 'quota', 'used' => user_used($owner), 'quota' => $quota], 413);
-        if (!$old && count_nodes($owner) >= MAX_NODES) fail('too_many', 422);
+        if (!$old && !$temp && count_nodes($owner) >= MAX_NODES) fail('too_many', 422);
         $id = new_key();
-        db()->prepare('INSERT INTO ' . t('uploads') . ' (id, user_id, parent_id, name, mime, size, replace_id, created_at, expires_at) VALUES (?,?,?,?,?,?,?,?,?)')
-            ->execute([$id, $u['id'], $parent ? $parent['id'] : null, $name, guess_mime($name, (string)($b['mime'] ?? '')), $size, $old ? $old['id'] : null, now_utc(), gmdate('Y-m-d H:i:s', time() + UPLOAD_HOURS * 3600)]);
+        db()->prepare('INSERT INTO ' . t('uploads') . ' (id, user_id, parent_id, name, mime, size, replace_id, temp_id, created_at, expires_at) VALUES (?,?,?,?,?,?,?,?,?,?)')
+            ->execute([$id, $u['id'], $parent ? $parent['id'] : null, $name, guess_mime($name, (string)($b['mime'] ?? '')), $size, $old ? $old['id'] : null, $temp ? $temp['id'] : null, now_utc(), gmdate('Y-m-d H:i:s', time() + UPLOAD_HOURS * 3600)]);
         if (@file_put_contents(storage_dir((int)$u['id']) . "/$id.part", '') === false) throw new RuntimeException('storage not writable');
         // an empty file is already complete
         if ($size === 0) $_GET['id'] = $id;
@@ -1075,6 +1210,25 @@ switch ($r) {
         clearstatcache(true, $part);
         if (filesize($part) !== (int)$up['size']) fail('bad_chunk', 422);
         if (!empty($up['vault_id'])) vault_upload_done($u, $up, $part); // a file of the Vault (lib/vault.php): it never becomes a node of the drive
+        // a file of a temporary link: an item of the link (if it still waits for its files), never a node
+        if ($up['temp_id'] !== null) {
+            $s4 = db()->prepare('SELECT * FROM ' . t('temp_links') . ' WHERE id = ? AND user_id = ? FOR UPDATE');
+            $s4->execute([$up['temp_id'], $u['id']]);
+            $tl = $s4->fetch();
+            if (!$tl || (int)$tl['ready'] || temp_over($tl)) {
+                db()->prepare('DELETE FROM ' . t('uploads') . ' WHERE id = ?')->execute([$id]);
+                db()->commit();
+                @unlink($part);
+                fail('temp_gone', 410);
+            }
+            $key = new_key();
+            if (!@rename($part, blob_path((int)$u['id'], $key))) throw new RuntimeException('cannot store the file');
+            db()->prepare('INSERT INTO ' . t('temp_items') . ' (link_id, user_id, node_id, name, mime, size, bkey, created_at) VALUES (?,?,NULL,?,?,?,?,?)')
+                ->execute([$tl['id'], $u['id'], $up['name'], $up['mime'], $up['size'], $key, now_utc()]);
+            db()->prepare('DELETE FROM ' . t('uploads') . ' WHERE id = ?')->execute([$id]);
+            db()->commit();
+            send_json(['ok' => true, 'done' => true, 'temp' => true, 'item' => ['name' => $up['name'], 'size' => (int)$up['size']]] + drive_space($u));
+        }
         // the folder (of this person, or shared with them, still with "write") may have gone meanwhile: then My drive
         $pid = $up['parent_id'] === null ? null : (int)$up['parent_id'];
         $owner = (int)$u['id'];
@@ -1155,7 +1309,7 @@ switch ($r) {
         $q = '%' . addcslashes(s($_GET, 'q', 80), '%_\\') . '%';
         $show = (string)($_GET['show'] ?? 'all');
         $extra = $show === 'waiting' ? ' AND u.activated = 0' : ($show === 'active' ? ' AND u.activated = 1' : '');
-        $st = db()->prepare('SELECT u.*, (SELECT COALESCE(SUM(n.size),0) FROM ' . t('nodes') . " n WHERE n.user_id = u.id AND n.kind = 'file') + (SELECT COALESCE(SUM(v.size),0) FROM " . t('vault_nodes') . " v WHERE v.user_id = u.id AND v.kind = 'file' AND v.bkey IS NOT NULL) used, (SELECT COUNT(*) FROM " . t('nodes') . " n WHERE n.user_id = u.id AND n.kind = 'file') files
+        $st = db()->prepare('SELECT u.*, (SELECT COALESCE(SUM(n.size),0) FROM ' . t('nodes') . " n WHERE n.user_id = u.id AND n.kind = 'file') + (SELECT COALESCE(SUM(v.size),0) FROM " . t('vault_nodes') . " v WHERE v.user_id = u.id AND v.kind = 'file' AND v.bkey IS NOT NULL) + (SELECT COALESCE(SUM(i.size),0) FROM " . t('temp_items') . " i WHERE i.user_id = u.id AND i.bkey IS NOT NULL) used, (SELECT COUNT(*) FROM " . t('nodes') . " n WHERE n.user_id = u.id AND n.kind = 'file') files
             FROM " . t('users') . " u WHERE (u.name LIKE ? OR u.email LIKE ?)$extra ORDER BY u.activated, u.id DESC LIMIT 500");
         $st->execute([$q, $q]);
         $rows = $st->fetchAll();

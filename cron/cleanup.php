@@ -101,7 +101,7 @@ function cleanApp($project, $defaultPrefix)
     }
     if ($project === 'savdrive') {
         // as its privacy notice promises: trash 30 days (the files on disk too), uploads left half-way 24 hours,
-        // accounts never confirmed 7 days. Files live in <storage>/<user id>/<bkey> ($storage_dir of its credentials.php)
+        // temporary links as soon as they are over, accounts never confirmed 7 days. Files live in <storage>/<user id>/<bkey> ($storage_dir of its credentials.php)
         $store = rtrim((string)($storage_dir ?? '') ?: __DIR__ . '/../savdrive/storage', '/\\');
         $old = "UTC_TIMESTAMP() - INTERVAL " . TRASH_DAYS . " DAY";
         $gone = 0;
@@ -125,6 +125,22 @@ function cleanApp($project, $defaultPrefix)
                 $db->exec("DELETE FROM `{$prefix}vault_keys` WHERE user_id = $uid");
             }
             $result['vaults_reset'] = count($due);
+        }
+        // temporary links that are over (expired, out of downloads, files never finished uploading, nothing of the drive
+        // left): the files uploaded only for them are deleted from the disk, the files of the drive stay (savdrive/lib/temp.php)
+        if ($db->query("SHOW TABLES LIKE " . $db->quote(addcslashes($prefix, '_%') . 'temp_links'))->fetchColumn()) {
+            $over = "(l.expires_at < UTC_TIMESTAMP() OR (l.max_downloads IS NOT NULL AND l.downloads >= l.max_downloads) OR (l.ready = 0 AND l.created_at < UTC_TIMESTAMP() - INTERVAL 24 HOUR)
+                OR (l.ready = 1 AND NOT EXISTS (SELECT 1 FROM `{$prefix}temp_items` x WHERE x.link_id = l.id)))";
+            $gone = 0;
+            foreach ($db->query("SELECT i.user_id, i.bkey FROM `{$prefix}temp_items` i JOIN `{$prefix}temp_links` l ON l.id = i.link_id WHERE i.bkey IS NOT NULL AND $over")->fetchAll(PDO::FETCH_ASSOC) as $f) {
+                if (preg_match('/^[a-f0-9]{32}$/', (string)$f['bkey']) && @unlink($store . '/' . (int)$f['user_id'] . '/' . $f['bkey'])) $gone++;
+            }
+            foreach ($db->query("SELECT p.id, p.user_id FROM `{$prefix}uploads` p JOIN `{$prefix}temp_links` l ON l.id = p.temp_id WHERE $over")->fetchAll(PDO::FETCH_ASSOC) as $u) {
+                if (preg_match('/^[a-f0-9]{32}$/', (string)$u['id'])) @unlink($store . '/' . (int)$u['user_id'] . '/' . $u['id'] . '.part');
+            }
+            $db->exec("DELETE p FROM `{$prefix}uploads` p JOIN `{$prefix}temp_links` l ON l.id = p.temp_id WHERE $over");
+            $result['temp_links'] = $db->exec("DELETE l FROM `{$prefix}temp_links` l WHERE $over");
+            $result['temp_files'] = $gone;
         }
         $result['unconfirmed'] = $db->exec("DELETE FROM `{$prefix}users` WHERE email_verified_at IS NULL AND status = 'active' AND created_at < UTC_TIMESTAMP() - INTERVAL 7 DAY");
         $result['links'] = $db->exec("DELETE FROM `{$prefix}email_tokens` WHERE expires_at < UTC_TIMESTAMP()");
