@@ -23,9 +23,25 @@ The page shows the download only on a Mac (`savoffice/page.js`), Apple silicon o
 redraws the pictures (`tools/brand.js`). The app is put together in the temporary folder of the system and only the DMG
 comes back into `dist/`: in a folder kept by iCloud (Documents) the files get Finder attributes that `codesign` refuses.
 
-Without an Apple Developer ID the app is signed *ad hoc* (`tools/adhoc-sign.js`): it opens at once on the Mac where it
-was built; on another Mac, the first time: System Settings → Privacy & Security → **Open Anyway**. With a Developer ID in
-the keychain electron-builder signs by itself (for notarization add `mac.notarize` in `package.json`).
+### Signing: why macOS warns, and how it stops
+
+`npm run dist` (`tools/dist.js`) looks in the keychain for a **Developer ID Application** certificate:
+
+- **none**: the app is signed *ad hoc* (`tools/adhoc-sign.js`). macOS trusts it only where it was built and not
+  downloaded: a DMG that comes from the web, or from iCloud Drive (Documents), carries `com.apple.quarantine` and macOS
+  warns ("cannot verify", "insecure"); System Settings → Privacy & Security → **Open Anyway** once per installed copy.
+- **found**: signed with it, with the hardened runtime (`tools/entitlements.mac.plist`: the JIT of Electron, camera,
+  microphone) and, when the variables below are set, **notarized** by Apple: no warning on any Mac.
+
+To get there: join the [Apple Developer Program](https://developer.apple.com/programs/) (99 USD a year); in Xcode →
+Settings → Accounts → Manage Certificates → **+ Developer ID Application** (it lands in the keychain); then one of
+
+    APPLE_ID=you@example.com APPLE_APP_SPECIFIC_PASSWORD=xxxx-xxxx-xxxx-xxxx APPLE_TEAM_ID=ABCDE12345 npm run dist
+    APPLE_API_KEY=~/AuthKey_XXXX.p8 APPLE_API_KEY_ID=XXXX APPLE_API_ISSUER=<issuer uuid> npm run dist
+
+(the app-specific password from appleid.apple.com; the Team ID from developer.apple.com → Membership). The apps of their
+own that the Toolbox makes on each Mac (`bundles.js`) are signed again ad hoc there: made on that Mac, never downloaded,
+macOS does not question them.
 
 ## How it works
 
@@ -55,8 +71,13 @@ the keychain electron-builder signs by itself (for notarization add `mac.notariz
   at sign-out. Every app has its own browser profile (Chromium allows one process per profile); the session of the suite
   (one account for all the apps, `../identity/suite.php`) is the same in all of them through `session-sync.js`: signed in
   or out anywhere — the Toolbox, an app — means everywhere.
-- **Account in the Toolbox**: Sign in opens the sign-in page of an app in a small window (email and password, or SavAccount);
-  Sign out ends the session in every process and deletes what the apps kept for working offline, as on the web.
+- **Account in the Toolbox**: *Sign in with SavAccount* opens the **browser** (passkeys and Touch ID work only in the
+  browsers Apple allows, never inside an Electron app): `…/savschedules/api/?r=auth.handoff&n=<nonce>` signs in there
+  (SavAccount if needed) and opens `savoffice://signed-in?code=…&n=…`; the Toolbox checks the nonce it made and exchanges the
+  code (one use, 3 minutes) at `auth.handoff.redeem` for a session of its own (`../identity/suite.php`). *Sign in with
+  email* opens the sign-in page of an app in a small window; SavAccount clicked there opens in a window of its own, in a
+  session where `serve.js` does not answer (SavAccount checks `Sec-Fetch-Site`). Sign out ends the session in every
+  process and deletes what the apps kept for working offline, as on the web.
 - **Version** of an app = a fingerprint of its `sw.js`, `assets/version.js` and its page (which stamps its styles and the
   shared scripts with `?v=<date>`). So: bump `CACHE` in `sw.js` when the files change and `VERSION` at a release, as the
   READMEs of the apps already say; a change to SavComponents or `assets/savoffice/` is seen through the page.

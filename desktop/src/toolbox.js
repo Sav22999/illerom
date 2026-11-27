@@ -13,6 +13,7 @@
  */
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { app, BrowserWindow, Menu, ipcMain, protocol, session, shell, net, nativeTheme } = require('electron');
 const { Store, ORIGIN, SLUGS, catalog } = require('./store');
 const { serve, cut } = require('./serve');
@@ -122,6 +123,46 @@ function openSignin(mode = 'signin') {
   signinWin.loadURL(`${ORIGIN}/${slug}/#/${mode === 'signup' ? 'signup' : 'signin'}`);
 }
 
+/*
+ * SavAccount in the browser: passkeys (Touch ID, the iCloud Keychain) work only in the browsers Apple allows, not here.
+ * The browser opens the page of the suite that signs in (with SavAccount when needed) and then opens
+ * savoffice://signed-in?code=…&n=… : a code for one use, for minutes, given only with the nonce made here.
+ * The Toolbox exchanges it for a session of its own (../../identity/suite.php, auth.handoff / auth.handoff.redeem),
+ * which session-sync.js gives to every app.
+ */
+let handoff = null; // { nonce, at, error }
+const HANDOFF_MS = 15 * 60e3;
+const handoffWaiting = () => !!handoff && !handoff.error && Date.now() - handoff.at < HANDOFF_MS;
+
+function signinBrowser() {
+  handoff = { nonce: crypto.randomBytes(16).toString('hex'), at: Date.now(), error: null };
+  shell.openExternal(`${ACCOUNT_API}?r=auth.handoff&n=${handoff.nonce}`);
+  store.changed();
+}
+
+async function redeemHandoff(u) {
+  const code = u.searchParams.get('code') || '', n = u.searchParams.get('n') || '';
+  showLauncher();
+  app.focus({ steal: true });
+  // only the answer to the request made here, and only while it is fresh
+  if (!handoff || !/^[a-f0-9]{64}$/.test(code) || n.length !== handoff.nonce.length || !crypto.timingSafeEqual(Buffer.from(n), Buffer.from(handoff.nonce)) || Date.now() - handoff.at > HANDOFF_MS) {
+    if (handoff) handoff.error = 'expired';
+    store.changed();
+    return;
+  }
+  try {
+    const r = await session.defaultSession.fetch(ACCOUNT_API + '?r=auth.handoff.redeem', { method: 'POST', bypassCustomProtocolHandlers: true, credentials: 'include',
+      headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code, n }) });
+    const d = await r.json().catch(() => ({}));
+    if (!d.ok) throw new Error(d.error || 'failed');
+    handoff = null;
+    await refreshAccount();
+  } catch (e) {
+    handoff = { ...(handoff || {}), error: /expired/.test(e.message) ? 'expired' : 'failed' };
+  }
+  store.changed();
+}
+
 /** Signs out of every app: the session goes (in every process, session-sync.js), and what was kept for working offline. */
 async function signOut() {
   const csrf = await refreshAccount();
@@ -166,7 +207,7 @@ function showLauncher(view) {
 const snapshot = () => ({
   apps: store.snapshot(), catalog, settings: { ...settings.all(), windows: undefined, account: undefined }, online, lang: lang(), lastCheck: store.lastCheck,
   checking: !!store.checking, version: app.getVersion(), shortcutsDir: shortcuts.dir(), separateSupported: bundles.supported(),
-  account: account?.email ? account : null, accountKnown,
+  account: account?.email ? account : null, accountKnown, handoff: handoffWaiting() ? 'waiting' : handoff?.error || null,
 });
 let pushTimer = null;
 store.on('change', () => {
@@ -249,6 +290,8 @@ ipcMain.handle('settings', async (e, patch) => {
 });
 ipcMain.handle('reveal', () => shell.openPath(shortcuts.dir()));
 ipcMain.handle('signin', (e, mode) => openSignin(mode));
+ipcMain.handle('signin-browser', () => signinBrowser());
+ipcMain.handle('signin-browser-cancel', () => { handoff = null; store.changed(); });
 ipcMain.handle('signout', () => signOut());
 ipcMain.handle('account', () => refreshAccount().then(() => account));
 ipcMain.handle('external', (e, url) => { if (/^https:\/\//.test(url)) shell.openExternal(url); });
@@ -277,6 +320,7 @@ function openAddress(url) {
   if (!ready) { pending.push(url); return; }
   let u;
   try { u = new URL(url); } catch { return; }
+  if (u.hostname === 'signed-in') { redeemHandoff(u); return; } // the browser, after SavAccount
   const slug = (u.hostname === 'open' ? u.pathname.split('/')[1] : u.hostname) || '';
   if (SLUGS.has(slug) && store.installed(slug)) open(slug);
   else showLauncher();

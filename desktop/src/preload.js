@@ -16,6 +16,8 @@ contextBridge.exposeInMainWorld('savoffice', {
   reveal: call('reveal'),
   external: call('external'),
   signin: call('signin'),
+  signinBrowser: call('signin-browser'),
+  signinBrowserCancel: call('signin-browser-cancel'),
   signout: call('signout'),
   account: call('account'),
   /** fn(state) at every change */

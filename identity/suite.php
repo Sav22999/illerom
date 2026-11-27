@@ -163,3 +163,109 @@ function suite_reset_app(PDO $pdo, string $prefix): bool
     error_log("SavOffice: the tables $prefix* were dropped, the app now uses the accounts of the suite");
     return true;
 }
+
+/* ---------- SavOffice for Mac: signing in in the browser, the session back to the app ----------
+ *
+ * Passkeys (Touch ID, the iCloud Keychain) work only in the browsers Apple allows, not inside SavOffice for Mac. So the
+ * app can sign in in the browser and get the session back:
+ *   1. the app opens  <SavSchedules>/api/?r=auth.handoff&n=<nonce>  in the browser (the nonce: random, known only to it);
+ *   2. signed in there already: a code for one use (SUITE_HANDOFF_MINUTES) is made and the page opens
+ *      savoffice://signed-in?code=…&n=…  (the app); not signed in: off to SavAccount, and back here when it is done;
+ *   3. the app sends the code and its nonce to  auth.handoff.redeem  and gets a session of its own (its own cookie).
+ * The session itself never travels: only the code, which works once, for minutes, with the nonce of who asked for it.
+ * Called by the API of SavSchedules (the owner of the accounts): it uses its db(), t(), current_user(), body()…
+ */
+const SUITE_HANDOFF_COOKIE = 'savoffice_handoff';
+const SUITE_HANDOFF_MINUTES = 3;
+
+function suite_handoff_install(): void
+{
+    $a = suite_accounts();
+    $p = $a ? $a['prefix'] : 'sch_';
+    db()->exec('CREATE TABLE IF NOT EXISTS ' . t('handoffs') . " (
+        `code_hash` CHAR(64) NOT NULL PRIMARY KEY,
+        `user_id` INT UNSIGNED NOT NULL,
+        `nonce` CHAR(64) NOT NULL,
+        `created_at` DATETIME NOT NULL,
+        `expires_at` DATETIME NOT NULL,
+        KEY `ix_expires` (`expires_at`),
+        CONSTRAINT `fk_{$p}hand_user` FOREIGN KEY (`user_id`) REFERENCES " . t('users') . ' (`id`) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
+    db()->exec('DELETE FROM ' . t('handoffs') . ' WHERE expires_at < UTC_TIMESTAMP()');
+}
+
+/** GET auth.handoff (in the browser). $savStart(): the address of SavAccount to sign in, coming back here. */
+function suite_handoff(callable $savStart, bool $savEnabled): void
+{
+    $n = (string)($_GET['n'] ?? ($_COOKIE[SUITE_HANDOFF_COOKIE] ?? ''));
+    if (!preg_match('/^[a-f0-9]{32,64}$/', $n)) suite_handoff_page('expired');
+    $cookie = fn(string $v, int $exp) => setcookie(SUITE_HANDOFF_COOKIE, $v, ['expires' => $exp, 'path' => app_base_path(), 'secure' => is_https(), 'httponly' => true, 'samesite' => 'Lax']);
+    $cookie($n, time() + 15 * 60); // remembered while SavAccount asks who you are
+    $u = current_user();
+    if ($u && $u['status'] === 'active' && !empty($u['email_verified_at'])) {
+        suite_handoff_install();
+        $code = bin2hex(random_bytes(32));
+        db()->prepare('INSERT INTO ' . t('handoffs') . ' (code_hash, user_id, nonce, created_at, expires_at) VALUES (?,?,?,?,?)')
+            ->execute([hash('sha256', $code), (int)$u['id'], $n, now_utc(), gmdate('Y-m-d H:i:s', time() + SUITE_HANDOFF_MINUTES * 60)]);
+        $cookie('', time() - 3600);
+        suite_handoff_page('ready', 'savoffice://signed-in?code=' . $code . '&n=' . $n);
+    }
+    $sav = (string)($_GET['sav'] ?? '');
+    if ($sav === 'signup' || $sav === 'link') suite_handoff_page('finish', app_base_path() . '?sav=' . $sav); // a new account, or one to join: in the app
+    if ($sav !== '' && $sav !== 'in') suite_handoff_page($sav === 'cancelled' ? 'cancelled' : 'failed');
+    if (!$savEnabled) suite_handoff_page('failed');
+    header('Cache-Control: no-store');
+    header('Location: ' . $savStart(), true, 302);
+    exit;
+}
+
+/** POST auth.handoff.redeem {code, n} (from the app): a session of its own, once. */
+function suite_handoff_redeem(): void
+{
+    if (too_many_attempts('handoff', 20, 15)) fail('rate_limited', 429);
+    record_attempt('handoff');
+    $b = body();
+    $code = (string)($b['code'] ?? '');
+    $n = (string)($b['n'] ?? '');
+    if (!preg_match('/^[a-f0-9]{64}$/', $code) || !preg_match('/^[a-f0-9]{32,64}$/', $n)) fail('expired', 410);
+    suite_handoff_install();
+    $st = db()->prepare('SELECT h.user_id, h.nonce, u.status FROM ' . t('handoffs') . ' h JOIN ' . t('users') . ' u ON u.id = h.user_id WHERE h.code_hash = ? AND h.expires_at > UTC_TIMESTAMP()');
+    $st->execute([hash('sha256', $code)]);
+    $row = $st->fetch();
+    db()->prepare('DELETE FROM ' . t('handoffs') . ' WHERE code_hash = ?')->execute([hash('sha256', $code)]); // once, right or wrong
+    if (!$row || !hash_equals((string)$row['nonce'], $n)) fail('expired', 410);
+    if ($row['status'] !== 'active') fail('disabled', 403);
+    $csrf = create_auth_session((int)$row['user_id']);
+    send_json(['ok' => true, 'csrf' => $csrf]);
+}
+
+/** The page of the browser: open SavOffice, finish the sign-in in the app, or what went wrong. */
+function suite_handoff_page(string $state, string $link = ''): void
+{
+    $it = stripos((string)($_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? ''), 'it') === 0;
+    $L = fn(string $i, string $e) => htmlspecialchars($it ? $i : $e, ENT_QUOTES, 'UTF-8');
+    $retry = htmlspecialchars(app_base_path() . 'api/?r=auth.handoff', ENT_QUOTES, 'UTF-8');
+    $href = htmlspecialchars($link, ENT_QUOTES, 'UTF-8');
+    $texts = [
+        'ready' => [$L('Accesso fatto', 'Signed in'), $L('Torna a SavOffice: sei dentro in tutte le app. Puoi chiudere questa scheda.', 'Go back to SavOffice: you are in every app. You can close this tab.'), $L('Apri SavOffice', 'Open SavOffice')],
+        'finish' => [$L('Ancora un passo', 'One more step'), $L('Completa l’accesso qui, poi premi «Torna a SavOffice».', 'Finish signing in here, then press “Back to SavOffice”.'), $L('Completa l’accesso', 'Finish signing in')],
+        'cancelled' => [$L('Accesso annullato', 'Sign-in cancelled'), $L('Puoi riprovare quando vuoi.', 'You can try again whenever you like.'), ''],
+        'expired' => [$L('Richiesta scaduta', 'Request expired'), $L('Torna a SavOffice e premi di nuovo «Accedi con SavAccount».', 'Go back to SavOffice and press “Sign in with SavAccount” again.'), ''],
+        'failed' => [$L('Non è riuscito', 'It did not work'), $L('Riprova tra poco.', 'Try again in a moment.'), ''],
+    ][$state] ?? [$L('Non è riuscito', 'It did not work'), '', ''];
+    http_response_code($state === 'expired' ? 410 : 200);
+    header('Content-Type: text/html; charset=utf-8');
+    header('Cache-Control: no-store');
+    header('Referrer-Policy: no-referrer');
+    header("Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'");
+    $go = $state === 'ready' ? '<meta http-equiv="refresh" content="0;url=' . $href . '">' : '';
+    $main = $texts[2] !== '' ? '<a class="b" href="' . $href . '">' . $texts[2] . '</a>' : '';
+    $again = in_array($state, ['finish', 'cancelled', 'failed'], true) ? '<a class="b' . ($state === 'finish' ? ' o' : '') . '" href="' . $retry . '">' . ($state === 'finish' ? $L('Torna a SavOffice', 'Back to SavOffice') : $L('Riprova', 'Try again')) . '</a>' : '';
+    echo '<!doctype html><html lang="' . ($it ? 'it' : 'en') . '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' . $go
+        . '<title>SavOffice</title><style>:root{color-scheme:light dark}body{margin:0;min-height:100vh;display:grid;place-items:center;font:16px/1.5 -apple-system,system-ui,sans-serif;background:light-dark(#f6f4f9,#121016);color:light-dark(#1b1724,#ece8f3)}'
+        . 'main{width:min(26rem,calc(100% - 2rem));padding:2rem;border-radius:20px;background:light-dark(#fff,#1b1820);box-shadow:0 18px 40px rgb(30 20 50/.12);text-align:center}'
+        . 'img{width:56px;height:56px}h1{font-size:1.4rem;margin:.6rem 0 .3rem}p{margin:0 0 1.2rem;color:light-dark(#625b70,#a39cb0)}'
+        . '.b{display:block;margin:.5rem 0 0;padding:.8rem 1rem;border-radius:12px;background:#6a3fe0;color:#fff;text-decoration:none;font-weight:600}.b.o{background:none;color:inherit;border:1px solid light-dark(#e2ddea,#2f2a37)}</style></head>'
+        . '<body><main><img src="/savoffice/icons/favicon.svg" alt=""><h1>' . $texts[0] . '</h1><p>' . $texts[1] . '</p>' . $main . $again . '</main></body></html>';
+    exit;
+}

@@ -152,6 +152,8 @@ identity_setup([
     'accepted' => fn(array $b) => !empty($b['acceptTerms']),
     'create' => fn(array $who, array $b) => new_user($who['name'] ?: explode('@', $who['email'])[0], $who['email'], '', null, ui_lang($b)),
     'writer' => fn() => writer(),
+    // SavOffice for Mac signs in in the browser and comes back here (../../identity/suite.php, suite_handoff())
+    'pages' => ['handoff' => 'api/?r=auth.handoff'],
 ]);
 identity_route($r);
 
@@ -161,6 +163,15 @@ switch ($r) {
 
     case 'auth.config':
         send_json(['ok' => true, 'installed' => true, 'savAccount' => sav_enabled(), 'mailReady' => mail_settings() !== null]);
+
+    // SavOffice for Mac: the sign-in made in the browser (passkeys work there), its session back to the app (../../identity/suite.php)
+    case 'auth.handoff':
+        only('GET');
+        suite_handoff(fn() => sav_start('login', null, 'handoff'), sav_enabled());
+
+    case 'auth.handoff.redeem':
+        only('POST');
+        suite_handoff_redeem();
 
     case 'auth.me':
         only('GET');

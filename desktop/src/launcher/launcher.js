@@ -45,6 +45,9 @@ const WORDS = {
     s_off: 'Offline e sincronizzazione', s_off_p: 'Cosa fa ogni app senza connessione. Quando la rete torna, tutto quello che hai fatto parte da solo.',
     off_l_edit: 'Si crea e si modifica tutto', off_l_queue: 'Le modifiche aspettano la rete', off_l_read: 'Si legge quello già aperto', off_l_online: 'Solo online',
     signin: 'Accedi', signup: 'Crea un account', signout: 'Esci', account: 'Account',
+    sav_browser: 'Accedi con SavAccount', with_email: 'Accedi con email', sav_browser_t: 'Si apre il browser: lì funzionano anche le passkey e Touch ID. Poi torni qui da solo.',
+    hand_wait: 'Continua nel browser', hand_wait_t: 'Accedi con SavAccount nella pagina che si è aperta: SavOffice si connette da solo quando hai finito.', hand_again: 'Riapri la pagina', hand_cancel: 'Annulla',
+    hand_expired: 'La richiesta è scaduta: premi di nuovo «Accedi con SavAccount».', hand_failed: 'L’accesso non è riuscito: riprova.',
     acc_h: 'Un account per tutte le app', acc_p: 'Accedi una volta sola, con email e password o con SavAccount: sei dentro in tutte le app di SavOffice, anche in quelle che installerai dopo.',
     acc_in: 'Hai fatto l’accesso come {name}', acc_in_t: '{email} · lo stesso account in tutte le app di SavOffice.',
     acc_out: 'Non hai fatto l’accesso', acc_out_t: 'Un solo account per tutte le app: accedi qui, o in una qualsiasi app, e vale per tutte.',
@@ -88,6 +91,9 @@ const WORDS = {
     s_off: 'Offline and sync', s_off_p: 'What each app does without a connection. When the network is back, everything you did goes out by itself.',
     off_l_edit: 'Create and edit everything', off_l_queue: 'Changes wait for the network', off_l_read: 'Read what was already open', off_l_online: 'Online only',
     signin: 'Sign in', signup: 'Create an account', signout: 'Sign out', account: 'Account',
+    sav_browser: 'Sign in with SavAccount', with_email: 'Sign in with email', sav_browser_t: 'The browser opens: passkeys and Touch ID work there too. Then you come back here by yourself.',
+    hand_wait: 'Go on in the browser', hand_wait_t: 'Sign in with SavAccount on the page that opened: SavOffice signs in by itself when you are done.', hand_again: 'Open the page again', hand_cancel: 'Cancel',
+    hand_expired: 'The request expired: press “Sign in with SavAccount” again.', hand_failed: 'Signing in did not work: try again.',
     acc_h: 'One account for all the apps', acc_p: 'Sign in once, with email and password or with SavAccount: you are in every app of SavOffice, also the ones you install later.',
     acc_in: 'Signed in as {name}', acc_in_t: '{email} · the same account in every app of SavOffice.',
     acc_out: 'You are not signed in', acc_out_t: 'One account for all the apps: sign in here, or in any app, and it works for all of them.',
@@ -210,6 +216,7 @@ const act = {
       actions: [{ label: t('cancel') }, { label: t('remove'), danger: true, run: async () => { await api.remove(slug); toast(t('done_remove', { app: name })); } }] });
   },
   reinstall: (slug) => api.reinstall(slug),
+  signinBrowser: () => api.signinBrowser(),
   signin: () => api.signin('signin'),
   signup: () => api.signin('signup'),
   signout() {
@@ -218,6 +225,25 @@ const act = {
   },
   browser: (slug) => api.browser(slug),
 };
+
+/** The ways to sign in: SavAccount in the browser (passkeys work there), email in a window of the Toolbox, a new account. */
+function signinButtons(o = {}) {
+  return [
+    btn(t('sav_browser'), { variant: 'primary', appearance: 'solid', icon: 'key', disabled: !S.online, title: t('sav_browser_t'), onclick: () => act.signinBrowser() }),
+    btn(t('with_email'), { icon: 'mail', disabled: !S.online, onclick: () => act.signin() }),
+    o.signup === false ? null : btn(t('signup'), { icon: 'user-plus', disabled: !S.online, onclick: () => act.signup() }),
+  ];
+}
+
+/** Signing in in the browser: waiting for it, or what went wrong. */
+function handoffNote() {
+  if (!S.handoff) return null;
+  if (S.handoff === 'waiting') {
+    return h('sav-alert.offnote', { variant: 'primary', icon: 'external' }, h('b', t('hand_wait')), h('p', t('hand_wait_t')),
+      h('div.accbtns', btn(t('hand_again'), { icon: 'refresh', onclick: () => act.signinBrowser() }), btn(t('hand_cancel'), { appearance: 'ghost', onclick: () => api.signinBrowserCancel() })));
+  }
+  return h('sav-alert.offnote', { variant: 'danger', icon: 'alert-circle' }, t(S.handoff === 'expired' ? 'hand_expired' : 'hand_failed'));
+}
 
 /* ------------------------------------------------------------------ the screen */
 
@@ -298,11 +324,12 @@ function drawMain() {
   }
   const grid = ui.main.querySelector('.grid');
   // only the cards change while something downloads: the open menus of the others stay open
-  const key = view + '|' + query + '|' + S.online + '|' + !!S.account + '|' + S.accountKnown;
+  const key = view + '|' + query + '|' + S.online + '|' + !!S.account + '|' + S.accountKnown + '|' + S.handoff;
   if (grid && body.classList?.contains('grid') && ui.main.dataset.view === key) put(grid, [...body.children]);
   else put(ui.main, h('div.dhead', h('h1', head[0]), h('p', head[1])), S.online ? null : h('sav-alert.offnote', { variant: 'warning', icon: 'cloud' }, t('offline_note')),
-    !S.account && S.accountKnown && S.online && view !== 'updates' ? h('sav-alert.offnote.accnote', { variant: 'primary', icon: 'user' }, h('b', t('acc_h')), h('p', t('acc_p')),
-      h('div.accbtns', btn(t('signin'), { variant: 'primary', appearance: 'solid', icon: 'log-in', onclick: () => act.signin() }), btn(t('signup'), { icon: 'user-plus', onclick: () => act.signup() }))) : null,
+    !S.account && handoffNote(),
+    !S.account && !S.handoff && S.accountKnown && S.online && view !== 'updates' ? h('sav-alert.offnote.accnote', { variant: 'primary', icon: 'user' }, h('b', t('acc_h')), h('p', t('acc_p')),
+      h('div.accbtns', signinButtons())) : null,
     body);
   ui.main.dataset.view = key;
 }
@@ -317,7 +344,7 @@ function settingsView() {
     h('div.dhead', h('h1', t('settings'))),
     section(t('account'), null, S.account
       ? row(t('acc_in', { name: S.account.name }), t('acc_in_t', { email: S.account.email }), btn(t('signout'), { icon: 'log-out', onclick: () => act.signout() }))
-      : row(t('acc_out'), t('acc_out_t'), btn(t('signin'), { variant: 'primary', appearance: 'solid', disabled: !S.online, onclick: () => act.signin() }), btn(t('signup'), { disabled: !S.online, onclick: () => act.signup() }))),
+      : row(t('acc_out'), t('acc_out_t') + ' ' + t('sav_browser_t'), ...signinButtons())),
     section(t('s_upd'), t('s_upd_p'),
       row(t('auto'), t('auto_t'), toggle(t('auto'), st.autoUpdate, (v) => set({ autoUpdate: v }))),
       row(t('every'), t('every_t'), select(t('every'), [[1, t('h1')], [6, t('h6')], [24, t('h24')], [168, t('h168')]], st.checkHours, (v) => set({ checkHours: +v }))),
@@ -357,7 +384,8 @@ function drawChrome() {
       ? drop(h('sav-button.accb', { appearance: 'ghost', variant: 'neutral', size: 'sm', label: S.account.name },
         h('sav-avatar', { label: S.account.name, image: S.account.picture || null, style: '--sav-avatar-size:28px' })), [
         ['user', S.account.email, null], '-', ['settings', t('settings'), () => go('settings')], ['log-out', t('signout'), () => act.signout(), { danger: true }]], t('account'))
-      : btn(t('signin'), { variant: 'primary', appearance: 'solid', icon: 'log-in', disabled: !S.online, onclick: () => act.signin() }));
+      : drop(h('sav-button', { variant: 'primary', appearance: 'solid', size: 'sm', icon: 'log-in', caret: true, disabled: !S.online || null }, t('signin')), [
+        ['key', t('sav_browser'), () => act.signinBrowser()], ['mail', t('with_email'), () => act.signin()], '-', ['user-plus', t('signup'), () => act.signup()]], t('signin')));
   }
   ui.check.button.loading = !!S.checking;
   ui.check.button.disabled = !S.online;

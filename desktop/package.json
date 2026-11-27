@@ -57,10 +57,15 @@
           ]
         }
       ],
-      "identity": null,
       "hardenedRuntime": false,
       "gatekeeperAssess": false,
-      "minimumSystemVersion": "12.0"
+      "minimumSystemVersion": "12.0",
+      "entitlements": "tools/entitlements.mac.plist",
+      "entitlementsInherit": "tools/entitlements.mac.plist",
+      "extendInfo": {
+        "NSCameraUsageDescription": "The apps of SavOffice use the camera only when you ask them to (a photo, a video call).",
+        "NSMicrophoneUsageDescription": "The apps of SavOffice use the microphone only when you ask them to (a recording, a call)."
+      }
     },
     "afterSign": "tools/adhoc-sign.js",
     "dmg": {

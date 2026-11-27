@@ -394,7 +394,7 @@ function sav_back(string $result, string $page = ''): void
     ident_set_cookie('sav', '', time() - 3600);
     header('Cache-Control: no-store');
     header('Referrer-Policy: no-referrer');
-    header('Location: ' . app_base_path() . $to . '?sav=' . $result, true, 302);
+    header('Location: ' . app_base_path() . $to . (strpos($to, '?') === false ? '?' : '&') . 'sav=' . $result, true, 302); // a page may have its query (the API: SavOffice for Mac)
     exit;
 }
 
