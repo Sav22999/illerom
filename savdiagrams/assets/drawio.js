@@ -1,0 +1,127 @@
+/**
+ * diagrams.net / draw.io files (.drawio, .xml, the XML inside a .drawio.png is not read): the first page becomes a
+ * diagram. Shapes, their text and colours, connectors with their route, heads and labels, groups and containers (their
+ * children are placed where they are on the page). What SavDiagrams does not have (images, tables, custom stencils) becomes
+ * a rectangle with its text, so nothing is lost silently.
+ *
+ * A page is an <mxGraphModel>, inside the file as it is or compressed: base64 of the raw deflate of its URI-encoded XML.
+ */
+import { cleanItems, defaultSettings, uid } from './model.js';
+
+const bad = (code) => Object.assign(new Error(code), { code });
+
+async function inflate(b64) {
+  const bytes = Uint8Array.from(atob(b64.replace(/\s+/g, '')), (c) => c.charCodeAt(0));
+  const out = await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text();
+  return decodeURIComponent(out);
+}
+
+/** The <mxGraphModel> of the first page. */
+async function firstModel(xml) {
+  const doc = new DOMParser().parseFromString(xml, 'application/xml');
+  if (doc.querySelector('parsererror')) throw bad('file_invalid');
+  let model = doc.querySelector('mxGraphModel');
+  const page = doc.querySelector('diagram');
+  if (page && !page.querySelector('mxGraphModel')) {
+    const raw = page.textContent.trim();
+    if (!raw) throw bad('file_invalid');
+    let inner;
+    try { inner = await inflate(raw); } catch { throw bad('file_invalid'); }
+    model = new DOMParser().parseFromString(inner, 'application/xml').querySelector('mxGraphModel');
+  } else if (page) model = page.querySelector('mxGraphModel');
+  if (!model) throw bad('file_invalid');
+  return { model, title: page?.getAttribute('name') || '' };
+}
+
+const styleOf = (s) => {
+  const o = {};
+  for (const part of String(s || '').split(';')) { if (!part) continue; const k = part.indexOf('='); if (k < 0) o['_' + part] = true; else o[part.slice(0, k)] = part.slice(k + 1); }
+  return o;
+};
+const hex = (v) => {
+  if (!v || v === 'none' || v === 'default') return '';
+  let m = /^#([0-9a-f]{3})$/i.exec(v);
+  if (m) return '#' + [...m[1]].map((c) => c + c).join('').toLowerCase();
+  m = /^#([0-9a-f]{6})$/i.exec(v);
+  return m ? '#' + m[1].toLowerCase() : '';
+};
+/** The text of a cell: its value, HTML turned into plain lines. */
+function plain(v, html) {
+  if (!v) return '';
+  if (!html && !/<[a-z][\s\S]*>/i.test(v)) return v;
+  const withBreaks = v.replace(/<br\s*\/?>/gi, '\n').replace(/<\/(div|p|li|h[1-6])>/gi, '\n');
+  const doc = new DOMParser().parseFromString('<!doctype html><body>' + withBreaks, 'text/html');
+  return (doc.body.textContent || '').replace(/ /g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+}
+function kindOf(st) {
+  const shape = st.shape || '';
+  if (st._text || shape === 'text' || (st._label && !st.fillColor)) return 'text';
+  if (st._ellipse || shape === 'ellipse' || st._doubleEllipse || shape === 'doubleEllipse') return 'ellipse';
+  if (st._rhombus || shape === 'rhombus') return 'diamond';
+  if (shape === 'parallelogram' || st._parallelogram) return 'para';
+  if (/^(cylinder|cylinder3|datastore)$/.test(shape) || st._cylinder) return 'cyl';
+  if (shape === 'document' || st._document) return 'doc';
+  if (shape === 'note' || st._note || shape === 'card') return 'note';
+  if (shape === 'umlActor' || st._umlActor || shape === 'actor') return 'person';
+  if (shape === 'cloud' || st._cloud) return 'cloud';
+  if (st.rounded === '1' || shape === 'process' && st.rounded === '1') return 'round';
+  return 'rect';
+}
+const HEAD = { none: 'none', '': 'none', classic: 'arrow', classicThin: 'arrow', block: 'arrow', blockThin: 'arrow', open: 'open', openThin: 'open', openAsync: 'open', async: 'arrow', diamond: 'diamond', diamondThin: 'diamond', ERmandOne: 'bar', dash: 'bar', oval: 'circle', circle: 'circle', circlePlus: 'circle', box: 'diamond' };
+const side = (x, y) => { x = parseFloat(x); y = parseFloat(y); if (!Number.isFinite(x) || !Number.isFinite(y)) return ''; if (y <= .05) return 't'; if (y >= .95) return 'b'; if (x <= .05) return 'l'; if (x >= .95) return 'r'; return ''; };
+
+export async function fromDrawio(xml, name = '') {
+  const { model, title } = await firstModel(xml);
+  // UserObject / object wrap their mxCell and carry its label and id
+  const cells = [...model.querySelectorAll('mxCell')].map((c) => {
+    const w = c.parentElement && /^(UserObject|object)$/.test(c.parentElement.localName) ? c.parentElement : null;
+    return { el: c, id: w?.getAttribute('id') || c.getAttribute('id'), value: w ? w.getAttribute('label') || '' : c.getAttribute('value') || '' };
+  });
+  const byId = new Map(cells.map((c) => [c.id, c]));
+  const geo = (c) => { const g = c.el.querySelector(':scope > mxGeometry'); return g ? { x: +g.getAttribute('x') || 0, y: +g.getAttribute('y') || 0, w: +g.getAttribute('width') || 0, h: +g.getAttribute('height') || 0, g } : null; };
+  // the place of a cell on the page: inside a group or container its geometry is relative to the parent
+  const offset = (c, seen = new Set()) => {
+    const p = byId.get(c.el.getAttribute('parent'));
+    if (!p || seen.has(p.id) || p.el.getAttribute('vertex') !== '1') return [0, 0];
+    seen.add(p.id);
+    const g = geo(p), [ox, oy] = offset(p, seen);
+    return [ox + (g?.x || 0), oy + (g?.y || 0)];
+  };
+  const ids = new Map(), items = [], labels = new Map();
+  const groupOf = new Map();
+  for (const c of cells) {
+    const st = styleOf(c.el.getAttribute('style'));
+    if (c.el.getAttribute('vertex') !== '1') continue;
+    const g = geo(c);
+    if (!g) continue;
+    // a label on a connector: kept for its connector
+    if (st._edgeLabel || st.edgeLabel !== undefined) { const p = c.el.getAttribute('parent'); labels.set(p, [labels.get(p), plain(c.value, st.html === '1')].filter(Boolean).join(' ')); continue; }
+    const kids = cells.some((x) => x.el.getAttribute('parent') === c.id);
+    if (st._group || (kids && !c.value && (st.fillColor === 'none' || !st.fillColor) && !st.strokeColor)) { groupOf.set(c.id, uid()); continue; } // a group: no shape of its own
+    const [ox, oy] = offset(c), id = uid(), fs = +st.fontSize || 12, fstyle = +st.fontStyle || 0, k = kindOf(st);
+    ids.set(c.id, id);
+    const fill = st.fillColor === undefined ? (k === 'text' ? '' : '#ffffff') : hex(st.fillColor);
+    const stroke = st.strokeColor === undefined ? (k === 'text' ? '' : '#1c1c1c') : hex(st.strokeColor);
+    items.push({ id, t: 'node', k, x: g.x + ox, y: g.y + oy, w: Math.max(4, g.w), h: Math.max(4, g.h), text: plain(c.value, st.html === '1'), f: fill, c: stroke, s: stroke ? +st.strokeWidth || 1 : 0,
+      d: st.dashed === '1' ? 'dash' : '', tc: hex(st.fontColor) || '#1c1c1c', fs: Math.max(6, Math.round(fs * 1.15)), ff: /mono|courier/i.test(st.fontFamily || '') ? 'mono' : /serif|times|georgia/i.test(st.fontFamily || '') && !/sans/i.test(st.fontFamily || '') ? 'serif' : 'sans',
+      b: !!(fstyle & 1), i: !!(fstyle & 2), al: ['left', 'right'].includes(st.align) ? st.align : 'center', va: st.verticalAlign === 'top' ? 'top' : st.verticalAlign === 'bottom' ? 'bottom' : 'middle', _parent: c.el.getAttribute('parent') });
+  }
+  // groups: what was inside one group stays together
+  for (const n of items) { const g = groupOf.get(n._parent); if (g) n.g = g; delete n._parent; }
+  for (const c of cells) {
+    if (c.el.getAttribute('edge') !== '1') continue;
+    const st = styleOf(c.el.getAttribute('style')), g = c.el.querySelector(':scope > mxGeometry');
+    const pt = (as) => { const p = g?.querySelector(`mxPoint[as="${as}"]`); return p ? { x: +p.getAttribute('x') || 0, y: +p.getAttribute('y') || 0 } : null; };
+    const s = ids.get(c.el.getAttribute('source')), t = ids.get(c.el.getAttribute('target'));
+    const a = s ? { n: s, p: side(st.exitX, st.exitY) } : pt('sourcePoint'), b = t ? { n: t, p: side(st.entryX, st.entryY) } : pt('targetPoint');
+    if (!a || !b) continue;
+    const [ox, oy] = offset(c);
+    if (!a.n) { a.x += ox; a.y += oy; }
+    if (!b.n) { b.x += ox; b.y += oy; }
+    const stroke = hex(st.strokeColor) || '#1c1c1c';
+    items.push({ id: uid(), t: 'edge', a, b, r: /orthogonal|elbow|entityRelation/i.test(st.edgeStyle || '') ? 'elbow' : st.curved === '1' ? 'curve' : 'straight', c: stroke, s: +st.strokeWidth || 1.5, d: st.dashed === '1' ? 'dash' : '',
+      sa: HEAD[st.startArrow ?? 'none'] || 'arrow', ea: HEAD[st.endArrow ?? 'classic'] || 'arrow', text: [plain(c.value, st.html === '1'), labels.get(c.id)].filter(Boolean).join(' '), fs: Math.round((+st.fontSize || 11) * 1.15), tc: hex(st.fontColor) || '#1c1c1c' });
+  }
+  if (!items.length) throw bad('file_empty');
+  return { title: (title && !/^Page-\d+$/i.test(title) ? title : name.replace(/\.(drawio|xml)$/i, '')).slice(0, 160), settings: defaultSettings(), items: cleanItems(items) };
+}

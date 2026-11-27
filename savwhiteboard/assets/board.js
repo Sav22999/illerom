@@ -841,6 +841,8 @@ export async function boardScreen(root, id) {
     ['mouse-pointer-2', t('select_all'), () => { setTool('select'); select(order); }, { kbd: 'Mod+A' }],
     ['clipboard-paste', t('paste'), () => pasteFromMenu(...toWorld(size().l + size().w / 2, size().t + size().h / 2))],
     ['image', t('insert_image'), () => pickImage()],
+    // from the sketch to the diagram: SavDiagrams (same account) reads this board and makes a diagram of its shapes, texts and arrows
+    ['workflow', t('to_diagram'), async () => { await flush(); window.open('../savdiagrams/#/from-board/' + B.id, '_blank', 'noopener'); }],
     '-', ['scan', t('zoom_fit'), () => fit(), { kbd: 'Shift+1' }], document.documentElement.requestFullscreen ? ['maximize', t(document.fullscreenElement ? 'exit_full' : 'full_screen'), fullscreen] : null,
     '-', ['info', t('shortcuts'), () => shortcuts()],
   ];

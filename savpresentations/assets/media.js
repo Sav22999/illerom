@@ -93,14 +93,23 @@ export function libraryPanel(onpick, only = '') {
   return h('div.mpanel', dz, info, grid);
 }
 
-/** Asks for a picture: own library, upload or search. Resolves with it, or null. */
+/** Asks for a picture: own library, upload, search, or a diagram of SavDiagrams (../../savdiagrams/assets/embed.js). Resolves with it, or null. */
 export function pickPicture() {
   return new Promise((resolve) => {
     let dlg, res = null;
     const pick = (m) => { res = m; dlg.close(m); };
-    const src = sourceFields(), tabs = h('div.stack', state.local ? h('p.muted', t('local_media_t')) : h('sav-tabs', { appearance: 'segmented' }, h('sav-tab', { label: t('search_web'), icon: 'search' }, searchPanel('image', pick)), h('sav-tab', { label: t('my_pictures'), icon: 'images' }, libraryPanel(pick, 'image'))), src.node);
+    const src = sourceFields(), tabs = h('div.stack', state.local ? h('p.muted', t('local_media_t')) : h('sav-tabs', { appearance: 'segmented' }, h('sav-tab', { label: t('search_web'), icon: 'search' }, searchPanel('image', pick)), h('sav-tab', { label: t('my_pictures'), icon: 'images' }, libraryPanel(pick, 'image')), h('sav-tab', { label: t('sav_diagrams'), icon: 'workflow' }, diagramsTab(pick))), src.node);
     dialog(t('choose_picture'), tabs, [[t('from_computer'), async () => { const f = await pickFile('image/*'); if (!f.length) return false; res = await uploadPicture(f[0]); return res; }, { icon: 'upload' }]], { width: '46rem', ref: (d) => (dlg = d) }).then((v) => resolve(src.add(v && v !== true ? v : res)));
   });
+}
+
+/** The diagrams of SavDiagrams (same account as SavSchedules: the session goes with the request); the one picked is uploaded as a picture. */
+function diagramsTab(pick) {
+  const box = h('div', h('sav-spinner'));
+  import('../../savdiagrams/assets/embed.js').then(({ diagramsPanel }) => box.replaceChildren(diagramsPanel(async (d) => {
+    try { pick({ ...(await uploadPicture(new File([d.blob], (d.title || 'diagram').slice(0, 80) + '.png', { type: 'image/png' }))), name: d.title }); } catch (e) { oops(e); }
+  }, document.documentElement.lang))).catch(() => box.replaceChildren(h('p.muted', t('sav_diagrams_off'))));
+  return box;
 }
 
 /** Who made it and where it comes from, asked while choosing. */

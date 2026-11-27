@@ -1,5 +1,5 @@
 /*
- * SavOffice — the apps of the suite (SavBooks, SavCalendar, SavDocuments, SavDrive, SavForms, SavMail, SavNewsletters, SavNotes, SavPhotos, SavPodcasts, SavPresentations, SavSchedules, SavSplits, SavSpreadsheets, SavTasks, SavWhiteboard) from inside each one:
+ * SavOffice — the apps of the suite (SavBooks, SavCalendar, SavDiagrams, SavDocuments, SavDrive, SavForms, SavMail, SavNewsletters, SavNotes, SavPhotos, SavPodcasts, SavPresentations, SavSchedules, SavSplits, SavSpreadsheets, SavTasks, SavWhiteboard) from inside each one:
  * <savoffice-apps current="savcalendar"></savoffice-apps> is a button with a grid that opens the list of the apps and the
  * page of SavOffice. Plain script, no build: it needs SavComponents (sav-button, sav-popover), which every app loads.
  * The apps live in folders next to each other (../savdocuments/ …): the links are relative, so it works anywhere.
@@ -21,6 +21,7 @@
   const APPS = [
     ['savbooks', 'SavBooks', 'Libri ed e-book', 'Books and e-books'],
     ['savcalendar', 'SavCalendar', 'Calendario', 'Calendar'],
+    ['savdiagrams', 'SavDiagrams', 'Diagrammi', 'Diagrams'],
     ['savdocuments', 'SavDocuments', 'Documenti', 'Documents'],
     ['savdrive', 'SavDrive', 'File e cartelle', 'Files and folders'],
     ['savforms', 'SavForms', 'Moduli e sondaggi', 'Forms and surveys'],
@@ -284,6 +285,7 @@ savoffice-apps { display: inline-flex; }
         savpresentations: (k) => (k.startsWith('l') ? null : ['deck.' + (gone ? 'trash' : 'restore'), { d: k }]), // "l…": only in that browser
         savwhiteboard: (k) => ['wb.' + (gone ? 'trash' : 'restore'), { ids: [k] }],
         savnotes: (k) => ['nb.' + (gone ? 'trash' : 'restore'), { ids: [k] }],
+        savdiagrams: (k) => ['dg.' + (gone ? 'trash' : 'restore'), { ids: [k] }],
       };
       for (const [key, v] of Object.entries(links())) {
         if (!want.has(v.id)) continue;
@@ -390,7 +392,7 @@ savoffice-apps { display: inline-flex; }
   if (window.SavOffice?.commands) return;
   const IS_MAC = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
   const it = () => (document.documentElement.lang || navigator.language || 'en').startsWith('it');
-  const APPS = [['savbooks', 'SavBooks', 'Libri ed e-book', 'Books and e-books'], ['savcalendar', 'SavCalendar', 'Calendario', 'Calendar'], ['savdocuments', 'SavDocuments', 'Documenti', 'Documents'], ['savdrive', 'SavDrive', 'File e cartelle', 'Files and folders'],
+  const APPS = [['savbooks', 'SavBooks', 'Libri ed e-book', 'Books and e-books'], ['savcalendar', 'SavCalendar', 'Calendario', 'Calendar'], ['savdiagrams', 'SavDiagrams', 'Diagrammi', 'Diagrams'], ['savdocuments', 'SavDocuments', 'Documenti', 'Documents'], ['savdrive', 'SavDrive', 'File e cartelle', 'Files and folders'],
     ['savforms', 'SavForms', 'Moduli e sondaggi', 'Forms and surveys'], ['savmail', 'SavMail', 'Posta', 'Email'], ['savnewsletters', 'SavNewsletters', 'Newsletter', 'Newsletters'], ['savnotes', 'SavNotes', 'Quaderni', 'Notebooks'],
     ['savphotos', 'SavPhotos', 'Foto e video', 'Photos and videos'], ['savpodcasts', 'SavPodcasts', 'Podcast', 'Podcasts'], ['savpresentations', 'SavPresentations', 'Presentazioni', 'Presentations'],
     ['savschedules', 'SavSchedules', 'Sondaggi e posti', 'Polls and slots'], ['savsplits', 'SavSplits', 'Spese condivise', 'Shared expenses'], ['savspreadsheets', 'SavSpreadsheets', 'Fogli di calcolo', 'Spreadsheets'], ['savtasks', 'SavTasks', 'Attività', 'Tasks'], ['savwhiteboard', 'SavWhiteboard', 'Lavagna', 'Whiteboard']];

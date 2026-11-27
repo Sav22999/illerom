@@ -125,6 +125,8 @@ function cleanApp($project, $defaultPrefix)
         if ($db->query("SHOW TABLES LIKE " . $db->quote(addcslashes($prefix, '_%') . 'wb_boards'))->fetchColumn()) $result['boards_trash'] = $db->exec("DELETE FROM `{$prefix}wb_boards` WHERE trashed_at < UTC_TIMESTAMP() - INTERVAL " . TRASH_DAYS . " DAY");
         // SavNotes too: its notebooks in the trash after 30 days
         if ($db->query("SHOW TABLES LIKE " . $db->quote(addcslashes($prefix, '_%') . 'nb_notebooks'))->fetchColumn()) $result['notebooks_trash'] = $db->exec("DELETE FROM `{$prefix}nb_notebooks` WHERE trashed_at < UTC_TIMESTAMP() - INTERVAL " . TRASH_DAYS . " DAY");
+        // SavDiagrams too: its diagrams in the trash after 30 days
+        if ($db->query("SHOW TABLES LIKE " . $db->quote(addcslashes($prefix, '_%') . 'dg_diagrams'))->fetchColumn()) $result['diagrams_trash'] = $db->exec("DELETE FROM `{$prefix}dg_diagrams` WHERE trashed_at < UTC_TIMESTAMP() - INTERVAL " . TRASH_DAYS . " DAY");
         $result['unconfirmed'] = $db->exec("DELETE FROM `{$prefix}users` WHERE email_verified_at IS NULL AND status = 'active' AND created_at < UTC_TIMESTAMP() - INTERVAL 7 DAY");
         $result['links'] = $db->exec("DELETE FROM `{$prefix}email_tokens` WHERE expires_at < UTC_TIMESTAMP()");
         if ($db->query("SHOW TABLES LIKE " . $db->quote(addcslashes($prefix, '_%') . 'identity'))->fetchColumn()) $result['sign_in_requests'] = $db->exec("DELETE FROM `{$prefix}identity` WHERE expires_at < UTC_TIMESTAMP()"); // made at the first SavAccount or Google sign-in

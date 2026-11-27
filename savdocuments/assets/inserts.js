@@ -1,4 +1,4 @@
-/** Dialogs of what is inserted: link, note, formula, special characters, drawing, table. */
+/** Dialogs of what is inserted: link, note, formula, special characters, drawing, diagram, table. */
 import { btn, colorField, dialog, h, iconBtn, num, range, row, select, tile, toast } from './ui.js';
 import { t } from './i18n.js';
 import { cleanHref } from './clean.js';
@@ -67,6 +67,18 @@ export function tableDialog(W) {
 }
 
 /** A drawing or a signature made by hand: it becomes a picture. */
+/** A diagram of SavDiagrams (same site; its own picker: ../../savdiagrams/assets/embed.js), put in as a picture. */
+export async function diagramDialog(W) {
+  const c = W.ed.caret() || W.lastCaret;
+  const { pickDiagram } = await import('../../savdiagrams/assets/embed.js');
+  const d = await pickDiagram(document.documentElement.lang);
+  if (!d) return;
+  const id = await W.store.addImage(d.blob);
+  W.ed.ed.focus({ preventScroll: true });
+  if (c) W.ed.setCaret(c);
+  W.ed.insertImage(id, d.title, '', Math.max(20, Math.min(100, Math.round(d.width / 2 / 7)))); // drawn at twice its size; the page is about 700 px wide
+}
+
 export function drawDialog(W) {
   const c = W.ed.caret() || W.lastCaret, cv = h('canvas.drawpad', { width: 1200, height: 500, 'aria-label': t('i_drawing') }), x = cv.getContext('2d'), undo = [];
   let color = '#1c1c1c', size = 5, down = false, used = false, pts = [];

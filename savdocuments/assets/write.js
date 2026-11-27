@@ -10,7 +10,7 @@ import { fontDialog, fontOptions, useFonts, withFont } from './fonts.js';
 import { download, fileName, imageIds, toEpub, toHtml, toMarkdown, toSavdoc, toText } from './files.js';
 import { CHARTS, CHART_ICONS, FLOWS, FLOW_ICONS, newObject, objectWidth, RULES } from './objects.js';
 import { elementsPanel, formatPanel, imageDialog, imagesPanel, pageForm, styleForm } from './panels.js';
-import { charsDialog, drawDialog, linkDialog, mathDialog, noteDialog, tableDialog } from './inserts.js';
+import { charsDialog, diagramDialog, drawDialog, linkDialog, mathDialog, noteDialog, tableDialog } from './inserts.js';
 import { reportDialog, shareDialog } from './share.js';
 import { can, importFile, pickFile } from './actions.js';
 import { prefs, setPrefs, userMenu } from './account.js';
@@ -222,6 +222,7 @@ export async function openWriter(root, pid, opt = {}) {
     if (k === 'math') return void mathDialog(W);
     if (k === 'chars') return void charsDialog(W);
     if (k === 'drawing') return void drawDialog(W);
+    if (k === 'diagram') return void diagramDialog(W).catch(fail);
     if (k === 'callout') return void ed.block('callout', a);
     if (k === 'quote') return void ed.block('blockquote');
     if (k === 'code') return void ed.block('pre');
@@ -252,7 +253,7 @@ export async function openWriter(root, pid, opt = {}) {
   }
   const chartItems = () => CHARTS.map((c) => [CHART_ICONS[c], t('ct_' + c), () => W.insert('chart:' + c)]), flowItems = () => FLOWS.map((c) => [FLOW_ICONS[c], t('fl_' + c), () => W.insert('flow:' + c)]);
   const shapeItems = () => [['square', t('sh_rect'), 'rect'], ['rectangle-horizontal', t('sh_round'), 'round'], ['circle', t('sh_ellipse'), 'ellipse'], ['triangle', t('sh_triangle'), 'triangle'], ['star', t('sh_star'), 'star'], ['arrow-right', t('sh_arrow'), 'arrow'], ['message-square', t('sh_speech'), 'speech'], ['minus', t('sh_line'), 'line'], ['move-right', t('sh_line-end'), 'line-end']].map(([i, l, s]) => [i, l, () => W.insert('shape:' + s)]);
-  const listOf = () => [['image', t('i_image'), 'image'], ['images', t('img_free'), 'search'], ['table', t('i_table'), 'table'], ['columns-2', t('i_cols2'), 'cols:2'], ['sigma', t('i_math'), 'math'], ['list-tree', t('i_toc'), 'toc'], ['captions', t('i_tocf'), 'tocf'], ['footprints', t('i_note'), 'note'], ['link', t('i_link'), 'link'], ['minus', t('hr_thin'), 'hr:'], ['separator-horizontal', t('i_pb'), 'pb'], ['panel-top', t('o_bands'), 'bands'], ['info', t('s_callout'), 'callout:info'], ['quote', t('s_blockquote'), 'quote'], ['square-code', t('s_pre'), 'code'], ['calendar', t('i_date'), 'date'], ['qr-code', t('i_qr'), 'qr'], ['signature', t('i_sign'), 'sign'], ['pen-line', t('i_drawing'), 'drawing'], ['omega', t('i_chars'), 'chars']];
+  const listOf = () => [['image', t('i_image'), 'image'], ['images', t('img_free'), 'search'], ['table', t('i_table'), 'table'], ['columns-2', t('i_cols2'), 'cols:2'], ['sigma', t('i_math'), 'math'], ['list-tree', t('i_toc'), 'toc'], ['captions', t('i_tocf'), 'tocf'], ['footprints', t('i_note'), 'note'], ['link', t('i_link'), 'link'], ['minus', t('hr_thin'), 'hr:'], ['separator-horizontal', t('i_pb'), 'pb'], ['panel-top', t('o_bands'), 'bands'], ['info', t('s_callout'), 'callout:info'], ['quote', t('s_blockquote'), 'quote'], ['square-code', t('s_pre'), 'code'], ['calendar', t('i_date'), 'date'], ['qr-code', t('i_qr'), 'qr'], ['signature', t('i_sign'), 'sign'], ['pen-line', t('i_drawing'), 'drawing'], ['workflow', t('i_diagram'), 'diagram'], ['omega', t('i_chars'), 'chars']];
 
   // ------------------------------------------------------------------ toolbars
 

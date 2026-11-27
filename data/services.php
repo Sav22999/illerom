@@ -21,6 +21,7 @@ return [
     'savtasks' => ['app' => ['sch_', 'Liste e attività', 'Lists and tasks', ['savschedules', 'task_schema_version', 'TASK_SCHEMA_VERSION']]],
     'savforms' => ['app' => ['sch_', 'Moduli e risposte', 'Forms and answers', ['savschedules', 'form_schema_version', 'FORM_SCHEMA_VERSION']]],
     'savwhiteboard' => ['app' => ['sch_', 'Lavagne e immagini', 'Boards and pictures', ['savschedules', 'wb_schema_version', 'WB_SCHEMA_VERSION']]],
+    'savdiagrams' => ['app' => ['sch_', 'Diagrammi', 'Diagrams', ['savschedules', 'dg_schema_version', 'DG_SCHEMA_VERSION']]],
     'savnotes' => ['app' => ['sch_', 'Quaderni', 'Notebooks', ['savschedules', 'nb_schema_version', 'NB_SCHEMA_VERSION']]],
     'savmail' => ['app' => ['sch_', 'Indirizzi e posta', 'Addresses and mail', ['savschedules', 'ml_schema_version', 'ML_SCHEMA_VERSION']]],
     'savpodcasts' => ['app' => ['sch_', 'Podcast seguiti', 'Podcasts followed', ['savschedules', 'pod_schema_version', 'POD_SCHEMA_VERSION']]],

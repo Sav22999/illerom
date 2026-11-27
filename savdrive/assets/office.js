@@ -23,11 +23,13 @@ export const KINDS = {
     blank: (title) => ({ format: 'savwhi', version: 1, app: 'SavWhiteboard', exported: new Date().toISOString(), title, settings: {}, items: [] }) },
   savnot: { app: 'savnotes', name: 'SavNotes', k: 'k_not', mime: 'application/vnd.savnotes.notebook+zip', file: 'notebook.json',
     blank: (title) => ({ format: 'savnot', version: 1, app: 'SavNotes', exported: new Date().toISOString(), title, settings: {}, sheets: [{ id: id(), items: [] }] }) },
+  savdia: { app: 'savdiagrams', name: 'SavDiagrams', k: 'k_dia', mime: 'application/vnd.savdiagrams.diagram+zip', file: 'diagram.json',
+    blank: (title) => ({ format: 'savdia', version: 1, app: 'SavDiagrams', exported: new Date().toISOString(), title, settings: {}, items: [] }) },
 };
 
 /** The app of a file name (any kind of SavOffice, also the ones SavDrive cannot create), or null. */
-export const APPS = { savdoc: 'savdocuments', savspr: 'savspreadsheets', savpre: 'savpresentations', savboo: 'savbooks', savwhi: 'savwhiteboard', savnot: 'savnotes', savfor: 'savforms', savtas: 'savtasks', savcal: 'savcalendar', savsch: 'savschedules', savnew: 'savnewsletters', savspl: 'savsplits' };
-export const NAMES = { savdocuments: 'SavDocuments', savspreadsheets: 'SavSpreadsheets', savpresentations: 'SavPresentations', savbooks: 'SavBooks', savwhiteboard: 'SavWhiteboard', savnotes: 'SavNotes', savforms: 'SavForms', savtasks: 'SavTasks', savcalendar: 'SavCalendar', savschedules: 'SavSchedules', savnewsletters: 'SavNewsletters', savsplits: 'SavSplits' };
+export const APPS = { savdoc: 'savdocuments', savspr: 'savspreadsheets', savpre: 'savpresentations', savboo: 'savbooks', savwhi: 'savwhiteboard', savnot: 'savnotes', savdia: 'savdiagrams', savfor: 'savforms', savtas: 'savtasks', savcal: 'savcalendar', savsch: 'savschedules', savnew: 'savnewsletters', savspl: 'savsplits' };
+export const NAMES = { savdocuments: 'SavDocuments', savspreadsheets: 'SavSpreadsheets', savpresentations: 'SavPresentations', savbooks: 'SavBooks', savwhiteboard: 'SavWhiteboard', savnotes: 'SavNotes', savdiagrams: 'SavDiagrams', savforms: 'SavForms', savtasks: 'SavTasks', savcalendar: 'SavCalendar', savschedules: 'SavSchedules', savnewsletters: 'SavNewsletters', savsplits: 'SavSplits' };
 export const appOf = (name) => APPS[(/\.([a-z]+)$/i.exec(name || '')?.[1] || '').toLowerCase()] || null;
 
 /** An empty file of this kind, ready to upload. */
