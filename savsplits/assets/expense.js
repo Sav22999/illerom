@@ -17,6 +17,8 @@ export function expenseDialog(e, preset = {}) {
   const d = S.G, g = d.group, me = meId();
   const active = d.members.filter((m) => m.active || (e && (e.payers[m.id] !== undefined || e.split.parts[m.id] !== undefined)));
   const tables = g.tables || [];
+  // a personal group: only the account, so nobody to choose (who paid, for whom) and no paybacks
+  const alone = g.kind === 'personal' && !!me;
   // the state of the form: amounts in minor units of the expense currency
   const st = {
     kind: e?.kind || preset.kind || 'expense',
@@ -35,6 +37,7 @@ export function expenseDialog(e, preset = {}) {
   if (!e && st.mode === 'equal' && active.some((m) => m.weight !== 1)) st.mode = 'shares';
   if (!e && st.mode === 'shares') st.parts = Object.fromEntries(active.filter((m) => m.active && m.weight > 0).map((m) => [m.id, m.weight]));
   if (!e && st.mode === 'table') st.parts = {};
+  if (alone) { st.payer = me; st.multi = false; st.mode = 'equal'; st.parts = { [me]: 1 }; if (st.kind === 'transfer') st.kind = 'expense'; }
 
   // ---------------------------------------------------------------- fields
   const kind = segmented(t('kind'), st.kind, [['expense', 'receipt', t('k_expense')], ['transfer', 'arrow-right-left', t('k_transfer')], ['income', 'banknote', t('k_income')]], (v) => { st.kind = v; paint(); }, { class: 'ekind', show: false });
@@ -75,6 +78,7 @@ export function expenseDialog(e, preset = {}) {
     return n;
   };
   function paintWho() {
+    if (alone) { put(who); return; }
     const opts = active.map((m) => [m.id, m.name + (m.id === me ? ' (' + t('you') + ')' : '')]);
     if (st.kind === 'transfer') {
       const from = select(t('from_who'), opts, st.payer, (v) => { st.payer = v; if (st.to === v) st.to = active.find((m) => m.id !== v)?.id; paintWho(); });
@@ -93,7 +97,7 @@ export function expenseDialog(e, preset = {}) {
 
   // ---------------------------------------------------------------- for whom
   function paintSplit() {
-    if (st.kind === 'transfer') { put(split, ); return; }
+    if (st.kind === 'transfer' || alone) { put(split); return; }
     const modes = MODES.filter(([m]) => m !== 'table' || tables.length);
     const seg = segmented(t('split_how'), st.mode, modes.map(([m, ic]) => [m, ic, t('mode_' + m)]), (v) => {
       // the parts of the new way start from the ones chosen: the same people
@@ -165,6 +169,7 @@ export function expenseDialog(e, preset = {}) {
   }
 
   function paint() {
+    kind.hidden = alone;
     title.hidden = st.kind === 'transfer';
     title.setAttribute('placeholder', t(st.kind === 'income' ? 'what_income_ph' : 'what_ph'));
     cat.hidden = st.kind === 'transfer';
@@ -211,9 +216,12 @@ export function expenseDialog(e, preset = {}) {
       const parts = Object.fromEntries(Object.entries(st.parts).filter(([k, v]) => k !== '_' && v > 0));
       body.split = { mode: st.mode, parts, table: st.table };
     }
-    await groupCall('splits.expense.save', body);
+    const r = await groupCall('splits.expense.save', body);
     toast(t(e ? 'expense_saved' : 'expense_added'), 'success');
     redraw();
+    // a monthly cap of My spending passed with this expense: a note (assets/budget.js)
+    const mine = S.user && r.eid && r.me ? S.G.expenses.find((x) => x.id === r.eid)?.alloc[r.me] : 0;
+    if (body.kind === 'expense' && body.category && mine > 0) import('./budget.js').then((m) => m.capCheck(body.category, body.day, mine, S.G.group.currency)).catch(() => {});
   };
   const actions = [{ label: t('cancel') }, { label: t(e ? 'save' : 'add'), primary: true, run: save }];
   if (e) actions.unshift({ label: t('delete'), danger: true, icon: 'trash', run: async () => { await removeExpense(e); } });

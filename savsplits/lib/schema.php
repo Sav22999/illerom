@@ -24,6 +24,10 @@
  * split_photos    the photos attached to an expense (a receipt, a bill): re-encoded as JPEG without their metadata, kept
  *                 as files in the storage folder (lib/photos.php) and served by their random id to whoever can open the
  *                 group. eid is NULL while the expense being written is not saved yet (forgotten ones go after a day)
+ * split_budget    the light personal budget of an account (lib/budget.php): the currency of "My spending", a monthly cap
+ *                 for some categories (JSON {category: minor units}), the keywords that give a category to the rows of a
+ *                 bank statement (JSON [{k, c}]) and how the last CSV of the bank was read (columns, separators, dates).
+ *                 Only the account sees it; it goes with the account.
  */
 
 declare(strict_types=1);
@@ -131,6 +135,15 @@ function split_schema_statements(string $p): array
             `created_at` DATETIME NOT NULL,
             KEY `ix_group` (`group_id`, `eid`),
             CONSTRAINT `fk_{$p}splitph_group` FOREIGN KEY (`group_id`) REFERENCES `{$p}split_groups` (`id`) ON DELETE CASCADE
+        ) $e",
+        "CREATE TABLE IF NOT EXISTS `{$p}split_budget` (
+            `user_id` INT UNSIGNED NOT NULL PRIMARY KEY,
+            `currency` CHAR(3) CHARACTER SET ascii NOT NULL DEFAULT 'EUR',
+            `caps` TEXT NULL,
+            `rules` MEDIUMTEXT NULL,
+            `csv` TEXT NULL,
+            `updated_at` DATETIME NOT NULL,
+            CONSTRAINT `fk_{$p}splitb_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
         ) $e",
         "CREATE TABLE IF NOT EXISTS `{$p}split_rates` (
             `currency` CHAR(3) CHARACTER SET ascii NOT NULL PRIMARY KEY,

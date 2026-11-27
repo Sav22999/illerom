@@ -11,6 +11,8 @@
  *            splits.member.leave
  * Expenses:  splits.expense.save, splits.expense.delete, splits.expense.restore, splits.log, splits.rate
  * Photos:    splits.photo.upload (the body is the image itself), splits.photo (the image, to whoever can open the group)
+ * Budget:    splits.mine (the share of the account in the expenses of all its groups, its caps and keywords),
+ *            splits.budget.save, splits.expense.import (the rows of a bank statement, read in the browser)
  *
  * A group is reached by its id (gid, for an account that owns it or is one of its people) or by its link (code, for
  * anybody: without an account, to look or also to add, as the owner chose). Every POST of a signed-in person needs the
@@ -22,6 +24,7 @@ declare(strict_types=1);
 require __DIR__ . '/../lib/bootstrap.php';
 require __DIR__ . '/../lib/splits.php';
 require __DIR__ . '/../lib/photos.php';
+require __DIR__ . '/../lib/budget.php';
 
 header('X-Robots-Tag: noindex');
 set_exception_handler(function (Throwable $e) {
@@ -341,7 +344,7 @@ switch ($r) {
         }
         header('Content-Disposition: attachment; filename="savsplits-data.json"');
         send_json(['app' => 'SavSplits', 'exported' => gmdate('c'), 'account' => ['name' => $u['name'], 'email' => $u['email'], 'created' => iso($u['created_at'])],
-            'prefs' => (object)profile_prefs(profile($u)), 'groups' => $groups]);
+            'prefs' => (object)profile_prefs(profile($u)), 'budget' => out_budget(budget_row((int)$u['id'])), 'groups' => $groups]);
 
     case 'auth.delete':
         $u = writer(true);
@@ -360,7 +363,7 @@ switch ($r) {
     case 'splits.init':
         // What the app needs to start: the settings of the account and the currencies
         $u = reader();
-        send_json(['ok' => true, 'prefs' => (object)profile_prefs(profile($u)), 'currencies' => CURRENCIES]);
+        send_json(['ok' => true, 'prefs' => (object)profile_prefs(profile($u)), 'currencies' => CURRENCIES, 'capCats' => cap_categories((int)$u['id'])]);
 
     case 'splits.prefs':
         $u = writer();
@@ -371,8 +374,10 @@ switch ($r) {
         send_json(['ok' => true]);
 
     case 'splits.groups':
+        // the groups, and how many categories are over their monthly cap (month: the one of the person, YYYY-MM)
         $u = reader();
-        send_json(['ok' => true, 'groups' => groups_of($u)]);
+        $month = is_string($_GET['month'] ?? null) && preg_match('/^\d{4}-\d{2}$/', $_GET['month']) ? $_GET['month'] : gmdate('Y-m');
+        send_json(['ok' => true, 'groups' => groups_of($u), 'capsOver' => caps_over($u, $month), 'capCats' => cap_categories((int)$u['id'])]);
 
     case 'splits.group':
         // One group, by its id or its link. The repeated expenses whose day has come are made now
@@ -406,8 +411,11 @@ switch ($r) {
             if (q('SELECT 1 FROM ' . t('split_expenses') . ' WHERE group_id = ? LIMIT 1', [$g['id']])->fetchColumn()) fail('currency_locked', 409);
         }
         $tables = array_key_exists('tables', $b) ? clean_tables($b['tables']) : jdec($g['tables']);
+        // a personal group stays personal, and a shared one never becomes personal (it has, or had, other people)
+        $kind = pick($b, 'kind', GROUP_KINDS, $g['kind']);
+        if ($g['kind'] === 'personal' || $kind === 'personal') $kind = $g['kind'];
         q('UPDATE ' . t('split_groups') . ' SET name = ?, kind = ?, icon = ?, color = ?, currency = ?, notes = ?, tables = ? WHERE id = ?',
-            [$name, pick($b, 'kind', GROUP_KINDS, $g['kind']), pick($b, 'icon', GROUP_ICONS, $g['icon']),
+            [$name, $kind, pick($b, 'icon', GROUP_ICONS, $g['icon']),
                 valid_color($b['color'] ?? '', $g['color']), $cur, array_key_exists('notes', $b) ? multiline($b, 'notes', 2000) : (string)$g['notes'], json_out($tables), $g['id']]);
         log_event($a, $b, 'group.edit', null, ['name' => $name]);
         send_group($b);
@@ -437,6 +445,7 @@ switch ($r) {
         $a = access($b, true);
         if ($a['via'] !== 'account') fail('forbidden', 403);
         $g = $a['group'];
+        if ($g['kind'] === 'personal') fail('personal_group', 409);
         $code = $g['link_code'];
         if (array_key_exists('on', $b)) $code = !empty($b['on']) ? ($code ?: new_link_code()) : null;
         if (!empty($b['renew']) && $code) $code = new_link_code();
@@ -483,6 +492,7 @@ switch ($r) {
             q('UPDATE ' . t('split_members') . ' SET name = ?, weight = ?, quotas = ?, pay = ?, role = ?, active = ? WHERE id = ?', [$name, $weight, json_out((object)$quotas), $pay, $role, $active, $m['id']]);
             log_event($a, $b, 'member.edit', $mid, ['name' => $name, 'was' => $m['name'] !== $name ? $m['name'] : null]);
         } else {
+            if ($g['kind'] === 'personal') fail('personal_group', 409);
             if (count($members) >= MAX_MEMBERS) fail('too_many_members', 409);
             grows($a);
             $mid = new_code('split_members', 'mid');
@@ -515,6 +525,7 @@ switch ($r) {
         $a = access($b);
         $g = $a['group'];
         if ($a['member']) fail('already_member', 409);
+        if ($g['kind'] === 'personal') fail('personal_group', 409);
         $mid = valid_code($b['mid'] ?? '');
         if ($mid) {
             $m = q('SELECT * FROM ' . t('split_members') . ' WHERE group_id = ? AND mid = ?', [$g['id'], $mid])->fetch();
@@ -590,6 +601,35 @@ switch ($r) {
         q('UPDATE ' . t('split_expenses') . ' SET deleted_at = ? WHERE id = ?', [$del ? now_utc() : null, $e['id']]);
         log_event($a, $b, $del ? 'expense.delete' : 'expense.restore', $e['eid'], ['kind' => $e['kind'], 'title' => $e['title'], 'base' => (int)$e['base']]);
         send_group($b);
+
+    case 'splits.expense.import':
+        // The rows of a bank statement, read in the browser (the file itself never comes here), as expenses of a group
+        // where the account is one of the people, paid by it: for itself alone, or equally among all (rows, for)
+        $u = writer();
+        $b = body();
+        $a = access($b, true);
+        if ($a['via'] !== 'account' || !$a['member']) fail('no_member', 409);
+        grows($a);
+        $n = import_rows($a, is_array($b['rows'] ?? null) ? $b['rows'] : [], ($b['for'] ?? '') === 'all' ? 'all' : 'me', mb_substr(who($a, $b), 0, 80));
+        log_event($a, $b, 'expense.import', null, ['n' => $n]);
+        send_json(['ok' => true, 'imported' => $n] + group_payload(access($b)));
+
+    case 'splits.mine':
+        // My spending: the share of the account in the expenses of its groups (from: the first day, optional), the
+        // personal budget, and the rates of the European Central Bank when the groups use more than one currency
+        $u = reader();
+        $from = valid_day($_GET['from'] ?? '') ?: '';
+        $m = my_spending($u, $from);
+        $bud = budget_row((int)$u['id']);
+        $curs = array_unique(array_merge(array_column($m['groups'], 'currency'), [$bud['currency'] ?: 'EUR']));
+        send_json(['ok' => true] + $m + ['budget' => out_budget($bud), 'rates' => count($curs) > 1 ? (object)(ecb_rates()['rates'] ?? []) : (object)[]]);
+
+    case 'splits.budget.save':
+        // The currency of the view, the monthly caps, the keywords of the categories, how the CSV of the bank is read
+        $u = writer();
+        $b = body();
+        if (strlen(json_out($b)) > 120000) fail('bad_request', 413);
+        send_json(['ok' => true, 'budget' => out_budget(save_budget((int)$u['id'], $b))]);
 
     case 'splits.photo.upload':
         // A photo for the expense being written: the body is the image (at most 5 MB). By whoever may write in the group

@@ -2,6 +2,7 @@
  * A group: its expenses (by day, with a search and filters), the balances and who pays whom, the charts, the people (and
  * the tables of shares of a condominium), what happened. Opened by an account (#/g/<id>) or from its link (#/j/<code>):
  * a guest of the link says who they are (kept in this browser) and may join with an account at any time.
+ * A personal group (kind "personal") has only its owner: no balances, no people, no link; its expenses count in My spending.
  */
 import { btn, colorPop, confirm, copyText, dialog, drop, empty, face, fail, h, icon, iconBtn, primary, put, select, toast, K } from './ui.js';
 import { getLang, t, when } from './i18n.js';
@@ -9,11 +10,11 @@ import { S, api, canWrite, groupCall, guestAs, loadGroup, meId, member, memberNa
 import { brand, commands, credit, go, langButton, userMenu } from './account.js';
 import { appsButton } from './office.js';
 import { CATS, catHue, catIcon, catName, curOptions, major, money, toInput, parseAmount } from './money.js';
-import { dayHead, monthKey, monthLabel } from './time.js';
+import { dayHead, monthKey, monthLabel, todayKey } from './time.js';
 import { KINDS, groupIcon, kindOf } from './home.js';
 
 const TABS = [['expenses', 'receipt'], ['stats', 'pie-chart'], ['people', 'users'], ['activity', 'history']];
-const GROUP_ICONS = ['wallet', 'plane', 'house', 'heart', 'party-popper', 'users', 'building', 'utensils', 'car', 'tent', 'gift', 'shopping-cart', 'graduation-cap', 'dumbbell', 'music', 'briefcase', 'coffee', 'globe', 'star'];
+const GROUP_ICONS = ['user', 'wallet', 'plane', 'house', 'heart', 'party-popper', 'users', 'building', 'utensils', 'car', 'tent', 'gift', 'shopping-cart', 'graduation-cap', 'dumbbell', 'music', 'briefcase', 'coffee', 'globe', 'star'];
 let sc = null; // the screen open now
 
 const G = () => S.G;
@@ -22,6 +23,8 @@ const fmt = (v) => money(v, cur());
 const base = () => (S.G.src.code ? '#/j/' + S.G.src.code : '#/g/' + S.G.group.id);
 export const linkUrl = (code) => location.origin + location.pathname.replace(/[^/]*$/, '') + '#/j/' + code;
 const isGuest = () => !S.user || !S.user.verified;
+const personal = () => S.G?.group.kind === 'personal';
+const tabsOf = () => (personal() ? TABS.filter(([k]) => k !== 'people') : TABS);
 
 export async function groupScreen(root, where, tab) {
   const first = !sc || sc.key !== JSON.stringify(where) || !root.contains(sc.el);
@@ -32,24 +35,29 @@ export async function groupScreen(root, where, tab) {
     if (where.code && G().via === 'account') { history.replaceState(null, '', '#/g/' + G().group.id + (tab ? '/' + tab : '')); where = { id: G().group.id }; S.G.src = where; }
     sc = { key: JSON.stringify(where), el: null, tab: 'expenses', filter: { q: '', who: '', cat: '' } };
   }
-  sc.tab = TABS.some((x) => x[0] === tab) ? tab : sc.tab || 'expenses';
+  sc.tab = tabsOf().some((x) => x[0] === tab) ? tab : tabsOf().some((x) => x[0] === sc.tab) ? sc.tab : 'expenses';
   draw(root);
   if (first && G().src.code && !G().me && !guestAs(G().src.code) && G().members.length) setTimeout(() => whoAreYou(), 250);
   commands([G().group.name, [canWrite() ? ['plus', t('add_expense'), () => openExpense(), 'N'] : null, canWrite() ? ['hand-coins', t('add_transfer'), () => openExpense(null, { kind: 'transfer' })] : null,
-    ...TABS.map(([k, ic], i) => [ic, t('tab_' + k), () => setTab(k), String(i + 1)]), ['share', t('share'), () => shareDialog()], S.user ? ['home', t('my_groups'), '#/'] : null]]);
+    ...tabsOf().map(([k, ic], i) => [ic, t('tab_' + k), () => setTab(k), String(i + 1)]), personal() ? null : ['share', t('share'), () => shareDialog()],
+    G().me && canWrite() && G().via === 'account' ? ['upload', t('import_bank'), () => importBank()] : null, S.user ? ['pie-chart', t('my_spending'), '#/spending'] : null, S.user ? ['home', t('my_groups'), '#/'] : null]]);
   const onKey = (e) => {
     if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || document.querySelector('sav-dialog[open], sav-drawer[open]')) return;
     if (e.composedPath().some((x) => /^(input|textarea|sav-input|sav-textarea|sav-select|sav-search|sav-chip-input|sav-date-picker|sav-number-input)$/.test(x.localName || ''))) return;
     const map = { n: () => canWrite() && openExpense(), a: () => canWrite() && openExpense(), '/': () => document.querySelector('.eq')?.focus(), '?': () => shortcutsDialog() };
-    TABS.forEach(([k], i) => { map[String(i + 1)] = () => setTab(k); });
+    tabsOf().forEach(([k], i) => { map[String(i + 1)] = () => setTab(k); });
     if (map[e.key]) { e.preventDefault(); map[e.key](); }
   };
   let last = Date.now();
   const onVis = () => { if (document.visibilityState === 'visible' && Date.now() - last > 30000) { last = Date.now(); refresh().catch(() => {}); } };
+  // rows of a bank statement imported into this group (assets/bankcsv.js): the group as the server sent it back
+  const onBudget = () => redraw();
   addEventListener('keydown', onKey);
+  addEventListener('savsplits-budget', onBudget);
   document.addEventListener('visibilitychange', onVis);
-  return () => { removeEventListener('keydown', onKey); document.removeEventListener('visibilitychange', onVis); };
+  return () => { removeEventListener('keydown', onKey); removeEventListener('savsplits-budget', onBudget); document.removeEventListener('visibilitychange', onVis); };
 }
+const importBank = () => import('./bankcsv.js').then((m) => m.importDialog(G().group.id)).catch(fail);
 
 /** Again from the server (another person may have added something), only when something changed. */
 async function refresh(force) {
@@ -77,18 +85,20 @@ function draw(root) {
   const people = d.members.filter((m) => m.active);
   const head = h('div.rhead', S.user ? btn(t('my_groups'), { icon: 'arrow-left', appearance: 'ghost', size: 'sm', onclick: () => go('#/') }) : null, h('span.spacer'),
     iconBtn('rotate-ccw', t('refresh'), () => refresh(true)), canWrite() && d.via === 'account' ? btn(t('edit'), { icon: 'pencil', size: 'sm', onclick: () => settingsDialog() }) : null,
-    btn(t('share'), { icon: 'share', size: 'sm', onclick: () => shareDialog() }), canWrite() ? primary(t('add_expense'), { icon: 'plus', size: 'sm', class: 'addb', onclick: () => openExpense() }) : null, groupMenu());
+    personal() ? null : btn(t('share'), { icon: 'share', size: 'sm', onclick: () => shareDialog() }), canWrite() ? primary(t('add_expense'), { icon: 'plus', size: 'sm', class: 'addb', onclick: () => openExpense() }) : null, groupMenu());
   const title = h('div.rtitle', h('span.rk', icon(groupIcon(g)), t('k_' + g.kind)), h('h1', g.name), h('p.muted', [people.map((m) => m.name).join(', '), t('updated_w', { w: when(g.updated) })].filter(Boolean).join(' · ')), g.notes ? h('p.gnotes', g.notes) : null);
   const st = (label, value, ic, cls) => h('sav-card.stat', h('div.sti', icon(ic)), h('div', h('small.muted', label), h('strong' + (cls ? '.' + cls : ''), value)));
   const ex = d.expenses.filter((e) => e.kind === 'expense'), mine = me ? +d.balance[me] || 0 : null;
-  const stats = h('div.stats', st(t('total_spent'), fmt(g.total), 'receipt'),
+  const month = todayKey().slice(0, 7), months = new Set(ex.map((e) => monthKey(e.day)));
+  const stats = personal() ? h('div.stats', st(t('total_spent'), fmt(g.total), 'receipt'), st(t('this_month'), fmt(ex.filter((e) => e.day.slice(0, 7) === month).reduce((a, e) => a + e.base, 0)), 'calendar'),
+    st(t('n_expenses_l'), String(ex.length), 'list'), st(t('month_avg'), fmt(Math.round(g.total / Math.max(1, months.size))), 'bar-chart')) : h('div.stats', st(t('total_spent'), fmt(g.total), 'receipt'),
     mine !== null ? st(t(mine > 0 ? 'to_get' : mine < 0 ? 'to_give' : 'your_balance'), mine ? fmt(Math.abs(mine)) : t('settled'), 'scale', mine > 0 ? 'pos' : mine < 0 ? 'neg' : '') : st(t('people'), String(people.length), 'users'),
     st(t('n_expenses_l'), String(ex.length), 'list'), st(t('per_person'), fmt(Math.round(g.total / Math.max(1, people.length))), 'users'));
-  const tabs = h('sav-tabs.gtabs', { active: sc.tab }, TABS.map(([k, ic]) => h('sav-tab', { name: k, label: t('tab_' + k), icon: ic }, h('div.tabbody', { 'data-tab': k }))));
+  const tabs = h('sav-tabs.gtabs', { active: sc.tab }, tabsOf().map(([k, ic]) => h('sav-tab', { name: k, label: t('tab_' + k), icon: ic }, h('div.tabbody', { 'data-tab': k }))));
   tabs.addEventListener('sav-tab-show', (e) => { if (e.target !== tabs) return; sc.tab = e.detail.name; history.replaceState(null, '', base() + '/' + sc.tab); fillTab(tabs); });
   const fab = canWrite() ? h('sav-button.fab', { variant: 'primary', appearance: 'solid', icon: 'plus', label: t('add_expense'), size: 'lg', onclick: () => openExpense() }) : null;
   const el = h('div.home.resp', { style: `--c:${g.color}` }, top,
-    h('main.rmain', head, title, banner(me), stats, h('div.rbody', h('div.rside', balancesCard(), settleCard()), h('sav-card.tcard', tabs))), credit(), fab);
+    h('main.rmain', head, title, banner(me), stats, personal() ? h('div.rbody.solo', h('sav-card.tcard', tabs)) : h('div.rbody', h('div.rside', balancesCard(), settleCard()), h('sav-card.tcard', tabs))), credit(), fab);
   put(root, el);
   sc.el = el;
   fillTab(tabs);
@@ -106,6 +116,8 @@ function fillTab(tabs) {
 /** A guest of the link: who they are, and joining with an account. An account not yet among the people: which one it is. */
 function banner(me) {
   const d = G();
+  if (personal()) return h('sav-alert.gban', { variant: 'neutral', appearance: 'soft' }, icon('user', { slot: 'icon' }), h('div.gban-t', h('b', t('personal_title')), h('small', t('personal_ban_t'))),
+    h('div.prow.wrap', S.user ? btn(t('my_spending'), { size: 'sm', icon: 'pie-chart', onclick: () => go('#/spending') }) : null, canWrite() && d.me ? btn(t('import_bank_s'), { size: 'sm', icon: 'upload', variant: 'primary', appearance: 'soft', onclick: () => importBank() }) : null));
   if (d.src.code && isGuest()) {
     const who = me ? memberName(me) : '';
     return h('sav-alert.gban', { variant: 'neutral', appearance: 'soft' }, icon('link', { slot: 'icon' }),
@@ -132,7 +144,7 @@ function expensesTab() {
   const q = h('sav-input.eq', { type: 'search', placeholder: t('search_expenses'), value: f.q, clearable: true, size: 'sm', 'aria-label': t('search') }, icon('search', { slot: 'prefix' }));
   q.addEventListener('keydown', (e) => e.stopPropagation());
   q.addEventListener('input', () => { f.q = q.value; paint(); });
-  const who = select(null, [['', t('everyone')], ...d.members.map((m) => [m.id, m.name])], f.who, (v) => { f.who = v; paint(); }, { 'aria-label': t('filter_person'), class: 'efilter' });
+  const who = personal() ? null : select(null, [['', t('everyone')], ...d.members.map((m) => [m.id, m.name])], f.who, (v) => { f.who = v; paint(); }, { 'aria-label': t('filter_person'), class: 'efilter' });
   const used = new Set(d.expenses.map((e) => e.category));
   const cat = select(null, [['', t('all_categories')], ...CATS.filter(([c]) => used.has(c)).map(([c]) => [c, catName(c)]), used.has('') ? ['-', t('cat_none')] : null].filter(Boolean), f.cat, (v) => { f.cat = v; paint(); }, { 'aria-label': t('category'), class: 'efilter' });
   const list = h('div.elist');
@@ -161,8 +173,8 @@ function expenseRow(e, me) {
   const tr = e.kind === 'transfer', inc = e.kind === 'income';
   const to = tr ? Object.keys(e.alloc)[0] : null, from = tr ? Object.keys(e.payers)[0] : null;
   const title = tr ? h('b', memberName(from), ' ', icon('arrow-right', { class: 'arr' }), ' ', memberName(to)) : h('b', e.title || t('k_' + e.kind));
-  const sub = tr ? t('payback') : inc ? t('received_by', { n: payersText(e) }) : t('paid_by', { n: payersText(e) });
-  const mine = me ? net(e, me) : null;
+  const sub = personal() ? catName(e.category) : tr ? t('payback') : inc ? t('received_by', { n: payersText(e) }) : t('paid_by', { n: payersText(e) });
+  const mine = me && !personal() ? net(e, me) : null;
   const involved = mine !== null && (e.alloc[me] !== undefined || e.paid[me] !== undefined);
   // a payback is money given or received; an expense is money lent or owed
   const say = tr ? (mine > 0 ? t('you_gave', { a: fmt(mine) }) : t('you_received', { a: fmt(-mine) })) : mine > 0 ? t('you_lent', { a: fmt(mine) }) : mine < 0 ? t('you_borrowed', { a: fmt(-mine) }) : t('even');
@@ -253,7 +265,7 @@ function statsTab() {
   if (mbars) mbars.data = { labels: months.map((m) => monthLabel(m, true)), series: [{ name: t('spent'), values: months.map((m) => major(byMonth[m], cur())), color: 'var(--sav-color-primary)' }] };
   return h('div.stab',
     h('section.ssec', h('h3', t('by_category')), h('div.catbox', pie, catList)),
-    h('section.ssec', h('h3', t('by_person')), h('small.muted', t('by_person_t')), bars),
+    personal() ? null : h('section.ssec', h('h3', t('by_person')), h('small.muted', t('by_person_t')), bars),
     mbars ? h('section.ssec', h('h3', t('by_month')), mbars) : null);
 }
 
@@ -348,13 +360,14 @@ function activityTab() {
   }).catch((e) => put(box, empty('circle-alert', t('err_server'), e.code || '')));
   return box;
 }
-const ACT_ICONS = { 'expense.add': 'plus', 'expense.edit': 'pencil', 'expense.delete': 'trash', 'expense.restore': 'undo', 'member.add': 'user-plus', 'member.edit': 'user', 'member.remove': 'user-x', 'member.join': 'user-check', 'member.leave': 'log-out', 'group.create': 'sparkles', 'group.import': 'file-up', 'group.edit': 'settings', 'group.link': 'link' };
+const ACT_ICONS = { 'expense.import': 'upload', 'expense.add': 'plus', 'expense.edit': 'pencil', 'expense.delete': 'trash', 'expense.restore': 'undo', 'member.add': 'user-plus', 'member.edit': 'user', 'member.remove': 'user-x', 'member.join': 'user-check', 'member.leave': 'log-out', 'group.create': 'sparkles', 'group.import': 'file-up', 'group.edit': 'settings', 'group.link': 'link' };
 function actText(x) {
   const i = x.info || {}, who = x.who || t('someone');
   const what = i.kind === 'transfer' ? t('a_payback') : `«${i.title || t('k_' + (i.kind || 'expense'))}»`;
   const amt = i.base !== undefined ? ` (${fmt(i.base)})` : '';
   const m = { 'expense.add': 'act_add', 'expense.edit': 'act_edit', 'expense.delete': 'act_delete', 'expense.restore': 'act_restore' }[x.action];
   if (m) return t(m, { who, what: what + amt });
+  if (x.action === 'expense.import') return t('act_import_rows', { who, n: i.n });
   if (x.action === 'member.add') return t('act_member_add', { who, n: i.name });
   if (x.action === 'member.edit') return i.was ? t('act_member_rename', { who, was: i.was, n: i.name }) : t('act_member_edit', { who, n: i.name });
   if (x.action === 'member.remove') return t('act_member_remove', { who, n: i.name });
@@ -374,7 +387,8 @@ function groupMenu() {
   const account = d.via === 'account';
   return drop(h('sav-button', { icon: 'more-vertical', label: t('more'), appearance: 'outline', size: 'sm', square: true }), () => [
     canWrite() && account ? ['settings', t('group_settings'), () => settingsDialog()] : null,
-    ['share', t('share'), () => shareDialog()],
+    personal() ? null : ['share', t('share'), () => shareDialog()],
+    d.me && canWrite() && account ? ['upload', t('import_bank'), () => importBank()] : null,
     '-',
     ['download', t('save_savspl'), () => import('./files.js').then((m) => m.saveSavspl(G()))],
     ['file-text', t('save_csv'), () => import('./files.js').then((m) => m.saveCsv(G()))],
@@ -407,7 +421,8 @@ function settingsDialog() {
   const d = G(), g = d.group;
   let color = g.color, ic = g.icon || kindOf(g.kind)[1], kind = g.kind;
   const name = h('sav-input', { label: t('group_name'), value: g.name, maxlength: 80 });
-  const kindSel = select(t('kind'), KINDS.map(([k]) => [k, t('k_' + k)]), kind, (v) => { kind = v; });
+  // a personal group stays personal, a shared one does not become personal
+  const kindSel = personal() ? h('sav-input', { label: t('kind'), value: t('k_personal'), readonly: true, size: 'sm' }) : select(t('kind'), KINDS.filter(([k]) => k !== 'personal').map(([k]) => [k, t('k_' + k)]), kind, (v) => { kind = v; });
   const icons = h('div.icgrid', { role: 'radiogroup', 'aria-label': t('icon') });
   const paintIcons = () => put(icons, GROUP_ICONS.map((x) => h('sav-button', { icon: x, label: x, square: true, size: 'sm', appearance: x === ic ? 'solid' : 'ghost', variant: x === ic ? 'primary' : 'neutral', role: 'radio', 'aria-checked': String(x === ic), onclick: () => { ic = x; paintIcons(); } })));
   paintIcons();

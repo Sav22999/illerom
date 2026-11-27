@@ -1,5 +1,5 @@
 /**
- * Home: the groups of the account, as in SavSchedules, SavDocuments and SavPresentations: the side with "New", the views
+ * Home: the groups of the account (and My spending, #/spending: assets/budget.js, beside the same side menu), as in SavSchedules, SavDocuments and SavPresentations: the side with "New", the views
  * and two numbers; the title with sort, grid or list and "Open a file"; the box to start a group from a template; the cards.
  */
 import { btn, confirm, copyText, dialog, drop, empty, fail, h, icon, iconBtn, item, primary, put, select, tile, toast } from './ui.js';
@@ -9,7 +9,7 @@ import { brand, commands, credit, go, prefs, setPrefs, userMenu } from './accoun
 import { curOptions, money } from './money.js';
 
 /** The templates of a group: [kind, icon, colour]. The condominium starts with a table of thousandths. */
-export const KINDS = [['trip', 'plane', '#1f56d1'], ['home', 'house', '#0b7a87'], ['couple', 'heart', '#c2307a'], ['event', 'party-popper', '#6a2cf0'], ['team', 'users', '#0f8a63'], ['condo', 'building', '#4a5875'], ['generic', 'wallet', '#1a7f37']];
+export const KINDS = [['trip', 'plane', '#1f56d1'], ['home', 'house', '#0b7a87'], ['couple', 'heart', '#c2307a'], ['event', 'party-popper', '#6a2cf0'], ['team', 'users', '#0f8a63'], ['condo', 'building', '#4a5875'], ['personal', 'user', '#7a5c3e'], ['generic', 'wallet', '#1a7f37']];
 export const kindOf = (k) => KINDS.find((x) => x[0] === k) || KINDS[KINDS.length - 1];
 export const groupIcon = (g) => g.icon || kindOf(g.kind)[1];
 const linkUrl = (code) => location.origin + location.pathname.replace(/[^/]*$/, '') + '#/j/' + code;
@@ -24,6 +24,8 @@ export function balanceText(v, cur) {
 
 /** The picture of a card: the icon of the group on its colour, what the account gets back or owes, the kind. */
 function thumb(g) {
+  // a personal group has no balance: what was spent this month
+  if (g.kind === 'personal') return h('div.cthumb', { style: `--c:${g.color}` }, h('div.gtile', icon(groupIcon(g))), h('div.tstat', h('strong', money(g.month || 0, g.currency)), h('small', t('spent_month'))), h('span.ckind', icon('user')));
   const v = g.balance;
   const stat = v === null ? h('div.tstat', h('strong', money(g.total, g.currency)), h('small', t('spent'))) : h('div.tstat', h('strong.' + (v > 0 ? 'pos' : v < 0 ? 'neg' : 'zero'), v ? money(Math.abs(v), g.currency) : t('settled')), h('small', v > 0 ? t('to_get') : v < 0 ? t('to_give') : t('n_expenses', { n: g.expenses })));
   return h('div.cthumb', { style: `--c:${g.color}` }, h('div.gtile', icon(groupIcon(g))), stat, h('span.ckind', icon(kindOf(g.kind)[1])));
@@ -43,6 +45,7 @@ export async function homeScreen(root, view = '') {
 
   const V = {
     '': ['all_groups', 'layout-grid', () => S.groups.filter((g) => !g.archived)],
+    spending: ['my_spending', 'pie-chart', () => []],
     get: ['v_get', 'arrow-down-left', () => S.groups.filter((g) => !g.archived && g.balance > 0)],
     owe: ['v_owe', 'arrow-up-right', () => S.groups.filter((g) => !g.archived && g.balance < 0)],
     mine: ['v_mine', 'user', () => S.groups.filter((g) => !g.archived && g.owner)],
@@ -51,8 +54,8 @@ export async function homeScreen(root, view = '') {
   if (!V[view]) view = '';
 
   function drawSide() {
-    const count = { get: V.get[2]().length, owe: V.owe[2]().length, archived: V.archived[2]().length };
-    const it = (v) => { const x = item(v, V[v][1], t(V[v][0])); x.toggleAttribute('current', view === v); if (count[v]) x.append(h('sav-badge', { slot: 'suffix', appearance: 'soft', variant: 'neutral', pill: true }, String(count[v]))); return x; };
+    const count = { get: V.get[2]().length, owe: V.owe[2]().length, archived: V.archived[2]().length, spending: S.capsOver };
+    const it = (v) => { const x = item(v, V[v][1], t(V[v][0])); x.toggleAttribute('current', view === v); if (count[v]) x.append(h('sav-badge', { slot: 'suffix', appearance: 'soft', variant: v === 'spending' ? 'danger' : 'neutral', pill: true, title: v === 'spending' ? t(count[v] === 1 ? 'caps_over_1' : 'caps_over_n', { n: count[v] }) : null }, v === 'spending' ? '!' : String(count[v]))); return x; };
     const menu = h('sav-menu', { label: t('my_groups'), selectable: true }, Object.keys(V).map(it));
     menu.addEventListener('sav-select', (e) => go('#/' + e.detail.value));
     // the two numbers: in the currency of most groups
@@ -67,17 +70,18 @@ export async function homeScreen(root, view = '') {
 
   function menuOf(g) {
     return [['arrow-right', t('open'), () => go('#/g/' + g.id)],
-      ['link', t('copy_link'), async () => { const d = await api('splits.group', undefined, { id: g.id }); if (d.group.link) copyText(linkUrl(d.group.link), t('link_copied')); else toast(t('share_ask_owner'), 'neutral'); }],
+      g.kind === 'personal' ? null : ['link', t('copy_link'), async () => { const d = await api('splits.group', undefined, { id: g.id }); if (d.group.link) copyText(linkUrl(d.group.link), t('link_copied')); else toast(t('share_ask_owner'), 'neutral'); }],
       ['download', t('save_savspl'), async () => { const d = await api('splits.group', undefined, { id: g.id }); (await import('./files.js')).saveSavspl(d); }], '-',
       g.me ? ['archive', t(g.archived ? 'unarchive' : 'archive'), async () => { await api('splits.group.archive', { id: g.id, archived: !g.archived }); toast(t(g.archived ? 'unarchived_done' : 'archived_done'), 'success'); reload(); }] : null,
       g.owner ? ['trash', t('delete_group'), async () => { if (await confirm(t('delete_group'), t('delete_group_t', { n: g.name, x: g.expenses }), t('delete_forever'))) { await api('splits.group.delete', { id: g.id }); toast(t('group_deleted'), 'success'); reload(); } }, { danger: true }] : null];
   }
 
   function card(g) {
-    const meta = [t('n_people', { n: g.people }), g.expenses ? t('spent_total', { a: money(g.total, g.currency) }) : t('no_expenses_yet'), when(g.updated)].join(' · ');
+    const meta = [g.kind === 'personal' ? t('personal_title') : t('n_people', { n: g.people }), g.expenses ? t('spent_total', { a: money(g.total, g.currency) }) : t('no_expenses_yet'), when(g.updated)].join(' · ');
     const more = drop(h('sav-button', { icon: 'ellipsis-vertical', label: t('more'), appearance: 'ghost', size: 'sm', square: true }), menuOf(g).filter(Boolean), { placement: 'bottom-end' });
     more.addEventListener('click', (e) => e.stopPropagation());
-    const badge = !g.owner && g.me ? h('div.cbadges', h('sav-badge', { variant: 'neutral', appearance: 'soft', pill: true }, icon('users'), ' ', t('shared_with_me'))) : null;
+    const badge = g.kind === 'personal' ? h('div.cbadges', h('sav-badge', { variant: 'neutral', appearance: 'soft', pill: true }, icon('user'), ' ', t('personal_badge')))
+      : !g.owner && g.me ? h('div.cbadges', h('sav-badge', { variant: 'neutral', appearance: 'soft', pill: true }, icon('users'), ' ', t('shared_with_me'))) : null;
     return tile(g.name, () => go('#/g/' + g.id), { class: 'card' + (g.archived ? ' away' : '') }, thumb(g), badge, h('div.cinfo', h('div', h('b', g.name), h('small', meta)), more));
   }
 
@@ -88,6 +92,12 @@ export async function homeScreen(root, view = '') {
 
   function draw() {
     drawSide();
+    if (view === 'spending') {
+      import('./budget.js').then((m) => m.spendingView(main, term)).catch(fail);
+      commands([t('my_spending'), [['upload', t('import_bank'), () => import('./bankcsv.js').then((m) => m.importDialog())], ['target', t('set_caps'), () => import('./budget.js').then((m) => m.capsDialog())], ['tag', t('keywords'), () => import('./budget.js').then((m) => m.keywordsDialog())]]],
+        [t('my_groups'), Object.keys(V).map((v) => [V[v][1], t(V[v][0]), '#/' + v])]);
+      return;
+    }
     let shown = V[view][2]();
     if (term) shown = shown.filter((g) => (g.name + ' ' + g.names.join(' ')).toLowerCase().includes(term));
     const sort = prefs().sort || 'updated';
@@ -105,10 +115,14 @@ export async function homeScreen(root, view = '') {
   document.title = t(V[view][0]) + ' – SavSplits';
   if (S.pendingFile) import('./files.js').then((m) => m.openPending());
   const onKey = (e) => { if (e.key === 'n' && !e.ctrlKey && !e.metaKey && !e.altKey && !document.querySelector('sav-dialog[open]') && !e.composedPath().some((x) => /^(input|textarea|sav-input|sav-textarea|sav-select|sav-chip-input)$/.test(x.localName || ''))) { e.preventDefault(); newGroupDialog(); } };
-  const onFocus = () => { if (document.visibilityState === 'visible') reload().catch(() => {}); };
+  const onFocus = () => { if (document.visibilityState === 'visible') { if (view === 'spending') S.mine = null; reload().catch(() => {}); } };
+  // the budget changed (caps, an import): the numbers again
+  const onBudget = () => reload().catch(fail);
   addEventListener('keydown', onKey);
+  addEventListener('savsplits-budget', onBudget);
   document.addEventListener('visibilitychange', onFocus);
-  return () => { removeEventListener('keydown', onKey); document.removeEventListener('visibilitychange', onFocus); };
+  if (view === 'spending') S.mine = null; // read again each time the view opens
+  return () => { removeEventListener('keydown', onKey); removeEventListener('savsplits-budget', onBudget); document.removeEventListener('visibilitychange', onFocus); };
 }
 
 /** The link of a group someone shared: pasted here, it opens. */
@@ -128,15 +142,16 @@ export function newGroupDialog(kind = 'trip') {
   const cards = {};
   const tables = h('div.condo-t', h('p.muted.small', t('condo_tables_t')),
     ...[['prop', t('tbl_prop'), true], ['stairs', t('tbl_stairs')], ['lift', t('tbl_lift')], ['heat', t('tbl_heat')]].map(([id, label, on]) => h('sav-checkbox', { value: id, checked: on || null, 'data-name': label }, label)));
-  const mark = () => { Object.entries(cards).forEach(([x, c]) => c.classList.toggle('on', x === k)); name.placeholder = t('k_' + k + '_ph'); tables.hidden = k !== 'condo'; };
+  const alone = h('sav-alert', { variant: 'neutral', appearance: 'soft' }, icon('user', { slot: 'icon' }), t('personal_only'));
+  const mark = () => { Object.entries(cards).forEach(([x, c]) => c.classList.toggle('on', x === k)); name.placeholder = t('k_' + k + '_ph'); tables.hidden = k !== 'condo'; people.hidden = k === 'personal'; alone.hidden = k !== 'personal'; };
   const pre = ([id, ic, c]) => (cards[id] = tile(t('k_' + id), () => { k = id; mark(); }, { class: 'pret', style: `--c:${c}` }, icon(ic), h('div', h('strong', t('k_' + id)), h('small.muted', t('k_' + id + '_t')))));
   const cur = select(t('currency'), curOptions(), prefs().currency || 'EUR', null, { searchable: true });
   const people = h('sav-chip-input', { label: t('others'), multiple: true, placeholder: t('others_ph'), help: t('others_t', { me: S.user.name }), 'max-terms': 59 });
-  const body = h('div.form', name, h('sav-label', { appearance: 'plain', case: 'normal', variant: 'neutral' }, t('template')), h('div.presets', KINDS.map(pre)), tables, h('div.grid2', cur, h('div')), people,
+  const body = h('div.form', name, h('sav-label', { appearance: 'plain', case: 'normal', variant: 'neutral' }, t('template')), h('div.presets', KINDS.map(pre)), tables, alone, h('div.grid2', cur, h('div')), people,
     h('div', btn(t('open_file'), { icon: 'file-up', size: 'sm', appearance: 'ghost', onclick: () => { d.hide(); import('./files.js').then((m) => m.openFileDialog()); } })));
   mark();
   const d = dialog({ title: t('new_group'), width: '44rem', body, actions: [{ label: t('cancel') }, { label: t('create'), icon: 'plus', primary: true, run: async () => {
-    const others = String(people.value || '').split(',').map((x) => x.trim()).filter(Boolean);
+    const others = k === 'personal' ? [] : String(people.value || '').split(',').map((x) => x.trim()).filter(Boolean);
     const tbl = k === 'condo' ? [...tables.querySelectorAll('sav-checkbox')].filter((c) => c.checked).map((c) => ({ id: c.value, name: c.dataset.name })) : [];
     const [, ic, color] = kindOf(k);
     const r = await api('splits.group.create', { name: name.value.trim() || name.placeholder, kind: k, icon: ic, color, currency: cur.value || 'EUR', members: [{ name: S.user.name, me: true }, ...others.map((n) => ({ name: n }))], tables: tbl });
