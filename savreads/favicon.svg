@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <defs>
+        <linearGradient id="a" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#7479de"/>
+            <stop offset="1" stop-color="#3d40a0"/>
+        </linearGradient>
+        <linearGradient id="b" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#2b2d75"/>
+            <stop offset="1" stop-color="#171844"/>
+        </linearGradient>
+    </defs>
+    <!-- an S made of two pieces, as in the other apps of SavOffice: above, the round glasses of who reads, a glint on a
+         lens; below, the page of a paper kept for later, its headline, its columns and its picture in the yellow of the suite -->
+    <path d="M20.500 4H53a5 5 0 0 1 5 5v17.500a5 5 0 0 1-5 5H20.500A13.750 13.750 0 0 1 20.500 4z" fill="url(#a)"/>
+    <g fill="#fff" fill-opacity=".16" stroke="#fff" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="26.300" cy="19.200" r="6.300"/>
+        <circle cx="42.300" cy="19.200" r="6.300"/>
+    </g>
+    <path d="M32.600 18.400q1.700-1.900 3.400 0M20 17.600l-5.200-3.600M48.600 17.600l5.200-3.600" fill="none" stroke="#fff" stroke-width="2.600" stroke-linecap="round"/>
+    <path d="M38.800 17.400a3.800 3.800 0 0 1 2.600-2.200" fill="none" stroke="#fff" stroke-width="1.700" stroke-linecap="round" stroke-opacity=".85"/>
+    <path d="M43.500 60H11a5 5 0 0 1-5-5V37.500a5 5 0 0 1 5-5h32.500a13.750 13.750 0 0 1 0 27.500z" fill="url(#b)"/>
+    <rect x="12" y="37.400" width="27" height="3.800" rx="1.900" fill="#fff" fill-opacity=".94"/>
+    <rect x="12" y="44.300" width="10.400" height="10.200" rx="2" fill="#ffd166"/>
+    <path d="M26 45.600h13.500M26 49.400h13.500M26 53.200h9" stroke="#fff" stroke-opacity=".55" stroke-width="2.200" stroke-linecap="round"/>
+    <path d="M45.500 39.500v14" stroke="#fff" stroke-opacity=".22" stroke-width="1.400" stroke-linecap="round"/>
+</svg>

@@ -10,7 +10,8 @@
 
 declare(strict_types=1);
 
-const NET_AGENT = 'SavPodcasts/1.0 (+https://www.illerom.eu/savpodcasts/; podcast player)';
+// an app that reuses this file (SavReads) may name itself first
+if (!defined('NET_AGENT')) define('NET_AGENT', 'SavPodcasts/1.0 (+https://www.illerom.eu/savpodcasts/; podcast player)');
 const NET_HOPS = 5;
 
 /** The address cleaned up (feed://, itpc://, pcast://, no scheme…), or '' when it cannot be an address of the Internet. */

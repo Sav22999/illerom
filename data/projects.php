@@ -182,6 +182,16 @@ return [
             'Trips, flatmates, couples, clubs and condominiums: write who paid and for whom, SavSplits works out the balances and the fewest payments to settle up. The others join with a link, no account needed. It shares the account with the other apps of SavOffice.',
             ['Equally, by shares, by percentages, by amounts or by thousandths', 'Balances and payments to settle up, marked as done with one press', 'A link to look or to add expenses, no account needed', 'Any currency with ECB rates, repeated expenses, .savspl and CSV files']],
     ],
+    'savreads' => [
+        'name' => 'SavReads', 'suite' => 'savoffice', 'cat' => 'work', 'level' => 2, 'account' => 'required', 'offline' => true, 'play' => '',
+        'url' => '/savreads/', 'source' => 'savreads', 'privacy' => 'privacy.html', 'langs' => $two, 'shots' => 0, 'tablet' => 0, 'desk' => 0,
+        'it' => ['Leggi dopo, in pace.',
+            'Un’alternativa libera a Pocket e Instapaper, con un lettore di feed: salvi un articolo dal suo indirizzo, da un bookmarklet o dal menu Condividi del telefono, e lo leggi pulito, senza pubblicità né tracker, con il carattere, la dimensione e i colori che preferisci. Evidenziazioni con note, tag, preferiti, archivio e ricerca nel testo; il punto di lettura ti segue su ogni dispositivo, anche offline. La lista di Pocket (chiuso nel 2025) e di Instapaper entra con i suoi tag. Ha lo stesso account delle altre app di SavOffice.',
+            ['Articoli salvati da link, bookmarklet o dal menu Condividi, letti senza pubblicità né tracker', 'Carattere, dimensione, interlinea, larghezza e pagina chiara, seppia o scura', 'Evidenziazioni con note, tag, archivio, ricerca nel testo e lettura offline', 'Feed RSS, Atom e JSON in cartelle, OPML, import da Pocket e Instapaper, file .savrea']],
+        'en' => ['Read later, in peace.',
+            'A free alternative to Pocket and Instapaper, with a feed reader: save an article from its address, a bookmarklet or the share menu of your phone, and read it clean, without ads or trackers, in the font, size and colours you like. Highlights with notes, tags, favourites, archive and search in the text; where you stopped follows you on every device, offline too. Your list from Pocket (closed in 2025) and Instapaper comes in with its tags. It shares the account with the other apps of SavOffice.',
+            ['Articles saved from a link, a bookmarklet or the share menu, read without ads or trackers', 'Font, size, line spacing, width and a light, sepia or dark page', 'Highlights with notes, tags, archive, search in the text and offline reading', 'RSS, Atom and JSON feeds in folders, OPML, import from Pocket and Instapaper, .savrea files']],
+    ],
     'chess' => [
         'name' => 'Chess', 'cat' => 'games', 'level' => 3, 'account' => 'none', 'offline' => true, 'play' => 'com.saverio.chess',
         'url' => '/chess/', 'source' => 'chess', 'privacy' => 'privacy.html', 'langs' => $five, 'shots' => 4, 'tablet' => 3, 'desk' => 3,
