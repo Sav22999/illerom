@@ -25,6 +25,7 @@ const SAVOFFICE = [
     'savnew' => ['savnewsletters', 'application/vnd.savnewsletters.newsletter+json'],
     'savspl' => ['savsplits', 'application/vnd.savsplits.group+json'],
     'savcon' => ['savcontacts', 'application/vnd.savcontacts.contacts+json'],
+    'savrea' => ['savreads', 'application/vnd.savreads.library+json'],
 ];
 
 /** Types a browser may show inside the page (everything else is always downloaded). */

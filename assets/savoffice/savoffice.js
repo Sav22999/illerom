@@ -1,5 +1,5 @@
 /*
- * SavOffice — the apps of the suite (SavBooks, SavCalendar, SavContacts, SavDiagrams, SavDocuments, SavDrive, SavForms, SavMail, SavNewsletters, SavNotes, SavPhotos, SavPodcasts, SavPresentations, SavSchedules, SavSplits, SavSpreadsheets, SavTasks, SavWhiteboard) from inside each one:
+ * SavOffice — the apps of the suite (SavBooks, SavCalendar, SavContacts, SavDiagrams, SavDocuments, SavDrive, SavForms, SavMail, SavNewsletters, SavNotes, SavPhotos, SavPodcasts, SavPresentations, SavReads, SavSchedules, SavSplits, SavSpreadsheets, SavTasks, SavWhiteboard) from inside each one:
  * <savoffice-apps current="savcalendar"></savoffice-apps> is a button with a grid that opens the list of the apps and the
  * page of SavOffice. Plain script, no build: it needs SavComponents (sav-button, sav-popover), which every app loads.
  * The apps live in folders next to each other (../savdocuments/ …): the links are relative, so it works anywhere.
@@ -32,6 +32,7 @@
     ['savphotos', 'SavPhotos', 'Foto e video', 'Photos and videos'],
     ['savpodcasts', 'SavPodcasts', 'Podcast', 'Podcasts'],
     ['savpresentations', 'SavPresentations', 'Presentazioni', 'Presentations'],
+    ['savreads', 'SavReads', 'Da leggere e feed', 'Read later and feeds'],
     ['savschedules', 'SavSchedules', 'Sondaggi e posti', 'Polls and slots'],
     ['savsplits', 'SavSplits', 'Spese condivise', 'Shared expenses'],
     ['savspreadsheets', 'SavSpreadsheets', 'Fogli di calcolo', 'Spreadsheets'],
@@ -396,7 +397,7 @@ savoffice-apps { display: inline-flex; }
   const APPS = [['savbooks', 'SavBooks', 'Libri ed e-book', 'Books and e-books'], ['savcalendar', 'SavCalendar', 'Calendario', 'Calendar'], ['savcontacts', 'SavContacts', 'Contatti', 'Contacts'], ['savdiagrams', 'SavDiagrams', 'Diagrammi', 'Diagrams'], ['savdocuments', 'SavDocuments', 'Documenti', 'Documents'], ['savdrive', 'SavDrive', 'File e cartelle', 'Files and folders'],
     ['savforms', 'SavForms', 'Moduli e sondaggi', 'Forms and surveys'], ['savmail', 'SavMail', 'Posta', 'Email'], ['savnewsletters', 'SavNewsletters', 'Newsletter', 'Newsletters'], ['savnotes', 'SavNotes', 'Quaderni', 'Notebooks'],
     ['savphotos', 'SavPhotos', 'Foto e video', 'Photos and videos'], ['savpodcasts', 'SavPodcasts', 'Podcast', 'Podcasts'], ['savpresentations', 'SavPresentations', 'Presentazioni', 'Presentations'],
-    ['savschedules', 'SavSchedules', 'Sondaggi e posti', 'Polls and slots'], ['savsplits', 'SavSplits', 'Spese condivise', 'Shared expenses'], ['savspreadsheets', 'SavSpreadsheets', 'Fogli di calcolo', 'Spreadsheets'], ['savtasks', 'SavTasks', 'Attività', 'Tasks'], ['savwhiteboard', 'SavWhiteboard', 'Lavagna', 'Whiteboard']];
+    ['savreads', 'SavReads', 'Da leggere e feed', 'Read later and feeds'], ['savschedules', 'SavSchedules', 'Sondaggi e posti', 'Polls and slots'], ['savsplits', 'SavSplits', 'Spese condivise', 'Shared expenses'], ['savspreadsheets', 'SavSpreadsheets', 'Fogli di calcolo', 'Spreadsheets'], ['savtasks', 'SavTasks', 'Attività', 'Tasks'], ['savwhiteboard', 'SavWhiteboard', 'Lavagna', 'Whiteboard']];
   const GRIP = '<circle cx="12" cy="5" r="1"/><circle cx="19" cy="5" r="1"/><circle cx="5" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/><circle cx="12" cy="19" r="1"/><circle cx="19" cy="19" r="1"/><circle cx="5" cy="19" r="1"/>';
   let groups = [], pal = null;
   const fns = new Map();

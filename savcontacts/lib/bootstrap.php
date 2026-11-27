@@ -14,7 +14,7 @@ declare(strict_types=1);
 
 const APP_NAME = 'SavContacts';
 const AUTH_COOKIE = 'savschedules_auth';     // the same cookie of SavSchedules: one session for all
-const SHARED_APPS = ['savschedules', 'savcalendar', 'savwhiteboard', 'savtasks', 'savnotes', 'savforms', 'savsplits', 'savpodcasts', 'savmail', 'savdiagrams', 'savcontacts']; // folders next to each other that share the session
+const SHARED_APPS = ['savschedules', 'savcalendar', 'savwhiteboard', 'savtasks', 'savnotes', 'savforms', 'savsplits', 'savpodcasts', 'savmail', 'savdiagrams', 'savcontacts', 'savreads']; // folders next to each other that share the session
 const SCHEMA_VERSION = 1;              // of the tables of SavSchedules (created here only if SavSchedules never ran)
 const CON_SCHEMA_VERSION = 2;          // of the tables of the contacts and their groups (2: CardDAV — app passwords, deletions, resource names)
 const LANGS = ['en', 'it'];

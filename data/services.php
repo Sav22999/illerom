@@ -27,6 +27,7 @@ return [
     'savpodcasts' => ['app' => ['sch_', 'Podcast seguiti', 'Podcasts followed', ['savschedules', 'pod_schema_version', 'POD_SCHEMA_VERSION']]],
     'savsplits' => ['app' => ['sch_', 'Gruppi e spese', 'Groups and expenses', ['savschedules', 'split_schema_version', 'SPLIT_SCHEMA_VERSION']]],
     'savcontacts' => ['app' => ['sch_', 'Contatti e gruppi', 'Contacts and groups', ['savschedules', 'con_schema_version', 'CON_SCHEMA_VERSION']]],
+    'savreads' => ['app' => ['sch_', 'Articoli e feed', 'Articles and feeds', ['savschedules', 'rd_schema_version', 'RD_SCHEMA_VERSION']]],
     // SavPhotos keeps its tables in the database of SavDrive (savdrive/lib/photos.php)
     'savphotos' => ['app' => ['dr_', 'Foto e album', 'Photos and albums', ['savdrive', 'photos_schema', 'PHOTOS_SCHEMA']]],
     'thinkhop' => ['app' => ['th_', 'Account e classifiche', 'Accounts and rankings']],

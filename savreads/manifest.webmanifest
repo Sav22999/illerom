@@ -1,0 +1,33 @@
+{
+  "name": "SavReads",
+  "short_name": "SavReads",
+  "description": "Free, open read-later app and feed reader: save any article and read it clean, without ads or trackers, with highlights, notes and tags on every device. Part of SavOffice.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f5f5fb",
+  "theme_color": "#3d40a0",
+  "lang": "en",
+  "categories": ["news", "books", "productivity", "education"],
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ],
+  "shortcuts": [
+    {"name": "To read", "short_name": "To read", "url": "./#/"},
+    {"name": "Feeds", "short_name": "Feeds", "url": "./#/feeds"},
+    {"name": "Highlights", "short_name": "Highlights", "url": "./#/highlights"}
+  ],
+  "share_target": {
+    "action": "./",
+    "method": "GET",
+    "params": {"title": "title", "text": "text", "url": "url"}
+  },
+  "file_handlers": [
+    {"action": "./", "accept": {"application/vnd.savreads.library+json": [".savrea"]}}
+  ],
+  "launch_handler": {"client_mode": "navigate-existing"}
+}

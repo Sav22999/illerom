@@ -167,7 +167,7 @@ function parse_date(?string $s): ?string
 
 function x_attr(?SimpleXMLElement $e, string $name, string $ns = ''): string
 {
-    if (!$e) return '';
+    if ($e === null) return ''; // not !$e: an empty element reached through children($ns) casts to false even with attributes (Atom <link href>)
     $a = $ns === '' ? $e->attributes() : $e->attributes($ns);
     return $a && isset($a[$name]) ? trim((string)$a[$name]) : '';
 }
