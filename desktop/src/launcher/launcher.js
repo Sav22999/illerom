@@ -53,6 +53,10 @@ const WORDS = {
     acc_out: 'Non hai fatto l’accesso', acc_out_t: 'Un solo account per tutte le app: accedi qui, o in una qualsiasi app, e vale per tutte.',
     out_q: 'Uscire da SavOffice?', out_t: 'Esci da tutte le app di SavOffice su questo Mac. Le copie per l’uso senza connessione e le modifiche non ancora inviate vengono cancellate, come quando esci dal sito.',
     done_out: 'Sei uscito da tutte le app',
+    su_avail: 'È uscita SavOffice {v}', su_avail_t: 'L’aggiornamento automatico è spento: scaricala quando vuoi.', su_get: 'Scarica e aggiorna',
+    su_down: 'Scarico SavOffice {v}…', su_ready: 'SavOffice {v} è pronta', su_ready_t: 'Si installa da sola quando chiudi SavOffice, oppure adesso: SavOffice e le app aperte si chiudono e si riaprono.', su_ready_manual: 'Premi Aggiorna e riavvia: SavOffice e le app aperte si chiudono e si riaprono.',
+    su_now: 'Aggiorna e riavvia', su_err: 'L’aggiornamento di SavOffice non è riuscito: {e}', su_err_nw: 'SavOffice.app non si può sostituire (appartiene a un altro utente del Mac): scarica il DMG dal sito.',
+    su_current: 'aggiornata', su_checking: 'controllo…', su_new: 'nuova versione {v}',
     s_about: 'Informazioni', about_v: 'SavOffice per Mac {v}', about_t: 'Le app sono quelle di illerom.eu: lo stesso account, gli stessi documenti, sempre sincronizzati.', site: 'SavOffice sul web', source: 'Codice sorgente',
   },
   en: {
@@ -99,6 +103,10 @@ const WORDS = {
     acc_out: 'You are not signed in', acc_out_t: 'One account for all the apps: sign in here, or in any app, and it works for all of them.',
     out_q: 'Sign out of SavOffice?', out_t: 'You sign out of every app of SavOffice on this Mac. The copies for working without a connection and the changes not sent yet are deleted, as when you sign out on the site.',
     done_out: 'You signed out of every app',
+    su_avail: 'SavOffice {v} is out', su_avail_t: 'Automatic updates are off: download it whenever you like.', su_get: 'Download and update',
+    su_down: 'Downloading SavOffice {v}…', su_ready: 'SavOffice {v} is ready', su_ready_t: 'It installs by itself when you quit SavOffice, or now: SavOffice and the open apps close and open again.', su_ready_manual: 'Press Update and restart: SavOffice and the open apps close and open again.',
+    su_now: 'Update and restart', su_err: 'Updating SavOffice did not work: {e}', su_err_nw: 'SavOffice.app cannot be replaced (it belongs to another user of this Mac): download the DMG from the site.',
+    su_current: 'up to date', su_checking: 'checking…', su_new: 'new version {v}',
     s_about: 'About', about_v: 'SavOffice for Mac {v}', about_t: 'The apps are the ones of illerom.eu: the same account, the same documents, always in sync.', site: 'SavOffice on the web', source: 'Source code',
   },
 };
@@ -235,6 +243,37 @@ function signinButtons(o = {}) {
   ];
 }
 
+/** " · up to date" / " · new version 1.3.0" after the version of SavOffice, when it is known. */
+function selfStatus() {
+  const u = S.selfUpdate;
+  if (!u?.enabled) return '';
+  const w = { current: t('su_current'), checking: t('su_checking'), available: t('su_new', { v: u.version }), downloading: t('su_new', { v: u.version }), ready: t('su_new', { v: u.version }) }[u.status];
+  return w ? ' · ' + w : '';
+}
+
+/** SavOffice itself: a new version out, downloading, ready to install, or what went wrong (updater.js). */
+function selfNote() {
+  const u = S.selfUpdate;
+  if (!u?.enabled) return null;
+  const notes = u.notes ? (L() === 'it' ? u.notes.it : u.notes.en) || u.notes.it || '' : '';
+  if (u.status === 'available' && !S.settings.autoUpdate) {
+    return h('sav-alert.offnote', { variant: 'primary', icon: 'download' }, h('b', t('su_avail', { v: u.version })), h('p', notes || t('su_avail_t')),
+      h('div.accbtns', btn(t('su_get'), { variant: 'primary', appearance: 'solid', icon: 'download', onclick: () => api.selfDownload() })));
+  }
+  if (u.status === 'downloading') {
+    return h('sav-alert.offnote', { variant: 'primary', icon: 'download' }, h('b', t('su_down', { v: u.version })),
+      h('sav-progress-bar', { value: Math.round((u.progress || 0) * 100), max: 100, size: 'sm', 'aria-label': t('su_down', { v: u.version }) }));
+  }
+  if (u.status === 'ready') {
+    return h('sav-alert.offnote', { variant: 'success', icon: 'check-circle' }, h('b', t('su_ready', { v: u.version })), notes ? h('p', notes) : null, h('p', t(S.settings.autoUpdate ? 'su_ready_t' : 'su_ready_manual')),
+      h('div.accbtns', btn(t('su_now'), { variant: 'primary', appearance: 'solid', icon: 'refresh', onclick: () => api.selfInstall() })));
+  }
+  if (u.status === 'error' && u.error && !/^list|^download: 404/.test(u.error)) {
+    return h('sav-alert.offnote', { variant: 'warning', icon: 'alert-circle' }, u.error === 'not_writable' ? t('su_err_nw') : t('su_err', { e: u.error }));
+  }
+  return null;
+}
+
 /** Signing in in the browser: waiting for it, or what went wrong. */
 function handoffNote() {
   if (!S.handoff) return null;
@@ -324,9 +363,10 @@ function drawMain() {
   }
   const grid = ui.main.querySelector('.grid');
   // only the cards change while something downloads: the open menus of the others stay open
-  const key = view + '|' + query + '|' + S.online + '|' + !!S.account + '|' + S.accountKnown + '|' + S.handoff;
+  const key = view + '|' + query + '|' + S.online + '|' + !!S.account + '|' + S.accountKnown + '|' + S.handoff + '|' + JSON.stringify(S.selfUpdate || null);
   if (grid && body.classList?.contains('grid') && ui.main.dataset.view === key) put(grid, [...body.children]);
   else put(ui.main, h('div.dhead', h('h1', head[0]), h('p', head[1])), S.online ? null : h('sav-alert.offnote', { variant: 'warning', icon: 'cloud' }, t('offline_note')),
+    selfNote(),
     !S.account && handoffNote(),
     !S.account && !S.handoff && S.accountKnown && S.online && view !== 'updates' ? h('sav-alert.offnote.accnote', { variant: 'primary', icon: 'user' }, h('b', t('acc_h')), h('p', t('acc_p')),
       h('div.accbtns', signinButtons())) : null,
@@ -358,7 +398,8 @@ function settingsView() {
     section(t('s_off'), t('s_off_p'),
       h('div.orow', h('div.orow-t', h('ul.olist', ['edit', 'queue', 'read', 'online'].map((lv) => h('li', h('b', t('off_l_' + lv)), ': ', byLevel(lv))))))),
     section(t('s_about'), null,
-      row(t('about_v', { v: S.version }), t('about_t'), btn(t('site'), { onclick: () => api.external('https://www.illerom.eu/savoffice/') }), btn(t('source'), { onclick: () => api.external('https://github.com/Sav22999/illerom/tree/main/desktop') }))),
+      row(t('about_v', { v: S.version }) + selfStatus(), t('about_t'),
+        S.selfUpdate?.status === 'ready' ? btn(t('su_now'), { variant: 'primary', appearance: 'solid', onclick: () => api.selfInstall() }) : null, btn(t('site'), { onclick: () => api.external('https://www.illerom.eu/savoffice/') }), btn(t('source'), { onclick: () => api.external('https://github.com/Sav22999/illerom/tree/main/desktop') }))),
   ];
 }
 

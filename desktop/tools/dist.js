@@ -2,7 +2,7 @@
  * SavOffice for Mac — makes the DMG: npm run dist.
  * The app is put together outside the repository (in the temporary folder of the system): the repository may sit in a
  * folder kept by iCloud (Documents), which keeps adding Finder attributes to the files, and codesign refuses them.
- * Only the finished DMG comes back, into dist/.
+ * Only the finished DMGs (to install) and ZIPs (for the updates of the installed app) come back, into dist/.
  */
 const fs = require('fs');
 const os = require('os');
@@ -27,9 +27,9 @@ const signing = devId
   ? ['--config.mac.hardenedRuntime=true', `--config.mac.notarize=${notarize}`]
   : ['--config.mac.identity=null', '--config.mac.hardenedRuntime=false', '--config.mac.notarize=false'];
 console.log(devId ? `\n  Signing with ${devId}${notarize ? ', notarized by Apple' : ' (NOT notarized: set the APPLE_… variables, README)'}\n` : '\n  No Developer ID in the keychain: signed ad hoc (macOS will warn on other Macs, README)\n');
-run(bin('electron-builder'), ['--mac', 'dmg', '--arm64', '--x64', `--config.directories.output=${out}`, ...signing]); // Apple silicon and Intel
+run(bin('electron-builder'), ['--mac', 'dmg', 'zip', '--arm64', '--x64', `--config.directories.output=${out}`, ...signing]); // Apple silicon and Intel; the ZIPs are for the updates (updater.js)
 fs.mkdirSync(path.join(here, 'dist'), { recursive: true });
-for (const f of fs.readdirSync(out).filter((f) => f.endsWith('.dmg'))) {
+for (const f of fs.readdirSync(out).filter((f) => /^SavOffice-(arm64|x64)\.(dmg|zip)$/.test(f))) {
   fs.copyFileSync(path.join(out, f), path.join(here, 'dist', f));
-  console.log('\n  DMG: ' + path.join(here, 'dist', f));
+  console.log('\n  ' + (f.endsWith('.zip') ? 'ZIP' : 'DMG') + ': ' + path.join(here, 'dist', f));
 }

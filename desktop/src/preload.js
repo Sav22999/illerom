@@ -12,6 +12,8 @@ contextBridge.exposeInMainWorld('savoffice', {
   remove: call('remove'),
   reinstall: call('reinstall'),
   check: call('check'),
+  selfDownload: call('self-download'),
+  selfInstall: call('self-install'),
   settings: call('settings'),
   reveal: call('reveal'),
   external: call('external'),

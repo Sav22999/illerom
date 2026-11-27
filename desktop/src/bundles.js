@@ -27,9 +27,12 @@ const run = (cmd, args) => new Promise((resolve, reject) => execFile(cmd, args, 
 const toolbox = () => (app.isPackaged ? path.resolve(process.execPath, '../../..') : null);
 const icnsOf = (slug) => (app.isPackaged ? path.join(process.resourcesPath, 'apps', slug + '.icns') : path.join(__dirname, '..', 'build', 'apps', slug + '.icns'));
 
+/** The version of SavOffice and the date of its code: different only when SavOffice.app was replaced. */
 function stamp() {
   let t = 0;
-  try { t = Math.floor(fs.statSync(path.join(process.resourcesPath, 'app.asar')).mtimeMs); } catch { /* development */ }
+  // original-fs: the fs of Electron sees app.asar as a folder and gives it a made-up date, different at every start (that
+  // made every app again at every start)
+  try { t = Math.floor(require('original-fs').statSync(path.join(process.resourcesPath, 'app.asar')).mtimeMs); } catch { /* development */ }
   return `${app.getVersion()}+${t}`;
 }
 const keyOf = (bundle, k) => { try { return (fs.readFileSync(path.join(bundle, 'Contents', 'Info.plist'), 'utf8').match(new RegExp('<key>' + k + '</key>\\s*<string>([^<]*)</string>')) || [])[1] || null; } catch { return null; } };
@@ -55,6 +58,7 @@ function ensure(slug, force = false) {
   if (!supported()) return Promise.resolve(false);
   if (!force && keyOf(bundleOf(slug), 'SavOfficeToolbox') === stamp()) return Promise.resolve(true);
   if (making.has(slug)) return making.get(slug);
+  console.log('SavOffice: making the app', slug, force ? '(forced)' : `(${keyOf(bundleOf(slug), 'SavOfficeToolbox') || 'new'} → ${stamp()})`);
   const job = (async () => {
     const dst = bundleOf(slug);
     const tmp = dst.replace(/\.app$/, '') + `.making-${Date.now()}.app`;

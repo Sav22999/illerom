@@ -9,7 +9,11 @@ const os = require('os');
 const { app } = require('electron');
 const { catalog } = require('./store');
 
-const dir = () => path.join(os.homedir(), 'Applications', 'SavOffice');
+const env = require('./env');
+// tests (env.testing): a folder of their own, as bundles.js does — never the icons of this Mac
+const dir = () => path.join(os.homedir(), 'Applications', env.testing ? 'SavOffice-test' : 'SavOffice');
+/** Whether the bundle at p is one of these little apps (its script open-<slug>), not an app of its own made by bundles.js. */
+const isShortcut = (p, slug) => fs.existsSync(path.join(p, 'Contents', 'MacOS', 'open-' + slug));
 const bundleOf = (a) => path.join(dir(), a.name + '.app');
 const icnsOf = (slug) => (app.isPackaged ? path.join(process.resourcesPath, 'apps', slug + '.icns') : path.join(__dirname, '..', 'build', 'apps', slug + '.icns'));
 
@@ -49,7 +53,8 @@ function create(slug) {
 
 function remove(slug) {
   const a = catalog.find((x) => x.slug === slug);
-  if (a) fs.rmSync(bundleOf(a), { recursive: true, force: true });
+  // only a little app made here: the apps of their own (bundles.js) live in the same folder with the same names
+  if (a && isShortcut(bundleOf(a), slug)) fs.rmSync(bundleOf(a), { recursive: true, force: true });
   try { if (!fs.readdirSync(dir()).some((n) => n.endsWith('.app'))) fs.rmSync(dir(), { recursive: true, force: true }); } catch { /* not there */ }
 }
 
@@ -57,7 +62,7 @@ function remove(slug) {
 function sync(on, installedSlugs) {
   for (const a of catalog) {
     try {
-      if (on && installedSlugs.includes(a.slug)) { if (!fs.existsSync(bundleOf(a))) create(a.slug); } else remove(a.slug);
+      if (on && installedSlugs.includes(a.slug)) { if (!fs.existsSync(bundleOf(a))) create(a.slug); } else remove(a.slug); // remove(): never an app of its own
     } catch { /* a folder that cannot be written: no icon */ }
   }
 }

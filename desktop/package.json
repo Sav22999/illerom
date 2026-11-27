@@ -1,7 +1,7 @@
 {
   "name": "savoffice-desktop",
   "productName": "SavOffice",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "SavOffice for Mac: the apps of the suite, installed one by one, working offline",
   "main": "src/main.js",
   "private": true,
@@ -10,7 +10,8 @@
   "scripts": {
     "start": "node tools/prepare.js && electron .",
     "brand": "electron tools/brand.js",
-    "dist": "node tools/dist.js"
+    "dist": "node tools/dist.js",
+    "release": "node tools/release.js"
   },
   "devDependencies": {
     "electron": "45.3.2",
@@ -55,6 +56,13 @@
             "arm64",
             "x64"
           ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
         }
       ],
       "hardenedRuntime": false,
@@ -65,7 +73,8 @@
       "extendInfo": {
         "NSCameraUsageDescription": "The apps of SavOffice use the camera only when you ask them to (a photo, a video call).",
         "NSMicrophoneUsageDescription": "The apps of SavOffice use the microphone only when you ask them to (a recording, a call)."
-      }
+      },
+      "artifactName": "SavOffice-${arch}.${ext}"
     },
     "afterSign": "tools/adhoc-sign.js",
     "dmg": {

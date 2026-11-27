@@ -21,6 +21,7 @@ const settings = require('./settings');
 const shortcuts = require('./shortcuts');
 const bundles = require('./bundles');
 const sync = require('./session-sync');
+const updater = require('./updater');
 const { lang, t, makeWindows, prepareSession } = require('./common');
 
 app.setName('SavOffice');
@@ -48,6 +49,13 @@ windows.events.closed = (slug) => store.closed(slug).catch(() => {});
 windows.events.changed = () => store.changed();
 store.isOpen = (slug) => windows.windowsOf(slug).length > 0 || bundles.running(slug);
 store.autoUpdate = () => settings.get('autoUpdate');
+// SavOffice itself (updater.js): same automatic updates; the apps of their own quit before it is replaced
+updater.autoUpdate = () => settings.get('autoUpdate');
+updater.beforeInstall = async () => {
+  for (const slug of installedSlugs()) if (bundles.running(slug)) await bundles.quit(slug);
+  for (let i = 0; i < 20 && installedSlugs().some((s) => bundles.running(s)); i++) await new Promise((r) => setTimeout(r, 250));
+};
+updater.on('change', () => store.changed());
 
 /** Opens an installed app: its own app, or a window here. */
 async function open(slug, url) {
@@ -206,7 +214,7 @@ function showLauncher(view) {
 
 const snapshot = () => ({
   apps: store.snapshot(), catalog, settings: { ...settings.all(), windows: undefined, account: undefined }, online, lang: lang(), lastCheck: store.lastCheck,
-  checking: !!store.checking, version: app.getVersion(), shortcutsDir: shortcuts.dir(), separateSupported: bundles.supported(),
+  checking: !!store.checking, version: app.getVersion(), shortcutsDir: shortcuts.dir(), separateSupported: bundles.supported(), selfUpdate: { ...updater.state, enabled: updater.enabled },
   account: account?.email ? account : null, accountKnown, handoff: handoffWaiting() ? 'waiting' : handoff?.error || null,
 });
 let pushTimer = null;
@@ -277,7 +285,9 @@ ipcMain.handle('update-all', async () => {
   }
   return true;
 });
-ipcMain.handle('check', () => store.check().then(() => true));
+ipcMain.handle('check', () => Promise.all([store.check(), updater.check()]).then(() => true));
+ipcMain.handle('self-download', () => updater.download());
+ipcMain.handle('self-install', () => updater.install(true));
 ipcMain.handle('settings', async (e, patch) => {
   const before = settings.all();
   const was = { shortcuts: before.shortcuts, autoUpdate: before.autoUpdate, separate: before.separate };
@@ -366,14 +376,19 @@ else {
     syncIcons().catch(() => {}); // the apps of their own again after an update of SavOffice
     online = net.isOnline() && !cut();
     if (online) store.check().catch(() => {});
+    if (online) setTimeout(() => updater.check(), 8000); // SavOffice itself, after the start
     // back online: look for updates (the apps send their waiting changes by themselves); then every checkHours
     setInterval(() => {
       const now = net.isOnline() && !cut();
-      if (now !== online) { online = now; store.changed(); if (now) store.check().catch(() => {}); }
+      if (now !== online) { online = now; store.changed(); if (now) { store.check().catch(() => {}); updater.check(); } }
     }, 15000);
-    setInterval(() => { if (online && Date.now() - store.lastCheck >= settings.get('checkHours') * 3600e3) store.check().catch(() => {}); }, 10 * 60e3);
+    setInterval(() => { if (online && Date.now() - store.lastCheck >= settings.get('checkHours') * 3600e3) { store.check().catch(() => {}); updater.check(); } }, 10 * 60e3);
   });
 
   app.on('activate', () => { if (!BrowserWindow.getAllWindows().length) showLauncher(); });
   app.on('window-all-closed', () => { /* on the Mac the app stays in the Dock, and keeps the apps up to date */ });
+  // a new SavOffice downloaded: with automatic updates on, it is installed when SavOffice quits (opened again next time)
+  app.on('before-quit', (e) => {
+    if (updater.state.status === 'ready' && settings.get('autoUpdate') && !updater.installing) { e.preventDefault(); updater.install(false); }
+  });
 }

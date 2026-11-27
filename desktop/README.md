@@ -11,10 +11,19 @@ to date.
     npm install
     npm run dist        # → dist/SavOffice-arm64.dmg (Apple silicon) and dist/SavOffice-x64.dmg (Intel)
 
-**Publish** a version: raise `version` in `package.json`, `npm run dist`, then a release on GitHub with both files, with
-these exact names (the page `/savoffice/` links `releases/latest/download/SavOffice-<arch>.dmg`, `data/site.php`):
+**Publish** a version (the installed apps update by themselves, `src/updater.js`): raise `version` in `package.json`, then
 
-    gh release create desktop-v1.0.0 dist/SavOffice-arm64.dmg dist/SavOffice-x64.dmg --title "SavOffice for Mac 1.0.0" --notes "…"
+    npm run release -- --notes "Cosa cambia" --notes-en "What changes"
+
+It builds the DMGs (to install) and the ZIPs (for the updates) and writes `dist/latest-mac.json`: version, notes, size and
+SHA-256 of each ZIP, **signed** with the private key `~/.savoffice/release-key.pem` (made the first time; its public half
+is `src/update-key.pem`, inside the app). **Keep a copy of the private key somewhere safe**: without it no installed
+SavOffice accepts an update any more (they would need the DMG again). Then a release on GitHub whose **tag is the version**
+(`1.2.0`), with the five files under these exact names: `SavOffice-arm64.dmg`, `SavOffice-x64.dmg`, `SavOffice-arm64.zip`,
+`SavOffice-x64.zip`, `latest-mac.json`. The page `/savoffice/` links `releases/latest/download/SavOffice-<arch>.dmg`
+(`data/site.php`); the installed apps read `releases/latest/download/latest-mac.json`.
+
+
 
 The page shows the download only on a Mac (`savoffice/page.js`), Apple silicon or Intel from the graphics chip.
 
@@ -50,6 +59,7 @@ macOS does not question them.
 | `src/main.js`, `env.js`  | The same code is the Toolbox or one app: `env.js` reads the key `SavOfficeApp` of the Info.plist; `HOME` is shared, each process has its own browser profile |
 | `src/toolbox.js`         | The Toolbox: its window, menus, the Dock, `savoffice://`, updates, the account                              |
 | `src/appmode.js`         | One app as an app of its own: its windows and menu; reads what the Toolbox installed; quits with its last window |
+| `src/updater.js`         | SavOffice updates itself: signed list, download, checks, swap when it quits (see below)                    |
 | `src/bundles.js`         | The apps of their own: a clone of SavOffice.app (APFS: no space used) renamed (Info.plist, helpers), its icon, signed ad hoc; opening them; whether one runs (`Profiles/<slug>/running.json`) |
 | `src/session-sync.js`    | One sign-in for every process: the cookie `savoffice_auth` copied through `HOME/session.json` (0600)         |
 | `src/store.js`           | The installed apps: install, version, look for updates, download aside, switch when the app is closed       |
@@ -88,7 +98,14 @@ macOS does not question them.
 - **Other apps of the suite**: a link to an installed app opens that app (`open -b eu.illerom.savoffice.app.<slug>`; with an
   address, `--savoffice-url=`, given to an app already open through its single-instance lock); in the SavOffice button
   (`../assets/savoffice/savoffice.js`) the grid lists only the installed apps, and "All the apps" opens the Toolbox.
-- **Tests**: `SAVOFFICE_USERDATA=<folder>` uses a separate `HOME` (a file `offline-test` in it cuts the network);
+- **SavOffice itself** (`updater.js`): Squirrel.Mac would want a Developer ID, so the update is done here. At the start and
+  every `checkHours` it reads `latest-mac.json`, refuses it unless its Ed25519 signature matches `src/update-key.pem`,
+  downloads the ZIP of this Mac into `HOME/updates`, checks size and SHA-256, unpacks it with `ditto` and checks it is
+  `eu.illerom.savoffice` of that version. Installed with *Update and restart*, or by itself when SavOffice quits (automatic
+  updates on): the apps of their own quit, a small script waits for SavOffice to quit, swaps the bundle (putting the old one
+  back if anything fails) and, after *Update and restart*, opens it again. The new SavOffice makes the apps of their own
+  again, once (`bundles.js`: the stamp is the version and the date of `app.asar`, read with `original-fs`).
+- **Tests**: `SAVOFFICE_USERDATA=<folder>` uses a separate `HOME` (a file `offline-test` in it cuts the network; the apps it makes go to `~/Applications/SavOffice-test` with identifiers of their own);
   `SAVOFFICE_ORIGIN=http://localhost:8100` uses the site run locally (`php -S localhost:8100 index.php` in the root); the
   apps made meanwhile keep both in their Info.plist. While developing, `electron . --savoffice-app=<slug>` runs one app.
   A packaged SavOffice must sit where macOS registers apps (`/Applications`, `~/Applications`) for `open -b` to find the
