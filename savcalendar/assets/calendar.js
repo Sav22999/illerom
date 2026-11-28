@@ -117,8 +117,8 @@ export async function calendarScreen(root, view = '', k = '') {
   // the title bar: the logo on the left, ⋮, the apps and the account on the right (always); between them the buttons each person
   // chooses, in their order (⋮ → Customise the bars, kept with the account). Going back and forth, today and the period shown stay
   // together (on a phone they make a row of their own).
-  const T2 = { today: btn(t('today'), { size: 'sm', onclick: () => go(`#/${view}/${todayKey(viewTz())}`) }), prev: iconBtn('chevron-left', t('previous'), () => step(-1), { kbd: 'K' }), next: iconBtn('chevron-right', t('next'), () => step(1), { kbd: 'J' }),
-    period: title, search: h('div.csearch', q), view: viewSel, days: daysMenu, new: iconBtn('plus', t('new_event'), () => newEvent(), { kbd: 'C' }) };
+  const T2 = { today: btn(t('today'), { size: 'sm', onclick: () => go(`#/${view}/${todayKey(viewTz())}`) }), prev: iconBtn('chevron-left', t('previous'), () => step(-1), { kbd: '←' }), next: iconBtn('chevron-right', t('next'), () => step(1), { kbd: '→' }),
+    period: title, search: h('div.csearch', q), view: viewSel, days: daysMenu, new: iconBtn('plus', t('new_event'), () => newEvent(), { kbd: 'Alt+Shift+C' }) };
   const TITLE_ITEMS = [['today', 'calendar-check', t('today')], ['prev', 'chevron-left', t('previous')], ['next', 'chevron-right', t('next')], ['period', 'calendar', t('bar_period'), { lock: true }], ['new', 'plus', t('new_event')], ['search', 'search', t('search_events')], ['view', 'calendar-days', t('view')], ['days', 'calendar-range', t('week_days')]];
   const TITLE_DEF = ['today', 'prev', 'next', 'period', '~', 'search', 'view', 'days'];
   const NAV = ['today', 'prev', 'next', 'period'];
@@ -201,17 +201,21 @@ export async function calendarScreen(root, view = '', k = '') {
 
   // ---------------------------------------------------------------- keys
   const onKey = (e) => {
-    if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || document.querySelector('sav-dialog[open]')) return;
+    if (e.defaultPrevented || e.ctrlKey || e.metaKey || document.querySelector('sav-dialog[open]')) return;
     if (e.composedPath().some((x) => /^(input|textarea|sav-input|sav-textarea|sav-select)$/.test(x.localName || ''))) return;
+    // a letter is a shortcut only with ⌥⇧ (Alt+Shift), never alone: read from the key itself (on a Mac ⌥ changes the character)
+    const L = e.altKey && e.shiftKey && /^Key[A-Z]$/.test(e.code) ? e.code[3].toLowerCase() : null;
+    if ((e.altKey && !L) || (!L && /^[a-z]$/i.test(e.key))) return;
     const map = { t: () => go(`#/${view}/${todayKey(viewTz())}`), j: () => step(1), k: () => step(-1), ArrowRight: () => step(1), ArrowLeft: () => step(-1), d: () => go(`#/day/${k}`), w: () => go(`#/week/${k}`), m: () => go(`#/month/${k}`), a: () => go(`#/agenda/${k}`), c: () => newEvent(), n: () => newEvent(), '/': () => q.focus() };
-    if (map[e.key]) { e.preventDefault(); map[e.key](); }
+    const kk = L || e.key;
+    if (map[kk]) { e.preventDefault(); map[kk](); }
   };
   const newEvent = () => { const s = zoned(...keyParts(k), 9, 0, viewTz()); editEvent(null, { start: s, end: s + 3600e3 }, ctx); };
   ctx.newEvent = newEvent;
   // the search of actions (⌘J / Ctrl+J): the same moves as the keys of the calendar
-  commands([t('new_event'), [['plus', t('new_event'), () => newEvent(), 'C'], ['search', t('search_events'), () => q.focus(), '/']]],
-    [t('today'), [['calendar-check', t('today'), () => go(`#/${view}/${todayKey(viewTz())}`), 'T'], ['chevron-left', t('previous'), () => step(-1), 'K'], ['chevron-right', t('next'), () => step(1), 'J'],
-      ...VIEWS.map((v) => [{ day: 'calendar', week: 'calendar-range', month: 'calendar-days', agenda: 'list' }[v], t('v_' + v), () => go(`#/${v}/${k}`), v[0].toUpperCase()])]]);
+  commands([t('new_event'), [['plus', t('new_event'), () => newEvent(), 'Alt+Shift+C'], ['search', t('search_events'), () => q.focus(), '/']]],
+    [t('today'), [['calendar-check', t('today'), () => go(`#/${view}/${todayKey(viewTz())}`), 'Alt+Shift+T'], ['chevron-left', t('previous'), () => step(-1), '←'], ['chevron-right', t('next'), () => step(1), '→'],
+      ...VIEWS.map((v) => [{ day: 'calendar', week: 'calendar-range', month: 'calendar-days', agenda: 'list' }[v], t('v_' + v), () => go(`#/${v}/${k}`), 'Alt+Shift+' + v[0].toUpperCase()])]]);
   addEventListener('keydown', onKey);
   const onVis = () => { if (document.visibilityState === 'visible') refresh(true).catch(() => {}); };
   document.addEventListener('visibilitychange', onVis);

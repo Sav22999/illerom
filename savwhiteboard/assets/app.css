@@ -153,6 +153,7 @@ sav-dialog h3 { font-size: .98rem; } .dlg-err { margin-top: .8rem; } .segm.wide 
 body.onboard { overflow: hidden; overscroll-behavior: none; position: fixed; inset: 0; }
 .wb { position: fixed; inset: 0; overflow: hidden; background: #fff; --pad: max(.6rem, env(safe-area-inset-left)); }
 .stage { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; cursor: crosshair; }
+.wb > svg.live { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; will-change: transform; overflow: visible; }
 .stage[data-tool="select"] { cursor: default; } .stage[data-tool="hand"], .wb.space .stage { cursor: grab; } .wb.panning .stage { cursor: grabbing; }
 .stage[data-tool="text"] { cursor: text; } .stage[data-tool="eraser"] { cursor: none; } .stage[data-tool="laser"] { cursor: none; }
 .over .selbox { fill: none; stroke: var(--sav-color-primary); stroke-width: 1.5; stroke-dasharray: 5 4; pointer-events: none; }

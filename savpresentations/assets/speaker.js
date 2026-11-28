@@ -1,5 +1,5 @@
 /** The speaker view, in its own window: notes, this slide and the next one, time. The show (present.js) sends what to draw. */
-import { h, icon, iconBtn, btn, $ } from './core.js';
+import { h, icon, iconBtn, btn, isMac, $ } from './core.js';
 import { t } from './i18n.js';
 import { context } from './themes.js';
 import { slideNode } from './render.js';
@@ -13,7 +13,9 @@ export function speakerScreen(app, room) {
   let st = null, gone = false, size = +(localStorage.getItem('sp-notes-size') || 22), from = Date.now(), stopped = 0;
 
   const now = h('div.spk-now'), nxt = h('div.spk-next'), notes = h('div.spk-notes', { tabindex: 0 }), count = h('b.spk-n'), timer = h('span.spk-t'), clock = h('span.muted'), dots = h('span.muted');
-  const tog = (ic, label, key, fn) => { const tip = iconBtn(ic, `${label} · ${key}`, fn), b = tip.firstElementChild; return { tip, set(on) { b.setAttribute('aria-pressed', String(on)); b.variant = on ? 'primary' : 'neutral'; b.appearance = on ? 'solid' : 'ghost'; } }; };
+  // a letter only with ⌥⇧ (Alt+Shift), never alone
+  const AK = (c) => (isMac ? '⌥⇧' : 'Alt+Shift+') + c;
+  const tog = (ic, label, key, fn) => { const tip = iconBtn(ic, `${label} · ${AK(key)}`, fn), b = tip.firstElementChild; return { tip, set(on) { b.setAttribute('aria-pressed', String(on)); b.variant = on ? 'primary' : 'neutral'; b.appearance = on ? 'solid' : 'ghost'; } }; };
   const laser = tog('pointer', t('laser'), 'L', () => send('tool', { v: st?.tool === 'laser' ? '' : 'laser' })), black = tog('eye-off', t('black'), 'B', () => send('black'));
   const page = h('sav-select.spk-page', { size: 'sm', 'aria-label': t('go_to_page'), onchange: (e) => { if (e.target.value !== st?.sid) send('to', { sid: e.target.value }); } });
   const pause = iconBtn('pause', t('pause'), () => { if (stopped) { from += Date.now() - stopped; stopped = 0; } else stopped = Date.now(); pause.firstElementChild.icon = stopped ? 'play' : 'pause'; pause.setAttribute('content', stopped ? t('resume') : t('pause')); tick(); }, { size: 'sm' });
@@ -53,8 +55,11 @@ export function speakerScreen(app, room) {
   // the laser of the audience follows the pointer over the slide here
   now.addEventListener('pointermove', (e) => { if (st?.tool !== 'laser') return; const r = now.querySelector('.thumb')?.getBoundingClientRect(); if (!r) return; const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height; if (x >= 0 && y >= 0 && x <= 1 && y <= 1) send('point', { x, y }); });
   const onKey = (e) => {
-    if (e.ctrlKey || e.metaKey || e.altKey || e.composedPath().some((x) => /^(input|textarea|sav-select|sav-button)$/.test(x.localName || ''))) return;
-    const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    if (e.ctrlKey || e.metaKey || e.composedPath().some((x) => /^(input|textarea|sav-select|sav-button)$/.test(x.localName || ''))) return;
+    // a letter only with ⌥⇧ (Alt+Shift), never alone: read from the key itself (on a Mac ⌥ changes the character)
+    const L = e.altKey && e.shiftKey && /^Key[A-Z]$/.test(e.code) ? e.code[3].toLowerCase() : null;
+    if ((e.altKey && !L) || (!L && /^[a-z]$/i.test(e.key))) return;
+    const k = L || (e.key.length === 1 ? e.key.toLowerCase() : e.key);
     if (['ArrowRight', 'ArrowDown', 'PageDown', ' ', 'n', 'Enter'].includes(k)) send('next');
     else if (['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace', 'p'].includes(k)) send('prev');
     else if (k === 'l') send('tool', { v: st?.tool === 'laser' ? '' : 'laser' }); else if (k === 'b' || k === '.') send('black'); else if (k === 'e') send('clear'); else return;

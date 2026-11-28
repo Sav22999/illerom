@@ -25,7 +25,8 @@ const DEF = {
 };
 const SIZES = { pen: [2, 4, 7, 12, 20], pencil: [1.5, 3, 5, 8], marker: [12, 24, 36, 56], shape: [2, 4, 7, 12], eraser: [14, 28, 56, 100] };
 const FS = [16, 24, 32, 48, 72, 120];
-const TOOLS = [['select', 'mouse-pointer-2', 'V'], ['hand', 'hand', 'H'], ['pen', 'pen', 'P'], ['pencil', 'pencil', 'C'], ['marker', 'highlighter', 'M'], ['eraser', 'eraser', 'E'], ['laser', 'laser', 'L'], ['text', 'type', 'T'], ['note', 'sticky-note', 'N'], ['shape', 'square', 'R'], ['image', 'image', 'I']];
+// the key of each tool: its letter with ⌥⇧ (Alt+Shift), never the letter alone
+const TOOLS = [['select', 'mouse-pointer-2', 'Alt+Shift+V'], ['hand', 'hand', 'Alt+Shift+H'], ['pen', 'pen', 'Alt+Shift+P'], ['pencil', 'pencil', 'Alt+Shift+C'], ['marker', 'highlighter', 'Alt+Shift+M'], ['eraser', 'eraser', 'Alt+Shift+E'], ['laser', 'laser', 'Alt+Shift+L'], ['text', 'type', 'Alt+Shift+T'], ['note', 'sticky-note', 'Alt+Shift+N'], ['shape', 'square', 'Alt+Shift+R'], ['image', 'image', 'Alt+Shift+I']];
 const SHAPE_ICONS = { rect: 'square', ellipse: 'circle', diamond: 'diamond', triangle: 'triangle', line: 'line', arrow: 'move-up-right' };
 const svgEl = (tag, attrs = {}) => { const n = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); return n; };
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -68,10 +69,16 @@ export async function boardScreen(root, id) {
   defs.append(patHold);
   const bgRect = svgEl('rect', { width: '100%', height: '100%' }), patRect = svgEl('rect', { width: '100%', height: '100%', fill: 'url(#wbp)' });
   const world = svgEl('g'), itemsG = svgEl('g', { style: 'isolation:isolate' }), liveG = svgEl('g'), over = svgEl('g', { class: 'over' });
-  world.append(itemsG, liveG);
+  world.append(itemsG);
   svg.append(defs, bgRect, patRect, world, over);
+  // what changes at every frame while drawing or erasing (the stroke being drawn, the circle of the eraser, the laser) is on a
+  // layer of its own above the board: only that layer is painted again, not the whole board (slow on a tablet with many strokes)
+  const liveWorld = svgEl('g'), cursorG = svgEl('g', { class: 'over' });
+  liveWorld.append(liveG);
+  const liveSvg = svgEl('svg', { class: 'live', 'aria-hidden': 'true' });
+  liveSvg.append(liveWorld, cursorG);
 
-  const wrap = h('div.wb', svg);
+  const wrap = h('div.wb', svg, liveSvg);
   const status = h('span.wstatus', { role: 'status' });
   const zoomLabel = h('sav-button.zl', { size: 'sm', appearance: 'ghost', variant: 'neutral', title: t('zoom_100') }, '100%');
   zoomLabel.addEventListener('click', () => zoomTo(1));
@@ -83,6 +90,7 @@ export async function boardScreen(root, id) {
   let viewTimer = 0, viewDirty = false;
   function applyView() {
     world.setAttribute('transform', `matrix(${V.z} 0 0 ${V.z} ${V.x} ${V.y})`);
+    liveWorld.setAttribute('transform', `matrix(${V.z} 0 0 ${V.z} ${V.x} ${V.y})`);
     drawPattern();
     drawOverlay();
     placeEditor();
@@ -202,7 +210,8 @@ export async function boardScreen(root, id) {
     saving = true;
     if (put.length || del.length || sent.orderDirty || sent.titleDirty || sent.lookDirty) setStatus('saving');
     try {
-      if (thumbDirty && (leaving || Date.now() - lastThumb > 15000)) { body.thumb = await thumbnail([...order.map((x) => items.get(x))], settings).catch(() => undefined); lastThumb = Date.now(); thumbDirty = false; }
+      // the small picture of the board: never while a pen or a finger is on it (drawing it takes a moment on a tablet)
+      if (thumbDirty && (leaving || (Date.now() - lastThumb > 15000 && !action && !pointers.size))) { body.thumb = await thumbnail([...order.map((x) => items.get(x))], settings).catch(() => undefined); lastThumb = Date.now(); thumbDirty = false; }
       const res = await api('wb.save', body);
       version = res.version;
       fails = 0;
@@ -281,18 +290,20 @@ export async function boardScreen(root, id) {
     flashT = setTimeout(() => { if (eraserAt === at) { eraserAt = null; drawOverlay(); } }, 1100);
   }
   function drawOverlay() {
-    over.replaceChildren();
+    // the board's own layer only when it has something (an empty change would still paint the board again)
+    if (over.firstChild) over.replaceChildren();
+    if (cursorG.firstChild) cursorG.replaceChildren();
     if (marquee) {
       const [x0, y0] = toScreen(marquee.x0, marquee.y0), [x1, y1] = toScreen(marquee.x1, marquee.y1);
       over.append(svgEl('rect', { class: 'marq', x: Math.min(x0, x1), y: Math.min(y0, y1), width: Math.abs(x1 - x0), height: Math.abs(y1 - y0) }));
     }
     if (eraserAt && tool === 'eraser') {
       const [x, y] = eraserAt, r = opt('eraser').s / 2;
-      over.append(svgEl('circle', { class: 'ercur' + (eraserAt.flash ? ' flash' : ''), cx: x, cy: y, r }));
+      cursorG.append(svgEl('circle', { class: 'ercur' + (eraserAt.flash ? ' flash' : ''), cx: x, cy: y, r }));
       // a finger covers the circle under it: the same circle again above the finger, joined to it, shows its size
-      if (eraserAt.touch) { const gy = y - r * 2 - 56; over.append(svgEl('line', { class: 'erlink', x1: x, y1: y - r, x2: x, y2: gy + r }), svgEl('circle', { class: 'ercur ghost', cx: x, cy: gy, r })); }
+      if (eraserAt.touch) { const gy = y - r * 2 - 56; cursorG.append(svgEl('line', { class: 'erlink', x1: x, y1: y - r, x2: x, y2: gy + r }), svgEl('circle', { class: 'ercur ghost', cx: x, cy: gy, r })); }
     }
-    if (laser.length > 1) over.append(laserPath());
+    if (laser.length > 1) cursorG.append(laserPath());
     const list = selItems();
     if (!list.length || (editing && list.length === 1 && list[0].id === editing.id)) return;
     if (list.length === 1 && list[0].t === 'shape' && (list[0].k === 'line' || list[0].k === 'arrow')) {
@@ -386,6 +397,9 @@ export async function boardScreen(root, id) {
   }
 
   function eraserAction(e) {
+    // on a tablet or a phone the path is looked at a little less densely (a circle every radius instead of every half radius):
+    // as precise to the eye, half the work
+    const LIGHT = navigator.maxTouchPoints > 1 && matchMedia('(any-pointer: coarse)').matches ? 1 : .5;
     const o = opt('eraser'), r = o.s / 2 / V.z, before = new Map(), created = new Set();
     let last = null;
     // what the eraser changed is drawn once per frame (it may cut the same stroke many times between two frames)
@@ -420,7 +434,7 @@ export async function boardScreen(root, id) {
     };
     const step = (ev) => {
       const [x, y] = toWorld(ev.clientX, ev.clientY);
-      if (last) { const d = Math.hypot(x - last[0], y - last[1]), n = Math.ceil(d / (r * .5)); for (let k = 1; k <= n; k++) at(last[0] + (x - last[0]) * k / n, last[1] + (y - last[1]) * k / n); } else at(x, y);
+      if (last) { const d = Math.hypot(x - last[0], y - last[1]), n = Math.ceil(d / (r * LIGHT)); for (let k = 1; k <= n; k++) at(last[0] + (x - last[0]) * k / n, last[1] + (y - last[1]) * k / n); } else at(x, y);
       last = [x, y];
     };
     step(e);
@@ -1007,7 +1021,7 @@ export async function boardScreen(root, id) {
 
   // ---------------------------------------------------------------- keyboard, clipboard, files dropped
   const typing = (e) => { const p = e.composedPath?.() || []; return p.some((x) => /^(input|textarea|select|sav-input|sav-select|sav-textarea|sav-number-input)$/.test(x.localName || '') || x.isContentEditable) || !!document.querySelector('sav-dialog[open]'); };
-  const KEYS = Object.fromEntries(TOOLS.map(([k, , key]) => [key.toLowerCase(), k]));
+  const KEYS = Object.fromEntries(TOOLS.map(([k, , key]) => [key.slice(-1).toLowerCase(), k]));
   function onKey(e) {
     if (gone || typing(e)) return;
     const mod = e.metaKey || e.ctrlKey, k = e.key.toLowerCase();
@@ -1035,10 +1049,14 @@ export async function boardScreen(root, id) {
     if (e.key === '-' || e.key === '_') return zoomTo(V.z / 1.25);
     if (e.shiftKey && (e.code === 'Digit1')) return fit();
     if (e.shiftKey && (e.code === 'Digit0')) return zoomTo(1);
-    if (e.key === 'o' || e.key === 'O') { setOpt('shape', { k: 'ellipse' }); tb.shape.button.icon = 'circle'; return setTool('shape'); }
-    if (e.key === 'a' || e.key === 'A') { setOpt('shape', { k: 'arrow' }); tb.shape.button.icon = 'move-up-right'; return setTool('shape'); }
-    if (k === 'r') { setOpt('shape', { k: 'rect' }); tb.shape.button.icon = 'square'; return setTool('shape'); }
-    if (KEYS[k] && !e.altKey) setTool(KEYS[k]);
+    // a letter is a shortcut only with ⌥⇧ (Alt+Shift), never alone (read from the key: on a Mac ⌥ changes the character)
+    const L = e.altKey && e.shiftKey && /^Key[A-Z]$/.test(e.code) ? e.code[3].toLowerCase() : null;
+    if (!L) return;
+    e.preventDefault();
+    if (L === 'o') { setOpt('shape', { k: 'ellipse' }); tb.shape.button.icon = 'circle'; return setTool('shape'); }
+    if (L === 'a') { setOpt('shape', { k: 'arrow' }); tb.shape.button.icon = 'move-up-right'; return setTool('shape'); }
+    if (L === 'r') { setOpt('shape', { k: 'rect' }); tb.shape.button.icon = 'square'; return setTool('shape'); }
+    if (KEYS[L]) setTool(KEYS[L]);
   }
   const onKeyUp = (e) => { if (e.key === ' ') { spaceDown = false; wrap.classList.remove('space'); } };
   const onCopy = (e) => { if (gone || typing(e) || !sel.size) return; const d = copySel(e.type === 'cut'); if (d) { e.clipboardData.setData('text/plain', d); e.preventDefault(); } };

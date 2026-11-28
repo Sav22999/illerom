@@ -107,14 +107,14 @@ export async function homeScreen(root, view = '') {
     const head = h('div.hhead', h('h1', term ? t('results_for', { q: term }) : t(V[view][0])), h('div.spacer'), sorter, viewBtn, btn(t('open_file'), { size: 'sm', icon: 'file-up', appearance: 'outline', variant: 'neutral', onclick: () => import('./files.js').then((m) => m.openFileDialog()) }));
     const none = term ? empty('search', t('nothing_found'), '') : view === 'archived' ? empty('archive', t('no_archived'), t('no_archived_t')) : view ? empty(V[view][1], t('none_here'), '') : empty('wallet', t('no_groups'), t('no_groups_t'), primary(t('new_group'), { icon: 'plus', onclick: () => newGroupDialog() }));
     put(main, head, view === '' && !term ? quick() : null, view === '' && !term && shown.length ? h('h2', t('recent')) : null, shown.length ? h('div.' + (mode() === 'grid' ? 'grid' : 'rows'), shown.map(card)) : none);
-    commands([t('new_group'), [['plus', t('new_group'), () => newGroupDialog(), 'N'], ...KINDS.map(([k, ic]) => [ic, t('k_' + k), () => newGroupDialog(k)]), ['file-up', t('open_file'), () => import('./files.js').then((m) => m.openFileDialog())], ['link', t('open_link'), () => joinDialog()]]],
+    commands([t('new_group'), [['plus', t('new_group'), () => newGroupDialog(), 'Alt+Shift+N'], ...KINDS.map(([k, ic]) => [ic, t('k_' + k), () => newGroupDialog(k)]), ['file-up', t('open_file'), () => import('./files.js').then((m) => m.openFileDialog())], ['link', t('open_link'), () => joinDialog()]]],
       [t('my_groups'), Object.keys(V).map((v) => [V[v][1], t(V[v][0]), '#/' + v])],
       [t('recent'), S.groups.filter((g) => !g.archived).slice(0, 80).map((g) => [groupIcon(g), g.name, '#/g/' + g.id])]);
   }
   draw();
   document.title = t(V[view][0]) + ' – SavSplits';
   if (S.pendingFile) import('./files.js').then((m) => m.openPending());
-  const onKey = (e) => { if (e.key === 'n' && !e.ctrlKey && !e.metaKey && !e.altKey && !document.querySelector('sav-dialog[open]') && !e.composedPath().some((x) => /^(input|textarea|sav-input|sav-textarea|sav-select|sav-chip-input)$/.test(x.localName || ''))) { e.preventDefault(); newGroupDialog(); } };
+  const onKey = (e) => { if (e.code === 'KeyN' && e.altKey && e.shiftKey && !e.ctrlKey && !e.metaKey && !document.querySelector('sav-dialog[open]') && !e.composedPath().some((x) => /^(input|textarea|sav-input|sav-textarea|sav-select|sav-chip-input)$/.test(x.localName || ''))) { e.preventDefault(); newGroupDialog(); } };
   const onFocus = () => { if (document.visibilityState === 'visible') { if (view === 'spending') S.mine = null; reload().catch(() => {}); } };
   // the budget changed (caps, an import): the numbers again
   const onBudget = () => reload().catch(fail);

@@ -1,7 +1,13 @@
 /** The version of SavPresentations (in the footer) and what changed in each one (the page ?p=changelog). Newest first. */
-export const VERSION = '1.2.0';
+export const VERSION = '1.2.1';
 
 export const CHANGES = [
+  {
+    v: '1.2.1', date: '2026-11-28', items: [
+      ['Keyboard shortcuts: a letter is never a shortcut by itself any more, only with ⌥⇧ (Alt+Shift) — also in the slideshow (⌥⇧B black screen, ⌥⇧L laser, ⌥⇧D pen) and for a new text box (⌥⇧T); the arrows, numbers and . work as before', 'Scorciatoie da tastiera: una lettera da sola non è più mai una scorciatoia, solo con ⌥⇧ (Alt+Shift) — anche nella presentazione (⌥⇧B schermo nero, ⌥⇧L laser, ⌥⇧D penna) e per una nuova casella di testo (⌥⇧T); frecce, numeri e . funzionano come prima'],
+      ['Customise the bars: the preview scrolls when the bar is long and shows “Title” instead of the name of the file; on phones and tablets the list scrolls with a finger (the handle moves the rows)', 'Personalizza le barre: l’anteprima scorre quando la barra è lunga e mostra «Titolo» invece del nome del file; su telefoni e tablet l’elenco scorre con il dito (la maniglia sposta le righe)'],
+    ],
+  },
   {
     v: '1.2.0', date: '2026-11-28', items: [
       ['New templates: team retrospective, annual report, workshop and recipe', 'Nuovi modelli: retrospettiva del team, relazione annuale, laboratorio e ricetta'],

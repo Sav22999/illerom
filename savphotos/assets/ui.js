@@ -3,7 +3,7 @@ import { has, t } from './i18n.js';
 
 export const MAC = /Mac|iPhone|iPad/.test(navigator.platform);
 export const mobile = () => matchMedia('(max-width: 900px)').matches;
-export const K = (s) => s.replace('Mod', MAC ? '⌘' : 'Ctrl').replace('Shift', MAC ? '⇧' : 'Shift').replace(/\+/g, MAC ? '' : '+');
+export const K = (s) => s.replace('Mod', MAC ? '⌘' : 'Ctrl').replace('Alt', MAC ? '⌥' : 'Alt').replace('Shift', MAC ? '⇧' : 'Shift').replace(/\+/g, MAC ? '' : '+');
 
 /** h('div.row', {onclick}, children…) */
 export function h(sel, ...kids) {

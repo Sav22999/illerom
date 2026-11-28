@@ -575,7 +575,8 @@ export async function deckScreen(app, deckId, q) {
     const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[k];
     if (d && ed.sel.size && ed.simple) return;
     if (d && ed.sel.size) return act(() => { const s = e.shiftKey ? 10 : 1; deck.do(selEls().filter((x) => !x.el.lock).map((x) => ({ k: 'el.set', s: ed.sid, e: x.id, p: { x: x.el.x + d[0] * s, y: x.el.y + d[1] * s, ...(x.el.cell != null ? { cell: null, cr: null } : {}) } })), 'nudge'); });
-    if (k === 't') act(() => ed.insert('text:body'));
+    // a text box: ⌥⇧T (Alt+Shift), never the letter alone
+    if (e.altKey && e.shiftKey && e.code === 'KeyT') act(() => ed.insert('text:body'));
   };
   const onCopy = (e) => {
     if (busyField() || !ed.edit) return;
@@ -628,7 +629,7 @@ export async function deckScreen(app, deckId, q) {
     box.dataset.c = p.c;
     box.replaceChildren(h('sav-alert', { variant: 'primary' }, h('div.prow', h('span', t('is_presenting', { name: p.name || t('guest') })), h('div.spacer'), btn(t('follow'), () => show(p.st.s, { follow: p.c }), { size: 'sm', icon: 'play' }))));
   }
-  function shortcuts() { const r = (k, v) => h('div.kr', h('span', t(v)), h('kbd', k)); dialog(t('shortcuts'), h('div.keys', r('F5', 'present'), r(C + 'Z', 'undo'), r(isMac ? '⇧⌘Z' : 'Ctrl+Y', 'redo'), r('T', 'text'), r('Ctrl+M', 'new_slide'), r(C + 'D', 'duplicate'), r(C + 'J', 'palette_l'), r(C + 'K', 'link'), r(C + 'F', 'find_replace'), r(C + 'G', 'group'), r(C + (isMac ? '⌥C' : 'Alt+C'), 'copy_style'), r('Enter', 'k_write'), r('Esc', 'k_esc'), r('↑ ↓ ← →', 'k_nudge'), r('Shift', 'k_shift'), r('Alt', 'k_alt'), r(C + '[  ]', 'k_order'), r(C + t('k_wheel_n'), 'k_wheel'), r('PgUp / PgDn', 'k_pages'), r(t('k_show_n'), 'k_show')), [], { width: '30rem' }); }
+  function shortcuts() { const r = (k, v) => h('div.kr', h('span', t(v)), h('kbd', k)); dialog(t('shortcuts'), h('div.keys', r('F5', 'present'), r(C + 'Z', 'undo'), r(isMac ? '⇧⌘Z' : 'Ctrl+Y', 'redo'), r(isMac ? '⌥⇧T' : 'Alt+Shift+T', 'text'), r('Ctrl+M', 'new_slide'), r(C + 'D', 'duplicate'), r(C + 'J', 'palette_l'), r(C + 'K', 'link'), r(C + 'F', 'find_replace'), r(C + 'G', 'group'), r(C + (isMac ? '⌥C' : 'Alt+C'), 'copy_style'), r('Enter', 'k_write'), r('Esc', 'k_esc'), r('↑ ↓ ← →', 'k_nudge'), r('Shift', 'k_shift'), r('Alt', 'k_alt'), r(C + '[  ]', 'k_order'), r(C + t('k_wheel_n'), 'k_wheel'), r('PgUp / PgDn', 'k_pages'), r(t('k_show_n'), 'k_show')), [], { width: '30rem' }); }
 
   const dropFeatures = addFeatures(ed);
 

@@ -1,5 +1,5 @@
 /** The show: full screen, transitions, entrances, tools (laser, pen), speaker view in a second window (speaker.js). */
-import { h, icon, iconBtn, btn, toast, uid, clamp, openLink, $, $$ } from './core.js';
+import { h, icon, iconBtn, btn, toast, uid, clamp, openLink, isMac, $, $$ } from './core.js';
 import {t} from './i18n.js';
 import {fluidThumb, frameClip, mediaUrl, slideNode} from './render.js';
 import {okLink} from './richtext.js';
@@ -54,9 +54,11 @@ export function startShow(ed, fromSid, { follow = '', presenter: withPresenter =
   // ---- tools: one at a time; what is on is always written on the screen
   let tool = '', black = false, penColor = PENS[0], drawing = false;
   const ink = h('canvas.ink', { hidden: true });
-  const toggleBtn = (ic, label, key, fn) => { const tip = iconBtn(ic, `${label} · ${key}`, fn, { place: 'top' }), b = tip.firstElementChild; b.setAttribute('aria-pressed', 'false'); return { tip, b, set(on) { b.setAttribute('aria-pressed', String(on)); b.variant = on ? 'primary' : 'neutral'; b.appearance = on ? 'solid' : 'ghost'; } }; };
+  // the keys of the show: a letter only with ⌥⇧ (Alt+Shift), never alone
+  const AK = (c) => (isMac ? '⌥⇧' : 'Alt+Shift+') + c;
+  const toggleBtn = (ic, label, key, fn) => { const tip = iconBtn(ic, `${label} · ${AK(key)}`, fn, { place: 'top' }), b = tip.firstElementChild; b.setAttribute('aria-pressed', 'false'); return { tip, b, set(on) { b.setAttribute('aria-pressed', String(on)); b.variant = on ? 'primary' : 'neutral'; b.appearance = on ? 'solid' : 'ghost'; } }; };
   const laserB = toggleBtn('pointer', t('laser'), 'L', () => setTool(tool === 'laser' ? '' : 'laser')), penB = toggleBtn('pencil', t('pen'), 'D', () => setTool(tool === 'pen' ? '' : 'pen')), blackB = toggleBtn('eye-off', t('black'), 'B', () => setBlack(!black)), overB = toggleBtn('layout-grid', t('overview'), 'G', () => overview()), speakB = toggleBtn('presentation', t('speaker_view'), 'S', () => presenter());
-  const pens = h('div.pens', { hidden: true, role: 'group', 'aria-label': t('pen_color') }, ...PENS.map((c) => h('sav-button.sw.penc', { circle: true, size: 'sm', label: c, style: `--c:${c}`, 'data-c': c, onclick: () => { penColor = c; drawTools(); } })), iconBtn('eraser', t('pen_clear') + ' · E', () => inkClear(), { place: 'top' }));
+  const pens = h('div.pens', { hidden: true, role: 'group', 'aria-label': t('pen_color') }, ...PENS.map((c) => h('sav-button.sw.penc', { circle: true, size: 'sm', label: c, style: `--c:${c}`, 'data-c': c, onclick: () => { penColor = c; drawTools(); } })), iconBtn('eraser', t('pen_clear') + ' · ' + AK('E'), () => inkClear(), { place: 'top' }));
   function drawTools() {
     laserB.set(tool === 'laser'); penB.set(tool === 'pen'); blackB.set(black); speakB.set(!!win && !win.closed);
     pens.hidden = tool !== 'pen';
@@ -66,7 +68,7 @@ export function startShow(ed, fromSid, { follow = '', presenter: withPresenter =
     root.classList.toggle('lasering', tool === 'laser'); root.classList.toggle('black', black); root.classList.toggle('tooling', !!tool || black);
     const [ic, txt, key] = black ? ['eye-off', 'black_on', 'B'] : tool === 'laser' ? ['pointer', 'laser_on', 'L'] : tool === 'pen' ? ['pencil', 'pen_on', 'D'] : [];
     chip.hidden = !ic;
-    if (ic) chip.replaceChildren(icon(ic), h('b', t(txt)), h('span', t('turn_off_key', { k: key })));
+    if (ic) chip.replaceChildren(icon(ic), h('b', t(txt)), h('span', t('turn_off_key', { k: AK(key) })));
   }
   function setTool(v) { tool = v; drawTools(); tell(); }
   function setBlack(v) { black = v; drawTools(); tell(); }
@@ -177,8 +179,11 @@ export function startShow(ed, fromSid, { follow = '', presenter: withPresenter =
 
   let digits = '';
   function keys(e) {
-    if (e.target.closest?.('input,textarea') || e.ctrlKey || e.metaKey || e.altKey) return;
-    const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    if (e.target.closest?.('input,textarea') || e.ctrlKey || e.metaKey) return;
+    // a letter only with ⌥⇧ (Alt+Shift), never alone: read from the key itself (on a Mac ⌥ changes the character)
+    const L = e.altKey && e.shiftKey && /^Key[A-Z]$/.test(e.code) ? e.code[3].toLowerCase() : null;
+    if ((e.altKey && !L) || (!L && /^[a-z]$/i.test(e.key))) return;
+    const k = L || (e.key.length === 1 ? e.key.toLowerCase() : e.key);
     // a button of the bar reached with Tab is pressed by Enter and Space
     if ((k === 'Enter' || k === ' ') && e.composedPath().some((x) => x.localName === 'sav-button')) return;
     if (['ArrowRight', 'ArrowDown', 'PageDown', ' ', 'n'].includes(k)) next();

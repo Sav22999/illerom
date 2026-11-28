@@ -777,13 +777,16 @@ savoffice-apps { display: inline-flex; }
     const l = it(), cur = current(), list = [];
     const apps = { label: 'SavOffice', items: (window.SavOffice?.apps || APPS).filter((a) => a[0] !== cur && reachable(a[0])).map(appCommand(l)) };
     let n = 0;
+    // a shortcut is shown only with a modifier when it is a letter or a figure: a letter alone is never a shortcut of SavOffice
+    // (it would fire while typing, or by mistake), so one written that way by an app is left out rather than shown
+    const okKey = (k) => { k = String(k || '').trim(); return /^[a-z0-9]$/i.test(k) ? '' : k; };
     // what the screen tells, what the selection can do, the page, the options on it, the other apps
     const told = [...(window.SavOffice?.driveCommands?.() || []), ...groups], pc = pageCommands();
     const smart = smartCommands([...told, ...pc].flatMap((g) => (g?.items || []).filter(Boolean).map((c) => fold(c.label))));
     for (const g of [...told, smart.sel, ...pc, smart.page, apps]) for (const c of (g?.items || []).filter(Boolean)) {
       const id = 'c' + n++;
       fns.set(id, c.run || (() => { if (c.href) location.href = c.href; }));
-      list.push({ label: c.label, value: id, icon: c.icon || '', shortcut: c.shortcut || '', description: c.description || '', keywords: synonyms(c.label + ' ' + (c.description || ''), c.keywords || ''), group: g.label || '', disabled: !!c.disabled });
+      list.push({ label: c.label, value: id, icon: c.icon || '', shortcut: okKey(c.shortcut), description: c.description || '', keywords: synonyms(c.label + ' ' + (c.description || ''), c.keywords || ''), group: g.label || '', disabled: !!c.disabled });
     }
     pal.commands = list;
   }
@@ -949,7 +952,7 @@ savoffice-apps { display: inline-flex; }
   const W = {
     title: ['Customise the bars', 'Personalizza le barre'], hint: ['Choose the buttons of each bar, drag them in the order you like and add spaces. It is kept with your account.', 'Scegli i pulsanti di ogni barra, trascinali nell’ordine che vuoi e aggiungi degli spazi. Resta salvato nel tuo account.'],
     bar_title: ['Title bar', 'Barra del titolo'], bar_tools: ['Toolbar', 'Barra degli strumenti'], bar_status: ['Status bar', 'Barra di stato'], bar_insert: ['Insert bar', 'Barra Inserisci'], bar_format: ['Text bar', 'Barra del testo'],
-    preview: ['Preview', 'Anteprima'], always: ['Always in the bar', 'Sempre nella barra'],
+    preview: ['Preview', 'Anteprima'], title_ph: ['Title', 'Titolo'], always: ['Always in the bar', 'Sempre nella barra'],
     sep: ['Separator', 'Separatore'], gap: ['Fixed space', 'Spazio fisso'], flex: ['Adaptive space', 'Spazio adattivo'],
     add_sep: ['Separator', 'Separatore'], add_gap: ['Fixed space', 'Spazio fisso'], add_flex: ['Adaptive space', 'Spazio adattivo'], add: ['Add', 'Aggiungi'],
     flex_t: ['It takes the room left: what follows goes to the end of the bar.', 'Prende lo spazio libero: quello che segue va in fondo alla barra.'],
@@ -965,12 +968,12 @@ savoffice-apps { display: inline-flex; }
   const GRIP = '<circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/>';
   const MARK = { sep: '<path d="M12 4v16"/>', gap: '<path d="M4 12h16"/><path d="M4 8v8"/><path d="M20 8v8"/>', flex: '<path d="M3 12h18"/><path d="m7 8-4 4 4 4"/><path d="m17 8 4 4-4 4"/>' };
   const CSS = `.so-bars-list{--gap:.3rem}.so-bars-row{display:flex;align-items:center;gap:.7rem;padding:.45rem .6rem;border:1px solid var(--sav-color-border);border-radius:10px;background:var(--sav-color-surface)}
-.so-bars-list,.so-bars-row,.so-bars-row *,.so-bars-strip,.so-bars-strip *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}.so-bars-row .so-grip{width:18px;height:18px;flex:none;cursor:grab;color:var(--sav-color-text-muted)}.so-bars-row>sav-icon,.so-bars-row>.so-mark{flex:none;width:18px;height:18px;font-size:18px;color:var(--sav-color-text-muted)}
+.so-bars-list,.so-bars-row,.so-bars-row *,.so-bars-strip,.so-bars-strip *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}.so-bars-list>.so-bars-row{touch-action:pan-y!important}.so-bars-row .so-grip{touch-action:none!important;width:18px;height:18px;flex:none;cursor:grab;color:var(--sav-color-text-muted)}.so-bars-row>sav-icon,.so-bars-row>.so-mark{flex:none;width:18px;height:18px;font-size:18px;color:var(--sav-color-text-muted)}
 .so-bars-row .so-name{flex:1;min-width:0}.so-bars-row .so-name small{display:block;color:var(--sav-color-text-muted);font-size:.78em}.so-bars-row.so-special{border-style:dashed;background:transparent}
 .so-bars-pane{display:grid;gap:.6rem;padding-top:.6rem}.so-bars-hint{margin:0;color:var(--sav-color-text-muted);font-size:var(--sav-font-size-sm,.85rem)}
 .so-bars-adds{display:flex;flex-wrap:wrap;align-items:center;gap:.3rem}.so-bars-adds>span{color:var(--sav-color-text-muted);font-size:.85rem;margin-right:.2rem}
 .so-bars-pv{display:grid;gap:.3rem}.so-bars-pv>span{color:var(--sav-color-text-muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.04em}
-.so-bars-strip{display:flex;align-items:center;gap:2px;min-height:40px;padding:4px 8px;border:1px solid var(--sav-color-border);border-radius:10px;background:var(--sav-color-surface-2,var(--sav-color-surface));overflow:hidden;pointer-events:none;user-select:none}
+.so-bars-strip{display:flex;align-items:center;gap:2px;min-height:40px;padding:4px 8px;border:1px solid var(--sav-color-border);border-radius:10px;background:var(--sav-color-surface-2,var(--sav-color-surface));overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;scrollbar-width:thin;user-select:none}.so-bars-strip>*{pointer-events:none}
 .so-bars-strip>.so-pi{flex:none;display:grid;place-items:center;width:28px;height:28px;border-radius:7px;color:var(--sav-color-text)}.so-bars-strip>.so-pi sav-icon{font-size:17px}
 .so-bars-strip>.so-pi.so-fixed{color:var(--sav-color-text-muted);opacity:.55}.so-bars-strip>.so-pt{flex:none;font-size:.78rem;font-weight:600;color:var(--sav-color-text-muted);opacity:.7;padding:0 .3rem;white-space:nowrap}
 .so-bars-strip>.so-ps{flex:none;width:1px;height:20px;margin:0 4px;background:var(--sav-color-border-strong,#b9c2ad)}.so-bars-strip>.so-pg{flex:none;width:14px}.so-bars-strip>.so-pf{flex:1;min-width:14px;height:2px;margin:0 4px;background:repeating-linear-gradient(90deg,var(--sav-color-border) 0 4px,transparent 4px 8px)}`;
@@ -1003,7 +1006,8 @@ savoffice-apps { display: inline-flex; }
     const chosen = (bar) => [...lists[bar.id].querySelectorAll('.so-bars-row')].filter((r) => r.querySelector('sav-switch').checked).map((r) => r.dataset.id);
     /** The bar as it will be: its buttons in order, the spaces, and greyed what it always has at its ends. */
     const draw = (bar) => {
-      const fixed = (x) => (x[0] ? el('span', { class: 'so-pi so-fixed', title: x[1] }, el('sav-icon', { name: x[0] })) : el('span', { class: 'so-pt' }, x[1]));
+      // what the bar always has (the logo, the title, ⋮, the account), greyed; the title as a word, not the name of this file
+      const fixed = (x) => (x[0] ? el('span', { class: 'so-pi so-fixed', title: x[1] }, el('sav-icon', { name: x[0] })) : el('span', { class: 'so-pt' }, w('title_ph')));
       strips[bar.id].replaceChildren(...(bar.before || []).map(fixed), ...layout(chosen(bar)).map((k) => {
         if (k === '|') return el('span', { class: 'so-ps' });
         if (k === '_') return el('span', { class: 'so-pg' });
@@ -1131,7 +1135,7 @@ savoffice-apps { display: inline-flex; }
     list = l = l.filter(Boolean);
     cm.replaceChildren(...l.map((i, n) => (i === '-' ? make('sav-divider') : i instanceof Node ? i : i.head ? make('sav-menu-label', {}, i.head)
       : make('sav-menu-item', { value: String(n), variant: i[3]?.danger ? 'danger' : null, disabled: i[3]?.disabled || null, type: i[3]?.check !== undefined ? 'checkbox' : null, checked: !!i[3]?.check },
-        i[0] ? make('sav-icon', { slot: 'prefix', name: i[0] }) : null, i[1], i[3]?.kbd ? make('kbd', { slot: 'suffix', class: 'so-kbd' }, keys(i[3].kbd)) : null))));
+        i[0] ? make('sav-icon', { slot: 'prefix', name: i[0] }) : null, i[1], i[3]?.kbd && !/^[a-z0-9]$/i.test(i[3].kbd) ? make('kbd', { slot: 'suffix', class: 'so-kbd' }, keys(i[3].kbd)) : null))));
   }
   /** A surface that draws with a finger (a board, the sheet of a notebook with a pen) says so with data-so-draw: there a
    *  finger held still is the start of a stroke, not a long press. */

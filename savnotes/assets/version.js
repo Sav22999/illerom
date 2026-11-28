@@ -1,7 +1,14 @@
 /** The version of SavNotes (in the footer) and what changed in each one (the page #/changelog). Newest first. */
-export const VERSION = '1.1.0';
+export const VERSION = '1.1.1';
 
 export const CHANGES = [
+  {
+    v: '1.1.1', date: '2026-11-28', items: [
+      ['Faster on tablets: the stroke being drawn and the circle of the eraser are on a layer of their own, so the sheet is not painted again at every movement; the small preview waits until the pen is lifted, and the eraser does less work on touch screens', 'Più veloce sui tablet: il tratto che stai disegnando e il cerchio della gomma stanno su un livello a parte, così il foglio non viene ridisegnata a ogni movimento; la piccola anteprima aspetta che il pennino si sollevi, e la gomma lavora meno sugli schermi touch'],
+      ['Keyboard shortcuts: a letter is never a shortcut by itself any more, only with ⌥⇧ (Alt+Shift), so typing or a key pressed by mistake does nothing; the arrows, / and ? work as before', 'Scorciatoie da tastiera: una lettera da sola non è più mai una scorciatoia, solo con ⌥⇧ (Alt+Shift), così scrivere o premere un tasto per sbaglio non fa nulla; frecce, / e ? funzionano come prima'],
+      ['Customise the bars: the preview scrolls when the bar is long and shows “Title” instead of the name of the file; on phones and tablets the list scrolls with a finger (the handle moves the rows)', 'Personalizza le barre: l’anteprima scorre quando la barra è lunga e mostra «Titolo» invece del nome del file; su telefoni e tablet l’elenco scorre con il dito (la maniglia sposta le righe)'],
+    ],
+  },
   {
     v: '1.1.0', date: '2026-11-28', items: [
       ['Move the sheets: a tool next to Select that scrolls the notebook with a press, as in SavWhiteboard', 'Sposta i fogli: uno strumento accanto a Seleziona che fa scorrere il quaderno con una pressione, come in SavWhiteboard'],

@@ -464,15 +464,15 @@ function reader(m) {
   const people = (label, list) => list?.length ? h('div.rppl', h('span.muted', label + ' '), list.map((p, i) => h('span', { title: p.email }, (i ? ', ' : '') + who(p)))) : null;
   const tool = h('div.rtool',
     iconBtn('arrow-left', t('back'), () => closeMessage(), { class: 'rback' }),
-    iconBtn('reply', t('reply'), () => openCompose({ mode: 'reply', msg: m }), { kbd: 'R' }),
-    iconBtn('reply-all', t('reply_all'), () => openCompose({ mode: 'all', msg: m }), { kbd: 'A' }),
-    iconBtn('forward', t('forward'), () => openCompose({ mode: 'forward', msg: m }), { kbd: 'F' }),
+    iconBtn('reply', t('reply'), () => openCompose({ mode: 'reply', msg: m }), { kbd: 'Alt+Shift+R' }),
+    iconBtn('reply-all', t('reply_all'), () => openCompose({ mode: 'all', msg: m }), { kbd: 'Alt+Shift+A' }),
+    iconBtn('forward', t('forward'), () => openCompose({ mode: 'forward', msg: m }), { kbd: 'Alt+Shift+F' }),
     h('span.tsep'),
-    iconBtn('archive', t('archive'), () => act('move', [m], { to: 'archive' }), { kbd: 'E' }),
+    iconBtn('archive', t('archive'), () => act('move', [m], { to: 'archive' }), { kbd: 'Alt+Shift+E' }),
     iconBtn('octagon-alert', t('spam'), () => act('move', [m], { to: 'junk' })),
     iconBtn('trash', t('delete'), () => act('delete', [m]), { kbd: '#' }),
     h('span.tsep'),
-    iconBtn('mail', t('mark_unread'), async () => { await act('seen', [m], { on: false }); closeMessage(); }, { kbd: 'U' }),
+    iconBtn('mail', t('mark_unread'), async () => { await act('seen', [m], { on: false }); closeMessage(); }, { kbd: 'Alt+Shift+U' }),
     iconBtn('star', t(m.flagged ? 'unstar' : 'star'), (b) => { act('flagged', [m], { on: !m.flagged }).then(() => b.on(m.flagged)).catch(fail); }),
     moveMenu(() => [m]));
   tool.querySelector('sav-tooltip:has([icon="star"])')?.on?.(m.flagged);
@@ -570,13 +570,16 @@ async function openDraft(m) {
 // ------------------------------------------------------------------ keys and ⌘J
 
 function keys(e) {
-  if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || document.querySelector('sav-dialog[open]') || /^(input|textarea|sav-input|sav-chip-input)$/i.test(e.target.localName || '') || e.target.isContentEditable) return;
+  if (e.defaultPrevented || e.metaKey || e.ctrlKey || document.querySelector('sav-dialog[open]') || /^(input|textarea|sav-input|sav-chip-input)$/i.test(e.target.localName || '') || e.target.isContentEditable) return;
+  // a letter is a shortcut only with ⌥⇧ (Alt+Shift), never alone: read from the key itself (on a Mac ⌥ changes the character)
+  const L = e.altKey && e.shiftKey && /^Key[A-Z]$/.test(e.code) ? e.code[3].toLowerCase() : null;
+  if ((e.altKey && !L) || (!L && /^[a-z]$/i.test(e.key))) return;
   const i = M.open ? M.rows.findIndex((x) => key(x) === key(M.open)) : -1;
-  const k = e.key;
+  const k = L || e.key;
   if (k === 'c') { e.preventDefault(); openCompose({ mode: 'new' }); }
   else if (k === '/') { e.preventDefault(); els.search.focus(); }
-  else if ((k === 'j' || k === 'ArrowDown') && M.rows[i + 1]) { e.preventDefault(); openMessage(M.rows[i + 1]); }
-  else if ((k === 'k' || k === 'ArrowUp') && i > 0) { e.preventDefault(); openMessage(M.rows[i - 1]); }
+  else if (k === 'ArrowDown' && !L && M.rows[i + 1]) { e.preventDefault(); openMessage(M.rows[i + 1]); }
+  else if (k === 'ArrowUp' && !L && i > 0) { e.preventDefault(); openMessage(M.rows[i - 1]); }
   else if (!M.open && !M.sel.size) return;
   else if (k === 'r' && M.open?.html !== undefined) openCompose({ mode: 'reply', msg: M.open });
   else if (k === 'a' && M.open?.html !== undefined) openCompose({ mode: 'all', msg: M.open });
@@ -589,7 +592,7 @@ function keys(e) {
 
 function setCommands() {
   commands([t('mail'), [
-    ['square-pen', t('compose'), () => openCompose({ mode: 'new' }), 'C'],
+    ['square-pen', t('compose'), () => openCompose({ mode: 'new' }), 'Alt+Shift+C'],
     ['search', t('search_mail'), () => els.search.focus(), '/'],
     ['refresh-cw', t('refresh'), () => refresh(true)],
     ...(S.accounts.length > 1 ? ROLES.map(([r, ic]) => [ic, t('all_x', { x: t('role_' + r) }), '#/m/all/' + r]) : ROLES.map(([r, ic]) => roleBox(S.accounts[0], r) ? [ic, t('role_' + r), `#/m/${enc(S.accounts[0].id)}/${enc(roleBox(S.accounts[0], r))}`] : null)),

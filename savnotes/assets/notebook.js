@@ -27,7 +27,8 @@ const DEF = {
   shape: { k: 'rect', c: '#1d4e89', s: 3, f: '', d: false },
 };
 const SIZES_T = { pen: [1.5, 3, 5, 8, 13], pencil: [1.2, 2.5, 4, 6], marker: [10, 18, 28, 42], shape: [1.5, 3, 5, 8], eraser: [12, 24, 48, 90] };
-const TOOLS = [['select', 'mouse-pointer-2', 'V'], ['hand', 'hand', 'H'], ['pen', 'pen', 'P'], ['pencil', 'pencil', 'C'], ['marker', 'highlighter', 'M'], ['eraser', 'eraser', 'E'], ['shape', 'square', 'R'], ['image', 'image', 'I']];
+// the key of each tool: its letter with ⌥⇧ (Alt+Shift), never the letter alone
+const TOOLS = [['select', 'mouse-pointer-2', 'Alt+Shift+V'], ['hand', 'hand', 'Alt+Shift+H'], ['pen', 'pen', 'Alt+Shift+P'], ['pencil', 'pencil', 'Alt+Shift+C'], ['marker', 'highlighter', 'Alt+Shift+M'], ['eraser', 'eraser', 'Alt+Shift+E'], ['shape', 'square', 'Alt+Shift+R'], ['image', 'image', 'Alt+Shift+I']];
 const SHAPE_ICONS = { rect: 'square', ellipse: 'circle', diamond: 'diamond', triangle: 'triangle', line: 'line', arrow: 'move-up-right' };
 const BLOCKS = [['p', 'b_p'], ['h1', 'b_h1'], ['h2', 'b_h2'], ['h3', 'b_h3'], ['blockquote', 'b_quote']];
 const svgEl = (tag, attrs = {}) => { const n = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); return n; };
@@ -187,11 +188,15 @@ export async function notebookScreen(root, id) {
     const ink = svgEl('svg', { class: 'ink', viewBox: `0 0 ${W} ${H}` }), defs = svgEl('defs');
     defs.innerHTML = DEFS;
     const itemsG = svgEl('g', { style: 'isolation:isolate' }), liveG = svgEl('g'), over = svgEl('g', { class: 'over' });
-    ink.append(defs, itemsG, liveG, over);
-    el.append(style, paper, doc, ink);
+    ink.append(defs, itemsG, over);
+    // what changes at every frame while writing or erasing (the stroke being drawn, the circle of the eraser) is on a layer of
+    // its own above the sheet: only that layer is painted again, not every stroke of the sheet (slow on a tablet)
+    const cursor = svgEl('g', { class: 'over' }), live = svgEl('svg', { class: 'live', viewBox: `0 0 ${W} ${H}`, 'aria-hidden': 'true' });
+    live.append(liveG, cursor);
+    el.append(style, paper, doc, ink, live);
     const num = h('div.snum');
     const box = h('div.swrap', el, num);
-    sh.dom = { box, el, style, paper, doc, ink, itemsG, liveG, over, num };
+    sh.dom = { box, el, style, paper, doc, ink, itemsG, liveG, over, cursor, num };
     sh.els = new Map();
     doc.contentEditable = mode === 'doc' ? 'true' : 'false';
     paintPaper(sh);
@@ -475,7 +480,8 @@ export async function notebookScreen(root, id) {
   }
   function paintThumb(sh) { const pic = thumbs.get(sh.id); if (pic) pic.innerHTML = sheetSVG(settings, dataOf(sh), { id: 'th' + sh.id }).replace(/ width="\d+" height="\d+"/, ''); }
   const thumbTimers = new Map();
-  const thumbLater = (sh) => { clearTimeout(thumbTimers.get(sh.id)); thumbTimers.set(sh.id, setTimeout(() => !gone && paintThumb(sh), 700)); };
+  // the small picture in the list of sheets: never while a pen or a finger is on the sheets (drawing it takes a moment on a tablet)
+  const thumbLater = (sh) => { clearTimeout(thumbTimers.get(sh.id)); thumbTimers.set(sh.id, setTimeout(() => { if (gone) return; if (action || pointers.size) thumbLater(sh); else paintThumb(sh); }, 700)); };
   function markSide() {
     const sh = sheets[cur];
     side.querySelectorAll('.thumb').forEach((x) => { const on = x.dataset.id === sh?.id; x.classList.toggle('on', on); if (on) x.setAttribute('aria-current', 'true'); else x.removeAttribute('aria-current'); });
@@ -680,7 +686,7 @@ export async function notebookScreen(root, id) {
     flashT = setTimeout(() => { if (eraserAt === at) { eraserAt = null; drawOverlay(); } }, 1100);
   }
   function drawOverlay() {
-    for (const sh of overDrawn) sh.dom?.over.replaceChildren();
+    for (const sh of overDrawn) { if (sh.dom?.over.firstChild) sh.dom.over.replaceChildren(); if (sh.dom?.cursor.firstChild) sh.dom.cursor.replaceChildren(); }
     overDrawn.clear();
     const k = 1 / z;
     if (marquee) {
@@ -689,7 +695,7 @@ export async function notebookScreen(root, id) {
       overDrawn.add(sh);
     }
     if (eraserAt && tool === 'eraser' && mode === 'ink' && eraserAt.sh.dom) {
-      const { sh, x, y, touch } = eraserAt, r = opt('eraser').s / 2 * k, o = sh.dom.over;
+      const { sh, x, y, touch } = eraserAt, r = opt('eraser').s / 2 * k, o = sh.dom.cursor;
       o.append(svgEl('circle', { class: 'ercur' + (eraserAt.flash ? ' flash' : ''), cx: x, cy: y, r }));
       // a finger covers the circle under it: the same circle again above the finger, joined to it, shows its size
       if (touch) { const gy = y - r * 2 - 56 * k; o.append(svgEl('line', { class: 'erlink', x1: x, y1: y - r, x2: x, y2: gy + r }), svgEl('circle', { class: 'ercur ghost', cx: x, cy: gy, r })); }
@@ -776,6 +782,9 @@ export async function notebookScreen(root, id) {
   }
 
   function eraserAction(sh, e) {
+    // on a tablet or a phone the path is looked at a little less densely (a circle every radius instead of every half radius):
+    // as precise to the eye, half the work
+    const LIGHT = navigator.maxTouchPoints > 1 && matchMedia('(any-pointer: coarse)').matches ? 1 : .5;
     const o = opt('eraser'), r = o.s / 2 / z, before = new Map(), created = new Set();
     let last = null;
     // what the eraser changed is drawn once per frame (it may cut the same stroke many times between two frames)
@@ -810,7 +819,7 @@ export async function notebookScreen(root, id) {
     };
     const step = (ev) => {
       const [x, y] = toPage(sh, ev.clientX, ev.clientY);
-      if (last) { const d = Math.hypot(x - last[0], y - last[1]), n = Math.ceil(d / (r * .5)); for (let k = 1; k <= n; k++) at(last[0] + (x - last[0]) * k / n, last[1] + (y - last[1]) * k / n); } else at(x, y);
+      if (last) { const d = Math.hypot(x - last[0], y - last[1]), n = Math.ceil(d / (r * LIGHT)); for (let k = 1; k <= n; k++) at(last[0] + (x - last[0]) * k / n, last[1] + (y - last[1]) * k / n); } else at(x, y);
       last = [x, y];
       eraserAt = { sh, x, y, touch: ev.pointerType === 'touch' };
       drawOverlay();
@@ -1378,7 +1387,7 @@ export async function notebookScreen(root, id) {
 
   // ---------------------------------------------------------------- keyboard, clipboard, files dropped
   const typing = (e) => { const p = e.composedPath?.() || []; return p.some((x) => /^(input|textarea|select|sav-input|sav-select|sav-textarea|sav-number-input)$/.test(x.localName || '') || x.isContentEditable) || !!document.querySelector('sav-dialog[open]'); };
-  const KEYS = Object.fromEntries(TOOLS.map(([k, , key]) => [key.toLowerCase(), k]));
+  const KEYS = Object.fromEntries(TOOLS.map(([k, , key]) => [key.slice(-1).toLowerCase(), k]));
   function onKey(e) {
     if (gone) return;
     const mod = e.metaKey || e.ctrlKey, k = e.key.toLowerCase();
@@ -1410,10 +1419,14 @@ export async function notebookScreen(root, id) {
     if (e.key === '-' || e.key === '_') return setZ(z / 1.2);
     if (e.shiftKey && e.code === 'Digit1') return fit();
     if (e.shiftKey && e.code === 'Digit0') return setZ(1);
-    if (k === 'o') { setOpt('shape', { k: 'ellipse' }); tb.shape.button.icon = 'circle'; return setTool('shape'); }
-    if (k === 'a') { setOpt('shape', { k: 'arrow' }); tb.shape.button.icon = 'move-up-right'; return setTool('shape'); }
-    if (k === 'r') { setOpt('shape', { k: 'rect' }); tb.shape.button.icon = 'square'; return setTool('shape'); }
-    if (KEYS[k] && !e.altKey) setTool(KEYS[k]);
+    // a letter is a shortcut only with ⌥⇧ (Alt+Shift), never alone (read from the key: on a Mac ⌥ changes the character)
+    const L = e.altKey && e.shiftKey && /^Key[A-Z]$/.test(e.code) ? e.code[3].toLowerCase() : null;
+    if (!L) return;
+    e.preventDefault();
+    if (L === 'o') { setOpt('shape', { k: 'ellipse' }); tb.shape.button.icon = 'circle'; return setTool('shape'); }
+    if (L === 'a') { setOpt('shape', { k: 'arrow' }); tb.shape.button.icon = 'move-up-right'; return setTool('shape'); }
+    if (L === 'r') { setOpt('shape', { k: 'rect' }); tb.shape.button.icon = 'square'; return setTool('shape'); }
+    if (KEYS[L]) setTool(KEYS[L]);
   }
   const onCopy = (e) => { if (gone || mode !== 'ink' || typing(e) || !sel.size) return; const d = copySel(e.type === 'cut'); if (d) { e.clipboardData.setData('text/plain', d); e.preventDefault(); } };
   const onPaste = (e) => {

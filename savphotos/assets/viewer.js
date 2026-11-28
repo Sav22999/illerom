@@ -137,8 +137,9 @@ export function openViewer({ items, index, more, actions = {}, pub = null }) {
     if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
     else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
     else if (e.key === 'Escape' && zoom > 1) { e.preventDefault(); e.stopPropagation(); resetZoom(); }
-    else if ((e.key === 'i' || e.key === 'I') && !pub) toggleInfo();
-    else if ((e.key === 'f' || e.key === 'F') && !pub && actions.star) bar.querySelector('sav-favourite-button')?.toggle?.();
+    // letters only with ⌥⇧ (Alt+Shift), never alone (read from the key: on a Mac ⌥ changes the character)
+    else if (e.altKey && e.shiftKey && !e.metaKey && !e.ctrlKey && e.code === 'KeyI' && !pub) { e.preventDefault(); toggleInfo(); }
+    else if (e.altKey && e.shiftKey && !e.metaKey && !e.ctrlKey && e.code === 'KeyF' && !pub && actions.star) bar.querySelector('sav-favourite-button')?.toggle?.();
     else if ((e.key === 'Delete' || e.key === 'Backspace') && actions.trash && !pub) { e.preventDefault(); const x = items[i]; actions.trash(x).then((ok) => ok && gone(x)).catch(fail); }
   });
 

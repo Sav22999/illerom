@@ -761,9 +761,10 @@ export async function editorScreen(root, id) {
   // every tool has its button; which ones the dock shows and in what order is a choice of each person (⋮ → Customise the bars)
   const TL = {}, TL_ITEMS = [];
   const addTool = (k, ic, label, kbd, run) => { const b = iconBtn(ic, label, run, { place: 'top', kbd, size: matchMedia('(max-width: 640px)').matches ? 'sm' : 'md' }); tb[k] = b; TL[k] = b; TL_ITEMS.push([k, ic, label]); return b; };
-  addTool('select', 'mouse-pointer-2', t('tool_select'), 'V', () => setTool('select'));
-  addTool('hand', 'hand', t('tool_hand'), 'H', () => setTool('hand'));
-  for (const k of QUICK) addTool('shape:' + k, SHAPE_ICON[k], t('s_' + k), { rect: 'R', round: 'U', diamond: 'D', ellipse: 'O' }[k], () => setTool('shape', k));
+  // the key of each tool: its letter with ⌥⇧ (Alt+Shift), never the letter alone
+  addTool('select', 'mouse-pointer-2', t('tool_select'), 'Alt+Shift+V', () => setTool('select'));
+  addTool('hand', 'hand', t('tool_hand'), 'Alt+Shift+H', () => setTool('hand'));
+  for (const k of QUICK) addTool('shape:' + k, SHAPE_ICON[k], t('s_' + k), 'Alt+Shift+' + { rect: 'R', round: 'U', diamond: 'D', ellipse: 'O' }[k], () => setTool('shape', k));
   // the whole library: a grid of shapes, to press (then click on the page) or to drag onto the page
   const lib = h('div.lib');
   const libPop = h('sav-popover', { placement: 'top', 'sheet-on-mobile': true, heading: t('shapes'), style: '--width:19rem' });
@@ -800,8 +801,8 @@ export async function editorScreen(root, id) {
     lib.append(b);
   }
   TL.lib = libPop; TL_ITEMS.push(['lib', 'shapes', t('shapes')]);
-  addTool('connect', 'connector', t('tool_connect'), 'C', () => setTool('connect'));
-  addTool('text', 'type', t('tool_text'), 'T', () => setTool('text'));
+  addTool('connect', 'connector', t('tool_connect'), 'Alt+Shift+C', () => setTool('connect'));
+  addTool('text', 'type', t('tool_text'), 'Alt+Shift+T', () => setTool('text'));
   // the other shapes of the library, each can have its own button in the dock too
   for (const k of SHAPES) if (!QUICK.includes(k) && k !== 'text') addTool('shape:' + k, SHAPE_ICON[k], t('s_' + k), '', () => setTool('shape', k));
   const TL_DEF = ['select', 'hand', '|', ...QUICK.map((k) => 'shape:' + k), 'lib', '|', 'connect', 'text'];
@@ -981,7 +982,7 @@ export async function editorScreen(root, id) {
   wrap.append(top, h('div.dock', props, tools), zoom, map);
   put(root, wrap);
   const asCmd = (list) => list.filter(Array.isArray).map(([ic, l, fn, o]) => [ic, l, fn, o?.kbd || null]);
-  commands([t('tools'), [['mouse-pointer-2', t('tool_select'), () => setTool('select'), 'V'], ['hand', t('tool_hand'), () => setTool('hand'), 'H'], ['connector', t('tool_connect'), () => setTool('connect'), 'C'], ['type', t('tool_text'), () => setTool('text'), 'T'], ...SHAPES.filter((k) => k !== 'text').map((k) => [SHAPE_ICON[k], t('s_' + k), () => setTool('shape', k)])]],
+  commands([t('tools'), [['mouse-pointer-2', t('tool_select'), () => setTool('select'), 'Alt+Shift+V'], ['hand', t('tool_hand'), () => setTool('hand'), 'Alt+Shift+H'], ['connector', t('tool_connect'), () => setTool('connect'), 'Alt+Shift+C'], ['type', t('tool_text'), () => setTool('text'), 'Alt+Shift+T'], ...SHAPES.filter((k) => k !== 'text').map((k) => [SHAPE_ICON[k], t('s_' + k), () => setTool('shape', k)])]],
     [t('more_tools'), [['undo-2', t('undo'), () => undo(), 'Mod+Z'], ['redo-2', t('redo'), () => redo(), 'Mod+Shift+Z'], ['palette', t('diagram_look'), () => lookB.button.click()], ...asCmd(layoutList), ...asCmd(moreList())]],
     [t('download_as'), asCmd(dlList)]);
   document.title = title + ' – SavDiagrams';
@@ -989,7 +990,7 @@ export async function editorScreen(root, id) {
 
   function shortcuts() {
     const row = (k, l) => h('div.kb', h('span', l), h('kbd', K(k)));
-    dialog({ title: t('shortcuts'), width: '36rem', body: h('div.kbs', row('V', t('tool_select')), row('H', t('tool_hand')), row('R', t('s_rect')), row('U', t('s_round')), row('D', t('s_diamond')), row('O', t('s_ellipse')), row('C', t('tool_connect')), row('T', t('tool_text')),
+    dialog({ title: t('shortcuts'), width: '36rem', body: h('div.kbs', row('Alt+Shift+V', t('tool_select')), row('Alt+Shift+H', t('tool_hand')), row('Alt+Shift+R', t('s_rect')), row('Alt+Shift+U', t('s_round')), row('Alt+Shift+D', t('s_diamond')), row('Alt+Shift+O', t('s_ellipse')), row('Alt+Shift+C', t('tool_connect')), row('Alt+Shift+T', t('tool_text')),
       row('Enter', t('edit_text')), row('Tab', t('add_child')), row('Mod+Enter', t('add_sibling')), row('Mod+Z', t('undo')), row('Mod+Shift+Z', t('redo')), row('Mod+A', t('select_all')), row('Mod+C', t('copy_sel')), row('Mod+X', t('cut_sel')), row('Mod+V', t('paste')), row('Mod+D', t('duplicate_sel')),
       row('Mod+G', t('group')), row('Mod+Shift+G', t('ungroup')), row('Mod+L', t('lock')), row(']', t('front')), row('[', t('back')), row('Del', t('delete_sel')), row('Shift+1', t('zoom_fit')), row('Shift+0', t('zoom_100')), row('+', t('zoom_in')), row('-', t('zoom_out')),
       h('p.muted.small', t('hint_pan'))) });
@@ -1034,9 +1035,11 @@ export async function editorScreen(root, id) {
     if (e.key === '-' || e.key === '_') return zoomTo(V.z / 1.25);
     if (e.shiftKey && e.code === 'Digit1') return fit();
     if (e.shiftKey && e.code === 'Digit0') return zoomTo(1);
+    // a tool: its letter with ⌥⇧ (Alt+Shift), never alone (read from the key: on a Mac ⌥ changes the character)
+    const L = e.altKey && e.shiftKey && /^Key[A-Z]$/.test(e.code) ? e.code[3].toLowerCase() : null;
+    if (L) { if (KEYS[L]) { e.preventDefault(); setTool(...KEYS[L]); } return; }
     // a letter typed on a selected shape starts writing its text
-    if (one && e.key.length === 1 && !e.altKey && (one.t === 'edge' || !KEYS[k] || e.shiftKey)) { e.preventDefault(); startEdit(one, e.key); return; }
-    if (KEYS[k] && !e.altKey) setTool(...KEYS[k]);
+    if (one && e.key.length === 1 && !e.altKey) { e.preventDefault(); startEdit(one, e.key); return; }
   }
   const onKeyUp = (e) => { if (e.key === ' ') { spaceDown = false; wrap.classList.remove('space'); } };
   const onCopy = (e) => { if (gone || typing(e) || !sel.size) return; const d = copySel(e.type === 'cut'); if (d) { e.clipboardData.setData('text/plain', d); e.preventDefault(); } };

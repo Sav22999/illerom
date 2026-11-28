@@ -38,15 +38,19 @@ export async function groupScreen(root, where, tab) {
   sc.tab = tabsOf().some((x) => x[0] === tab) ? tab : tabsOf().some((x) => x[0] === sc.tab) ? sc.tab : 'expenses';
   draw(root);
   if (first && G().src.code && !G().me && !guestAs(G().src.code) && G().members.length) setTimeout(() => whoAreYou(), 250);
-  commands([G().group.name, [canWrite() ? ['plus', t('add_expense'), () => openExpense(), 'N'] : null, canWrite() ? ['hand-coins', t('add_transfer'), () => openExpense(null, { kind: 'transfer' })] : null,
+  commands([G().group.name, [canWrite() ? ['plus', t('add_expense'), () => openExpense(), 'Alt+Shift+N'] : null, canWrite() ? ['hand-coins', t('add_transfer'), () => openExpense(null, { kind: 'transfer' })] : null,
     ...tabsOf().map(([k, ic], i) => [ic, t('tab_' + k), () => setTab(k), String(i + 1)]), personal() ? null : ['share', t('share'), () => shareDialog()],
     G().me && canWrite() && G().via === 'account' ? ['upload', t('import_bank'), () => importBank()] : null, S.user ? ['pie-chart', t('my_spending'), '#/spending'] : null, S.user ? ['home', t('my_groups'), '#/'] : null]]);
   const onKey = (e) => {
-    if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || document.querySelector('sav-dialog[open], sav-drawer[open]')) return;
+    if (e.defaultPrevented || e.ctrlKey || e.metaKey || document.querySelector('sav-dialog[open], sav-drawer[open]')) return;
     if (e.composedPath().some((x) => /^(input|textarea|sav-input|sav-textarea|sav-select|sav-search|sav-chip-input|sav-date-picker|sav-number-input)$/.test(x.localName || ''))) return;
+    // a letter is a shortcut only with ⌥⇧ (Alt+Shift), never alone: read from the key itself (on a Mac ⌥ changes the character)
+    const L = e.altKey && e.shiftKey && /^Key[A-Z]$/.test(e.code) ? e.code[3].toLowerCase() : null;
+    if ((e.altKey && !L) || (!L && /^[a-z]$/i.test(e.key))) return;
     const map = { n: () => canWrite() && openExpense(), a: () => canWrite() && openExpense(), '/': () => document.querySelector('.eq')?.focus(), '?': () => shortcutsDialog() };
     tabsOf().forEach(([k], i) => { map[String(i + 1)] = () => setTab(k); });
-    if (map[e.key]) { e.preventDefault(); map[e.key](); }
+    const kk = L || e.key;
+    if (map[kk]) { e.preventDefault(); map[kk](); }
   };
   let last = Date.now();
   const onVis = () => { if (document.visibilityState === 'visible' && Date.now() - last > 30000) { last = Date.now(); refresh().catch(() => {}); } };
@@ -488,7 +492,7 @@ function claimDialog(free) {
 }
 
 export function shortcutsDialog() {
-  const rows = [['N', t('add_expense')], ['1 – 5', t('tabs_keys')], ['/', t('search_expenses')], ['?', t('shortcuts')], [K('Mod+J'), t('actions_search')]];
+  const rows = [[K('Alt+Shift+N'), t('add_expense')], ['1 – 5', t('tabs_keys')], ['/', t('search_expenses')], ['?', t('shortcuts')], [K('Mod+J'), t('actions_search')]];
   dialog({ title: t('shortcuts'), width: '26rem', body: h('div.keys', rows.map(([k, l]) => h('div.krow', h('kbd', k), h('span', l)))), actions: [{ label: t('close') }] });
 }
 
