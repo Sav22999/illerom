@@ -201,9 +201,9 @@ function schema_statements(string $p): array
             " . $fk('ti_user', 'user_id', 'users') . ",
             " . $fk('ti_node', 'node_id', 'nodes') . "
         ) $e",
-        // reports of public links and the admin audit log: the shared moderation module (../../identity/moderation.php)
-        ...moderation_schema($p),
     ];
+    // reports of public links and the admin audit log (../../identity/moderation.php) are added separately, best-effort, by
+    // install_schema(): a host that cannot create them must not block the rest of the app.
 }
 
 function install_schema(PDO $pdo, string $prefix): void
@@ -211,9 +211,15 @@ function install_schema(PDO $pdo, string $prefix): void
     // once only: the tables of the time when this app had accounts of its own go, then the accounts of the suite are there
     suite_reset_app($pdo, $prefix);
     suite_install($pdo, (string)(credentials()['name'] ?? ''));
-    // the first draft of reports (its own columns) is replaced by the shared moderation table (content_kind/content_id)
-    if ($pdo->query("SHOW TABLES LIKE '{$prefix}reports'")->fetch() && $pdo->query("SHOW COLUMNS FROM `{$prefix}reports` LIKE 'category'")->fetch()) $pdo->exec("DROP TABLE `{$prefix}reports`");
     foreach (schema_statements($prefix) as $sql) $pdo->exec($sql);
+    // the moderation tables (reports + audit) are optional: if a host cannot create them, the app keeps working without them
+    try {
+        // the first draft of reports (its own columns) is replaced by the shared moderation table (content_kind/content_id)
+        if ($pdo->query("SHOW TABLES LIKE '{$prefix}reports'")->fetch() && $pdo->query("SHOW COLUMNS FROM `{$prefix}reports` LIKE 'category'")->fetch()) $pdo->exec("DROP TABLE `{$prefix}reports`");
+        foreach (moderation_schema($prefix) as $sql) $pdo->exec($sql);
+    } catch (Throwable $e) {
+        error_log('SavDrive moderation schema not installed: ' . $e->getMessage());
+    }
     if (!$pdo->query("SHOW COLUMNS FROM `{$prefix}uploads` LIKE 'replace_id'")->fetch()) $pdo->exec("ALTER TABLE `{$prefix}uploads` ADD COLUMN `replace_id` INT UNSIGNED NULL AFTER `received`");
     if (!$pdo->query("SHOW COLUMNS FROM `{$prefix}uploads` LIKE 'vault_id'")->fetch()) $pdo->exec("ALTER TABLE `{$prefix}uploads` ADD COLUMN `vault_id` INT UNSIGNED NULL AFTER `replace_id`");
     if (!$pdo->query("SHOW COLUMNS FROM `{$prefix}uploads` LIKE 'temp_id'")->fetch()) $pdo->exec("ALTER TABLE `{$prefix}uploads` ADD COLUMN `temp_id` INT UNSIGNED NULL AFTER `replace_id`");

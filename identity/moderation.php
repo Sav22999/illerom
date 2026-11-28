@@ -85,9 +85,13 @@ function mod_report(array $content, string $reason, string $note = '', ?string $
 
 function mod_report_get(int $id): ?array
 {
-    $st = db()->prepare('SELECT * FROM ' . t('reports') . ' WHERE id = ?');
-    $st->execute([$id]);
-    return $st->fetch() ?: null;
+    try {
+        $st = db()->prepare('SELECT * FROM ' . t('reports') . ' WHERE id = ?');
+        $st->execute([$id]);
+        return $st->fetch() ?: null;
+    } catch (Throwable $e) { // the moderation tables may not be installed on this host
+        return null;
+    }
 }
 
 /** Note that a master looked at the content of a reported item (the privacy notices promise this is logged). */
@@ -96,10 +100,25 @@ function mod_report_seen(int $id): void
     db()->prepare('UPDATE ' . t('reports') . ' SET seen_at = ? WHERE id = ?')->execute([now_utc(), $id]);
 }
 
-/** How many reports are waiting for review (for the admin badge and the overview). */
+/** How many reports are waiting for review (for the admin badge and the overview). 0 if the table is not installed. */
 function mod_open_count(): int
 {
-    return (int)db()->query('SELECT COUNT(*) FROM ' . t('reports') . " WHERE status = 'open'")->fetchColumn();
+    try {
+        return (int)db()->query('SELECT COUNT(*) FROM ' . t('reports') . " WHERE status = 'open'")->fetchColumn();
+    } catch (Throwable $e) {
+        return 0;
+    }
+}
+
+/** The reports to review (open | resolved | all), newest first, as raw rows. Empty if the table is not installed. */
+function mod_reports(string $show = 'open', int $limit = 500): array
+{
+    $where = $show === 'open' ? "WHERE status = 'open'" : ($show === 'resolved' ? "WHERE status <> 'open'" : '');
+    try {
+        return db()->query('SELECT * FROM ' . t('reports') . ' ' . $where . " ORDER BY status = 'open' DESC, created_at DESC LIMIT " . (int)$limit)->fetchAll();
+    } catch (Throwable $e) {
+        return [];
+    }
 }
 
 /** Close a report with the decision taken. $action is a short machine summary of what was done; $resolution the reason. */

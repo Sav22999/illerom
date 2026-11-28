@@ -1301,7 +1301,8 @@ switch ($r) {
         }
         if (!$content) fail('not_found', 404);
         record_attempt('report');
-        mod_report($content, $reason, $note, $email !== '' ? $email : null, client_ip());
+        try { mod_report($content, $reason, $note, $email !== '' ? $email : null, client_ip()); }
+        catch (Throwable $e) { error_log('SavDrive report not stored: ' . $e->getMessage()); fail('unavailable', 503); }
         send_json(['ok' => true]);
 
     case 'report.file':
@@ -1464,9 +1465,7 @@ switch ($r) {
         // (that is report.file, and only for a reported link). Stored by the shared moderation module (content_kind/content_id).
         only('GET');
         require_master();
-        $show = (string)($_GET['show'] ?? 'open');
-        $where = $show === 'open' ? "WHERE status = 'open'" : ($show === 'resolved' ? "WHERE status <> 'open'" : '');
-        $reps = db()->query('SELECT * FROM ' . t('reports') . ' ' . $where . " ORDER BY status = 'open' DESC, created_at DESC LIMIT 500")->fetchAll();
+        $reps = mod_reports((string)($_GET['show'] ?? 'open'));
         $idsOf = fn(string $kind) => array_values(array_filter(array_map(fn($r) => $r['content_kind'] === $kind && $r['content_id'] !== null ? (int)$r['content_id'] : 0, $reps)));
         $pick = function (string $table, string $cols, array $ids) {
             if (!$ids) return [];
