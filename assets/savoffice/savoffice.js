@@ -946,7 +946,7 @@ savoffice-apps { display: inline-flex; }
  *   SavOffice.bars.layout(list) -> the same with no separator or fixed space at the ends and no two in a row (an adaptive space stays)
  *   bar ids: 'title', 'tools', 'status', 'insert', 'format' (their names come from here, in the language of the page)
  *   SavOffice.bars.attach({ title: el, tools: el, … }, open): the bars the app has laid out and its function that opens this
- *     window; the right click (a long press on phones and tablets) on one of them, or on a button of it, offers «Customize…»
+ *     window; the right click (a long press on phones and tablets) on one of them, or on a button of it, offers «Customise bar»
  *     in SavOffice.context, and the window opens on that bar's tab. dialog({ at }) opens it on a tab by itself.
  *   SavOffice.bars.at(target) -> { id, open } of the bar that holds target (null when none): what that menu item opens
  */
@@ -1079,7 +1079,7 @@ savoffice-apps { display: inline-flex; }
   const W = {
     open_link: ['Open the link', 'Apri il collegamento'], new_tab: ['Open in a new tab', 'Apri in una nuova scheda'], copy_link: ['Copy the address', 'Copia l’indirizzo'],
     open_image: ['Open the picture in a new tab', 'Apri l’immagine in una nuova scheda'], copy: ['Copy', 'Copia'], cut: ['Cut', 'Taglia'], paste: ['Paste', 'Incolla'], select_all: ['Select all', 'Seleziona tutto'],
-    customize: ['Customize…', 'Personalizza…'], undo: ['Undo', 'Annulla'], redo: ['Redo', 'Ripeti'], palette: ['Search a command', 'Cerca un comando'], back: ['Back', 'Indietro'], reload: ['Reload the page', 'Ricarica la pagina'],
+    customize: ['Customise bar', 'Personalizza barra'], undo: ['Undo', 'Annulla'], redo: ['Redo', 'Ripeti'], palette: ['Search a command', 'Cerca un comando'], back: ['Back', 'Indietro'], reload: ['Reload the page', 'Ricarica la pagina'],
   };
   const w = (k) => W[k][it() ? 1 : 0];
   const IS_MAC = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
