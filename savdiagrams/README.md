@@ -42,16 +42,33 @@ Free, open diagrams on a page without edges: flowcharts, org charts, mind maps a
     attribute; one to one, one to many, one to zero or many, one to zero or one (crow's feet).
   - *BPMN and swimlanes*: task, sub-process, start / intermediate / end event, exclusive / parallel / inclusive gateway,
     data object, data store, pool and lane; sequence flow, message flow, association; horizontal and vertical lanes.
+  - *Business canvases*: block with a title (first line in bold, the others under it), sticky note, title.
+  - *Customer journey and user story map*: stage (arrow), row of the journey, step with a title, touchpoint, happy /
+    neutral / sad face, line of the feelings; activity, step, user story, release line.
+  - *Wireframes*: browser window and phone screen (containers), navigation bar, heading, text lines, picture, button,
+    text field, drop-down list, checkbox, switch, avatar, card.
+  - *Data flows (DFD)*: process, external entity, data store (its code, `D1`, in the narrow part), data flow.
+  - *C4 model*: person, software system, external system, container, database container, component, boundary,
+    relationship.
+  - *Cloud architecture* (generic icons, no brand): CDN, load balancer, API gateway, virtual machine, function, message
+    queue, file storage (bucket), database, private network and region.
+  - *Electric and electronic*: resistor, capacitor, inductor, battery, switch, lamp, diode, LED, ground, junction, wire
+    (the leads are at the middle of the left and right sides, where the wires attach).
+  - *Floor plan*: room (a container), wall, door (it opens the wall under it), window, bed, sofa, table with chairs,
+    table, stairs.
 
   Containers (lanes, pools, zones, system boundaries, frames, packages, nodes, lifelines) take along what lies inside
   them when they move, and a new one goes behind what it covers. The name of an icon is under it, and a connector that
   leaves from below starts under the name.
 - **Templates** — blank, flowchart, org chart, mind map, network diagram, UML class diagram, UML sequence, UML use cases,
-  UML activity, UML states, UML components, database (ER), BPMN process, swimlanes, parallel timeline, process,
-  timeline, SWOT analysis, decision tree.
+  UML activity, UML states, UML components, cloud architecture, C4 system context, data flow (DFD), database (ER), BPMN
+  process, swimlanes, customer journey, user story map, Business Model Canvas, Lean Canvas, wireframe, parallel timeline,
+  electric circuit, floor plan, process, timeline, SWOT analysis, decision tree. (Gantt charts and kanban boards are in
+  SavTasks, not here.)
 - **Files** — `.savdia` (the format of SavDiagrams), PNG, SVG (fonts embedded), PDF; diagrams.net / draw.io files
   (`.drawio`, `.xml`, compressed or not) open as new diagrams or are inserted into one; their UML classes, lifelines and
-  messages, BPMN events and gateways, swimlanes, network stencils and UML / ER heads become the shapes of the libraries.
+  messages, BPMN events and gateways, swimlanes, network, cloud (AWS / Azure / GCP icons by what they are), C4,
+  electrical, floor plan and mock-up stencils, and UML / ER heads become the shapes of the libraries.
 
 ## With the other apps
 

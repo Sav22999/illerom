@@ -8,7 +8,13 @@ export const SHAPES = ['rect', 'round', 'diamond', 'ellipse', 'para', 'cyl', 'do
   // UML
   'class', 'package', 'comp', 'cube', 'lifeline', 'frame', 'box', 'start', 'end',
   // org chart, timeline, database, BPMN, swimlanes
-  'card', 'track', 'axis', 'mile', 'entity', 'subproc', 'bstart', 'binter', 'bend', 'gwx', 'gwp', 'gwo', 'lane', 'vlane'];
+  'card', 'track', 'axis', 'mile', 'entity', 'subproc', 'bstart', 'binter', 'bend', 'gwx', 'gwp', 'gwo', 'lane', 'vlane',
+  // business canvases, journeys and story maps, wireframes
+  'panel', 'chevron', 'smile', 'meh', 'frown', 'divider', 'browser', 'mobile', 'imgph', 'check', 'toggle', 'lorem', 'select',
+  // DFD, C4, cloud architecture
+  'store', 'c4person', 'func', 'queue', 'bucket', 'cdn', 'lb', 'apigw',
+  // electric and electronic symbols, floor plans
+  'res', 'cap', 'ind', 'bat', 'eswitch', 'lamp', 'diode', 'led', 'gnd', 'door', 'window', 'bed', 'sofa', 'dtable', 'stairs'];
 export const ROUTES = ['straight', 'elbow', 'curve'];
 export const HEADS = ['none', 'arrow', 'open', 'diamond', 'circle', 'bar', 'tri', 'odiamond', 'ocircle', 'er1', 'er01', 'ern', 'er0n'];
 export const SIDES = ['', 't', 'r', 'b', 'l'];
@@ -93,14 +99,19 @@ export const SIZE = { rect: [140, 70], round: [140, 70], diamond: [140, 90], ell
   router: [64, 64], switch: [84, 48], server: [52, 72], firewall: [76, 60], pc: [72, 64], laptop: [80, 56], phone: [36, 64], printer: [72, 60], ap: [64, 56],
   class: [200, 120], package: [240, 160], comp: [160, 80], cube: [160, 100], lifeline: [130, 360], frame: [320, 200], box: [300, 260], start: [30, 30], end: [34, 34],
   card: [230, 76], track: [760, 100], axis: [620, 44], mile: [26, 26], entity: [220, 130], subproc: [150, 84], bstart: [40, 40], binter: [40, 40], bend: [40, 40],
-  gwx: [52, 52], gwp: [52, 52], gwo: [52, 52], lane: [640, 160], vlane: [200, 420] };
+  gwx: [52, 52], gwp: [52, 52], gwo: [52, 52], lane: [640, 160], vlane: [200, 420],
+  panel: [200, 150], chevron: [170, 56], smile: [40, 40], meh: [40, 40], frown: [40, 40], divider: [600, 30], browser: [640, 420], mobile: [220, 420], imgph: [200, 130],
+  check: [160, 24], toggle: [160, 26], lorem: [240, 50], select: [200, 36], store: [180, 50], c4person: [170, 170], func: [56, 56], queue: [84, 40], bucket: [56, 60],
+  cdn: [56, 56], lb: [56, 56], apigw: [60, 56], res: [80, 28], cap: [60, 40], ind: [80, 28], bat: [60, 44], eswitch: [80, 36], lamp: [60, 40], diode: [60, 36], led: [60, 48],
+  gnd: [40, 40], door: [80, 80], window: [120, 12], bed: [160, 200], sofa: [200, 80], dtable: [140, 140], stairs: [100, 220] };
 
 // ------------------------------------------------------------------ kinds that behave on their own
 
 /** The text goes under the shape (icons, events, gateways), as for a person. */
-export const UNDER = new Set(['person', 'router', 'switch', 'server', 'firewall', 'pc', 'laptop', 'phone', 'printer', 'ap', 'start', 'end', 'mile', 'bstart', 'binter', 'bend', 'gwx', 'gwp', 'gwo']);
+export const UNDER = new Set(['person', 'router', 'switch', 'server', 'firewall', 'pc', 'laptop', 'phone', 'printer', 'ap', 'start', 'end', 'mile', 'bstart', 'binter', 'bend', 'gwx', 'gwp', 'gwo',
+  'smile', 'meh', 'frown', 'func', 'queue', 'bucket', 'cdn', 'lb', 'apigw', 'res', 'cap', 'ind', 'bat', 'eswitch', 'lamp', 'diode', 'led', 'gnd']);
 /** Containers: what lies inside them moves with them, and a new one goes behind what it covers. */
-export const CONTAINERS = new Set(['lane', 'vlane', 'track', 'box', 'frame', 'package', 'cube', 'lifeline']);
+export const CONTAINERS = new Set(['lane', 'vlane', 'track', 'box', 'frame', 'package', 'cube', 'lifeline', 'browser', 'mobile']);
 /** Shapes in compartments (UML class, database table): lines "--" divide the text into parts, the first one is the name. */
 export const COMPART = new Set(['class', 'entity']);
 /** Connectors are attached anywhere along them, not only in the middle of a side. */
@@ -162,6 +173,44 @@ export const LIBRARIES = [
     ['seqflow', null, { r: 'elbow', sa: 'none', ea: 'arrow' }], ['msgflow', null, { r: 'elbow', sa: 'ocircle', ea: 'tri', d: 'dash' }], ['bassoc', null, { r: 'straight', sa: 'none', ea: 'none', d: 'dot' }]]],
   ['swimlane', [['lane', 'lane', 680, 150, { f: '#ffffff', c: '#5f6660' }, ['Lane', 'Corsia']], ['vlane', 'vlane', 220, 460, { f: '#ffffff', c: '#5f6660' }, ['Lane', 'Corsia']], ['step', 'round', 140, 64, { f: '#e8eefc', c: '#4352d6' }, ['Step', 'Passo']],
     ['diamond', 'diamond'], ['flow', null, { r: 'elbow', sa: 'none', ea: 'arrow' }]]],
+  ['business', [['bm_block', 'panel', 210, 180, { f: '#ffffff', c: '#4352d6', fs: 15, al: 'left' }, ['Key partners\n• Suppliers\n• Allies', 'Partner chiave\n• Fornitori\n• Alleati']],
+    ['sticky', 'note', 140, 110, { f: '#fff3c4', c: '#b7791f', fs: 14, al: 'left', va: 'top' }, ['Idea', 'Idea']], ['bm_title', 'text', 400, 44, { fs: 24, b: true, al: 'left', f: '', c: '', s: 0 }, ['Business Model Canvas', 'Business Model Canvas']]]],
+  ['journey', [['stage', 'chevron', 180, 56, { f: '#4352d6', c: '#2f38a3', tc: '#ffffff', b: true, fs: 15 }, ['Stage', 'Fase']], ['jrow', 'track', 1090, 130, { f: '#ffffff', c: '#4352d6', b: true, fs: 14 }, ['Actions', 'Azioni']],
+    ['jcell', 'panel', 170, 106, { f: '#ffffff', c: '#4352d6', fs: 14, al: 'left' }, ['Action\nWhat the person does', 'Azione\nCosa fa la persona']], ['touch', 'round', 170, 40, { f: '#dcefe6', c: '#0f6e56', fs: 14 }, ['Touchpoint', 'Punto di contatto']],
+    ['smile', 'smile', 36, 36, { f: '#dcefe6', c: '#0f6e56', fs: 12 }], ['meh', 'meh', 36, 36, { f: '#fff3c4', c: '#b7791f', fs: 12 }], ['frown', 'frown', 36, 36, { f: '#fbdada', c: '#b3261e', fs: 12 }],
+    ['sticky', 'note'], ['moodline', null, { r: 'curve', sa: 'none', ea: 'none', d: 'dash', c: '#9aa29d' }]]],
+  ['storymap', [['sm_act', 'round', 340, 56, { f: '#4352d6', c: '#2f38a3', tc: '#ffffff', b: true, fs: 15 }, ['Activity', 'Attività']], ['sm_step', 'rect', 160, 50, { f: '#e8eefc', c: '#4352d6', fs: 14 }, ['Step', 'Passo']],
+    ['story', 'note', 160, 84, { f: '#fff3c4', c: '#b7791f', fs: 13, al: 'left', va: 'top' }, ['As a user I want…', 'Come utente voglio…']], ['release', 'divider', 1060, 30, { c: '#c45a0c', tc: '#c45a0c', fs: 13, b: true }, ['Release 1', 'Rilascio 1']]]],
+  ['wireframe', [['browser', 'browser', 640, 420, { f: '#ffffff', c: '#9aa29d', s: 1.5, fs: 12, tc: '#5f6660' }, ['www.example.com', 'www.example.com']], ['mobile', 'mobile', 240, 480, { f: '#ffffff', c: '#3a3f47', s: 2 }],
+    ['w_nav', 'rect', 600, 44, { f: '#3a3f47', c: '', s: 0, tc: '#ffffff', fs: 13, al: 'left' }, ['LOGO      Home      About      Contact', 'LOGO      Home      Chi siamo      Contatti']],
+    ['w_title', 'text', 300, 40, { fs: 24, b: true, al: 'left', f: '', c: '', s: 0 }, ['Heading', 'Titolo']], ['lorem', 'lorem', 240, 50, { c: '#5f6660' }], ['imgph', 'imgph', 200, 130, { f: '#f7f8fb', c: '#9aa29d', s: 1.5 }],
+    ['w_button', 'round', 140, 42, { f: '#4352d6', c: '', s: 0, tc: '#ffffff', fs: 15, b: true }, ['Button', 'Pulsante']], ['w_input', 'rect', 240, 38, { f: '#ffffff', c: '#9aa29d', s: 1.5, tc: '#9aa29d', fs: 14, al: 'left' }, ['Placeholder…', 'Segnaposto…']],
+    ['select', 'select', 200, 38, { f: '#ffffff', c: '#9aa29d', s: 1.5, fs: 14, tc: '#5f6660', al: 'left' }, ['Choose…', 'Scegli…']], ['check', 'check', 160, 24, { f: '#ffffff', c: '#4352d6', fs: 14, tc: '#5f6660' }, ['Option', 'Opzione']],
+    ['toggle', 'toggle', 160, 26, { f: '#ffffff', c: '#4352d6', fs: 14, tc: '#5f6660' }, ['Setting', 'Impostazione']], ['w_avatar', 'ellipse', 48, 48, { f: '#e4e7e5', c: '#9aa29d', s: 1.5 }],
+    ['w_card', 'round', 240, 160, { f: '#ffffff', c: '#cfd5df', s: 1.5, al: 'left', va: 'top', fs: 15, b: true }, ['Card', 'Scheda']]]],
+  ['dfd', [['dfd_proc', 'ellipse', 160, 100, { f: '#e8eefc', c: '#4352d6', fs: 15 }, ['1.0\nProcess', '1.0\nProcesso']], ['dfd_ext', 'rect', 150, 70, { f: '#f7f8fb', c: '#1c1c1c', fs: 15, b: true }, ['External entity', 'Entità esterna']],
+    ['store', 'store', 200, 50, { f: '#fff3c4', c: '#b7791f', fs: 15 }, ['D1 Data store', 'D1 Archivio dati']], ['dfd_flow', null, { r: 'curve', sa: 'none', ea: 'arrow', c: '#3a3f47' }]]],
+  ['c4', [['c4person', 'c4person', 190, 180, { f: '#08427b', c: '#073b6f', tc: '#ffffff', fs: 14 }, ['Person\n[Person]\nWho uses the system', 'Persona\n[Persona]\nChi usa il sistema']],
+    ['c4sys', 'round', 250, 140, { f: '#1168bd', c: '#0b4884', tc: '#ffffff', fs: 14 }, ['Software system\n[Software system]\nWhat it does', 'Sistema software\n[Sistema software]\nCosa fa']],
+    ['c4ext', 'round', 250, 140, { f: '#8a8a8a', c: '#6b6b6b', tc: '#ffffff', fs: 14 }, ['External system\n[External system]\nWhat it does', 'Sistema esterno\n[Sistema esterno]\nCosa fa']],
+    ['c4cont', 'round', 230, 130, { f: '#438dd5', c: '#3c7fc0', tc: '#ffffff', fs: 14 }, ['Container\n[Container: technology]\nWhat it does', 'Container\n[Container: tecnologia]\nCosa fa']],
+    ['c4db', 'cyl', 200, 130, { f: '#438dd5', c: '#3c7fc0', tc: '#ffffff', fs: 14 }, ['Database\n[Container: SQL]', 'Database\n[Container: SQL]']],
+    ['c4comp', 'round', 220, 110, { f: '#85bbf0', c: '#78a8d8', tc: '#1c1c1c', fs: 14 }, ['Component\n[Component: technology]', 'Componente\n[Componente: tecnologia]']],
+    ['c4bound', 'box', 560, 360, { f: '', c: '#444444', d: 'dash', s: 1.5, al: 'left', fs: 14, b: true }, ['System boundary', 'Confine del sistema']], ['c4rel', null, { r: 'straight', sa: 'none', ea: 'arrow', d: 'dash', c: '#707070', s: 1.5 }]]],
+  ['cloud', [['person', 'person'], ['internet', 'cloud'], ['cdn', 'cdn', 56, 56, { f: '#efe3fb', c: '#5b4cf0', fs: 13 }, ['CDN', 'CDN']], ['lb', 'lb', 56, 56, { f: '#efe3fb', c: '#5b4cf0', fs: 13 }, ['Load balancer', 'Bilanciatore']],
+    ['apigw', 'apigw', 60, 56, { f: '#efe3fb', c: '#5b4cf0', fs: 13 }, ['API gateway', 'API gateway']], ['vm', 'server', 52, 72, { f: '#efe3fb', c: '#5b4cf0', fs: 13 }, ['Server', 'Server']],
+    ['func', 'func', 56, 56, { f: '#efe3fb', c: '#5b4cf0', fs: 13 }, ['Function', 'Funzione']], ['queue', 'queue', 84, 40, { f: '#efe3fb', c: '#5b4cf0', fs: 13 }, ['Queue', 'Coda']],
+    ['bucket', 'bucket', 56, 60, { f: '#efe3fb', c: '#5b4cf0', fs: 13 }, ['Storage', 'Archivio file']], ['netdb', 'cyl'],
+    ['vpc', 'box', 420, 300, { f: '#f7f8fb', c: '#5b4cf0', d: 'dash', s: 1.5, al: 'left', fs: 14, b: true }, ['Private network', 'Rete privata']], ['region', 'box', 560, 380, { f: '', c: '#0f6e56', d: 'dash', s: 1.5, al: 'left', fs: 14, b: true }, ['Region', 'Regione']],
+    ['flow', null]]],
+  ['electric', [['res', 'res', 80, 28, { f: '#ffffff', c: '#1c1c1c', fs: 13 }], ['cap', 'cap', 60, 40, { f: '#ffffff', c: '#1c1c1c', fs: 13 }], ['ind', 'ind', 80, 28, { f: '#ffffff', c: '#1c1c1c', fs: 13 }],
+    ['bat', 'bat', 60, 44, { f: '#ffffff', c: '#1c1c1c', fs: 13 }], ['eswitch', 'eswitch', 80, 36, { f: '#ffffff', c: '#1c1c1c', fs: 13 }], ['lamp', 'lamp', 60, 40, { f: '#ffffff', c: '#1c1c1c', fs: 13 }],
+    ['diode', 'diode', 60, 36, { f: '#ffffff', c: '#1c1c1c', fs: 13 }], ['led', 'led', 60, 48, { f: '#ffffff', c: '#b3261e', fs: 13 }], ['gnd', 'gnd', 40, 40, { f: '#ffffff', c: '#1c1c1c', fs: 13 }],
+    ['junction', 'start', 10, 10, { c: '#1c1c1c' }], ['wire', null, { r: 'elbow', sa: 'none', ea: 'none', c: '#1c1c1c', s: 2 }]]],
+  ['floor', [['room', 'box', 300, 240, { f: '#fbf8f1', c: '#3a3f47', s: 4, fs: 14, b: true }, ['Room', 'Stanza']], ['wall', 'rect', 240, 12, { f: '#3a3f47', c: '', s: 0 }],
+    ['door', 'door', 80, 80, { f: '#fbf8f1', c: '#3a3f47', s: 2 }], ['window', 'window', 120, 12, { f: '#eef3f8', c: '#3a3f47', s: 1.5 }], ['bed', 'bed', 160, 200, { f: '#ffffff', c: '#5f6660', s: 1.5 }],
+    ['sofa', 'sofa', 200, 80, { f: '#ffffff', c: '#5f6660', s: 1.5 }], ['dtable', 'dtable', 140, 140, { f: '#ffffff', c: '#5f6660', s: 1.5 }], ['stairs', 'stairs', 100, 220, { f: '#ffffff', c: '#5f6660', s: 1.5 }],
+    ['f_table', 'rect', 120, 70, { f: '#ffffff', c: '#5f6660', s: 1.5, fs: 12 }, ['Table', 'Tavolo']]]],
 ];
 /** Every entry by its id: {id, k (null for a connector), w, h, st, tx}. */
 export const PRESETS = new Map();
@@ -176,6 +225,13 @@ export const libOf = (k) => (LIBRARIES.find(([key, list]) => key !== 'basic' && 
 const at = (n) => ({ n: n.id, p: '' });
 /** A shape in compartments as tall as its text. */
 const fitted = (n) => ({ ...n, h: compH(n) });
+/** A canvas (Business Model, Lean): blocks on a grid of 5 columns, [name, lines, column, row, columns, rows], names in [en, it]. */
+function canvasTpl(it, title, blocks) {
+  const W = 210, H = 190, tones = ['#4352d6', '#0f6e56', '#c45a0c', '#a1328c', '#b7791f', '#1d4e89', '#5b4cf0', '#3a3f47', '#b3261e'];
+  const items = [node('text', 0, -60, W * 5, 44, title, { fs: 24, b: true, al: 'left', f: '', c: '', s: 0 })];
+  blocks.forEach(([name, list, c, r, cs, rs], k) => items.push(node('panel', c * W, r * H, cs * W - 8, rs * H - 8, (it ? name[1] : name[0]) + '\n' + list.map((x) => '• ' + (it ? x[1] : x[0])).join('\n'), { f: '#ffffff', c: tones[k % tones.length], fs: 15, al: 'left' })));
+  return { items };
+}
 /** [key, icon, make(it)]: make returns {settings, items}; it = Italian. The mind map and the org chart are laid out by layout.js. */
 export const TEMPLATES = [
   ['blank', 'square', () => ({ items: [] })],
@@ -240,6 +296,19 @@ export const TEMPLATES = [
       L(S(fw, 'r'), S(web, 't')), L(S(fw, 'r'), S(mail, 't')),
       ...[pc1, pc2, pr, nas, ap].map((n) => L(S(sw, 'b'), S(n, 't'))),
       L(S(ap, 'r'), S(lap, 'l'), { d: 'dash' }), L(S(ap, 'r'), S(ph, 'l'), { d: 'dash' })] };
+  }],
+  ['cloud', 'cloud-arch', (it) => {
+    const T = (x) => (it ? x[1] : x[0]), C = { f: '#efe3fb', c: '#5b4cf0', fs: 13 };
+    const vpc = node('box', 220, 20, 620, 420, T(['Private network', 'Rete privata']), { f: '#f7f8fb', c: '#5b4cf0', d: 'dash', s: 1.5, fs: 14, b: true, al: 'left' });
+    const users = node('person', 0, 186, 50, 80, T(['Users', 'Utenti']), { f: '#ffffff', c: '#1c1c1c', fs: 13 });
+    const cdn = node('cdn', 100, 198, 56, 56, 'CDN', C), lb = node('lb', 260, 198, 56, 56, T(['Load balancer', 'Bilanciatore']), C);
+    const s1 = node('server', 420, 80, 52, 72, 'App 1', C), s2 = node('server', 420, 300, 52, 72, 'App 2', C);
+    const db = node('cyl', 600, 76, 70, 80, 'Database', { f: '#dcefe6', c: '#0f6e56', fs: 13 });
+    const q = node('queue', 570, 316, 84, 40, T(['Queue', 'Coda']), C), fn = node('func', 740, 308, 56, 56, T(['Function', 'Funzione']), C);
+    const bk = node('bucket', 740, 120, 56, 60, T(['Storage', 'Archivio file']), C);
+    const S = (n, p) => ({ n: n.id, p }), F = (a, b, o = {}) => edge(a, b, { r: 'elbow', c: '#3a3f47', ...o });
+    return { items: [vpc, users, cdn, lb, s1, s2, db, q, fn, bk, F(S(users, 'r'), S(cdn, 'l')), F(S(cdn, 'r'), S(lb, 'l')), F(S(lb, 'r'), S(s1, 'l')), F(S(lb, 'r'), S(s2, 'l')),
+      F(S(s1, 'r'), S(db, 'l')), F(S(s2, 'r'), S(q, 'l')), F(S(q, 'r'), S(fn, 'l')), F(S(fn, 't'), S(bk, 'b'))] };
   }],
   ['uml_class', 'square-stack', (it) => {
     const T = (x) => (it ? x[1] : x[0]), C = (x, y, w, txt, o = {}) => fitted(node('class', x, y, w, 0, txt, { f: '#ffffff', c: '#1c1c1c', fs: 14, ...o }));
@@ -318,6 +387,28 @@ export const TEMPLATES = [
     const S = (n, p) => ({ n: n.id, p }), D = (a, b, o = {}) => edge(a, b, { r: 'elbow', c: '#1c1c1c', ea: 'open', d: 'dash', fs: 13, ...o });
     return { items: [srv, web, api, auth, store, ball, edge(S(web, 'r'), S(ball, 'l'), { r: 'straight', sa: 'none', ea: 'none', c: '#1c1c1c' }), D(S(ball, 'r'), S(api, 'l'), { text: 'REST' }), D(S(api, 'b'), S(auth, 't')), D(S(api, 'r'), S(store, 'l')), D(S(auth, 'r'), S(store, 'l'))] };
   }],
+  ['c4', 'c4', (it) => {
+    const T = (x) => (it ? x[1] : x[0]);
+    const title = node('text', -20, -70, 620, 40, T(['System context: the online shop', 'Contesto del sistema: il negozio online']), { fs: 20, b: true, al: 'left', f: '', c: '', s: 0 });
+    const per = node('c4person', 30, 0, 190, 180, T(['Customer\n[Person]\nBuys products online', 'Cliente\n[Persona]\nCompra prodotti online']), { f: '#08427b', c: '#073b6f', tc: '#ffffff', fs: 14 });
+    const sys = node('round', 0, 300, 250, 140, T(['Online shop\n[Software system]\nLets customers browse and buy', 'Negozio online\n[Sistema software]\nPermette di sfogliare e comprare']), { f: '#1168bd', c: '#0b4884', tc: '#ffffff', fs: 14 });
+    const pay = node('round', 520, 300, 250, 140, T(['Payment provider\n[External system]\nCharges the cards', 'Servizio di pagamento\n[Sistema esterno]\nAddebita le carte']), { f: '#8a8a8a', c: '#6b6b6b', tc: '#ffffff', fs: 14 });
+    const mail = node('round', 520, 20, 250, 140, T(['E-mail system\n[External system]\nSends the messages', 'Sistema di posta\n[Sistema esterno]\nInvia i messaggi']), { f: '#8a8a8a', c: '#6b6b6b', tc: '#ffffff', fs: 14 });
+    const S = (n, p) => ({ n: n.id, p }), Rl = (a, b, text) => edge(a, b, { r: 'straight', c: '#707070', d: 'dash', s: 1.5, fs: 13, text, tc: '#3a3f47' });
+    return { items: [title, per, sys, pay, mail, Rl(S(per, 'b'), S(sys, 't'), T(['Browses and buys using', 'Sfoglia e compra con'])), Rl(S(sys, 'r'), S(pay, 'l'), T(['Charges payments using', 'Addebita i pagamenti con'])),
+      Rl(S(sys, ''), S(mail, ''), T(['Sends e-mails using', 'Invia e-mail con'])), Rl(S(mail, 'l'), S(per, 'r'), T(['Sends e-mails to', 'Invia e-mail a']))] };
+  }],
+  ['dfd', 'dfd', (it) => {
+    const T = (x) => (it ? x[1] : x[0]);
+    const cust = node('rect', 0, 110, 150, 70, T(['Customer', 'Cliente']), { f: '#f7f8fb', c: '#1c1c1c', fs: 15, b: true });
+    const p1 = node('ellipse', 260, 90, 170, 110, T(['1.0\nTake the order', '1.0\nRicevi l’ordine']), { f: '#e8eefc', c: '#4352d6', fs: 15 });
+    const d1 = node('store', 250, 300, 200, 50, T(['D1 Orders', 'D1 Ordini']), { f: '#fff3c4', c: '#b7791f', fs: 15 });
+    const p2 = node('ellipse', 600, 270, 170, 110, T(['2.0\nPrepare the shipment', '2.0\nPrepara la spedizione']), { f: '#e8eefc', c: '#4352d6', fs: 15 });
+    const wh = node('rect', 820, 110, 150, 70, T(['Warehouse', 'Magazzino']), { f: '#f7f8fb', c: '#1c1c1c', fs: 15, b: true });
+    const S = (n, p) => ({ n: n.id, p }), F = (a, b, text, o = {}) => edge(a, b, { r: 'curve', c: '#3a3f47', fs: 13, text, ...o });
+    return { items: [cust, p1, d1, p2, wh, F(S(cust, 'r'), S(p1, 'l'), T(['order', 'ordine'])), F(S(p1, 'b'), S(d1, 't'), T(['order details', 'dati dell’ordine'])),
+      F(S(d1, 'r'), S(p2, 'l'), T(['orders to ship', 'ordini da spedire'])), F(S(p2, 't'), S(wh, 'b'), T(['pick list', 'lista di prelievo'])), F(S(p1, 't'), S(cust, 't'), T(['confirmation', 'conferma']))] };
+  }],
   ['database', 'database', (it) => {
     const T = (x) => (it ? x[1] : x[0]), E = (x, y, txt) => fitted(node('entity', x, y, 210, 0, txt, { f: '#ffffff', c: '#1d4e89', fs: 14 }));
     const users = E(0, 0, T(['users\nPK id\nname\nemail', 'utenti\nPK id\nnome\nemail']));
@@ -348,6 +439,80 @@ export const TEMPLATES = [
     const S = (n, p) => ({ n: n.id, p }), F = (x, y, o = {}) => edge(x, y, { r: 'elbow', c: '#3a3f47', fs: 12, ...o });
     return { items: [...L, a, b, c, d, e, f, F(S(a, 'r'), S(b, 't')), F(S(b, 'r'), S(c, 'b')), F(S(c, 'r'), S(d, 't'), { text: T(['yes', 'sì']) }), F(S(c, 'l'), S(a, 't'), { text: 'no' }), F(S(d, 'b'), S(e, 't')), F(S(e, 'r'), S(f, 'b'))] };
   }],
+  ['journey', 'journey', (it) => {
+    const T = (x) => (it ? x[1] : x[0]), X = 140, CW = 190;
+    const stages = T([['Discover', 'Consider', 'Buy', 'Use', 'Recommend'], ['Scoperta', 'Valutazione', 'Acquisto', 'Uso', 'Consiglio']]);
+    const rows = T([['Actions', 'Touchpoints', 'Feelings', 'Opportunities'], ['Azioni', 'Punti di contatto', 'Emozioni', 'Opportunità']]), H = [130, 76, 130, 130];
+    const items = [], tones = [['#ffffff', '#4352d6'], ['#f7f8fb', '#0f6e56'], ['#ffffff', '#c45a0c'], ['#f7f8fb', '#a1328c']];
+    let y = 76;
+    const top = [];
+    rows.forEach((r, k) => { items.push(node('track', 0, y, X + CW * stages.length, H[k], r, { f: tones[k][0], c: tones[k][1], b: true, fs: 14 })); top.push(y); y += H[k]; });
+    stages.forEach((s, j) => items.push(node('chevron', X + CW * j + 4, 0, CW - 8, 56, s, { f: '#4352d6', c: '#2f38a3', tc: '#ffffff', b: true, fs: 15 })));
+    const acts = T([[['Sees an ad', 'Asks friends'], ['Compares prices', 'Reads reviews'], ['Signs up', 'Pays by card'], ['Gets the order', 'Cooks it'], ['Writes a review', 'Shares a code']], [['Vede una pubblicità', 'Chiede agli amici'], ['Confronta i prezzi', 'Legge le recensioni'], ['Si iscrive', 'Paga con la carta'], ['Riceve l’ordine', 'Lo cucina'], ['Scrive una recensione', 'Condivide un codice']]]);
+    acts.forEach(([a, b], j) => items.push(node('panel', X + CW * j + 10, top[0] + 12, CW - 20, H[0] - 24, a + '\n' + b, { f: '#ffffff', c: '#4352d6', fs: 14, al: 'left' })));
+    T([['Social media', 'Website', 'App', 'Delivery', 'E-mail'], ['Social', 'Sito web', 'App', 'Consegna', 'E-mail']]).forEach((p, j) => items.push(node('round', X + CW * j + 10, top[1] + 18, CW - 20, 40, p, { f: '#dcefe6', c: '#0f6e56', fs: 14 })));
+    const moods = [['meh', .5, T(['Curious', 'Curioso'])], ['frown', .78, T(['Confused', 'Confuso'])], ['smile', .3, T(['Relieved', 'Sollevato'])], ['smile', .12, T(['Happy', 'Contento'])], ['meh', .45, T(['Neutral', 'Neutro'])]];
+    const tone = { smile: ['#dcefe6', '#0f6e56'], meh: ['#fff3c4', '#b7791f'], frown: ['#fbdada', '#b3261e'] };
+    const faces = moods.map(([k, f, l], j) => node(k, X + CW * j + CW / 2 - 18, top[2] + 8 + f * (H[2] - 60), 36, 36, l, { f: tone[k][0], c: tone[k][1], fs: 12 }));
+    items.push(...faces);
+    T([['Clearer ads', 'Show prices sooner', 'Pay with one tap', 'Recipe cards', 'Rewards for sharing'], ['Pubblicità più chiare', 'Prezzi subito visibili', 'Pagare con un tocco', 'Schede con le ricette', 'Premi per chi condivide']]).forEach((o, j) => items.push(node('note', X + CW * j + 20, top[3] + 14, CW - 40, H[3] - 28, o, { f: '#fff3c4', c: '#b7791f', fs: 14, al: 'left', va: 'top' })));
+    return { items: [...items, ...faces.slice(1).map((f, j) => edge({ n: faces[j].id, p: 'r' }, { n: f.id, p: 'l' }, { r: 'curve', sa: 'none', ea: 'none', c: '#9aa29d', s: 2, d: 'dash' }))] };
+  }],
+  ['storymap', 'storymap', (it) => {
+    const T = (x) => (it ? x[1] : x[0]), CW = 180;
+    const acts = T([['Find a product', 'Buy it', 'Receive it'], ['Trovare un prodotto', 'Comprarlo', 'Riceverlo']]);
+    const steps = T([['Search', 'Browse categories', 'Add to the cart', 'Pay', 'Track the order', 'Return it'], ['Cercare', 'Sfogliare le categorie', 'Aggiungere al carrello', 'Pagare', 'Seguire l’ordine', 'Restituirlo']]);
+    const stories = T([[['Search by name', 'Filters by price'], ['Category pages', 'Best sellers'], ['Cart with totals', 'Save for later'], ['Pay by card', 'Pay later'], ['E-mail with status', 'Live map'], ['Return form', 'Free pick-up']],
+      [['Cerca per nome', 'Filtri per prezzo'], ['Pagine delle categorie', 'Più venduti'], ['Carrello con i totali', 'Salva per dopo'], ['Paga con la carta', 'Paga dopo'], ['E-mail con lo stato', 'Mappa in tempo reale'], ['Modulo di reso', 'Ritiro gratuito']]]);
+    const items = acts.map((a, j) => node('round', j * CW * 2, 0, CW * 2 - 20, 56, a, { f: '#4352d6', c: '#2f38a3', tc: '#ffffff', b: true, fs: 15 }));
+    steps.forEach((s, j) => items.push(node('rect', j * CW, 80, CW - 20, 50, s, { f: '#e8eefc', c: '#4352d6', fs: 14 })));
+    const W = CW * steps.length - 20;
+    items.push(node('divider', 0, 152, W, 30, T(['Release 1 · first version', 'Rilascio 1 · prima versione']), { c: '#c45a0c', tc: '#c45a0c', fs: 13, b: true }));
+    items.push(node('divider', 0, 300, W, 30, T(['Release 2', 'Rilascio 2']), { c: '#c45a0c', tc: '#c45a0c', fs: 13, b: true }));
+    stories.forEach(([a, b], j) => { items.push(node('note', j * CW, 196, CW - 20, 84, a, { f: '#fff3c4', c: '#b7791f', fs: 13, al: 'left', va: 'top' }), node('note', j * CW, 344, CW - 20, 84, b, { f: '#fff3c4', c: '#b7791f', fs: 13, al: 'left', va: 'top' })); });
+    return { items };
+  }],
+  ['bmc', 'canvas', (it) => canvasTpl(it, it ? 'Business Model Canvas' : 'Business Model Canvas', [
+    [['Key partners', 'Partner chiave'], [['Suppliers', 'Fornitori'], ['Couriers', 'Corrieri'], ['Banks', 'Banche']], 0, 0, 1, 2],
+    [['Key activities', 'Attività chiave'], [['Product design', 'Progettazione'], ['Marketing', 'Marketing']], 1, 0, 1, 1],
+    [['Key resources', 'Risorse chiave'], [['Team', 'Squadra'], ['Brand', 'Marchio'], ['Platform', 'Piattaforma']], 1, 1, 1, 1],
+    [['Value propositions', 'Proposte di valore'], [['Fresh food at home in 30 minutes', 'Cibo fresco a casa in 30 minuti'], ['No subscription', 'Nessun abbonamento']], 2, 0, 1, 2],
+    [['Customer relationships', 'Relazioni con i clienti'], [['Self-service app', 'App fai da te'], ['Support chat', 'Chat di assistenza']], 3, 0, 1, 1],
+    [['Channels', 'Canali'], [['App', 'App'], ['Website', 'Sito web'], ['Social media', 'Social']], 3, 1, 1, 1],
+    [['Customer segments', 'Segmenti di clienti'], [['Busy families', 'Famiglie impegnate'], ['Students', 'Studenti']], 4, 0, 1, 2],
+    [['Cost structure', 'Struttura dei costi'], [['Couriers', 'Corrieri'], ['Servers', 'Server'], ['Advertising', 'Pubblicità']], 0, 2, 2.5, 1],
+    [['Revenue streams', 'Flussi di ricavi'], [['Delivery fee', 'Costo di consegna'], ['Partner commissions', 'Commissioni dei partner']], 2.5, 2, 2.5, 1],
+  ])],
+  ['lean', 'canvas', (it) => canvasTpl(it, 'Lean Canvas', [
+    [['Problem', 'Problema'], [['Cooking takes time', 'Cucinare richiede tempo'], ['Deliveries are slow', 'Le consegne sono lente']], 0, 0, 1, 2],
+    [['Solution', 'Soluzione'], [['Fresh meals in 30 minutes', 'Pasti freschi in 30 minuti']], 1, 0, 1, 1],
+    [['Key metrics', 'Metriche chiave'], [['Orders a week', 'Ordini a settimana'], ['Returning customers', 'Clienti che tornano']], 1, 1, 1, 1],
+    [['Unique value proposition', 'Proposta di valore unica'], [['Home-made taste, without cooking', 'Il gusto di casa, senza cucinare']], 2, 0, 1, 2],
+    [['Unfair advantage', 'Vantaggio competitivo'], [['Local cooks', 'Cuochi del quartiere']], 3, 0, 1, 1],
+    [['Channels', 'Canali'], [['App', 'App'], ['Word of mouth', 'Passaparola']], 3, 1, 1, 1],
+    [['Customer segments', 'Segmenti di clienti'], [['Busy families', 'Famiglie impegnate'], ['Early adopters: students', 'Primi clienti: studenti']], 4, 0, 1, 2],
+    [['Cost structure', 'Struttura dei costi'], [['Cooks', 'Cuochi'], ['Couriers', 'Corrieri']], 0, 2, 2.5, 1],
+    [['Revenue streams', 'Flussi di ricavi'], [['Price of the meals', 'Prezzo dei pasti']], 2.5, 2, 2.5, 1],
+  ])],
+  ['wireframe', 'wireframe', (it) => {
+    const T = (x) => (it ? x[1] : x[0]), G = '#5f6660';
+    const br = node('browser', 0, 0, 760, 540, 'www.example.com', { f: '#ffffff', c: '#9aa29d', s: 1.5, fs: 12, tc: G });
+    const nav = node('rect', 1, 30, 758, 44, T(['LOGO      Home      Products      About      Contact', 'LOGO      Home      Prodotti      Chi siamo      Contatti']), { f: '#3a3f47', c: '', s: 0, tc: '#ffffff', fs: 13, al: 'left' });
+    const h1 = node('text', 30, 100, 330, 40, T(['Fresh food at home', 'Cibo fresco a casa']), { fs: 26, b: true, al: 'left', f: '', c: '', s: 0 });
+    const lo = node('lorem', 30, 152, 330, 50, '', { c: G });
+    const bt = node('round', 30, 222, 150, 42, T(['Sign up', 'Iscriviti']), { f: '#4352d6', c: '', s: 0, tc: '#ffffff', fs: 15, b: true });
+    const hero = node('imgph', 400, 100, 330, 190, '', { f: '#f7f8fb', c: '#9aa29d', s: 1.5 });
+    const cards = [0, 1, 2].flatMap((j) => { const x = 30 + j * 240; return [node('round', x, 320, 220, 190, T(['Card title', 'Titolo della scheda']), { f: '#ffffff', c: '#cfd5df', s: 1.5, al: 'left', va: 'top', fs: 15, b: true }), node('imgph', x + 12, 352, 196, 90, '', { f: '#f7f8fb', c: '#cfd5df', s: 1 }), node('lorem', x + 12, 454, 196, 36, '', { c: G })]; });
+    const ph = node('mobile', 820, 0, 250, 520, '', { f: '#ffffff', c: '#3a3f47', s: 2 });
+    const mt = node('text', 845, 50, 200, 40, T(['Sign in', 'Accedi']), { fs: 22, b: true, al: 'left', f: '', c: '', s: 0 });
+    const in1 = node('rect', 845, 104, 200, 38, 'E-mail', { f: '#ffffff', c: '#9aa29d', s: 1.5, tc: '#9aa29d', fs: 14, al: 'left' }), in2 = node('rect', 845, 152, 200, 38, 'Password', { f: '#ffffff', c: '#9aa29d', s: 1.5, tc: '#9aa29d', fs: 14, al: 'left' });
+    const ck = node('check', 845, 204, 200, 24, T(['Remember me', 'Ricordami']), { f: '#ffffff', c: '#4352d6', fs: 14, tc: G });
+    const tg = node('toggle', 845, 240, 200, 26, T(['Notifications', 'Notifiche']), { f: '#ffffff', c: '#4352d6', fs: 14, tc: G });
+    const sl = node('select', 845, 282, 200, 38, T(['Language', 'Lingua']), { f: '#ffffff', c: '#9aa29d', s: 1.5, fs: 14, tc: G, al: 'left' });
+    const b2 = node('round', 845, 340, 200, 42, T(['Sign in', 'Accedi']), { f: '#4352d6', c: '', s: 0, tc: '#ffffff', fs: 15, b: true });
+    const lk = node('text', 845, 392, 200, 30, T(['Forgot the password?', 'Password dimenticata?']), { fs: 13, tc: '#4352d6', f: '', c: '', s: 0 });
+    return { items: [br, nav, h1, lo, bt, hero, ...cards, ph, mt, in1, in2, ck, tg, sl, b2, lk] };
+  }],
   ['ptimeline', 'gantt', (it) => {
     const T = (x) => (it ? x[1] : x[0]), months = T([['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu']]);
     const X = 130, W = 780, cw = W / months.length, H = 100;
@@ -362,6 +527,26 @@ export const TEMPLATES = [
     const s4 = span(2, 3.5, 5.5, T(['Campaign', 'Campagna'])), m2 = mile(2, 3, T(['Website', 'Sito web']));
     const S = (n, p) => ({ n: n.id, p });
     return { items: [axis, ...tracks, s1, s2, s3, s4, m1, m2, edge(S(s2, 'r'), S(s3, 't'), { r: 'elbow', ea: 'arrow', d: 'dash', c: '#5f6660' }), edge(S(s3, 'r'), S(m1, 'l'), { r: 'straight', ea: 'arrow', d: 'dash', c: '#5f6660' })] };
+  }],
+  ['circuit', 'circuit', (it) => {
+    const T = (x) => (it ? x[1] : x[0]), E = { f: '#ffffff', c: '#1c1c1c', fs: 13 };
+    const bat = node('bat', 0, 0, 60, 44, '9 V', E), sw = node('eswitch', 140, 4, 80, 36, T(['Switch', 'Interruttore']), E), res = node('res', 300, 8, 80, 28, 'R1 · 330 Ω', E);
+    const led = node('led', 460, -2, 60, 48, 'LED', { ...E, c: '#b3261e' }), lamp = node('lamp', 280, 102, 60, 40, T(['Lamp', 'Lampada']), E);
+    const j1 = node('start', 600, 117, 10, 10, '', { c: '#1c1c1c' }), j2 = node('start', -60, 117, 10, 10, '', { c: '#1c1c1c' }), gnd = node('gnd', -75, 180, 40, 40, '', E);
+    const S = (n, p) => ({ n: n.id, p }), W = (a, b) => edge(a, b, { r: 'elbow', sa: 'none', ea: 'none', c: '#1c1c1c', s: 2 });
+    return { items: [bat, sw, res, led, lamp, j1, j2, gnd, W(S(bat, 'r'), S(sw, 'l')), W(S(sw, 'r'), S(res, 'l')), W(S(res, 'r'), S(led, 'l')), W(S(led, 'r'), S(j1, 't')),
+      W(S(j1, 'l'), S(lamp, 'r')), W(S(lamp, 'l'), S(j2, 'r')), W(S(j2, 't'), S(bat, 'l')), W(S(j2, 'b'), S(gnd, 't'))] };
+  }],
+  ['floorplan', 'floorplan', (it) => {
+    const T = (x) => (it ? x[1] : x[0]), Rm = { f: '#fbf8f1', c: '#3a3f47', s: 4, fs: 14, b: true }, F = { f: '#ffffff', c: '#5f6660', s: 1.5, fs: 12 };
+    const rooms = [[0, 0, 420, 300, T(['Living room', 'Soggiorno'])], [420, 0, 260, 300, T(['Kitchen', 'Cucina'])], [0, 300, 340, 260, T(['Bedroom', 'Camera'])], [340, 300, 180, 260, T(['Bathroom', 'Bagno'])], [520, 300, 160, 260, T(['Hall', 'Ingresso'])]].map(([x, y, w, h, l]) => node('box', x, y, w, h, l, Rm));
+    const sofa = node('sofa', 30, 196, 190, 80, '', F), tv = node('rect', 120, 40, 120, 14, 'TV', { ...F, fs: 10 });
+    const counter = node('rect', 430, 44, 240, 50, T(['Counter', 'Piano di lavoro']), F), table = node('dtable', 470, 110, 140, 130, '', F);
+    const bed = node('bed', 40, 340, 160, 200, '', F), wardrobe = node('rect', 250, 340, 70, 180, T(['Wardrobe', 'Armadio']), F);
+    const shower = node('rect', 430, 470, 80, 80, T(['Shower', 'Doccia']), F), sink = node('ellipse', 360, 360, 60, 40, '', F);
+    const doors = [[234, 230, 70], [590, 230, 70], [352, 250, 50], [580, 490, 70]].map(([x, y, s]) => node('door', x, y, s, s, '', { f: '#fbf8f1', c: '#3a3f47', s: 2 }));
+    const wins = [[120, -6, 160, 12], [480, -6, 140, 12], [60, 554, 140, 12], [-6, 80, 12, 120]].map(([x, y, w, h]) => node('window', x, y, w, h, '', { f: '#eef3f8', c: '#3a3f47', s: 1.5 }));
+    return { items: [...rooms, sofa, tv, counter, table, bed, wardrobe, shower, sink, ...doors, ...wins] };
   }],
   ['process', 'arrow-right', (it) => {
     const names = it ? ['Idea', 'Progetto', 'Sviluppo', 'Prova', 'Rilascio'] : ['Idea', 'Design', 'Build', 'Test', 'Release'];

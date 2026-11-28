@@ -150,6 +150,15 @@ const ICONS = {
 "gantt": "<path d=\"M3 3v18h18\"/><rect x=\"6\" y=\"6\" width=\"7\" height=\"3\" rx=\"1\"/><rect x=\"10\" y=\"11\" width=\"8\" height=\"3\" rx=\"1\"/><rect x=\"8\" y=\"16\" width=\"6\" height=\"3\" rx=\"1\"/>",
 "image-off": "<line x1=\"2\" x2=\"22\" y1=\"2\" y2=\"22\"/><path d=\"M10.41 10.41a2 2 0 1 1-2.83-2.83\"/><line x1=\"13.5\" x2=\"6\" y1=\"13.5\" y2=\"21\"/><line x1=\"18\" x2=\"21\" y1=\"12\" y2=\"15\"/><path d=\"M3.59 3.59A1.99 1.99 0 0 0 3 5v14a2 2 0 0 0 2 2h14c.55 0 1.052-.22 1.41-.59\"/><path d=\"M21 15V5a2 2 0 0 0-2-2H9\"/>",
 "fit": "<path d=\"M8 3H5a2 2 0 0 0-2 2v3\"/><path d=\"M21 8V5a2 2 0 0 0-2-2h-3\"/><path d=\"M3 16v3a2 2 0 0 0 2 2h3\"/><path d=\"M16 21h3a2 2 0 0 0 2-2v-3\"/><path d=\"M7 9h10\"/><path d=\"M7 15h7\"/>",
+"canvas": "<rect x=\"2\" y=\"3\" width=\"20\" height=\"18\" rx=\"1.5\"/><path d=\"M2 15h20\"/><path d=\"M6 3v12\"/><path d=\"M10 3v12\"/><path d=\"M14 3v12\"/><path d=\"M18 3v12\"/><path d=\"M12 15v6\"/>",
+"journey": "<path d=\"M2 5h5l2 2.5L7 10H2l2-2.5z\"/><path d=\"M9 5h5l2 2.5-2 2.5H9l2-2.5z\"/><path d=\"M16 5h4l2 2.5-2 2.5h-4l2-2.5z\"/><path d=\"M3 19c3-4 5 1 8-2s5-3 10 1\"/>",
+"storymap": "<rect x=\"2\" y=\"3\" width=\"9\" height=\"4\" rx=\"1\"/><rect x=\"13\" y=\"3\" width=\"9\" height=\"4\" rx=\"1\"/><path d=\"M2 12h20\" stroke-dasharray=\"2 2\"/><rect x=\"3\" y=\"15\" width=\"5\" height=\"5\"/><rect x=\"10\" y=\"15\" width=\"5\" height=\"5\"/><rect x=\"17\" y=\"15\" width=\"4\" height=\"5\"/>",
+"wireframe": "<rect x=\"2\" y=\"3\" width=\"20\" height=\"18\" rx=\"2\"/><path d=\"M2 7h20\"/><rect x=\"5\" y=\"10\" width=\"7\" height=\"5\"/><path d=\"M15 11h4\"/><path d=\"M15 14h4\"/><path d=\"M5 18h6\"/>",
+"dfd": "<rect x=\"1.5\" y=\"9\" width=\"5\" height=\"6\"/><ellipse cx=\"14\" cy=\"6\" rx=\"4\" ry=\"3.5\"/><path d=\"M22 17H12v4h10\"/><path d=\"M6.5 11c3-2 4-4 4-4\"/><path d=\"M14 9.5V17\"/>",
+"c4": "<circle cx=\"6\" cy=\"5\" r=\"2.5\"/><rect x=\"2.5\" y=\"8\" width=\"7\" height=\"5\" rx=\"2\"/><rect x=\"13\" y=\"14\" width=\"9\" height=\"7\" rx=\"1.5\"/><path d=\"M6 13v4.5h7\" stroke-dasharray=\"2 2\"/>",
+"cloud-arch": "<path d=\"M7 10a4 4 0 0 1 7.6-1.5A3 3 0 1 1 17 14H7a2 2 0 0 1 0-4z\"/><rect x=\"3\" y=\"17\" width=\"5\" height=\"4\" rx=\"1\"/><rect x=\"16\" y=\"17\" width=\"5\" height=\"4\" rx=\"1\"/><path d=\"M12 14v2h-6.5v1M12 16h6.5v1\"/>",
+"circuit": "<path d=\"M2 12h4l1.5-3 3 6 3-6 3 6 1.5-3h4\"/><path d=\"M2 12v7h20v-7\"/>",
+"floorplan": "<rect x=\"2\" y=\"3\" width=\"20\" height=\"18\"/><path d=\"M12 3v9H2\"/><path d=\"M12 16v5\"/><path d=\"M16 12h6\"/><path d=\"M8 12a4 4 0 0 0 4 4\"/>",
 "dot-line": "<path d=\"M3 12h.01M7.5 12h.01M12 12h.01M16.5 12h.01M21 12h.01\" stroke-width=\"3\"/>"
 };
 

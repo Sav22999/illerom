@@ -5,7 +5,8 @@
  * A diagram is {title, settings, items}. settings: {bg, grid, gs, snap, view}. items is the list of what is drawn, in order
  * (the last one on top). Every item has an id (made by the browser) and a type t:
  *   node   a shape: k (rect | round | diamond | ellipse | para | cyl | doc | note | person | cloud | text, and the kinds of the
- *          libraries: network, UML, org chart, timeline, database, BPMN, swimlanes; see DG_SHAPES), x y w h, text, img (a
+ *          libraries: network, cloud, UML, C4, DFD, org chart, timeline, database, BPMN, swimlanes, canvases, journeys, story
+ *          maps, wireframes, circuits, floor plans; see DG_SHAPES), x y w h, text, img (a
  *          small photo, data: URL, on org chart cards),
  *          f fill ('' = none), c border ('' = none), s border width, d dash ('' | dash | dot), tc colour of the text, fs size,
  *          ff (sans | serif | mono | hand), b bold, i italic, al (left | center | right), va (top | middle | bottom)
@@ -24,7 +25,10 @@ declare(strict_types=1);
 const DG_SHAPES = ['rect', 'round', 'diamond', 'ellipse', 'para', 'cyl', 'doc', 'note', 'person', 'cloud', 'text',
     'router', 'switch', 'server', 'firewall', 'pc', 'laptop', 'phone', 'printer', 'ap',
     'class', 'package', 'comp', 'cube', 'lifeline', 'frame', 'box', 'start', 'end',
-    'card', 'track', 'axis', 'mile', 'entity', 'subproc', 'bstart', 'binter', 'bend', 'gwx', 'gwp', 'gwo', 'lane', 'vlane'];
+    'card', 'track', 'axis', 'mile', 'entity', 'subproc', 'bstart', 'binter', 'bend', 'gwx', 'gwp', 'gwo', 'lane', 'vlane',
+    'panel', 'chevron', 'smile', 'meh', 'frown', 'divider', 'browser', 'mobile', 'imgph', 'check', 'toggle', 'lorem', 'select',
+    'store', 'c4person', 'func', 'queue', 'bucket', 'cdn', 'lb', 'apigw',
+    'res', 'cap', 'ind', 'bat', 'eswitch', 'lamp', 'diode', 'led', 'gnd', 'door', 'window', 'bed', 'sofa', 'dtable', 'stairs'];
 const DG_ROUTES = ['straight', 'elbow', 'curve'];
 const DG_HEADS = ['none', 'arrow', 'open', 'diamond', 'circle', 'bar', 'tri', 'odiamond', 'ocircle', 'er1', 'er01', 'ern', 'er0n'];
 const DG_MAX_IMG = 60000; // the photo of a node (an org chart card), as a data: URL

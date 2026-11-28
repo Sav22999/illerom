@@ -57,7 +57,7 @@ function plain(v, html) {
 }
 /** The kind of SavDiagrams that a style of draw.io becomes: its basic shapes, network icons, UML, BPMN, swimlanes. */
 function kindOf(st) {
-  const shape = st.shape || '', any = (re) => re.test(shape);
+  const shape = st.shape || '', any = (re) => re.test(shape + ' ' + (st.resIcon || '') + ' ' + (st.prIcon || '')); // the icon of an AWS / Azure / GCP stencil names what it is
   if (any(/umlLifeline/)) return 'lifeline';
   if (any(/umlFrame/)) return 'frame';
   if (any(/startState/)) return 'start';
@@ -71,6 +71,40 @@ function kindOf(st) {
     if (/event|shape$/i.test(shape)) { const o = (st.outline || '') + (st.eventType || ''); return /end/i.test(o) ? 'bend' : /throw|catch|boundInt|interm/i.test(o) ? 'binter' : 'bstart'; }
     return 'round';
   }
+  // electric symbols, floor plans, wireframes, C4 and cloud stencils (before the network ones: a switch can be electric)
+  if (any(/electrical|resistor|capacitor|inductor|battery|ground|diode|lamp/i)) {
+    if (any(/resistor/i)) return 'res';
+    if (any(/capacitor/i)) return 'cap';
+    if (any(/inductor|coil/i)) return 'ind';
+    if (any(/battery|cell/i)) return 'bat';
+    if (any(/\bled|light_emitting/i)) return 'led';
+    if (any(/diode/i)) return 'diode';
+    if (any(/lamp|bulb/i)) return 'lamp';
+    if (any(/ground|earth/i)) return 'gnd';
+    if (any(/switch/i)) return 'eswitch';
+  }
+  if (any(/floorplan/i)) {
+    if (any(/door/i)) return 'door';
+    if (any(/window/i)) return 'window';
+    if (any(/bed/i)) return 'bed';
+    if (any(/sofa|couch/i)) return 'sofa';
+    if (any(/stair/i)) return 'stairs';
+    if (any(/table/i)) return 'dtable';
+  }
+  if (any(/c4.*person/i)) return 'c4person';
+  if (any(/mockup.*(browser|window)/i)) return 'browser';
+  if (any(/mockup.*(iphone|android|phone)/i)) return 'mobile';
+  if (any(/mockup.*checkbox/i)) return 'check';
+  if (any(/mockup.*(switch|toggle)/i)) return 'toggle';
+  if (any(/mockup.*(combo|select)/i)) return 'select';
+  if (any(/mockup.*image/i)) return 'imgph';
+  if (any(/lambda|function/i)) return 'func';
+  if (any(/sqs|queue/i)) return 'queue';
+  if (any(/\bs3|bucket|blob/i)) return 'bucket';
+  if (any(/cloudfront|\bcdn/i)) return 'cdn';
+  if (any(/load_?balanc|\belb\b/i)) return 'lb';
+  if (any(/api_?gateway/i)) return 'apigw';
+  if (any(/dataStore|datastore/) && !/cylinder/.test(shape)) return 'store';
   if (any(/router/i)) return 'router';
   if (any(/switch|hub|bridge/i)) return 'switch';
   if (any(/firewall/i)) return 'firewall';
@@ -86,7 +120,7 @@ function kindOf(st) {
   if (st._ellipse || shape === 'ellipse' || st._doubleEllipse || shape === 'doubleEllipse') return 'ellipse';
   if (st._rhombus || shape === 'rhombus') return 'diamond';
   if (shape === 'parallelogram' || st._parallelogram) return 'para';
-  if (/^(cylinder|cylinder3|datastore)$/.test(shape) || st._cylinder) return 'cyl';
+  if (/^(cylinder|cylinder3)$/.test(shape) || st._cylinder) return 'cyl';
   if (shape === 'document' || st._document) return 'doc';
   if (shape === 'note' || st._note || shape === 'card') return 'note';
   if (shape === 'umlActor' || st._umlActor || shape === 'actor') return 'person';

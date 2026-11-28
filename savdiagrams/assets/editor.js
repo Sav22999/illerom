@@ -12,7 +12,7 @@ import { btn, colorPop, confirm, ctxAt, dialog, drop, fail, h, icon, iconBtn, K,
 import { both, getLang, t } from './i18n.js';
 import { S, api } from './store.js';
 import { commands, go, prefs, setPrefs, userMenu } from './account.js';
-import { BACKS, COMPART, CONTAINERS, FILLS, FONTS, INKS, LIBRARIES, MAX_IMG, PRESETS, RELATIONS, SHAPES, SLOTS, cleanItems, compH, edge as newEdge, freshIds, isDark, libOf, node as newNode, r2, uid } from './model.js';
+import { BACKS, COMPART, CONTAINERS, UNDER, FILLS, FONTS, INKS, LIBRARIES, MAX_IMG, PRESETS, RELATIONS, SHAPES, SLOTS, cleanItems, compH, edge as newEdge, freshIds, isDark, libOf, node as newNode, r2, uid } from './model.js';
 import { NS, bounds, facing, gridPattern, hits, itemSVG, measure, overlaps, route, sample, shapeSVG, sidePoint, textLines, union } from './shapes.js';
 import { layoutTree, rootOf } from './layout.js';
 import { keep as keepOff, take as takeOff, drop as dropOff } from '../../assets/savoffice/offline-keep.js';
@@ -828,8 +828,8 @@ export async function editorScreen(root, id) {
       const e = { ...EDGE_DEF, ...p.st, id: 'x', t: 'edge', a: { x: 4, y: 20 }, b: { x: 60, y: 20 }, r: 'straight', c: 'currentColor', s: 2, text: '' };
       return h('span.libpic', { html: `<svg viewBox="-4 -4 72 52" width="56" height="40">${itemSVG(e, () => null, 'none')}</svg>` });
     }
-    const k = p.k, ar = p.w / p.h, W = 60, H = 36, w = ar > W / H ? W : Math.max(10, H * ar), hh = ar > W / H ? Math.max(6, W / ar) : H;
-    const under = ['person', 'router', 'switch', 'server', 'firewall', 'pc', 'laptop', 'phone', 'printer', 'ap'].includes(k) ? .85 : 1;
+    const k = p.k, ar = k === 'text' ? 140 / 40 : p.w / p.h, W = 60, H = 36, w = ar > W / H ? W : Math.max(10, H * ar), hh = ar > W / H ? Math.max(6, W / ar) : H;
+    const under = UNDER.has(k) && !['start', 'end', 'mile'].includes(k) ? .85 : 1;
     const ww = w * under, h2 = hh * under, x = 2 + (W - ww) / 2, y = 6 + (H - h2) / 2;
     const paint = k === 'text' ? 'fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 3"' : `fill="var(--libfill)" stroke="currentColor" stroke-width="2" stroke-linejoin="round"${p.st.d ? ' stroke-dasharray="4 3"' : ''}`;
     const body = p.id === 'fork' ? `<rect x="2" y="${R2(6 + H / 2 - 3)}" width="60" height="6" fill="currentColor"/>` : shapeSVG(k === 'text' ? 'rect' : k, x, y, ww, h2, paint);

@@ -47,7 +47,7 @@ export function wrap(s, font, width) {
 
 /** Where the text of a node goes (inside the shape, or under it for a person). */
 export function textBox(n) {
-  const { x, y, w, h } = n;
+  const { x, y, w, h } = n, k2 = n.k;
   if (UNDER.has(n.k)) return { x: x - 50, y: y + h + 4, w: w + 100, h: 0, under: true, al: 'center' };
   if (COMPART.has(n.k)) return { x, y, w, h, va: 'top', al: 'left' };
   switch (n.k) {
@@ -69,6 +69,15 @@ export function textBox(n) {
     case 'subproc': return { x, y, w, h: h - 14 };
     case 'lane': { const b = Math.min(36, w * .3); return { x: x + b / 2 - h / 2, y: y + h / 2 - b / 2, w: h, h: b, rot: [x + b / 2, y + h / 2] }; }
     case 'vlane': return { x, y, w, h: Math.min(36, h * .3) };
+    case 'chevron': { const t = Math.min(h * .35, w * .3); return { x: x + t * .8, y, w: w - t * 1.8, h }; }
+    case 'divider': return { x, y, w, h: h / 2, al: 'left', va: 'bottom' };
+    case 'browser': { const b = Math.min(30, h * .15); return { x: x + b * .5 + Math.max(2, b * .14) * 9 + 4, y, w: Math.max(10, w - b - Math.max(2, b * .14) * 9 - 8), h: b, al: 'left' }; }
+    case 'mobile': return { x, y: y + 2, w, h: Math.min(h * .08, 28) };
+    case 'check': case 'toggle': { const s = k2 === 'check' ? Math.min(h, 20) : Math.min(h, 22) * 1.8; return { x: x + s + 2, y, w: Math.max(10, w - s - 2), h, al: 'left' }; }
+    case 'select': return { x, y, w: w - 26, h, al: 'left' };
+    case 'store': { const id = Math.min(40, w * .22); return { x: x + id, y, w: w - id, h }; }
+    case 'c4person': { const r = Math.min(w * .17, h * .2); return { x, y: y + r * 1.7, w, h: h - r * 1.7 }; }
+    case 'panel': return { x: x + 4, y: y + 4, w: w - 8, h: h - 8, va: 'top', al: 'left' };
     default: return { x, y, w, h };
   }
 }
@@ -249,6 +258,126 @@ export function shapeSVG(k, x, y, w, h, paint, n) {
       const v = k === 'vlane', b = v ? Math.min(36, h * .3) : Math.min(36, w * .3);
       return `<rect x="${R(x)}" y="${R(y)}" width="${R(w)}" height="${R(h)}" ${paint}/><rect x="${R(x)}" y="${R(y)}" width="${R(v ? w : b)}" height="${R(v ? b : h)}" fill="${S}" fill-opacity=".07"/>` + detail(v ? `M${R(x)} ${R(y + b)}H${R(x + w)}` : `M${R(x + b)} ${R(y)}V${R(y + h)}`, 1);
     }
+    // ---- business, journeys, story maps
+    case 'panel': {
+      const r = Math.min(10, Math.min(w, h) * .08);
+      return `<rect x="${R(x)}" y="${R(y)}" width="${R(w)}" height="${R(h)}" rx="${R(r)}" ${paint}/>` + (S !== 'none' ? `<path d="M${R(x + r)} ${R(y + 2)}H${R(x + w - r)}" stroke="${S}" stroke-width="${R(Math.max(3, SW * 2))}" stroke-linecap="round"/>` : '');
+    }
+    case 'chevron': { const t = Math.min(h * .35, w * .3); return P([[x, y], [x + w - t, y], [x + w, y + h / 2], [x + w - t, y + h], [x, y + h], [x + t, y + h / 2]]); }
+    case 'smile': case 'meh': case 'frown': {
+      const cx = x + w / 2, cy = y + h / 2, r = Math.min(w, h) / 2, e = r * .32, m = k === 'smile' ? r * .22 : k === 'frown' ? -r * .22 : 0;
+      return `<circle cx="${R(cx)}" cy="${R(cy)}" r="${R(r)}" ${paint}/><circle cx="${R(cx - e)}" cy="${R(cy - r * .2)}" r="${R(Math.max(1.2, r * .09))}" fill="${S}"/><circle cx="${R(cx + e)}" cy="${R(cy - r * .2)}" r="${R(Math.max(1.2, r * .09))}" fill="${S}"/>`
+        + detail(`M${R(cx - r * .42)} ${R(cy + r * .3 - m / 2)}Q${R(cx)} ${R(cy + r * .3 + m * 1.5)} ${R(cx + r * .42)} ${R(cy + r * .3 - m / 2)}`, 1);
+    }
+    case 'divider': return `<path d="M${R(x)} ${R(y + h / 2)}H${R(x + w)}" fill="none" stroke="${S === 'none' ? '#5f6660' : S}" stroke-width="${R(Math.max(1, SW))}" stroke-dasharray="${R(SW * 4 + 4)} ${R(SW * 2 + 4)}" stroke-linecap="round"/>`;
+    // ---- wireframes
+    case 'browser': {
+      const b = Math.min(30, h * .15), r = Math.min(8, w * .05), d = Math.max(2, b * .14);
+      return `<rect x="${R(x)}" y="${R(y)}" width="${R(w)}" height="${R(h)}" rx="${R(r)}" ${paint}/><path d="M${R(x + r)} ${R(y)}H${R(x + w - r)}Q${R(x + w)} ${R(y)} ${R(x + w)} ${R(y + r)}V${R(y + b)}H${R(x)}V${R(y + r)}Q${R(x)} ${R(y)} ${R(x + r)} ${R(y)}Z" fill="${S}" fill-opacity=".08"/>` + detail(`M${R(x)} ${R(y + b)}H${R(x + w)}`, 1)
+        + [0, 1, 2].map((j) => `<circle cx="${R(x + b * .5 + j * d * 3)}" cy="${R(y + b / 2)}" r="${R(d)}" fill="${S}" fill-opacity=".5"/>`).join('')
+        + (w > b * 4 ? `<rect x="${R(x + b * .5 + d * 9)}" y="${R(y + b * .22)}" width="${R(Math.max(4, w - b - d * 9))}" height="${R(b * .56)}" rx="${R(b * .28)}" fill="#ffffff" stroke="${S}" stroke-opacity=".4" stroke-width="1"/>` : '');
+    }
+    case 'mobile': {
+      const r = Math.min(w, h) * .14, s = Math.min(w, h) * .05, top = Math.min(h * .08, 28);
+      return `<rect x="${R(x)}" y="${R(y)}" width="${R(w)}" height="${R(h)}" rx="${R(r)}" ${paint}/><rect x="${R(x + s)}" y="${R(y + top)}" width="${R(w - s * 2)}" height="${R(h - top * 2)}" rx="${R(s)}" fill="${S}" fill-opacity=".05"/>`
+        + `<rect x="${R(x + w * .38)}" y="${R(y + top * .35)}" width="${R(w * .24)}" height="${R(top * .3)}" rx="${R(top * .15)}" fill="${S}" fill-opacity=".6"/>` + detail(`M${R(x + w * .4)} ${R(y + h - top / 2)}H${R(x + w * .6)}`, 1.2);
+    }
+    case 'imgph': return `<rect x="${R(x)}" y="${R(y)}" width="${R(w)}" height="${R(h)}" rx="3" ${paint}/>` + detail(`M${R(x)} ${R(y)}L${R(x + w)} ${R(y + h)}M${R(x + w)} ${R(y)}L${R(x)} ${R(y + h)}`, .5);
+    case 'check': {
+      const s = Math.min(h, 20), by = y + (h - s) / 2;
+      return `<rect x="${R(x)}" y="${R(by)}" width="${R(s)}" height="${R(s)}" rx="${R(s * .2)}" ${paint}/>` + detail(`M${R(x + s * .22)} ${R(by + s * .52)}L${R(x + s * .42)} ${R(by + s * .72)}L${R(x + s * .78)} ${R(by + s * .3)}`, 1.1);
+    }
+    case 'toggle': {
+      const ph = Math.min(h, 22), pw = ph * 1.8, py = y + (h - ph) / 2;
+      return `<rect x="${R(x)}" y="${R(py)}" width="${R(pw)}" height="${R(ph)}" rx="${R(ph / 2)}" fill="${S === 'none' ? F : S}"/><circle cx="${R(x + pw - ph / 2)}" cy="${R(py + ph / 2)}" r="${R(ph * .38)}" fill="#ffffff"/>`;
+    }
+    case 'lorem': {
+      const lh = 14, n2 = Math.max(1, Math.floor((h + 4) / lh));
+      return Array.from({ length: n2 }, (_, j) => `<rect x="${R(x)}" y="${R(y + j * lh)}" width="${R(j === n2 - 1 && n2 > 1 ? w * .6 : w)}" height="8" rx="4" fill="${S === 'none' ? '#9aa29d' : S}" fill-opacity=".28"/>`).join('');
+    }
+    case 'select': {
+      const q = Math.min(6, h * .2), cx = x + w - 16;
+      return `<rect x="${R(x)}" y="${R(y)}" width="${R(w)}" height="${R(h)}" rx="${R(Math.min(6, h * .2))}" ${paint}/>` + detail(`M${R(cx - q)} ${R(y + h / 2 - q / 2)}L${R(cx)} ${R(y + h / 2 + q / 2)}L${R(cx + q)} ${R(y + h / 2 - q / 2)}`, 1);
+    }
+    // ---- DFD, C4, cloud architecture
+    case 'store': {
+      const id = Math.min(40, w * .22);
+      return `<rect x="${R(x)}" y="${R(y)}" width="${R(w)}" height="${R(h)}" fill="${F}"/><path d="M${R(x + w)} ${R(y)}H${R(x)}V${R(y + h)}H${R(x + w)}M${R(x + id)} ${R(y)}V${R(y + h)}" ${noFill}/>`;
+    }
+    case 'c4person': {
+      const r = Math.min(w * .17, h * .2), cx = x + w / 2, top = y + r * 1.7;
+      return `<rect x="${R(x)}" y="${R(top)}" width="${R(w)}" height="${R(y + h - top)}" rx="${R(Math.min(w * .18, (y + h - top) * .4))}" ${paint}/><circle cx="${R(cx)}" cy="${R(y + r)}" r="${R(r)}" ${paint}/>`;
+    }
+    case 'func': {
+      const q = Math.min(w, h), ox = x + (w - q) / 2, oy = y + (h - q) / 2;
+      return `<rect x="${R(ox)}" y="${R(oy)}" width="${R(q)}" height="${R(q)}" rx="${R(q * .2)}" ${paint}/>` + detail(`M${R(ox + q * .3)} ${R(oy + q * .25)}H${R(ox + q * .42)}L${R(ox + q * .72)} ${R(oy + q * .78)}M${R(ox + q * .52)} ${R(oy + q * .45)}L${R(ox + q * .3)} ${R(oy + q * .78)}`, 1.2);
+    }
+    case 'queue': {
+      let d = '';
+      for (let j = 1; j < 5; j++) d += `M${R(x + w * j / 5)} ${R(y)}V${R(y + h)}`;
+      return `<rect x="${R(x)}" y="${R(y)}" width="${R(w)}" height="${R(h)}" rx="${R(Math.min(6, h * .15))}" ${paint}/>` + detail(d, .8);
+    }
+    case 'bucket': {
+      const ry = Math.min(h * .14, w * .2), cx = x + w / 2;
+      return `<path d="M${R(x)} ${R(y + ry)}L${R(x + w * .14)} ${R(y + h - ry * .6)}A${R(w * .36)} ${R(ry * .6)} 0 0 0 ${R(x + w * .86)} ${R(y + h - ry * .6)}L${R(x + w)} ${R(y + ry)}Z" ${paint}/><ellipse cx="${R(cx)}" cy="${R(y + ry)}" rx="${R(w / 2)}" ry="${R(ry)}" ${paint}/>`;
+    }
+    case 'cdn': {
+      const cx = x + w / 2, cy = y + h / 2, r = Math.min(w, h) / 2;
+      return `<circle cx="${R(cx)}" cy="${R(cy)}" r="${R(r)}" ${paint}/>` + detail(`M${R(cx - r)} ${R(cy)}H${R(cx + r)}M${R(cx - r * .86)} ${R(cy - r * .5)}H${R(cx + r * .86)}M${R(cx - r * .86)} ${R(cy + r * .5)}H${R(cx + r * .86)}M${R(cx)} ${R(cy - r)}A${R(r * .45)} ${R(r)} 0 0 0 ${R(cx)} ${R(cy + r)}A${R(r * .45)} ${R(r)} 0 0 0 ${R(cx)} ${R(cy - r)}`, .8);
+    }
+    case 'lb': {
+      const cx = x + w / 2, cy = y + h / 2, r = Math.min(w, h) / 2, a = cx - r * .5, b = cx + r * .55, hd = r * .16;
+      return `<circle cx="${R(cx)}" cy="${R(cy)}" r="${R(r)}" ${paint}/>` + detail(arrow(a, cy, b, cy - r * .45, hd) + arrow(a, cy, b, cy, hd) + arrow(a, cy, b, cy + r * .45, hd), 1);
+    }
+    case 'apigw': {
+      const cx = x + w / 2, cy = y + h / 2, q = Math.min(w, h) / 2, c = q * .26;
+      return P([[cx - q * .5, cy - q * .87], [cx + q * .5, cy - q * .87], [cx + q, cy], [cx + q * .5, cy + q * .87], [cx - q * .5, cy + q * .87], [cx - q, cy]])
+        + detail(`M${R(cx - c * .4)} ${R(cy - c)}L${R(cx - c * 1.4)} ${R(cy)}L${R(cx - c * .4)} ${R(cy + c)}M${R(cx + c * .4)} ${R(cy - c)}L${R(cx + c * 1.4)} ${R(cy)}L${R(cx + c * .4)} ${R(cy + c)}`, 1.1);
+    }
+    // ---- electric and electronic symbols: two leads at mid height (ground: one at the top)
+    case 'res': case 'cap': case 'ind': case 'bat': case 'eswitch': case 'lamp': case 'diode': case 'led': case 'gnd': {
+      const cy = y + h / 2, cx = x + w / 2, L = (a, b) => `M${R(x)} ${R(cy)}H${R(a)}M${R(b)} ${R(cy)}H${R(x + w)}`, ink = S === 'none' ? '#1c1c1c' : S;
+      const line = (d, k2 = 1) => `<path d="${d}" fill="none" stroke="${ink}" stroke-width="${R(Math.max(1, SW * k2))}" stroke-linecap="round" stroke-linejoin="round"/>`;
+      if (k === 'res') { const a = x + w * .2, b = x + w * .8, n2 = 6, step = (b - a) / n2, am = h * .3; let d = L(a, b) + `M${R(a)} ${R(cy)}`; for (let j = 0; j < n2; j++) d += `L${R(a + step * (j + .5))} ${R(cy + (j % 2 ? am : -am))}`; return line(d + `L${R(b)} ${R(cy)}`); }
+      if (k === 'cap') { const g = Math.max(3, w * .05), hh = h * .38; return line(L(cx - g, cx + g) + `M${R(cx - g)} ${R(cy - hh)}V${R(cy + hh)}M${R(cx + g)} ${R(cy - hh)}V${R(cy + hh)}`); }
+      if (k === 'ind') { const a = x + w * .2, b = x + w * .8, s = (b - a) / 4; let d = L(a, b) + `M${R(a)} ${R(cy)}`; for (let j = 0; j < 4; j++) d += `A${R(s / 2)} ${R(s / 2)} 0 0 1 ${R(a + s * (j + 1))} ${R(cy)}`; return line(d); }
+      if (k === 'bat') { const g = Math.max(3, w * .05); return line(L(cx - g, cx + g) + `M${R(cx - g)} ${R(cy - h * .4)}V${R(cy + h * .4)}`) + line(`M${R(cx + g)} ${R(cy - h * .22)}V${R(cy + h * .22)}`, 2) + line(`M${R(cx - g - 10)} ${R(cy - h * .42)}h6M${R(cx - g - 7)} ${R(cy - h * .42 - 3)}v6`, .6); }
+      if (k === 'eswitch') { const a = x + w * .3, b = x + w * .7, dr = Math.max(2, SW * 1.4); return line(L(a, b) + `M${R(a)} ${R(cy)}L${R(b - 2)} ${R(cy - h * .4)}`) + `<circle cx="${R(a)}" cy="${R(cy)}" r="${R(dr)}" fill="${ink}"/><circle cx="${R(b)}" cy="${R(cy)}" r="${R(dr)}" fill="${ink}"/>`; }
+      if (k === 'lamp') { const r = Math.min(h / 2, w * .22), q = r * .7071; return `<circle cx="${R(cx)}" cy="${R(cy)}" r="${R(r)}" ${paint}/>` + line(L(cx - r, cx + r) + `M${R(cx - q)} ${R(cy - q)}L${R(cx + q)} ${R(cy + q)}M${R(cx + q)} ${R(cy - q)}L${R(cx - q)} ${R(cy + q)}`); }
+      if (k === 'diode' || k === 'led') {
+        const s = Math.min(h * .36, w * .16), a = cx - s, b = cx + s;
+        let out = line(L(a, b) + `M${R(b)} ${R(cy - s)}V${R(cy + s)}`) + `<polygon points="${R(a)},${R(cy - s)} ${R(b)},${R(cy)} ${R(a)},${R(cy + s)}" fill="${ink}" stroke="${ink}" stroke-width="1" stroke-linejoin="round"/>`;
+        if (k === 'led') out += line(arrow(cx, cy - s * 1.2, cx + s * .9, cy - s * 2.1, s * .35) + arrow(cx + s * .6, cy - s * 1.1, cx + s * 1.5, cy - s * 2, s * .35), .7);
+        return out;
+      }
+      const t = y + h * .38; return line(`M${R(cx)} ${R(y)}V${R(t)}M${R(x + w * .1)} ${R(t)}H${R(x + w * .9)}M${R(x + w * .25)} ${R(t + h * .2)}H${R(x + w * .75)}M${R(x + w * .4)} ${R(t + h * .4)}H${R(x + w * .6)}`);
+    }
+    // ---- floor plans (seen from above)
+    case 'door': {
+      const hx = x, hy = y + h, gap = F !== 'none' ? `<rect x="${R(x)}" y="${R(hy - 5)}" width="${R(w)}" height="10" fill="${F}"/>` : ''; // the opening in the wall
+      return gap + `<path d="M${R(hx)} ${R(hy)}V${R(y)}" fill="none" stroke="${S}" stroke-width="${R(Math.max(2, SW * 1.5))}" stroke-linecap="round"/><path d="M${R(hx)} ${R(y)}A${R(w)} ${R(h)} 0 0 1 ${R(x + w)} ${R(hy)}" fill="none" stroke="${S}" stroke-width="${R(Math.max(1, SW * .6))}" stroke-dasharray="4 3"/>`;
+    }
+    case 'window': return `<rect x="${R(x)}" y="${R(y)}" width="${R(w)}" height="${R(h)}" ${paint}/>` + detail(w >= h ? `M${R(x)} ${R(y + h / 2)}H${R(x + w)}` : `M${R(x + w / 2)} ${R(y)}V${R(y + h)}`, .7);
+    case 'bed': {
+      const p = Math.min(h * .2, 40), m = w * .06;
+      return `<rect x="${R(x)}" y="${R(y)}" width="${R(w)}" height="${R(h)}" rx="${R(Math.min(6, w * .05))}" ${paint}/>` + (w > h * .9
+        ? `<rect x="${R(x + m)}" y="${R(y + m)}" width="${R(w / 2 - m * 1.5)}" height="${R(p)}" rx="5" ${thin}/><rect x="${R(x + w / 2 + m / 2)}" y="${R(y + m)}" width="${R(w / 2 - m * 1.5)}" height="${R(p)}" rx="5" ${thin}/>`
+        : `<rect x="${R(x + m)}" y="${R(y + m)}" width="${R(w - m * 2)}" height="${R(p)}" rx="5" ${thin}/>`) + detail(`M${R(x)} ${R(y + h * .38)}H${R(x + w)}`, .7);
+    }
+    case 'sofa': {
+      const b = Math.min(h * .3, 22), a = Math.min(w * .12, 22);
+      return `<rect x="${R(x)}" y="${R(y)}" width="${R(w)}" height="${R(h)}" rx="${R(Math.min(8, h * .2))}" ${paint}/>` + detail(`M${R(x + a)} ${R(y + h)}V${R(y + b)}H${R(x + w - a)}V${R(y + h)}M${R(x + w / 2)} ${R(y + b)}V${R(y + h)}`, .7);
+    }
+    case 'dtable': {
+      const c = Math.min(w, h) * .2, tx = x + c * .9, ty = y + c * .9, tw = w - c * 1.8, th = h - c * 1.8, ch = (cx2, cy2) => `<rect x="${R(cx2 - c / 2)}" y="${R(cy2 - c / 2)}" width="${R(c)}" height="${R(c)}" rx="${R(c * .25)}" ${thin}/>`;
+      return ch(x + w / 2, y + c / 2) + ch(x + w / 2, y + h - c / 2) + ch(x + c / 2, y + h / 2) + ch(x + w - c / 2, y + h / 2) + `<rect x="${R(tx)}" y="${R(ty)}" width="${R(tw)}" height="${R(th)}" rx="${R(Math.min(8, tw * .1))}" ${paint}/>`;
+    }
+    case 'stairs': {
+      const across = w >= h, n2 = Math.max(3, Math.round((across ? w : h) / 22));
+      let d = '';
+      for (let j = 1; j < n2; j++) d += across ? `M${R(x + w * j / n2)} ${R(y)}V${R(y + h)}` : `M${R(x)} ${R(y + h * j / n2)}H${R(x + w)}`;
+      return `<rect x="${R(x)}" y="${R(y)}" width="${R(w)}" height="${R(h)}" ${paint}/>` + detail(d, .6) + detail(across ? arrow(x + w * .1, y + h / 2, x + w * .9, y + h / 2, Math.min(h, 20) * .3) : arrow(x + w / 2, y + h * .9, x + w / 2, y + h * .1, Math.min(w, 20) * .3), .8);
+    }
     default: return `<rect x="${R(x)}" y="${R(y)}" width="${R(w)}" height="${R(h)}" ${paint}/>`;
   }
 }
@@ -258,6 +387,12 @@ export function nodeSVG(n) {
   if (COMPART.has(n.k)) return shape + compText(n);
   if (n.k === 'card') return shape + cardText(n);
   if (n.k === 'axis') return shape + axisText(n);
+  if (n.k === 'panel') return shape + panelText(n);
+  if (n.k === 'store') {
+    // a data store of a DFD: its code (D1, 2…) in the narrow part, its name in the wide one
+    const m = /^\s*([A-Za-z]{0,3}\d+)\s+([\s\S]*)$/.exec(n.text || ''), id = Math.min(40, n.w * .22);
+    if (m) { const t = textLines({ ...n, text: m[2] }); return shape + textTag(n, n.x + id / 2, n.y + n.h / 2 + n.fs * .35, m[1], { anchor: 'middle', b: true }) + textSVG(n, t.lines, t.lh, t.top, t.box, t.pad, t.al); }
+  }
   const t = textLines(n);
   return shape + textSVG(n, t.lines, t.lh, t.top, t.box, t.pad, t.al);
 }
@@ -305,6 +440,17 @@ function cardText(n) {
   for (const l of l2) { out += textTag(n, x, y + fs2 * .92, l, { anchor: al, b: false, fs: fs2, op: .72 }); y += h2; }
   return out;
 }
+/** A panel (a block of a canvas, a step of a journey): its first line is the title, in bold, the others under it. */
+function panelText(n) {
+  const b = textBox(n), pad = 8, lines = String(n.text || '').split('\n'), fs2 = n.fs * .88, W = b.w - pad * 2;
+  const t1 = wrap(lines[0] || '', fontOf({ ...n, b: true }), W), rest = lines.length > 1 ? wrap(lines.slice(1).join('\n'), fontOf({ ...n, fs: fs2 }, fs2), W) : [];
+  const al = n.al === 'center' ? 'middle' : n.al === 'right' ? 'end' : 'start', x = al === 'middle' ? b.x + b.w / 2 : al === 'end' ? b.x + b.w - pad : b.x + pad;
+  let y = b.y + pad, out = '';
+  for (const l of t1) { out += textTag(n, x, y + n.fs * .92, l, { anchor: al, b: true }); y += n.fs * 1.25; }
+  y += 4;
+  for (const l of rest) { if (y + fs2 > n.y + n.h) break; out += textTag(n, x, y + fs2 * .92, l, { anchor: al, b: false, fs: fs2 }); y += fs2 * 1.3; }
+  return out;
+}
 /** Axis of a timeline: one label in the middle of every interval, a line of the text each. */
 function axisText(n) {
   const labels = String(n.text || '').split('\n').filter((l) => l.trim()), N = Math.max(1, labels.length), cw = n.w / N;
@@ -323,7 +469,7 @@ export function sidePoint(n, p, o) {
   const f = o === undefined || o === null ? .5 : o;
   return p === 't' ? [n.x + n.w * f, n.y] : p === 'r' ? [n.x + n.w, n.y + n.h * f] : p === 'b' ? [n.x + n.w * f, n.y + n.h] : [n.x, n.y + n.h * f];
 }
-const ROUNDISH = new Set(['ellipse', 'cloud', 'start', 'end', 'bstart', 'binter', 'bend', 'router']), DIAMONDISH = new Set(['diamond', 'gwx', 'gwp', 'gwo', 'mile']);
+const ROUNDISH = new Set(['ellipse', 'cloud', 'start', 'end', 'bstart', 'binter', 'bend', 'router', 'smile', 'meh', 'frown', 'cdn', 'lb']), DIAMONDISH = new Set(['diamond', 'gwx', 'gwp', 'gwo', 'mile']);
 const center = (n) => [n.x + n.w / 2, n.y + n.h / 2];
 /** Where the line from the centre of a node toward (px, py) leaves its outline. */
 export function boundary(n, px, py) {
