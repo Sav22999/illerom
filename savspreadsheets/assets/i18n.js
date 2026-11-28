@@ -176,6 +176,7 @@ const T = {
   clear_rows: ["Clear rows", "Svuota le righe"],
   clear_values: ["Clear contents", "Svuota il contenuto"],
   close: ["Close", "Chiudi"],
+  actions_search: ["Search the actions", "Cerca tra le azioni"], k_editor: ["With a spreadsheet open, here are the keys of the editor.", "Con un foglio di calcolo aperto, qui trovi i tasti dell’editor."],
   col_width: ["Column width", "Larghezza colonna"],
   color: ["Text colour", "Colore del testo"],
   column_n: ["Column {c}", "Colonna {c}"],

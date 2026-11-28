@@ -1,6 +1,7 @@
 /** Texts of the app, in English and Italian: the ones shared with SavSchedules and the other apps (accounts, settings), then the mail. */
 const T = {
   cancel: ['Cancel', 'Annulla'], close: ['Close', 'Chiudi'], save: ['Save', 'Salva'], delete: ['Delete', 'Elimina'], edit: ['Edit', 'Modifica'], remove: ['Remove', 'Rimuovi'],
+  shortcuts: ['Keyboard shortcuts', 'Scorciatoie da tastiera'], actions_search: ['Search the actions', 'Cerca tra le azioni'], k_move: ['The message before or after', 'Il messaggio prima o dopo'], k_close: ['Close the message, or let the chosen ones go', 'Chiudi il messaggio, o togli la scelta'], k_send: ['Send, while writing', 'Invia, mentre scrivi'],
   copy: ['Copy', 'Copia'], copied: ['Copied', 'Copiato'], retry: ['Try again', 'Riprova'], home: ['Home', 'Home'], or: ['or', 'oppure'], back: ['Back', 'Indietro'],
   sign_in: ['Sign in', 'Accedi'], sign_up: ['Create account', 'Crea account'], sign_out: ['Sign out', 'Esci'], settings: ['Settings', 'Impostazioni'],
   your_name: ['Your name', 'Il tuo nome'], email: ['Email', 'Email'], password: ['Password', 'Password'],

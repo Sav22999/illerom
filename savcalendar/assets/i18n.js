@@ -4,6 +4,7 @@ const T = {
   account: ['Account', 'Account'], bar_period: ['The period shown', 'Il periodo mostrato'],
   move_next_day: ['Move to the next day', 'Sposta al giorno dopo'],
   cancel: ['Cancel', 'Annulla'], close: ['Close', 'Chiudi'], save: ['Save', 'Salva'], delete: ['Delete', 'Elimina'], create: ['Create', 'Crea'], add: ['Add', 'Aggiungi'], done: ['Done', 'Fatto'],
+  shortcuts: ['Keyboard shortcuts', 'Scorciatoie da tastiera'], actions_search: ['Search the actions', 'Cerca tra le azioni'],
   copy: ['Copy', 'Copia'], copied: ['Copied', 'Copiato'], more: ['More', 'Altro'], retry: ['Try again', 'Riprova'], remove: ['Remove', 'Rimuovi'], name: ['Name', 'Nome'], search: ['Search', 'Cerca'],
   open: ['Open', 'Apri'], edit: ['Edit', 'Modifica'], home: ['Home', 'Home'], send: ['Send', 'Invia'], restore: ['Restore', 'Ripristina'], refresh: ['Refresh', 'Aggiorna'], print: ['Print', 'Stampa'],
   previous: ['Previous', 'Precedente'], next: ['Next', 'Successivo'], today: ['Today', 'Oggi'], or: ['or', 'oppure'], yes: ['Yes', 'Sì'], no: ['No', 'No'], maybe: ['If need be', 'Se serve'], total: ['Total', 'Totale'],

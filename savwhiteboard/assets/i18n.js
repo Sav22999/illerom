@@ -20,6 +20,7 @@ const T = {
   shared_by_edit: ["From {n} · you can edit","Di {n} · puoi modificare"],
   shared_by_view: ["From {n} · only to look","Di {n} · solo da guardare"],
   close: ["Close","Chiudi"],
+  actions_search: ["Search the actions", "Cerca tra le azioni"], k_editor: ["With a board open, here are the keys of the editor.", "Con una lavagna aperta, qui trovi i tasti dell’editor."],
   save: ["Save","Salva"],
   delete: ["Delete","Elimina"],
   create: ["Create","Crea"],

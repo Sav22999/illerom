@@ -11,7 +11,7 @@
 import { btn, colorPop, confirm, ctxAt, dialog, drop, fail, h, icon, iconBtn, K, menuAt, mobile, put, toast } from './ui.js';
 import { both, getLang, t } from './i18n.js';
 import { S, api } from './store.js';
-import { commands, go, prefs, setPrefs, userMenu } from './account.js';
+import { commands, go, prefs, ownShortcuts, setPrefs, userMenu } from './account.js';
 import { BACKS, COMPART, CONTAINERS, UNDER, FILLS, FONTS, INKS, LIBRARIES, MAX_IMG, PRESETS, RELATIONS, SHAPES, SLOTS, cleanItems, compH, edge as newEdge, freshIds, isDark, libOf, node as newNode, r2, uid } from './model.js';
 import { NS, bounds, facing, gridPattern, hits, itemSVG, measure, overlaps, route, sample, shapeSVG, sidePoint, textLines, union } from './shapes.js';
 import { layoutTree, rootOf } from './layout.js';
@@ -1175,6 +1175,7 @@ export async function editorScreen(root, id) {
     queueSave(400);
   }
   addEventListener('keydown', onKey);
+  ownShortcuts(shortcuts); // the menu of the account and ? show the keys of the editor
   addEventListener('keyup', onKeyUp);
   addEventListener('blur', onKeyUp);
   document.addEventListener('copy', onCopy);
@@ -1210,6 +1211,7 @@ export async function editorScreen(root, id) {
     flush(true);
     delete window.__savdia;
     removeEventListener('keydown', onKey);
+    ownShortcuts(null);
     removeEventListener('keyup', onKeyUp);
     removeEventListener('blur', onKeyUp);
     document.removeEventListener('copy', onCopy);

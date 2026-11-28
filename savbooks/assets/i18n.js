@@ -4,6 +4,7 @@ const T = {
     tagline: ['Write books, from the first chapter to the e-book.', 'Scrivi libri, dal primo capitolo all’e-book.'],
     cancel: ['Cancel', 'Annulla'],
     close: ['Close', 'Chiudi'],
+    actions_search: ['Search the actions', 'Cerca tra le azioni'], k_editor: ['With a book open, here are the keys of the editor.', 'Con un libro aperto, qui trovi i tasti dell’editor.'],
     save: ['Save', 'Salva'],
     ok: ['OK', 'OK'],
     delete: ['Delete', 'Elimina'],

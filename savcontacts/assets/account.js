@@ -44,6 +44,13 @@ export function userMenu() {
   av.setAttribute('button', '');
   return h('div.umenu', appsButton(), drop(av, [{ head: u.email }, ['contact', t('all_contacts'), () => go('#/')], ['settings', t('settings'), () => go('#/settings')], ['keyboard', t('shortcuts'), () => import('./contacts.js').then((m) => m.shortcutsDialog())], '-', ['log-out', t('sign_out'), signOut]], { placement: 'bottom-end', label: u.name }));
 }
+// ⌘? / Ctrl+? opens the keys on every page of the app, also while writing (as ⌘J), never over a dialog
+addEventListener('keydown', (e) => {
+  if (e.defaultPrevented || !(e.metaKey || e.ctrlKey) || e.altKey || !(e.key === '?' || (e.shiftKey && e.code === 'Slash'))) return;
+  if (document.querySelector('sav-dialog[open], sav-drawer[open]')) return;
+  e.preventDefault();
+  import('./contacts.js').then((m) => m.shortcutsDialog());
+});
 export async function signOut() {
   await api('auth.logout', {}).catch(() => {});
   S.user = null; S.csrf = ''; S.groups = []; S.contacts = []; S.prefs = {}; S.ready = false;

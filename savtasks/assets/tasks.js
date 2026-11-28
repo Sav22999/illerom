@@ -135,8 +135,7 @@ function build(root) {
     // a letter is a shortcut only with ⌥⇧ (Alt+Shift), never alone: read from the key itself (on a Mac ⌥ changes the character)
     const L = e.altKey && e.shiftKey && /^Key[A-Z]$/.test(e.code) ? e.code[3].toLowerCase() : null;
     if ((e.altKey && !L) || (!L && /^[a-z]$/i.test(e.key))) return;
-    const map = { n: () => main.querySelector('.qadd')?.focus(), q: () => main.querySelector('.qadd')?.focus(), '/': () => q.focus(), t: () => go('#/today'), u: () => go('#/upcoming'), i: () => go('#/inbox'), s: () => go('#/starred'),
-      '?': () => shortcutsDialog() };
+    const map = { n: () => main.querySelector('.qadd')?.focus(), q: () => main.querySelector('.qadd')?.focus(), '/': () => q.focus(), t: () => go('#/today'), u: () => go('#/upcoming'), i: () => go('#/inbox'), s: () => go('#/starred') };
     const kk = L || e.key;
     if (map[kk]) { e.preventDefault(); map[kk](); }
   };
@@ -509,7 +508,7 @@ function schedulesView() {
 
 export function shortcutsDialog() {
   const r = (k, l) => h('div.krow', h('span', l), h('kbd', K(k)));
-  dialog({ title: t('shortcuts'), width: '26rem', body: h('div.keys', r('Alt+Shift+N', t('k_new')), r('/', t('k_search')), r('Alt+Shift+T', t('v_today')), r('Alt+Shift+U', t('v_upcoming')), r('Alt+Shift+I', t('inbox')), r('Alt+Shift+S', t('v_starred')),  r('?', t('shortcuts')),
+  dialog({ title: t('shortcuts'), width: '26rem', body: h('div.keys', r('Alt+Shift+N', t('k_new')), r('/', t('k_search')), r('Alt+Shift+T', t('v_today')), r('Alt+Shift+U', t('v_upcoming')), r('Alt+Shift+I', t('inbox')), r('Alt+Shift+S', t('v_starred')),  r('Mod+?', t('shortcuts')),
     h('p.muted.small', t('k_quick'))), actions: [{ label: t('close'), primary: true }] });
 }
 

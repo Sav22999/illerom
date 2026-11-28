@@ -2,7 +2,7 @@
 import { state, api, get, h, icon, btn, iconBtn, item, tile, isApp, openLink, segmented, $, $$, clamp, uid, go, oops, ok, toast, errText, mobile, isMac, userSetting, dialog, confirmBox, promptBox, uploadPicture, copyText, fileName } from './core.js';
 import { t } from './i18n.js';
 import { brand, logo } from './auth.js';
-import { userMenu } from './home.js';
+import { ownShortcuts, userMenu } from './home.js';
 import { Deck, fixSlide } from './model.js';
 import { context, slideContext, styleOf, FORMATS } from './themes.js';
 import { slideNode, thumb, sorted } from './render.js';
@@ -626,6 +626,7 @@ export async function deckScreen(app, deckId, q) {
   function show(from, opt) { if (!deck.slides.size || running) return; ed.closeText(); ed.saveNotes(); const cur = deck.slide(ed.sid); running = startShow(ed, from || (cur && !cur.d.hide ? ed.sid : undefined), opt); ed.onShowEnd = (sid) => { running = null; ed.goto(sid); stage.draw(); deck.setState({ s: sid }); }; }
   ed.show = show;
   ed.shortcuts = shortcuts;
+  ownShortcuts(shortcuts); // the menu of the account and ? show the keys of the editor
   /** Someone is presenting: whoever has the presentation open can follow their slides. */
   function drawBanner() {
     const p = deck.people.find((x) => x.st?.pr), box = $('.banner', center);
@@ -650,5 +651,5 @@ export async function deckScreen(app, deckId, q) {
   if (q.get('present')) show(ed.sid);
   // for automatic checks and the console
   window.__sp = ed;
-  return { leave: () => { window.SavOffice?.exporter?.(null); ed.closeText(); saveNotes(); running?.close(); dropFeatures(); stage.leave(); deck.stop(); removeEventListener('keydown', onKey); removeEventListener('copy', onCopy); removeEventListener('cut', onCopy); removeEventListener('paste', onPaste); removeEventListener('resize', onResize); app.className = ''; $$('.ctxm,.ftb').forEach((x) => x.remove()); delete window.__sp; } };
+  return { leave: () => { ownShortcuts(null); window.SavOffice?.exporter?.(null); ed.closeText(); saveNotes(); running?.close(); dropFeatures(); stage.leave(); deck.stop(); removeEventListener('keydown', onKey); removeEventListener('copy', onCopy); removeEventListener('cut', onCopy); removeEventListener('paste', onPaste); removeEventListener('resize', onResize); app.className = ''; $$('.ctxm,.ftb').forEach((x) => x.remove()); delete window.__sp; } };
 }

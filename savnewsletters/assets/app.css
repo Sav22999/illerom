@@ -1560,3 +1560,8 @@ sav-input.bad::part(base) { border-color: var(--sav-color-danger); }
 /* the home (my groups): its title, the box to start a group and "Recent" sit in one container, spaced as in SavDocuments and SavPresentations */
 .hmain > div > .hhead { margin-bottom: 1rem; }
 .hmain > div > h2 { margin: 1.4rem 0 .7rem; }
+/* the list of the keyboard shortcuts: the rows of the settings of the other apps of SavOffice */
+.ocard { --sav-card-padding: 0; margin: 0; } .orows { display: grid; }
+.orow { display: flex; align-items: center; gap: 1rem 1.6rem; padding: .95rem 1.2rem; border-bottom: 1px solid var(--sav-color-border); } .orow:last-child { border-bottom: 0; }
+.orow-t { flex: 1; min-width: 0; display: grid; gap: .15rem; } .orow-t small { color: var(--sav-color-text-muted); font-size: .84rem; } .orow-c { flex: none; max-width: 55%; display: flex; justify-content: flex-end; } .orow-c > sav-select, .orow-c > sav-input { width: 15rem; max-width: 100%; }
+@media (max-width: 700px) { .orow { flex-wrap: wrap; } .orow-c { max-width: 100%; width: 100%; justify-content: flex-start; } }

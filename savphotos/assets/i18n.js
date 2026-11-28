@@ -5,6 +5,7 @@ const T = {
   filter: ['Filter', 'Filtra'], kind_all: ['Photos and videos', 'Foto e video'], kind_photo: ['Photos only', 'Solo foto'], kind_video: ['Videos only', 'Solo video'], only_fav: ['Favourites only', 'Solo preferiti'],
   cancel: ['Cancel', 'Annulla'],
   close: ['Close', 'Chiudi'],
+  shortcuts: ['Keyboard shortcuts', 'Scorciatoie da tastiera'], actions_search: ['Search the actions', 'Cerca tra le azioni'], k_del: ['Move what is chosen to the trash', 'Sposta nel cestino ciò che hai scelto'], k_none: ['Let the chosen ones go', 'Togli la scelta'], k_browse: ['The photo before or after, while you look at it', 'La foto prima o dopo, mentre la guardi'], k_info: ['Show or hide the details of the photo', 'Mostra o nascondi i dettagli della foto'], k_fav: ['Add to the favourites, or take away', 'Aggiungi ai preferiti, o togli'],
   save: ['Save', 'Salva'],
   create: ['Create', 'Crea'],
   done: ['Done', 'Fatto'],

@@ -15,7 +15,7 @@
 import { btn, colorPop, confirm, dialog, drop, fail, h, icon, iconBtn, K, keepCaret, mobile, put, tile, toast } from './ui.js';
 import { getLang, t } from './i18n.js';
 import { S, api } from './store.js';
-import { commands, go, prefs, setPrefs, userMenu } from './account.js';
+import { commands, go, prefs, ownShortcuts, setPrefs, userMenu } from './account.js';
 import { DEFS, NS, docCSS, itemSVG, paperSVG, sheetSVG } from './render.js';
 import { bounds, cut, hits, moved, overlaps, scaled, union } from './ink.js';
 import { BACKS, COVERS, FONTS, HIGHLIGHT, PAPERS, PATTERNS, SIZES, TEXT_INKS, TEXT_MARKS, cleanDoc, cleanItems, defaultPaper, docEmpty, freshIds, freshSheet, inkOn, inksFor, isDark, newSheet, pageSize, r2, uid } from './model.js';
@@ -1458,6 +1458,7 @@ export async function notebookScreen(root, id) {
     queueSave(400);
   }
   addEventListener('keydown', onKey);
+  ownShortcuts(shortcuts); // the menu of the account and ? show the keys of the editor
   document.addEventListener('copy', onCopy);
   document.addEventListener('cut', onCopy);
   document.addEventListener('paste', onPaste);
@@ -1496,6 +1497,7 @@ export async function notebookScreen(root, id) {
     gone = true;
     flush(true);
     removeEventListener('keydown', onKey);
+    ownShortcuts(null);
     document.removeEventListener('copy', onCopy);
     document.removeEventListener('cut', onCopy);
     document.removeEventListener('paste', onPaste);
