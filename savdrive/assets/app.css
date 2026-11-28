@@ -238,6 +238,9 @@ sav-menu-item.over, sav-breadcrumb-item.over { outline: 2px dashed var(--sav-col
 .dname .rtag, .dname .ptag { justify-self: start; margin-top: .2rem; }
 /* the drop area reaches the bottom of the page */
 .drive .hbody { align-content: stretch; } .drive .dmain { min-height: 0; }
+/* phones and tablets: the menu is a row on top, and only the content below it takes the height left (stretched, the two rows
+   shared it, and every section began halfway down the page) */
+@media (max-width: 900px) { .drive .hbody { grid-template-rows: auto minmax(0, 1fr); } }
 /* previews in the cards: text and JSON, documents, spreadsheets, slides */
 .tic.cprev { position: absolute; inset: 0; display: grid; place-items: center; overflow: hidden; }
 .tic.cprev.filled { place-items: stretch; }
