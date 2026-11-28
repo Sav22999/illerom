@@ -201,12 +201,11 @@ function drawNav(nav, sc) {
     const i = e.target.closest('sav-bottom-nav-item');
     if (!i || i.getAttribute('href')) return;
     const lists = S.lists.filter((l) => !l.inbox && !l.archived), on = (v, a = '') => sc.view === v && (!a || sc.arg === a);
-    const open = () => { if (window.SavOffice?.actionSheet) window.SavOffice.actionSheet({ title: t('more'), items: [
+    const open = () => window.SavOffice?.actionSheet?.({ title: t('more'), items: [
       ['star', t('v_starred'), () => go('#/starred'), { current: on('starred') }], ['circle-check', t('v_done'), () => go('#/done'), { current: on('done') }],
       prefs().schedules !== false ? ['vote', t('v_schedules'), () => go('#/schedules'), { current: on('schedules') }] : null, ['timer', t('v_time'), () => go('#/time'), { current: on('time') }],
       lists.length ? '-' : null, ...lists.map((l) => [l.icon || 'list', l.name, () => go('#/l/' + l.id), { current: on('l', l.id) }]),
       '-', ['list-plus', t('new_list_dots'), () => newDialog(sc.ctx, { kind: 'list' })]] });
-    else { put(sc.drawer, sidebar(sc)); sc.drawer.show(); } };
     open();
   };
 }

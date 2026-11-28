@@ -1208,11 +1208,10 @@ savoffice-apps { display: inline-flex; }
 /*
  * SavOffice.bottomNav / SavOffice.actionSheet — on phones and tablets (up to 900px) every app moves between its places with the
  * bar at the bottom (sav-bottom-nav), never with tabs or a menu at the top. With more places than fit (5), the bar shows the
- * first four and "More", which opens an action sheet with the others (a sheet that rises from the bottom on phones, a small
- * window on tablets). On larger screens the bar is not there: the apps keep their side menu.
+ * first four and "More", which opens an action sheet with the others (sav-action-sheet of SavComponents). On larger screens the bar is not there: the apps keep their side menu.
  *   SavOffice.bottomNav({ label, items: [{ value, icon, label, href | run, badge }], current, more: [extra rows of the sheet], max })
  *     -> <sav-bottom-nav>; el.setCurrent(value) marks the place shown (More when it is one of those in the sheet).
- *   SavOffice.actionSheet({ title, items: [[icon, label, run, { current, danger, disabled }] | '-'] })
+ *   SavOffice.actionSheet({ title, items: [[icon, label, run, { current, danger, disabled }] | '-'] }): sav-action-sheet of SavComponents
  */
 (() => {
   if (window.SavOffice?.bottomNav) return;
@@ -1223,16 +1222,6 @@ savoffice-apps { display: inline-flex; }
   const CSS = `.so-bnav{display:none}
 @media (max-width:900px){.so-bnav{display:block}body:has(.so-bnav){padding-bottom:calc(4.6rem + env(safe-area-inset-bottom))}}
 .so-rmore{display:none!important}@media (max-width:900px){.so-rmore{display:flex!important}.so-rover{display:none!important}}
-.so-as{--width:22rem}.so-as::part(body){padding:.2rem .5rem .6rem}
-.so-as-list{display:grid;gap:2px}
-.so-as-row{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:.85rem;min-height:3rem;padding:.55rem .8rem;border-radius:12px;cursor:pointer;font:inherit;font-size:1rem;color:var(--sav-color-text);-webkit-tap-highlight-color:transparent}
-.so-as-row>sav-icon{font-size:1.25rem;color:var(--sav-color-text-muted);flex:none}
-.so-as-row>span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.so-as-row:hover,.so-as-row:focus-visible{background:var(--sav-color-surface-2)}.so-as-row:focus-visible{outline:2px solid var(--sav-color-primary);outline-offset:-2px}
-.so-as-row[aria-current]{font-weight:600;background:color-mix(in oklab,var(--sav-color-primary) 12%,transparent)}.so-as-row[aria-current]>sav-icon{color:var(--sav-color-primary)}
-.so-as-row.danger,.so-as-row.danger>sav-icon{color:var(--sav-color-danger)}.so-as-row[disabled]{opacity:.45;pointer-events:none}
-.so-as-sep{height:1px;margin:.3rem .8rem;background:var(--sav-color-border)}
-.so-as-cancel{width:100%}
 .so-sheet sav-menu-item[aria-current]{font-weight:600}.so-sheet sav-menu-item[aria-current]>sav-icon{color:var(--sav-color-primary)}`;
   // its two icons (Lucide, ISC licence), so it looks the same in every app whatever icons the app carries
   const ICONS = { ellipsis: '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>', check: '<path d="M20 6 9 17l-5-5"/>' };
@@ -1244,46 +1233,27 @@ savoffice-apps { display: inline-flex; }
    *  place shown marked with a tick. Choosing a row closes it, then runs it. */
   function actionSheet({ title = '', items = [] } = {}) {
     css();
-    if (customElements.get('sav-action-sheet') || window.Sav?.version >= '1.3') {
-      const s = make('sav-action-sheet', { class: 'so-sheet', label: title || null, 'no-header': title ? null : true });
-      const runs = new Map();
-      let cur = null, n = 0;
-      for (const x of items.filter(Boolean)) {
-        if (x === '-') { if (s.lastElementChild && s.lastElementChild.localName !== 'sav-divider') s.append(make('sav-divider')); continue; }
-        const [ic, label, fn, o = {}] = x, v = 'r' + n++;
-        const m = make('sav-menu-item', { value: v, variant: o.danger ? 'danger' : null, disabled: o.disabled || null, 'aria-current': o.current ? 'page' : null },
-          ic ? make('sav-icon', { slot: 'prefix', name: ic }) : null, label, o.current ? make('sav-icon', { slot: 'suffix', name: 'so-check' }) : null);
-        if (o.current) cur = m;
-        runs.set(v, fn);
-        s.append(m);
-      }
-      if (s.lastElementChild?.localName === 'sav-divider') s.lastElementChild.remove();
-      document.body.append(s);
-      customElements.whenDefined('sav-action-sheet').then(() => {
-        const chosen = s.pick();
-        // the place shown takes the focus (the sheet gives it to the first row)
-        if (cur) requestAnimationFrame(() => { s.rove?.(cur); cur.focus({ preventScroll: true }); });
-        return chosen;
-      }).then((v) => { setTimeout(() => s.remove(), 50); const fn = runs.get(v); if (fn) { const r = fn(); if (r?.catch) r.catch(() => {}); } });
-      return s;
-    }
-    const d = make('sav-dialog', { class: 'so-as', label: title || null, 'sheet-on-mobile': true, 'no-header': title ? null : true });
-    const list = make('div', { class: 'so-as-list', role: 'menu' });
-    let run = null;
+    const s = make('sav-action-sheet', { class: 'so-sheet', label: title || null, 'no-header': title ? null : true });
+    const runs = new Map();
+    let cur = null, n = 0;
     for (const x of items.filter(Boolean)) {
-      if (x === '-') { list.append(make('div', { class: 'so-as-sep', role: 'separator' })); continue; }
-      const [ic, label, fn, o = {}] = x;
-      const b = make('button', { type: 'button', class: 'so-as-row' + (o.danger ? ' danger' : ''), role: 'menuitem', 'aria-current': o.current ? 'page' : null, disabled: o.disabled || null }, ic ? make('sav-icon', { name: ic }) : null, make('span', {}, label), o.current ? make('sav-icon', { name: 'so-check' }) : null);
-      b.addEventListener('click', () => { run = fn; d.hide(); });
-      list.append(b);
+      if (x === '-') { if (s.lastElementChild && s.lastElementChild.localName !== 'sav-divider') s.append(make('sav-divider')); continue; }
+      const [ic, label, fn, o = {}] = x, v = 'r' + n++;
+      const m = make('sav-menu-item', { value: v, variant: o.danger ? 'danger' : null, disabled: o.disabled || null, 'aria-current': o.current ? 'page' : null },
+        ic ? make('sav-icon', { slot: 'prefix', name: ic }) : null, label, o.current ? make('sav-icon', { slot: 'suffix', name: 'so-check' }) : null);
+      if (o.current) cur = m;
+      runs.set(v, fn);
+      s.append(m);
     }
-    const cancel = make('sav-button', { slot: 'footer', class: 'so-as-cancel', appearance: 'outline', variant: 'neutral' }, w('cancel'));
-    cancel.addEventListener('click', () => d.hide());
-    d.append(list, cancel);
-    d.addEventListener('sav-hide', () => { setTimeout(() => d.remove(), 300); if (run) { const r = run(); if (r?.catch) r.catch(() => {}); } });
-    document.body.append(d);
-    customElements.whenDefined('sav-dialog').then(() => requestAnimationFrame(() => { d.show(); setTimeout(() => (list.querySelector('[aria-current]') || list.querySelector('button'))?.focus({ preventScroll: true }), 60); }));
-    return d;
+    if (s.lastElementChild?.localName === 'sav-divider') s.lastElementChild.remove();
+    document.body.append(s);
+    customElements.whenDefined('sav-action-sheet').then(() => {
+      const chosen = s.pick();
+      // the place shown takes the focus (the sheet gives it to the first row)
+      if (cur) requestAnimationFrame(() => { s.rove?.(cur); cur.focus({ preventScroll: true }); });
+      return chosen;
+    }).then((v) => { setTimeout(() => s.remove(), 50); const fn = runs.get(v); if (fn) { const r = fn(); if (r?.catch) r.catch(() => {}); } });
+    return s;
   }
 
   /** The bar at the bottom of an app on phones and tablets: up to five places, "More" and an action sheet beyond. */

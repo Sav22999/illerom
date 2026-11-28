@@ -71,10 +71,9 @@ function build(root, view, key) {
   const clist = h('section.clist', head, list);
   const panes = h('div.cpanes.single', clist);
   const main = h('main.hmain', panes);
-  // phones: the bar at the bottom (as SavTasks); its last place opens every place and group in a drawer
+  // phones: the bar at the bottom (as SavTasks); its last place, "More", opens the groups and the other places in an action sheet
   const bottom = h('sav-bottom-nav.cbottom', { label: t('all_contacts'), fixed: true });
-  const drawer = h('sav-drawer.cdrawer', { label: t('groups'), placement: 'bottom', style: '--size:min(70dvh, 34rem)' });
-  const page = h('div.home.cont', h('header.htop', brand(), search, h('div.spacer'), userMenu()), h('div.hbody', side, main), credit(), bottom, drawer);
+  const page = h('div.home.cont', h('header.htop', brand(), search, h('div.spacer'), userMenu()), h('div.hbody', side, main), credit(), bottom);
   put(root, page);
   const drawBottom = () => {
     const soon = S.contacts.filter((c) => { const n = nextBirthday(c); return n && n.days <= 7; }).length;
@@ -82,24 +81,14 @@ function build(root, view, key) {
     put(bottom, it('all', 'contact', t('all_contacts')), it('fav', 'star', t('favorites')), it('birthdays', 'cake', t('birthdays'), soon), it('', 'so-ellipsis', t('more')));
   };
   bottom.addEventListener('click', (e) => { const i = e.target.closest('sav-bottom-nav-item'); if (i && !i.getAttribute('href')) openDrawer(); });
-  /** Every group, and the places that are not in the bar (duplicates, trash): "More", the action sheet of SavOffice (as in every
-   *  app); the drawer from the bottom when it is not there. */
+  /** Every group, and the places that are not in the bar (duplicates, trash): "More", the action sheet of SavComponents (as in
+   *  every app of SavOffice). */
   function openDrawer() {
-    if (window.SavOffice?.actionSheet) {
-      const on = (k, id) => view.kind === k && (!id || String(view.id) === String(id));
-      window.SavOffice.actionSheet({ title: t('more'), items: [
-        ...S.groups.map((g) => ['tag', g.name, () => nav('group:' + g.id), { current: on('group', g.id) }]),
-        S.groups.length ? '-' : null, ['merge', t('duplicates'), () => nav('duplicates:'), { current: on('duplicates') }], ['trash', t('trash'), () => nav('trash:'), { current: on('trash') }],
-        '-', ['tag-plus', t('new_group'), () => groupDialog()]] });
-      return;
-    }
-    const mi = (value, ic, label, count) => { const x = h('sav-menu-item', { value }, typeof ic === 'string' ? icon(ic, { slot: 'prefix' }) : ic, h('span.mlab', label), count ? h('sav-badge', { slot: 'suffix', variant: 'neutral', appearance: 'soft', pill: true }, String(count)) : null); if (value === key) x.setAttribute('current', ''); return x; };
-    const m = h('sav-menu', { label: t('groups'), selectable: true },
-      S.groups.map((g) => mi('group:' + g.id, h('span.gdot', { slot: 'prefix', style: `--g:${g.color}` }), g.name, S.contacts.filter((c) => c.groups.includes(g.id)).length)),
-      S.groups.length ? h('sav-divider') : null, mi('duplicates:', 'merge', t('duplicates'), 0), mi('trash:', 'trash', t('trash'), S.trash));
-    m.addEventListener('sav-select', (e) => { drawer.hide(); nav(String(e.detail.value)); });
-    put(drawer, m, h('div.prow', { style: 'margin-top:.8rem' }, btn(t('new_group'), { icon: 'tag-plus', size: 'sm', onclick: () => { drawer.hide(); groupDialog(); } })));
-    drawer.show();
+    const on = (k, id) => view.kind === k && (!id || String(view.id) === String(id));
+    window.SavOffice?.actionSheet?.({ title: t('more'), items: [
+      ...S.groups.map((g) => ['tag', g.name, () => nav('group:' + g.id), { current: on('group', g.id) }]),
+      S.groups.length ? '-' : null, ['merge', t('duplicates'), () => nav('duplicates:'), { current: on('duplicates') }], ['trash', t('trash'), () => nav('trash:'), { current: on('trash') }],
+      '-', ['tag-plus', t('new_group'), () => groupDialog()]] });
   }
 
   // files dropped on the page are imported

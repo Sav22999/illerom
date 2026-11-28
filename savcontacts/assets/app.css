@@ -239,5 +239,5 @@ sav-avatar.cav { flex: none; color: #fff; }
   .cbottom { display: block; }
   .home.cont { padding-bottom: calc(4.4rem + env(safe-area-inset-bottom)); }
   .hside > sav-menu.dnav { display: none; }
-  .cdrawer sav-menu { width: 100%; }
+ 
 }
