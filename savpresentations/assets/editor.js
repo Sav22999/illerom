@@ -196,6 +196,8 @@ export async function deckScreen(app, deckId, q) {
   const STATUS_DEF = ['pages', 'sn', 'notes', '~', 'fit', 'zoom'];
   function layoutStatus() { bottom.replaceChildren(...barList('status', STATUS_DEF, STATUS_ITEMS()).map((k) => barEl(k, SB)).filter(Boolean)); }
   layoutStatus();
+  // a right click (a long press) on a bar or on one of its buttons: «Customise…», the window of the bars on that bar
+  BARS?.attach?.({ title: top, insert: ins, status: bottom }, toolsDialog);
   const center = h('section.ecenter', h('div.banner'), stage.scroller, ed.editor && notesBar, bottom);
   app.append(top, h('div.emain', left, center, panel, rail));
 

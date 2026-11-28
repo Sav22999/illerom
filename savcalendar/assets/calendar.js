@@ -143,6 +143,8 @@ export async function calendarScreen(root, view = '', k = '') {
       save: async (v) => { await setPrefs({ bars: { ...(prefs().bars || {}), ...v } }); layoutTitle(); } });
   }
   layoutTitle();
+  // a right click (a long press) on a bar or on one of its buttons: «Customise…», the window of the bars on that bar
+  BARS?.attach?.({ title: top }, barsDialog);
   // phones and tablets: the views in the bar at the bottom of SavOffice (the choice of the view at the top is left out)
   const VI = { day: 'calendar', week: 'calendar-range', month: 'calendar-days', agenda: 'list' };
   const bnav = window.SavOffice?.bottomNav?.({ label: t('view'), current: view, items: VIEWS.map((v) => ({ value: v, icon: VI[v], label: t('v_' + v), run: () => go(`#/${v}/${k}`) })) });

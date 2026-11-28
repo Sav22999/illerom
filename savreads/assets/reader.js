@@ -192,6 +192,8 @@ export async function readerScreen(root, kind, id) {
   }
 
   paintTop();
+  // a right click (a long press) on a bar or on one of its buttons: «Customise…», the window of the bars on that bar
+  BARS?.attach?.({ title: top }, barsDialog);
 
   const page = h('article.rpage', meta, h('h1.rtitle', a.title), byline, a.cover ? h('figure.rcover', h('img', { src: a.cover, alt: '', referrerpolicy: 'no-referrer', onerror: (e) => e.target.parentNode.remove() })) : null, noText, fullBtn, text, endBox);
   put(root, h('div.rwrap', el));

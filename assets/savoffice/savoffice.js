@@ -945,6 +945,10 @@ savoffice-apps { display: inline-flex; }
  *   SavOffice.bars.pick(saved, def, items) -> the list to show, the ids not available any more left out, the locked ones put back
  *   SavOffice.bars.layout(list) -> the same with no separator or fixed space at the ends and no two in a row (an adaptive space stays)
  *   bar ids: 'title', 'tools', 'status', 'insert', 'format' (their names come from here, in the language of the page)
+ *   SavOffice.bars.attach({ title: el, tools: el, … }, open): the bars the app has laid out and its function that opens this
+ *     window; the right click (a long press on phones and tablets) on one of them, or on a button of it, offers «Customize…»
+ *     in SavOffice.context, and the window opens on that bar's tab. dialog({ at }) opens it on a tab by itself.
+ *   SavOffice.bars.at(target) -> { id, open } of the bar that holds target (null when none): what that menu item opens
  */
 (() => {
   if (window.SavOffice?.bars) return;
@@ -993,7 +997,18 @@ savoffice-apps { display: inline-flex; }
     while (out.length && isSpecial(out[out.length - 1]) && out[out.length - 1] !== '~') out.pop();
     return out;
   };
-  function dialog({ bars, value = {}, save }) {
+  // the bars laid out by the apps (attach): an element -> its id and the app's function that opens the window
+  const reg = new WeakMap();
+  let opening = null;
+  const attach = (map, open) => { for (const [id, e] of Object.entries(map || {})) if (e && typeof open === 'function') reg.set(e, { id, open }); };
+  const at = (target) => {
+    for (let n = target; n; n = n.parentElement || n.getRootNode?.().host) {
+      const r = reg.get(n);
+      if (r) return { id: r.id, open: () => { opening = r.id; try { r.open(r.id); } finally { opening = null; } } };
+    }
+    return null;
+  };
+  function dialog({ bars, value = {}, save, at: start = opening }) {
     if (!document.getElementById('so-bars-css')) document.head.append(el('style', { id: 'so-bars-css' }, CSS));
     const lists = {}, strips = {};
     const row = (bar, k, on) => {
@@ -1025,7 +1040,7 @@ savoffice-apps { display: inline-flex; }
       return el('div', { class: 'so-bars-pane' }, el('div', { class: 'so-bars-pv' }, el('span', {}, w('preview')), strips[bar.id]), list,
         el('div', { class: 'so-bars-adds' }, el('span', {}, w('add')), add('|', w('add_sep')), add('_', w('add_gap')), add('~', w('add_flex'))));
     });
-    const tabs = bars.length > 1 ? el('sav-tabs', {}, bars.map((bar, i) => el('sav-tab', { name: bar.id, label: w('bar_' + bar.id) }, panes[i]))) : panes[0];
+    const tabs = bars.length > 1 ? el('sav-tabs', { active: bars.some((b) => b.id === start) ? start : null }, bars.map((bar, i) => el('sav-tab', { name: bar.id, label: w('bar_' + bar.id) }, panes[i]))) : panes[0];
     const err = el('sav-alert', { variant: 'danger', hidden: true });
     const current = () => (bars.length > 1 ? bars.find((b) => b.id === tabs.active) || bars[0] : bars[0]);
     const btn = (label, o, run) => { const b = el('sav-button', { slot: 'footer', ...o }, label); b.addEventListener('click', run); return b; };
@@ -1042,7 +1057,7 @@ savoffice-apps { display: inline-flex; }
     customElements.whenDefined('sav-dialog').then(() => d.show());
     return d;
   }
-  window.SavOffice = Object.assign(window.SavOffice || {}, { bars: { dialog, pick, layout, name: (id) => w('bar_' + id), menuLabel: () => w('title') } });
+  window.SavOffice = Object.assign(window.SavOffice || {}, { bars: { dialog, pick, layout, attach, at, name: (id) => w('bar_' + id), menuLabel: () => w('title') } });
 })();
 
 /*
@@ -1064,12 +1079,12 @@ savoffice-apps { display: inline-flex; }
   const W = {
     open_link: ['Open the link', 'Apri il collegamento'], new_tab: ['Open in a new tab', 'Apri in una nuova scheda'], copy_link: ['Copy the address', 'Copia l’indirizzo'],
     open_image: ['Open the picture in a new tab', 'Apri l’immagine in una nuova scheda'], copy: ['Copy', 'Copia'], cut: ['Cut', 'Taglia'], paste: ['Paste', 'Incolla'], select_all: ['Select all', 'Seleziona tutto'],
-    undo: ['Undo', 'Annulla'], redo: ['Redo', 'Ripeti'], palette: ['Search a command', 'Cerca un comando'], back: ['Back', 'Indietro'], reload: ['Reload the page', 'Ricarica la pagina'],
+    customize: ['Customize…', 'Personalizza…'], undo: ['Undo', 'Annulla'], redo: ['Redo', 'Ripeti'], palette: ['Search a command', 'Cerca un comando'], back: ['Back', 'Indietro'], reload: ['Reload the page', 'Ricarica la pagina'],
   };
   const w = (k) => W[k][it() ? 1 : 0];
   const IS_MAC = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
   // the icons of this menu (Lucide, ISC licence), so it looks the same in every app, whatever icons the app carries
-  const ICONS = {"external-link": "<path d=\"M15 3h6v6\"/><path d=\"M10 14 21 3\"/><path d=\"M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6\"/>", "app-window": "<rect x=\"2\" y=\"4\" width=\"20\" height=\"16\" rx=\"2\"/><path d=\"M10 4v4\"/><path d=\"M2 8h20\"/><path d=\"M6 4v4\"/>", "link": "<path d=\"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71\"/><path d=\"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71\"/>", "image": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\" ry=\"2\"/><circle cx=\"9\" cy=\"9\" r=\"2\"/><path d=\"m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21\"/>", "undo-2": "<path d=\"M9 14 4 9l5-5\"/><path d=\"M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11\"/>", "redo-2": "<path d=\"m15 14 5-5-5-5\"/><path d=\"M20 9H9.5A5.5 5.5 0 0 0 4 14.5A5.5 5.5 0 0 0 9.5 20H13\"/>", "scissors": "<circle cx=\"6\" cy=\"6\" r=\"3\"/><path d=\"M8.12 8.12 12 12\"/><path d=\"M20 4 8.12 15.88\"/><circle cx=\"6\" cy=\"18\" r=\"3\"/><path d=\"M14.8 14.8 20 20\"/>", "copy": "<rect width=\"14\" height=\"14\" x=\"8\" y=\"8\" rx=\"2\" ry=\"2\"/><path d=\"M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2\"/>", "clipboard-paste": "<path d=\"M11 14h10\"/><path d=\"M16 4h2a2 2 0 0 1 2 2v1.344\"/><path d=\"m17 18 4-4-4-4\"/><path d=\"M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 1.793-1.113\"/><rect x=\"8\" y=\"2\" width=\"8\" height=\"4\" rx=\"1\"/>", "text-select": "<path d=\"M14 21h1\"/><path d=\"M14 3h1\"/><path d=\"M19 3a2 2 0 0 1 2 2\"/><path d=\"M21 14v1\"/><path d=\"M21 19a2 2 0 0 1-2 2\"/><path d=\"M21 9v1\"/><path d=\"M3 14v1\"/><path d=\"M3 9v1\"/><path d=\"M5 21a2 2 0 0 1-2-2\"/><path d=\"M5 3a2 2 0 0 0-2 2\"/><path d=\"M7 12h10\"/><path d=\"M7 16h6\"/><path d=\"M7 8h8\"/><path d=\"M9 21h1\"/><path d=\"M9 3h1\"/>", "command": "<path d=\"M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3\"/>", "arrow-left": "<path d=\"m12 19-7-7 7-7\"/><path d=\"M19 12H5\"/>", "rotate-cw": "<path d=\"M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8\"/><path d=\"M21 3v5h-5\"/>"};
+  const ICONS = {"external-link": "<path d=\"M15 3h6v6\"/><path d=\"M10 14 21 3\"/><path d=\"M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6\"/>", "app-window": "<rect x=\"2\" y=\"4\" width=\"20\" height=\"16\" rx=\"2\"/><path d=\"M10 4v4\"/><path d=\"M2 8h20\"/><path d=\"M6 4v4\"/>", "link": "<path d=\"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71\"/><path d=\"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71\"/>", "image": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\" ry=\"2\"/><circle cx=\"9\" cy=\"9\" r=\"2\"/><path d=\"m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21\"/>", "undo-2": "<path d=\"M9 14 4 9l5-5\"/><path d=\"M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11\"/>", "redo-2": "<path d=\"m15 14 5-5-5-5\"/><path d=\"M20 9H9.5A5.5 5.5 0 0 0 4 14.5A5.5 5.5 0 0 0 9.5 20H13\"/>", "scissors": "<circle cx=\"6\" cy=\"6\" r=\"3\"/><path d=\"M8.12 8.12 12 12\"/><path d=\"M20 4 8.12 15.88\"/><circle cx=\"6\" cy=\"18\" r=\"3\"/><path d=\"M14.8 14.8 20 20\"/>", "copy": "<rect width=\"14\" height=\"14\" x=\"8\" y=\"8\" rx=\"2\" ry=\"2\"/><path d=\"M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2\"/>", "clipboard-paste": "<path d=\"M11 14h10\"/><path d=\"M16 4h2a2 2 0 0 1 2 2v1.344\"/><path d=\"m17 18 4-4-4-4\"/><path d=\"M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 1.793-1.113\"/><rect x=\"8\" y=\"2\" width=\"8\" height=\"4\" rx=\"1\"/>", "text-select": "<path d=\"M14 21h1\"/><path d=\"M14 3h1\"/><path d=\"M19 3a2 2 0 0 1 2 2\"/><path d=\"M21 14v1\"/><path d=\"M21 19a2 2 0 0 1-2 2\"/><path d=\"M21 9v1\"/><path d=\"M3 14v1\"/><path d=\"M3 9v1\"/><path d=\"M5 21a2 2 0 0 1-2-2\"/><path d=\"M5 3a2 2 0 0 0-2 2\"/><path d=\"M7 12h10\"/><path d=\"M7 16h6\"/><path d=\"M7 8h8\"/><path d=\"M9 21h1\"/><path d=\"M9 3h1\"/>", "command": "<path d=\"M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3\"/>", "arrow-left": "<path d=\"m12 19-7-7 7-7\"/><path d=\"M19 12H5\"/>", "rotate-cw": "<path d=\"M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8\"/><path d=\"M21 3v5h-5\"/>", "settings-2": "<path d=\"M14 17H5\"/><path d=\"M19 7h-9\"/><circle cx=\"17\" cy=\"17\" r=\"3\"/><circle cx=\"7\" cy=\"7\" r=\"3\"/>"};
   const icons = () => { if (icons.done || !window.Sav?.registerIcon) return; icons.done = true; for (const [k, v] of Object.entries(ICONS)) window.Sav.registerIcon('so-' + k, v); };
   const extra = [];
   const MORE = ['ellipsis-vertical', 'more-vertical', 'ellipsis', 'more-horizontal'];
@@ -1106,7 +1121,12 @@ savoffice-apps { display: inline-flex; }
       }
       if (list.length) out.push('-');
     }
-    const link = target.closest?.('a[href]'), img = target.closest?.('img'), field = fieldOf(target), sel = String(getSelection() || '');
+    const field = fieldOf(target);
+    // a bar that can be customised (SavOffice.bars.attach), or a button of it: the window of the bars, on that bar. Not in a
+    // text field of the bar (the name of the file, the font: there cut, copy and paste), nor on a thing with its own menu
+    const bar = mine || field ? null : window.SavOffice?.bars?.at?.(target);
+    if (bar) out.push(['so-settings-2', w('customize'), bar.open], '-');
+    const link = target.closest?.('a[href]'), img = target.closest?.('img'), sel = String(getSelection() || '');
     if (link && !link.getAttribute('href').startsWith('#')) out.push(['so-external-link', w('open_link'), () => link.click()], ['so-app-window', w('new_tab'), () => window.open(link.href, '_blank', 'noopener')], ['so-link', w('copy_link'), () => navigator.clipboard?.writeText(link.href)], '-');
     else if (link) out.push(['so-link', w('copy_link'), () => navigator.clipboard?.writeText(link.href)], '-');
     if (img && img.src && !img.src.startsWith('data:')) out.push(['so-image', w('open_image'), () => window.open(img.src, '_blank', 'noopener')], '-');
@@ -1127,7 +1147,7 @@ savoffice-apps { display: inline-flex; }
   }
   // ---- the menu: sav-context-menu of SavComponents (1.2.1+) on the whole page. It opens with the right click, a long press on
   // touch screens, the menu key and Shift F10, and never takes the focus from a text field (its caret and selection stay)
-  let cm = null, list = [], pending = null, lastTouch = false, viaClick = null;
+  let cm = null, list = [], pending = null, lastTouch = false, viaClick = null, lastDown = null;
   const make = (tag, props = {}, ...kids) => { const e = document.createElement(tag); for (const [k, v] of Object.entries(props)) if (v != null && v !== false) e.setAttribute(k, v === true ? '' : v); e.append(...kids.filter(Boolean)); return e; };
   const keys = (k) => (IS_MAC ? k.replace(/Mod\+?|Ctrl\+/g, '⌘').replace(/Shift\+?/g, '⇧').replace(/Alt\+?/g, '⌥') : k.replace(/Mod/g, 'Ctrl'));
   /** items: [icon, label, run, {danger, disabled, kbd, check}] | '-' | {head} | a node (put as it is) */
@@ -1160,7 +1180,10 @@ savoffice-apps { display: inline-flex; }
       if (!viaClick && lastTouch) {
         const ce = new MouseEvent('contextmenu', { bubbles: true, cancelable: true, composed: true, button: 2, clientX: e.detail.x, clientY: e.detail.y });
         ce.__savContext = true; // not this menu again
-        t.dispatchEvent(ce);
+        // to what the finger touched, also inside a component (a tab of sav-tabs): the app finds it as with a right click
+        let deep = lastDown;
+        for (let n = deep; n && n !== t; n = n.parentElement || n.getRootNode?.().host) if (n === document.documentElement) deep = null;
+        (deep || t).dispatchEvent(ce);
         if (ce.defaultPrevented) { if (!cm.open) e.preventDefault(); return; }
       }
       const l = items(t, { type: 'contextmenu', target: t, clientX: e.detail.x, clientY: e.detail.y, preventDefault() {} });
@@ -1182,7 +1205,7 @@ savoffice-apps { display: inline-flex; }
     if (e.shiftKey) e.__savContext = true;
     if (!e.__savContext || e.isTrusted) { viaClick = e; setTimeout(() => { if (viaClick === e) viaClick = null; }, 0); }
   }, true);
-  addEventListener('pointerdown', (e) => { lastTouch = e.pointerType === 'touch'; mount(); }, true);
+  addEventListener('pointerdown', (e) => { lastTouch = e.pointerType === 'touch'; lastDown = e.composedPath()[0] instanceof Element ? e.composedPath()[0] : null; mount(); }, true);
   // a text field: the menu leaves it to the browser, but here it is the app's too (cut, copy, paste, select all, and what the
   // app adds); the focus and the selection stay in the field
   addEventListener('contextmenu', (e) => {

@@ -113,6 +113,8 @@ export async function editorScreen(root, id, tab = 'questions') {
       save: async (v) => { await setPrefs({ bars: { ...(prefs().bars || {}), ...v } }); layoutTitle(); } });
   }
   layoutTitle();
+  // a right click (a long press) on a bar or on one of its buttons: «Customise…», the window of the bars on that bar
+  BARS?.attach?.({ title: bar }, barsDialog);
   const syncTitle = () => { document.title = (F.title || t('untitled')) + ' – SavForms'; const h1 = body.querySelector('.fhead .ftitle'); if (h1 && h1 !== document.activeElement) h1.value = F.title; };
   const body = h('div.ebody');
   // phones and tablets: the three tabs in the bar at the bottom of SavOffice (the tabs on top are left out); computers keep them on top

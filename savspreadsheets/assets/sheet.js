@@ -122,6 +122,8 @@ export async function openSheet(root, pid, opt = {}) {
   function layoutStatus() { put(bottom, barList('status', STATUS_DEF, STATUS_ITEMS()).map((k) => barEl(k, SB))); }
   layoutTitle();
   layoutStatus();
+  // a right click (a long press) on a bar or on one of its buttons: «Customise…», the window of the bars on that bar
+  BARS?.attach?.({ title: top, tools: fmt, status: bottom }, toolbarDialog);
   const note = editable ? null : h('sav-alert.robar', { variant: data.doc.review ? 'warning' : 'neutral', noicon: true }, data.doc.review ? t('a_review_bar') : data.doc.role === 'commenter' ? t('can_comment') : t('read_only'));
   const center = h('section.scenter', note, fbar, gridHost, bottom);
   const frame = h('div.sheetapp' + (editable ? '' : '.reading'), top, editable ? fmt : null, h('div.emain', center, panel, rail));

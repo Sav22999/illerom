@@ -125,6 +125,8 @@ export function composeDialog(o) {
     put(bar, toolsOn(TOOLS).map(el), iconBtn('paperclip', t('attach'), () => pickFiles()), more);
   }
   drawBar();
+  // a right click (a long press) on a bar or on one of its buttons: «Customise…», the window of the bars on that bar
+  window.SavOffice?.bars?.attach?.({ tools: bar }, () => toolsDialog(TOOLS, drawBar));
   const attList = h('div.catts');
   const drawAtts = () => {
     const total = files.reduce((s, f) => s + f.size, 0);
