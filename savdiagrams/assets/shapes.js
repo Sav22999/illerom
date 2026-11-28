@@ -318,6 +318,8 @@ const DIR = { t: [0, -1], r: [1, 0], b: [0, 1], l: [-1, 0] };
 export function sidePoint(n, p, o) {
   if (n.k === 'lifeline' && (p === 'l' || p === 'r')) return o === undefined || o === null ? [p === 'l' ? n.x : n.x + n.w, n.y + lifeHead(n) / 2] : [n.x + n.w / 2, n.y + o * n.h];
   if (n.k === 'lifeline' && p === 'b') return [n.x + n.w / 2, n.y + n.h];
+  // under an icon with its name below, a connector leaves from under the name (it never crosses it)
+  if (p === 'b' && UNDER.has(n.k) && n.text) { const t = textLines(n); return [n.x + n.w * (o ?? .5), n.y + n.h + 6 + t.lines.length * t.lh]; }
   const f = o === undefined || o === null ? .5 : o;
   return p === 't' ? [n.x + n.w * f, n.y] : p === 'r' ? [n.x + n.w, n.y + n.h * f] : p === 'b' ? [n.x + n.w * f, n.y + n.h] : [n.x, n.y + n.h * f];
 }

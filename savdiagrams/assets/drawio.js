@@ -2,7 +2,9 @@
  * diagrams.net / draw.io files (.drawio, .xml, the XML inside a .drawio.png is not read): the first page becomes a
  * diagram. Shapes, their text and colours, connectors with their route, heads and labels, groups and containers (their
  * children are placed where they are on the page). What SavDiagrams does not have (images, tables, custom stencils) becomes
- * a rectangle with its text, so nothing is lost silently.
+ * a rectangle with its text, so nothing is lost silently. The shapes of the libraries come in as theirs: UML classes (a
+ * swimlane with its lines), lifelines and their messages, frames, components, packages, BPMN events and gateways, swimlanes,
+ * network devices (Cisco and "networks" stencils), and the heads of UML (hollow triangle and diamond) and ER (crow's feet).
  *
  * A page is an <mxGraphModel>, inside the file as it is or compressed: base64 of the raw deflate of its URI-encoded XML.
  */
@@ -157,6 +159,17 @@ export async function fromDrawio(xml, name = '') {
     const s = ids.get(c.el.getAttribute('source')), t = ids.get(c.el.getAttribute('target'));
     const a = s ? { n: s, ...side(st.exitX, st.exitY) } : pt('sourcePoint'), b = t ? { n: t, ...side(st.entryX, st.entryY) } : pt('targetPoint');
     if (!a || !b) continue;
+    // a message of a sequence diagram: on a lifeline it keeps its height (draw.io gives it as exitY / entryY, or as a point)
+    const byId = (id) => items.find((n) => n.id === id);
+    const onLife = (end, other, fy, p) => {
+      const n = end.n && byId(end.n);
+      if (!n || n.k !== 'lifeline' || (end.p && end.p !== 'l' && end.p !== 'r')) return;
+      const y = Number.isFinite(parseFloat(fy)) ? parseFloat(fy) : p ? (p.y - n.y) / n.h : NaN;
+      if (!Number.isFinite(y) || y <= 0 || y >= 1) return;
+      const o = other.n && byId(other.n), ox2 = o ? o.x + o.w / 2 : other.x;
+      end.p = ox2 < n.x + n.w / 2 ? 'l' : 'r'; end.o = Math.round(y * 1000) / 1000;
+    };
+    onLife(a, b, st.exitY, pt('sourcePoint')); onLife(b, a, st.entryY, pt('targetPoint'));
     const [ox, oy] = offset(c);
     if (!a.n) { a.x += ox; a.y += oy; }
     if (!b.n) { b.x += ox; b.y += oy; }

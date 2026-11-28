@@ -223,12 +223,12 @@ export const TEMPLATES = [
   }],
   ['network', 'network', (it) => {
     const N = { f: '#e8eefc', c: '#1d4e89', fs: 13 }, T = (x) => (it ? x[1] : x[0]);
-    const lan = node('box', 0, 444, 820, 276, 'LAN', { f: '#f7f8fb', c: '#9aa29d', d: 'dash', s: 1.5, fs: 14, b: true });
-    const dmz = node('box', 560, 196, 300, 190, 'DMZ', { f: '#fbf8f1', c: '#9aa29d', d: 'dash', s: 1.5, fs: 14, b: true });
+    const lan = node('box', 0, 456, 820, 264, 'LAN', { f: '#f7f8fb', c: '#9aa29d', d: 'dash', s: 1.5, fs: 14, b: true, al: 'left' });
+    const dmz = node('box', 560, 196, 300, 190, 'DMZ', { f: '#fbf8f1', c: '#9aa29d', d: 'dash', s: 1.5, fs: 14, b: true, al: 'left' });
     const net = node('cloud', 300, -20, 170, 100, 'Internet', { f: '#eef3f8', c: '#1d4e89' });
     const fw = node('firewall', 347, 150, 76, 60, 'Firewall', { f: '#fbdada', c: '#b3261e', fs: 13 });
     const rt = node('router', 353, 260, 64, 64, 'Router', N);
-    const sw = node('switch', 343, 380, 84, 48, 'Switch', N);
+    const sw = node('switch', 343, 370, 84, 48, 'Switch', N);
     const web = node('server', 610, 252, 52, 72, T(['Web server', 'Server web']), N), mail = node('server', 750, 252, 52, 72, T(['Mail server', 'Server posta']), N);
     const pc1 = node('pc', 40, 540, 72, 64, 'PC 1', N), pc2 = node('pc', 170, 540, 72, 64, 'PC 2', N), pr = node('printer', 300, 542, 72, 60, T(['Printer', 'Stampante']), N);
     const nas = node('server', 445, 536, 52, 72, 'NAS', N), ap = node('ap', 575, 545, 64, 56, 'Wi-Fi', N);
