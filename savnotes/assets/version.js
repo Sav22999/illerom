@@ -1,7 +1,12 @@
 /** The version of SavNotes (in the footer) and what changed in each one (the page #/changelog). Newest first. */
-export const VERSION = '1.1.2';
+export const VERSION = '1.1.3';
 
 export const CHANGES = [
+  {
+    v: '1.1.3', date: '2026-11-28', items: [
+      ['Fixed: the sheets that rise from the bottom on phones (menus, action sheets) reach the edges of the screen, without a strip along the sides', 'Corretto: i fogli che salgono dal basso sui telefoni (menu, fogli di azioni) arrivano ai bordi dello schermo, senza una striscia ai lati'],
+    ],
+  },
   {
     v: '1.1.2', date: '2026-11-28', items: [
       ['On phones and tablets the places are in the bar at the bottom, as in every app of SavOffice; when they do not all fit, “More” opens an action sheet with the others', 'Su telefoni e tablet le sezioni sono nella barra in basso, come in ogni app di SavOffice; quando non ci stanno tutte, «Altro» apre un foglio di azioni con le altre'],

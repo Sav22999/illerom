@@ -129,6 +129,7 @@ const T = {
     suspended: ['Suspended', 'Sospeso'],
     start_from: ['Start from', 'Parti da'],
     moved_trash: ['Moved to trash', 'Spostato nel cestino'],
+    save_drive: ['Save to SavDrive', 'Salva in SavDrive'],
     undo: ['Undo', 'Annulla'],
     redo: ['Redo', 'Ripeti'],
     importing: ['Opening the file…', 'Apertura del file…'],

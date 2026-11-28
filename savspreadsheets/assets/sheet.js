@@ -1713,6 +1713,9 @@ export async function openSheet(root, pid, opt = {}) {
   }
   function moreItems() {
     return [...(mobile() && !S.user ? [['log-in', t('sign_in'), () => { location.hash = '#/signin'; }], '-'] : []),
+      // phones: undo, redo and the copy in SavDrive are here (the title bar has no room for them)
+      ...(mobile() && window.SavOffice?.saveToDrive ? [['cloud-upload', t('save_drive'), () => window.SavOffice.saveToDrive()]] : []),
+      ...(mobile() && editable ? [['undo-2', t('undo'), () => undo()], ['redo-2', t('redo'), () => undo(true)], '-'] : []),
       ['search', t('find'), () => setTab('find', true), { kbd: 'Mod+F' }], editable && !isLocal && data.doc.versions !== false ? ['history', t('history'), () => setTab('history', true)] : null, isOwner && !isLocal ? ['users', t('sheet_perm'), () => permDialog(sh)] : null, editable ? ['settings-2', t('book_settings'), () => W.settingsDialog()] : null, '-',
       mobile() && !lim.noDownload ? ['download', t('download'), () => downloadDialog()] : null, lim.noDownload ? null : ['printer', t('print'), () => printSheet(), { kbd: 'Mod+P' }], ['file-scan', t('page_guides_m', { p: t('paper_' + pagePrefs().paper.toLowerCase()) }), () => toggleGuides(), { check: pagePrefs().guides }], editable ? ['file-up', t('import_into'), () => import('./actions.js').then((a) => a.importInto(W))] : null,
       !isLocal && S.user && !lim.noCopy ? ['copy-plus', t('duplicate'), () => duplicate()] : null, ['link', t('copy_link'), () => copyText(`${location.origin}${location.pathname}#/d/${pid}`, t('link_copied'))], '-',

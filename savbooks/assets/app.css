@@ -166,13 +166,13 @@ sav-tab > * { padding-top: 1rem; }
 @media (max-width: 900px) {
  
   .home .brand span { display: none; }
-  .emain { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; } .ecenter { grid-row: 1; grid-column: 1; } .rail { grid-row: 2; width: auto; border-left: 0; border-top: 1px solid var(--sav-color-border); padding-bottom: env(safe-area-inset-bottom); } .rail::part(base) { flex-direction: row; overflow-x: auto; justify-content: flex-start; padding: .1rem .3rem; scrollbar-width: none; } .rail sav-bottom-nav-item { min-width: 4.4rem; }
+  .emain { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; } .ecenter { grid-row: 1; grid-column: 1; } .rail { grid-row: 2; width: auto; border-left: 0; border-top: 1px solid var(--sav-color-border); padding-bottom: env(safe-area-inset-bottom); } .rail::part(base) { flex-direction: row; overflow: hidden; justify-content: stretch; padding: .1rem .3rem; } .rail sav-bottom-nav-item { flex: 1 1 0; min-width: 0; } /* at the bottom the panels share the width: never more than five, "More" beyond (SavOffice.railMore) */
   .eleft, .epanel { grid-row: 1; grid-column: 1; z-index: 20; } .left-open .eleft { width: min(20rem, 86%); box-shadow: var(--sav-shadow-lg); justify-self: start; } .has-panel .epanel { width: auto; align-self: end; height: min(62%, 30rem); border: 0; border-radius: 16px 16px 0 0; box-shadow: 0 -8px 30px rgb(0 0 0 / .22); }
   .etop .ins { display: none; } .desk { padding: 0 .4rem 40vh; }
 }
 @media (max-width: 640px) {
   .etop { gap: .2rem; padding: .3rem .4rem; padding-top: max(.3rem, env(safe-area-inset-top)); } .etop > .spacer { display: none; } .etitle { flex: 1; min-width: 0; } .etop .status { display: none; } .etop .hist sav-button { --_h: 2.2rem; }
-  .people, .etop > sav-tooltip { display: none; } .ebottom sav-zoom { display: none; } .grid2, .grid3 { grid-template-columns: minmax(0, 1fr); } .htools .w9 { width: 8.5rem; } .f-type { width: 8.4rem; } .etitle { flex: 1; } .hist { margin-left: auto; } .etop { gap: .2rem; }
+  .people, .etop > sav-tooltip, .etop savoffice-apps > .so-save { display: none; } /* the copy in SavDrive is in ⋮ on phones */ .ebottom sav-zoom { display: none; } .grid2, .grid3 { grid-template-columns: minmax(0, 1fr); } .htools .w9 { width: 8.5rem; } .f-type { width: 8.4rem; } .etitle { flex: 1; } .hist { margin-left: auto; } .etop { gap: .2rem; }
 }
 
 /* settings: sections on the side, rows "what it is | control" (as in SavPresentations) */

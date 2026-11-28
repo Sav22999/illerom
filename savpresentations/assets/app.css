@@ -2917,3 +2917,16 @@ body.spk { overflow: hidden; } body.spk #app { height: 100dvh; }
 .etop > i.sep, .ebottom > i.sep { width: 1px; align-self: stretch; margin: .45rem .25rem; background: var(--sav-color-border); flex: none; }
 /* a fixed space chosen in a bar; an adaptive one is a .spacer */
 .etop > i.bgap, .ebottom > i.bgap, .ins > i.bgap { width: .9rem; flex: none; } .ins > .spacer { flex: 1; } .ins > i.sep { width: 1px; align-self: stretch; margin: .45rem .25rem; background: var(--sav-color-border); flex: none; }
+
+/* phones: the title bar as in SavDocuments — the logo, the title, Share, ⋮, the apps and the account; undo, redo, Present and the
+   copy in SavDrive are in ⋮ (they do not fit) */
+@media (max-width: 640px) {
+    .etop > sav-tooltip, .etop > i.sep, .etop > i.bgap, .etop > .spacer, .etop > .pgroup, .etop > .ins, .etop .people-now, .etop savoffice-apps > .so-save {
+        display: none;
+    }
+
+    .etop .etitle {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+}

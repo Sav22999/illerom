@@ -1,7 +1,13 @@
 /** The version of SavBooks (in the footer) and what changed in each one (the page #/changelog). Newest first. */
-export const VERSION = '1.1.3';
+export const VERSION = '1.1.4';
 
 export const CHANGES = [
+  {
+    v: '1.1.4', date: '2026-11-28', items: [
+      ['Phones: undo, redo and the copy in SavDrive are in ⋮ (the title bar has no room for them); the bar of the panels at the bottom shares its width among its buttons', 'Telefoni: annulla, ripeti e la copia in SavDrive sono in ⋮ (la barra del titolo non ha spazio per loro); la barra dei pannelli in basso divide la sua larghezza tra i pulsanti'],
+      ['Fixed: the sheets that rise from the bottom on phones (menus, action sheets) reach the edges of the screen, without a strip along the sides', 'Corretto: i fogli che salgono dal basso sui telefoni (menu, fogli di azioni) arrivano ai bordi dello schermo, senza una striscia ai lati'],
+    ],
+  },
   {
     v: '1.1.3', date: '2026-11-28', items: [
       ['On phones and tablets the bar of the panels at the bottom no longer scrolls: it shows four, and “More” opens an action sheet with the others', 'Su telefoni e tablet la barra dei pannelli in basso non scorre più: ne mostra quattro, e «Altro» apre un foglio di azioni con gli altri'],

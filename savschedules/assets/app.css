@@ -172,7 +172,7 @@ sav-dialog h3 { font-size: .98rem; } .dlg-err { margin-top: .8rem; } .segm.wide 
 @media (max-width: 1100px) { .has-panel .epanel { width: 300px; } .rail { width: 70px; } .kchip { display: none; } }
 @media (max-width: 900px) {
   .ebody { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; } .emain { grid-row: 1; grid-column: 1; padding: .5rem; }
-  .rail { grid-row: 2; width: auto; border-left: 0; border-top: 1px solid var(--sav-color-border); padding-bottom: env(safe-area-inset-bottom); } .rail::part(base) { flex-direction: row; overflow-x: auto; justify-content: flex-start; padding: .1rem .3rem; scrollbar-width: none; } .rail sav-bottom-nav-item { min-width: 4.4rem; }
+  .rail { grid-row: 2; width: auto; border-left: 0; border-top: 1px solid var(--sav-color-border); padding-bottom: env(safe-area-inset-bottom); } .rail::part(base) { flex-direction: row; overflow: hidden; justify-content: stretch; padding: .1rem .3rem; } .rail sav-bottom-nav-item { flex: 1 1 0; min-width: 0; } /* at the bottom the panels share the width: never more than five, "More" beyond (SavOffice.railMore) */
   .epanel { grid-row: 1; grid-column: 1; z-index: 20; } .has-panel .epanel { width: auto; align-self: end; height: min(62%, 30rem); border: 0; border-radius: 16px 16px 0 0; box-shadow: 0 -8px 30px rgb(0 0 0 / .22); }
   .lenwrap .muted { display: none; }
 }

@@ -1,7 +1,13 @@
 /** The version of SavSchedules (in the footer) and what changed in each one (the page #/changelog). Newest first. */
-export const VERSION = '1.4.2';
+export const VERSION = '1.4.3';
 
 export const CHANGES = [
+  {
+    v: '1.4.3', date: '2026-11-28', items: [
+      ['Phones: the bar of the panels at the bottom shares its width among its buttons, instead of leaving them on the left', 'Telefoni: la barra dei pannelli in basso divide la sua larghezza tra i pulsanti, invece di lasciarli a sinistra'],
+      ['Fixed: the sheets that rise from the bottom on phones (menus, action sheets) reach the edges of the screen, without a strip along the sides', 'Corretto: i fogli che salgono dal basso sui telefoni (menu, fogli di azioni) arrivano ai bordi dello schermo, senza una striscia ai lati'],
+    ],
+  },
   {
     v: '1.4.2', date: '2026-11-28', items: [
       ['On phones and tablets the bar of the panels at the bottom no longer scrolls: it shows four, and “More” opens an action sheet with the others', 'Su telefoni e tablet la barra dei pannelli in basso non scorre più: ne mostra quattro, e «Altro» apre un foglio di azioni con gli altri'],

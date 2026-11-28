@@ -1,5 +1,6 @@
 /** Texts of the app: one line each, key | English | Italian. {x} is replaced. */
 const RAW = `
+save_drive|Save to SavDrive|Salva in SavDrive
 all|All|Tutti
 show_more|Show {n} more|Mostra altri {n}
 f_display|Display|Decorativo

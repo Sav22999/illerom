@@ -1,7 +1,12 @@
 /** The version of SavNewsletters (in the footer) and what changed in each one (the page #/changelog). Newest first. */
-export const VERSION = '1.2.3';
+export const VERSION = '1.2.4';
 
 export const CHANGES = [
+  {
+    v: '1.2.4', date: '2026-11-28', items: [
+      ['Fixed: the sheets that rise from the bottom on phones (menus, action sheets) reach the edges of the screen, without a strip along the sides', 'Corretto: i fogli che salgono dal basso sui telefoni (menu, fogli di azioni) arrivano ai bordi dello schermo, senza una striscia ai lati'],
+    ],
+  },
   {
     v: '1.2.3', date: '2026-11-28', items: [
       ['Fixed: on phones the bar on top has the logo and the name on the left, the apps and the account on the right, and the search on a row of its own', 'Corretto: sui telefoni la barra in alto ha logo e nome a sinistra, le app e l’account a destra, e la ricerca su una riga a sé'],

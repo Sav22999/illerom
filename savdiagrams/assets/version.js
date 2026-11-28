@@ -1,7 +1,12 @@
 /** The version of SavDiagrams (in the footer) and what changed in each one (the page #/changelog). Newest first. */
-export const VERSION = '1.1.1';
+export const VERSION = '1.1.2';
 
 export const CHANGES = [
+  {
+    v: '1.1.2', date: '2026-11-28', items: [
+      ['Fixed: the sheets that rise from the bottom on phones (menus, action sheets) reach the edges of the screen, without a strip along the sides', 'Corretto: i fogli che salgono dal basso sui telefoni (menu, fogli di azioni) arrivano ai bordi dello schermo, senza una striscia ai lati'],
+    ],
+  },
   {
     v: '1.1.1', date: '2026-11-28', items: [
       ['Keyboard shortcuts: a letter is never a shortcut by itself any more, only with ⌥⇧ (Alt+Shift), so typing or a key pressed by mistake does nothing; the arrows, / and ? work as before', 'Scorciatoie da tastiera: una lettera da sola non è più mai una scorciatoia, solo con ⌥⇧ (Alt+Shift), così scrivere o premere un tasto per sbaglio non fa nulla; frecce, / e ? funzionano come prima'],

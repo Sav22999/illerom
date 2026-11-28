@@ -742,6 +742,7 @@ const T = {
   tp_weekly: ["Weekly schedule", "Programma settimanale"],
   trash_note: ["Spreadsheets in the trash are deleted after 30 days.", "I fogli di calcolo nel cestino si eliminano dopo 30 giorni."],
   underline: ["Underline", "Sottolineato"],
+  save_drive: ['Save to SavDrive', 'Salva in SavDrive'],
   undo: ["Undo", "Annulla"],
   unhide_cols: ["Show columns", "Mostra colonne"],
   unhide_rows: ["Show rows", "Mostra righe"],
