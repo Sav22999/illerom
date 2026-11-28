@@ -777,13 +777,79 @@ savoffice-apps { display: inline-flex; }
     const l = it(), cur = current(), list = [];
     const apps = { label: 'SavOffice', items: (window.SavOffice?.apps || APPS).filter((a) => a[0] !== cur && reachable(a[0])).map(appCommand(l)) };
     let n = 0;
-    for (const g of [...(window.SavOffice?.driveCommands?.() || []), ...groups, ...pageCommands(), apps]) for (const c of (g?.items || []).filter(Boolean)) {
+    // what the screen tells, what the selection can do, the page, the options on it, the other apps
+    const told = [...(window.SavOffice?.driveCommands?.() || []), ...groups], pc = pageCommands();
+    const smart = smartCommands([...told, ...pc].flatMap((g) => (g?.items || []).filter(Boolean).map((c) => fold(c.label))));
+    for (const g of [...told, smart.sel, ...pc, smart.page, apps]) for (const c of (g?.items || []).filter(Boolean)) {
       const id = 'c' + n++;
       fns.set(id, c.run || (() => { if (c.href) location.href = c.href; }));
       list.push({ label: c.label, value: id, icon: c.icon || '', shortcut: c.shortcut || '', description: c.description || '', keywords: synonyms(c.label + ' ' + (c.description || ''), c.keywords || ''), group: g.label || '', disabled: !!c.disabled });
     }
     pal.commands = list;
   }
+  /*
+   * The smart part of the search: besides what each screen tells, what the thing last clicked or chosen can do (the same as its
+   * right click, SavOffice.context) and every option on the page — the buttons of its bars, the items of its menus ("Freeze ›
+   * 2 rows"), its switches, the choices of its lists, its tabs. What the app already lists is not repeated.
+   */
+  let lastTarget = null;
+  const outside = (t) => t instanceof Element && !t.closest('sav-command, .so-ctx');
+  addEventListener('pointerdown', (e) => { const t = e.composedPath()[0]; if (e.isTrusted && outside(t)) lastTarget = t; }, true); // not the presses made to build the menus
+  addEventListener('focusin', (e) => { const t = e.composedPath()[0]; if (e.isTrusted && outside(t) && t !== document.body) lastTarget = t; }, true);
+  const visible = (x) => x.isConnected && x.offsetParent !== null && !x.closest('sav-command, .so-ctx, [hidden], sav-dialog:not([open]), sav-drawer:not([open])') && !x.hasAttribute('disabled');
+  const nameOf = (x) => (x.getAttribute('label') || x.getAttribute('aria-label') || x.getAttribute('title') || (x.parentElement?.localName === 'sav-tooltip' ? x.parentElement.getAttribute('content') : '') || x.textContent || '').replace(/\s*\([^)]*\)\s*$/, '').replace(/\s+/g, ' ').trim();
+  function smartCommands(known) {
+    const l = it(), seen = new Set(known), sel = [], page = [];
+    const push = (list, c) => { const k = fold(c.label); if (!c.label || seen.has(k)) return; seen.add(k); list.push(c); };
+    // what is chosen: the item under the last click or focus (a message, a task, a card…), as its right click
+    const t = lastTarget?.isConnected ? lastTarget : null;
+    if (t && window.SavOffice?.context?.items) {
+      for (const x of window.SavOffice.context.items(t, null, { general: false })) if (Array.isArray(x) && x[2] && !x[3]?.disabled) push(sel, { icon: String(x[0] || '').replace(/^so-/, ''), label: x[1], run: x[2] });
+    }
+    // the menus of the page: their items, made when they open (drop() of the apps), are asked as a press on their button would
+    for (const d of document.querySelectorAll('sav-dropdown')) {
+      if (d.classList.contains('so-ctx') || d.closest('sav-command')) continue;
+      const trig = d.querySelector(':scope > [slot="trigger"]');
+      if (!trig || !visible(trig)) continue;
+      const head = nameOf(trig);
+      if (!d.open) trig.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true }));
+      for (const m of d.querySelectorAll(':scope > sav-menu-item')) {
+        if (m.hasAttribute('disabled')) continue;
+        // its name without the shortcut written beside it (<kbd slot="suffix">), and not again what the app lists already
+        const name = [...m.childNodes].filter((n) => !(n instanceof Element && n.slot)).map((n) => n.textContent).join('').replace(/\s+/g, ' ').trim();
+        if (!name || seen.has(fold(name))) continue;
+        push(page, { icon: m.querySelector('[slot="prefix"]')?.getAttribute('name') || '', label: head && head !== name ? head + ' › ' + name : name, run: () => (d.choose ? d.choose(m) : m.click()) });
+      }
+    }
+    // the buttons of the bars and of the panels
+    for (const b of document.querySelectorAll('sav-button, button[aria-label], button[title]')) {
+      if (b.slot === 'trigger' || b.closest('sav-dropdown > [slot="trigger"], sav-popover > [slot="trigger"]') || !visible(b)) continue;
+      const name = nameOf(b);
+      if (name.length < 2 || name.length > 60) continue;
+      push(page, { icon: b.getAttribute('icon') || '', label: name, run: () => b.click() });
+    }
+    // switches and checkboxes: on or off
+    for (const sw of document.querySelectorAll('sav-switch, sav-checkbox')) {
+      if (!visible(sw)) continue;
+      const name = nameOf(sw);
+      if (!name || name.length > 70) continue;
+      push(page, { icon: 'toggle-left', label: (sw.checked ? (l ? 'Disattiva: ' : 'Turn off: ') : (l ? 'Attiva: ' : 'Turn on: ')) + name, run: () => sw.click() });
+    }
+    // the choices of the lists (a select with a name)
+    for (const se of document.querySelectorAll('sav-select')) {
+      if (!visible(se)) continue;
+      const name = nameOf(se.querySelector('[slot="label"]') || se) || se.getAttribute('label') || '';
+      if (!name) continue;
+      for (const op of se.querySelectorAll('option')) if (op.value !== se.value && op.textContent.trim()) push(page, { icon: 'list', label: name + ': ' + op.textContent.trim(), run: () => { se.value = op.value; se.dispatchEvent(new Event('change', { bubbles: true })); se.dispatchEvent(new Event('input', { bubbles: true })); } });
+    }
+    // the tabs (of a panel, of a page)
+    for (const tb of document.querySelectorAll('sav-tab[label], sav-bottom-nav-item[label]')) {
+      if (!tb.isConnected || tb.closest('sav-command, sav-dialog:not([open])')) continue;
+      push(page, { icon: tb.getAttribute('icon') || 'panel-top', label: (l ? 'Vai a: ' : 'Go to: ') + tb.getAttribute('label'), run: () => { const g = tb.closest('sav-tabs'); if (g && tb.getAttribute('name')) g.active = tb.getAttribute('name'); tb.click(); } });
+    }
+    return { sel: sel.length ? { label: l ? 'Per la selezione' : 'For the selection', items: sel } : null, page: page.length ? { label: l ? 'Su questa pagina' : 'On this page', items: page.slice(0, 400) } : null };
+  }
+
   /** What every page offers: the home of the app, and its search field when there is one. */
   function pageCommands() {
     const l = it(), cur = current(), app = (window.SavOffice?.apps || APPS).find((a) => a[0] === cur), items = [];
@@ -827,7 +893,9 @@ savoffice-apps { display: inline-flex; }
       }
       o.append(g);
     };
-    for (const g of [...(window.SavOffice?.driveCommands?.() || []), ...pageCommands()]) add(g.label, g.items || []);
+    const known = [...o.querySelectorAll('option')].map((op) => fold(op.textContent));
+    const smart = smartCommands(known);
+    for (const g of [...(window.SavOffice?.driveCommands?.() || []), smart.sel, ...pageCommands(), smart.page].filter(Boolean)) add(g.label, g.items || []);
     add('SavOffice', (window.SavOffice?.apps || APPS).filter((a) => a[0] !== cur && reachable(a[0])).map(appCommand(l)));
   }
   // the palettes of the editors, as soon as they are on the page
@@ -857,4 +925,278 @@ savoffice-apps { display: inline-flex; }
     palette: open,
     paletteKey: IS_MAC ? '⌘J' : 'Ctrl+J',
   });
+})();
+
+/*
+ * SavOffice.bars — customising the bars of an app, the same window in every app of the suite (⋮ → Customise the bars).
+ * An app describes the bars it has (the title bar, the toolbar, the status bar…: only those that exist) and what each can
+ * hold; the person chooses the buttons of each bar, their order and the spaces between them, seeing the bar as it will be;
+ * the app keeps the choice with the account (prefs().bars = {title: [...], tools: [...], status: [...]}) and lays out its
+ * bars again, in the order of the list. Besides the ids of its buttons a list holds '|' (a separator), '_' (a fixed space)
+ * and '~' (an adaptive space: it takes the room left, so what follows goes to the end).
+ *
+ *   SavOffice.bars.dialog({ bars: [{ id: 'tools', items: [[id, icon, label, {lock}], …], def: [id | '|' | '_' | '~', …],
+ *                                    before: [[icon, label], …], after: [[icon, label], …] }, …], value: {tools: [...]}, save: async (value) => {…} })
+ *     lock: always in the bar (it can be moved, not taken away); before / after: what the bar always has at its ends (the logo,
+ *     the title, the ⋮ menu that opens this window, the account), drawn greyed in the preview, not in the list.
+ *   SavOffice.bars.pick(saved, def, items) -> the list to show, the ids not available any more left out, the locked ones put back
+ *   SavOffice.bars.layout(list) -> the same with no separator or fixed space at the ends and no two in a row (an adaptive space stays)
+ *   bar ids: 'title', 'tools', 'status', 'insert', 'format' (their names come from here, in the language of the page)
+ */
+(() => {
+  if (window.SavOffice?.bars) return;
+  const it = () => (document.documentElement.lang || navigator.language || 'en').startsWith('it');
+  const W = {
+    title: ['Customise the bars', 'Personalizza le barre'], hint: ['Choose the buttons of each bar, drag them in the order you like and add spaces. It is kept with your account.', 'Scegli i pulsanti di ogni barra, trascinali nell’ordine che vuoi e aggiungi degli spazi. Resta salvato nel tuo account.'],
+    bar_title: ['Title bar', 'Barra del titolo'], bar_tools: ['Toolbar', 'Barra degli strumenti'], bar_status: ['Status bar', 'Barra di stato'], bar_insert: ['Insert bar', 'Barra Inserisci'], bar_format: ['Text bar', 'Barra del testo'],
+    preview: ['Preview', 'Anteprima'], always: ['Always in the bar', 'Sempre nella barra'],
+    sep: ['Separator', 'Separatore'], gap: ['Fixed space', 'Spazio fisso'], flex: ['Adaptive space', 'Spazio adattivo'],
+    add_sep: ['Separator', 'Separatore'], add_gap: ['Fixed space', 'Spazio fisso'], add_flex: ['Adaptive space', 'Spazio adattivo'], add: ['Add', 'Aggiungi'],
+    flex_t: ['It takes the room left: what follows goes to the end of the bar.', 'Prende lo spazio libero: quello che segue va in fondo alla barra.'],
+    reset: ['Reset', 'Ripristina'], cancel: ['Cancel', 'Annulla'], save: ['Save', 'Salva'],
+  };
+  const w = (k) => W[k][it() ? 1 : 0];
+  const SPECIAL = { '|': 'sep', _: 'gap', '~': 'flex' };
+  // the separators that the bars of the apps draw from these lists (class so-sep): a short line in the middle of the bar,
+  // whatever the bar's padding, the height of its buttons or the place (title bar, toolbar, status bar)
+  if (!document.getElementById('so-sep-css')) (document.head || document.documentElement).append(Object.assign(document.createElement('style'), { id: 'so-sep-css', textContent: '.so-sep{align-self:center!important;height:1.25rem!important;min-height:0!important;margin-top:0!important;margin-bottom:0!important;flex:none}' }));
+  const el = (tag, props = {}, ...kids) => { const e = document.createElement(tag); for (const [k, v] of Object.entries(props)) { if (v == null || v === false) continue; if (k === 'class') e.className = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v === true ? '' : v); } e.append(...kids.flat().filter((x) => x != null && x !== false)); return e; };
+  const svg = (inner, cls) => { const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); for (const [k, v] of Object.entries({ viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true' })) s.setAttribute(k, v); s.innerHTML = inner; if (cls) s.classList.add(cls); return s; };
+  const GRIP = '<circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/>';
+  const MARK = { sep: '<path d="M12 4v16"/>', gap: '<path d="M4 12h16"/><path d="M4 8v8"/><path d="M20 8v8"/>', flex: '<path d="M3 12h18"/><path d="m7 8-4 4 4 4"/><path d="m17 8 4 4-4 4"/>' };
+  const CSS = `.so-bars-list{--gap:.3rem}.so-bars-row{display:flex;align-items:center;gap:.7rem;padding:.45rem .6rem;border:1px solid var(--sav-color-border);border-radius:10px;background:var(--sav-color-surface)}
+.so-bars-list,.so-bars-row,.so-bars-row *,.so-bars-strip,.so-bars-strip *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}.so-bars-row .so-grip{width:18px;height:18px;flex:none;cursor:grab;color:var(--sav-color-text-muted)}.so-bars-row>sav-icon,.so-bars-row>.so-mark{flex:none;width:18px;height:18px;font-size:18px;color:var(--sav-color-text-muted)}
+.so-bars-row .so-name{flex:1;min-width:0}.so-bars-row .so-name small{display:block;color:var(--sav-color-text-muted);font-size:.78em}.so-bars-row.so-special{border-style:dashed;background:transparent}
+.so-bars-pane{display:grid;gap:.6rem;padding-top:.6rem}.so-bars-hint{margin:0;color:var(--sav-color-text-muted);font-size:var(--sav-font-size-sm,.85rem)}
+.so-bars-adds{display:flex;flex-wrap:wrap;align-items:center;gap:.3rem}.so-bars-adds>span{color:var(--sav-color-text-muted);font-size:.85rem;margin-right:.2rem}
+.so-bars-pv{display:grid;gap:.3rem}.so-bars-pv>span{color:var(--sav-color-text-muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.04em}
+.so-bars-strip{display:flex;align-items:center;gap:2px;min-height:40px;padding:4px 8px;border:1px solid var(--sav-color-border);border-radius:10px;background:var(--sav-color-surface-2,var(--sav-color-surface));overflow:hidden;pointer-events:none;user-select:none}
+.so-bars-strip>.so-pi{flex:none;display:grid;place-items:center;width:28px;height:28px;border-radius:7px;color:var(--sav-color-text)}.so-bars-strip>.so-pi sav-icon{font-size:17px}
+.so-bars-strip>.so-pi.so-fixed{color:var(--sav-color-text-muted);opacity:.55}.so-bars-strip>.so-pt{flex:none;font-size:.78rem;font-weight:600;color:var(--sav-color-text-muted);opacity:.7;padding:0 .3rem;white-space:nowrap}
+.so-bars-strip>.so-ps{flex:none;width:1px;height:20px;margin:0 4px;background:var(--sav-color-border-strong,#b9c2ad)}.so-bars-strip>.so-pg{flex:none;width:14px}.so-bars-strip>.so-pf{flex:1;min-width:14px;height:2px;margin:0 4px;background:repeating-linear-gradient(90deg,var(--sav-color-border) 0 4px,transparent 4px 8px)}`;
+  const isSpecial = (k) => k in SPECIAL;
+  /** The list chosen, or what the bar has at first: ids no longer there left out, the locked ones put back at their place of the default. */
+  const pick = (saved, def, items) => {
+    const has = new Set(items.map((i) => i[0])), list = (Array.isArray(saved) ? saved : def).filter((k) => isSpecial(k) || has.has(k));
+    for (const i of items) if (i[3]?.lock && !list.includes(i[0])) { const at = def.indexOf(i[0]); list.splice(at < 0 ? list.length : Math.min(at, list.length), 0, i[0]); }
+    return list;
+  };
+  /** No separator or space at the ends, none twice in a row (an adaptive space wins over a fixed one next to it). */
+  const layout = (list) => {
+    const out = [];
+    for (const k of list) {
+      if (isSpecial(k)) { const last = out[out.length - 1]; if (!out.length) { if (k === '~') out.push(k); continue; } /* at the start only an adaptive space means something: it pushes the bar to the end */ if (isSpecial(last)) { if (k === '~' || (k === '|' && last === '_')) out[out.length - 1] = k; continue; } out.push(k); } else if (!out.includes(k)) out.push(k);
+    }
+    while (out.length && isSpecial(out[out.length - 1]) && out[out.length - 1] !== '~') out.pop();
+    return out;
+  };
+  function dialog({ bars, value = {}, save }) {
+    if (!document.getElementById('so-bars-css')) document.head.append(el('style', { id: 'so-bars-css' }, CSS));
+    const lists = {}, strips = {};
+    const row = (bar, k, on) => {
+      const sp = SPECIAL[k], it0 = sp ? null : bar.items.find((x) => x[0] === k), lock = !!it0?.[3]?.lock, name = sp ? w(sp) : it0[2];
+      const sw = el('sav-switch', { size: 'sm', checked: on || lock || null, disabled: lock || null, 'aria-label': name });
+      sw.addEventListener('change', () => draw(bar));
+      return el('div', { class: 'so-bars-row' + (sp ? ' so-special' : ''), 'data-id': k }, svg(GRIP, 'so-grip'), sp ? svg(MARK[sp], 'so-mark') : el('sav-icon', { name: it0[1] }),
+        el('span', { class: 'so-name' }, name, sp === 'flex' ? el('small', {}, w('flex_t')) : lock ? el('small', {}, w('always')) : null), sw);
+    };
+    const chosen = (bar) => [...lists[bar.id].querySelectorAll('.so-bars-row')].filter((r) => r.querySelector('sav-switch').checked).map((r) => r.dataset.id);
+    /** The bar as it will be: its buttons in order, the spaces, and greyed what it always has at its ends. */
+    const draw = (bar) => {
+      const fixed = (x) => (x[0] ? el('span', { class: 'so-pi so-fixed', title: x[1] }, el('sav-icon', { name: x[0] })) : el('span', { class: 'so-pt' }, x[1]));
+      strips[bar.id].replaceChildren(...(bar.before || []).map(fixed), ...layout(chosen(bar)).map((k) => {
+        if (k === '|') return el('span', { class: 'so-ps' });
+        if (k === '_') return el('span', { class: 'so-pg' });
+        if (k === '~') return el('span', { class: 'so-pf' });
+        const x = bar.items.find((i) => i[0] === k); return el('span', { class: 'so-pi', title: x[2] }, el('sav-icon', { name: x[1] }));
+      }), ...(bar.after || []).map(fixed));
+    };
+    const paint = (bar, order) => { lists[bar.id].replaceChildren(...order.map((k) => row(bar, k, true)), ...bar.items.filter((x) => !order.includes(x[0])).map((x) => row(bar, x[0], false))); draw(bar); };
+    const panes = bars.map((bar) => {
+      const list = (lists[bar.id] = el('sav-sortable', { class: 'so-bars-list', handle: '.so-grip', 'aria-label': w('bar_' + bar.id) }));
+      strips[bar.id] = el('div', { class: 'so-bars-strip', role: 'img', 'aria-label': w('preview') + ' · ' + w('bar_' + bar.id) });
+      new MutationObserver(() => draw(bar)).observe(list, { childList: true }); // dragged: the preview follows
+      paint(bar, pick(value[bar.id], bar.def, bar.items));
+      const add = (k, label) => { const b = el('sav-button', { size: 'sm', appearance: 'outline', variant: 'neutral' }, label); b.addEventListener('click', () => { const on = [...list.querySelectorAll('.so-bars-row')].filter((r) => r.querySelector('sav-switch').checked).pop(), r = row(bar, k, true); if (on) on.after(r); else list.prepend(r); r.scrollIntoView({ block: 'nearest' }); }); return b; }; // after the last button shown: there it is seen, and dragged from there
+      return el('div', { class: 'so-bars-pane' }, el('div', { class: 'so-bars-pv' }, el('span', {}, w('preview')), strips[bar.id]), list,
+        el('div', { class: 'so-bars-adds' }, el('span', {}, w('add')), add('|', w('add_sep')), add('_', w('add_gap')), add('~', w('add_flex'))));
+    });
+    const tabs = bars.length > 1 ? el('sav-tabs', {}, bars.map((bar, i) => el('sav-tab', { name: bar.id, label: w('bar_' + bar.id) }, panes[i]))) : panes[0];
+    const err = el('sav-alert', { variant: 'danger', hidden: true });
+    const current = () => (bars.length > 1 ? bars.find((b) => b.id === tabs.active) || bars[0] : bars[0]);
+    const btn = (label, o, run) => { const b = el('sav-button', { slot: 'footer', ...o }, label); b.addEventListener('click', run); return b; };
+    const d = el('sav-dialog', { label: w('title'), 'sheet-on-mobile': true, style: '--width:min(34rem, calc(100vw - 2rem))' }, el('p', { class: 'so-bars-hint' }, w('hint')), tabs, err,
+      btn(w('reset'), { appearance: 'outline', variant: 'neutral' }, () => { const b = current(); paint(b, pick(null, b.def, b.items)); }),
+      btn(w('cancel'), { appearance: 'outline', variant: 'neutral' }, () => d.hide()),
+      btn(w('save'), { appearance: 'solid', variant: 'primary' }, async (e) => {
+        const b = e.currentTarget; if (b.loading) return; b.loading = true; err.hidden = true;
+        const out = {}; for (const bar of bars) out[bar.id] = chosen(bar);
+        try { await save(out); d.hide(); } catch (x) { err.textContent = x?.message || String(x); err.hidden = false; } finally { b.loading = false; }
+      }));
+    d.addEventListener('sav-after-hide', (e) => { if (e.target === d) d.remove(); });
+    document.body.append(d);
+    customElements.whenDefined('sav-dialog').then(() => d.show());
+    return d;
+  }
+  window.SavOffice = Object.assign(window.SavOffice || {}, { bars: { dialog, pick, layout, name: (id) => w('bar_' + id), menuLabel: () => w('title') } });
+})();
+
+/*
+ * SavOffice.context — the right click is the app's, never the generic menu of the browser (Shift + right click still opens it).
+ * The menu is sav-context-menu of SavComponents: also a long press on phones and tablets, the menu key and Shift F10, and it
+ * leaves the focus where it was (a text field keeps its caret and its selection).
+ * In order: what the app shows by itself (an app that handles the right click on something calls preventDefault: nothing here);
+ * then, on something that has its own ⋮ menu (a card, a row of a list…), the actions of that menu, opened where the pointer is;
+ * then what fits what is under the pointer (a link, a picture, the text selected, a field to write in), and what any page of
+ * the suite can do (the search of the commands, back, reload).
+ *   SavOffice.context.add(fn): fn(target, event) -> [[icon, label, run, {danger, disabled}] | '-' | {head}] | null: more items
+ *   of an app for what is under the pointer, at the top of the menu.
+ *   el.soMenu = (event) => items: the same, on one thing of the app (a message, a task…): its right click, and "For the selection"
+ *   in the search of actions (⌘J) when it is the thing last clicked.
+ */
+(() => {
+  if (window.SavOffice?.context) return;
+  const it = () => (document.documentElement.lang || navigator.language || 'en').startsWith('it');
+  const W = {
+    open_link: ['Open the link', 'Apri il collegamento'], new_tab: ['Open in a new tab', 'Apri in una nuova scheda'], copy_link: ['Copy the address', 'Copia l’indirizzo'],
+    open_image: ['Open the picture in a new tab', 'Apri l’immagine in una nuova scheda'], copy: ['Copy', 'Copia'], cut: ['Cut', 'Taglia'], paste: ['Paste', 'Incolla'], select_all: ['Select all', 'Seleziona tutto'],
+    undo: ['Undo', 'Annulla'], redo: ['Redo', 'Ripeti'], palette: ['Search a command', 'Cerca un comando'], back: ['Back', 'Indietro'], reload: ['Reload the page', 'Ricarica la pagina'],
+  };
+  const w = (k) => W[k][it() ? 1 : 0];
+  const IS_MAC = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+  // the icons of this menu (Lucide, ISC licence), so it looks the same in every app, whatever icons the app carries
+  const ICONS = {"external-link": "<path d=\"M15 3h6v6\"/><path d=\"M10 14 21 3\"/><path d=\"M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6\"/>", "app-window": "<rect x=\"2\" y=\"4\" width=\"20\" height=\"16\" rx=\"2\"/><path d=\"M10 4v4\"/><path d=\"M2 8h20\"/><path d=\"M6 4v4\"/>", "link": "<path d=\"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71\"/><path d=\"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71\"/>", "image": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\" ry=\"2\"/><circle cx=\"9\" cy=\"9\" r=\"2\"/><path d=\"m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21\"/>", "undo-2": "<path d=\"M9 14 4 9l5-5\"/><path d=\"M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11\"/>", "redo-2": "<path d=\"m15 14 5-5-5-5\"/><path d=\"M20 9H9.5A5.5 5.5 0 0 0 4 14.5A5.5 5.5 0 0 0 9.5 20H13\"/>", "scissors": "<circle cx=\"6\" cy=\"6\" r=\"3\"/><path d=\"M8.12 8.12 12 12\"/><path d=\"M20 4 8.12 15.88\"/><circle cx=\"6\" cy=\"18\" r=\"3\"/><path d=\"M14.8 14.8 20 20\"/>", "copy": "<rect width=\"14\" height=\"14\" x=\"8\" y=\"8\" rx=\"2\" ry=\"2\"/><path d=\"M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2\"/>", "clipboard-paste": "<path d=\"M11 14h10\"/><path d=\"M16 4h2a2 2 0 0 1 2 2v1.344\"/><path d=\"m17 18 4-4-4-4\"/><path d=\"M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 1.793-1.113\"/><rect x=\"8\" y=\"2\" width=\"8\" height=\"4\" rx=\"1\"/>", "text-select": "<path d=\"M14 21h1\"/><path d=\"M14 3h1\"/><path d=\"M19 3a2 2 0 0 1 2 2\"/><path d=\"M21 14v1\"/><path d=\"M21 19a2 2 0 0 1-2 2\"/><path d=\"M21 9v1\"/><path d=\"M3 14v1\"/><path d=\"M3 9v1\"/><path d=\"M5 21a2 2 0 0 1-2-2\"/><path d=\"M5 3a2 2 0 0 0-2 2\"/><path d=\"M7 12h10\"/><path d=\"M7 16h6\"/><path d=\"M7 8h8\"/><path d=\"M9 21h1\"/><path d=\"M9 3h1\"/>", "command": "<path d=\"M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3\"/>", "arrow-left": "<path d=\"m12 19-7-7 7-7\"/><path d=\"M19 12H5\"/>", "rotate-cw": "<path d=\"M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8\"/><path d=\"M21 3v5h-5\"/>"};
+  const icons = () => { if (icons.done || !window.Sav?.registerIcon) return; icons.done = true; for (const [k, v] of Object.entries(ICONS)) window.Sav.registerIcon('so-' + k, v); };
+  const extra = [];
+  const MORE = ['ellipsis-vertical', 'more-vertical', 'ellipsis', 'more-horizontal'];
+  /** The ⋮ menu of the thing under the pointer: the nearest card or row that holds one (not a bar of the page). */
+  function ownMenu(target) {
+    const ITEM = 'sav-card, .card, .tile, .row, li, tr, .item, [data-id], [role="row"], [role="listitem"], article';
+    for (let n = target, depth = 0; n && n !== document.body && depth < 8; n = n.parentElement, depth++) {
+      if (n.matches?.('header, nav, [role="toolbar"], sav-dialog, sav-drawer, .etop, .wtop, .htop, .ltop, .ctop, .rtop, .fmt, .ins')) return null;
+      const mine = [...(n.querySelectorAll?.('sav-dropdown') || [])].filter((x) => MORE.includes(x.querySelector(':scope > [slot="trigger"]')?.getAttribute('icon')));
+      if (mine.length > 1) return null; // a list of many things: the pointer is on none of them
+      if (mine.length === 1 && n.matches?.(ITEM)) return mine[0];
+    }
+    return null;
+  }
+
+  const editable = (t) => t.closest?.('input:not([type=checkbox]):not([type=radio]):not([type=button]), textarea, [contenteditable=""], [contenteditable="true"], sav-input, sav-textarea');
+  const fieldOf = (t) => { const e = editable(t); if (!e) return null; return e.localName === 'sav-input' || e.localName === 'sav-textarea' ? e.shadowRoot?.querySelector('input, textarea') || e : e; };
+  function items(target, e, o = {}) {
+    const out = [];
+    for (const fn of extra) { try { const x = fn(target, e); if (x?.length) out.push(...x, '-'); } catch { /* an app's items, not this menu */ } }
+    // a thing of the app that says what can be done with it (el.soMenu = () => items): a message, a task, a cell…
+    let mine = false;
+    for (let n = target; n && n !== document.body; n = n.parentElement || n.getRootNode?.().host) if (typeof n.soMenu === 'function') { try { const x = n.soMenu(e); if (x?.length) { out.push(...x.filter(Boolean), '-'); mine = true; } } catch { /* not this menu */ } break; }
+    const own = mine ? null : ownMenu(target);
+    if (own) {
+      const trig = own.querySelector(':scope > [slot="trigger"]');
+      // a menu made when it opens (drop() of the apps): its items are asked as a press on its button would
+      trig?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true }));
+      const list = [...own.querySelectorAll(':scope > sav-menu-item, :scope > sav-divider, :scope > sav-menu-label')];
+      for (const x of list) {
+        if (x.localName === 'sav-divider') out.push('-');
+        else if (x.localName === 'sav-menu-label') out.push({ head: x.textContent.trim() });
+        else out.push([x.querySelector('[slot="prefix"]')?.getAttribute('name') || null, x.textContent.trim(), () => own.choose ? own.choose(x) : x.click(), { danger: x.getAttribute('variant') === 'danger', disabled: x.hasAttribute('disabled') }]);
+      }
+      if (list.length) out.push('-');
+    }
+    const link = target.closest?.('a[href]'), img = target.closest?.('img'), field = fieldOf(target), sel = String(getSelection() || '');
+    if (link && !link.getAttribute('href').startsWith('#')) out.push(['so-external-link', w('open_link'), () => link.click()], ['so-app-window', w('new_tab'), () => window.open(link.href, '_blank', 'noopener')], ['so-link', w('copy_link'), () => navigator.clipboard?.writeText(link.href)], '-');
+    else if (link) out.push(['so-link', w('copy_link'), () => navigator.clipboard?.writeText(link.href)], '-');
+    if (img && img.src && !img.src.startsWith('data:')) out.push(['so-image', w('open_image'), () => window.open(img.src, '_blank', 'noopener')], '-');
+    if (field) {
+      const has = (field.selectionEnd ?? 0) > (field.selectionStart ?? 0) || !!sel;
+      out.push(['so-undo-2', w('undo'), () => { field.focus(); document.execCommand('undo'); }], ['so-redo-2', w('redo'), () => { field.focus(); document.execCommand('redo'); }], '-',
+        ['so-scissors', w('cut'), () => { field.focus(); document.execCommand('cut'); }, { disabled: !has }], ['so-copy', w('copy'), () => { field.focus(); document.execCommand('copy'); }, { disabled: !has }],
+        ['so-clipboard-paste', w('paste'), async () => { field.focus(); try { const tx = await navigator.clipboard.readText(); document.execCommand('insertText', false, tx); } catch { document.execCommand('paste'); } }],
+        ['so-text-select', w('select_all'), () => { field.focus(); field.select ? field.select() : document.execCommand('selectAll'); }], '-');
+    } else if (sel.trim()) out.push(['so-copy', w('copy'), () => navigator.clipboard?.writeText(sel)], '-');
+    if (o.general !== false) {
+      if (window.SavOffice?.palette) out.push(['so-command', w('palette') + ' (' + (window.SavOffice.paletteKey || (IS_MAC ? '⌘J' : 'Ctrl+J')) + ')', () => window.SavOffice.palette()]);
+      if (history.length > 1) out.push(['so-arrow-left', w('back'), () => history.back()]);
+      out.push(['so-rotate-cw', w('reload'), () => location.reload()]);
+    }
+    // no line at the ends or twice
+    return out.filter((x, i, a) => x !== '-' || (i > 0 && i < a.length - 1 && a[i - 1] !== '-'));
+  }
+  // ---- the menu: sav-context-menu of SavComponents (1.2.1+) on the whole page. It opens with the right click, a long press on
+  // touch screens, the menu key and Shift F10, and never takes the focus from a text field (its caret and selection stay)
+  let cm = null, list = [], pending = null, lastTouch = false, viaClick = null;
+  const make = (tag, props = {}, ...kids) => { const e = document.createElement(tag); for (const [k, v] of Object.entries(props)) if (v != null && v !== false) e.setAttribute(k, v === true ? '' : v); e.append(...kids.filter(Boolean)); return e; };
+  const keys = (k) => (IS_MAC ? k.replace(/Mod\+?|Ctrl\+/g, '⌘').replace(/Shift\+?/g, '⇧').replace(/Alt\+?/g, '⌥') : k.replace(/Mod/g, 'Ctrl'));
+  /** items: [icon, label, run, {danger, disabled, kbd, check}] | '-' | {head} | a node (put as it is) */
+  function fill(l) {
+    list = l = l.filter(Boolean);
+    cm.replaceChildren(...l.map((i, n) => (i === '-' ? make('sav-divider') : i instanceof Node ? i : i.head ? make('sav-menu-label', {}, i.head)
+      : make('sav-menu-item', { value: String(n), variant: i[3]?.danger ? 'danger' : null, disabled: i[3]?.disabled || null, type: i[3]?.check !== undefined ? 'checkbox' : null, checked: !!i[3]?.check },
+        i[0] ? make('sav-icon', { slot: 'prefix', name: i[0] }) : null, i[1], i[3]?.kbd ? make('kbd', { slot: 'suffix', class: 'so-kbd' }, keys(i[3].kbd)) : null))));
+  }
+  /** A surface that draws with a finger (a board, the sheet of a notebook with a pen) says so with data-so-draw: there a
+   *  finger held still is the start of a stroke, not a long press. */
+  const drawing = (t) => !!t.closest?.('[data-so-draw]');
+  function mount() {
+    if (cm) { if (!cm.isConnected && document.body) document.body.append(cm); return; }
+    if (!document.body) return;
+    icons();
+    cm = make('sav-context-menu', { class: 'so-ctx', 'sheet-on-mobile': true });
+    document.body.append(cm);
+    customElements.whenDefined('sav-context-menu').then(() => { cm.target = document.body; });
+    cm.addEventListener('sav-show', (e) => {
+      cm.toggleAttribute('label', false);
+      if (pending) { fill(pending.list); if (pending.label) cm.setAttribute('label', pending.label); pending = null; return; } // SavOffice.context.show(x, y, list)
+      const t = e.detail?.target instanceof Element ? e.detail.target : document.body;
+      // inside a menu or a popover that is open: the browser's menu, as before
+      if (t.closest?.('sav-dropdown[open], sav-popover[open], sav-command')) { e.preventDefault(); return; }
+      // (a long press, or the contextmenu event that Android sends for it)
+      if (lastTouch && drawing(t)) { e.preventDefault(); return; }
+      // a long press (no contextmenu event, as on iPhone and iPad): the app hears it as a right click, so the menus it shows
+      // for one (a file, a cell, a slide) come with a long press too; the menu of the app fills this one (ctxAt → show)
+      if (!viaClick && lastTouch) {
+        const ce = new MouseEvent('contextmenu', { bubbles: true, cancelable: true, composed: true, button: 2, clientX: e.detail.x, clientY: e.detail.y });
+        ce.__savContext = true; // not this menu again
+        t.dispatchEvent(ce);
+        if (ce.defaultPrevented) { if (!cm.open) e.preventDefault(); return; }
+      }
+      const l = items(t, { type: 'contextmenu', target: t, clientX: e.detail.x, clientY: e.detail.y, preventDefault() {} });
+      if (!l.length) { e.preventDefault(); return; }
+      fill(l);
+    });
+    cm.addEventListener('sav-select', (e) => {
+      e.stopPropagation();
+      const i = list[+e.detail.value];
+      // the menu has already closed: an action that opens a dialog or moves the focus keeps it
+      if (i?.[2]) { try { const r = i[2](); if (r?.catch) r.catch(() => {}); } catch (err) { console.error(err); } }
+    });
+  }
+  if (document.body) mount(); else document.addEventListener('DOMContentLoaded', mount, { once: true });
+  // before the menu sees it: Shift + right click opens the browser's menu (spelling, inspect…); the menu is put back if a page
+  // replaced the whole body
+  addEventListener('contextmenu', (e) => {
+    mount();
+    if (e.shiftKey) e.__savContext = true;
+    if (!e.__savContext || e.isTrusted) { viaClick = e; setTimeout(() => { if (viaClick === e) viaClick = null; }, 0); }
+  }, true);
+  addEventListener('pointerdown', (e) => { lastTouch = e.pointerType === 'touch'; mount(); }, true);
+  // a text field: the menu leaves it to the browser, but here it is the app's too (cut, copy, paste, select all, and what the
+  // app adds); the focus and the selection stay in the field
+  addEventListener('contextmenu', (e) => {
+    if (e.defaultPrevented || e.shiftKey || e.__savContext || !cm?.show) return;
+    const t = e.composedPath()[0] instanceof Element ? e.composedPath()[0] : e.target;
+    if (!editable(t) || t.closest?.('sav-dropdown[open], sav-popover[open], sav-command')) return;
+    if (e.pointerType === 'touch') return; // a long press in a field: the system's handles to select and paste
+    if (cm.show(e.clientX, e.clientY, t)) e.preventDefault();
+  });
+  /** A menu of the app's own items at a point of the window (items as in fill), as the right click shows it: the apps'
+   *  menus of a right click (a cell, a file, a slide…) come here, so every one looks and works the same. o: {label}.
+   *  False when the menu is not there (SavComponents older than 1.2): then the app shows its own. */
+  function show(x, y, l, o = {}) {
+    mount();
+    if (!cm || typeof cm.show !== 'function') return false;
+    pending = { list: l, label: o.label };
+    if (!cm.show(x, y, null)) { pending = null; return false; }
+    return true;
+  }
+  window.SavOffice = Object.assign(window.SavOffice || {}, { context: { items, add: (fn) => { extra.push(fn); return () => { const i = extra.indexOf(fn); if (i >= 0) extra.splice(i, 1); }; }, show } });
 })();

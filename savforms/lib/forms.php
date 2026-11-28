@@ -108,7 +108,9 @@ function clean_opts($in, int $max = MAX_OPTIONS, bool $allowEmpty = false): arra
         if (!is_array($o)) continue;
         $label = clean_line($o['label'] ?? '', 300);
         if ($label === '' && !$allowEmpty) continue;
-        $out[] = ['id' => clean_id($o['id'] ?? null, $seen), 'label' => $label];
+        $one = ['id' => clean_id($o['id'] ?? null, $seen), 'label' => $label];
+        if (isset($o['go']) && is_string($o['go']) && preg_match('/^[A-Za-z0-9_-]{1,40}$/', $o['go'])) $one['go'] = $o['go'];
+        $out[] = $one;
     }
     return $out;
 }
@@ -199,9 +201,63 @@ function clean_questions($in): array
                 $q['alt'] = clean_line($x['alt'] ?? '', 300);
                 break;
         }
+        // where to go next: a choice of one (single, dropdown) can send to a section by its answer; a section says where
+        // to go once it is done
+        if ($type === 'single' || $type === 'dropdown') $q['branch'] = !empty($x['branch']);
+        if ($type === 'section' && isset($x['go']) && is_string($x['go'])) $q['go'] = $x['go'];
         $out[] = $q;
     }
-    return $out;
+    return clean_jumps($out);
+}
+
+/**
+ * The jumps of a form kept only when they lead forward: to a section after the question ('submit' ends the form), so a form
+ * never goes round in a circle. A jump to a section that is not there any more goes too.
+ */
+function clean_jumps(array $items): array
+{
+    $at = [];
+    foreach ($items as $i => $q) if ($q['t'] === 'section') $at[$q['id']] = $i;
+    $ok = fn($go, int $i) => $go === 'submit' || (isset($at[$go]) && $at[$go] > $i);
+    foreach ($items as $i => &$q) {
+        if (isset($q['go']) && !$ok($q['go'], $i)) unset($q['go']);
+        if (isset($q['opts'])) foreach ($q['opts'] as &$o) {
+            if (isset($o['go']) && (empty($q['branch']) || !$ok($o['go'], $i))) unset($o['go']);
+        }
+        unset($o);
+    }
+    unset($q);
+    return $items;
+}
+
+/**
+ * The questions on the way of these answers: the form goes page by page (a page starts at every section) and follows the
+ * jumps — the first answered choice of a page that leads somewhere, otherwise where its section says. The other pages are
+ * skipped: their questions are not asked (nor required). Returns the ids of the items asked.
+ */
+function form_path(array $items, array $answers): array
+{
+    $pages = [['sec' => null, 'items' => []]];
+    foreach ($items as $q) { if ($q['t'] === 'section') $pages[] = ['sec' => $q, 'items' => []]; else $pages[count($pages) - 1]['items'][] = $q; }
+    $index = [];
+    foreach ($pages as $n => $p) if ($p['sec']) $index[$p['sec']['id']] = $n;
+    $asked = [];
+    for ($n = 0, $guard = 0; $n < count($pages) && $guard < 500; $guard++) {
+        $p = $pages[$n];
+        if ($p['sec']) $asked[$p['sec']['id']] = true;
+        $go = null;
+        foreach ($p['items'] as $q) {
+            $asked[$q['id']] = true;
+            if ($go === null && !empty($q['branch']) && isset($answers[$q['id']]) && is_string($answers[$q['id']])) {
+                foreach ($q['opts'] ?? [] as $o) if ($o['id'] === $answers[$q['id']] && isset($o['go'])) { $go = $o['go']; break; }
+            }
+        }
+        if ($go === null && $p['sec'] && isset($p['sec']['go'])) $go = $p['sec']['go'];
+        if ($go === 'submit') break;
+        $next = $go !== null && isset($index[$go]) ? $index[$go] : $n + 1;
+        $n = $next > $n ? $next : $n + 1;
+    }
+    return $asked;
 }
 
 /** The settings of a form (see the editor, tab "Settings"): what is not sent keeps its default. */
@@ -376,9 +432,11 @@ function clean_answers(array $items, $in, bool $soft = false): array
 {
     $in = is_array($in) ? $in : [];
     $out = [];
+    $asked = form_path($items, $in); // the questions of the sections skipped by the answers are neither required nor kept
     foreach ($items as $q) {
         $t = $q['t'];
         if (in_array($t, STATIC_TYPES, true)) continue;
+        if (!isset($asked[$q['id']])) continue;
         $id = $q['id'];
         $v = $in[$id] ?? null;
         $given = false;

@@ -89,5 +89,40 @@ export function models() {
         q('section', L('About you', 'Su di te')), q('number', L('Years of experience', 'Anni di esperienza'), { min: 0, max: 60, int: true }), q('long', L('Why us?', 'Perché noi?')), q('date', L('Available from', 'Disponibile dal'))],
       settings: { notify: true },
     })],
+    ['survey', 'git-branch', '#6d4fd6', () => {
+      // answers that lead on: who used the product goes to its section, who did not to the other one
+      const used = opts(L('Yes', 'Sì'), L('No', 'No'));
+      const secA = q('section', L('Your experience', 'La tua esperienza'), { go: 'submit' }), secB = q('section', L('What stopped you?', 'Cosa ti ha fermato?'));
+      used[0].go = secA.id; used[1].go = secB.id;
+      return {
+        title: L('Customer survey', 'Sondaggio clienti'), descr: L('A few questions, different for those who already know us.', 'Poche domande, diverse per chi ci conosce già.'),
+        items: [q('single', L('Have you used our product?', 'Hai già usato il nostro prodotto?'), { req: true, opts: used, branch: true }),
+          secA, q('rating', L('How do you rate it?', 'Come lo valuti?'), { req: true }), q('long', L('What do you like most?', 'Cosa ti piace di più?')),
+          secB, q('multi', L('Why not yet?', 'Perché non ancora?'), { opts: opts(L('Too expensive', 'Troppo caro'), L('I did not know it', 'Non lo conoscevo'), L('I use something else', 'Uso altro')), other: true }), q('email', L('Email, if you want news', 'Email, se vuoi aggiornamenti'))],
+        settings: { showSummary: false },
+      };
+    }],
+    ['booking', 'calendar-clock', '#0f6e8a', () => ({
+      title: L('Book an appointment', 'Prenota un appuntamento'), descr: L('Choose a day and a time: we will confirm by email.', 'Scegli un giorno e un orario: ti confermeremo via email.'),
+      items: [q('short', L('Name and surname', 'Nome e cognome'), { req: true }), q('email', 'Email', { req: true }),
+        q('dropdown', L('Service', 'Servizio'), { req: true, opts: opts(L('First visit', 'Prima visita'), L('Check-up', 'Controllo'), L('Consultation', 'Consulenza')) }),
+        q('date', L('Day', 'Giorno'), { req: true }), q('time', L('Time', 'Orario'), { req: true }), q('long', L('Notes', 'Note'))],
+      settings: { collectEmail: 'ask', notify: true, allowEdit: true },
+    })],
+    ['volunteer', 'hand-heart', '#c2410c', () => ({
+      title: L('Volunteer sign-up', 'Iscrizione volontari'), descr: L('Thank you for giving us some of your time!', 'Grazie per il tempo che ci regali!'),
+      items: [q('short', L('Name and surname', 'Nome e cognome'), { req: true }), q('email', 'Email', { req: true }), q('short', L('Phone', 'Telefono')),
+        q('multi', L('Where would you like to help?', 'Dove vorresti dare una mano?'), { req: true, opts: opts(L('Welcome desk', 'Accoglienza'), L('Kitchen', 'Cucina'), L('Set-up', 'Allestimento'), L('Photos and social', 'Foto e social')) }),
+        q('checkgrid', L('When are you free?', 'Quando sei disponibile?'), { rows: opts(L('Saturday', 'Sabato'), L('Sunday', 'Domenica')), cols: opts(L('Morning', 'Mattina'), L('Afternoon', 'Pomeriggio'), L('Evening', 'Sera')) }),
+        q('single', L('T-shirt size', 'Taglia della maglietta'), { opts: opts('S', 'M', 'L', 'XL') })],
+      settings: { collectEmail: 'ask', notify: true },
+    })],
+    ['course', 'graduation-cap', '#2f6b2f', () => ({
+      title: L('Course evaluation', 'Valutazione del corso'), descr: L('Anonymous: tell us honestly how the course went.', 'Anonimo: dicci sinceramente com’è andato il corso.'),
+      items: [q('grid', L('How do you rate…', 'Come valuti…'), { req: true, rows: opts(L('the teacher', 'il docente'), L('the materials', 'i materiali'), L('the pace', 'il ritmo'), L('the exercises', 'gli esercizi')), cols: opts('1', '2', '3', '4', '5') }),
+        q('scale', L('How much did you learn?', 'Quanto hai imparato?'), { min: 1, max: 10, minLabel: L('Nothing', 'Niente'), maxLabel: L('A lot', 'Moltissimo') }),
+        q('single', L('Would you take another course with us?', 'Seguiresti un altro corso con noi?'), { opts: opts(L('Yes', 'Sì'), L('Maybe', 'Forse'), L('No', 'No')) }), q('long', L('One thing to keep, one to change', 'Una cosa da tenere, una da cambiare'))],
+      settings: { showSummary: true },
+    })],
   ];
 }

@@ -37,7 +37,7 @@ export const monthLabel = (ym) => { const s = asDate(ym + '-01').toLocaleDateStr
 export function makeGrid({ thumb, onOpen, sel = null, onSelect = () => {}, pick = false, size = 'm' }) {
   const el = h('div.grid', { 'data-size': size });
   const items = [];
-  let lastDay = null, lastBox = null, anchor = -1, choosing = false, bandState = null;
+  let lastDay = null, lastBox = null, anchor = -1, choosing = false, bandState = null, byDay = true; // byDay: grouped under their days (sorted by date), or one block
   const tiles = new Map(); // id -> tile
   // the small pictures are asked when they come near the screen, 40 in a request and kept in the browser (thumb(x) gives
   // a promise of its address, store.js thumbFor): a page of hundreds of photos asks the hosting very little
@@ -117,7 +117,7 @@ export function makeGrid({ thumb, onOpen, sel = null, onSelect = () => {}, pick 
       daySync();
       onSelect();
     });
-    const sec = h('section.day', { 'data-day': key }, h('h3.dayh', h('span', dayLabel(key)), c), box);
+    const sec = h('section.day', { 'data-day': key }, key === '*' ? null : h('h3.dayh', h('span', dayLabel(key)), c), box);
     return [sec, box];
   }
 
@@ -127,12 +127,13 @@ export function makeGrid({ thumb, onOpen, sel = null, onSelect = () => {}, pick 
       for (const x of list) {
         const i = items.length;
         items.push(x);
-        const key = dayKey(x.t);
+        const key = byDay ? dayKey(x.t) : '*';
         if (key !== lastDay) { const [sec, box] = daySection(key); el.append(sec); lastDay = key; lastBox = box; }
         lastBox.append(tile(x, i));
       }
       daySync();
     },
+    setByDay(v) { byDay = !!v; },
     reset() { items.length = 0; tiles.clear(); lastDay = null; lastBox = null; anchor = -1; seen?.disconnect(); el.replaceChildren(); },
     /** draws one photo again (its star changed) */
     update(x) { const old = tiles.get(x.id); if (old) old.replaceWith(tile(x, +old.dataset.i)); },

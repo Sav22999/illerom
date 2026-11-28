@@ -16,6 +16,7 @@ export function h(sel, ...kids) {
     for (const [k, v] of Object.entries(kids.shift())) {
       if (v === null || v === undefined || v === false) continue;
       if (k.startsWith('on') && typeof v === 'function') n.addEventListener(k.slice(2), v);
+      else if (typeof v === 'function') n[k] = v; // a property (soMenu: what can be done with it, SavOffice.context)
       else if (k === 'html') n.innerHTML = v;
       else if (k === 'class') n.className += ' ' + v;
       else n.setAttribute(k, v === true ? '' : v);

@@ -160,6 +160,12 @@ body.onboard { overflow: hidden; overscroll-behavior: none; position: fixed; ins
 .over .hd[data-h="ne"], .over .hd[data-h="sw"] { cursor: nesw-resize; } .over .hd[data-h="a"], .over .hd[data-h="b"] { cursor: move; }
 .over .marq { fill: color-mix(in oklab, var(--sav-color-primary) 10%, transparent); stroke: var(--sav-color-primary); stroke-width: 1; pointer-events: none; }
 .over .ercur { fill: rgb(255 255 255 / .35); stroke: #555; stroke-width: 1.2; pointer-events: none; } .wb.dark .over .ercur { fill: rgb(0 0 0 / .25); stroke: #ddd; }
+/* the circle of the eraser above a finger (which covers the real one), and when its size is chosen */
+.over .ercur.ghost, .over .ercur.flash { fill: rgb(255 255 255 / .6); stroke: var(--sav-color-primary); stroke-width: 1.6; filter: drop-shadow(0 1px 3px rgb(0 0 0 / .25)); }
+.wb.dark .over .ercur.ghost, .wb.dark .over .ercur.flash { fill: rgb(0 0 0 / .35); }
+.over .erlink { stroke: var(--sav-color-primary); stroke-width: 1.2; stroke-dasharray: 2 3; pointer-events: none; opacity: .7; }
+.over .ercur.flash { animation: erflash 1.1s ease-out forwards; } @keyframes erflash { 70% { opacity: 1; } to { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .over .ercur.flash { animation: none; } }
 .over .laser { pointer-events: none; } .over .laser line { stroke: #ff3b30; stroke-linecap: round; filter: drop-shadow(0 0 4px rgb(255 59 48 / .9)); } .over .laser circle { fill: #ff3b30; filter: drop-shadow(0 0 6px #ff3b30); }
 
 /* the floating bars */
@@ -213,3 +219,15 @@ body.onboard { overflow: hidden; overscroll-behavior: none; position: fixed; ins
 .mcell.own sav-tooltip { position: absolute; right: .2rem; top: .2rem; background: var(--sav-color-surface); border-radius: 8px; opacity: 0; } .mcell.own:hover sav-tooltip, .mcell.own:focus-within sav-tooltip { opacity: 1; }
 @media (hover: none) { .mcell.own sav-tooltip, .mcell .mlic { opacity: 1; } }
 .ppick { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: .7rem; max-height: 52vh; overflow: auto; padding: 4px; } .ppick .tname { padding: .35rem .6rem .45rem; font-size: .8rem; }
+/* a fixed space chosen in a bar (⋮ → Customise the bars); an adaptive one is a .spacer */
+.wtop > i.bgap, .tools > i.bgap { width: .8rem; flex: none; } .tools > .spacer { flex: 1; min-width: .8rem; }
+/* a board shared: the faces of who is on it now, the people in the window of sharing, only to look at */
+.wtop .here { display: inline-flex; align-items: center; margin: 0 .2rem; } .wtop .here:empty { display: none; } .wtop .here sav-avatar + sav-avatar { margin-left: -.45rem; } .wtop .here sav-avatar { box-shadow: 0 0 0 2px var(--bar, var(--sav-color-surface)); border-radius: 50%; } .wtop .here .more { margin-left: .3rem; color: var(--sav-color-text-muted); }
+.people { display: grid; gap: .35rem; } .people .prow { display: flex; align-items: center; gap: .6rem; padding: .3rem 0; } .people .prow .grow { flex: 1; min-width: 0; display: grid; } .people .prow small { overflow: hidden; text-overflow: ellipsis; }
+/* a long press on a tablet selects nothing and opens no menu of the system (only the fields to write in keep them) */
+.wb, .wtop, .dock, .zoom, .props, .tools { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.wb :is(input, textarea, [contenteditable="true"], sav-input, sav-textarea), .wb .doc { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
+/* tablets (a narrow window or a touch screen): the zoom goes up, under the title bar, so it never covers the tools */
+@media (max-width: 1180px), (pointer: coarse) {
+  .zoom { top: calc(max(.6rem, env(safe-area-inset-top)) + 3.4rem); bottom: auto; right: max(.5rem, env(safe-area-inset-right)); }
+}

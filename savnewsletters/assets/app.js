@@ -86,6 +86,7 @@ async function boot() {
     }
     try {
         const me = await api('auth.me');
+        S.prefs = me.prefs || {};
         setUser(me.user, me.csrf);
     } catch (e) {
         return fatal(errText(e));

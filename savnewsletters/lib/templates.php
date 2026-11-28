@@ -101,6 +101,41 @@ function builtin_templates(string $lang): array
                 $b('divider', ['color' => '#B91C1C', 'thickness' => 2, 'style' => ['px' => 64]]),
                 $b('text', ['html' => '<p>' . $T('The whole team', 'Tutto il team') . '</p>', 'align' => 'center', 'style' => ['pb' => 16, 'size' => 16]]),
             ]]],
+        ['id' => 'b:launch', 'name' => $T('Product launch', 'Lancio di un prodotto'), 'description' => $T('A big picture, three features and a button', 'Una grande immagine, tre caratteristiche e un pulsante'),
+            'doc' => ['theme' => $theme(['accent' => '#4F46E5', 'bg' => '#EEF0FD', 'radius' => 18]), 'blocks' => [
+                $b('heading', ['text' => $T('NEW', 'NOVITÀ'), 'level' => 3, 'align' => 'center', 'style' => ['pt' => 20, 'pb' => 0, 'size' => 13, 'color' => '#4F46E5']]),
+                $b('heading', ['text' => $T('Meet the new product', 'Ecco il nuovo prodotto'), 'level' => 1, 'align' => 'center']),
+                $b('image', ['src' => '', 'alt' => '', 'href' => '', 'width' => 100, 'align' => 'center', 'rounded' => true]),
+                $b('media', ['src' => '', 'alt' => '', 'title' => $T('Faster', 'Più veloce'), 'html' => '<p>' . $T('What it does better than before.', 'Cosa fa meglio di prima.') . '</p>', 'label' => '', 'href' => '', 'side' => 'left', 'imgWidth' => 30, 'valign' => 'middle', 'rounded' => true, 'gap' => 20]),
+                $b('media', ['src' => '', 'alt' => '', 'title' => $T('Simpler', 'Più semplice'), 'html' => '<p>' . $T('Why anyone can use it.', 'Perché chiunque può usarlo.') . '</p>', 'label' => '', 'href' => '', 'side' => 'right', 'imgWidth' => 30, 'valign' => 'middle', 'rounded' => true, 'gap' => 20]),
+                $b('media', ['src' => '', 'alt' => '', 'title' => $T('Yours', 'Tuo'), 'html' => '<p>' . $T('How it adapts to what you do.', 'Come si adatta a quello che fai.') . '</p>', 'label' => '', 'href' => '', 'side' => 'left', 'imgWidth' => 30, 'valign' => 'middle', 'rounded' => true, 'gap' => 20]),
+                $b('button', ['label' => $T('Discover it', 'Scoprilo'), 'href' => 'https://', 'align' => 'center', 'color' => '', 'full' => true, 'style' => ['pt' => 12, 'pb' => 16]]),
+            ]]],
+        ['id' => 'b:thanks', 'name' => $T('Thank you', 'Grazie'), 'description' => $T('After a purchase, a donation or a sign-up', 'Dopo un acquisto, una donazione o un’iscrizione'),
+            'doc' => ['theme' => $theme(['accent' => '#059669', 'bg' => '#ECFDF5', 'radius' => 20, 'width' => 560]), 'blocks' => [
+                $b('heading', ['text' => $T('Thank you!', 'Grazie!'), 'level' => 1, 'align' => 'center', 'style' => ['pt' => 24, 'size' => 44]]),
+                $b('text', ['html' => '<p>' . $T('Your support means a lot to us. Here is what happens next.', 'Il tuo sostegno conta molto per noi. Ecco cosa succede adesso.') . '</p>', 'align' => 'center']),
+                $b('text', ['html' => '<ol><li>' . $T('You will get a receipt in a few minutes.', 'Riceverai una ricevuta tra pochi minuti.') . '</li><li>' . $T('We will write to you when it is on its way.', 'Ti scriveremo quando sarà in viaggio.') . '</li><li>' . $T('Questions? Just reply to this email.', 'Domande? Rispondi a questa email.') . '</li></ol>', 'align' => 'left', 'style' => ['pt' => 8, 'pb' => 8]]),
+                $b('button', ['label' => $T('See your order', 'Vedi il tuo ordine'), 'href' => 'https://', 'align' => 'center', 'color' => '', 'full' => false, 'style' => ['pb' => 20]]),
+            ]]],
+        ['id' => 'b:hiring', 'name' => $T('We are hiring', 'Cerchiamo persone'), 'description' => $T('Open positions, one card each', 'Le posizioni aperte, una scheda ciascuna'),
+            'doc' => ['theme' => $theme(['accent' => '#0369A1', 'bg' => '#EEF6FB', 'font' => 'system', 'radius' => 12]), 'blocks' => [
+                $b('heading', ['text' => $T('Join the team', 'Unisciti al team'), 'level' => 1, 'align' => 'left']),
+                $b('text', ['html' => '<p>' . $T('We are growing and looking for people who like what we do.', 'Stiamo crescendo e cerchiamo persone a cui piace quello che facciamo.') . '</p>', 'align' => 'left']),
+                $b('card', ['src' => '', 'title' => $T('Designer', 'Designer'), 'html' => '<p>' . $T('Full time · Remote or in the office', 'Tempo pieno · Da remoto o in ufficio') . '</p>', 'label' => $T('Apply', 'Candidati'), 'href' => 'https://']),
+                $b('card', ['src' => '', 'title' => $T('Developer', 'Sviluppatore'), 'html' => '<p>' . $T('Full time · Remote', 'Tempo pieno · Da remoto') . '</p>', 'label' => $T('Apply', 'Candidati'), 'href' => 'https://']),
+                $b('quote', ['text' => $T('What a colleague says about working here.', 'Cosa dice un collega del lavorare qui.'), 'cite' => '', 'style' => ['pt' => 16, 'pb' => 16]]),
+            ]]],
+        ['id' => 'b:recipe', 'name' => $T('Recipe of the month', 'Ricetta del mese'), 'description' => $T('A dish, its ingredients and the steps', 'Un piatto, i suoi ingredienti e i passaggi'),
+            'doc' => ['theme' => $theme(['font' => 'serif', 'accent' => '#B45309', 'bg' => '#FBF3E8', 'card' => '#FFFDF9', 'radius' => 10]), 'blocks' => [
+                $b('image', ['src' => '', 'alt' => '', 'href' => '', 'width' => 100, 'align' => 'center', 'rounded' => true, 'style' => ['pt' => 0, 'px' => 0]]),
+                $b('heading', ['text' => $T('Pumpkin risotto', 'Risotto alla zucca'), 'level' => 1, 'align' => 'center', 'style' => ['pt' => 20]]),
+                $b('text', ['html' => '<p>' . $T('Serves 4 · 40 minutes', 'Per 4 persone · 40 minuti') . '</p>', 'align' => 'center', 'style' => ['size' => 14]]),
+                $b('heading', ['text' => $T('Ingredients', 'Ingredienti'), 'level' => 2, 'align' => 'left']),
+                $b('text', ['html' => '<ul><li>' . $T('320 g rice', '320 g di riso') . '</li><li>' . $T('400 g pumpkin', '400 g di zucca') . '</li><li>' . $T('1 onion', '1 cipolla') . '</li><li>' . $T('Stock, butter, parmesan', 'Brodo, burro, parmigiano') . '</li></ul>', 'align' => 'left']),
+                $b('heading', ['text' => $T('Method', 'Preparazione'), 'level' => 2, 'align' => 'left']),
+                $b('text', ['html' => '<ol><li>' . $T('Soften the onion and the pumpkin.', 'Fai appassire la cipolla e la zucca.') . '</li><li>' . $T('Toast the rice, then add stock little by little.', 'Tosta il riso, poi aggiungi il brodo poco alla volta.') . '</li><li>' . $T('Finish with butter and parmesan.', 'Manteca con burro e parmigiano.') . '</li></ol>', 'align' => 'left', 'style' => ['pb' => 16]]),
+            ]]],
     ];
 }
 

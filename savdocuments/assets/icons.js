@@ -1,5 +1,7 @@
 /** Icons drawn in the page (Lucide, ISC licence: see assets/LICENSE-lucide.txt), from SavComponents 1.0.0. */
 const ICONS = {
+"square-plus": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\"/><path d=\"M8 12h8\"/><path d=\"M12 8v8\"/>",
+"whole-word": "<circle cx=\"7\" cy=\"12\" r=\"3\"/><path d=\"M10 9v6\"/><circle cx=\"17\" cy=\"12\" r=\"3\"/><path d=\"M14 7v8\"/><path d=\"M22 17v1c0 .5-.5 1-1 1H3c-.5 0-1-.5-1-1v-1\"/>",
 "chart-column": "<path d=\"M3 3v16a2 2 0 0 0 2 2h16\"/><path d=\"M18 17V9\"/><path d=\"M13 17V5\"/><path d=\"M8 17v-3\"/>",
 "chart-column-stacked": "<path d=\"M11 13H7\"/><path d=\"M19 9h-4\"/><path d=\"M3 3v16a2 2 0 0 0 2 2h16\"/><rect x=\"15\" y=\"5\" width=\"4\" height=\"12\" rx=\"1\"/><rect x=\"7\" y=\"8\" width=\"4\" height=\"9\" rx=\"1\"/>",
 "chart-bar": "<path d=\"M3 3v16a2 2 0 0 0 2 2h16\"/><path d=\"M7 16h8\"/><path d=\"M7 11h12\"/><path d=\"M7 6h3\"/>",

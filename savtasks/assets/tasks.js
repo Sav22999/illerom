@@ -9,7 +9,7 @@
  */
 import { btn, confirm, dialog, drop, dropBtn, empty, fail, h, icon, iconBtn, mobile, put, segmented, toast, K } from './ui.js';
 import { getLang, t, when } from './i18n.js';
-import { S, api, inbox, keep, listById, loadAll, taskById } from './store.js';
+import { S, api, drop as forget, inbox, keep, listById, loadAll, taskById } from './store.js';
 import { brand, commands, go, prefs, setPrefs, userMenu } from './account.js';
 import { addDays, clock, dayLabel, daysBetween, longDay, relDay, todayKey } from './time.js';
 import { parseQuick } from './parse.js';
@@ -302,6 +302,19 @@ export function taskRow(x, ctx, o = {}) {
     onclick: () => openTask(x.id, ctx), onkeydown: (e) => { if (e.key === 'Enter' && e.target === e.currentTarget) openTask(x.id, ctx); if (e.key === ' ' && e.target === e.currentTarget) { e.preventDefault(); cb.checked = !cb.checked; toggleDone(x, cb.checked, ctx, row); } } },
     o.drag ? h('span.grip', { 'data-grip': '', 'aria-hidden': 'true' }, icon('grip-vertical')) : null,
     cb, h('div.tinfo', h('div.ttitle', x.title || t('no_title')), meta.length ? h('div.tmeta', meta) : null), x.done || listById(x.list)?.view === 'habits' ? null : rowTimer(x, () => ctx.redraw()), x.done ? null : star);
+  // what can be done with this task without opening it: its right click and ⌘J (SavOffice.context)
+  row.soMenu = () => {
+    const save = async (p, msg) => { try { keep((await api('tasks.task.save', { id: x.id, ...p })).task); if (msg) toast(msg, 'success'); ctx.redraw(); } catch (err) { fail(err); } };
+    const day = (n) => addDays(todayKey(tz()), n);
+    return [
+      ['square-pen', t('open'), () => openTask(x.id, ctx)],
+      [x.done ? 'circle' : 'circle-check', t(x.done ? 'mark_open' : 'mark_done'), () => toggleDone(x, !x.done, ctx, row)],
+      [x.starred ? 'star-off' : 'star', t(x.starred ? 'unstar' : 'star'), () => save({ starred: !x.starred })], '-',
+      x.done ? null : ['calendar-check', t('due_today_l'), () => save({ due: day(0), tz: tz() })], x.done ? null : ['calendar-arrow-up', t('due_tomorrow_l'), () => save({ due: day(1), tz: tz() })], x.done ? null : ['calendar-range', t('due_week_l'), () => save({ due: day(7), tz: tz() })], x.done ? null : '-',
+      ['copy', t('duplicate'), async () => { try { keep((await api('tasks.task.save', { title: x.title, notes: x.notes, list: x.list, start: x.start, due: x.due, time: x.time, rrule: x.rrule, priority: x.priority, starred: x.starred, tags: x.tags, tz: tz() })).task); ctx.redraw(); } catch (err) { fail(err); } }],
+      ['trash', t('delete'), async () => { if (!(await confirm(t('delete_task'), t('delete_task_t', { t: x.title }), t('delete')))) return; try { await api('tasks.task.delete', { id: x.id }); forget(x.id); ctx.redraw(); } catch (err) { fail(err); } }, { danger: true }],
+    ].filter(Boolean);
+  };
   return row;
 }
 

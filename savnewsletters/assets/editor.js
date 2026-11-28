@@ -32,9 +32,11 @@ import {
     LANG_NAMES,
     modal,
     partsIn,
+    prefs,
     primary,
     put,
     select,
+    setPrefs,
     svg,
     textarea,
     toast,
@@ -307,6 +309,7 @@ export function previewDialog(html, title) {
  */
 export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
     const isTpl = !!tpl;
+    const narrow = () => matchMedia('(max-width: 900px)').matches; // a phone: no customising of the bars, as in the other apps
     if (isTpl) nl = {id: 0, rev: 0, subject: tpl.name, preheader: '', lang: '', doc: tpl.doc};
     const E = {
         tplId: isTpl ? tpl.id : 0,
@@ -605,13 +608,18 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
         h('sav-menu-item', {value: 'test'}, icon('mail', {slot: 'prefix'}), t('send_test')),
         h('sav-menu-item', {value: 'tpl'}, icon('layout', {slot: 'prefix'}), t('save_template')),
         h('sav-menu-item', {value: 'file'}, icon('download', {slot: 'prefix'}), t('download_savnew')),
+        narrow() || !window.SavOffice?.bars ? null : h('sav-menu-item', {value: 'bar'}, icon('settings-2', {slot: 'prefix'}), window.SavOffice.bars.menuLabel()),
         h('sav-divider'),
         h('sav-menu-item', {value: 'delete', variant: 'danger'}, icon('trash', {slot: 'prefix'}), t('delete_draft')));
     if (moreMenu) moreMenu.addEventListener('sav-select', (ev) => {
         const v = ev.detail.value;
-        setTimeout(() => (v === 'test' ? sendTest() : v === 'tpl' ? saveTemplate() : v === 'file' ? downloadFile() : discard.click()), 20);
+        setTimeout(() => (v === 'test' ? sendTest() : v === 'tpl' ? saveTemplate() : v === 'file' ? downloadFile() : v === 'bar' ? toolsDialog() : discard.click()), 20);
     });
-    const actions = isTpl ? h('div.ed-actions', R.undoBtn, R.redoBtn, previewBtn,
+    const tplMore = isTpl && !narrow() && window.SavOffice?.bars ? h('sav-dropdown', {placement: 'bottom-end', label: t('more'), 'sheet-on-mobile': true},
+        h('sav-button', {slot: 'trigger', icon: 'ellipsis-vertical', label: t('more'), title: t('more'), appearance: 'ghost', variant: 'neutral', size: 'sm', square: true}),
+        h('sav-menu-item', {value: 'bar'}, icon('settings-2', {slot: 'prefix'}), window.SavOffice.bars.menuLabel())) : null;
+    if (tplMore) tplMore.addEventListener('sav-select', () => setTimeout(toolsDialog, 20));
+    const actions = isTpl ? h('div.ed-actions', R.undoBtn, R.redoBtn, previewBtn, tplMore,
         primary(t('done'), {
             icon: 'check', size: 'sm', onclick: async () => {
                 if (await save() !== false || !E.dirty) onBack();
@@ -1410,15 +1418,47 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
         };
         const keep = (ev) => ev.preventDefault(); // keeps the selection in the page while clicking
         const tb = (ic, title, fn) => h('sav-button', {icon: ico(ic), label: title, title, appearance: 'ghost', variant: 'neutral', size: 'sm', square: true, onmousedown: keep, onclick: fn});
-        return h('sav-button-group.rich-tools', {label: t('format')},
-            tb('bold', t('bold'), cmd('bold')), tb('italic', t('italic'), cmd('italic')), tb('underline', t('underline'), cmd('underline')),
-            tb('link', t('link'), (ev) => {
+        const tools = richTools(cmd);
+        // the buttons shown and their order: a choice of each person (⋮ → Customise the bar), kept with the account
+        const el = (k) => (k === '|' ? h('span.rich-sep.so-sep') : k === '_' ? h('i.rich-gap') : k === '~' ? h('span.rich-flex') : tb(tools[k][0], tools[k][1], tools[k][2]));
+        return h('sav-button-group.rich-tools', {label: t('format')}, richOn().map(el));
+    }
+
+    /** The buttons the bar of a text can have: [icon, name, what it does]. */
+    function richTools(cmd = () => () => {}) {
+        return {
+            bold: ['bold', t('bold'), cmd('bold')], italic: ['italic', t('italic'), cmd('italic')], underline: ['underline', t('underline'), cmd('underline')],
+            strike: ['strikethrough', t('strike'), cmd('strikeThrough')],
+            link: ['link', t('link'), (ev) => {
                 ev.preventDefault();
                 const url = prompt(t('link_prompt'), 'https://');
                 if (url && /^(https?:\/\/|mailto:)/i.test(url.trim())) cmd('createLink', url.trim())(ev);
-            }),
-            tb('list', t('bullets'), cmd('insertUnorderedList')), tb('olist', t('numbers'), cmd('insertOrderedList')), tb('clear', t('clear_format'), cmd('removeFormat')));
+            }],
+            bullets: ['list', t('bullets'), cmd('insertUnorderedList')], numbers: ['olist', t('numbers'), cmd('insertOrderedList')], clear: ['clear', t('clear_format'), cmd('removeFormat')],
+            undo: ['undo', t('undo'), cmd('undo')], redo: ['redo-2', t('redo'), cmd('redo')],
+        };
     }
+    const RICH_DEF = ['bold', 'italic', 'underline', 'link', 'bullets', 'numbers', 'clear'];
+    /** The buttons chosen, in order ('|' a separator, '_' a fixed space, '~' an adaptive one: SavOffice.bars), kept with the account. */
+    const richOn = () => {
+        const B = window.SavOffice && window.SavOffice.bars, items = Object.keys(richTools()).map((k) => [k]), v = (prefs().bars || {}).tools || prefs().tools;
+        return B ? B.layout(B.pick(v, RICH_DEF, items)) : RICH_DEF;
+    };
+
+    /** Customising the bar of a text (⋮ → Customise the bars): the window shared by the apps of SavOffice, with its preview. */
+    function toolsDialog() {
+        const B = window.SavOffice && window.SavOffice.bars;
+        if (!B) return;
+        const items = Object.entries(richTools()).map(([k, x]) => [k, ico(x[0]), x[1]]);
+        B.dialog({
+            bars: [{id: 'tools', items, def: RICH_DEF}], value: {tools: B.pick((prefs().bars || {}).tools || prefs().tools, RICH_DEF, items)},
+            save: async (v) => {
+                await setPrefs({bars: {...(prefs().bars || {}), ...v}});
+                drawInspector();
+            }
+        });
+    }
+
 
     // ---------------------------------------------------------------- actions
 

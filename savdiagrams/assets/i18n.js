@@ -1,6 +1,7 @@
 /** Texts of the app, in English and Italian: the ones shared with SavSchedules and SavCalendar (accounts, settings), then the diagrams. */
 const T = {
   cancel: ["Cancel","Annulla"],
+  account: ["Account","Account"],
   close: ["Close","Chiudi"],
   save: ["Save","Salva"],
   delete: ["Delete","Elimina"],
@@ -142,7 +143,7 @@ const T = {
   rename: ['Rename', 'Rinomina'], duplicate: ['Duplicate', 'Duplica'], to_trash: ['Move to the trash', 'Sposta nel cestino'], trashed: ['Moved to the trash', 'Spostato nel cestino'], restored: ['Diagram restored', 'Diagramma ripristinato'],
   title_l: ['Title', 'Titolo'], untitled: ['Untitled diagram', 'Diagramma senza titolo'], items_n: ['{n} items', '{n} elementi'], items_1: ['1 item', '1 elemento'], items_0: ['Empty', 'Vuoto'], changed_w: ['changed {w}', 'modificato {w}'],
   as_list: ['Show as a list', 'Mostra come elenco'], as_grid: ['Show as a grid', 'Mostra come griglia'], sort_updated: ['Last changed', 'Ultima modifica'], sort_title: ['By title', 'Per titolo'], sort_opened: ['Last opened', 'Ultima apertura'],
-  t_blank: ['Blank', 'Vuoto'], t_flowchart: ['Flowchart', 'Diagramma di flusso'], t_orgchart: ['Org chart', 'Organigramma'], t_mindmap: ['Mind map', 'Mappa mentale'], t_process: ['Process', 'Processo'], t_network: ['Network', 'Rete'],
+  t_blank: ['Blank', 'Vuoto'], t_flowchart: ['Flowchart', 'Diagramma di flusso'], t_orgchart: ['Org chart', 'Organigramma'], t_mindmap: ['Mind map', 'Mappa mentale'], t_process: ['Process', 'Processo'], t_network: ['Network', 'Rete'], t_swot: ['SWOT analysis', 'Analisi SWOT'], t_timeline: ['Timeline', 'Linea del tempo'], t_database: ['Database tables', 'Tabelle di un database'], t_decision: ['Decision tree', 'Albero delle decisioni'],
   from_board: ['From a SavWhiteboard sketch', 'Da uno schizzo di SavWhiteboard'], from_board_t: ['Pick a board: its shapes, texts and arrows become a diagram (the board stays as it is).', 'Scegli una lavagna: forme, testi e frecce diventano un diagramma (la lavagna resta com’è).'],
   no_boards: ['No boards in SavWhiteboard yet', 'Ancora nessuna lavagna in SavWhiteboard'], boards_off: ['SavWhiteboard does not answer: sign in there and try again.', 'SavWhiteboard non risponde: accedi lì e riprova.'], sketch_done: ['The sketch is now a diagram', 'Lo schizzo ora è un diagramma'],
 

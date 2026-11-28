@@ -1,6 +1,24 @@
 /** Texts of the app, in English and Italian: the ones shared with SavSchedules and SavCalendar (accounts, settings), then the boards. */
 const T = {
   cancel: ["Cancel","Annulla"],
+  account: ["Account","Account"],
+  here_now: ["On the board now","Sulla lavagna ora"],
+  share: ["Share","Condividi"],
+  share_board: ["Share the board","Condividi la lavagna"],
+  share_t: ["The people you add see the board and, if they may edit it, write and draw on it with you at the same time.","Le persone che aggiungi vedono la lavagna e, se possono modificarla, scrivono e disegnano insieme a te nello stesso momento."],
+  share_email: ["Email of their SavOffice account","Email del suo account SavOffice"],
+  share_role: ["They can","Può"],
+  role_editor: ["Edit","Modificare"],
+  role_viewer: ["Only look","Solo guardare"],
+  role_owner: ["Owner","Proprietario"],
+  share_add: ["Add","Aggiungi"],
+  share_remove: ["Remove","Rimuovi"],
+  share_done: ["Shared","Condivisa"],
+  share_no_account: ["No SavOffice account with this email","Nessun account SavOffice con questa email"],
+  share_self: ["That is you","Sei tu"],
+  shared_with_me: ["Shared with me","Condivise con me"],
+  shared_by_edit: ["From {n} · you can edit","Di {n} · puoi modificare"],
+  shared_by_view: ["From {n} · only to look","Di {n} · solo da guardare"],
   close: ["Close","Chiudi"],
   save: ["Save","Salva"],
   delete: ["Delete","Elimina"],
@@ -141,6 +159,7 @@ const T = {
   title_l: ['Title', 'Titolo'], untitled: ['Untitled board', 'Lavagna senza titolo'], items_n: ['{n} items', '{n} elementi'], items_1: ['1 item', '1 elemento'], items_0: ['Empty', 'Vuota'], changed_w: ['changed {w}', 'modificata {w}'],
   as_list: ['Show as a list', 'Mostra come elenco'], as_grid: ['Show as a grid', 'Mostra come griglia'], sort_updated: ['Last changed', 'Ultima modifica'], sort_title: ['By title', 'Per titolo'], sort_opened: ['Last opened', 'Ultima apertura'],
   t_blank: ['Blank', 'Bianca'], t_dots: ['Dots', 'Puntini'], t_grid: ['Squares', 'Quadretti'], t_lines: ['Lines', 'Righe'], t_iso: ['Isometric', 'Isometrica'], t_black: ['Blackboard', 'Lavagna nera'], t_green: ['Green board', 'Lavagna verde'], t_dark: ['Dark', 'Scura'], t_kraft: ['Kraft paper', 'Carta kraft'], t_blueprint: ['Blueprint', 'Cianografia'], t_staff: ['Music staff', 'Pentagramma'], t_mm: ['Graph paper', 'Carta millimetrata'], t_hex: ['Hexagons', 'Esagoni'], t_tab: ['Guitar tab', 'Tablatura'], t_chalkstaff: ['Music blackboard', 'Lavagna musicale'],
+  t_cork: ['Corkboard', 'Bacheca di sughero'], t_night: ['Night grid', 'Quadretti notte'], t_mint: ['Mint dots', 'Puntini menta'], t_cream: ['Cream lines', 'Righe crema'], t_slate: ['Isometric slate', 'Ardesia isometrica'],
   open_board: ['Open', 'Apri'], download_as: ['Download', 'Scarica'], boards_n: ['{n} boards', '{n} lavagne'],
 
   // the board

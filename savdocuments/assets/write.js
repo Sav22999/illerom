@@ -1,5 +1,5 @@
 /** The writing screen. */
-import { ask, btn, colorPop, confirm, copyText, dialog, drop, dropBtn, empty, errText, face, fail, h, icon, iconBtn, INKS, item, K, keepCaret, menuAt, mobile, num, PASTEL, primary, put, select, tile, toast, toggle } from './ui.js';
+import { ask, btn, colorPop, confirm, copyText, ctxAt, dialog, drop, dropBtn, empty, errText, face, fail, h, icon, iconBtn, INKS, item, K, keepCaret, menuAt, mobile, num, PASTEL, primary, put, select, tile, toast, toggle } from './ui.js';
 import { getLang, t, when } from './i18n.js';
 import { S, api, keep, local, localStore, offline, remoteStore, shrink } from './store.js';
 import { Editor } from './editor.js';
@@ -73,9 +73,29 @@ export async function openWriter(root, pid, opt = {}) {
   W.download = downloadDialog;
   const downB = iconBtn('download', t('download'), () => downloadDialog(), { size: 'md' });
   const menuB = drop(h('sav-button', { icon: 'ellipsis-vertical', appearance: 'ghost', variant: 'neutral', square: true, label: t('more') }), () => moreItems(), { placement: 'bottom-end', label: data.doc.title });
-  const top = h('header.etop', h('a.ehome', { href: '#/', title: t('home'), 'aria-label': t('home') }, h('img', { src: 'icons/favicon.svg', width: 30, height: 30, alt: '' })), h('div.etitle', title, status), editable ? h('div.hist', undoB, redoB) : null, editable ? ins : null, h('div.spacer'), people, shareB, mobile() || lim.noDownload ? null : downB, mobile() ? null : iconBtn('command', t('palette_l'), () => W.palette.show(), { kbd: 'Mod+J', size: 'md' }), menuB, S.user ? userMenu() : mobile() ? null : btn(t('sign_in'), { appearance: 'outline', variant: 'neutral', href: '#/signin' }));
+  // the pieces of the bars that each person may show or not, and in what order (⋮ → Customise the bars, kept with the account)
+  const homeA = h('a.ehome', { href: '#/', title: t('home'), 'aria-label': t('home') }, h('img', { src: 'icons/favicon.svg', width: 30, height: 30, alt: '' })), etitle = h('div.etitle', title, status), accountEl = S.user ? userMenu() : h('span.umenu', h('savoffice-apps', { current: 'savdocuments' }), mobile() ? null : btn(t('sign_in'), { appearance: 'outline', variant: 'neutral', href: '#/signin' })); // on the right, always: ⋮, the apps of SavOffice, the account
+  const T2 = { undo: editable ? undoB : null, redo: editable ? redoB : null, people, share: shareB, download: mobile() || lim.noDownload ? null : downB, palette: mobile() ? null : iconBtn('command', t('palette_l'), () => W.palette.show(), { kbd: 'Mod+J', size: 'md' }) };
+  const top = h('header.etop');
   const note = editable ? null : h('sav-alert.robar', { variant: data.doc.review ? 'warning' : 'neutral', noicon: true }, data.doc.review ? t('a_review_bar') : data.doc.role === 'commenter' ? t('can_comment') : t('read_only'));
-  const bottom = h('div.ebottom', iconBtn('list-tree', t('outline'), () => toggleLeft(), { place: 'top' }), pageB, wordB, h('div.spacer'), editable ? iconBtn('maximize', t('focus'), () => focusMode(), { place: 'top' }) : null, iconBtn('fullscreen', t('fit'), () => setZoom('fit'), { place: 'top' }), zoomEl);
+  const SB = { side: iconBtn('list-tree', t('outline'), () => toggleLeft(), { place: 'top' }), pages: pageB, words: wordB, focus: editable ? iconBtn('maximize', t('focus'), () => focusMode(), { place: 'top' }) : null, fit: iconBtn('fullscreen', t('fit'), () => setZoom('fit'), { place: 'top' }), zoom: zoomEl };
+  const bottom = h('div.ebottom');
+  /** A bar as each person chose it (⋮ → Customise the bars, kept with the account): its list, in order, with '|' a separator,
+   *  '_' a fixed space and '~' an adaptive one (SavOffice.bars); what it has at first when nothing was chosen. */
+  const BARS = window.SavOffice?.bars;
+  const barPick = (id, def, items, old) => { const v = prefs().bars?.[id] ?? old; return BARS ? BARS.pick(v, def, items) : def; };
+  const barList = (id, def, items, old) => { const l = barPick(id, def, items, old); return BARS ? BARS.layout(l) : l; };
+  const barEl = (k, map) => (k === '|' ? h('i.sep.so-sep') : k === '_' ? h('i.bgap') : k === '~' ? h('div.spacer') : map[k]);
+  T2.insbar = editable ? ins : null;
+  const TITLE_ITEMS = () => [['undo', 'undo-2', t('undo')], ['redo', 'redo-2', t('redo')], ['insbar', 'square-plus', t('bar_insbar')], ['people', 'users', t('bar_people')], ['share', 'user-plus', t('share')], ['download', 'download', t('download')], ['palette', 'command', t('palette_l')]].filter(([k]) => T2[k]);
+  const TITLE_DEF = ['undo', 'redo', 'insbar', '~', 'people', 'share', 'download', 'palette'];
+  /** The title bar: the logo and the title first, ⋮ and the account last (always); between them the list, in its order. */
+  function layoutTitle() { put(top, homeA, etitle, barList('title', TITLE_DEF, TITLE_ITEMS()).map((k) => barEl(k, T2)), menuB, accountEl); }
+  const STATUS_ITEMS = () => [['side', 'list-tree', t('outline')], ['pages', 'file', t('bar_pages')], ['words', 'whole-word', t('bar_words')], ['focus', 'maximize', t('focus')], ['fit', 'fullscreen', t('fit')], ['zoom', 'zoom-in', t('bar_zoom')]].filter(([k]) => SB[k]);
+  const STATUS_DEF = ['side', 'pages', 'words', '~', 'focus', 'fit', 'zoom'];
+  function layoutStatus() { put(bottom, barList('status', STATUS_DEF, STATUS_ITEMS()).map((k) => barEl(k, SB))); }
+  layoutTitle();
+  layoutStatus();
   desk.append(paper);
   const center = h('section.ecenter', note, desk, bottom), frame = h('div.writer' + (editable ? '' : '.reading'), top, editable ? fmt : null, h('div.emain', left, center, panel, rail), bubble, objbar);
   put(root, frame);
@@ -283,19 +303,27 @@ export async function openWriter(root, pid, opt = {}) {
   };
   const TOOLS_DEF = ['image', 'table', 'chart', 'shape', 'diagram', 'math', 'toc'];
   function drawTools() {
-    const on = (prefs().tools || TOOLS_DEF).filter((k) => TOOLS[k]), shown = new Set(on);
+    const list = barList('insert', TOOLS_DEF, Object.keys(TOOLS).map((k) => [k]), prefs().tools), on = list.filter((k) => TOOLS[k]), shown = new Set(on);
     const rest = listOf().filter(([, , w]) => !Object.keys(TOOLS).some((k) => shown.has(k) && TOOLS[k][2] && w === { image: 'image', table: 'table', math: 'math', toc: 'toc', cols: 'cols:2', note: 'note', link: 'link', pb: 'pb', bands: 'bands', callout: 'callout:info', qr: 'qr', sign: 'sign', drawing: 'drawing', chars: 'chars' }[k]));
-    put(ins, h('span.inst', t('insert')), on.map((k) => TOOLS[k][2]()), dropTool('plus', t('more'), () => rest.map(([i, l, w]) => [i, l, () => W.insert(w)]))); // customising the bar: in the ⋮ menu
+    put(ins, h('span.inst', t('insert')), list.map((k) => (TOOLS[k] ? TOOLS[k][2]() : barEl(k, {}))), dropTool('plus', t('more'), () => rest.map(([i, l, w]) => [i, l, () => W.insert(w)]))); // customising the bar: in the ⋮ menu
   }
-  /** Which buttons the insert bar has, and in what order. */
-  async function toolsDialog() {
-    const on = (prefs().tools || TOOLS_DEF).filter((k) => TOOLS[k]), list = h('sav-sortable.toollist', { handle: '.grip', 'aria-label': t('toolbar_edit') });
-    const paint = (order, sel) => put(list, order.map((k) => h('div.toolrow', { 'data-id': k }, icon('grip-vertical', { class: 'grip' }), icon(TOOLS[k][0]), h('span.grow', t(TOOLS[k][1])), h('sav-switch', { size: 'sm', checked: sel.includes(k) || null, 'aria-label': t(TOOLS[k][1]) }))));
-    paint([...on, ...Object.keys(TOOLS).filter((k) => !on.includes(k))], on);
-    dialog({ title: t('toolbar_edit'), width: '26rem', body: h('div.form', h('p.muted', t('toolbar_edit_t')), list), actions: [{ label: t('reset'), appearance: 'ghost', keep: true, run: () => { paint([...TOOLS_DEF, ...Object.keys(TOOLS).filter((k) => !TOOLS_DEF.includes(k))], TOOLS_DEF); return false; } }, { label: t('cancel') }, { label: t('save'), primary: true, run: async () => { await setPrefs({ tools: [...list.querySelectorAll('.toolrow')].filter((r) => r.querySelector('sav-switch').checked).map((r) => r.dataset.id) }); drawTools(); } }] });
+  /** Customising the bars (⋮ → Customise the bars): the window shared by the apps of SavOffice, a tab for each bar. */
+  function toolsDialog() {
+    if (!window.SavOffice?.bars) return;
+    const insItems = Object.keys(TOOLS).map((k) => [k, TOOLS[k][0], t(TOOLS[k][1])]);
+    const bars = [{ id: 'title', items: TITLE_ITEMS(), def: TITLE_DEF, before: [[null, data.doc.title]], after: [['ellipsis-vertical', t('more')], ['layout-grid', 'SavOffice'], ['user', t('account')]] }, editable ? { id: 'insert', items: insItems, def: TOOLS_DEF } : null, editable ? { id: 'tools', items: FMT_ITEMS(), def: FMT_DEF } : null, { id: 'status', items: STATUS_ITEMS(), def: STATUS_DEF }].filter(Boolean);
+    const value = { title: barPick('title', TITLE_DEF, TITLE_ITEMS()), insert: barPick('insert', TOOLS_DEF, insItems, prefs().tools), tools: barPick('tools', FMT_DEF, FMT_ITEMS()), status: barPick('status', STATUS_DEF, STATUS_ITEMS()) };
+    window.SavOffice.bars.dialog({ bars, value, save: async (v) => { await setPrefs({ bars: { ...(prefs().bars || {}), ...v } }); layoutTitle(); if (editable) { drawTools(); layoutFmt(); } layoutStatus(); } });
   }
 
+
   const B = {};
+  /** The toolbar (formatting): what it can hold, and what it has at first. */
+  const FMT_ITEMS = () => [['type', 'pilcrow', t('styles')], ['font', 'type', t('font')], ['size', 'a-large-small', t('size')], ['bold', 'bold', t('bold')], ['italic', 'italic', t('italic')], ['underline', 'underline', t('underline')], ['strike', 'strikethrough', t('strike')],
+    ['color', 'baseline', t('color')], ['mark', 'highlighter', t('highlight')], ['link', 'link', t('link')], ['more', 'type', t('more_format')], ['ul', 'list', t('s_ul')], ['ol', 'list-ordered', t('s_ol')], ['check', 'list-checks', t('s_check')],
+    ['align', 'text-align-start', t('align')], ['lh', 'between-horizontal-start', t('line_height')], ['outdent', 'indent-decrease', t('outdent')], ['indent', 'indent-increase', t('indent')], ['paint', 'paint-roller', t('painter')], ['clear', 'remove-formatting', t('clear')]].filter(([k]) => B[k]);
+  const FMT_DEF = ['type', 'font', 'size', '|', 'bold', 'italic', 'underline', 'strike', 'color', 'mark', 'link', 'more', '|', 'ul', 'ol', 'check', '|', 'align', 'lh', 'outdent', 'indent', '|', 'paint', 'clear'];
+  function layoutFmt() { put(fmt, barList('tools', FMT_DEF, FMT_ITEMS()).map((k) => barEl(k, B))); }
   function buildToolbars() {
     if (!editable) return;
     drawTools();
@@ -314,8 +342,8 @@ export async function openWriter(root, pid, opt = {}) {
     B.paint = iconBtn('paint-roller', t('painter'), () => { if (W.clip) { W.clip = null; B.paint.on(false); desk.classList.remove('painting'); return; } act(() => { W.clip = ed.copyFormat(); }); if (W.clip) { B.paint.on(true); desk.classList.add('painting'); toast(t('painter_t'), 'neutral'); } });
     B.clear = iconBtn('remove-formatting', t('clear'), () => act(() => ed.inline('clear')), { kbd: 'Mod+\\' });
     B.more = dropBtn('type', t('more_format'), () => [['superscript', t('sup'), () => act(() => ed.inline('superscript')), { check: W.st?.sup }], ['subscript', t('sub'), () => act(() => ed.inline('subscript')), { check: W.st?.sub }], ['code', t('code'), () => act(() => ed.inline('code')), { check: W.st?.code, kbd: 'Mod+E' }], ['a-large-small', t('small_caps'), () => act(() => ed.textStyle('font-variant', 'small-caps'))], '-', ['case-upper', t('case_upper'), () => act(() => ed.changeCase('upper'))], ['case-lower', t('case_lower'), () => act(() => ed.changeCase('lower'))], ['case-sensitive', t('case_title'), () => act(() => ed.changeCase('title'))], ['letter-text', t('case_sentence'), () => act(() => ed.changeCase('sentence'))], '-', ['info', t('call_info'), () => act(() => ed.block('callout', 'info'))], ['lightbulb', t('call_tip'), () => act(() => ed.block('callout', 'tip'))], ['triangle-alert', t('call_warn'), () => act(() => ed.block('callout', 'warn'))], '-', ['sliders-horizontal', t('paragraph'), () => setTab('format')]]);
-    const gap = () => h('i.sep');
-    put(fmt, B.type, B.font, B.size, gap(), B.bold, B.italic, B.underline, B.strike, B.color, B.mark, B.link, B.more, gap(), B.ul, B.ol, B.check, gap(), B.align, B.lh, iconBtn('indent-decrease', t('outdent'), () => act(() => ed.indent(-1))), iconBtn('indent-increase', t('indent'), () => act(() => ed.indent(1))), gap(), B.paint, B.clear);
+    B.outdent = iconBtn('indent-decrease', t('outdent'), () => act(() => ed.indent(-1))); B.indent = iconBtn('indent-increase', t('indent'), () => act(() => ed.indent(1)));
+    layoutFmt();
     for (const x of [fmt, ins, bubble, objbar]) keepCaret(x);
     W.bub = [['bold', 'bold', 'bold'], ['italic', 'italic', 'italic'], ['underline', 'underline', 'underline'], ['strikethrough', 'strikeThrough', 'strike']].map(([ic, cmd, k]) => Object.assign(iconBtn(ic, t(k), () => act(() => ed.inline(cmd)), { place: 'top' }), { k }));
     put(bubble, W.bub, iconBtn('highlighter', t('highlight'), () => act(() => ed.inline('hiliteColor', '#fff3a3')), { place: 'top' }), iconBtn('link', t('link'), () => linkDialog(W), { place: 'top' }), W.canComment ? iconBtn('message-square', t('c_add'), () => startComment(), { place: 'top' }) : null);
@@ -388,7 +416,7 @@ export async function openWriter(root, pid, opt = {}) {
     if (v) ed.select(v);
     W.lastCaret = ed.caret() || W.lastCaret;
     const T = (k, ic, danger) => [ic, t('t_' + k), () => act(() => ed.table(k)), { danger }];
-    menuAt(e.clientX, e.clientY, v ? [fig ? ['sliders-horizontal', t('format_tab'), () => setTab('format', true)] : null, fig ? ['copy-plus', t('duplicate_l'), () => ed.do(() => { const c = ed.topOf(v).cloneNode(true); c.removeAttribute('id'); c.classList.remove('sel'); ed.topOf(v).after(c); ed.quiet(() => ed.decorate()); })] : null, ['trash', t('delete'), () => ed.removeSelected(), { danger: true }]] : [mark ? ['scissors', t('cut'), () => act(() => document.execCommand('cut')), { kbd: 'Mod+X' }] : null, mark ? ['copy', t('copy'), () => act(() => document.execCommand('copy')), { kbd: 'Mod+C' }] : null, mark ? ['link', t('link'), () => linkDialog(W)] : null, mark && W.canComment ? ['message-square', t('c_add'), () => startComment()] : null, mark ? ['volume-2', t('read_aloud'), () => speak(mark)] : null, mark && cell ? '-' : null, ...(cell ? [T('rowAbove', 'arrow-up'), T('rowBelow', 'arrow-down'), T('colLeft', 'arrow-left'), T('colRight', 'arrow-right'), '-', ed.cells().length > 1 ? T('merge', 'merge') : null, T('split', 'split'), ['arrow-down-a-z', t('sort_az'), () => act(() => ed.sort(1))], ['sigma', t('t_sum'), () => act(() => ed.sumColumn())], '-', T('delRow', 'trash', true), T('delCol', 'trash', true), T('drop', 'trash', true)] : [])]);
+    ctxAt(e.clientX, e.clientY, v ? [fig ? ['sliders-horizontal', t('format_tab'), () => setTab('format', true)] : null, fig ? ['copy-plus', t('duplicate_l'), () => ed.do(() => { const c = ed.topOf(v).cloneNode(true); c.removeAttribute('id'); c.classList.remove('sel'); ed.topOf(v).after(c); ed.quiet(() => ed.decorate()); })] : null, ['trash', t('delete'), () => ed.removeSelected(), { danger: true }]] : [mark ? ['scissors', t('cut'), () => act(() => document.execCommand('cut')), { kbd: 'Mod+X' }] : null, mark ? ['copy', t('copy'), () => act(() => document.execCommand('copy')), { kbd: 'Mod+C' }] : null, mark ? ['link', t('link'), () => linkDialog(W)] : null, mark && W.canComment ? ['message-square', t('c_add'), () => startComment()] : null, mark ? ['volume-2', t('read_aloud'), () => speak(mark)] : null, mark && cell ? '-' : null, ...(cell ? [T('rowAbove', 'arrow-up'), T('rowBelow', 'arrow-down'), T('colLeft', 'arrow-left'), T('colRight', 'arrow-right'), '-', ed.cells().length > 1 ? T('merge', 'merge') : null, T('split', 'split'), ['arrow-down-a-z', t('sort_az'), () => act(() => ed.sort(1))], ['sigma', t('t_sum'), () => act(() => ed.sumColumn())], '-', T('delRow', 'trash', true), T('delCol', 'trash', true), T('drop', 'trash', true)] : [])]);
   });
   // a click on the margins or under the text puts the caret where a person expects it
   if (editable) desk.addEventListener('mousedown', (e) => {
@@ -715,7 +743,7 @@ export async function openWriter(root, pid, opt = {}) {
   const duplicate = async () => { await W.sync?.flush(); const r = await api('doc.duplicate', { doc: pid, title: `${t('copy_of')} ${ed.title}`.slice(0, 160) }); location.hash = '#/d/' + r.doc.id; };
   const owner = data.doc.role === 'owner';
   function moreItems() {
-    return [...(mobile() && !S.user ? [['log-in', t('sign_in'), () => { location.hash = '#/signin'; }], '-'] : []), ['search', t('find'), () => setTab('find', true), { kbd: 'Mod+F' }], editable && !isLocal ? ['history', t('history'), () => setTab('history', true)] : null, ['volume-2', speaking() ? t('stop_reading') : t('read_aloud'), () => speak()], editable ? ['maximize', t('focus'), () => focusMode()] : null, ['tally-5', t('counts'), () => countsDialog()], '-', ...dlItems(), !isLocal && S.user && !data.doc.review && !lim.noCopy ? ['book-open', t('to_book'), () => toBook()] : null, lim.noDownload ? null : ['printer', t('print'), () => printDoc(), { kbd: 'Mod+P' }], ['file-up', t('open_'), () => importFile()], !isLocal && S.user && !data.doc.review && !lim.noCopy ? ['copy', t('duplicate'), () => duplicate()] : null, owner && !isLocal ? ['layout-template', t('as_template'), async () => { await setPrefs({ templates: [...new Set([...(prefs().templates || []), pid])].slice(-30) }); toast(t('as_template_done'), 'success'); }] : null, editable && !mobile() ? ['settings-2', t('toolbar_edit'), () => toolsDialog()] : null, ['keyboard', t('shortcuts'), () => shortcuts()], !isLocal ? ['link', t('copy_link'), () => copyText(location.href)] : null, !isLocal && !owner && !data.doc.review ? ['flag', t('report'), () => reportDialog(pid)] : null, owner && !isLocal && !data.doc.deleted ? '-' : null, owner && !isLocal && !data.doc.deleted ? ['trash', t('to_trash'), async () => { await W.sync?.flush(); await api('doc.trash', { doc: pid }); toast(t('moved_trash')); location.hash = '#/'; }, { danger: true }] : null];
+    return [...(mobile() && !S.user ? [['log-in', t('sign_in'), () => { location.hash = '#/signin'; }], '-'] : []), ['search', t('find'), () => setTab('find', true), { kbd: 'Mod+F' }], editable && !isLocal ? ['history', t('history'), () => setTab('history', true)] : null, ['volume-2', speaking() ? t('stop_reading') : t('read_aloud'), () => speak()], editable ? ['maximize', t('focus'), () => focusMode()] : null, ['tally-5', t('counts'), () => countsDialog()], '-', ...dlItems(), !isLocal && S.user && !data.doc.review && !lim.noCopy ? ['book-open', t('to_book'), () => toBook()] : null, lim.noDownload ? null : ['printer', t('print'), () => printDoc(), { kbd: 'Mod+P' }], ['file-up', t('open_'), () => importFile()], !isLocal && S.user && !data.doc.review && !lim.noCopy ? ['copy', t('duplicate'), () => duplicate()] : null, owner && !isLocal ? ['layout-template', t('as_template'), async () => { await setPrefs({ templates: [...new Set([...(prefs().templates || []), pid])].slice(-30) }); toast(t('as_template_done'), 'success'); }] : null, !mobile() && window.SavOffice?.bars ? ['settings-2', window.SavOffice.bars.menuLabel(), () => toolsDialog()] : null, ['keyboard', t('shortcuts'), () => shortcuts()], !isLocal ? ['link', t('copy_link'), () => copyText(location.href)] : null, !isLocal && !owner && !data.doc.review ? ['flag', t('report'), () => reportDialog(pid)] : null, owner && !isLocal && !data.doc.deleted ? '-' : null, owner && !isLocal && !data.doc.deleted ? ['trash', t('to_trash'), async () => { await W.sync?.flush(); await api('doc.trash', { doc: pid }); toast(t('moved_trash')); location.hash = '#/'; }, { danger: true }] : null];
   }
 
   // command palette

@@ -13,6 +13,7 @@ async function start() {
   const r = await api('wb.init');
   S.wb = r.prefs && !Array.isArray(r.prefs) ? r.prefs : {};
   S.boards = r.boards;
+  S.shared = r.shared || []; // the boards of others shared with this person
   S.trashDays = r.trashDays || 30;
   applyTheme();
 }

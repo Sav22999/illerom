@@ -4,6 +4,7 @@
  * (96 per inch), from the top left corner of the sheet; an A4 sheet is 794 × 1123.
  *
  * settings {cover, size (a4 | a5 | letter | square | wide), orient (p | l), font (sans | serif | mono | hand), tsize (s | m | l),
+ *           flow (v: the sheets one under the other | h: side by side, like a book), scroll (free | snap: it stops on whole sheets),
  *           paper {bg, pat, gap, pc}: the paper of new sheets, view {z, at}}
  * sheet    {id, bg, pat (none | dots | grid | lines | ruled | cornell | iso | staff | tab | mm | hex), gap, pc, doc (typed text, a small set of HTML), items}
  * items    stroke {tool, c, s, p: [x, y, pressure…]} · shape {k, x, y, w, h, c, s, f, d} · image {x, y, w, h, src}
@@ -47,6 +48,12 @@ export const TEMPLATES = [
   ['tab', 'tab', { bg: '#ffffff', pat: 'tab', gap: 35 }],
   ['cream', 'lines', { bg: '#f7f1e3', pat: 'lines', gap: 30 }],
   ['dark', 'dots', { bg: '#1d2026', pat: 'dots', gap: 24 }],
+  ['wide', 'lines', { bg: '#ffffff', pat: 'lines', gap: 42 }],
+  ['small', 'grid-3x3', { bg: '#ffffff', pat: 'grid', gap: 13 }],
+  ['kraft', 'dots', { bg: '#d9c3a0', pat: 'dots', gap: 24 }],
+  ['chalk', 'lines', { bg: '#22372f', pat: 'lines', gap: 34 }],
+  ['blueprint', 'grid-3x3', { bg: '#16324f', pat: 'grid', gap: 22 }],
+  ['mint', 'cornell', { bg: '#eef6ee', pat: 'cornell', gap: 30 }],
 ];
 
 export const uid = () => { const a = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = ''; const r = crypto.getRandomValues(new Uint8Array(12)); for (const x of r) s += a[x % a.length]; return s; };
@@ -99,7 +106,7 @@ export function textBox(s, sheet) {
 export const marginX = (W) => Math.round(Math.max(56, W * .1));
 
 export const defaultPaper = (p = {}) => ({ bg: p.bg || '#ffffff', pat: PATTERNS.includes(p.pat) ? p.pat : 'lines', gap: p.gap || 30, pc: p.pc || '' });
-export const defaultSettings = (p = {}) => ({ cover: p.cover || COVERS[0], size: p.size || 'a4', orient: p.orient || 'p', font: p.font || 'sans', tsize: p.tsize || 'm', paper: defaultPaper(p.paper || p) });
+export const defaultSettings = (p = {}) => ({ cover: p.cover || COVERS[0], size: p.size || 'a4', orient: p.orient || 'p', font: p.font || 'sans', tsize: p.tsize || 'm', flow: p.flow === 'h' ? 'h' : 'v', scroll: p.scroll === 'snap' ? 'snap' : 'free', paper: defaultPaper(p.paper || p) });
 export const newSheet = (paper) => ({ id: uid(), ...defaultPaper(paper), doc: '', items: [] });
 
 // ------------------------------------------------------------------ cleaning (files opened from the device)
@@ -113,7 +120,7 @@ export function cleanPaper(p = {}) {
   return { bg: col(p.bg, '#ffffff'), pat: pick(p.pat, PATTERNS, 'lines'), gap: num(p.gap, 8, 80, 30), pc: col(p.pc, '') };
 }
 export function cleanSettings(s = {}) {
-  const o = { cover: col(s.cover, COVERS[0]), size: pick(s.size, Object.keys(SIZES), 'a4'), orient: pick(s.orient, ['p', 'l'], 'p'), font: pick(s.font, Object.keys(FONTS), 'sans'), tsize: pick(s.tsize, TSIZES, 'm'), paper: cleanPaper(s.paper || {}) };
+  const o = { cover: col(s.cover, COVERS[0]), size: pick(s.size, Object.keys(SIZES), 'a4'), orient: pick(s.orient, ['p', 'l'], 'p'), font: pick(s.font, Object.keys(FONTS), 'sans'), tsize: pick(s.tsize, TSIZES, 'm'), flow: pick(s.flow, ['v', 'h'], 'v'), scroll: pick(s.scroll, ['free', 'snap'], 'free'), paper: cleanPaper(s.paper || {}) };
   if (s.view && typeof s.view === 'object') o.view = { z: num(s.view.z, .1, 6, 1), at: Math.round(num(s.view.at, 0, 1000, 0)) };
   return o;
 }

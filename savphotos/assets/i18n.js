@@ -1,6 +1,8 @@
 /** Texts of the app, in English and Italian. The language is the one of SavDrive (the same account, the same choice). */
 const T = {
   // general
+  sort_by: ['Sort by', 'Ordina per'], sort_new: ['Newest first', 'Dalla più recente'], sort_old: ['Oldest first', 'Dalla meno recente'], sort_name: ['Name', 'Nome'], sort_size: ['Largest first', 'Dalla più grande'],
+  filter: ['Filter', 'Filtra'], kind_all: ['Photos and videos', 'Foto e video'], kind_photo: ['Photos only', 'Solo foto'], kind_video: ['Videos only', 'Solo video'], only_fav: ['Favourites only', 'Solo preferiti'],
   cancel: ['Cancel', 'Annulla'],
   close: ['Close', 'Chiudi'],
   save: ['Save', 'Salva'],

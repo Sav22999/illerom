@@ -1,5 +1,5 @@
 /** The screen of a workbook: bars, the formula bar, the grid, the tabs of the sheets, the side panels. */
-import { ask, btn, colorPop, confirm, copyText, dialog, drop, dropBtn, empty, errText, face, fail, h, icon, iconBtn, INKS, item, K, keepCaret, menuAt, mobile, PASTEL, primary, put, select, tile, toast } from './ui.js';
+import { ask, btn, colorPop, confirm, copyText, ctxAt, dialog, drop, dropBtn, empty, errText, face, fail, h, icon, iconBtn, INKS, item, K, keepCaret, menuAt, mobile, PASTEL, primary, put, select, tile, toast } from './ui.js';
 import { getLang, t, when } from './i18n.js';
 import { S, api, keep, local, offline } from './store.js';
 import { Grid } from './grid.js';
@@ -9,7 +9,7 @@ import { editText, formatValue, isDateFormat, LOCALES, loc, nowSerial, parseInpu
 /** What is typed and edited in the cells is always standard British English (formulas, numbers, dates); only what the cells show follows the language of the workbook. */
 const EN = LOCALES.en;
 import { applyOp, cleanCell, colName, inRange, DEF_H, DEF_W, diffBack, extent, FONT_STACK, key, MAX_COLS, MAX_ROWS, mergeAt, moveFormula, newId, normalize, parseRange, pos, rangeStr, renameOps, sheetRef, shiftOps, snapshot, styleAt, uniqueName, words } from './model.js';
-import { cellFrom, decimals, fill, fromHtml, fromTsv, machine, presets, region, shownDecimals, sortRange, toHtml, toTsv } from './tools.js';
+import { cellFrom, decimals, fill, fromHtml, fromTsv, machine, pageBreaks, pagePrefs, presets, region, setPagePrefs, shownDecimals, tableAt, sortRange, toHtml, toTsv } from './tools.js';
 import { chartData, chartSVG } from './chart.js';
 import { Sync } from './sync.js';
 import { can } from './actions.js';
@@ -78,15 +78,50 @@ export async function openSheet(root, pid, opt = {}) {
   const menuB = drop(h('sav-button', { icon: 'ellipsis-vertical', appearance: 'ghost', variant: 'neutral', square: true, label: t('more') }), () => moreItems(), { placement: 'bottom-end', label: data.doc.title });
   const fmt = h('div.fmt', { role: 'toolbar', 'aria-label': t('format_tab') });
   const nameBox = h('input.namebox', { 'aria-label': t('name_box'), spellcheck: 'false', autocomplete: 'off' });
-  const fxBtn = iconBtn('square-function', t('functions'), () => functionDialog(), { size: 'sm' });
+  const fxBtn = iconBtn('square-function', t('g_title'), () => guide(), { size: 'sm' });
   const fxWrap = h('div.fxwrap'), fxHl = h('div.fxhl', { 'aria-hidden': 'true' }), fxIn = h('textarea.fxin', { rows: 1, spellcheck: 'false', 'aria-label': t('formula'), readonly: !editable || null, autocomplete: 'off' });
   fxWrap.append(fxHl, fxIn);
   const fxOk = iconBtn('check', t('enter'), () => commit(0, 0), { size: 'sm', class: 'fxok' }), fxNo = iconBtn('x', t('cancel'), () => cancelEdit(), { size: 'sm', class: 'fxno' });
-  const fbar = h('div.fbar', nameBox, h('i.sep'), editable ? [fxNo, fxOk] : null, fxBtn, fxWrap);
+  // the formula box: its normal height (it grows a little with the text), double or triple; kept in this browser
+  let fxSize = Math.max(1, Math.min(3, +localStorage.getItem('savspreadsheets-fxsize') || 1));
+  const fxGrow = iconBtn('chevrons-down', '', () => { fxSize = fxSize % 3 + 1; localStorage.setItem('savspreadsheets-fxsize', fxSize); fxSized(); autoBar(); }, { size: 'sm', class: 'fxgrow' });
+  function fxSized() {
+    fxWrap.dataset.size = fxSize;
+    fxGrow.button.icon = fxSize === 3 ? 'chevrons-up' : 'chevrons-down';
+    const label = t(fxSize === 3 ? 'fx_size_back' : fxSize === 1 ? 'fx_size_2' : 'fx_size_3');
+    fxGrow.setAttribute('content', label); fxGrow.button.setAttribute('label', label);
+  }
+  fxSized();
+  fxIn.addEventListener('scroll', () => { fxHl.scrollTop = fxIn.scrollTop; }); // the colours follow the text when it scrolls
+  const fbar = h('div.fbar', nameBox, h('i.sep'), editable ? [fxNo, fxOk] : null, fxBtn, fxWrap, fxGrow);
   const gridHost = h('div.ghost'), panel = h('aside.epanel'), rail = h('sav-bottom-nav.rail', { label: t('panels') });
   const tabsEl = h('sav-tabs.stabs', { appearance: 'pills', 'aria-label': t('sheets') }), roBadge = h('sav-badge.robadge', { variant: 'neutral', appearance: 'soft', pill: true, hidden: true }, icon('lock'), ' ', t('sheet_ro')), statsEl = h('div.stats'), zoomEl = h('sav-zoom', { value: Math.round(W.zoom * 100), min: 50, max: 200, step: 10, size: 'sm', appearance: 'plain' });
-  const bottom = h('div.sbottom', editable ? iconBtn('plus', t('add_sheet'), () => addSheet(), { place: 'top' }) : null, dropBtn('menu', t('all_sheets'), () => book.sheets.map((s) => [s.hidden ? 'eye-off' : 'sheet', s.name, () => { if (s.hidden && editable) change([{ t: 'sheet', id: s.id, p: { hidden: false } }]); switchTo(s.id); }, { check: s === sh }]), { placement: 'top-start', caret: false }), tabsEl, h('div.spacer'), roBadge, statsEl, zoomEl);
-  const top = h('header.etop', h('a.ehome', { href: '#/', title: t('home'), 'aria-label': t('home') }, h('img', { src: 'icons/favicon.svg', width: 30, height: 30, alt: '' })), h('div.etitle', title, status), editable ? h('div.hist', undoB, redoB) : null, h('div.spacer'), people, shareB, mobile() || lim.noDownload ? null : downB, menuB, S.user ? userMenu() : mobile() ? null : btn(t('sign_in'), { appearance: 'outline', variant: 'neutral', href: '#/signin' }));
+  // the pieces of the title bar and of the status bar that each person may show or not (⋮ → Customise the bars)
+  const SB = { addSheet: editable ? iconBtn('plus', t('add_sheet'), () => addSheet(), { place: 'top' }) : null, sheets: dropBtn('menu', t('all_sheets'), () => book.sheets.map((s) => [s.hidden ? 'eye-off' : 'sheet', s.name, () => { if (s.hidden && editable) change([{ t: 'sheet', id: s.id, p: { hidden: false } }]); switchTo(s.id); }, { check: s === sh }]), { placement: 'top-start', caret: false }), stats: statsEl, zoom: zoomEl };
+  const bottom = h('div.sbottom');
+  const homeA = h('a.ehome', { href: '#/', title: t('home'), 'aria-label': t('home') }, h('img', { src: 'icons/favicon.svg', width: 30, height: 30, alt: '' })), etitle = h('div.etitle', title, status);
+  // on the right, always: ⋮, the apps of SavOffice and the account (signed out too: the apps, then Sign in)
+  const accountEl = S.user ? userMenu() : h('span.umenu', h('savoffice-apps', { current: 'savspreadsheets' }), mobile() ? null : btn(t('sign_in'), { appearance: 'outline', variant: 'neutral', href: '#/signin' }));
+  const TB2 = { undo: editable ? undoB : null, redo: editable ? redoB : null, people, share: shareB, download: mobile() || lim.noDownload ? null : downB,
+    find: iconBtn('search', t('find'), () => setTab('find', true), { kbd: 'Mod+F', size: 'md' }), print: lim.noDownload ? null : iconBtn('printer', t('print'), () => printSheet(), { kbd: 'Mod+P', size: 'md' }),
+    guide: editable ? iconBtn('square-function', t('g_title'), () => guide(), { size: 'md' }) : null };
+  const top = h('header.etop');
+  /** A bar as each person chose it (⋮ → Customise the bars, kept with the account): its list, in order, with '|' a separator,
+   *  '_' a fixed space and '~' an adaptive one (SavOffice.bars); what it has at first when nothing was chosen. */
+  const BARS = window.SavOffice?.bars;
+  const barPick = (id, def, items, old) => { const v = prefs().bars?.[id] ?? old; return BARS ? BARS.pick(v, def, items) : def; };
+  const barList = (id, def, items, old) => { const l = barPick(id, def, items, old); return BARS ? BARS.layout(l) : l; };
+  const barEl = (k, map) => (k === '|' ? h('i.sep.so-sep') : k === '_' ? h('i.bgap') : k === '~' ? h('div.spacer') : map[k]);
+  const TITLE_ITEMS = () => [['undo', 'undo-2', t('undo')], ['redo', 'redo-2', t('redo')], ['people', 'users', t('bar_people')], ['share', 'user-plus', t('share')], ['download', 'download', t('download')], ['find', 'search', t('find')], ['print', 'printer', t('print')], ['guide', 'square-function', t('g_title')]].filter(([k]) => TB2[k]);
+  const TITLE_DEF = ['undo', 'redo', '~', 'people', 'share', 'download'];
+  /** The title bar: the logo and the title first, ⋮ and the account last (always); between them the list, in its order. */
+  function layoutTitle() { put(top, homeA, etitle, barList('title', TITLE_DEF, TITLE_ITEMS()).map((k) => barEl(k, TB2)), menuB, accountEl); }
+  SB.tabs = tabsEl; SB.ro = roBadge;
+  const STATUS_ITEMS = () => [['addSheet', 'plus', t('add_sheet')], ['sheets', 'menu', t('all_sheets')], ['tabs', 'sheet', t('sheets'), { lock: true }], ['ro', 'lock', t('sheet_ro'), { lock: true }], ['stats', 'sigma', t('bar_stats')], ['zoom', 'zoom-in', t('bar_zoom')]].filter(([k]) => SB[k]);
+  const STATUS_DEF = ['addSheet', 'sheets', 'tabs', '~', 'ro', 'stats', 'zoom'];
+  function layoutStatus() { put(bottom, barList('status', STATUS_DEF, STATUS_ITEMS()).map((k) => barEl(k, SB))); }
+  layoutTitle();
+  layoutStatus();
   const note = editable ? null : h('sav-alert.robar', { variant: data.doc.review ? 'warning' : 'neutral', noicon: true }, data.doc.review ? t('a_review_bar') : data.doc.role === 'commenter' ? t('can_comment') : t('read_only'));
   const center = h('section.scenter', note, fbar, gridHost, bottom);
   const frame = h('div.sheetapp' + (editable ? '' : '.reading'), top, editable ? fmt : null, h('div.emain', center, panel, rail));
@@ -171,11 +206,12 @@ export async function openSheet(root, pid, opt = {}) {
     if (bd.length) out.bd = bd.join(';');
     const extra = [];
     if (cf?.bar) extra.push(`<i class="dbar" style="width:${cf.bar[0]}%;background:${cf.bar[1]}"></i>`);
-    if (dv?.k === 'check') { extra.push(`<i class="chk${v === true ? ' on' : ''}" data-r="${r}" data-c="${c}"></i>`); out.text = ''; }
+    if (dv?.k === 'check') { extra.push(`<i class="chk${v === true ? ' on' : dv.tri && typeof v !== 'boolean' ? ' mid' : ''}" data-r="${r}" data-c="${c}" role="checkbox" aria-checked="${v === true ? 'true' : dv.tri && typeof v !== 'boolean' ? 'mixed' : 'false'}"></i>`); out.text = ''; }
     if (cm) extra.push(`<i class="cmk${cm < 0 ? ' own' : ''}"></i>`);
     if (fh) extra.push(`<i class="fbtn${fh.on ? ' on' : ''}" data-fc="${c}"></i>`);
-    if (dv?.k === 'list' && editable) extra.push(`<i class="dvb${v === null ? ' e' : ''}" data-r="${r}" data-c="${c}"></i>`);
-    if (fh || (dv?.k === 'list' && editable && v !== null)) css += 'padding-right:22px;';
+    const arrow = dv?.k === 'list' && editable && dv.arrow !== false;
+    if (arrow) extra.push(`<i class="dvb${v === null ? ' e' : ''}${dv.sel ? ' sel' : dv.hover !== false ? ' hov' : ''}" data-r="${r}" data-c="${c}"></i>`);
+    if (fh || (arrow && v !== null)) css += 'padding-right:22px;';
     if (extra.length) out.html = extra.join('');
     out.css = css;
     const tc = [];
@@ -244,7 +280,7 @@ export async function openSheet(root, pid, opt = {}) {
       case 'number': case 'date': return typeof v === 'number' && (a === null || v >= a) && (b === null || v <= b);
       case 'int': return typeof v === 'number' && Number.isInteger(v) && (a === null || v >= a) && (b === null || v <= b);
       case 'text': { const l = String(v).length; return (a === null || l >= a) && (b === null || l <= b); }
-      case 'check': return typeof v === 'boolean';
+      case 'check': return typeof v === 'boolean' || (x.tri && (v === null || v === ''));
     }
     return true;
   }
@@ -258,7 +294,7 @@ export async function openSheet(root, pid, opt = {}) {
 
   const grid = (W.grid = new Grid(gridHost, {
     editable,
-    colW: (c) => W8(c) * z(), rowH: (r) => H8(r) * z(),
+    colW: (c) => W8(c) * z(), rowH: (r) => H8(r) * z(), pages: () => { const p = pagePrefs(); return p.guides ? pageBreaks(sh, p) : null; },
     colHidden: (c) => !!sh.cols[colName(c)]?.x, rowHidden: (r) => !!sh.rows[r]?.x || filtered.has(r),
     freeze: () => sh.freeze || { r: 0, c: 0 },
     size: () => ({ r: Math.max(1000, ext.r + 100) + more.r, c: Math.max(26, ext.c + 6) + more.c }),
@@ -286,7 +322,17 @@ export async function openSheet(root, pid, opt = {}) {
   Object.defineProperty(grid.o, 'editable', { get: () => sheetOk(sh), configurable: true });
   rebuild();
   grid.refresh();
+  // going to a cell far away (the name box, a search, a link, Ctrl+arrows): the grid grows to it first, or there is nothing to scroll to
+  { const show = grid.show.bind(grid);
+    grid.show = (r, c) => {
+      let grew = false;
+      if (r > grid.nr - 30 && grid.nr < MAX_ROWS) { more.r += r - grid.nr + 100; grew = true; }
+      if (c > grid.nc - 3 && grid.nc < MAX_COLS) { more.c += c - grid.nc + 6; grew = true; }
+      if (grew) grid.refresh();
+      show(r, c);
+    }; }
   const wrap = grid.wrap;
+  wrap.soMenu = () => cellItems({});
   // the keys reach a hidden text box: whatever is typed into it (keys, a dictation, an input method) opens the cell editor.
   // On touch screens the grid itself keeps the focus, so the keyboard does not open at every tap.
   const sink = h('textarea.keysink', { autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false', 'aria-label': t('formula'), tabindex: -1 });
@@ -302,9 +348,19 @@ export async function openSheet(root, pid, opt = {}) {
     const x = e.target.closest('.chk,.fbtn,.dvb');
     if (!x) return;
     e.stopPropagation(); e.preventDefault();
-    if (x.classList.contains('chk') && editable) { const r = +x.dataset.r, c = +x.dataset.c, cell = sh.cells[key(r, c)]; change([{ t: 'cells', s: sh.id, m: { [key(r, c)]: { ...(cell || {}), v: !(cell?.v === true) } } }]); }
+    if (x.classList.contains('chk') && editable) toggleCheck(+x.dataset.r, +x.dataset.c, false);
     else if (x.classList.contains('fbtn')) filterPop(+x.dataset.fc, x);
-    else if (x.classList.contains('dvb')) listPop(+x.dataset.r, +x.dataset.c, x);
+    else if (x.classList.contains('dvb')) dvPress = x.dataset.r + ':' + x.dataset.c;
+  }, true);
+  // the list of a dropdown opens on the click, once the button is released: opened on the press, the release that
+  // follows (outside the list, which was not there yet) would close it straight away (light dismiss of popovers)
+  let dvPress = null;
+  wrap.addEventListener('click', (e) => {
+    const x = e.target.closest('.dvb');
+    if (!x || x.dataset.r + ':' + x.dataset.c !== dvPress) { dvPress = null; return; }
+    dvPress = null;
+    e.stopPropagation(); e.preventDefault();
+    listPop(+x.dataset.r, +x.dataset.c, x);
   }, true);
   wrap.addEventListener('click', (e) => { if ((e.ctrlKey || e.metaKey) && e.target.closest('.lk')) { const hh = grid.hit(e.clientX, e.clientY), v = eng.value(sh, key(hh.r, hh.c)); if (typeof v === 'string' && /^https?:\/\//.test(v)) window.open(v, '_blank', 'noopener'); } });
 
@@ -440,6 +496,8 @@ export async function openSheet(root, pid, opt = {}) {
   const cur = () => grid.sel.ranges.at(-1);
   const act = () => ({ r: grid.sel.r, c: grid.sel.c });
   function selected() {
+    W.dvShow?.();
+    if (W.ready) { (W.sels ||= {})[sh.id] = grid.sel; W.keepCell?.(); }
     const s = grid.sel, g = cur(), k = key(s.r, s.c);
     nameBox.value = g.r1 === g.r2 && g.c1 === g.c2 || (mm.get(g.r1 * 1000 + g.c1)?.r2 === g.r2 && mm.get(g.r1 * 1000 + g.c1)?.c2 === g.c2) ? k : FULLC(g) ? colName(g.c1) + ':' + colName(g.c2) : FULLR(g) ? g.r1 + ':' + g.r2 : rangeStr(g);
     if (!editing) setBar(barText(sh.cells[k]));
@@ -449,7 +507,8 @@ export async function openSheet(root, pid, opt = {}) {
   }
   const barText = (cell) => (cell?.f ? cell.f : editText(cell, EN));
   function setBar(v) { fxIn.value = v; paintHl(fxHl, v); autoBar(); }
-  function autoBar() { fxIn.style.height = 'auto'; fxIn.style.height = Math.min(120, fxIn.scrollHeight) + 'px'; }
+  /** Normal size: as tall as its text (up to 120px). Double and triple: a fixed height (CSS), scrolling inside. */
+  function autoBar() { if (fxSize > 1) { fxIn.style.height = ''; return; } fxIn.style.height = 'auto'; fxIn.style.height = Math.min(120, fxIn.scrollHeight) + 'px'; }
   /** Sum, average and count of the selected cells, at the bottom. */
   function showStats() {
     let n = 0, cnt = 0, s = 0, mn = Infinity, mx = -Infinity, guard = 0;
@@ -532,6 +591,8 @@ export async function openSheet(root, pid, opt = {}) {
     grid.overlay();
     paint();
     if (!fxFocus) { ceIn.focus({ preventScroll: true }); ceIn.setSelectionRange(v.length, v.length); }
+    // the first letters typed on the grid open the editor: they already ask for suggestions (values of a dropdown, functions)
+    if (text !== undefined && text !== '') complete(fxFocus ? fxIn : ceIn);
   }
   function place() {
     if (!editing) return;
@@ -607,7 +668,14 @@ export async function openSheet(root, pid, opt = {}) {
     if (!editing) return;
     if (!ac.hidden) {
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); acMove(e.key === 'ArrowDown' ? 1 : -1); return; }
-      if (e.key === 'Tab' || (e.key === 'Enter' && !e.altKey)) { e.preventDefault(); acPick(x); return; }
+      if (e.key === 'Tab' || (e.key === 'Enter' && !e.altKey)) {
+        e.preventDefault();
+        const value = acList[acI][1] === null;
+        acPick(x);
+        // a value of a dropdown is written at once, and the key moves on as usual
+        if (value) { if (e.key === 'Tab') commit(0, e.shiftKey ? -1 : 1); else commit(e.shiftKey ? -1 : 1, 0); }
+        return;
+      }
       if (e.key === 'Escape') { e.preventDefault(); ac.hidden = true; return; }
     }
     const mod = e.ctrlKey || e.metaKey;
@@ -648,6 +716,8 @@ export async function openSheet(root, pid, opt = {}) {
   let acList = [], acI = 0;
   function complete(x) {
     const v = x.value, at = x.selectionStart, m = /(^=|[=(,;+\-*/^&<> ])([A-Za-zÀ-ú][A-Za-z0-9.À-ú]*)$/.exec(v.slice(0, at));
+    const dv = editing && v[0] !== '=' ? dvAt(editing.r, editing.c) : null;
+    if (dv?.k === 'list' && dv.suggest !== false) { suggestValues(x, dv); return; }
     if (v[0] !== '=' || !m) { ac.hidden = true; sigHint(x); return; }
     const w = m[2].toUpperCase();
     acList = FUNCTIONS.map((f) => [f, f]).filter(([n]) => n.startsWith(w)).sort((a, b) => a[0].length - b[0].length || a[0].localeCompare(b[0])).slice(0, 8);
@@ -655,8 +725,16 @@ export async function openSheet(root, pid, opt = {}) {
     acI = 0;
     drawAc(x);
   }
+  /** The values of a dropdown that hold what is being written (those that start with it first). Their f is null. */
+  function suggestValues(x, dv) {
+    const q = x.value.trim().toLowerCase();
+    acList = q ? dv.list.filter((i) => i.toLowerCase().includes(q) && i.toLowerCase() !== q).sort((a, b) => (b.toLowerCase().startsWith(q) - a.toLowerCase().startsWith(q)) || a.localeCompare(b)).slice(0, 8).map((i) => [i, null]) : [];
+    if (!acList.length) { ac.hidden = true; return; }
+    acI = 0;
+    drawAc(x);
+  }
   function drawAc(x) {
-    put(ac, acList.map(([n, f], i) => h('div.aci' + (i === acI ? '.on' : ''), { role: 'option', onpointerdown: (e) => { e.preventDefault(); acI = i; acPick(x); } }, h('b', n), h('small', desc(f, ui)))));
+    put(ac, acList.map(([n, f], i) => h('div.aci' + (i === acI ? '.on' : ''), { role: 'option', onpointerdown: (e) => { e.preventDefault(); acI = i; const value = f === null; acPick(x); if (value) commit(0, 0); } }, h('b', n), f ? h('small', desc(f, ui)) : null)));
     const r = x.getBoundingClientRect();
     ac.hidden = false;
     ac.style.left = Math.min(innerWidth - 300, r.left) + 'px';
@@ -664,6 +742,8 @@ export async function openSheet(root, pid, opt = {}) {
   }
   const acMove = (d) => { acI = (acI + d + acList.length) % acList.length; drawAc(fxFocus ? fxIn : ceIn); };
   function acPick(x) {
+    // a value of a dropdown takes the place of what was written
+    if (acList[acI][1] === null) { x.value = acList[acI][0]; x.setSelectionRange(x.value.length, x.value.length); ac.hidden = true; sync(x); return; }
     const [n] = acList[acI], v = x.value, at = x.selectionStart, m = /([A-Za-zÀ-ú][A-Za-z0-9.À-ú]*)$/.exec(v.slice(0, at));
     x.value = v.slice(0, at - m[1].length) + n + '(' + v.slice(at);
     const p = at - m[1].length + n.length + 1;
@@ -712,9 +792,16 @@ export async function openSheet(root, pid, opt = {}) {
     if (!quiet) { setBar(barText(sh.cells[key(grid.sel.r, grid.sel.c)])); focusGrid(); }
   }
   /** What was typed goes into the cell (or into all the selected cells with Ctrl+Enter), then the selection moves. */
+  /** "=ABS(E16" is written "=ABS(E16)": the brackets left open (outside quoted texts) are closed, nested ones too. */
+  function closeBrackets(v) {
+    if (v[0] !== '=') return v;
+    let open = 0, q = false;
+    for (const ch of v) { if (ch === '"') q = !q; else if (!q && ch === '(') open++; else if (!q && ch === ')') open = Math.max(0, open - 1); }
+    return open && !q ? v.trimEnd() + ')'.repeat(open) : v;
+  }
   function commit(dr, dc, stay, all) {
     if (!editing) return;
-    const { r, c, sid } = editing, text = ceIn.value;
+    const { r, c, sid } = editing, text = closeBrackets(ceIn.value);
     const home = book.sheets.find((s) => s.id === sid);
     endEdit();
     if (home && home !== sh) switchTo(sid, true);
@@ -763,9 +850,25 @@ export async function openSheet(root, pid, opt = {}) {
 
   // ------------------------------------------------------------------ the keyboard
 
+  /** The next state of a checkbox: two states FALSE ⇄ TRUE · three FALSE → TRUE → indeterminate (no value) → FALSE.
+   *  all: the other checkbox cells of the selection take the same state (Space on several of them). */
+  function toggleCheck(r, c, all) {
+    if (!cellOk(sh, r, c)) { toast(t(sheetOk(sh) ? 'locked_cells' : 'sheet_ro'), 'warning'); return; }
+    const old = sh.cells[key(r, c)]?.v, tri = dvAt(r, c)?.tri, nv = tri ? (old === true ? null : old === false) : !(old === true);
+    const put1 = (rr, cc) => {
+      const cell = sh.cells[key(rr, cc)];
+      if (nv === null) { const { v: _v, f: _f, ...rest } = cell || {}; return Object.keys(rest).length ? rest : null; }
+      const { f: _f, ...rest } = cell || {};
+      return { ...rest, v: nv };
+    };
+    const m = { [key(r, c)]: put1(r, c) };
+    if (all) eachSel((rr, cc) => { if (dvAt(rr, cc)?.k === 'check' && cellOk(sh, rr, cc)) m[key(rr, cc)] = put1(rr, cc); }, { max: 5000 });
+    change([{ t: 'cells', s: sh.id, m }]);
+  }
   const onKey = (e, force) => {
     if (editing || (!force && e.target !== wrap && e.target !== sink) || e.isComposing) return;
     const mod = e.ctrlKey || e.metaKey, k = e.key, { r, c } = grid.sel.focus && e.shiftKey ? grid.sel.focus : act();
+    if (k === ' ' && !mod && !e.shiftKey && !e.altKey && editable && dvAt(r, c)?.k === 'check') { e.preventDefault(); toggleCheck(r, c, true); return; }
     const arrows = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] };
     if (arrows[k]) {
       e.preventDefault();
@@ -813,6 +916,15 @@ export async function openSheet(root, pid, opt = {}) {
     // typing writes in the cell: the key reaches the editor that opens now
     if (k.length === 1 && !mod && !e.altKey && editable) { startEdit('enter', ''); return; }
   };
+  // dropdown arrows shown "only on hover": the one of the cell under the mouse and the one of the cell in use.
+  // A rule in a <style>, so it holds while the cells are drawn again.
+  const dvHoverCss = h('style');
+  document.head.append(dvHoverCss);
+  let dvHover = null, dvRaf = 0;
+  const dvShow = () => { const at = (cls, r, c) => `.t .dvb.${cls}[data-r="${r}"][data-c="${c}"]`, { r, c } = grid.sel; dvHoverCss.textContent = [dvHover ? at('hov', ...dvHover) : '', at('hov', r, c), at('sel', r, c)].filter(Boolean).join(',') + '{opacity:.55}'; };
+  wrap.addEventListener('pointermove', (e) => { if (e.pointerType !== 'mouse' || dvRaf) return; dvRaf = requestAnimationFrame(() => { dvRaf = 0; const x = grid.hit(e.clientX, e.clientY), m = mm.get(x.r * 1000 + x.c); let at = x.r && x.c ? [x.r, x.c] : null; if (m === 'covered') for (const g of mlist) if (x.r >= g.r1 && x.r <= g.r2 && x.c >= g.c1 && x.c <= g.c2) at = [g.r1, g.c1]; if (String(at) !== String(dvHover)) { dvHover = at; dvShow(); } }); });
+  wrap.addEventListener('pointerleave', () => { dvHover = null; dvShow(); });
+  W.dvShow = dvShow; // selected() runs it too: the arrow of the cell in use shows (also with the keyboard)
   wrap.addEventListener('keydown', onKey);
   sink.addEventListener('keydown', onKey);
   // after a menu or a button the focus is on the page: the keys of the grid still work
@@ -1059,7 +1171,7 @@ export async function openSheet(root, pid, opt = {}) {
   }
   async function sortSel(desc, o = {}) {
     let g = cur();
-    if (g.r1 === g.r2 && g.c1 === g.c2) g = region(sh, g.r1, g.c1);
+    if (g.r1 === g.r2 && g.c1 === g.c2) g = tableAt(sh, g.r1, g.c1);
     if (FULLC(g)) g = { ...g, r1: 1, r2: Math.max(1, ext.r) };
     if (FULLR(g)) g = { ...g, c2: Math.max(1, ext.c) };
     const head = o.head ?? (g.r2 > g.r1 && [...Array(g.c2 - g.c1 + 1)].every((_, j) => typeof eng.value(sh, key(g.r1, g.c1 + j)) === 'string') && [...Array(g.c2 - g.c1 + 1)].some((_, j) => typeof eng.value(sh, key(g.r1 + 1, g.c1 + j)) === 'number'));
@@ -1087,7 +1199,8 @@ export async function openSheet(root, pid, opt = {}) {
   function toggleFilter() {
     if (sh.filter) { change([{ t: 'sheet', id: sh.id, p: { filter: null } }]); return; }
     let g = cur();
-    if (g.r1 === g.r2 && g.c1 === g.c2 || FULLC(g)) g = region(sh, g.r1 === g.r2 ? g.r1 : 1, g.c1);
+    // a whole column: the table it holds; one cell: the table it is in; more cells: just those
+    if (FULLC(g)) { let last = Math.max(1, ext.r); while (last > 1 && !shown(last, g.c1)) last--; const t0 = tableAt(sh, last, g.c1); g = { ...t0, c1: Math.min(t0.c1, g.c1), c2: Math.max(t0.c2, g.c2) }; } else if (g.r1 === g.r2 && g.c1 === g.c2) g = tableAt(sh, g.r1, g.c1);
     if (g.r2 <= g.r1) g = { ...g, r2: Math.max(g.r1 + 1, ext.r) };
     change([{ t: 'sheet', id: sh.id, p: { filter: { r: rangeStr({ ...g, c2: Math.min(g.c2, Math.max(ext.c, g.c1)) }), h: {} } } }]);
   }
@@ -1113,17 +1226,40 @@ export async function openSheet(root, pid, opt = {}) {
     if (!dv) return;
     grid.sel = { ranges: [{ r1: r, c1: c, r2: r, c2: c }], r, c };
     grid.overlay();
-    const rc = anchor.getBoundingClientRect();
-    menuAt(rc.left - 120, rc.bottom + 2, [...dv.list.map((v) => [null, v, () => writeHere(cellFrom(v, EN, book.settings.currency, sh.cells[key(r, c)]?.s || {}) || {})]), '-', ['eraser', t('clear'), () => change([{ t: 'cells', s: sh.id, m: { [key(r, c)]: sh.cells[key(r, c)]?.s ? { s: sh.cells[key(r, c)].s } : null } }])]], { label: t('dv_pick') });
+    selected();
+    const rc = anchor.getBoundingClientRect(), now = shown(r, c).toLowerCase();
+    // the value the cell holds now has the tick
+    menuAt(rc.left - 120, rc.bottom + 2, [...dv.list.map((v) => [null, v, () => writeHere(cellFrom(v, EN, book.settings.currency, sh.cells[key(r, c)]?.s || {}) || {}), { check: v.toLowerCase() === now }]), '-', ['eraser', t('clear_values'), () => change([{ t: 'cells', s: sh.id, m: { [key(r, c)]: sh.cells[key(r, c)]?.s ? { s: sh.cells[key(r, c)].s } : null } }])]], { label: t('dv_pick') });
   }
 
   // ------------------------------------------------------------------ menus
 
-  function cellMenu(x, y, hh) {
+  /** The rules of data validation of this kind that the selection touches. */
+  const dvIn = (kind) => { const g = cur(); return sh.dv.filter((d) => { const q = parseRange(d.r); return d.k === kind && q && q.r1 <= g.r2 && q.r2 >= g.r1 && q.c1 <= g.c2 && q.c2 >= g.c1; }); };
+  /** Takes the checkboxes (or the dropdowns) away from the selected cells only: a rule larger than the selection keeps the rest of
+   *  its cells (split around it). Checkboxes leave their cells empty, as before them; a dropdown leaves what was chosen. */
+  function removeDv(kind) {
+    const g0 = cur(), g = { ...g0, r2: Math.min(g0.r2, Math.max(ext.r, g0.r1) + 1000), c2: Math.min(g0.c2, Math.max(ext.c, g0.c1)) };
+    const out = [], m = {};
+    for (const d of sh.dv) {
+      const q = parseRange(d.r);
+      if (d.k !== kind || !q || q.r1 > g0.r2 || q.r2 < g0.r1 || q.c1 > g0.c2 || q.c2 < g0.c1) { out.push(d); continue; }
+      const top = Math.max(q.r1, g0.r1), bot = Math.min(q.r2, g0.r2), lft = Math.max(q.c1, g0.c1), rgt = Math.min(q.c2, g0.c2);
+      for (const p of [{ r1: q.r1, r2: top - 1, c1: q.c1, c2: q.c2 }, { r1: bot + 1, r2: q.r2, c1: q.c1, c2: q.c2 }, { r1: top, r2: bot, c1: q.c1, c2: lft - 1 }, { r1: top, r2: bot, c1: rgt + 1, c2: q.c2 }])
+        if (p.r1 <= p.r2 && p.c1 <= p.c2) out.push({ ...d, r: rangeStr(p) });
+      if (kind === 'check') for (let r = top; r <= Math.min(bot, g.r2); r++) for (let c = lft; c <= Math.min(rgt, g.c2); c++) { const cell = sh.cells[key(r, c)]; if (cell && typeof cell.v === 'boolean') { const { v: _v, ...rest } = cell; m[key(r, c)] = Object.keys(rest).length ? rest : null; } }
+    }
+    const ops = [{ t: 'sheet', id: sh.id, p: { dv: out } }];
+    if (Object.keys(m).length) ops.push({ t: 'cells', s: sh.id, m });
+    change(ops);
+  }
+  function cellMenu(x, y, hh) { ctxAt(x, y, cellItems(hh)); }
+  /** What can be done with the cells chosen: the right click on them, and "For the selection" in ⌘J (the grid's soMenu). */
+  function cellItems(hh = {}) {
     const g = cur(), wholeR = FULLR(g), wholeC = FULLC(g), nR = g.r2 - g.r1 + 1, nC = g.c2 - g.c1 + 1;
     const E = sheetOk(sh);
-    if (hh.insertOnly) return menuAt(x, y, [['arrow-down-to-line', tn('ins_rows_above', nR), () => insert('r', false)], ['arrow-right-to-line', tn('ins_cols_left', nC), () => insert('c', false)]]);
-    if (hh.deleteOnly) return menuAt(x, y, [['trash', tn('del_rows', nR), () => remove('r'), { danger: true }], ['trash', tn('del_cols', nC), () => remove('c'), { danger: true }]]);
+    if (hh.insertOnly) return ([['arrow-down-to-line', tn('ins_rows_above', nR), () => insert('r', false)], ['arrow-right-to-line', tn('ins_cols_left', nC), () => insert('c', false)]]);
+    if (hh.deleteOnly) return ([['trash', tn('del_rows', nR), () => remove('r'), { danger: true }], ['trash', tn('del_cols', nC), () => remove('c'), { danger: true }]]);
     const clipItems = [['scissors', t('cut'), () => document.execCommand('cut'), { kbd: 'Mod+X', disabled: !E }], ['copy', t('copy'), () => { focusGrid(); document.execCommand('copy'); }, { kbd: 'Mod+C' }], E ? ['clipboard-paste', t('paste'), () => W.pasteFrom(''), { kbd: 'Mod+V' }] : null, E ? ['clipboard-type', t('paste_values'), () => W.pasteFrom('values'), { kbd: 'Mod+Shift+V' }] : null, E ? ['paintbrush', t('paste_formats'), () => W.pasteFrom('formats')] : null];
     let items;
     if (hh.head === 'row' || wholeR) items = [...clipItems, '-', E ? ['arrow-up-to-line', tn('ins_rows_above', nR), () => insert('r', false)] : null, E ? ['arrow-down-to-line', tn('ins_rows_below', nR), () => insert('r', true)] : null, E ? ['trash', tn('del_rows', nR), () => remove('r'), { danger: true }] : null, E ? ['eraser', t('clear_rows'), () => clearSel('all')] : null, '-', E ? ['eye-off', t('hide_rows'), () => hideSel('r')] : null, E ? ['eye', t('unhide_rows'), () => hideSel('r', false)] : null, E ? ['move-vertical', t('row_height'), () => sizeDialog('r')] : null, E ? ['wand-sparkles', t('fit_rows'), () => autofit('r', range(g.r1, g.r2))] : null, E ? ['snowflake', t('freeze_to_row', { n: g.r2 }), () => change([{ t: 'sheet', id: sh.id, p: { freeze: { ...sh.freeze, r: g.r2 } } }])] : null];
@@ -1132,8 +1268,9 @@ export async function openSheet(root, pid, opt = {}) {
       E ? ['eraser', t('clear_values'), () => clearSel('values'), { kbd: 'Del' }] : null, E ? ['remove-formatting', t('clear_formats'), () => clearSel('formats')] : null, '-',
       E ? ['arrow-down-a-z', t('sort_az'), () => sortSel(false)] : null, E ? ['arrow-down-z-a', t('sort_za'), () => sortSel(true)] : null, E ? ['funnel', t(sh.filter ? 'filter_off' : 'filter_on'), () => toggleFilter()] : null, E ? ['chart-column', t('insert_chart'), () => chartDialog()] : null, '-',
       W.canComment && can(W.doc.role, 'commenter') ? ['message-square', t('c_add'), () => startComment(), { kbd: 'Mod+Alt+M' }] : null, W.canComment ? ['sticky-note', t('n_add'), () => startComment(true)] : null,
-      E ? ['list-checks', t('validation'), () => dvDialog()] : null, E ? ['paint-bucket', t('cond_format'), () => cfDialog()] : null, E ? ['sliders-horizontal', t('format_cells'), () => formatDialog(), { kbd: 'Mod+1' }] : null, isOwner && !isLocal ? ['lock', t('protect_these'), () => protectDialog(sh, rangeStr(cur()))] : null, isOwner && !isLocal ? ['lock-open', t('protect_but_these'), () => protectDialog(sh, rangeStr(cur()), true)] : null, '-', ['link', t('copy_cell_link'), () => copyText(`${location.origin}${location.pathname}#/d/${pid}/${sh.id}!${key(grid.sel.r, grid.sel.c)}`, t('link_copied'))]];
-    menuAt(x, y, items);
+      E ? ['list-collapse', t('dv_dropdown') + '…', () => dvDialog('list')] : null, E ? ['square-check', t('dv_check'), () => dvDialog('check')] : null,
+      E && dvIn('check').length ? ['square-x', t('dv_remove_check'), () => removeDv('check'), { danger: true }] : null, E && dvIn('list').length ? ['list-x', t('dv_remove_list'), () => removeDv('list'), { danger: true }] : null, E ? ['list-checks', t('validation') + '…', () => dvDialog()] : null, E ? ['paint-bucket', t('cond_format') + '…', () => cfDialog()] : null, E ? ['sliders-horizontal', t('format_cells'), () => formatDialog(), { kbd: 'Mod+1' }] : null, isOwner && !isLocal ? ['lock', t('protect_these'), () => protectDialog(sh, rangeStr(cur()))] : null, isOwner && !isLocal ? ['lock-open', t('protect_but_these'), () => protectDialog(sh, rangeStr(cur()), true)] : null, '-', ['link', t('copy_cell_link'), () => copyText(`${location.origin}${location.pathname}#/d/${pid}/${sh.id}!${key(grid.sel.r, grid.sel.c)}`, t('link_copied'))]];
+    return items;
   }
   /** A text with a number: the singular form (key_1) when there is one. */
   const tn = (k, n, v = {}) => t(n === 1 && t(k + '_1') !== k + '_1' ? k + '_1' : k, { n, ...v });
@@ -1168,19 +1305,60 @@ export async function openSheet(root, pid, opt = {}) {
     B.pct = iconBtn('percent', t('nf_percent0'), () => styleSel({ nf: '0%' }));
     B.dec0 = iconBtn('decimals-arrow-left', t('dec_less'), () => styleSel((s) => ({ nf: decimals(s.nf || (typeof eng.value(sh, key(grid.sel.r, grid.sel.c)) === 'number' ? '0.' + '0'.repeat(shownDecimals(eng.value(sh, key(grid.sel.r, grid.sel.c)))) : '0'), -1) })));
     B.dec1 = iconBtn('decimals-arrow-right', t('dec_more'), () => styleSel((s) => ({ nf: decimals(s.nf || (typeof eng.value(sh, key(grid.sel.r, grid.sel.c)) === 'number' ? '0.' + '0'.repeat(shownDecimals(eng.value(sh, key(grid.sel.r, grid.sel.c)))) : '0'), 1) })));
-    B.sum = dropBtn('sigma', t('functions'), () => [['sigma', t('f_sum'), () => autosum('SUM'), { kbd: 'Alt+=' }], ['chart-no-axes-column', t('f_avg'), () => autosum('AVERAGE')], ['hash', t('f_count'), () => autosum('COUNT')], ['arrow-up-to-line', t('f_max'), () => autosum('MAX')], ['arrow-down-to-line', t('f_min'), () => autosum('MIN')], '-', ['square-function', t('more_functions'), () => functionDialog()]]);
+    B.sum = dropBtn('sigma', t('functions'), () => [['sigma', t('f_sum'), () => autosum('SUM'), { kbd: 'Alt+=' }], ['chart-no-axes-column', t('f_avg'), () => autosum('AVERAGE')], ['hash', t('f_count'), () => autosum('COUNT')], ['arrow-up-to-line', t('f_max'), () => autosum('MAX')], ['arrow-down-to-line', t('f_min'), () => autosum('MIN')], '-', ['square-function', t('g_title') + '…', () => guide()]]);
     B.chart = iconBtn('chart-column', t('insert_chart'), () => chartDialog());
     B.filter = iconBtn('funnel', t('filter'), () => toggleFilter(), { kbd: 'Mod+Shift+L' });
     B.sort = dropBtn('arrow-down-a-z', t('sort'), () => [['arrow-down-a-z', t('sort_az'), () => sortSel(false)], ['arrow-down-z-a', t('sort_za'), () => sortSel(true)], '-', ['list-ordered', t('sort_more'), () => sortDialog()]]);
-    B.freeze = dropBtn('snowflake', t('freeze'), () => [['x', t('freeze_none'), () => change([{ t: 'sheet', id: sh.id, p: { freeze: { r: 0, c: 0 } } }]), { check: !sh.freeze.r && !sh.freeze.c }], ['rows-2', t('freeze_r1'), () => change([{ t: 'sheet', id: sh.id, p: { freeze: { ...sh.freeze, r: 1 } } }]), { check: sh.freeze.r === 1 }], ['rows-3', t('freeze_r2'), () => change([{ t: 'sheet', id: sh.id, p: { freeze: { ...sh.freeze, r: 2 } } }]), { check: sh.freeze.r === 2 }], ['columns-2', t('freeze_c1'), () => change([{ t: 'sheet', id: sh.id, p: { freeze: { ...sh.freeze, c: 1 } } }]), { check: sh.freeze.c === 1 }], '-', ['grid-2x2', t('freeze_here', { k: key(grid.sel.r, grid.sel.c) }), () => change([{ t: 'sheet', id: sh.id, p: { freeze: { r: Math.max(0, grid.sel.r - 1), c: Math.max(0, grid.sel.c - 1) } } }])]]);
-    B.cf = iconBtn('paint-bucket', t('cond_format'), () => cfDialog());
-    B.dv = iconBtn('list-checks', t('validation'), () => dvDialog());
+    B.freeze = dropBtn('snowflake', t('freeze'), freezeItems);
+    B.cf = dropBtn('blend', t('cond_format'), cfItems);
+    B.dv = dropBtn('list-checks', t('dv_menu'), dvItems);
     B.clear = iconBtn('remove-formatting', t('clear_formats'), () => clearSel('formats'));
-    const gap = () => h('i.sep');
-    B.cf.button.setAttribute('icon', 'blend');
-    put(fmt, B.paint, gap(), B.font, B.size, gap(), B.bold, B.italic, B.underline, B.strike, B.color, B.fill, gap(), B.borders, B.merge, B.ha, B.wrap, gap(), B.cur, B.pct, B.dec0, B.dec1, B.nf, gap(), B.sum, B.chart, B.filter, B.sort, B.freeze, B.cf, B.dv, gap(), B.clear);
+    // actions that are not in the bar at first, to add when customising it
+    const one = (k) => tn(k, 1);
+    B.insRow = iconBtn('between-horizontal-start', one('ins_rows_above'), () => insert('r', false));
+    B.insCol = iconBtn('between-vertical-start', one('ins_cols_left'), () => insert('c', false));
+    B.delRow = iconBtn('table-rows-split', one('del_rows'), () => remove('r'));
+    B.delCol = iconBtn('table-columns-split', one('del_cols'), () => remove('c'));
+    B.fmtCells = iconBtn('sliders-horizontal', t('format_cells'), () => formatDialog(), { kbd: 'Mod+1' });
+    B.dropdown = iconBtn('list-collapse', t('dv_dropdown'), () => dvDialog('list'));
+    B.checkbox = iconBtn('square-check', t('dv_check'), () => dvDialog('check'));
+    B.guide = iconBtn('square-function', t('g_title'), () => guide());
+    B.comment = W.canComment && can(data.doc.role, 'commenter') ? iconBtn('message-square', t('c_add'), () => startComment(), { kbd: 'Mod+Alt+M' }) : null;
+    B.find = iconBtn('search', t('find'), () => setTab('find', true), { kbd: 'Mod+F' });
+    B.print = lim.noDownload ? null : iconBtn('printer', t('print'), () => printSheet(), { kbd: 'Mod+P' });
+    B.pages = iconBtn('file-scan', t('page_guides'), () => toggleGuides());
+    B.sortAZ = iconBtn('arrow-down-a-z', t('sort_az'), () => sortSel(false));
+    B.sortZA = iconBtn('arrow-down-z-a', t('sort_za'), () => sortSel(true));
+    B.fitCols = iconBtn('wand-sparkles', t('fit_cols'), () => { const g = cur(); autofit('c', range(g.c1, Math.min(g.c2, Math.max(ext.c, g.c1)))); });
+    layoutToolbar();
     keepCaret(fmt);
   }
+  /** What the bar can hold: its id, icon and name (for the window that customises it), in the order of the catalogue. */
+  const TB_ITEMS = () => [['paint', 'paint-roller', t('painter')], ['font', 'type', t('font')], ['size', 'a-large-small', t('size')], ['bold', 'bold', t('bold')], ['italic', 'italic', t('italic')], ['underline', 'underline', t('underline')], ['strike', 'strikethrough', t('strike')],
+    ['color', 'baseline', t('color')], ['fill', 'paint-bucket', t('fill')], ['borders', 'grid-3x3', t('borders')], ['merge', 'merge', t('merge')], ['ha', 'text-align-start', t('align')], ['wrap', 'wrap-text', t('wrap')],
+    ['cur', 'euro', t('nf_currency')], ['pct', 'percent', t('nf_percent0')], ['dec0', 'decimals-arrow-left', t('dec_less')], ['dec1', 'decimals-arrow-right', t('dec_more')], ['nf', 'hash', t('num_format')],
+    ['sum', 'sigma', t('functions')], ['chart', 'chart-column', t('insert_chart')], ['filter', 'funnel', t('filter')], ['sort', 'arrow-down-a-z', t('sort')], ['freeze', 'snowflake', t('freeze')], ['cf', 'blend', t('cond_format')], ['dv', 'list-checks', t('dv_menu')], ['clear', 'remove-formatting', t('clear_formats')],
+    ['insRow', 'between-horizontal-start', tn('ins_rows_above', 1)], ['insCol', 'between-vertical-start', tn('ins_cols_left', 1)], ['delRow', 'table-rows-split', tn('del_rows', 1)], ['delCol', 'table-columns-split', tn('del_cols', 1)], ['fmtCells', 'sliders-horizontal', t('format_cells')],
+    ['dropdown', 'list-collapse', t('dv_dropdown')], ['checkbox', 'square-check', t('dv_check')], ['guide', 'square-function', t('g_title')], ['comment', 'message-square', t('c_add')], ['find', 'search', t('find')], ['print', 'printer', t('print')], ['pages', 'file-scan', t('page_guides')],
+    ['sortAZ', 'arrow-down-a-z', t('sort_az')], ['sortZA', 'arrow-down-z-a', t('sort_za')], ['fitCols', 'wand-sparkles', t('fit_cols')]].filter(([k]) => B[k]);
+  const TB_DEFAULT = ['paint', '|', 'font', 'size', '|', 'bold', 'italic', 'underline', 'strike', 'color', 'fill', '|', 'borders', 'merge', 'ha', 'wrap', '|', 'cur', 'pct', 'dec0', 'dec1', 'nf', '|', 'sum', 'chart', 'filter', 'sort', 'freeze', 'cf', 'dv', '|', 'clear'];
+  /** The toolbar chosen ('|' a separator): kept with the account (prefs().bars.tools), or the usual one. */
+  const tbChosen = () => barPick('tools', TB_DEFAULT, TB_ITEMS(), prefs().tools);
+  /** The toolbar laid out in the order of the list (separators and spaces too). */
+  function layoutToolbar() {
+    put(fmt, (BARS ? BARS.layout(tbChosen()) : tbChosen()).map((k) => barEl(k, B)));
+    refreshTools();
+  }
+
+  /** Customising the bars (⋮ → Customise the bars): the window shared by the apps of SavOffice, a tab for each bar. */
+  function toolbarDialog() {
+    if (!window.SavOffice?.bars) return;
+    const bars = [{ id: 'title', items: TITLE_ITEMS(), def: TITLE_DEF, before: [[null, W.title || data.doc.title]], after: [['ellipsis-vertical', t('more')], ['layout-grid', 'SavOffice'], ['user', t('account')]] }, editable ? { id: 'tools', items: TB_ITEMS(), def: TB_DEFAULT.filter((k) => k === '|' || B[k]) } : null, { id: 'status', items: STATUS_ITEMS(), def: STATUS_DEF }].filter(Boolean);
+    const value = { title: barPick('title', TITLE_DEF, TITLE_ITEMS()), tools: editable ? tbChosen() : [], status: barPick('status', STATUS_DEF, STATUS_ITEMS()) };
+    window.SavOffice.bars.dialog({ bars, value, save: async (v) => { await setPrefs({ bars: { ...(prefs().bars || {}), ...v } }); layoutTitle(); if (editable) layoutToolbar(); layoutStatus(); } });
+  }
+
+
   // the format painter: the next selection takes the look
   grid.o.on.selected = () => { if (!W.brush) return; const s = W.brush.s; W.brush = null; B.paint.on(false); styleSel(() => Object.fromEntries(['b', 'i', 'u', 'k', 'w', 'c', 'bg', 'ff', 'fz', 'ha', 'va', 'nf', 'bt', 'br', 'bb', 'bl', 'ind', 'rot'].map((k) => [k, s[k] ?? null]))); };
   function refreshTools() {
@@ -1188,6 +1366,7 @@ export async function openSheet(root, pid, opt = {}) {
     const s = curStyle();
     for (const [k, x] of [['bold', 'b'], ['italic', 'i'], ['underline', 'u'], ['strike', 'k'], ['wrap', 'w']]) B[k].on(!!s[x]);
     B.filter.on(!!sh.filter);
+    B.pages?.on(pagePrefs().guides);
     const ff = s.ff || book.settings.font, fz = String(s.fz || book.settings.fontSize || 10);
     if (B.font.value !== ff) B.font.value = ff;
     if (!SIZES.includes(+fz) && !B.size.querySelector(`[value="${fz}"]`)) B.size.append(h('option', { value: fz }, fz));
@@ -1211,11 +1390,18 @@ export async function openSheet(root, pid, opt = {}) {
     grid.sel = W.sels?.[id] || { ranges: [{ r1: 1, c1: 1, r2: 1, c2: 1 }], r: 1, c: 1 };
     grid.wrap.scrollTo(0, 0);
     grid.refresh();
+    grid.show(grid.sel.r, grid.sel.c); // back to the cell this sheet was left on
     drawCharts();
     drawTabs();
     drawPeople();
     if (!quiet) selected();
   }
+  // the cell in use of each sheet is kept in this browser: the workbook opens again where it was left
+  const CELL_KEY = 'savspreadsheets-cell-' + pid;
+  let cellT = 0;
+  const keepCell = () => { clearTimeout(cellT); cellT = setTimeout(() => { const o = {}; for (const [id, s] of Object.entries(W.sels || {})) if (book.sheets.some((x) => x.id === id)) o[id] = [s.r, s.c]; try { localStorage.setItem(CELL_KEY, JSON.stringify(o)); } catch { /* full: nothing kept */ } }, 400); };
+  try { for (const [id, p] of Object.entries(JSON.parse(localStorage.getItem(CELL_KEY) || '{}'))) if (Array.isArray(p) && p[0] >= 1 && p[1] >= 1 && p[0] <= MAX_ROWS && p[1] <= MAX_COLS) (W.sels ||= {})[id] = { ranges: [{ r1: p[0], c1: p[1], r2: p[0], c2: p[1] }], r: p[0], c: p[1] }; } catch { /* nothing kept */ }
+  W.keepCell = keepCell;
   grid.o.on.select = ((orig) => (s, how) => { (W.sels ||= {})[sh.id] = s; orig(s, how); })(grid.o.on.select);
   /** The icon of a tab: its colour and, when the sheet has rules (or is only to read), a lock. */
   const tabIcon = (s) => {
@@ -1238,15 +1424,13 @@ export async function openSheet(root, pid, opt = {}) {
   tabsEl.addEventListener('contextmenu', (e) => { const s = tabAt(e); if (!s) return; e.preventDefault(); sheetMenu(s, e.clientX, e.clientY - 10); });
   tabsEl.addEventListener('dblclick', (e) => { const s = tabAt(e); if (s && sheetOk(s)) renameSheet(s); });
   // a long press opens the menu on phones
-  let tabPress = 0;
-  tabsEl.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse') return; const s = tabAt(e); if (!s) return; const x = e.clientX, y = e.clientY; tabPress = setTimeout(() => sheetMenu(s, x, y - 140), 550); });
-  for (const ev of ['pointerup', 'pointercancel', 'pointermove']) tabsEl.addEventListener(ev, () => clearTimeout(tabPress));
+  // a long press on a tab (phones, tablets) opens the same menu: SavOffice.context hears it as a right click
   function sheetMenu(s, x, y) {
     if (!editable) return;
     const i = book.sheets.indexOf(s), vis = book.sheets.filter((q) => !q.hidden);
     const rules = isOwner && !isLocal ? [['users', t('sheet_perm'), () => permDialog(s)], ['lock', t('protect_cells'), () => protectDialog(s)], '-'] : [];
-    if (!sheetOk(s)) return menuAt(x, y, rules.length ? rules : [['lock', t('sheet_ro'), null, { disabled: true }]], { label: s.name });
-    menuAt(x, y, [...rules, ['pencil', t('rename'), () => renameSheet(s)], ['copy', t('duplicate'), () => dupSheet(s)], ['palette', t('tab_color'), () => colorDialog(s)], ['arrow-left', t('move_left'), () => change([{ t: 'movsheet', id: s.id, after: book.sheets[i - 2]?.id || '' }]), { disabled: i === 0 }], ['arrow-right', t('move_right'), () => change([{ t: 'movsheet', id: s.id, after: book.sheets[i + 1]?.id || s.id }]), { disabled: i === book.sheets.length - 1 }], ['eye-off', t('hide_sheet'), () => { change([{ t: 'sheet', id: s.id, p: { hidden: true } }]); if (s === sh) switchTo(vis.find((q) => q !== s)?.id); }, { disabled: vis.length < 2 }], ['grid-3x3', t(s.grid === false ? 'grid_show' : 'grid_hide'), () => change([{ t: 'sheet', id: s.id, p: { grid: s.grid === false } }])], '-', ['trash', t('delete'), () => delSheet(s), { danger: true, disabled: book.sheets.length < 2 }]], { label: s.name });
+    if (!sheetOk(s)) return ctxAt(x, y, rules.length ? rules : [['lock', t('sheet_ro'), null, { disabled: true }]], { label: s.name });
+    ctxAt(x, y, [...rules, ['pencil', t('rename'), () => renameSheet(s)], ['copy', t('duplicate'), () => dupSheet(s)], ['palette', t('tab_color'), () => colorDialog(s)], ['arrow-left', t('move_left'), () => change([{ t: 'movsheet', id: s.id, after: book.sheets[i - 2]?.id || '' }]), { disabled: i === 0 }], ['arrow-right', t('move_right'), () => change([{ t: 'movsheet', id: s.id, after: book.sheets[i + 1]?.id || s.id }]), { disabled: i === book.sheets.length - 1 }], ['eye-off', t('hide_sheet'), () => { change([{ t: 'sheet', id: s.id, p: { hidden: true } }]); if (s === sh) switchTo(vis.find((q) => q !== s)?.id); }, { disabled: vis.length < 2 }], ['grid-3x3', t(s.grid === false ? 'grid_show' : 'grid_hide'), () => change([{ t: 'sheet', id: s.id, p: { grid: s.grid === false } }])], '-', ['trash', t('delete'), () => delSheet(s), { danger: true, disabled: book.sheets.length < 2 }]], { label: s.name });
   }
   function addSheet() {
     const id = newId(), name = uniqueName(book, t('sheet_n', { n: book.sheets.length + 1 }));
@@ -1319,12 +1503,42 @@ export async function openSheet(root, pid, opt = {}) {
   // ------------------------------------------------------------------ dialogs (dialogs.js)
 
   const D = () => import('./dialogs.js');
-  const ctx = () => ({ W, sh, book, eng, L, lang, ui, grid, cur, change, styleSel, curStyle, shown, ext, presets: presets(lang, book.settings.currency), dvAt, sortSel, setSel, switchTo, startEdit, rangeOf: () => { let g = cur(); if (g.r1 === g.r2 && g.c1 === g.c2) g = region(sh, g.r1, g.c1); if (FULLC(g)) g = { ...g, r1: 1, r2: Math.max(1, ext.r) }; if (FULLR(g)) g = { ...g, c2: Math.max(1, ext.c) }; return g; } });
+  const ctx = () => ({ W, sh, book, eng, L, lang, ui, grid, cur, change, styleSel, curStyle, shown, ext, presets: presets(lang, book.settings.currency), dvAt, sortSel, setSel, switchTo, startEdit, selOf: () => { let g = cur(); if (FULLC(g)) g = { ...g, r1: 1, r2: Math.max(1, ext.r) }; if (FULLR(g)) g = { ...g, c2: Math.max(1, ext.c) }; return g; }, rangeOf: () => { let g = cur(); if (g.r1 === g.r2 && g.c1 === g.c2) g = tableAt(sh, g.r1, g.c1); if (FULLC(g)) g = { ...g, r1: 1, r2: Math.max(1, ext.r) }; if (FULLR(g)) g = { ...g, c2: Math.max(1, ext.c) }; return g; } });
   const formatDialog = (tab) => D().then((d) => d.formatDialog(ctx(), tab)).catch(fail);
-  const cfDialog = () => D().then((d) => d.cfDialog(ctx())).catch(fail);
-  const dvDialog = () => D().then((d) => d.dvDialog(ctx())).catch(fail);
+  /** Frozen rows and frozen columns are two choices: each part has its own tick. */
+  function freezeItems() {
+    const fr = sh.freeze || { r: 0, c: 0 }, set = (p) => () => change([{ t: 'sheet', id: sh.id, p: { freeze: { ...fr, ...p } } }]);
+    const part = (k, icons) => {
+      const n = fr[k], list = [0, 1, 2, 3];
+      if (!list.includes(n)) list.push(n); // what is frozen now shows even when it is not among the usual ones
+      return list.sort((a, b) => a - b).map((x) => [x ? icons[Math.min(x, icons.length) - 1] : 'x', x ? tn(k === 'r' ? 'freeze_rows' : 'freeze_cols', x) : t(k === 'r' ? 'freeze_no_rows' : 'freeze_no_cols'), set({ [k]: x }), { check: n === x }]);
+    };
+    return [{ head: t('rows') }, ...part('r', ['rows-2', 'rows-3', 'rows-4']), '-', { head: t('columns') }, ...part('c', ['columns-2', 'columns-3', 'columns-4']), '-',
+      ['grid-2x2', t('freeze_here', { k: key(grid.sel.r, grid.sel.c) }), set({ r: Math.max(0, grid.sel.r - 1), c: Math.max(0, grid.sel.c - 1) })],
+      ['settings-2', t('freeze_custom'), () => freezeDialog()]];
+  }
+  function freezeDialog() {
+    const fr = sh.freeze || { r: 0, c: 0 };
+    const r = h('sav-number-input', { label: t('rows'), value: fr.r || 0, min: 0, max: 100, step: 1, size: 'sm' }), c = h('sav-number-input', { label: t('columns'), value: fr.c || 0, min: 0, max: 50, step: 1, size: 'sm' });
+    dialog({ title: t('freeze'), width: '22rem', body: h('div.form', h('p.muted', t('freeze_custom_t')), h('div.grid2', r, c)), actions: [{ label: t('cancel') }, { label: t('apply'), primary: true, run: () => change([{ t: 'sheet', id: sh.id, p: { freeze: { r: Math.max(0, Math.min(100, Math.trunc(+r.value || 0))), c: Math.max(0, Math.min(50, Math.trunc(+c.value || 0))) } } }]) }] });
+  }
+  const cfDialog = (quick) => D().then((d) => d.cfDialog(ctx(), quick)).catch(fail);
+  const dvDialog = (k0) => D().then((d) => d.dvDialog(ctx(), k0)).catch(fail);
+  /** The common rules one click away; the ones without a value are added at once, the others open their rule. */
+  const cfItems = () => [{ head: t('cf_quick') }, ...[['gt', 'chevron-right'], ['lt', 'chevron-left'], ['between', 'between-horizontal-start'], ['text', 'text-search'], ['dup', 'copy'], ['scale', 'palette'], ['bars', 'chart-bar']].map(([k, ic]) => [ic, t('cf_' + (k === 'text' ? 'text_k' : k)) + (['dup', 'scale', 'bars'].includes(k) ? '' : '…'), () => cfDialog(k)]), '-', ['settings-2', t('cf_manage'), () => cfDialog()]];
+  const dvItems = () => [['list-collapse', t('dv_dropdown') + '…', () => dvDialog('list')], ['square-check', t('dv_check'), () => dvDialog('check')], ['square-minus', t('dv_check3'), () => dvDialog('check3')], '-', ['list-checks', t('validation') + '…', () => dvDialog()]];
   const chartDialog = (ch) => D().then((d) => d.chartDialog(ctx(), ch, (id) => { chartSel = id; drawCharts(); })).catch(fail);
   const sortDialog = () => D().then((d) => d.sortDialog(ctx())).catch(fail);
+  /** What the panel "Formula" makes: into the formula being written (where the caret is), or into the cell in use. */
+  function insertFormula(text, full) {
+    if (editing && (ceIn.value[0] === '=')) { const x = fxFocus ? fxIn : ceIn, at = x.selectionStart; x.setRangeText(text, at, x.selectionEnd, 'end'); sync(x); x.focus(); return; }
+    if (editing) cancelEdit(true);
+    if (!cellOk(sh, grid.sel.r, grid.sel.c)) { toast(t(sheetOk(sh) ? 'locked_cells' : 'sheet_ro'), 'warning'); return; }
+    startEdit('edit', full);
+    commit(0, 0);
+    focusGrid();
+  }
+  const guide = () => (editable ? setTab('formula', true) : functionDialog());
   const functionDialog = () => D().then((d) => d.functionDialog(ctx(), (name) => { const n = name; if (editing) { const x = fxFocus ? fxIn : ceIn, at = x.selectionStart; x.setRangeText(n + '(', at, x.selectionEnd, 'end'); sync(x); x.focus(); } else startEdit('edit', '=' + n + '('); })).catch(fail);
   W.settingsDialog = () => D().then((d) => d.bookDialog(ctx())).catch(fail);
   const permDialog = (s) => D().then((d) => d.permDialog(ctx(), s)).catch(fail);
@@ -1333,7 +1547,7 @@ export async function openSheet(root, pid, opt = {}) {
 
   // ------------------------------------------------------------------ side panels: comments, notes, history, find
 
-  const TABS = [...(isLocal ? [] : [['comments', 'message-square'], ['notes', 'sticky-note']]), ['find', 'search'], ...(editable && !isLocal && data.doc.versions !== false ? [['history', 'history']] : [])];
+  const TABS = [...(editable ? [['formula', 'square-function']] : []), ...(isLocal ? [] : [['comments', 'message-square'], ['notes', 'sticky-note']]), ['find', 'search'], ...(editable && !isLocal && data.doc.versions !== false ? [['history', 'history']] : [])];
   function drawRail() { put(rail, TABS.map(([k, ic]) => h('sav-bottom-nav-item', { label: t('tab_' + k), icon: ic, value: k, badge: k === 'comments' ? W.comments.filter((c) => !c.parent && !c.resolved && !c.private).length || null : null, current: W.tab === k }))); }
   rail.addEventListener('sav-select', (e) => { e.stopPropagation(); setTab(e.detail.value); });
   function setTab(name, force) {
@@ -1350,6 +1564,7 @@ export async function openSheet(root, pid, opt = {}) {
     W.pbody = body;
     put(panel, h('div.phead', h('h2', t('tab_' + name)), iconBtn('x', t('close'), () => setTab(name))), body);
     if (name === 'find') drawFind();
+    else if (name === 'formula') import('./guide.js').then((g) => { if (W.pbody === body) g.guidePanel(ctx, body, { insert: insertFormula }); }).catch(fail);
     else if (name === 'history') drawHistory();
     else drawNotes(name);
     return undefined;
@@ -1473,7 +1688,8 @@ export async function openSheet(root, pid, opt = {}) {
       files.download(out, files.fileName(b.title + (['csv', 'tsv'].includes(kind) && book.sheets.length > 1 ? ' - ' + sh.name : ''), kind));
     } finally { n.remove(); }
   }
-  async function printSheet() { const { printBook } = await import('./print.js'); printBook(W.bundle(), sh, cur()); }
+  async function printSheet() { const { printBook } = await import('./print.js'); printBook(W.bundle(), sh, cur(), () => grid.refresh()); }
+  const toggleGuides = () => { setPagePrefs({ guides: !pagePrefs().guides }); grid.refresh(); refreshTools(); };
   W.print = printSheet;
   async function toAccount() { const id = await keep({ title: W.title, settings: book.settings, sheets: book.sheets }); await local.remove(pid); toast(t('saved_account'), 'success'); W.close(); location.hash = '#/d/' + id; }
   const reload = () => { W.close(); openSheet(root, pid, opt).then((w) => opt.onReload?.(w)).catch(fail); };
@@ -1488,18 +1704,18 @@ export async function openSheet(root, pid, opt = {}) {
     const E = editable && sheetOk(sh), one = (k) => tn(k, 1);
     commands([t('edit'), [E ? ['sliders-horizontal', t('format_cells'), () => formatDialog(), 'Mod+1'] : null, E ? ['arrow-up-to-line', one('ins_rows_above'), () => insert('r', false)] : null, E ? ['arrow-left-to-line', one('ins_cols_left'), () => insert('c', false)] : null,
       E ? ['arrow-down-a-z', t('sort'), () => sortDialog()] : null, E ? ['funnel', t(sh.filter ? 'filter_off' : 'filter_on'), () => toggleFilter(), 'Mod+Shift+L'] : null, E ? ['chart-column', t('insert_chart'), () => chartDialog()] : null,
-      E ? ['paint-bucket', t('cond_format'), () => cfDialog()] : null, E ? ['list-checks', t('validation'), () => dvDialog()] : null, ['square-function', t('functions'), () => functionDialog()],
+      E ? ['paint-bucket', t('cond_format'), () => cfDialog()] : null, E ? ['list-collapse', t('dv_dropdown'), () => dvDialog('list')] : null, E ? ['square-check', t('dv_check'), () => dvDialog('check')] : null, E ? ['list-checks', t('validation'), () => dvDialog()] : null, ['square-function', t('g_title'), () => guide()], ['square-function', t('functions'), () => functionDialog()],
       W.canComment && can(data.doc.role, 'commenter') ? ['message-square', t('c_add'), () => startComment(), 'Mod+Alt+M'] : null, W.canComment ? ['sticky-note', t('n_add'), () => startComment(true)] : null,
-      isOwner && !isLocal ? ['lock', t('protect_cells'), () => protectDialog(sh)] : null, editable ? ['plus', t('add_sheet'), () => addSheet(), 'Shift+F11'] : null]],
+      isOwner && !isLocal ? ['lock', t('protect_cells'), () => protectDialog(sh)] : null, editable ? ['plus', t('add_sheet'), () => addSheet(), 'Shift+F11'] : null, window.SavOffice?.bars ? ['settings-2', window.SavOffice.bars.menuLabel(), () => toolbarDialog()] : null]],
     [t('more'), [shareB ? ['user-plus', t('share'), () => shareB.click()] : null, lim.noDownload ? null : ['download', t('download'), () => downloadDialog()], ...moreItems().filter(Array.isArray).filter((x) => x[0] !== 'download' && x[2]).map(([ic, l, fn, o]) => [ic, l, fn, o?.kbd])]],
     [t('sheets'), book.sheets.filter((s) => !s.hidden && s !== sh).map((s) => ['sheet', s.name, () => switchTo(s.id)])]);
   }
   function moreItems() {
     return [...(mobile() && !S.user ? [['log-in', t('sign_in'), () => { location.hash = '#/signin'; }], '-'] : []),
       ['search', t('find'), () => setTab('find', true), { kbd: 'Mod+F' }], editable && !isLocal && data.doc.versions !== false ? ['history', t('history'), () => setTab('history', true)] : null, isOwner && !isLocal ? ['users', t('sheet_perm'), () => permDialog(sh)] : null, editable ? ['settings-2', t('book_settings'), () => W.settingsDialog()] : null, '-',
-      mobile() && !lim.noDownload ? ['download', t('download'), () => downloadDialog()] : null, lim.noDownload ? null : ['printer', t('print'), () => printSheet(), { kbd: 'Mod+P' }], editable ? ['file-up', t('import_into'), () => import('./actions.js').then((a) => a.importInto(W))] : null,
+      mobile() && !lim.noDownload ? ['download', t('download'), () => downloadDialog()] : null, lim.noDownload ? null : ['printer', t('print'), () => printSheet(), { kbd: 'Mod+P' }], ['file-scan', t('page_guides_m', { p: t('paper_' + pagePrefs().paper.toLowerCase()) }), () => toggleGuides(), { check: pagePrefs().guides }], editable ? ['file-up', t('import_into'), () => import('./actions.js').then((a) => a.importInto(W))] : null,
       !isLocal && S.user && !lim.noCopy ? ['copy-plus', t('duplicate'), () => duplicate()] : null, ['link', t('copy_link'), () => copyText(`${location.origin}${location.pathname}#/d/${pid}`, t('link_copied'))], '-',
-      ['keyboard', t('shortcuts'), () => shortcuts()], !owner && !isLocal ? ['flag', t('report'), () => reportDialog(pid)] : null];
+      !mobile() && window.SavOffice?.bars ? ['settings-2', window.SavOffice.bars.menuLabel(), () => toolbarDialog()] : null, ['keyboard', t('shortcuts'), () => shortcuts()], !owner && !isLocal ? ['flag', t('report'), () => reportDialog(pid)] : null];
   }
   zoomEl.addEventListener('change', (e) => { W.zoom = Math.max(0.5, Math.min(2, (+(e.detail?.value ?? zoomEl.value) || 100) / 100)); localStorage.setItem('savspreadsheets-zoom', W.zoom); disp = new Map(); grid.refresh(); drawCharts(); place(); });
 
@@ -1512,6 +1728,8 @@ export async function openSheet(root, pid, opt = {}) {
   // an address with a cell (#/d/<id>/<sheet>!B7) opens there
   const want = (location.hash.split('/')[3] || '').split('!');
   if (want[1] && book.sheets.some((s) => s.id === want[0])) { switchTo(want[0], true); const p = pos(want[1]); if (p) setSel(p[0], p[1]); }
+  else if (W.sels?.[sh.id]) { const p = W.sels[sh.id]; setSel(p.r, p.c); } // where it was left last time
+  W.ready = true;
   selected();
   if (!isLocal && !data.doc.review && !data.doc.deleted) {
     W.sync = new Sync({ pid, rev: data.doc.rev, role: data.doc.role, stamp: data.stamp, apply: (ops) => remote(ops), on: {

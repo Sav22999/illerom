@@ -2,7 +2,7 @@
 /**
  * SavNotes — notebooks and what they may contain.
  *
- * A notebook is {title, settings, sheets}. settings: {cover, size, orient, font, tsize, paper {bg, pat, gap, pc}, view}.
+ * A notebook is {title, settings, sheets}. settings: {cover, size, orient, font, tsize, flow (v | h: the sheets one under the other, or side by side like a book), scroll (free | snap: it stops on whole sheets), paper {bg, pat, gap, pc}, view}.
  * sheets is the list of its sheets, in order. Every sheet has an id (made by the browser), its paper (bg, pat, gap, pc),
  * doc (the typed text: a small set of HTML, see clean_doc) and items, what is drawn by hand, in order (the last on top):
  *   stroke  a line by hand: tool (pen | pencil | marker), c colour, s size, p = [x, y, pressure, x, y, pressure, …]
@@ -94,6 +94,8 @@ function clean_settings($s): array
         'orient' => nb_pick($s['orient'] ?? '', ['p', 'l'], 'p'),
         'font' => nb_pick($s['font'] ?? '', NB_FONTS, 'sans'),
         'tsize' => nb_pick($s['tsize'] ?? '', ['s', 'm', 'l'], 'm'),
+        'flow' => nb_pick($s['flow'] ?? '', ['v', 'h'], 'v'),
+        'scroll' => nb_pick($s['scroll'] ?? '', ['free', 'snap'], 'free'),
         'paper' => clean_paper($s['paper'] ?? []),
     ];
     if (isset($s['view']) && is_array($s['view'])) $out['view'] = ['z' => nb_num($s['view']['z'] ?? 1, .1, 6, 1), 'at' => (int)nb_num($s['view']['at'] ?? 0, 0, 1000, 0)];

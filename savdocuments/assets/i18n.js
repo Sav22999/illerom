@@ -86,6 +86,8 @@ const T = {
     restore: ['Restore', 'Ripristina'],
     delete_forever: ['Delete forever', 'Elimina per sempre'],
     toolbar_edit: ['Customise the bar', 'Personalizza la barra'],
+    account: ['Account', 'Account'], bar_insbar: ['The Insert bar', 'La barra Inserisci'],
+    bar_people: ['People in the document', 'Persone nel documento'], bar_pages: ['Pages', 'Pagine'], bar_words: ['Words', 'Parole'], bar_zoom: ['Zoom', 'Zoom'],
     toolbar_edit_t: ['Choose the buttons and drag them in the order you like. Each one adds something to the document.', 'Scegli i pulsanti e trascinali nell’ordine che vuoi. Ognuno aggiunge qualcosa al documento.'],
     empty_trash: ['Empty now', 'Svuota ora'],
     more_fonts: ['More typefaces…', 'Altri caratteri…'], fonts_title: ['Typefaces', 'Caratteri'], fonts_inc: ['Included', 'Inclusi'], fonts_doc: ['In this document', 'In questo documento'], fonts_file: ['From file', 'Da file'], fonts_mine: ['Your typefaces', 'I tuoi caratteri'],

@@ -241,3 +241,5 @@ sav-empty-state .prow { margin-top: .6rem; }
 }
 @media (max-width: 380px) { .rtop .rbrand { display: none; } }
 @media (prefers-reduced-motion: reduce) { .rprog i, .arow, .irow, .hlc { transition: none; } .rtext mark.hl.flash { animation: none; } }
+/* a separator or a fixed space chosen in the bar of the reader (⋮ → Customise the bars) */
+.rtop > .rsep { width: 1px; align-self: stretch; margin: .4rem .2rem; background: var(--sav-color-border); flex: none; } .rtop > i.bgap { width: .8rem; flex: none; }

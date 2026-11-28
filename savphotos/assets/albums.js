@@ -2,7 +2,7 @@
  * Albums: the list, a new one, adding photos to one (from the photos chosen or the viewer), the link to share one, and the
  * page of an album shared with a link (anyone can see it and download its photos, with or without an account).
  */
-import { ask, btn, copyText, errText, dialog, drop, empty, fail, h, icon, iconBtn, menuAt, primary, put, toast } from './ui.js';
+import { ask, btn, copyText, ctxAt, dialog, drop, empty, errText, fail, h, icon, iconBtn, menuAt, primary, put, toast } from './ui.js';
 import { bandSelect } from './band.js';
 import { getLang, t } from './i18n.js';
 import { API, LIVE_WAIT, S, api, liveBatch, thumbFor } from './store.js';
@@ -184,7 +184,7 @@ export async function albumList(root) {
         go('#/album/' + a.id);
       },
       onkeydown: (e) => { if (e.key === 'Enter' && e.target === e.currentTarget) go('#/album/' + a.id); },
-      oncontextmenu: (e) => { e.preventDefault(); menuAt(e.clientX, e.clientY, albumMenu(a, changed(a)), { label: a.name }); } },
+      oncontextmenu: (e) => { e.preventDefault(); ctxAt(e.clientX, e.clientY, albumMenu(a, changed(a)), { label: a.name }); } },
     // the cover: large in front, two more photos of the album peeking out from behind it (they open up on hover)
     pick, h('div.dthumb.albstage', { 'data-n': Math.min(3, (a.covers || []).length || (a.cover ? 1 : 0)) }, prints(a),
       a.count ? h('span.albchip', icon('images'), String(a.count - (a.videos || 0)), a.videos ? [icon('film'), String(a.videos)] : null) : null,

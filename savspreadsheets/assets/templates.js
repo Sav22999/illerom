@@ -161,6 +161,48 @@ export const TEMPLATES = {
       [[L('Year', 'Anno'), H], [L('Balance', 'Saldo'), { ...H, ha: 'r' }]]];
     for (let y = 0; y <= 5; y++) rows.push([y, [`=FV($B$6/12,A${12 + y}*12,-$B$5,-$B$4)`, M]]);
     return { sheets: [sheet(L('Savings', 'Risparmi'), rows, { w: [190, 140], cf: [{ r: 'B12:B17', k: 'formula', a: 'B12>=$B$3', b: '', s: { bg: '#d3f3d8', b: 1 } }], charts: [{ k: 'area', r: 'A11:B17', title: L('Balance over time', 'Saldo nel tempo'), x: 400, y: 40, w: 460, h: 280 }] })] };
+  } },  subscriptions: { cat: 'money', build: (L, lang, cur) => {
+    const M = { nf: currencyFormat(cur, lang) }, D = { nf: dateFormat(lang) }, mo = L('Month', 'Mese'), yr = L('Year', 'Anno');
+    const subs = [[L('Music', 'Musica'), 10.99, mo, toSerial(2026, 12, 3)], [L('Video', 'Video'), 12.99, mo, toSerial(2026, 12, 15)], [L('Cloud storage', 'Spazio cloud'), 29.99, yr, toSerial(2027, 3, 1)], [L('News', 'Giornale'), 7.99, mo, toSerial(2026, 12, 8)], [L('Gym', 'Palestra'), 420, yr, toSerial(2027, 9, 20)], [L('Phone', 'Telefono'), 9.99, mo, toSerial(2026, 12, 21)]];
+    const rows = [[[L('Subscriptions', 'Abbonamenti'), TITLE]], [[L('What you pay every month, and when each one renews', 'Quanto paghi ogni mese, e quando si rinnova ciascuno'), SUB]],
+      [[L('Service', 'Servizio'), H], [L('Price', 'Prezzo'), { ...H, ha: 'r' }], [L('Every', 'Ogni'), H], [L('Per month', 'Al mese'), { ...H, ha: 'r' }], [L('Renews on', 'Si rinnova il'), H], [L('Days left', 'Giorni'), { ...H, ha: 'r' }]]];
+    subs.forEach((x, i) => { const r = 4 + i; rows.push([x[0], [x[1], M], x[2], [`=IF(C${r}="${yr}",B${r}/12,B${r})`, M], [x[3], D], `=E${r}-TODAY()`]); });
+    rows.push([], [[L('Per month', 'Al mese'), TOT], ['', TOT], ['', TOT], ['=SUM(D4:D9)', { ...TOT, ...M }]], [[L('Per year', "All'anno"), { b: 1 }], null, null, ['=D11*12', { ...M, b: 1 }]]);
+    return { sheets: [sheet(L('Subscriptions', 'Abbonamenti'), rows, { w: [170, 100, 90, 110, 120, 80], freeze: { r: 3, c: 0 }, dv: [{ r: 'C4:C40', k: 'list', list: [mo, yr], a: '', b: '', strict: true }],
+      cf: [{ r: 'F4:F40', k: 'lt', a: '8', b: '', s: { bg: '#fff3a3', b: 1 } }] })] };
+  } },
+  habits: { cat: 'plan', build: (L) => {
+    const habits = [L('Read 20 minutes', 'Leggere 20 minuti'), L('Walk 8000 steps', 'Camminare 8000 passi'), L('Drink 2 litres of water', 'Bere 2 litri d’acqua'), L('No phone after 22:00', 'Niente telefono dopo le 22'), L('Stretch', 'Stretching')];
+    const days = 14, rows = [[[L('Habit tracker', 'Monitoraggio abitudini'), TITLE]], [[L('Tick every day you keep it: the last column says how it goes', 'Spunta ogni giorno in cui la mantieni: l’ultima colonna dice come va'), SUB]],
+      [[L('Habit', 'Abitudine'), H], ...Array.from({ length: days }, (_, i) => [i + 1, { ...H, ha: 'c' }]), [L('Done', 'Fatto'), { ...H, ha: 'r' }]]];
+    const last = colName(1 + days), pc = colName(2 + days);
+    habits.forEach((x, i) => { const r = 4 + i; rows.push([x, ...Array.from({ length: days }, (_, d) => d < 7 + 2 * i && (d * (i + 1)) % 5 !== 4), [`=COUNTIF(B${r}:${last}${r},TRUE)/${days}`, { nf: '0%', b: 1 }]]); });
+    return { sheets: [sheet(L('Habits', 'Abitudini'), rows, { w: [200, ...Array(days).fill(40), 80], freeze: { r: 3, c: 1 }, dv: [{ r: `B4:${last}20`, k: 'check', list: [], a: '', b: '', strict: false }],
+      cf: [{ r: `${pc}4:${pc}20`, k: 'scale', a: '', b: '', s: {}, c1: '#ffc9c9', c3: '#fff3a3', c2: '#c8e6a0' }] })] };
+  } },
+  meals: { cat: 'personal', build: (L) => {
+    const days = [L('Monday', 'Lunedì'), L('Tuesday', 'Martedì'), L('Wednesday', 'Mercoledì'), L('Thursday', 'Giovedì'), L('Friday', 'Venerdì'), L('Saturday', 'Sabato'), L('Sunday', 'Domenica')];
+    const food = [[L('Yogurt and fruit', 'Yogurt e frutta'), L('Pasta with tomato', 'Pasta al pomodoro'), L('Grilled fish, salad', 'Pesce alla griglia, insalata')], [L('Toast and eggs', 'Toast e uova'), L('Rice salad', 'Insalata di riso'), L('Vegetable soup', 'Minestrone')],
+      [L('Porridge', 'Porridge'), L('Chicken wrap', 'Piadina con pollo'), L('Pizza', 'Pizza')], [L('Yogurt and fruit', 'Yogurt e frutta'), L('Lentil soup', 'Zuppa di lenticchie'), L('Omelette, vegetables', 'Frittata, verdure')],
+      [L('Toast and jam', 'Fette biscottate e marmellata'), L('Poke bowl', 'Poke'), L('Burgers', 'Hamburger')], [L('Pancakes', 'Pancake'), L('Out with friends', 'Fuori con gli amici'), L('Risotto', 'Risotto')], [L('Croissant', 'Cornetto'), L('Family lunch', 'Pranzo in famiglia'), L('Light: soup', 'Leggero: zuppa')]];
+    const rows = [[[L('Meal plan', 'Menu della settimana'), TITLE]], [], [['', H], [L('Breakfast', 'Colazione'), H], [L('Lunch', 'Pranzo'), H], [L('Dinner', 'Cena'), H], [L('To buy', 'Da comprare'), H]]];
+    days.forEach((d, i) => rows.push([[d, { b: 1, bg: GL }], [food[i][0], { w: 1 }], [food[i][1], { w: 1 }], [food[i][2], { w: 1 }], ['', { w: 1, c: '#66725c' }]]));
+    return { sheets: [sheet(L('Week', 'Settimana'), rows, { w: [110, 190, 190, 190, 200], freeze: { r: 3, c: 1 }, h: Object.fromEntries(days.map((_, i) => [4 + i, 40])) })] };
+  } },
+  pipeline: { cat: 'work', build: (L, lang, cur) => {
+    const M = { nf: currencyFormat(cur, lang, 0) }, D = { nf: dateFormat(lang) };
+    const st = [L('New', 'Nuovo'), L('Contacted', 'Contattato'), L('Proposal', 'Proposta'), L('Won', 'Vinto'), L('Lost', 'Perso')];
+    const leads = [['Rossi Srl', 'Anna Rossi', 12000, st[2], toSerial(2026, 12, 4)], ['Blu Design', 'Marco Blu', 4500, st[1], toSerial(2026, 12, 2)], ['Verde Bio', 'Sara Verdi', 8000, st[3], null], ['Nord Logistica', 'Luca Neri', 20000, st[0], toSerial(2026, 12, 9)], ['Studio Sole', 'Elena Sole', 3000, st[4], null], ['Alfa Tech', 'Paolo Gallo', 15000, st[2], toSerial(2026, 12, 11)]];
+    const rows = [[[L('Sales pipeline', 'Pipeline di vendita'), TITLE]], [],
+      [[L('Company', 'Azienda'), H], [L('Contact', 'Referente'), H], [L('Value', 'Valore'), { ...H, ha: 'r' }], [L('Stage', 'Fase'), H], [L('Next step', 'Prossimo passo'), H], [L('Notes', 'Note'), H]]];
+    leads.forEach((x) => rows.push([x[0], x[1], [x[2], M], x[3], x[4] ? [x[4], D] : '', '']));
+    const sum = [[], [[L('By stage', 'Per fase'), H], [L('Value', 'Valore'), { ...H, ha: 'r' }], [L('Leads', 'Contatti'), { ...H, ha: 'r' }]]];
+    st.forEach((x, i) => sum.push([x, [`=SUMIF($D$4:$D$100,H${3 + i},$C$4:$C$100)`, M], `=COUNTIF($D$4:$D$100,H${3 + i})`]));
+    const s0 = sheet(L('Pipeline', 'Pipeline'), rows, { w: [160, 140, 110, 120, 120, 200, 30, 140, 110, 80], freeze: { r: 3, c: 1 }, dv: [{ r: 'D4:D100', k: 'list', list: st, a: '', b: '', strict: true }],
+      cf: [{ r: 'A4:F100', k: 'formula', a: `$D4="${st[3]}"`, b: '', s: { bg: '#d3f3d8' } }, { r: 'A4:F100', k: 'formula', a: `$D4="${st[4]}"`, b: '', s: { c: '#9aa29d' } }, { r: 'E4:E100', k: 'formula', a: 'AND(E4<>"",E4<TODAY())', b: '', s: { c: '#b3261e', b: 1 } }],
+      charts: [{ k: 'column', r: 'H2:I7', title: L('Value by stage', 'Valore per fase'), x: 720, y: 280, w: 420, h: 280 }] });
+    sum.forEach((row, i) => row.forEach((x, j) => { if (!x || (Array.isArray(x) && !x.length)) return; const [v, stl] = Array.isArray(x) ? x : [x, null], k = colName(8 + j) + (1 + i), c = {}; if (typeof v === 'string' && v[0] === '=') c.f = v; else c.v = v; if (stl) c.s = stl; s0.cells[k] = c; }));
+    return { sheets: [s0] };
   } },
 };
 

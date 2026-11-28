@@ -483,6 +483,7 @@ function photo_page(int $uid, array $o): array
     $args[] = $uid;
     if (!empty($o['fav'])) $sql .= ' AND n.starred = 1';
     if (!empty($o['video'])) $sql .= " AND n.mime LIKE 'video/%'";
+    if (($o['kind'] ?? '') === 'photo') $sql .= " AND n.mime LIKE 'image/%'";
     if (($o['q'] ?? '') !== '') {
         $sql .= ' AND n.name LIKE ?';
         $args[] = '%' . addcslashes((string)$o['q'], '%_\\') . '%';
@@ -491,23 +492,35 @@ function photo_page(int $uid, array $o): array
         if (!$o['folders']) return ['items' => [], 'next' => null];
         $sql .= ' AND n.parent_id IN (' . implode(',', array_map('intval', $o['folders'])) . ')';
     }
-    if (!empty($o['cursor']) && preg_match('/^(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)\|(\d+)$/', (string)$o['cursor'], $c)) {
+    $sort = $o['sort'] ?? 'new';
+    [$col, $dir] = ['new' => ['m.taken_at', 'DESC'], 'old' => ['m.taken_at', 'ASC'], 'name' => ['n.name', 'ASC'], 'size' => ['n.size', 'DESC']][$sort];
+    $cmp = $dir === 'DESC' ? '<' : '>';
+    if ($sort !== 'new' && !empty($o['cursor']) && preg_match('/^s:([A-Za-z0-9_-]+)$/', (string)$o['cursor'], $c)) {
+        $k = json_decode((string)base64_decode(strtr($c[1], '-_', '+/')), true);
+        if (is_array($k) && count($k) === 2 && is_scalar($k[0]) && is_int($k[1])) {
+            $sql .= " AND ($col $cmp ? OR ($col = ? AND m.node_id $cmp ?))";
+            array_push($args, $k[0], $k[0], $k[1]);
+        }
+    } elseif ($sort === 'new' && !empty($o['cursor']) && preg_match('/^(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)\|(\d+)$/', (string)$o['cursor'], $c)) {
         $sql .= ' AND (m.taken_at < ? OR (m.taken_at = ? AND m.node_id < ?))';
         array_push($args, $c[1], $c[1], (int)$c[2]);
-    } elseif (!empty($o['before']) && preg_match('/^(\d{4})-(\d\d)$/', (string)$o['before'], $c)) {
+    } elseif ($sort === 'new' && !empty($o['before']) && preg_match('/^(\d{4})-(\d\d)$/', (string)$o['before'], $c)) {
         $y = (int)$c[1];
         $mo = (int)$c[2];
         $sql .= ' AND m.taken_at < ?';
         $args[] = $mo >= 12 ? sprintf('%04d-01-01 00:00:00', $y + 1) : sprintf('%04d-%02d-01 00:00:00', $y, $mo + 1);
     }
     $limit = max(1, min(600, (int)($o['limit'] ?? PHOTO_PAGE)));
-    $st = db()->prepare("$sql ORDER BY m.taken_at DESC, m.node_id DESC LIMIT " . ($limit + 1));
+    $st = db()->prepare("$sql ORDER BY $col $dir, m.node_id $dir LIMIT " . ($limit + 1));
     $st->execute($args);
     $rows = $st->fetchAll();
     $more = count($rows) > $limit;
     if ($more) array_pop($rows);
     $last = end($rows);
-    return ['items' => array_map('photo_out', $rows), 'next' => $more && $last ? $last['taken_at'] . '|' . $last['node_id'] : null];
+    $next = null;
+    if ($more && $last) $next = $sort === 'new' ? $last['taken_at'] . '|' . $last['node_id']
+        : 's:' . rtrim(strtr(base64_encode(json_encode([$sort === 'name' ? $last['name'] : ($sort === 'size' ? (int)$last['size'] : $last['taken_at']), (int)$last['node_id']])), '+/', '-_'), '=');
+    return ['items' => array_map('photo_out', $rows), 'next' => $next];
 }
 
 /** One photo as photo_out gives it (for the grid), or null. */
@@ -548,7 +561,10 @@ function photo_album_zip(array $a): void
 /** The filters of a request (the folder of SavPhotos when the person chose to see only that one). */
 function photo_filters(int $uid, array $q): array
 {
-    $o = ['fav' => !empty($q['fav']), 'video' => !empty($q['video']), 'q' => s($q, 'q', 120), 'cursor' => (string)($q['cursor'] ?? ''), 'before' => (string)($q['before'] ?? ''), 'limit' => (int)($q['limit'] ?? PHOTO_PAGE)];
+    $o = ['fav' => !empty($q['fav']), 'video' => !empty($q['video']), 'q' => s($q, 'q', 120), 'cursor' => (string)($q['cursor'] ?? ''), 'before' => (string)($q['before'] ?? ''), 'limit' => (int)($q['limit'] ?? PHOTO_PAGE),
+        // the order of the photos (newest first, oldest first, by name, the largest first) and which kind: photos only, videos only
+        'sort' => in_array($q['sort'] ?? '', ['old', 'name', 'size'], true) ? $q['sort'] : 'new', 'kind' => in_array($q['kind'] ?? '', ['photo', 'video'], true) ? $q['kind'] : 'all'];
+    if ($o['kind'] === 'video') $o['video'] = true;
     if ((photo_prefs($uid)['source'] ?? 'all') === 'folder') $o['folders'] = photo_root_ids($uid);
     return $o;
 }
@@ -566,6 +582,7 @@ function photo_months(int $uid, array $o): array
     $args[] = $uid;
     if (!empty($o['fav'])) $sql .= ' AND n.starred = 1';
     if (!empty($o['video'])) $sql .= " AND n.mime LIKE 'video/%'";
+    if (($o['kind'] ?? '') === 'photo') $sql .= " AND n.mime LIKE 'image/%'";
     if (($o['q'] ?? '') !== '') {
         $sql .= ' AND n.name LIKE ?';
         $args[] = '%' . addcslashes((string)$o['q'], '%_\\') . '%';
@@ -758,7 +775,7 @@ function photos_route(string $r): void
             send_json(['ok' => true, 'left' => photos_scan((int)$u['id'], 3.0)]);
 
         case 'photos.list':
-            // ?cursor= | ?before=YYYY-MM · ?fav=1 · ?video=1 · ?q= (in the name) · ?album=<id> · ?limit=. The first page also reads a few photos
+            // ?cursor= | ?before=YYYY-MM · ?fav=1 · ?video=1 · ?kind=photo|video · ?sort=new|old|name|size · ?q= (in the name) · ?album=<id> · ?limit=. The first page also reads a few photos
             // never read, and says how many are left (the app reads them with photos.scan, then asks again)
             $u = photos_reader();
             $o = photo_filters((int)$u['id'], $_GET);

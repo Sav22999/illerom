@@ -243,22 +243,29 @@ body.filling { background: var(--sav-color-bg); }
 .hdrbox { display: grid; place-items: center; min-height: 3.2rem; border-radius: 10px; border: 1px dashed var(--sav-color-border); overflow: hidden; margin-bottom: .4rem; } .hdrbox img { width: 100%; height: 4.6rem; object-fit: cover; }
 .addgrid { display: grid; grid-template-columns: 1fr 1fr; gap: .3rem; } .addk { display: flex; align-items: center; gap: .45rem; padding: .45rem .55rem; border: 1px solid transparent; border-radius: 9px; background: none; color: inherit; font: 500 .8rem var(--sav-font); cursor: pointer; text-align: left; min-width: 0; }
 .addk span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .addk sav-icon { color: var(--sav-color-primary); flex: none; } .addk:hover { background: var(--sav-color-surface-2); border-color: var(--sav-color-border); }
-.ehead, .qcard { cursor: pointer; } .ehead.on, .qcard.on { cursor: default; box-shadow: 0 10px 30px rgb(40 10 50 / .10); } .qcard.on { border-left: 5px solid var(--fci); padding-left: calc(1.5rem - 4px); }
-.ehead.on .fcin { box-shadow: inset 5px 0 0 var(--fci); }
+/* the card being edited: a ring of the colour of the form and a soft shadow (SavComponents tokens), no stripe on the side */
+.ehead, .qcard { cursor: pointer; transition: box-shadow calc(.2s * var(--sav-motion, 1)) var(--sav-easing); }
+.ehead.on, .qcard.on { cursor: default; box-shadow: 0 0 0 2px color-mix(in oklab, var(--fci) 70%, transparent), var(--sav-shadow-md, 0 10px 30px rgb(40 10 50 / .10)); }
+.qcard:not(.on):hover { box-shadow: 0 0 0 1px color-mix(in oklab, var(--fci) 35%, transparent); }
 .qlist { display: grid; gap: .9rem; } .qcard { display: grid; gap: .7rem; } .qcard.dragging { opacity: .4; } .qcard.dropto { box-shadow: 0 -3px 0 var(--fci); }
 .qgrip { position: absolute; top: .1rem; left: 50%; transform: translateX(-50%) rotate(90deg); color: var(--sav-color-text-muted); opacity: 0; cursor: grab; padding: .1rem .5rem; font-size: .9rem; } .qcard:hover .qgrip, .qcard.on .qgrip { opacity: .6; }
 .qprev { pointer-events: none; } .qcard:not(.on) .qprev { opacity: .85; }
 .qsec { border-top: 6px solid var(--fci); } .secmark { display: inline-flex; align-items: center; gap: .3rem; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--fci); }
-.ce { width: 100%; border: 0; border-bottom: 1px solid transparent; background: transparent; color: inherit; font: inherit; padding: .3rem .1rem; resize: none; overflow: hidden; border-radius: 0; transition: border-color .12s, background .12s; }
-.ce:hover { border-bottom-color: var(--sav-color-border); } .ce:focus { outline: none; border-bottom: 2px solid var(--fci); background: color-mix(in oklab, var(--fci) 4%, transparent); } .ce::placeholder { color: var(--sav-color-text-muted); opacity: .8; }
+/* the fields of the editor are fields of SavComponents (sav-input, sav-textarea): only the size of their text changes */
+.ce { width: 100%; display: block; }
+.ehead .ftitle::part(input) { font-size: clamp(1.35rem, 3.4vw, 1.8rem); font-weight: 700; letter-spacing: -.02em; }
 .ftitle { font-size: clamp(1.6rem, 4vw, 2.1rem); font-weight: 700; letter-spacing: -.03em; line-height: 1.15; } .fdescr { color: var(--sav-color-text-muted); }
-.qedit-head { display: grid; grid-template-columns: minmax(0, 1fr) 13rem; gap: .8rem; align-items: start; } .qt-title { font-size: 1.05rem; font-weight: 600; background: color-mix(in oklab, var(--sav-color-surface-2) 70%, transparent); border-radius: 8px 8px 0 0; padding: .55rem .7rem; } .qt-descr { font-size: .9rem; color: var(--sav-color-text-muted); }
+.qedit-head { display: grid; grid-template-columns: minmax(0, 1fr) 13rem; gap: .7rem; align-items: start; } .qt-title::part(textarea) { font-size: 1.02rem; font-weight: 600; } .qt-descr::part(textarea) { font-size: .9rem; }
 .kbody { display: grid; gap: .7rem; } .kbody.grid2 { gap: 1.2rem; } .w6 { width: 6.5rem; }
 .opts { display: grid; gap: .1rem; } .optrow { display: flex; align-items: center; gap: .55rem; min-height: 2.3rem; } .optrow > sav-icon, .onum { flex: none; color: var(--sav-color-text-muted); width: 1.1rem; text-align: center; font-size: .82rem; } .optin { flex: 1; min-width: 0; }
-.optrow.right .optin { color: var(--ok); font-weight: 600; } .corr.on sav-button { color: var(--ok); } .optrow.addopt { color: var(--sav-color-text-muted); font-size: .9rem; }
+.optrow.right .optin::part(input) { color: var(--ok); font-weight: 600; } .opts { gap: .35rem; } .corr.on sav-button { color: var(--ok); } .optrow.addopt { color: var(--sav-color-text-muted); font-size: .9rem; }
 .linkbtn { border: 0; background: none; padding: .2rem 0; font: inherit; color: var(--fci); cursor: pointer; } .linkbtn:hover { text-decoration: underline; }
 .qhint { display: flex; align-items: center; gap: .2rem; }
-.qfoot { display: flex; align-items: center; gap: .2rem; flex-wrap: wrap; padding-top: .7rem; border-top: 1px solid var(--sav-color-border); } .qsep { width: 1px; height: 1.4rem; background: var(--sav-color-border); margin: 0 .5rem; }
+.qfoot { display: flex; align-items: center; gap: .25rem; flex-wrap: wrap; margin-top: .2rem; padding-top: .6rem; border-top: 1px solid var(--sav-color-border); } .qsep { width: 1px; height: 1.4rem; background: var(--sav-color-border); margin: 0 .5rem; }
+/* where a choice or a section leads (conditional answers) */
+.optrow .gosel { flex: 0 0 13rem; } .goafter { display: flex; align-items: center; gap: .5rem; } .goafter sav-icon { color: var(--fci); } .goafter .gosel { flex: 0 1 18rem; }
+.gobadge { display: inline-flex; align-items: center; gap: .3rem; justify-self: start; font-size: .72rem; font-weight: 600; color: var(--fci); background: color-mix(in oklab, var(--fci) 10%, transparent); padding: .15rem .5rem; border-radius: 99px; }
+@media (max-width: 640px) { .optrow { flex-wrap: wrap; } .optrow .gosel { flex: 1 0 100%; margin-left: 1.6rem; } }
 .points { display: flex; align-items: center; gap: .4rem; } .points sav-number-input { width: 6.5rem; } .points sav-icon { color: var(--fci); }
 .imgbox { border-radius: 10px; overflow: hidden; } .noimg { display: grid; place-items: center; gap: .3rem; min-height: 8rem; border: 1px dashed var(--sav-color-border); border-radius: 10px; color: var(--sav-color-text-muted); }
 .addrow { display: flex; justify-content: center; gap: .6rem; padding: .4rem 0 1rem; } .qempty { padding: 1rem; }
@@ -302,3 +309,5 @@ body.filling { background: var(--sav-color-bg); }
 .how { padding: 1rem 0 3.5rem; } .how h2 { font-size: 1.4rem; letter-spacing: -.02em; margin-bottom: 1.2rem; }
 .langs { width: max-content; max-width: 100%; }
 .mpick { display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: .7rem; max-height: 52vh; overflow: auto; padding: 4px; } /* the templates in the New window */
+/* a separator or a fixed space chosen in the title bar (⋮ → Customise the bars) */
+.etop > .esep { width: 1px; align-self: stretch; margin: .45rem .25rem; background: var(--sav-color-border); flex: none; } .etop > i.bgap { width: .9rem; flex: none; }

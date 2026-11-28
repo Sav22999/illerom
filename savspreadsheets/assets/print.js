@@ -8,6 +8,7 @@ import { t } from './i18n.js';
 import { colName, FONT_STACK, key, parseRange, extent, styleAt } from './model.js';
 import { formatValue, loc } from './format.js';
 import { chartData, chartSVG } from './chart.js';
+import { pageArea, pagePrefs, PAPERS, setPagePrefs } from './tools.js';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]).replace(/\n/g, '<br>');
 
@@ -38,22 +39,29 @@ export function sheetTable(b, s, g, o = {}) {
   return html;
 }
 
-export function printBook(b, sh, sel) {
+/** onPrefs: told when the page chosen changes (the guides on the sheet follow it). */
+export function printBook(b, sh, sel, onPrefs) {
+  const pp = pagePrefs();
   const one = sel && (sel.r1 !== sel.r2 || sel.c1 !== sel.c2) && sel.r2 < 100000 && sel.c2 < 702;
   const what = select(t('print_what'), [...(one ? [['sel', t('print_sel')]] : []), ['sheet', t('print_sheet')], ['all', t('print_all')]], one ? 'sel' : 'sheet', null, { size: 'sm' });
-  const orient = select(t('o_orient'), [['portrait', t('portrait')], ['landscape', t('landscape')]], 'portrait', null, { size: 'sm' });
-  const fit = select(t('print_fit'), [['width', t('fit_width')], ['none', t('fit_none')]], 'width', null, { size: 'sm' });
+  const keep = () => { setPagePrefs({ paper: paper.value, orient: orient.value, fit: fit.value, guides: !!guides.checked }); onPrefs?.(); };
+  const paper = select(t('paper'), Object.keys(PAPERS).map((k) => [k, t('paper_' + k.toLowerCase())]), pp.paper, keep, { size: 'sm' });
+  const orient = select(t('o_orient'), [['portrait', t('portrait')], ['landscape', t('landscape')]], pp.orient, keep, { size: 'sm' });
+  const fit = select(t('print_fit'), [['width', t('fit_width')], ['none', t('fit_none')]], pp.fit, keep, { size: 'sm' });
   const grid = h('sav-switch', { size: 'sm', checked: true }, t('print_grid'));
-  dialog({ title: t('print'), width: '26rem', body: h('div.form', what, h('div.grid2', orient, fit), grid, h('p.muted.small', t('pdf_hint'))), actions: [{ label: t('cancel') }, { label: t('print'), primary: true, icon: 'printer', run: () => {
+  const guides = h('sav-switch', { size: 'sm', checked: pp.guides || null, help: t('page_guides_t') }, t('page_guides'));
+  guides.addEventListener('change', keep);
+  dialog({ title: t('print'), width: '26rem', body: h('div.form', what, paper, h('div.grid2', orient, fit), grid, guides, h('p.muted.small', t('pdf_hint'))), actions: [{ label: t('cancel') }, { label: t('print'), primary: true, icon: 'printer', run: () => {
+    keep();
     const sheets = what.value === 'all' ? b.sheets.filter((s) => !s.hidden) : [sh];
     const box = h('div.printing-area', { html: sheets.map((s) => `<section class="psheet">${sheets.length > 1 ? `<h2>${esc(s.name)}</h2>` : ''}${sheetTable(b, s, what.value === 'sel' ? sel : null, { noGrid: !grid.checked })}</section>`).join('') });
     if (fit.value === 'width') box.classList.add('fitw');
-    const st = h('style', `@page { size: A4 ${orient.value}; margin: 12mm; }`);
+    const st = h('style', `@page { size: ${paper.value} ${orient.value}; margin: 12mm; }`);
     document.head.append(st);
     document.body.append(box);
     document.body.classList.add('printing');
     // as wide as the page
-    if (fit.value === 'width') { const pw = (orient.value === 'landscape' ? 273 : 186) * 3.78; for (const t2 of box.querySelectorAll('.ptable')) { const w = t2.scrollWidth; if (w > pw) t2.style.zoom = pw / w; } }
+    if (fit.value === 'width') { const pw = pageArea({ paper: paper.value, orient: orient.value }).w; for (const t2 of box.querySelectorAll('.ptable')) { const w = t2.scrollWidth; if (w > pw) t2.style.zoom = pw / w; } }
     const done = () => { box.remove(); st.remove(); document.body.classList.remove('printing'); removeEventListener('afterprint', done); };
     addEventListener('afterprint', done);
     setTimeout(() => window.print(), 50);

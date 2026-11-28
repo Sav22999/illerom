@@ -60,7 +60,7 @@ export async function deckScreen(app, deckId, q) {
   zoomEl.addEventListener('change', (e) => { if (!zoomSet) stage.setZoom((e.detail?.value ?? zoomEl.value) / 100); });
   ed.onZoom = (v) => { zoomSet = true; zoomEl.value = v; zoomSet = false; };
   const menu = h('sav-dropdown', { placement: 'bottom-end', 'sheet-on-mobile': true, label: deck.title }, h('sav-button', { slot: 'trigger', icon: 'ellipsis-vertical', appearance: 'ghost', variant: 'neutral', square: true, label: t('more') }));
-  const fillMenu = () => { const e = deck.canEdit; menu.querySelectorAll(':not([slot="trigger"])').forEach((x) => { if (x.parentElement === menu) x.remove(); }); menu.append(...[e && item('options', 'settings', t('deck_options')), e && !deck.limited && !deck.local && item('vers', 'history', t('versions')), e && h('sav-divider'), item('over', 'layout-grid', t('overview')), item('find', 'search', t('find_replace')), e && item('text', 'file-text', t('add_from_text')), e && item('credits', 'copyright', t('credits_slide')), h('sav-divider'), (e || deck.meta.opts.download !== false) && item('dl', 'download', t('download')), !deck.local && state.user && (e || deck.meta.opts.copy !== false) && item('copy', 'copy', t('make_copy')), !deck.local && item('link', 'link', t('copy_link')), deck.local && state.user && item('upload', 'cloud-upload', t('move_to_account')), h('sav-divider'), ed.editor && item('mode', 'arrow-left-right', t('mode_change')), ed.editor && !mobile() && item('tools', 'settings-2', t('toolbar_edit')), item('keys', 'keyboard', t('shortcuts')), deck.role !== 'owner' && item('report', 'flag', t('report'), { variant: 'danger' })].filter(Boolean)); };
+  const fillMenu = () => { const e = deck.canEdit; menu.querySelectorAll(':not([slot="trigger"])').forEach((x) => { if (x.parentElement === menu) x.remove(); }); menu.append(...[e && item('options', 'settings', t('deck_options')), e && !deck.limited && !deck.local && item('vers', 'history', t('versions')), e && h('sav-divider'), item('over', 'layout-grid', t('overview')), item('find', 'search', t('find_replace')), e && item('text', 'file-text', t('add_from_text')), e && item('credits', 'copyright', t('credits_slide')), h('sav-divider'), (e || deck.meta.opts.download !== false) && item('dl', 'download', t('download')), !deck.local && state.user && (e || deck.meta.opts.copy !== false) && item('copy', 'copy', t('make_copy')), !deck.local && item('link', 'link', t('copy_link')), deck.local && state.user && item('upload', 'cloud-upload', t('move_to_account')), h('sav-divider'), ed.editor && item('mode', 'arrow-left-right', t('mode_change')), !mobile() && item('tools', 'settings-2', window.SavOffice?.bars ? window.SavOffice.bars.menuLabel() : t('toolbar_edit')), item('keys', 'keyboard', t('shortcuts')), deck.role !== 'owner' && item('report', 'flag', t('report'), { variant: 'danger' })].filter(Boolean)); };
   fillMenu();
   ed.options = () => dialog(t('deck_options'), optionsBody(ed), [[t('done'), true]], { width: '40rem' });
   ed.download = () => downloadMenu(ed);
@@ -116,6 +116,14 @@ export async function deckScreen(app, deckId, q) {
   const dropTool = (ic, label, items) => { const d = h('sav-dropdown', { label }, h('sav-button', { slot: 'trigger', icon: ic, caret: true, appearance: 'ghost', variant: 'neutral', size: 'sm', label }, h('span.insl', label)), ...items); d.addEventListener('sav-select', (e) => ed.insert(e.detail.value)); return d; };
   const addTool = (ic, label, what) => h('sav-tooltip', { content: label, placement: 'bottom', delay: 350 }, h('sav-button', { icon: ic, appearance: 'ghost', variant: 'neutral', size: 'sm', onclick: () => (typeof what === 'function' ? what() : ed.insert(what)), label }, h('span.insl', label)));
   const drawn = { rect: 'square', round: 'rectangle-horizontal', ellipse: 'circle', triangle: 'triangle', diamond: 'diamond', star: 'star', hexagon: 'hexagon', arrow: 'arrow-right', speech: 'message-square', heart: 'heart', cloud: 'cloud', plus: 'plus' };
+  /** The bars chosen (⋮ → Customise the bars): with the account, in this browser for who has none. */
+  const barsSaved = () => (state.user ? userSetting('bars', {}) : (() => { try { return JSON.parse(localStorage.getItem('savpresentations-bars') || '{}'); } catch { return {}; } })()) || {};
+  /** A bar as each person chose it: its list, in order, with '|' a separator, '_' a fixed space and '~' an adaptive one
+   *  (SavOffice.bars); what it has at first when nothing was chosen. */
+  const BARS = window.SavOffice?.bars;
+  const barPick = (id, def, items, old) => { const v = barsSaved()[id] ?? old; return BARS ? BARS.pick(v, def, items) : def; };
+  const barList = (id, def, items, old) => { const l = barPick(id, def, items, old); return BARS ? BARS.layout(l) : l; };
+  const barEl = (k, map) => (k === '|' ? h('i.sep.so-sep') : k === '_' ? h('i.bgap') : k === '~' ? h('div.spacer') : map[k]);
   const TOOLS = {
     text: ['type', 'text', () => addTool('type', t('text'), 'text:body')], title: ['heading-1', 'r_title', () => addTool('heading-1', t('r_title'), 'text:title')], list: ['list', 'r_list', () => addTool('list', t('r_list'), 'text:list')], quote: ['quote', 'r_quote', () => addTool('quote', t('r_quote'), 'text:quote')],
     image: ['image', 'image', () => addTool('image', t('image'), 'image')], video: ['film', 'video', () => addTool('film', t('video'), 'video')],
@@ -126,25 +134,36 @@ export async function deckScreen(app, deckId, q) {
   const TOOLS_DEF = ['text', 'image', 'video', 'chart', 'table', 'shape', 'icon'];
   const ins = h('div.ins', { role: 'toolbar', 'aria-label': t('insert') });
   function drawTools() {
-    const on = userSetting('tools', TOOLS_DEF).filter((k) => TOOLS[k]);
-    ins.replaceChildren(h('span.inst', t('insert')), ...on.map((k) => TOOLS[k][2]())); // customising the bar: in the ⋮ menu
+    const list = barList('insert', TOOLS_DEF, Object.keys(TOOLS).map((k) => [k]), userSetting('tools', TOOLS_DEF));
+    ins.replaceChildren(h('span.inst', t('insert')), ...list.map((k) => (TOOLS[k] ? TOOLS[k][2]() : barEl(k, {})))); // customising the bar: in the ⋮ menu
   }
   drawTools();
-  /** Which buttons the toolbar has, and in what order. */
-  async function toolsDialog() {
-    const on = userSetting('tools', TOOLS_DEF).filter((k) => TOOLS[k]), list = h('sav-sortable.toollist', { handle: '.grip', 'aria-label': t('toolbar_edit') });
-    const draw = (order, sel) => list.replaceChildren(...order.map((k) => h('div.toolrow', { 'data-id': k }, icon('grip-vertical', { class: 'grip' }), icon(TOOLS[k][0]), h('span.grow', t(TOOLS[k][1])), h('sav-switch', { size: 'sm', checked: sel.includes(k), 'aria-label': t(TOOLS[k][1]) }))));
-    draw([...on, ...Object.keys(TOOLS).filter((k) => !on.includes(k))], on);
-    const tools = await dialog(t('toolbar_edit'), h('div.stack', h('p.muted', t('toolbar_edit_t')), list), [[t('reset'), () => { draw([...TOOLS_DEF, ...Object.keys(TOOLS).filter((k) => !TOOLS_DEF.includes(k))], TOOLS_DEF); return false; }, { appearance: 'ghost', variant: 'neutral' }], [t('save'), () => $$('.toolrow', list).filter((r) => r.querySelector('sav-switch').checked).map((r) => r.dataset.id)]], { width: '26rem' });
-    if (!tools) return;
-    try { state.user = (await api('auth.settings', { settings: { tools } })).user; drawTools(); } catch (e) { oops(e); }
+  /** Customising the bars (⋮ → Customise the bars): the window shared by the apps of SavOffice, a tab for each bar. */
+  function toolsDialog() {
+    if (!window.SavOffice?.bars) return;
+    const insItems = Object.keys(TOOLS).map((k) => [k, TOOLS[k][0], t(TOOLS[k][1])]);
+    const bars = [{ id: 'title', items: TITLE_ITEMS(), def: TITLE_DEF, before: [[null, deck.meta.title || t('untitled')]], after: [['ellipsis-vertical', t('more')], ['layout-grid', 'SavOffice'], ['user', t('account')]] }, ed.editor && { id: 'insert', items: insItems, def: TOOLS_DEF }, { id: 'status', items: STATUS_ITEMS(), def: STATUS_DEF }].filter(Boolean);
+    const value = { title: barPick('title', TITLE_DEF, TITLE_ITEMS()), insert: barPick('insert', TOOLS_DEF, insItems, userSetting('tools', TOOLS_DEF)), status: barPick('status', STATUS_DEF, STATUS_ITEMS()) };
+    window.SavOffice.bars.dialog({ bars, value, save: async (v) => { const all = { ...barsSaved(), ...v }; if (state.user) state.user = (await api('auth.settings', { settings: { bars: all } })).user; else localStorage.setItem('savpresentations-bars', JSON.stringify(all)); layoutTitle(); drawTools(); layoutStatus(); } });
   }
+
   const present = h('sav-button', { icon: 'play', onclick: () => show() , class: 'presentb' }, h('span.insl', t('present')));
   const presentM = h('sav-dropdown', { placement: 'bottom-end' }, h('sav-button.presentm', { slot: 'trigger', icon: 'chevron-down', label: t('more'), square: true }), item('here', 'play', t('present_here'), { kbd: '⇧F5' }), item('start', 'play', t('present_start'), { kbd: 'F5' }), !isApp && h('sav-divider'), !isApp && item('view', 'presentation', t('present_speaker')));
   presentM.addEventListener('sav-select', (e) => ({ here: () => show(ed.sid), start: () => show(deck.order()[0]?.sid), view: () => show(ed.sid, { presenter: true }) })[e.detail.value]());
   const paletteB = iconBtn('command', t('palette_l') + ' · ' + (isMac ? '⌘J' : 'Ctrl+J'), () => ed.palette());
   const shareB = h('sav-button', { icon: 'user-plus', appearance: 'soft', onclick: () => shareDialog(deck.uid, deck.title, ed) }, h('span.insl', t('share')));
-  const top = h('header.etop', h('a.ehome', { href: './', 'data-go': true, title: t('home'), 'aria-label': t('home') }, logo(30)), h('div.etitle', title, status), ed.editor && h('div.hist', undoB, redoB), ins, h('div.spacer'), people, !deck.local && (deck.role === 'owner' || deck.role === 'editor') && shareB, h('sav-button-group.pgroup', present, presentM), !mobile() && (deck.canEdit || deck.meta.opts.download !== false) && iconBtn('download', t('download'), () => downloadMenu(ed)), !mobile() && paletteB, menu, !mobile() && (state.user ? userMenu() : btn(t('sign_in'), () => { sessionStorage.setItem('sp-back', location.pathname + location.search); go('?signin=login'); }, { appearance: 'outline', variant: 'neutral' })));
+  // the pieces of the bars that each person may show or not, and in what order (⋮ → Customise the bars, kept with the account)
+  const homeA = h('a.ehome', { href: './', 'data-go': true, title: t('home'), 'aria-label': t('home') }, logo(30)), etitle = h('div.etitle', title, status), presentG = h('sav-button-group.pgroup', present, presentM);
+  // on the right, always: ⋮, the apps of SavOffice and the account (signed out too: the apps, then Sign in)
+  const accountEl = !mobile() && (state.user ? userMenu() : h('span.umenu', h('savoffice-apps', { current: 'savpresentations' }), btn(t('sign_in'), () => { sessionStorage.setItem('sp-back', location.pathname + location.search); go('?signin=login'); }, { appearance: 'outline', variant: 'neutral' })));
+  const T2 = { undo: ed.editor && undoB, redo: ed.editor && redoB, people, share: !deck.local && (deck.role === 'owner' || deck.role === 'editor') && shareB, download: !mobile() && (deck.canEdit || deck.meta.opts.download !== false) && iconBtn('download', t('download'), () => downloadMenu(ed)), palette: !mobile() && paletteB };
+  T2.insbar = ins; T2.present = presentG;
+  const TITLE_ITEMS = () => [['undo', 'undo-2', t('undo')], ['redo', 'redo-2', t('redo')], ['insbar', 'square-plus', t('bar_insbar')], ['people', 'users', t('bar_people')], ['share', 'user-plus', t('share')], ['present', 'play', t('present'), { lock: true }], ['download', 'download', t('download')], ['palette', 'command', t('palette_l')]].filter(([k]) => T2[k]);
+  const TITLE_DEF = ['undo', 'redo', 'insbar', '~', 'people', 'share', 'present', 'download', 'palette'];
+  const top = h('header.etop');
+  /** The title bar: the logo and the title first, ⋮ and the account last (always); between them the list, in its order. */
+  function layoutTitle() { top.replaceChildren(...[homeA, etitle, ...barList('title', TITLE_DEF, TITLE_ITEMS()).map((k) => barEl(k, T2)), menu, accountEl].filter(Boolean)); }
+  layoutTitle();
   const strip = h('sav-sortable.strip', { 'aria-label': t('slides'), direction: mobile() ? 'horizontal' : null, handle: deck.canEdit && !mobile() ? null : '.never' }), addB = h('sav-button', { icon: 'plus', appearance: 'outline', variant: 'neutral', block: true, size: 'sm', onclick: () => ed.addSlide() }, t('new_slide'));
   const left = h('aside.eleft', strip, deck.canEdit && addB), panel = h('aside.epanel'), rail = h('sav-bottom-nav.rail', { label: t('panels') });
   // speaker notes of the page, under it
@@ -166,7 +185,14 @@ export async function deckScreen(app, deckId, q) {
     notesB.classList.toggle('has', !!s?.d.notes);
   }
   ed.saveNotes = saveNotes;
-  const center = h('section.ecenter', h('div.banner'), stage.scroller, ed.editor && notesBar, h('div.ebottom', !mobile() && iconBtn('panel-left', t('toggle_pages'), () => toggleStrip(), { size: 'sm', place: 'top' }), h('span.sn'), ed.editor && notesB, h('div.spacer'), iconBtn('fullscreen', t('fit'), () => stage.setZoom(0), { size: 'sm', place: 'top' }), zoomEl));
+  const SB = { pages: !mobile() && iconBtn('panel-left', t('toggle_pages'), () => toggleStrip(), { size: 'sm', place: 'top' }), notes: ed.editor && notesB, fit: iconBtn('fullscreen', t('fit'), () => stage.setZoom(0), { size: 'sm', place: 'top' }), zoom: zoomEl };
+  const bottom = h('div.ebottom'), slideNo = h('span.sn');
+  SB.sn = slideNo;
+  const STATUS_ITEMS = () => [['pages', 'panel-left', t('toggle_pages')], ['sn', 'hash', t('bar_slide'), { lock: true }], ['notes', 'notebook-pen', t('speaker_notes')], ['fit', 'fullscreen', t('fit')], ['zoom', 'zoom-in', t('bar_zoom')]].filter(([k]) => SB[k]);
+  const STATUS_DEF = ['pages', 'sn', 'notes', '~', 'fit', 'zoom'];
+  function layoutStatus() { bottom.replaceChildren(...barList('status', STATUS_DEF, STATUS_ITEMS()).map((k) => barEl(k, SB)).filter(Boolean)); }
+  layoutStatus();
+  const center = h('section.ecenter', h('div.banner'), stage.scroller, ed.editor && notesBar, bottom);
   app.append(top, h('div.emain', left, center, panel, rail));
 
   // ------------------------------------------------------------------ strip of slides
@@ -414,6 +440,9 @@ export async function deckScreen(app, deckId, q) {
 
   // menus at the pointer
   function menuAt(x, y, items) {
+    // the menu of a right click of SavOffice (sav-context-menu), the same in every app; this one when it is not there
+    const std = items.filter(Boolean).map((i) => (Array.isArray(i) ? [i[0], i[1], i[2], { danger: i[3] === 'danger', kbd: i[4] }] : i));
+    if (window.SavOffice?.context?.show?.(x, y, std)) return;
     $('.ctxm')?.remove();
     const list = items.filter(Boolean), d = h('sav-dropdown.ctxm', { placement: 'bottom-start', style: `left:${x}px;top:${y}px` }, h('span', { slot: 'trigger' }), ...list.map((i, n) => (i === '-' ? h('sav-divider') : item(String(n), i[0], i[1], { variant: i[3] || null, kbd: i[4] }))));
     d.addEventListener('sav-select', (e) => { const i = list[+e.detail.value]; setTimeout(() => i[2](), 30); });

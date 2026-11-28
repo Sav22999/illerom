@@ -21,7 +21,10 @@ export async function library(root, mode, arg) {
     album = (await api('photos.albums')).albums.find((a) => a.id === arg);
     if (!album) throw Object.assign(new Error('not_found'), { code: 'not_found' });
   }
-  const query = () => (mode === 'fav' ? { fav: 1 } : mode === 'video' ? { video: 1 } : mode === 'album' ? { album: arg } : q ? { q } : {});
+  // the order and the filter chosen (kept with the preferences): newest, oldest, by name, the largest; all, photos, videos, favourites
+  let sort = ['old', 'name', 'size'].includes(prefs().sort) ? prefs().sort : 'new', kind = ['photo', 'video'].includes(prefs().kind) ? prefs().kind : 'all', onlyFav = !!prefs().onlyFav;
+  const base = () => (mode === 'fav' ? { fav: 1 } : mode === 'video' ? { video: 1 } : mode === 'album' ? { album: arg } : q ? { q } : {});
+  const query = () => ({ ...base(), ...(sort !== 'new' ? { sort } : {}), ...(kind !== 'all' && mode !== 'video' ? { kind } : {}), ...(onlyFav && mode !== 'fav' ? { fav: 1 } : {}) });
   const sel = new Set();
   let size = prefs().size || 'm', next = null, before = '', summary = null, gone = false, scanning = false;
 
@@ -29,6 +32,7 @@ export async function library(root, mode, arg) {
   const main = h('main.hmain.dmain', head, note);
   frame(root, PLACE[mode] ?? '', main, { cls: 'photos' + (mode === 'pick' ? '.picking' : ''), q, onSearch: mode === 'pick' || mode === 'album' ? null : (v) => { q = v; mode = v ? 'search' : 'all'; before = ''; reload(); } });
   const grid = makeGrid({ thumb: (x) => thumbFor(x), sel, pick: mode === 'pick', size, onOpen: (i) => view(i), onSelect: () => drawHead() });
+  grid.setByDay(sort === 'new' || sort === 'old');
   const feed = h('sav-infinite-scroll', { 'end-label': t('all_shown'), 'loading-label': t('loading'), 'error-label': t('err_load'), 'retry-label': t('retry'), threshold: 900 }, grid.el);
   main.append(feed);
   grid.skeleton(); // the shape of the photos while the first page is on its way
@@ -107,7 +111,7 @@ export async function library(root, mode, arg) {
     }
     const count = summary?.count ? t(summary.count === 1 ? 'n_items_1' : 'n_items', { n: summary.count.toLocaleString(getLang()) }) + (summary.videos && mode !== 'video' ? ' · ' + t('n_videos', { n: summary.videos }) : '') + ' · ' + bytes(summary.bytes) : '';
     const months = summary?.months || [];
-    const jump = months.length > 1 ? drop(h('sav-button', { icon: 'calendar-search', label: before ? null : t('jump'), title: t('jump'), caret: true, appearance: before ? 'soft' : 'ghost', variant: before ? 'primary' : 'neutral', size: 'sm' }, before ? h('span.lbl', monthLabel(before)) : null), () => {
+    const jump = months.length > 1 && sort === 'new' ? drop(h('sav-button', { icon: 'calendar-search', label: before ? null : t('jump'), title: t('jump'), caret: true, appearance: before ? 'soft' : 'ghost', variant: before ? 'primary' : 'neutral', size: 'sm' }, before ? h('span.lbl', monthLabel(before)) : null), () => {
       const out = [before ? ['arrow-up', t('back_today'), () => { before = ''; reload(); }] : null, before ? '-' : null];
       let year = '';
       for (const m of months.slice(0, 240)) {
@@ -125,8 +129,24 @@ export async function library(root, mode, arg) {
         iconBtn('link', album.shared ? t('shared') : t('share'), () => shareAlbum(album, (a) => { album = a; drawHead(); }), album.shared ? { variant: 'primary', appearance: 'soft' } : {}),
         dropBtn('more-vertical', t('more'), () => albumMenu(album, (a) => { if (a) { album = a; drawHead(); } else go('#/albums'); }), { caret: false, placement: 'bottom-end' })] : null,
       mobile() && grid.items.length ? iconBtn('square-check', t('select'), () => { grid.choose(true); toast(t('select_hint'), 'neutral'); }) : null,
-      jump,
+      jump, mode === 'pick' ? null : sortMenu(), mode === 'pick' ? null : filterMenu(),
       segmented(t('grid_size'), size, [['s', 'grid-3x3', t('size_s')], ['m', 'layout-grid', t('size_m')], ['l', 'grid-2x2', t('size_l')]], (v) => { size = v; grid.setSize(v); setPrefs({ size: v }).catch(() => {}); }, { class: 'sizes' }));
+  }
+
+  /** The order of the photos: a menu with a tick on the one in use. */
+  function sortMenu() {
+    const set = (v) => { sort = v; setPrefs({ sort: v }).catch(() => {}); before = ''; grid.setByDay(v === 'new' || v === 'old'); reload(); };
+    return dropBtn('arrow-down-wide-narrow', t('sort_by'), () => [{ head: t('sort_by') }, ...[['new', 'clock-arrow-down'], ['old', 'clock-arrow-up'], ['name', 'arrow-down-a-z'], ['size', 'hard-drive']].map(([k, ic]) => [ic, t('sort_' + k), () => set(k), { check: sort === k }])],
+      { placement: 'bottom-end', caret: false });
+  }
+  /** Which photos: all, photos only, videos only, and the favourites only; the button is marked when something is left out. */
+  function filterMenu() {
+    const on = (kind !== 'all' && mode !== 'video') || (onlyFav && mode !== 'fav');
+    const setKind = (v) => { kind = v; setPrefs({ kind: v }).catch(() => {}); reload(); };
+    const d = dropBtn('funnel', t('filter'), () => [{ head: t('filter') }, ...(mode === 'video' ? [] : [['images', t('kind_all'), () => setKind('all'), { check: kind === 'all' }], ['image', t('kind_photo'), () => setKind('photo'), { check: kind === 'photo' }], ['film', t('kind_video'), () => setKind('video'), { check: kind === 'video' }]]),
+      ...(mode === 'fav' ? [] : ['-', ['star', t('only_fav'), () => { onlyFav = !onlyFav; setPrefs({ onlyFav }).catch(() => {}); reload(); }, { check: onlyFav }]])], { placement: 'bottom-end', caret: false });
+    if (on) { const b = d.querySelector('sav-button'); b.variant = 'primary'; b.appearance = 'soft'; }
+    return d;
   }
 
   // ---------------------------------------------------------------- actions (also used by the viewer)

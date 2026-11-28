@@ -5,7 +5,25 @@
 
 import {getLang, t} from './i18n.js?v=25';
 
-export const S = {config: {}, user: null, csrf: ''};
+export const S = {config: {}, user: null, csrf: '', prefs: {}};
+
+/** The settings of this app (the buttons of the editor's bar…): kept with the account, in this browser when signed out. */
+export const prefs = () => {
+    if (S.user) return S.prefs || {};
+    try {
+        return JSON.parse(localStorage.getItem('savnewsletters-prefs') || '{}');
+    } catch (e) {
+        return {};
+    }
+};
+export async function setPrefs(p) {
+    const all = {...prefs(), ...p};
+    if (S.user) S.prefs = all;
+    try {
+        localStorage.setItem('savnewsletters-prefs', JSON.stringify(all));
+    } catch (e) { /* private mode */ }
+    if (S.user) await api('auth.prefs', {prefs: all});
+}
 
 /** h('div.a.b#id', {attrs}, ...children) */
 export function h(tag, attrs, ...kids) {

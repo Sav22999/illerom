@@ -16,7 +16,7 @@ import { brand, commands, credit, go, prefs, setPrefs, userMenu } from './accoun
 import { addDays, dayKey, keyParts, LOCAL_TZ, parts, todayKey, weekday, zoned, clock, hm, monthLabel, dayLabel, longDay } from './time.js';
 import { expand } from './rrule.js';
 import { sidebar, openFile } from './sources.js';
-import { openItem, editEvent, quickCreate, moveEvent, scheduleDialog, searchDialog } from './event.js';
+import { openItem, editEvent, quickCreate, moveEvent, deleteItem, scheduleDialog, searchDialog } from './event.js';
 import { firstDay, shownDays, weekPanel } from './week.js';
 export { firstDay, shownDays };
 
@@ -113,10 +113,37 @@ export async function calendarScreen(root, view = '', k = '') {
     daysMenu.append(weekPanel((x) => { forget(); refresh(true); if ('firstDay' in x) drawSide(); }));
   });
   const viewSel = segmented(t('view'), view, [['day', '=' + t('v_day'), t('v_day')], ['week', '=' + t('v_week'), t('v_week')], ['month', '=' + t('v_month'), t('v_month')], ['agenda', '=' + t('v_agenda'), t('v_agenda')]], (v) => go(`#/${v}/${k}`), { class: 'vsel' });
-  const nav = h('div.cnav', btn(t('today'), { size: 'sm', onclick: () => go(`#/${view}/${todayKey(viewTz())}`) }),
-    iconBtn('chevron-left', t('previous'), () => step(-1), { kbd: 'K' }), iconBtn('chevron-right', t('next'), () => step(1), { kbd: 'J' }), title);
   const tray = h('div.tray', { hidden: true });
-  put(root, h('div.capp', h('header.ctop', menuBtn, brand(), h('div.chead', nav), h('div.spacer'), h('div.csearch', q), viewSel, daysMenu, userMenu()), h('div.cbody', side, h('div.cwrap', main, tray)), drawer));
+  // the title bar: the logo on the left, ⋮, the apps and the account on the right (always); between them the buttons each person
+  // chooses, in their order (⋮ → Customise the bars, kept with the account). Going back and forth, today and the period shown stay
+  // together (on a phone they make a row of their own).
+  const T2 = { today: btn(t('today'), { size: 'sm', onclick: () => go(`#/${view}/${todayKey(viewTz())}`) }), prev: iconBtn('chevron-left', t('previous'), () => step(-1), { kbd: 'K' }), next: iconBtn('chevron-right', t('next'), () => step(1), { kbd: 'J' }),
+    period: title, search: h('div.csearch', q), view: viewSel, days: daysMenu, new: iconBtn('plus', t('new_event'), () => newEvent(), { kbd: 'C' }) };
+  const TITLE_ITEMS = [['today', 'calendar-check', t('today')], ['prev', 'chevron-left', t('previous')], ['next', 'chevron-right', t('next')], ['period', 'calendar', t('bar_period'), { lock: true }], ['new', 'plus', t('new_event')], ['search', 'search', t('search_events')], ['view', 'calendar-days', t('view')], ['days', 'calendar-range', t('week_days')]];
+  const TITLE_DEF = ['today', 'prev', 'next', 'period', '~', 'search', 'view', 'days'];
+  const NAV = ['today', 'prev', 'next', 'period'];
+  const BARS = window.SavOffice?.bars;
+  const barPick = () => (BARS ? BARS.pick(prefs().bars?.title, TITLE_DEF, TITLE_ITEMS) : TITLE_DEF);
+  const moreB = drop(h('sav-button', { icon: 'ellipsis-vertical', label: t('more'), title: t('more'), appearance: 'ghost', variant: 'neutral', size: 'sm', square: true }), [
+    !mobile() && BARS ? ['settings-2', BARS.menuLabel(), () => barsDialog()] : null, ['settings', t('settings'), () => go('#/settings')]], { placement: 'bottom-end' });
+  const top = h('header.ctop'), accountEl = userMenu();
+  function layoutTitle() {
+    const list = BARS ? BARS.layout(barPick()) : TITLE_DEF, out = [];
+    let group = null;
+    for (const k of list) {
+      if (NAV.includes(k)) { if (!group) { group = h('div.cnav'); out.push(h('div.chead', group)); } group.append(T2[k]); continue; }
+      group = null;
+      out.push(k === '|' ? h('span.csep.so-sep') : k === '_' ? h('i.bgap') : k === '~' ? h('div.spacer') : T2[k]);
+    }
+    put(top, menuBtn, brand(), out, moreB, accountEl);
+  }
+  /** Customising the bars (⋮ → Customise the bars): the window shared by the apps of SavOffice. */
+  function barsDialog() {
+    BARS.dialog({ bars: [{ id: 'title', items: TITLE_ITEMS, def: TITLE_DEF, before: [[null, 'SavCalendar']], after: [['ellipsis-vertical', t('more')], ['layout-grid', 'SavOffice'], ['user', t('account')]] }], value: { title: barPick() },
+      save: async (v) => { await setPrefs({ bars: { ...(prefs().bars || {}), ...v } }); layoutTitle(); } });
+  }
+  layoutTitle();
+  put(root, h('div.capp', top, h('div.cbody', side, h('div.cwrap', main, tray)), drawer));
 
   const range = () => rangeOf(view, k).map((x) => startOfDay(x));
   function step(dir) {
@@ -209,10 +236,26 @@ function weekTitle(a, b) {
 const lockOf = (o) => (o.readOnly ? h('sav-icon.lk', { name: 'lock', label: t('read_only') }) : null);
 const srcIcon = (o) => (o.source === 'schedules' ? h('sav-icon.lk', { name: o.e.kind === 'slots' ? 'ticket' : 'vote' }) : o.source === 'newsletters' ? h('sav-icon.lk', { name: 'mail' }) : o.source === 'tasks' ? h('sav-icon.lk', { name: o.e.done ? 'circle-check' : 'list-checks' }) : o.source === 'forms' ? h('sav-icon.lk', { name: 'hourglass' }) : o.source === 'birthdays' ? h('sav-icon.lk', { name: 'cake' }) : o.e.rrule || o.e.recurId ? h('sav-icon.lk', { name: 'repeat' }) : null);
 const timeText = (o, tz) => (o.allDay ? t('all_day') : clock(o.s, tz));
+/** What can be done with an event: open it, change it, a copy, one day later, away (what cannot be changed only opens) —
+ *  its right click and ⌘J (SavOffice.context: the element carries them as soMenu). */
+function evMenu(o, ctx) {
+  return () => {
+    const ro = o.readOnly, run = (p) => Promise.resolve(p).catch(fail);
+    return [
+      ['calendar-search', t('open'), () => openItem(o, ctx)],
+      ro ? null : ['pencil', t('edit'), () => editEvent(o, null, ctx)],
+      ['copy', t('duplicate'), () => editEvent(null, { copyOf: o.e }, ctx)],
+      ro ? null : ['calendar-arrow-down', t('move_next_day'), () => run(moveEvent(o, o.s + 864e5, o.en + 864e5, ctx))],
+      ro ? null : '-', ro ? null : ['trash', t('delete'), () => run(deleteItem(o, ctx)), { danger: true }],
+    ].filter(Boolean);
+  };
+}
+
 function chip(o, ctx, opts = {}) {
   const tz = ctx.tz(), full = o.allDay || opts.bar;
   const b = h('button.chip' + (full ? '.full' : '') + (tentative(o) ? '.tent' : '') + (o.readOnly ? '.ro' : ''), { type: 'button', style: `--c:${o.color}`, title: `${o.title}${o.readOnly ? ' · ' + t('read_only') : ''}`, onclick: (e) => { e.stopPropagation(); openItem(o, ctx); } },
     full ? null : h('i.dot'), full || o.allDay ? null : h('b', clock(o.s, tz)), h('span', o.title), srcIcon(o), lockOf(o));
+  b.soMenu = evMenu(o, ctx);
   return b;
 }
 
@@ -257,7 +300,7 @@ function agendaView(k0, k1, list, ctx) {
     const items = list.filter((o) => o.startKey <= d && o.endKey > d);
     if (!items.length && d !== today) continue;
     days.push(h('section.aday' + (d === today ? '.today' : ''), h('button.ahead', { type: 'button', onclick: () => go(`#/day/${d}`) }, h('b', String(keyParts(d)[2])), h('span', dayLabel(d, { weekday: 'long', month: 'long' }))),
-      h('div.alist', items.length ? items.map((o) => h('button.arow' + (tentative(o) ? '.tent' : ''), { type: 'button', style: `--c:${o.color}`, onclick: () => openItem(o, ctx) },
+      h('div.alist', items.length ? items.map((o) => h('button.arow' + (tentative(o) ? '.tent' : ''), { type: 'button', style: `--c:${o.color}`, onclick: () => openItem(o, ctx), soMenu: evMenu(o, ctx) },
         h('span.atime', o.allDay || (o.startKey < d && o.endKey > addDays(d, 1)) ? t('all_day') : o.startKey < d ? t('until_t', { t: clock(o.en, tz) }) : `${clock(o.s, tz)}${o.en > o.s ? ' – ' + clock(o.en, tz) : ''}`),
         h('i.dot'), h('span.atitle', h('b', o.title), o.e.place ? h('small.muted', o.e.place) : null), srcIcon(o), lockOf(o))) : h('p.muted.small', t('nothing_today')))));
   }
@@ -323,7 +366,7 @@ function block(it, ctx, tz) {
   const b = h('div.blk' + (tentative(o) ? '.tent' : '') + (o.readOnly ? '.ro' : '') + (short ? '.short' : '') + (it.cut.top ? '.cut-t' : '') + (it.cut.bottom ? '.cut-b' : ''), {
     role: 'button', tabindex: 0, style: `--c:${o.color};top:${it.top * HH / 60}px;height:${(it.bottom - it.top) * HH / 60 - 2}px;left:calc(${(it.col / it.n) * 100}% + 2px);width:calc(${100 / it.n}% - 4px)`,
     title: `${o.title} · ${clock(o.s, tz)}–${clock(o.en, tz)}${o.readOnly ? ' · ' + t('read_only') : ''}`,
-    onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openItem(o, ctx); } },
+    onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openItem(o, ctx); } }, soMenu: evMenu(o, ctx),
   }, h('b', o.title), h('small', `${clock(o.s, tz)}${short ? '' : ' – ' + clock(o.en, tz)}`), o.e.place && !short ? h('small', o.e.place) : null, h('span.blk-ic', srcIcon(o), lockOf(o)), o.readOnly ? null : h('div.rz', { 'aria-hidden': 'true' }));
   dragBlock(b, o, ctx, tz);
   return b;

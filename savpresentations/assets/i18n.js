@@ -843,6 +843,10 @@ page_settings|Page settings|Impostazioni della pagina
 transition_in|How this page comes in|Come entra questa pagina
 transition_t|The transition of the whole presentation is in its options.|Quella di tutta la presentazione è nelle sue opzioni.
 toolbar_edit|Customise the toolbar|Personalizza la barra
+bar_people|People in the presentation|Persone nella presentazione
+bar_zoom|Zoom|Zoom
+bar_insbar|The Insert bar|La barra Inserisci
+bar_slide|Number of the slide|Numero della diapositiva
 toolbar_edit_t|Choose the buttons and drag them in the order you like. Each one adds something to the page.|Scegli i pulsanti e trascinali nell’ordine che vuoi. Ognuno aggiunge qualcosa alla pagina.
 speaker_notes_ph|Speaker notes of this page: only editors see them, and you while presenting|Note del relatore per questa pagina: le vedono gli editor, e tu mentre presenti
 present_speaker|Speaker: slides + notes in two windows|Relatore: slide e note in due finestre

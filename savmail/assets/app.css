@@ -333,3 +333,5 @@ sav-avatar.logo { box-shadow: 0 0 0 1px var(--sav-color-border); border-radius: 
 .home.app.noside .hbody { grid-template-columns: minmax(0, 1fr); max-width: 1080px; }
 .sett .shd { margin: 0 0 .2rem -.6rem; }
 .pvwrap:has(.pvtext) { place-items: stretch; } .pvwrap:has(.pvtext) .pvstage { place-items: stretch; } .pvtext { min-height: 50vh; }
+/* a fixed space chosen in the bar of a message (⋮ → Customise the bars) */
+.cbar > i.bgap { width: .9rem; flex: none; }

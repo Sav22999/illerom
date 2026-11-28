@@ -27,7 +27,7 @@ const DEF = {
   shape: { k: 'rect', c: '#1d4e89', s: 3, f: '', d: false },
 };
 const SIZES_T = { pen: [1.5, 3, 5, 8, 13], pencil: [1.2, 2.5, 4, 6], marker: [10, 18, 28, 42], shape: [1.5, 3, 5, 8], eraser: [12, 24, 48, 90] };
-const TOOLS = [['select', 'mouse-pointer-2', 'V'], ['pen', 'pen', 'P'], ['pencil', 'pencil', 'C'], ['marker', 'highlighter', 'M'], ['eraser', 'eraser', 'E'], ['shape', 'square', 'R'], ['image', 'image', 'I']];
+const TOOLS = [['select', 'mouse-pointer-2', 'V'], ['hand', 'hand', 'H'], ['pen', 'pen', 'P'], ['pencil', 'pencil', 'C'], ['marker', 'highlighter', 'M'], ['eraser', 'eraser', 'E'], ['shape', 'square', 'R'], ['image', 'image', 'I']];
 const SHAPE_ICONS = { rect: 'square', ellipse: 'circle', diamond: 'diamond', triangle: 'triangle', line: 'line', arrow: 'move-up-right' };
 const BLOCKS = [['p', 'b_p'], ['h1', 'b_h1'], ['h2', 'b_h2'], ['h3', 'b_h3'], ['blockquote', 'b_quote']];
 const svgEl = (tag, attrs = {}) => { const n = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); return n; };
@@ -67,6 +67,112 @@ export async function notebookScreen(root, id) {
   const stack = h('div.col');
   const scroller = h('div.scroller', stack);
   const wrap = h('div.nb', scroller);
+  /** How the sheets follow one another: one under the other ('v') or side by side, turned like the pages of a book ('h'). */
+  const flowH = () => settings.flow === 'h';
+  /** How scrolling stops: where the finger or the wheel leaves it ('free'), or on a whole sheet ('snap', CSS scroll snap). */
+  const snapOn = () => settings.scroll === 'snap';
+  const applyFlow = () => { wrap.classList.toggle('fh', flowH()); wrap.classList.toggle('snap', snapOn()); };
+  applyFlow();
+  // ---- by whole sheets: the scroll moves freely (finger, wheel, trackpad, its momentum) and, once it stops, glides to a sheet:
+  // the next one in the direction it went if it went past a fifth of the way, back to the one it left otherwise. (CSS scroll
+  // snap pulled the sheets at every pause of a trackpad or a finger: it stopped and started again.)
+  let lastPos = 0, dir = 0, settleT = 0, glideUntil = 0, fingers = 0;
+  const pos = () => (flowH() ? scroller.scrollLeft : scroller.scrollTop);
+  function settleLater(ms = 220) { if (!snapOn()) return; clearTimeout(settleT); settleT = setTimeout(settle, ms); }
+  function settle() {
+    if (!snapOn()) return;
+    if (gesture || action || fingers || pull.on) { settleLater(200); return; }
+    if (performance.now() < glideUntil) { settleLater(glideUntil - performance.now() + 30); return; }
+    if (!sheets.length || !sheets[0].dom) return;
+    const hz = flowH(), p = pos(), view = hz ? scroller.clientWidth : scroller.clientHeight - (parseFloat(getComputedStyle(scroller).scrollPaddingTop) || 0);
+    const marks = sheets.map((sh) => snapAt(sh.dom.box)), size = (sh) => (hz ? sh.dom.box.offsetWidth : sh.dom.box.offsetHeight) + 24;
+    let k = 0;
+    while (k < marks.length - 1 && marks[k + 1] <= p + 1) k++;
+    // a sheet bigger than the window (zoomed in) is free inside: it only snaps past its end
+    const lo = marks[k] + Math.max(0, size(sheets[k]) - view), hi = k + 1 < marks.length ? marks[k + 1] : null;
+    if (p < marks[0]) { glide(marks[0]); return; }
+    if (p <= lo + 1) return;
+    if (hi === null) { glide(lo); return; }
+    const f = (p - lo) / Math.max(1, hi - lo);
+    glide(dir > 0 ? (f > .2 ? hi : lo) : f < .8 ? lo : hi);
+  }
+  function glide(to) {
+    if (Math.abs(to - pos()) < 2) return;
+    glideUntil = performance.now() + 650;
+    scroller.scrollTo(flowH() ? { left: to, behavior: 'smooth' } : { top: to, behavior: 'smooth' });
+  }
+  scroller.addEventListener('scroll', () => {
+    const p = pos();
+    if (performance.now() >= glideUntil && p !== lastPos) dir = Math.sign(p - lastPos);
+    lastPos = p;
+    settleLater();
+  }, { passive: true });
+  if ('onscrollend' in window) scroller.addEventListener('scrollend', () => settleLater(120));
+  scroller.addEventListener('touchstart', (e) => { fingers = e.touches.length; }, { passive: true });
+  scroller.addEventListener('touchend', (e) => { fingers = e.touches.length; if (!fingers) settleLater(); }, { passive: true });
+  scroller.addEventListener('touchcancel', (e) => { fingers = e.touches.length; if (!fingers) settleLater(); }, { passive: true });
+  /** The scrolls done here (zoom, a finger panning with a stylus, the pinch): the sheet comes into place once they stop. */
+  const freeScroll = () => settleLater(260);
+
+  // ---- at the ends of the notebook: going on past the last sheet (or before the first) fills the tile of a new sheet; letting
+  // go when it is full adds the sheet. Wheel and trackpad: it counts the scroll that has nowhere to go; a finger: its move.
+  const PULL = 200; // pixels of pulling to fill the tile
+  const pull = { on: false, end: 0, v: 0, t: 0 };
+  const atEdge = (sign) => (sign > 0 ? pos() >= (flowH() ? scroller.scrollWidth - scroller.clientWidth : scroller.scrollHeight - scroller.clientHeight) - 2 : pos() <= 2);
+  /** d: pixels of a scroll that had nowhere to go (+ towards the end). True when it pulled. */
+  function pullBy(d) {
+    const sign = Math.sign(d);
+    if (!sign || !atEdge(sign) || (pull.on && pull.end !== sign)) { if (pull.on && Math.sign(d) !== pull.end) pullReset(); return false; }
+    pull.on = true; pull.end = sign;
+    pull.v = clamp(pull.v + Math.abs(d) / PULL, 0, 1);
+    paintPull();
+    return true;
+  }
+  function paintPull() {
+    const on = pull.on ? (pull.end > 0 ? endTile : startTile) : null;
+    for (const x of [endTile, startTile]) {
+      x.style.setProperty('--pull', x === on ? pull.v : 0);
+      x.classList.toggle('pulling', x === on);
+      x.classList.toggle('ready', x === on && pull.v >= 1);
+    }
+    endTile.querySelector('span').textContent = on === endTile && pull.v >= 1 ? t('add_release') : t('add_sheet');
+  }
+  function pullRelease() {
+    clearTimeout(pull.t);
+    if (!pull.on) return;
+    const full = pull.v >= 1, end = pull.end;
+    pullReset();
+    if (full) addSheet(end > 0 ? sheets.length : 0);
+  }
+  function pullReset() { clearTimeout(pull.t); pull.on = false; pull.v = 0; pull.end = 0; paintPull(); }
+  /** Wheel and trackpad have no letting go: still for a moment is letting go. */
+  // the momentum of a trackpad that reaches the end dies away step by step: only a scroll that is not fading counts (a notch
+  // of a wheel, fingers still pushing), so a flick that lands at the end does not add a sheet by itself
+  let wheelLast = 0, wheelAt = 0;
+  const pullWheel = (d) => {
+    const now = performance.now(), m = Math.abs(d), fresh = now - wheelAt > 120 || m >= wheelLast * .98;
+    wheelLast = m; wheelAt = now;
+    if (!atEdge(Math.sign(d))) { if (pull.on) pullReset(); return false; }
+    if (!fresh) { if (pull.on) { clearTimeout(pull.t); pull.t = setTimeout(pullRelease, 280); } return true; }
+    if (!pullBy(d)) return false;
+    clearTimeout(pull.t); pull.t = setTimeout(pullRelease, 280);
+    return true;
+  };
+  let touchAt = null;
+  scroller.addEventListener('touchstart', (e) => { const p = e.touches[0]; touchAt = e.touches.length === 1 && !e.target.closest?.('.ink') ? [p.clientX, p.clientY] : null; }, { passive: true });
+  scroller.addEventListener('touchmove', (e) => {
+    if (!touchAt || e.touches.length !== 1) return;
+    const p = e.touches[0], d = flowH() ? touchAt[0] - p.clientX : touchAt[1] - p.clientY;
+    touchAt = [p.clientX, p.clientY];
+    pullBy(d);
+  }, { passive: true });
+  scroller.addEventListener('touchend', () => { touchAt = null; pullRelease(); }, { passive: true });
+  scroller.addEventListener('touchcancel', () => { touchAt = null; pullReset(); }, { passive: true });
+  /** Where the window stops for a sheet: in the middle when side by side, at its top (under the bar) when one under the other. */
+  const snapAt = (box) => (flowH() ? box.offsetLeft - Math.max(16, (scroller.clientWidth - box.offsetWidth) / 2) : box.offsetTop - (snapOn() ? (parseFloat(getComputedStyle(scroller).scrollPaddingTop) || 0) + 16 : 16));
+  // at the ends of the notebook a new sheet: after the last one (below it, or beside it like a book) and, smaller, before the first
+  const endTile = h('button.addend', { type: 'button', onclick: () => addSheet(sheets.length) }, icon('plus'), h('span', t('add_sheet')));
+  const startTile = h('button.addend.first', { type: 'button', title: t('add_sheet_before'), 'aria-label': t('add_sheet_before'), onclick: () => addSheet(0) }, icon('plus'));
   const status = h('span.wstatus', { role: 'status' });
   const zoomLabel = h('sav-button.zl', { size: 'sm', appearance: 'ghost', variant: 'neutral', title: t('zoom_100') }, '100%');
   zoomLabel.addEventListener('click', () => zoomTo(1));
@@ -102,7 +208,7 @@ export async function notebookScreen(root, id) {
     [W, H] = pageSize(settings);
     stack.style.setProperty('--W', W);
     stack.style.setProperty('--H', H);
-    put(stack, sheets.map(renderSheet));
+    put(stack, startTile, sheets.map(renderSheet), endTile);
     numberSheets();
     buildSide();
   }
@@ -121,13 +227,19 @@ export async function notebookScreen(root, id) {
   const restack = (sh) => { for (const x of sh.order) { const n = sh.els.get(x); if (n) sh.dom.itemsG.append(n); } };
 
   // ---------------------------------------------------------------- view: zoom and the sheet in front
-  const fitZ = () => { const w = (scroller.clientWidth || innerWidth) - (parseFloat(getComputedStyle(scroller).paddingLeft) || 0); return clamp((w - (mobile() ? 20 : 72)) / W, .15, mobile() ? 3 : 1.35); };
+  const fitZ = () => {
+    const cs = getComputedStyle(scroller), w = (scroller.clientWidth || innerWidth) - (parseFloat(cs.paddingLeft) || 0), zw = (w - (mobile() ? 20 : 72)) / W;
+    // side by side: the whole sheet in the height of the window as well (under the bar on top, above the tools at the bottom)
+    const zh = flowH() ? ((scroller.clientHeight || innerHeight) - (parseFloat(cs.paddingTop) || 0) - (mobile() ? 175 : 160)) / H : Infinity;
+    return clamp(Math.min(zw, zh), .15, mobile() ? 3 : 1.35);
+  };
   function setZ(nz, ax = scroller.clientWidth / 2, ay = scroller.clientHeight / 2) {
     nz = clamp(nz, .15, 5);
     if (Math.abs(nz - z) < 1e-4) return;
     // the point under (ax, ay) stays where it is
     const sx = (scroller.scrollLeft + ax) / Math.max(1, stack.scrollWidth), sy = (scroller.scrollTop + ay) / Math.max(1, stack.scrollHeight);
     z = nz;
+    freeScroll();
     stack.style.setProperty('--z', z);
     zoomLabel.textContent = Math.round(z * 100) + '%';
     scroller.scrollLeft = sx * stack.scrollWidth - ax;
@@ -142,9 +254,9 @@ export async function notebookScreen(root, id) {
   /** The sheet in the middle of the window. */
   let cur = 0;
   function whichSheet() {
-    const mid = scroller.getBoundingClientRect().top + scroller.clientHeight * .4;
+    const sb = scroller.getBoundingClientRect(), hz = flowH(), mid = hz ? sb.left + scroller.clientWidth * .5 : sb.top + scroller.clientHeight * .4;
     let best = 0, d = Infinity;
-    sheets.forEach((sh, n) => { const b = sh.dom.el.getBoundingClientRect(), dd = mid < b.top ? b.top - mid : mid > b.bottom ? mid - b.bottom : 0; if (dd < d) { d = dd; best = n; } });
+    sheets.forEach((sh, n) => { const b = sh.dom.el.getBoundingClientRect(), [lo, hi] = hz ? [b.left, b.right] : [b.top, b.bottom], dd = mid < lo ? lo - mid : mid > hi ? mid - hi : 0; if (dd < d) { d = dd; best = n; } });
     return best;
   }
   function onScroll() {
@@ -156,8 +268,9 @@ export async function notebookScreen(root, id) {
   function goSheet(n, smooth = true) {
     const sh = sheets[clamp(n, 0, sheets.length - 1)];
     if (!sh) return;
-    const top = sh.dom.box.offsetTop - 16;
-    scroller.scrollTo({ top, behavior: smooth && !matchMedia('(prefers-reduced-motion: reduce)').matches ? 'smooth' : 'auto' });
+    const behavior = smooth && !matchMedia('(prefers-reduced-motion: reduce)').matches ? 'smooth' : 'auto';
+    // side by side: the sheet in the middle of the window
+    scroller.scrollTo(flowH() ? { left: snapAt(sh.dom.box), behavior } : { top: snapAt(sh.dom.box), behavior });
   }
 
   // ---------------------------------------------------------------- changes, history, saving
@@ -284,7 +397,7 @@ export async function notebookScreen(root, id) {
     sheets.splice(at, 0, sh);
     const box = renderSheet(sh);
     const next = sheets[at + 1];
-    if (next) stack.insertBefore(box, next.dom.box); else stack.append(box);
+    stack.insertBefore(box, next ? next.dom.box : endTile);
     dirtyMeta.add(sh.id);
     for (const x of sh.order) mark(sh.id, x);
     orderDirty = true;
@@ -316,7 +429,7 @@ export async function notebookScreen(root, id) {
     sheets.splice(n, 1);
     sheets.splice(m, 0, sh);
     const next = sheets[m + 1];
-    if (next) stack.insertBefore(sh.dom.box, next.dom.box); else stack.append(sh.dom.box);
+    stack.insertBefore(sh.dom.box, next ? next.dom.box : endTile);
     orderDirty = true;
     numberSheets();
     buildSide();
@@ -555,6 +668,17 @@ export async function notebookScreen(root, id) {
   let selSheet = null, marquee = null, eraserAt = null;
   const overDrawn = new Set();
   const selItems = () => (selSheet ? [...sel].map((x) => selSheet.items.get(x)).filter(Boolean) : []);
+  /** The size of the eraser just chosen: its circle for a moment in the middle of the sheet in view. */
+  let flashT = 0;
+  function showEraser() {
+    const sh = sheets[cur], sb = scroller.getBoundingClientRect();
+    if (!sh?.dom || action) return;
+    const [x, y] = toPage(sh, sb.left + scroller.clientWidth / 2, sb.top + scroller.clientHeight / 2);
+    const at = (eraserAt = { sh, x: clamp(x, 0, W), y: clamp(y, 0, H), flash: true });
+    drawOverlay();
+    clearTimeout(flashT);
+    flashT = setTimeout(() => { if (eraserAt === at) { eraserAt = null; drawOverlay(); } }, 1100);
+  }
   function drawOverlay() {
     for (const sh of overDrawn) sh.dom?.over.replaceChildren();
     overDrawn.clear();
@@ -564,7 +688,13 @@ export async function notebookScreen(root, id) {
       sh.dom.over.append(svgEl('rect', { class: 'marq', x: Math.min(x0, x1), y: Math.min(y0, y1), width: Math.abs(x1 - x0), height: Math.abs(y1 - y0) }));
       overDrawn.add(sh);
     }
-    if (eraserAt && tool === 'eraser' && mode === 'ink') { eraserAt.sh.dom.over.append(svgEl('circle', { class: 'ercur', cx: eraserAt.x, cy: eraserAt.y, r: opt('eraser').s / 2 * k })); overDrawn.add(eraserAt.sh); }
+    if (eraserAt && tool === 'eraser' && mode === 'ink' && eraserAt.sh.dom) {
+      const { sh, x, y, touch } = eraserAt, r = opt('eraser').s / 2 * k, o = sh.dom.over;
+      o.append(svgEl('circle', { class: 'ercur' + (eraserAt.flash ? ' flash' : ''), cx: x, cy: y, r }));
+      // a finger covers the circle under it: the same circle again above the finger, joined to it, shows its size
+      if (touch) { const gy = y - r * 2 - 56 * k; o.append(svgEl('line', { class: 'erlink', x1: x, y1: y - r, x2: x, y2: gy + r }), svgEl('circle', { class: 'ercur ghost', cx: x, cy: gy, r })); }
+      overDrawn.add(sh);
+    }
     const list = selItems();
     if (!list.length || mode !== 'ink') return;
     const o = selSheet.dom.over;
@@ -619,7 +749,17 @@ export async function notebookScreen(root, id) {
       last = [x, y];
       lastT = ev.timeStamp;
     };
-    const paint = () => { raf = 0; live.innerHTML = itemSVG(item, isDark(sh.bg)); };
+    // the stroke on screen while it is drawn, in pieces: only the last one is drawn again at every frame (a long stroke was
+    // drawn whole sixty times a second, slower and slower); a full piece stays as it is and the next one starts on its end
+    let tail = svgEl('g'), from = 0;
+    live.append(tail);
+    const piece = (a, b) => itemSVG({ ...item, p: item.p.slice(a * 3, b * 3), _ts: a > 0, _te: b < item.p.length / 3 }, isDark(sh.bg));
+    const paint = () => {
+      raf = 0;
+      const n = item.p.length / 3;
+      if (kind !== 'marker' && n - from > 120) { tail.innerHTML = piece(from, n); from = n - 2; tail = svgEl('g'); live.append(tail); }
+      tail.innerHTML = itemSVG({ ...item, p: item.p.slice(from * 3), _ts: from > 0 }, isDark(sh.bg));
+    };
     add(e);
     paint();
     return {
@@ -638,6 +778,11 @@ export async function notebookScreen(root, id) {
   function eraserAction(sh, e) {
     const o = opt('eraser'), r = o.s / 2 / z, before = new Map(), created = new Set();
     let last = null;
+    // what the eraser changed is drawn once per frame (it may cut the same stroke many times between two frames)
+    const redraw = new Set();
+    let drawRaf = 0, reorder = false;
+    const later = (x2) => { redraw.add(x2); if (!drawRaf) drawRaf = requestAnimationFrame(flush); };
+    function flush() { cancelAnimationFrame(drawRaf); drawRaf = 0; for (const x2 of redraw) draw(sh, x2); redraw.clear(); if (reorder) { reorder = false; restack(sh); } }
     const at = (x, y) => {
       for (let k = sh.order.length - 1; k >= 0; k--) {
         const idk = sh.order[k], i = sh.items.get(idk);
@@ -654,12 +799,12 @@ export async function notebookScreen(root, id) {
           sh.order.splice(k + 1, 0, ...extra.map((x2) => x2.id));
           for (const x2 of extra) { sh.items.set(x2.id, x2); created.add(x2.id); }
           if (!pieces.length) sh.order.splice(k, 1);
-          draw(sh, idk);
-          for (const x2 of extra) draw(sh, x2.id);
-          restack(sh);
+          later(idk);
+          for (const x2 of extra) later(x2.id);
+          if (extra.length) reorder = true;
         } else if (hits(i, x, y, r)) {
           if (!before.has(idk) && !created.has(idk)) before.set(idk, i);
-          sh.items.delete(idk); sh.order.splice(k, 1); draw(sh, idk);
+          sh.items.delete(idk); sh.order.splice(k, 1); later(idk);
         }
       }
     };
@@ -667,7 +812,7 @@ export async function notebookScreen(root, id) {
       const [x, y] = toPage(sh, ev.clientX, ev.clientY);
       if (last) { const d = Math.hypot(x - last[0], y - last[1]), n = Math.ceil(d / (r * .5)); for (let k = 1; k <= n; k++) at(last[0] + (x - last[0]) * k / n, last[1] + (y - last[1]) * k / n); } else at(x, y);
       last = [x, y];
-      eraserAt = { sh, x, y };
+      eraserAt = { sh, x, y, touch: ev.pointerType === 'touch' };
       drawOverlay();
     };
     step(e);
@@ -675,6 +820,7 @@ export async function notebookScreen(root, id) {
       id: e.pointerId,
       move(ev) { for (const c of coalesced(ev)) step(c); },
       up() {
+        flush();
         const list = [...before].map(([k, b]) => [k, b, sh.items.get(k) || null]).concat([...created].map((k) => [k, null, sh.items.get(k) || null]));
         // what the eraser did is already on screen: it goes into the history and the save as one change
         const ord = sh.order.slice();
@@ -683,6 +829,8 @@ export async function notebookScreen(root, id) {
         sh.order = sh.order.filter((x) => sh.items.has(x));
         for (const [k] of before) if (!sh.order.includes(k)) sh.order.push(k);
         change(sh, list, ord);
+        // lifted: the circle stays a moment where the finger was, then goes (a mouse or a stylus keep it while hovering)
+        if (eraserAt?.touch) { const was = eraserAt; setTimeout(() => { if (eraserAt === was && !action) { eraserAt = null; drawOverlay(); } }, 550); }
       },
       cancel() { this.up(); },
     };
@@ -787,6 +935,8 @@ export async function notebookScreen(root, id) {
   // ---------------------------------------------------------------- pointers on the ink
   const sheetAt = (target) => { const s = target?.closest?.('.sheet'); return s ? byId(s.dataset.id) : null; };
   function cancelAction() { action?.cancel(); action = null; }
+  let penUp = -1e9;
+  const penDown = () => [...pointers.values()].some((q) => q.type === 'pen');
   const touchList = () => [...pointers.values()].filter((p) => p.type === 'touch');
   function startPinch() {
     const [a, b] = touchList();
@@ -803,12 +953,20 @@ export async function notebookScreen(root, id) {
     const sh = sheetAt(e.target);
     if (!sh) return;
     if (e.pointerType === 'pen' && !P.penOnly) { setPrefs({ penOnly: true }).catch(() => {}); P = prefs(); applyTouch(); toast(t('stylus_seen'), 'neutral'); }
-    // with a stylus a finger scrolls as the browser does
-    if (e.pointerType === 'touch' && P.penOnly) return;
+    // writing: no text field keeps the focus, or the iPad would take the Pencil for handwriting into it (Scribble)
+    if (e.pointerType !== 'touch' && isField(document.activeElement)) document.activeElement.blur();
+    // palm rejection: while a pen writes (and just after), fingers and the palm are ignored, so they neither scroll nor stop
+    // the stroke; a pen that lands while the palm is already down (the hand rested first) takes over instead of being dropped
+    if (e.pointerType === 'touch' && (penDown() || performance.now() - penUp < 400)) { e.preventDefault(); return; }
+    if (e.pointerType === 'pen' && gesture) { gesture = null; for (const [id, q] of pointers) if (q.type === 'touch') pointers.delete(id); wrap.classList.remove('panning'); }
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, type: e.pointerType });
     try { e.target.closest('.ink').setPointerCapture(e.pointerId); } catch { /* gone */ }
     if (e.pointerType === 'touch' && touchList().length >= 2) { cancelAction(); startPinch(); return; }
-    if (e.button === 1) { e.preventDefault(); gesture = { kind: 'pan', id: e.pointerId, x: e.clientX, y: e.clientY }; return; }
+    // with a stylus a finger scrolls the sheets (done here: the surface keeps touch-action none, so that Safari never takes
+    // the beginning of a stroke of the Pencil for a scroll and drops it)
+    if (e.pointerType === 'touch' && P.penOnly) { e.preventDefault(); gesture = { kind: 'pan', id: e.pointerId, x: e.clientX, y: e.clientY }; return; }
+    // the middle button, or the hand (Move): a press moves the sheets
+    if (e.button === 1 || tool === 'hand') { e.preventDefault(); gesture = { kind: 'pan', id: e.pointerId, x: e.clientX, y: e.clientY }; wrap.classList.add('panning'); return; }
     if (gesture) return;
     e.preventDefault();
     if (tool === 'pen' || tool === 'pencil' || tool === 'marker') action = strokeAction(sh, e, tool);
@@ -828,19 +986,25 @@ export async function notebookScreen(root, id) {
       const tl = touchList();
       if (tl.length < 2) return;
       const [a, b] = tl, d = Math.hypot(a.x - b.x, a.y - b.y), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2, sb = scroller.getBoundingClientRect();
-      scroller.scrollLeft -= mx - gesture.mx; scroller.scrollTop -= my - gesture.my;
+      freeScroll(); scroller.scrollLeft -= mx - gesture.mx; scroller.scrollTop -= my - gesture.my;
       gesture.mx = mx; gesture.my = my;
       setZ(gesture.z0 * d / gesture.d, mx - sb.left, my - sb.top);
       return;
     }
-    if (gesture?.kind === 'pan' && gesture.id === e.pointerId) { scroller.scrollLeft -= e.clientX - px; scroller.scrollTop -= e.clientY - py; return; }
+    if (gesture?.kind === 'pan' && gesture.id === e.pointerId) {
+      freeScroll();
+      const d = flowH() ? px - e.clientX : py - e.clientY;
+      if (!pullBy(d)) { scroller.scrollLeft -= e.clientX - px; scroller.scrollTop -= e.clientY - py; }
+      return;
+    }
     if (action && action.id === e.pointerId) action.move(e);
   }
   function onUp(e) {
     if (!pointers.has(e.pointerId)) return;
+    if (pointers.get(e.pointerId).type === 'pen') penUp = performance.now();
     pointers.delete(e.pointerId);
     if (gesture?.kind === 'pinch') { if (touchList().length < 2) gesture = null; return; }
-    if (gesture?.kind === 'pan' && gesture.id === e.pointerId) { gesture = null; return; }
+    if (gesture?.kind === 'pan' && gesture.id === e.pointerId) { gesture = null; wrap.classList.remove('panning'); pullRelease(); return; }
     if (action && action.id === e.pointerId) { const a = action; action = null; if (e.type === 'pointercancel') a.cancel(); else a.up(e); }
   }
   stack.addEventListener('pointerdown', onDown);
@@ -849,7 +1013,22 @@ export async function notebookScreen(root, id) {
   stack.addEventListener('pointerup', onUp);
   stack.addEventListener('pointercancel', onUp);
   stack.addEventListener('pointerleave', (e) => { if (e.pointerType !== 'touch' && eraserAt) { eraserAt = null; drawOverlay(); } });
+  let turnAt = 0;
   scroller.addEventListener('wheel', (e) => {
+    // side by side: the wheel of a mouse (up and down only) scrolls across; a trackpad already moves both ways
+    // (with the snapping, a notch of the wheel turns a whole sheet)
+    const px = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? scroller.clientHeight : 1;
+    // past an end of the notebook: the tile of a new sheet fills
+    if (!(e.ctrlKey || e.metaKey) && pullWheel((flowH() ? e.deltaX || (e.shiftKey ? 0 : e.deltaY) : e.deltaY) * px)) { if (flowH()) e.preventDefault(); return; }
+    if (!(e.ctrlKey || e.metaKey) && flowH() && !e.shiftKey && !e.deltaX && e.deltaY) {
+      e.preventDefault();
+      if (!snapOn()) { scroller.scrollLeft += e.deltaY * px; return; }
+      if (Math.abs(e.deltaY) < 4 || performance.now() - turnAt < 350) return;
+      turnAt = performance.now();
+      const n = clamp(whichSheet() + Math.sign(e.deltaY), 0, sheets.length - 1);
+      if (n === sheets.length - 1 && e.deltaY > 0 && whichSheet() === n) scroller.scrollTo({ left: scroller.scrollWidth, behavior: 'smooth' }); else goSheet(n);
+      return;
+    }
     if (!(e.ctrlKey || e.metaKey)) return;
     e.preventDefault();
     const sb = scroller.getBoundingClientRect();
@@ -858,21 +1037,24 @@ export async function notebookScreen(root, id) {
   let gs = 1; // Safari: the pinch of the trackpad
   scroller.addEventListener('gesturestart', (e) => { e.preventDefault(); gs = 1; });
   scroller.addEventListener('gesturechange', (e) => { e.preventDefault(); const sb = scroller.getBoundingClientRect(); setZ(z * e.scale / gs, e.clientX - sb.left, e.clientY - sb.top); gs = e.scale; });
-  stack.addEventListener('contextmenu', (e) => {
-    if (mode !== 'ink') return;
+  // the right click (or a long press) on a sheet: what the thing under it can do, in the menu of SavOffice (SavOffice.context);
+  // with a finger that writes, the column says data-so-draw: a finger held still is a stroke, not a menu
+  stack.soMenu = (e) => {
+    if (mode !== 'ink' || !e || gesture) return null;
+    // a long press with the select tool: the press held still is the menu, not a selection or a move
+    if (action) { if (tool !== 'select') return null; cancelAction(); marquee = null; }
     const sh = sheetAt(e.target);
-    if (!sh) return;
-    e.preventDefault();
-    if (action || gesture || ((e.pointerType || lastType) !== 'mouse' && tool !== 'select')) return;
+    if (!sh) return null;
     const [x, y] = toPage(sh, e.clientX, e.clientY), hit = topAt(sh, x, y, tol());
     if (hit && !(selSheet === sh && sel.has(hit.id))) select(sh, [hit.id]);
     const has = selSheet === sh && sel.size > 0;
-    import('./ui.js').then(({ menuAt }) => menuAt(e.clientX, e.clientY, has ? [
+    return has ? [
       ['copy', t('copy_sel'), () => copySel()], ['copy-plus', t('duplicate_sel'), () => duplicate()], '-', ['bring-to-front', t('front'), () => arrange(true)], ['send-to-back', t('back'), () => arrange(false)], '-', ['trash', t('delete_sel'), () => removeSel(), { danger: true }],
-    ] : [['clipboard-paste', t('paste'), () => pasteFromMenu(sh, [x, y])], ['image', t('insert_image'), () => pickImage(sh, [x, y])], ['file-plus', t('add_sheet_after'), () => addSheet(idx(sh) + 1)]]));
-  });
+    ] : [['clipboard-paste', t('paste'), () => pasteFromMenu(sh, [x, y])], ['image', t('insert_image'), () => pickImage(sh, [x, y])], ['file-plus', t('add_sheet_after'), () => addSheet(idx(sh) + 1)]];
+  };
+  function markDraw() { stack.toggleAttribute('data-so-draw', mode === 'ink' && tool !== 'select' && tool !== 'hand' && !P.penOnly); }
   /** Fingers draw (touch-action none) or, with a stylus, scroll the column as usual. */
-  function applyTouch() { wrap.classList.toggle('penonly', !!P.penOnly); }
+  function applyTouch() { wrap.classList.toggle('penonly', !!P.penOnly); markDraw(); }
 
   // ---------------------------------------------------------------- what the selection can do
   function removeSel() { const list = selItems(); if (!list.length) return; const sh = selSheet; change(sh, list.map((i) => [i.id, i, null])); sel.clear(); selSheet = null; drawOverlay(); buildProps(); }
@@ -942,7 +1124,7 @@ export async function notebookScreen(root, id) {
 
   // ---------------------------------------------------------------- the bars
   const tb = {};
-  function setToolQuiet(k) { tool = k; for (const [n, b] of Object.entries(tb)) b.on(n === k); wrap.dataset.tool = k; }
+  function setToolQuiet(k) { tool = k; for (const [n, b] of Object.entries(tb)) b.on(n === k); wrap.dataset.tool = k; markDraw(); }
   function setTool(k) {
     if (k === 'image') { pickImage(); return; }
     setToolQuiet(k);
@@ -953,12 +1135,18 @@ export async function notebookScreen(root, id) {
     setPrefs({ tool: k }).catch(() => {});
   }
   const tools = h('nav.tools', { 'aria-label': t('tools') });
-  for (const [k, ic, key] of TOOLS) {
-    const b = iconBtn(k === 'shape' ? SHAPE_ICONS[opt('shape').k] : ic, t('tool_' + k), () => setTool(k), { place: 'top', kbd: key, size: 'md' });
-    tb[k] = b;
-    tools.append(b);
-    if (k === 'select') tools.append(h('span.tsep'));
-  }
+  // every tool has its button; which ones the bars show and in what order is a choice of each person (⋮ → Customise the bars)
+  for (const [k, ic, key] of TOOLS) tb[k] = iconBtn(k === 'shape' ? SHAPE_ICONS[opt('shape').k] : ic, t('tool_' + k), () => setTool(k), { place: 'top', kbd: key, size: 'md' });
+  const TL_ITEMS = TOOLS.map(([k, ic]) => [k, ic, t('tool_' + k)]);
+  const TL_DEF = TOOLS.flatMap(([k]) => (k === 'hand' ? [k, '|'] : [k]));
+  /** A bar as each person chose it (kept with the account): its list, in order, with '|' a separator, '_' a fixed space and
+   *  '~' an adaptive one (SavOffice.bars); what it has at first when nothing was chosen. */
+  const BARS = window.SavOffice?.bars;
+  const barPick = (id, def, items) => (BARS ? BARS.pick(prefs().bars?.[id], def, items) : def);
+  const barList = (id, def, items) => { const l = barPick(id, def, items); return BARS ? BARS.layout(l) : l; };
+  const barEl = (k, map) => (k === '|' ? h('span.tsep.so-sep') : k === '_' ? h('i.bgap') : k === '~' ? h('span.spacer') : map[k]);
+  const layoutTools = () => put(tools, barList('tools', TL_DEF, TL_ITEMS).map((k) => barEl(k, tb)));
+  layoutTools();
 
   // the bar of the document
   const fmt = {};
@@ -970,12 +1158,16 @@ export async function notebookScreen(root, id) {
   const alignDrop = drop(h('sav-button', { icon: 'align-left', label: t('align'), title: t('align'), appearance: 'ghost', variant: 'neutral', size: 'sm', square: true }), [
     ['align-left', t('al_left'), () => cmd('justifyLeft')], ['align-center', t('al_center'), () => cmd('justifyCenter')], ['align-right', t('al_right'), () => cmd('justifyRight')],
   ], { placement: 'top', label: t('align') });
-  const docbar = keepCaret(h('nav.tools.docbar', { 'aria-label': t('mode_doc') },
-    blockSel, h('span.tsep'),
-    fbtn('bold', 'bold', t('bold'), () => cmd('bold'), 'Mod+B'), fbtn('italic', 'italic', t('italic'), () => cmd('italic'), 'Mod+I'), fbtn('underline', 'underline', t('underline'), () => cmd('underline'), 'Mod+U'), fbtn('strike', 'strikethrough', t('strike'), () => cmd('strikeThrough')),
-    textColor, textMark, h('span.tsep'),
-    fbtn('ul', 'list', t('list_bullet'), () => cmd('insertUnorderedList'), 'Mod+Shift+8'), fbtn('ol', 'list-ordered', t('list_number'), () => cmd('insertOrderedList'), 'Mod+Shift+7'), fbtn('chk', 'list-checks', t('list_check'), () => { restoreCaret(); checklist(); const sh = sheetOfDoc(lastDoc); if (sh) docInput(sh); syncFormat(); }, 'Mod+Shift+9'),
-    alignDrop, h('span.tsep'), fbtn('clear', 'remove-formatting', t('clear_format'), () => { cmd('removeFormat'); block('p'); }), fbtn('img', 'image', t('insert_image'), () => pickImage())));
+  const DB = { block: blockSel, bold: fbtn('bold', 'bold', t('bold'), () => cmd('bold'), 'Mod+B'), italic: fbtn('italic', 'italic', t('italic'), () => cmd('italic'), 'Mod+I'), underline: fbtn('underline', 'underline', t('underline'), () => cmd('underline'), 'Mod+U'), strike: fbtn('strike', 'strikethrough', t('strike'), () => cmd('strikeThrough')),
+    color: textColor, mark: textMark, ul: fbtn('ul', 'list', t('list_bullet'), () => cmd('insertUnorderedList'), 'Mod+Shift+8'), ol: fbtn('ol', 'list-ordered', t('list_number'), () => cmd('insertOrderedList'), 'Mod+Shift+7'),
+    chk: fbtn('chk', 'list-checks', t('list_check'), () => { restoreCaret(); checklist(); const sh = sheetOfDoc(lastDoc); if (sh) docInput(sh); syncFormat(); }, 'Mod+Shift+9'), align: alignDrop,
+    clear: fbtn('clear', 'remove-formatting', t('clear_format'), () => { cmd('removeFormat'); block('p'); }), img: fbtn('img', 'image', t('insert_image'), () => pickImage()) };
+  const DB_ITEMS = [['block', 'pilcrow', t('b_style')], ['bold', 'bold', t('bold')], ['italic', 'italic', t('italic')], ['underline', 'underline', t('underline')], ['strike', 'strikethrough', t('strike')], ['color', 'baseline', t('text_color')], ['mark', 'highlighter', t('text_mark')],
+    ['ul', 'list', t('list_bullet')], ['ol', 'list-ordered', t('list_number')], ['chk', 'list-checks', t('list_check')], ['align', 'align-left', t('align')], ['clear', 'remove-formatting', t('clear_format')], ['img', 'image', t('insert_image')]];
+  const DB_DEF = ['block', '|', 'bold', 'italic', 'underline', 'strike', 'color', 'mark', '|', 'ul', 'ol', 'chk', 'align', '|', 'clear', 'img'];
+  const docbar = keepCaret(h('nav.tools.docbar', { 'aria-label': t('mode_doc') }));
+  const layoutDoc = () => put(docbar, barList('format', DB_DEF, DB_ITEMS).map((k) => barEl(k, DB)));
+  layoutDoc();
   /** The buttons of the bar show what the text under the caret has. */
   function syncFormat() {
     const s = getSelection();
@@ -996,6 +1188,7 @@ export async function notebookScreen(root, id) {
     mode = m === 'doc' ? 'doc' : 'ink';
     if (modeSel.value !== mode) modeSel.value = mode;
     wrap.dataset.mode = mode;
+    markDraw();
     for (const sh of sheets) sh.dom.doc.contentEditable = mode === 'doc' ? 'true' : 'false';
     if (mode === 'doc') { cancelAction(); sel.clear(); selSheet = null; eraserAt = null; }
     tools.hidden = mode !== 'ink';
@@ -1037,7 +1230,7 @@ export async function notebookScreen(root, id) {
         kids.push(swatches(tool === 'marker' ? HIGHLIGHT : inks, tool === 'marker' ? o.c : inkOn(o.c, bg), (c) => { setOpt(tool, { c }); buildProps(); }), sep(), sizes(SIZES_T[tool], o.s, (s) => setOpt(tool, { s }), SIZES_T[tool].at(-1)));
       } else if (tool === 'eraser') {
         const o = opt('eraser');
-        kids.push(seg(t('eraser_mode'), o.mode, [['partial', 'eraser', t('er_partial')], ['whole', 'trash', t('er_whole')]], (m) => setOpt('eraser', { mode: m })), sep(), sizes(SIZES_T.eraser, o.s, (s) => setOpt('eraser', { s }), 90));
+        kids.push(seg(t('eraser_mode'), o.mode, [['partial', 'eraser', t('er_partial')], ['whole', 'trash', t('er_whole')]], (m) => setOpt('eraser', { mode: m })), sep(), sizes(SIZES_T.eraser, o.s, (s) => { setOpt('eraser', { s }); showEraser(); }, 90));
       } else if (tool === 'shape') {
         const o = opt('shape');
         kids.push(seg(t('tool_shape'), o.k, Object.entries(SHAPE_ICONS).map(([k, ic]) => [k, ic, t('s_' + k)]), (k) => { setOpt('shape', { k }); tb.shape.button.icon = SHAPE_ICONS[k]; buildProps(); }), sep(),
@@ -1105,11 +1298,18 @@ export async function notebookScreen(root, id) {
     font.addEventListener('change', () => { s.font = font.value; });
     const ts = h('sav-radio-group', { appearance: 'buttons', size: 'sm', value: s.tsize, label: t('text_size') }, ['s', 'm', 'l'].map((k) => h('sav-radio', { value: k }, t('ts_' + k))));
     ts.addEventListener('change', () => { s.tsize = ts.value; });
-    dialog({ title: t('nb_settings'), width: '28rem', body: h('div.form', h('div', h('span.flabel', t('cover')), covers), h('div.grid2', size, orient), h('p.small.muted', t('page_size_t')), h('div.grid2', font, ts)),
+    const flow = h('sav-radio-group', { appearance: 'buttons', size: 'sm', value: s.flow || 'v', label: t('flow') }, h('sav-radio', { value: 'v' }, icon('arrow-down-from-line'), t('flow_v')), h('sav-radio', { value: 'h' }, icon('book-open'), t('flow_h')));
+    flow.addEventListener('change', () => { s.flow = flow.value; });
+    const scroll = h('sav-radio-group', { appearance: 'buttons', size: 'sm', value: s.scroll || 'free', label: t('scrolling') }, h('sav-radio', { value: 'free' }, t('scroll_free')), h('sav-radio', { value: 'snap' }, t('scroll_snap')));
+    scroll.addEventListener('change', () => { s.scroll = scroll.value; });
+    dialog({ title: t('nb_settings'), width: '28rem', body: h('div.form', h('div', h('span.flabel', t('cover')), covers), h('div.grid2', size, orient), h('p.small.muted', t('page_size_t')), h('div.grid2', font, ts), flow, scroll, h('p.small.muted', t('scroll_t'))),
       actions: [{ label: t('cancel') }, { label: t('save'), primary: true, run: () => {
-        const resize = s.size !== settings.size || s.orient !== settings.orient, retype = resize || s.font !== settings.font || s.tsize !== settings.tsize;
+        const resize = s.size !== settings.size || s.orient !== settings.orient, retype = resize || s.font !== settings.font || s.tsize !== settings.tsize, reflowed = (s.flow || 'v') !== (settings.flow || 'v'), resnap = (s.scroll || 'free') !== (settings.scroll || 'free');
         Object.assign(settings, s);
         setDirty = true;
+        // the other way of turning the sheets: the same sheet in front, at the zoom that fits it
+        if (resnap && !reflowed) { applyFlow(); goSheet(cur); }
+        if (reflowed) { const at = cur; applyFlow(); requestAnimationFrame(() => { z = 0; setZ(fitZ()); goSheet(at, false); }); }
         if (resize) { const top = scroller.scrollTop / Math.max(1, stack.scrollHeight); renderAll(); scroller.scrollTop = top * stack.scrollHeight; }
         else if (retype) sheets.forEach((sh) => { paintPaper(sh); thumbLater(sh); });
         if (retype) sheets.forEach((sh) => reflowLater(sh));
@@ -1134,7 +1334,7 @@ export async function notebookScreen(root, id) {
     ['settings', t('nb_settings'), () => notebookSettings()],
     '-', mobile() ? ['file-down', t('save_savnot'), () => exp(saveSavnot)] : null, mobile() ? ['printer', t('save_pdf'), () => exp(printNotebook)] : null,
     ['scan', t('zoom_fit'), () => fit(), { kbd: 'Shift+1' }], document.documentElement.requestFullscreen ? ['maximize', t(document.fullscreenElement ? 'exit_full' : 'full_screen'), fullscreen] : null,
-    '-', ['info', t('shortcuts'), () => shortcuts()],
+    '-', !mobile() && BARS ? ['settings-2', BARS.menuLabel(), () => barsDialog()] : null, ['info', t('shortcuts'), () => shortcuts()],
   ];
   const moreB = drop(h('sav-button', { icon: 'ellipsis-vertical', label: t('more_tools'), title: t('more_tools'), appearance: 'ghost', variant: 'neutral', size: 'sm', square: true }), moreList, { placement: 'bottom-end', label: t('more_tools') });
 
@@ -1142,9 +1342,21 @@ export async function notebookScreen(root, id) {
   titleIn.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') titleIn.blur(); });
   titleIn.addEventListener('change', () => { const v = titleIn.value.trim(); if (!v) { titleIn.value = title; return; } if (v === title) return; title = v; titleDirty = true; document.title = title + ' – SavNotes'; queueSave(300); });
 
-  const top = h('header.wtop',
-    iconBtn('arrow-left', t('back_home'), () => go('#/'), { kbd: '' }), h('a.wbrand.mhide', { href: '#/', title: 'SavNotes' }, h('img', { src: 'icons/favicon.svg', width: 26, height: 26, alt: '' })), sideB,
-    h('div.wtitle', titleIn), status, h('span.spacer'), undoB, redoB, h('span.tsep'), h('span.mhide', paperPop), h('span.mhide', downloadB), moreB, h('span.tsep.mhide'), h('span.mhide', userMenu()));
+  // the title bar: back, the logo, the sheets and the title on the left, ⋮ and the account on the right (always); between them the list
+  const backB = iconBtn('arrow-left', t('back_home'), () => go('#/'), { kbd: '' }), brandA = h('a.wbrand.mhide', { href: '#/', title: 'SavNotes' }, h('img', { src: 'icons/favicon.svg', width: 26, height: 26, alt: '' })), titleEl = h('div.wtitle', titleIn), accountEl = h('span.mhide', userMenu());
+  const T2 = { undo: undoB, redo: redoB, paper: h('span.mhide', paperPop), download: h('span.mhide', downloadB) };
+  const TITLE_ITEMS = [['undo', 'undo-2', t('undo')], ['redo', 'redo-2', t('redo')], ['paper', 'notebook', t('sheet_paper')], ['download', 'download', t('download_as')]];
+  const TITLE_DEF = ['~', 'undo', 'redo', '|', 'paper', 'download'];
+  const top = h('header.wtop');
+  const layoutTitle = () => put(top, backB, brandA, sideB, titleEl, status, barList('title', TITLE_DEF, TITLE_ITEMS).map((k) => barEl(k, T2)), moreB, h('span.tsep.mhide'), accountEl);
+  layoutTitle();
+  /** Customising the bars (⋮ → Customise the bars): the window shared by the apps of SavOffice, a tab for each bar. */
+  function barsDialog() {
+    if (!BARS) return;
+    BARS.dialog({ bars: [{ id: 'title', items: TITLE_ITEMS, def: TITLE_DEF, before: [['arrow-left', t('back_home')], [null, title]], after: [['ellipsis-vertical', t('more_tools')], ['layout-grid', 'SavOffice'], ['user', t('account')]] }, { id: 'tools', items: TL_ITEMS, def: TL_DEF }, { id: 'format', items: DB_ITEMS, def: DB_DEF }],
+      value: { title: barPick('title', TITLE_DEF, TITLE_ITEMS), tools: barPick('tools', TL_DEF, TL_ITEMS), format: barPick('format', DB_DEF, DB_ITEMS) },
+      save: async (v) => { await setPrefs({ bars: { ...(prefs().bars || {}), ...v } }); layoutTitle(); layoutTools(); layoutDoc(); } });
+  }
   const zoom = h('div.zoom', pageLabel, h('span.tsep.mhide'), h('span.zbtns', iconBtn('zoom-out', t('zoom_out'), () => setZ(z / 1.2), { place: 'top', kbd: '-' }), zoomLabel, iconBtn('zoom-in', t('zoom_in'), () => setZ(z * 1.2), { place: 'top', kbd: '+' })), iconBtn('scan', t('zoom_fit'), () => fit(), { place: 'top', kbd: 'Shift+1' }));
   const dock = h('div.dock', props, h('div.dockrow', modeSel, tools, docbar));
   wrap.append(top, side, dock, zoom, h('div.sidescrim', { onclick: () => toggleSide(false) }));

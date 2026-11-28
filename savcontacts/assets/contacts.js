@@ -193,6 +193,16 @@ function build(root, view, key) {
       if (e.metaKey || e.ctrlKey || panes.classList.contains('selecting')) { box.checked = !box.checked; box.dispatchEvent(new Event('change')); return; }
       go(hashOf(view, c.id));
     });
+    // what can be done with this contact (with the ones chosen, when it is one of them): its right click and ⌘J (SavOffice.context)
+    r.soMenu = () => {
+      const ids = sel.has(c.id) && sel.size > 1 ? [...sel] : [c.id], one = ids.length === 1, run = (p) => Promise.resolve(p).catch(fail);
+      const items = view.kind === 'trash'
+        ? [['rotate-ccw', t('restore'), () => run(restore(ids))], ['trash', t('delete_forever'), () => run(purge(ids)), { danger: true }]]
+        : [one ? ['user', t('open'), () => go(hashOf(view, c.id))] : { head: t('n_selected', { n: ids.length }) }, one ? ['pencil', t('edit'), () => run(edit(c))] : null,
+          one && c.emails[0]?.value ? ['mail', t('write_email'), () => { location.href = 'mailto:' + c.emails[0].value; }] : null, one && c.phones[0]?.value ? ['phone', t('call'), () => { location.href = 'tel:' + c.phones[0].value.replace(/\s+/g, ''); }] : null, '-',
+          ['download', t('export'), () => run(import('./files.js').then((m) => m.exportDialog({ ids })))], ['trash', t('delete_contact'), () => run(remove(ids)), { danger: true }]];
+      return items.filter(Boolean);
+    };
     r.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); r.click(); }
       else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); step(e.key === 'ArrowDown' ? 1 : -1, r); }

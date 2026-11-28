@@ -37,6 +37,11 @@ export const TEMPLATES = [
   ['chalkstaff', 'staff', { bg: '#22372f', pat: 'staff', gap: 56 }],
   ['blueprint', 'grid-3x3', { bg: '#16324f', pat: 'grid', gap: 24 }],
   ['kraft', 'blank', { bg: '#d9c3a0', pat: 'dots', gap: 24 }],
+  ['cork', 'blank', { bg: '#c49a6c', pat: 'none', gap: 24 }],
+  ['night', 'grid-3x3', { bg: '#0f0f10', pat: 'grid', gap: 32 }],
+  ['mint', 'dots', { bg: '#e8f0e8', pat: 'dots', gap: 28 }],
+  ['cream', 'lines', { bg: '#f5f1e6', pat: 'lines', gap: 40 }],
+  ['slate', 'iso', { bg: '#2b3440', pat: 'iso', gap: 30 }],
 ];
 
 /** Where a picture is: m:<id> are the pictures of the account (kept by the server), data: URLs are inside the board. */

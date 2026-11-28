@@ -1515,6 +1515,8 @@ tr.click { cursor: pointer; }
 .style-box::part(content) { display: grid; gap: .8rem; } .style-box { display: block; }
 .color-row { display: flex; align-items: flex-end; gap: .3rem; } .color-row sav-color-picker { flex: 1; min-width: 0; }
 .rich-tools { display: flex; flex-wrap: wrap; }
+/* the bar of a text as each person chose it (⋮ → Customise the bars): separators, fixed and adaptive spaces */
+.rich-tools > .rich-sep { width: 1px; align-self: stretch; margin: .3rem .2rem; background: var(--sav-color-border); flex: none; } .rich-tools > .rich-gap { width: .8rem; flex: none; } .rich-tools > .rich-flex { flex: 1; }
 .layout-art { display: flex; gap: 3px; width: 2.6rem; height: 1rem; } .layout-art i { display: block; border-radius: 3px; background: currentColor; opacity: .45; }
 .segm { display: block; }
 sav-input.bad::part(base) { border-color: var(--sav-color-danger); }

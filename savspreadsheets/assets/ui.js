@@ -59,7 +59,7 @@ export const item = (value, ic, label, o = {}) => h('sav-menu-item', { value, va
 function fillMenu(d, items) {
   const list = items.filter(Boolean);
   list.forEach((i, n) => d.append(i === '-' ? h('sav-divider') : i instanceof Node ? i : i.head ? h('sav-menu-label', i.head) : item(String(n), i[0], i[1], i[3])));
-  d.addEventListener('sav-select', (e) => { const i = list[+e.detail.value]; if (i?.[2]) setTimeout(() => { const r = i[2](); if (r?.catch) r.catch(fail); }, 20); });
+  d.addEventListener('sav-select', (e) => { const i = list[+e.detail.value]; if (e.detail.checked !== undefined) d.hide(); if (i?.[2]) setTimeout(() => { const r = i[2](); if (r?.catch) r.catch(fail); }, 20); });
   return d;
 }
 /** A menu of a button. items may be a function, asked again every time it opens. */
@@ -69,7 +69,9 @@ export function drop(trigger, items, o = {}) {
   let list = [];
   const build = () => { for (const x of [...d.children]) if (x !== trigger) x.remove(); list = (typeof items === 'function' ? items() : items).filter(Boolean); list.forEach((i, n) => d.append(i === '-' ? h('sav-divider') : i instanceof Node ? i : i.head ? h('sav-menu-label', i.head) : item(String(n), i[0], i[1], i[3]))); };
   if (typeof items === 'function') { for (const ev of ['pointerdown', 'keydown']) trigger.addEventListener(ev, () => { if (!d.open) build(); }, true); } else build();
-  d.addEventListener('sav-select', (e) => { e.stopPropagation(); const i = list[+e.detail.value]; if (i?.[2]) setTimeout(() => { const r = i[2](); if (r?.catch) r.catch(fail); }, 20); });
+  // a checked item is a choice, not a toggle: sav-dropdown would only flip its own tick and stay open, leaving several ticked.
+  // Close it like any other item; the list is rebuilt from the real state the next time it opens.
+  d.addEventListener('sav-select', (e) => { e.stopPropagation(); const i = list[+e.detail.value]; if (e.detail.checked !== undefined) d.hide(); if (i?.[2]) setTimeout(() => { const r = i[2](); if (r?.catch) r.catch(fail); }, 20); });
   return d;
 }
 export const dropBtn = (ic, label, items, o = {}) => drop(h('sav-button', { icon: ic, label: o.text ? null : label, title: label, caret: o.caret !== false, appearance: o.appearance || 'ghost', variant: o.variant || 'neutral', size: o.size || 'sm' }, o.text ? h('span.lbl', label) : null), items, { label, ...o });
@@ -82,6 +84,10 @@ export function menuAt(x, y, items, o = {}) {
   requestAnimationFrame(() => d.show());
   return d;
 }
+
+/** The menu of a right click (or a long press): the one of SavOffice (sav-context-menu of SavComponents), the same in every
+ *  app; a menu at the point when it is not there. items as for menuAt. */
+export function ctxAt(x, y, items, o = {}) { if (window.SavOffice?.context?.show?.(x, y, items, o)) return null; return menuAt(x, y, items, o); }
 /** Something to press that shows a picture or a sample: a card. */
 export function tile(label, onclick, o = {}, ...kids) {
   return h('sav-card', { interactive: true, role: 'button', tabindex: 0, 'aria-label': label, title: label, onclick: (e) => onclick(e), onkeydown: (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); onclick(e); } }, ...o, class: 'tile ' + (o.class || '') }, ...kids);

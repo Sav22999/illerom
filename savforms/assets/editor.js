@@ -7,7 +7,7 @@ import { btn, colorPop, confirm, copyText, dialog, drop, dropBtn, empty, fail, h
 import { getLang, t } from './i18n.js';
 import { S, api, drop as dropForm, formLink, keep } from './store.js';
 import { appsButton } from './office.js';
-import { commands, go, userMenu } from './account.js';
+import { commands, go, prefs, setPrefs, userMenu } from './account.js';
 import { CHOICE, KINDS, OTHER, STATIC, kindIcon, kindName, newItem, uid } from './models.js';
 import { control, reqMark } from './inputs.js';
 import { headCard, richText, themed } from './fill.js';
@@ -42,14 +42,13 @@ const pickFile = (accept) => new Promise((ok) => { const i = h('input', { type: 
 const add = (n, ...kids) => { n.append(...kids.flat().filter((x) => x !== null && x !== undefined && x !== false)); return n; };
 
 /** An input of text inside the form canvas that grows with what is written. */
+/** A field of the editor (a title, a description, a choice): a field of SavComponents, a text area that grows with its text. */
 function grow(tag, value, placeholder, oninput, o = {}) {
-  const n = h(tag === 'input' ? 'input' : 'textarea', { class: 'ce ' + (o.cls || ''), value: tag === 'input' ? value || '' : null, placeholder, rows: tag === 'input' ? null : 1, maxlength: o.max || null, 'aria-label': o.label || placeholder, spellcheck: 'true' });
-  if (tag !== 'input') n.value = value || '';
-  const fit = () => { if (tag !== 'input') { n.style.height = 'auto'; n.style.height = n.scrollHeight + 'px'; } };
-  n.addEventListener('input', () => { fit(); oninput(n.value); });
-  n.addEventListener('keydown', (e) => { if (e.key === 'Enter' && tag === 'input' && o.onEnter) { e.preventDefault(); o.onEnter(); } });
-  requestAnimationFrame(fit);
-  new ResizeObserver(fit).observe(n);
+  const multi = tag !== 'input';
+  const n = h(multi ? 'sav-textarea' : 'sav-input', { class: 'ce ' + (o.cls || ''), placeholder, rows: multi ? 1 : null, resize: multi ? 'auto' : null, maxlength: o.max || null, 'aria-label': o.label || placeholder, spellcheck: 'true', size: o.size || null });
+  n.value = value || '';
+  n.addEventListener('input', () => oninput(n.value));
+  n.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !multi && o.onEnter) { e.preventDefault(); o.onEnter(); } });
   return n;
 }
 
@@ -95,10 +94,25 @@ export async function editorScreen(root, id, tab = 'questions') {
       '-', ['trash', t('delete_form'), async () => { if (!(await confirm(t('delete_form'), F.responses ? t('delete_form_answers', { n: F.responses }) : t('delete_form_text'), t('delete')))) return; pending = {}; await api('forms.delete', { id: F.id }); dropForm(F.id); go('#/'); }, { danger: true }],
   ];
   const shareBtn = btn(t('share'), { icon: 'send', variant: 'primary', appearance: 'solid', size: 'sm', onclick: () => shareDialog() });
-  const bar = h('header.etop', iconBtn('arrow-left', t('back_forms'), () => go('#/')), h('img.elogo', { src: 'icons/favicon.svg', width: 30, height: 30, alt: '' }),
-    h('div.etitlebox', title, h('div.emeta', badge, status)), h('div.spacer'),
-    iconBtn('eye', t('preview'), () => { flush(); window.open(formLink(F.id), '_blank', 'noopener'); }), shareBtn,
-    dropBtn('ellipsis-vertical', t('more'), moreList, { caret: false, placement: 'bottom-end' }), appsButton(), userMenu());
+  // the title bar: back, the logo and the title on the left, ⋮, the apps and the account on the right (always); between them the
+  // buttons each person chooses, in their order (⋮ → Customise the bars, kept with the account)
+  const [dupL, dlL, prL] = moreList();
+  const T2 = { preview: iconBtn('eye', t('preview'), () => { flush(); window.open(formLink(F.id), '_blank', 'noopener'); }), share: shareBtn,
+    duplicate: iconBtn('copy-plus', dupL[1], () => Promise.resolve(dupL[2]()).catch(fail)), download: iconBtn('download', dlL[1], () => Promise.resolve(dlL[2]()).catch(fail)), print: iconBtn('printer', prL[1], () => prL[2]()) };
+  const TITLE_ITEMS = [['preview', 'eye', t('preview')], ['share', 'send', t('share')], ['duplicate', 'copy-plus', dupL[1]], ['download', 'download', dlL[1]], ['print', 'printer', prL[1]]];
+  const TITLE_DEF = ['~', 'preview', 'share'];
+  const BARS = window.SavOffice?.bars;
+  const barPick = () => (BARS ? BARS.pick(prefs().bars?.title, TITLE_DEF, TITLE_ITEMS) : TITLE_DEF);
+  const fixedL = [iconBtn('arrow-left', t('back_forms'), () => go('#/')), h('img.elogo', { src: 'icons/favicon.svg', width: 30, height: 30, alt: '' }), h('div.etitlebox', title, h('div.emeta', badge, status))];
+  const fixedR = [dropBtn('ellipsis-vertical', t('more'), () => [...moreList(), ...(!mobile() && BARS ? ['-', ['settings-2', BARS.menuLabel(), () => barsDialog()]] : [])], { caret: false, placement: 'bottom-end' }), appsButton(), userMenu()];
+  const bar = h('header.etop');
+  const layoutTitle = () => put(bar, fixedL, (BARS ? BARS.layout(barPick()) : TITLE_DEF).map((k) => (k === '|' ? h('span.esep.so-sep') : k === '_' ? h('i.bgap') : k === '~' ? h('div.spacer') : T2[k])), fixedR);
+  /** Customising the bars (⋮ → Customise the bars): the window shared by the apps of SavOffice. */
+  function barsDialog() {
+    BARS.dialog({ bars: [{ id: 'title', items: TITLE_ITEMS, def: TITLE_DEF, before: [['arrow-left', t('back_forms')], [null, F.title || t('untitled')]], after: [['ellipsis-vertical', t('more')], ['layout-grid', 'SavOffice'], ['user', t('account')]] }], value: { title: barPick() },
+      save: async (v) => { await setPrefs({ bars: { ...(prefs().bars || {}), ...v } }); layoutTitle(); } });
+  }
+  layoutTitle();
   const syncTitle = () => { document.title = (F.title || t('untitled')) + ' – SavForms'; const h1 = body.querySelector('.fhead .ftitle'); if (h1 && h1 !== document.activeElement) h1.value = F.title; };
   const body = h('div.ebody');
   put(root, h('div.editor', bar, h('div.etabbar', tabs), body));
@@ -160,6 +174,13 @@ export async function editorScreen(root, id, tab = 'questions') {
     requestAnimationFrame(() => canvas.querySelector(`[data-id="${q.id}"]`)?.scrollIntoView({ block: 'nearest' }));
   }
 
+  /** Where a question or a section can lead: on, a section further down (never back: no circles), or the end of the form. */
+  function goSelect(q, value, onpick, label) {
+    const at = pos(q.id), secs = F.items.slice(at + 1).filter((x) => x.t === 'section');
+    const opts = [['next', t('go_next')], ...secs.map((x) => [x.id, t('go_section', { s: x.title || t('k_section') + ' ' + (F.items.filter((y) => y.t === 'section').indexOf(x) + 1) })]), ['submit', t('go_submit')]];
+    return select(label, opts, value && opts.some((o) => o[0] === value) ? value : 'next', (v) => onpick(v === 'next' ? undefined : v), { size: 'sm', class: 'gosel' });
+  }
+
   function itemCard(q, i) {
     const on = sel === q.id;
     const card = h('section.fcard.qcard' + (on ? '.on' : '') + (q.t === 'section' ? '.qsec' : ''), { 'data-id': q.id, onclick: (e) => { if (sel === q.id) return; if (e.target.closest('sav-button,sav-dropdown,button')) return; sel = q.id; const prev = canvas.querySelector('.qcard.on'); if (prev) redraw(F.items.find((x) => x.id === prev.dataset.id) || q); redraw(q); markSel(); requestAnimationFrame(() => canvas.querySelector(`[data-id="${q.id}"] .qt-title`)?.focus()); } });
@@ -180,6 +201,7 @@ export async function editorScreen(root, id, tab = 'questions') {
     const descr = q.t === 'image' ? null : grow('textarea', q.descr, t(q.t === 'text' || q.t === 'section' ? 'text_body_ph' : 'descr_ph'), (v) => { q.descr = v; changed(); }, { cls: 'qt-descr', max: 3000 });
     const quiz = F.settings.quiz && GRADED.includes(q.t);
     add(card, head, descr, kindBody(q, changed, quiz));
+    if (q.t === 'section') add(card, h('div.goafter', icon('git-branch'), goSelect(q, q.go, (v) => { q.go = v; changed(); }, t('go_after_section'))));
 
     const foot = h('div.qfoot',
       quiz ? h('div.points', icon('trophy'), h('sav-number-input', { value: q.points ?? 1, min: 0, max: 100, size: 'sm', limits: 'never', 'aria-label': t('points'), onchange: (e) => { q.points = Math.max(0, Math.min(100, +e.currentTarget.value || 0)); changed(); } }), h('small.muted', t('points'))) : null,
@@ -193,6 +215,7 @@ export async function editorScreen(root, id, tab = 'questions') {
         ['shuffle', t('shuffle_opts'), () => { q.shuffle = !q.shuffle; changed(); redraw(q); }, { check: !!q.shuffle }],
         q.t === 'single' || q.t === 'multi' ? ['plus', t('other_option'), () => { q.other = !q.other; changed(); redraw(q); }, { check: !!q.other }] : null,
         q.t === 'multi' ? ['sliders-horizontal', t('how_many'), () => limitsDialog(q, () => { changed(); redraw(q); })] : null,
+        q.t === 'single' || q.t === 'dropdown' ? ['git-branch', t('go_by_answer'), () => { q.branch = !q.branch; if (!q.branch) for (const o of q.opts) delete o.go; changed(); redraw(q); }, { check: !!q.branch }] : null,
       ], { caret: false, placement: 'bottom-end' }) : null);
     add(card, foot);
     return card;
@@ -203,7 +226,7 @@ export async function editorScreen(root, id, tab = 'questions') {
     if (q.t === 'section') add(card, h('div.secmark', icon('rows-3'), t('k_section')), h('h2', q.title || t('k_section')), q.descr ? richText(q.descr) : null);
     else if (q.t === 'text') add(card, q.title ? h('h2', q.title) : h('h2.muted', t('k_text')), q.descr ? richText(q.descr) : null);
     else if (q.t === 'image') add(card, q.src ? h('img.qimg', { src: q.src, alt: q.alt || '' }) : h('div.noimg', icon('image'), t('no_image')), q.title ? h('p.cap', q.title) : null);
-    else add(card, h('h3.qtitle', h('span', q.title || h('span.muted', t('untitled_q'))), q.req ? reqMark() : null), q.descr ? richText(q.descr, 'div.qdescr') : null, h('div.qprev', control(q, {}, { disabled: true })));
+    else add(card, q.branch ? h('div.gobadge', icon('git-branch'), t('go_by_answer_on')) : null, h('h3.qtitle', h('span', q.title || h('span.muted', t('untitled_q'))), q.req ? reqMark() : null), q.descr ? richText(q.descr, 'div.qdescr') : null, h('div.qprev', control(q, {}, { disabled: true })));
     return card;
   }
 
@@ -226,7 +249,7 @@ export async function editorScreen(root, id, tab = 'questions') {
     const marker = (j) => q.t === 'ranking' ? h('b.onum', String(j + 1)) : icon(o.icon || (q.t === 'multi' || q.t === 'checkgrid' ? 'square' : q.t === 'dropdown' ? 'hash' : 'circle'));
     const draw = (focus) => {
       put(box, q[key].map((op, j) => {
-        const inp = grow('input', op.label, o.ph ? o.ph(j + 1) : t('option_n', { n: j + 1 }), (v) => { op.label = v; changed(); }, { cls: 'optin', max: 300, onEnter: () => { addAt(j + 1); } });
+        const inp = grow('input', op.label, o.ph ? o.ph(j + 1) : t('option_n', { n: j + 1 }), (v) => { op.label = v; changed(); }, { cls: 'optin', max: 300, size: 'sm', onEnter: () => { addAt(j + 1); } });
         inp.addEventListener('paste', (e) => {
           const lines = (e.clipboardData?.getData('text') || '').split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
           if (lines.length < 2) return;
@@ -240,7 +263,8 @@ export async function editorScreen(root, id, tab = 'questions') {
           const isOn = (q.correct || []).includes(op.id);
           return iconBtn(isOn ? 'circle-check' : 'circle', t(isOn ? 'is_correct' : 'mark_correct'), () => { const c = new Set(q.correct || []); if (c.has(op.id)) c.delete(op.id); else { if (q.t !== 'multi') c.clear(); c.add(op.id); } q.correct = [...c]; changed(); draw(); }, { class: 'corr' + (isOn ? ' on' : '') });
         })() : null;
-        return h('div.optrow' + (o.quiz && (q.correct || []).includes(op.id) ? '.right' : ''), marker(j), inp, correct, q[key].length > 1 ? iconBtn('x', t('remove'), () => remove(j)) : null);
+        const go = key === 'opts' && q.branch ? goSelect(q, op.go, (v) => { if (v) op.go = v; else delete op.go; changed(); }, null) : null;
+        return h('div.optrow' + (o.quiz && (q.correct || []).includes(op.id) ? '.right' : ''), marker(j), inp, go, correct, q[key].length > 1 ? iconBtn('x', t('remove'), () => remove(j)) : null);
       }), q[key].length < (o.max || 100) ? h('div.optrow.addopt', marker(q[key].length), h('button.linkbtn', { type: 'button', onclick: () => addAt(q[key].length) }, o.addLabel || t('add_option')),
         key === 'opts' && q.other ? h('span.muted', ' · ', t('other_added')) : key === 'opts' && (q.t === 'single' || q.t === 'multi') ? [h('span.muted', ' ' + t('or') + ' '), h('button.linkbtn', { type: 'button', onclick: () => { q.other = true; changed(); redraw(q); } }, t('add_other'))] : null) : null,
       key === 'opts' && q.other ? h('div.optrow.other', marker(q[key].length), h('span.muted.grow', t('other') + '…'), iconBtn('x', t('remove'), () => { q.other = false; changed(); redraw(q); })) : null);

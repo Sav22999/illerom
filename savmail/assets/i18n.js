@@ -159,6 +159,10 @@ const T = {
   // writing
   new_message: ['New message', 'Nuovo messaggio'], cc_bcc: ['Cc Bcc', 'Cc Ccn'], addr_hint: ['Address, then Enter', 'Indirizzo, poi Invio'],
   bold: ['Bold', 'Grassetto'], italic: ['Italic', 'Corsivo'], underline: ['Underline', 'Sottolineato'], list_bullet: ['Bulleted list', 'Elenco puntato'], list_number: ['Numbered list', 'Elenco numerato'],
+  strike: ['Strikethrough', 'Barrato'], align_left: ['Align left', 'Allinea a sinistra'], align_center: ['Centre', 'Centra'], align_right: ['Align right', 'Allinea a destra'],
+  indent_more: ['Increase indent', 'Aumenta rientro'], indent_less: ['Decrease indent', 'Riduci rientro'], hr: ['Horizontal line', 'Linea orizzontale'], undo: ['Undo', 'Annulla'], redo: ['Redo', 'Ripeti'],
+  more: ['More', 'Altro'],
+  open: ['Open', 'Apri'], n_selected: ['{n} chosen', '{n} selezionati'],
   quote: ['Quote', 'Citazione'], link: ['Link', 'Link'], link_address: ['Address of the link', 'Indirizzo del link'], clear_format: ['Clear formatting', 'Cancella formattazione'], attach: ['Attach files', 'Allega file'],
   send: ['Send', 'Invia'], save_draft: ['Save draft', 'Salva bozza'], discard: ['Discard', 'Scarta'], discard_q: ['Discard this message?', 'Scartare questo messaggio?'],
   discard_t: ['What you wrote, and its draft, will be gone.', 'Quello che hai scritto, e la sua bozza, spariranno.'],

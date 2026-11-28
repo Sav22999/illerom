@@ -12,6 +12,7 @@
  *                  or rejected / expired (slot passed without approval) / cancelled / failed
  * deliveries       one row per subscriber of a newsletter that is being sent (the cron resumes from here)
  * images           pictures uploaded in the editor, public (they are shown in the emails)
+ * profiles         the settings of this app for each account (a small JSON: the buttons of the editor's bar…)
  */
 
 declare(strict_types=1);
@@ -25,6 +26,11 @@ function schema_statements(string $p): array
         "CREATE TABLE IF NOT EXISTS `{$p}meta` (
             `k` VARCHAR(40) NOT NULL PRIMARY KEY,
             `v` VARCHAR(255) NOT NULL
+        ) $e",
+        "CREATE TABLE IF NOT EXISTS `{$p}profiles` (
+            `user_id` INT UNSIGNED NOT NULL PRIMARY KEY,
+            `prefs` TEXT NULL,
+            " . $fk('prof_user', 'user_id', 'users') . "
         ) $e",
         "CREATE TABLE IF NOT EXISTS `{$p}attempts` (
             `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,

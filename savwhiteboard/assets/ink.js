@@ -29,13 +29,14 @@ export function outline(item) {
     let dx = b[0] - a[0], dy = b[1] - a[1];
     const len = Math.hypot(dx, dy) || 1;
     dx /= len; dy /= len;
-    const taper = item.tool === 'pencil' ? 1 : Math.min(1, .55 + .45 * Math.min(i, n - 1 - i) / 3);
+    // (a piece of a stroke still being drawn, _ts / _te: that end goes on in the next piece, so it is not thinner)
+    const taper = item.tool === 'pencil' ? 1 : Math.min(1, .55 + .45 * Math.min(item._ts ? 3 : i, item._te ? 3 : n - 1 - i) / 3);
     const r = w[i] * taper;
     L.push([P[i][0] - dy * r, P[i][1] + dx * r]);
     R.push([P[i][0] + dy * r, P[i][1] - dx * r]);
   }
   const curve = (side) => { let d = ''; for (let i = 1; i < side.length - 1; i++) { const m = [(side[i][0] + side[i + 1][0]) / 2, (side[i][1] + side[i + 1][1]) / 2]; d += `Q${f(side[i][0])} ${f(side[i][1])} ${f(m[0])} ${f(m[1])}`; } const e = side[side.length - 1]; return d + `L${f(e[0])} ${f(e[1])}`; };
-  const rEnd = Math.max(.3, w[n - 1] * (item.tool === 'pencil' ? 1 : .55)), rStart = Math.max(.3, w[0] * (item.tool === 'pencil' ? 1 : .55));
+  const rEnd = Math.max(.3, w[n - 1] * (item.tool === 'pencil' || item._te ? 1 : .55)), rStart = Math.max(.3, w[0] * (item.tool === 'pencil' || item._ts ? 1 : .55));
   const Rr = R.slice().reverse();
   return `M${f(L[0][0])} ${f(L[0][1])}${curve(L)}A${f(rEnd)} ${f(rEnd)} 0 0 1 ${f(Rr[0][0])} ${f(Rr[0][1])}${curve(Rr)}A${f(rStart)} ${f(rStart)} 0 0 1 ${f(L[0][0])} ${f(L[0][1])}Z`;
 }
@@ -168,16 +169,38 @@ export function hits(i, x, y, tol) {
 /** Does the circle (x, y, r) touch the item? (the eraser) */
 export const touches = (i, x, y, r) => hits(i, x, y, r);
 
-/** The stroke without the points inside the circle: the pieces that are left (none when all of it is gone). */
+/**
+ * The pieces of a stroke left by the eraser (a circle at x, y of radius r): null when it does not touch it. Precise: every
+ * stretch between two points is cut exactly where it enters and leaves the circle (the pressure follows), so only the ink under
+ * the eraser goes — not the whole stretch up to the next recorded point, which may be far when the line was drawn fast.
+ */
 export function cut(i, x, y, r) {
-  const p = i.p, runs = [];
+  const p = i.p, n = p.length / 3, runs = [];
+  if (!n) return null;
+  const rad = (pr) => r + (i.tool === 'marker' ? i.s / 2 : widthAt(i.tool, i.s, pr) / 2) * .35;
+  const R = (v) => Math.round(v * 100) / 100;
+  const at = (k, t) => [p[k] + (p[k + 3] - p[k]) * t, p[k + 1] + (p[k + 4] - p[k + 1]) * t, p[k + 2] + (p[k + 5] - p[k + 2]) * t];
+  const inside = (q) => Math.hypot(q[0] - x, q[1] - y) <= rad(q[2]);
   let cur = [], changed = false;
-  for (let k = 0; k < p.length; k += 3) {
-    if (Math.hypot(p[k] - x, p[k + 1] - y) <= r + (i.tool === 'marker' ? i.s / 2 : widthAt(i.tool, i.s, p[k + 2]) / 2) * .5) { changed = true; if (cur.length) runs.push(cur); cur = []; }
-    else cur.push(p[k], p[k + 1], p[k + 2]);
+  const add = (q) => { const l = cur.length; if (l && cur[l - 3] === R(q[0]) && cur[l - 2] === R(q[1])) return; cur.push(R(q[0]), R(q[1]), Math.round(q[2] * 1000) / 1000); };
+  const end = () => { if (cur.length) runs.push(cur); cur = []; };
+  if (n === 1) { const q = [p[0], p[1], p[2]]; return inside(q) ? [] : null; }
+  if (!inside([p[0], p[1], p[2]])) add([p[0], p[1], p[2]]); else changed = true;
+  for (let k = 0; k + 3 < p.length; k += 3) {
+    // where the stretch crosses the circle: |A + t(B − A) − C| = radius, for t between 0 and 1
+    const ax = p[k] - x, ay = p[k + 1] - y, dx = p[k + 3] - p[k], dy = p[k + 4] - p[k + 1], rr = rad((p[k + 2] + p[k + 5]) / 2);
+    const a = dx * dx + dy * dy, b = 2 * (ax * dx + ay * dy), c = ax * ax + ay * ay - rr * rr, ts = [0];
+    if (a > 0) { const d = b * b - 4 * a * c; if (d > 0) { const s = Math.sqrt(d); for (const t of [(-b - s) / (2 * a), (-b + s) / (2 * a)]) if (t > 0 && t < 1) ts.push(t); } }
+    ts.push(1);
+    for (let j = 0; j + 1 < ts.length; j++) {
+      const mid = at(k, (ts[j] + ts[j + 1]) / 2);
+      if (Math.hypot(mid[0] - x, mid[1] - y) <= rr) { changed = true; end(); continue; }
+      add(at(k, ts[j])); add(at(k, ts[j + 1]));
+    }
   }
-  if (cur.length) runs.push(cur);
-  return changed ? runs : null;
+  end();
+  // a piece too short to be seen (a sliver at the edge of the eraser) goes too
+  return changed ? runs.filter((q) => q.length >= 6 || i.p.length === 3) : null;
 }
 
 /** An item moved by (dx, dy). */

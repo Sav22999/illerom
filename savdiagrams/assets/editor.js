@@ -8,7 +8,7 @@
  * trees. Moving: two fingers (pinch to zoom), the middle button, the space bar, the hand, or the wheel. Every change goes
  * into the history (undo/redo) and into the next save, which sends only what changed.
  */
-import { btn, colorPop, confirm, dialog, drop, fail, h, icon, iconBtn, K, menuAt, mobile, put, toast } from './ui.js';
+import { btn, colorPop, confirm, ctxAt, dialog, drop, fail, h, icon, iconBtn, K, menuAt, mobile, put, toast } from './ui.js';
 import { getLang, t } from './i18n.js';
 import { S, api } from './store.js';
 import { commands, go, prefs, setPrefs, userMenu } from './account.js';
@@ -590,7 +590,7 @@ export async function editorScreen(root, id) {
   function context(cx, cy, hit) {
     if (hit && !sel.has(hit.id)) select([hit.id]);
     const [x, y] = toWorld(cx, cy), list = selItems(), one = list.length === 1 ? list[0] : null;
-    menuAt(cx, cy, list.length ? [
+    ctxAt(cx, cy, list.length ? [
       one ? ['type', t('edit_text'), () => startEdit(one), { kbd: 'Enter' }] : null,
       one?.t === 'node' ? ['git-branch-plus', t('add_child'), () => addChild(one), { kbd: 'Tab' }] : null,
       '-', ['scissors', t('cut_sel'), () => copySel(true), { kbd: 'Mod+X' }], ['copy', t('copy_sel'), () => copySel(), { kbd: 'Mod+C' }], ['copy-plus', t('duplicate_sel'), () => duplicate(), { kbd: 'Mod+D' }],
@@ -758,10 +758,11 @@ export async function editorScreen(root, id) {
   // ---------------------------------------------------------------- the library and the tools
   const tb = {};
   const tools = h('nav.tools', { 'aria-label': t('tools') });
-  const addTool = (k, ic, label, kbd, run) => { const b = iconBtn(ic, label, run, { place: 'top', kbd, size: matchMedia('(max-width: 640px)').matches ? 'sm' : 'md' }); tb[k] = b; tools.append(b); return b; };
+  // every tool has its button; which ones the dock shows and in what order is a choice of each person (⋮ → Customise the bars)
+  const TL = {}, TL_ITEMS = [];
+  const addTool = (k, ic, label, kbd, run) => { const b = iconBtn(ic, label, run, { place: 'top', kbd, size: matchMedia('(max-width: 640px)').matches ? 'sm' : 'md' }); tb[k] = b; TL[k] = b; TL_ITEMS.push([k, ic, label]); return b; };
   addTool('select', 'mouse-pointer-2', t('tool_select'), 'V', () => setTool('select'));
   addTool('hand', 'hand', t('tool_hand'), 'H', () => setTool('hand'));
-  tools.append(h('span.tsep'));
   for (const k of QUICK) addTool('shape:' + k, SHAPE_ICON[k], t('s_' + k), { rect: 'R', round: 'U', diamond: 'D', ellipse: 'O' }[k], () => setTool('shape', k));
   // the whole library: a grid of shapes, to press (then click on the page) or to drag onto the page
   const lib = h('div.lib');
@@ -798,9 +799,20 @@ export async function editorScreen(root, id) {
     });
     lib.append(b);
   }
-  tools.append(libPop, h('span.tsep'));
+  TL.lib = libPop; TL_ITEMS.push(['lib', 'shapes', t('shapes')]);
   addTool('connect', 'connector', t('tool_connect'), 'C', () => setTool('connect'));
   addTool('text', 'type', t('tool_text'), 'T', () => setTool('text'));
+  // the other shapes of the library, each can have its own button in the dock too
+  for (const k of SHAPES) if (!QUICK.includes(k) && k !== 'text') addTool('shape:' + k, SHAPE_ICON[k], t('s_' + k), '', () => setTool('shape', k));
+  const TL_DEF = ['select', 'hand', '|', ...QUICK.map((k) => 'shape:' + k), 'lib', '|', 'connect', 'text'];
+  /** A bar as each person chose it (kept with the account): its list, in order, with '|' a separator, '_' a fixed space and
+   *  '~' an adaptive one (SavOffice.bars); what it has at first when nothing was chosen. */
+  const BARS = window.SavOffice?.bars;
+  const barPick = (id, def, items) => (BARS ? BARS.pick(prefs().bars?.[id], def, items) : def);
+  const barList = (id, def, items) => { const l = barPick(id, def, items); return BARS ? BARS.layout(l) : l; };
+  const barEl = (k, map) => (k === '|' ? h('span.tsep.so-sep') : k === '_' ? h('i.bgap') : k === '~' ? h('span.spacer') : map[k]);
+  const layoutTools = () => put(tools, barList('tools', TL_DEF, TL_ITEMS).map((k) => barEl(k, TL)));
+  layoutTools();
 
   // ---------------------------------------------------------------- the panel of the selection
   const props = h('div.props');
@@ -937,7 +949,7 @@ export async function editorScreen(root, id) {
     ['whiteboard', t('from_board'), async () => { const { pickBoard } = await import('./home.js'); const d = await pickBoard(); if (d) pasteItems(d.items); }],
     ['file-up', t('insert_file'), () => insertFile()],
     '-', ['map', t(showMap ? 'hide_map' : 'show_map'), () => toggleMap()], ['scan', t('zoom_fit'), () => fit(), { kbd: 'Shift+1' }], document.documentElement.requestFullscreen ? ['maximize', t(document.fullscreenElement ? 'exit_full' : 'full_screen'), fullscreen] : null,
-    '-', ['info', t('shortcuts'), () => shortcuts()],
+    '-', !mobile() && BARS ? ['settings-2', BARS.menuLabel(), () => barsDialog()] : null, ['info', t('shortcuts'), () => shortcuts()],
   ];
   const moreB = drop(h('sav-button', { icon: 'ellipsis-vertical', label: t('more_tools'), title: t('more_tools'), appearance: 'ghost', variant: 'neutral', size: 'sm', square: true }), moreList, { placement: 'bottom-end', label: t('more_tools') });
 
@@ -950,9 +962,21 @@ export async function editorScreen(root, id) {
   document.fonts?.ready.then(() => { if (!gone) { fitTitle(); redrawAll(); drawOverlay(); } });
   titleIn.addEventListener('change', () => { const v = titleIn.value.trim(); if (!v) { titleIn.value = title; fitTitle(); return; } if (v === title) return; title = v; titleDirty = true; document.title = title + ' – SavDiagrams'; svg.setAttribute('aria-label', title); queueSave(300); });
 
-  const top = h('header.wtop',
-    iconBtn('arrow-left', t('back_home'), () => go('#/')), h('a.wbrand', { href: '#/', title: 'SavDiagrams' }, h('img', { src: 'icons/favicon.svg', width: 26, height: 26, alt: '' })),
-    titleBox, status, h('span.spacer'), undoB, redoB, h('span.tsep'), h('span.lookw', lookPop), h('span.lookw', layoutB), downloadB, moreB, h('span.tsep.mhide'), h('span.mhide', userMenu()));
+  // the title bar: back, the logo and the title on the left, ⋮ and the account on the right (always); between them the list
+  const backB = iconBtn('arrow-left', t('back_home'), () => go('#/')), brandA = h('a.wbrand', { href: '#/', title: 'SavDiagrams' }, h('img', { src: 'icons/favicon.svg', width: 26, height: 26, alt: '' })), accountEl = h('span.mhide', userMenu());
+  const T2 = { undo: undoB, redo: redoB, look: h('span.lookw', lookPop), layout: h('span.lookw', layoutB), download: downloadB };
+  const TITLE_ITEMS = [['undo', 'undo-2', t('undo')], ['redo', 'redo-2', t('redo')], ['look', 'palette', t('diagram_look')], ['layout', 'network', t('layout')], ['download', 'download', t('download_as')]];
+  const TITLE_DEF = ['~', 'undo', 'redo', '|', 'look', 'layout', 'download'];
+  const top = h('header.wtop');
+  const layoutTitle = () => put(top, backB, brandA, titleBox, status, barList('title', TITLE_DEF, TITLE_ITEMS).map((k) => barEl(k, T2)), moreB, h('span.tsep.mhide'), accountEl);
+  layoutTitle();
+  /** Customising the bars (⋮ → Customise the bars): the window shared by the apps of SavOffice, a tab for each bar. */
+  function barsDialog() {
+    if (!BARS) return;
+    BARS.dialog({ bars: [{ id: 'title', items: TITLE_ITEMS, def: TITLE_DEF, before: [['arrow-left', t('back_home')], [null, title]], after: [['ellipsis-vertical', t('more_tools')], ['layout-grid', 'SavOffice'], ['user', t('account')]] }, { id: 'tools', items: TL_ITEMS, def: TL_DEF }],
+      value: { title: barPick('title', TITLE_DEF, TITLE_ITEMS), tools: barPick('tools', TL_DEF, TL_ITEMS) },
+      save: async (v) => { await setPrefs({ bars: { ...(prefs().bars || {}), ...v } }); layoutTitle(); layoutTools(); } });
+  }
   const zoom = h('div.zoom', iconBtn('zoom-out', t('zoom_out'), () => zoomTo(V.z / 1.25), { place: 'top', kbd: '-' }), zoomLabel, iconBtn('zoom-in', t('zoom_in'), () => zoomTo(V.z * 1.25), { place: 'top', kbd: '+' }), iconBtn('scan', t('zoom_fit'), () => fit(), { place: 'top', kbd: 'Shift+1' }));
   wrap.append(top, h('div.dock', props, tools), zoom, map);
   put(root, wrap);

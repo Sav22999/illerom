@@ -71,6 +71,10 @@ export function menuAt(x, y, items, o = {}) {
   requestAnimationFrame(() => d.show());
   return d;
 }
+
+/** The menu of a right click (or a long press): the one of SavOffice (sav-context-menu of SavComponents), the same in every
+ *  app; a menu at the point when it is not there. items as for menuAt. */
+export function ctxAt(x, y, items, o = {}) { if (window.SavOffice?.context?.show?.(x, y, items, o)) return null; return menuAt(x, y, items, o); }
 /** A choice among a few. options: [[value, icon or '=text', label]] */
 export const segmented = (label, value, options, onpick, o = {}) => h('sav-radio-group', { appearance: 'buttons', size: o.size || 'sm', value: String(value), 'aria-label': label, label: o.show ? label : null, class: 'segm ' + (o.class || ''), onchange: (e) => onpick(e.currentTarget.value) }, options.map(([v, ic, l]) => h('sav-radio', { value: String(v), title: l, 'aria-label': l }, ic[0] === '=' ? ic.slice(1) : icon(ic))));
 export const select = (label, options, value, onchange, o = {}) => {

@@ -81,6 +81,27 @@ export const TEMPLATES = {
   family: { cat: 'personal', n: ['Family recipes', 'Ricette di famiglia'], look: 'cream', set: { justify: false }, book: { cv: 'classic', cc: '#8a4b2f', dedication: L('For who will cook them next.', 'Per chi le cucinerà dopo di noi.') }, make: () => [
     h1(L('Grandma’s recipes', 'Le ricette della nonna')), quote(L('“A pinch of salt, and patience.”', '«Un pizzico di sale, e pazienza.»')), h2(L('Name of the recipe', 'Nome della ricetta')), ul('', ''), ol('', ''),
     ...ch(L('Holidays', 'Le feste'), h2(L('Name of the recipe', 'Nome della ricetta')), p(''))] },
+  play: { cat: 'fiction', n: ['Play', 'Testo teatrale'], look: 'type', set: { justify: false }, book: { cv: 'minimal', cc: '#3b2f2f' }, make: () => [
+    h1(L('Characters', 'Personaggi')), table(null, [[L('<strong>ANNA</strong>', '<strong>ANNA</strong>'), L('a teacher, forty years old', 'un’insegnante, quarant’anni')], [L('<strong>MARCO</strong>', '<strong>MARCO</strong>'), L('her brother', 'suo fratello')]], { cls: 'bare', cols: [30, 70] }),
+    ...ch(L('Act one', 'Atto primo'), h2(L('Scene 1', 'Scena 1')), p(L('<em>A kitchen, at night. The light of the fridge is the only one on.</em>', '<em>Una cucina, di notte. L’unica luce accesa è quella del frigorifero.</em>')),
+      p(L('<strong>ANNA</strong> — You could have called.', '<strong>ANNA</strong> — Potevi chiamare.')), p(L('<strong>MARCO</strong> — <em>(sitting down)</em> I did. Twice.', '<strong>MARCO</strong> — <em>(sedendosi)</em> L’ho fatto. Due volte.')), p('')),
+    ...ch(L('Act two', 'Atto secondo'), h2(L('Scene 1', 'Scena 1')), p(''))] },
+  workbook: { cat: 'nonfiction', n: ['Workbook', 'Quaderno di esercizi'], look: 'office', set: { justify: false }, book: { chap: 'n', cv: 'bold', cc: '#0f6e56' }, make: () => [
+    h1(L('How to use this workbook', 'Come usare questo quaderno')), lead(L('A short explanation, then exercises to do with a pencil.', 'Una breve spiegazione, poi esercizi da fare con la matita.')), check(L('Read the explanation', 'Leggi la spiegazione'), L('Do the exercises', 'Fai gli esercizi'), L('Check the answers at the end', 'Controlla le soluzioni alla fine')),
+    ...ch(L('Unit 1', 'Unità 1'), box(L('The rule of this unit, in one sentence.', 'La regola di questa unità, in una frase.')), h2(L('Exercises', 'Esercizi')), ol(L('Complete the sentence: ______', 'Completa la frase: ______'), L('True or false? ______', 'Vero o falso? ______'), ''), table([L('Question', 'Domanda'), L('Your answer', 'La tua risposta')], blank(3, 2), { cols: [50, 50] })),
+    ...ch(L('Answers', 'Soluzioni'), h3(L('Unit 1', 'Unità 1')), ol('', '', ''))] },
+  biography: { cat: 'nonfiction', n: ['Biography', 'Biografia'], look: 'book', book: { chap: 'w', cv: 'photo', cc: '#2f3e46', indent: true }, make: () => [
+    h1(L('A beginning', 'Un inizio')), p(L('Every life has a date, a place and a family; the story starts a little before them.', 'Ogni vita ha una data, un luogo e una famiglia; la storia comincia un po’ prima.'), 'drop'), p(''),
+    ...ch(L('The years that changed everything', 'Gli anni che cambiarono tutto'), p(''), quote(L('“A sentence they said, and that people still remember.”', '«Una frase che disse, e che ancora si ricorda.»'))),
+    ...ch(L('Timeline', 'Cronologia'), table([L('Year', 'Anno'), L('What happened', 'Cosa accadde')], [['1950', ''], ['1968', ''], ['1990', '']], { cls: 'striped', cols: [20, 80] }))] },
+  gratitude: { cat: 'personal', n: ['Gratitude journal', 'Diario della gratitudine'], look: 'sunset', set: { justify: false }, book: { cv: 'minimal', cc: '#c2410c' }, make: () => [
+    h1(L('Why this journal', 'Perché questo diario')), mid(L('<em>Three small good things a day,<br>written before they are forgotten.</em>', '<em>Tre piccole cose belle al giorno,<br>scritte prima di dimenticarle.</em>')),
+    ...ch(L('Week 1', 'Settimana 1'), ...weekdays().slice(0, 3).flatMap((d) => [h3(d), ol('', '', '')])),
+    ...ch(L('Week 2', 'Settimana 2'), h3(weekdays()[0]), ol('', '', ''))] },
+  baby: { cat: 'personal', n: ['Baby’s first year', 'Il primo anno'], look: 'ocean', set: { justify: false }, book: { cv: 'bold', cc: '#0891b2', dedication: L('For you, when you are older.', 'Per te, quando sarai grande.') }, make: () => [
+    h1(L('Welcome', 'Benvenuto')), icon('baby', 30, '#0891b2'), table(null, [[L('Name', 'Nome'), ''], [L('Born on', 'Nato il'), ''], [L('Weight and length', 'Peso e lunghezza'), ''], [L('Where', 'Dove'), '']], { cls: 'bare', cols: [40, 60] }),
+    ...ch(L('The first months', 'I primi mesi'), table([L('Month', 'Mese'), L('What happened', 'Cosa è successo')], months().map((m) => [m, '']), { cols: [25, 75] })),
+    ...ch(L('Firsts', 'Le prime volte'), check(L('First smile', 'Primo sorriso'), L('First word', 'Prima parola'), L('First steps', 'Primi passi'), L('First tooth', 'Primo dentino')))] },
 };
 export const tplName = (id) => TEMPLATES[id].n[getLang() === 'it' ? 1 : 0];
 export const catName = (c) => CAT_NAMES[c][getLang() === 'it' ? 1 : 0];

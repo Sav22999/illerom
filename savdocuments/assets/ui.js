@@ -82,6 +82,10 @@ export function menuAt(x, y, items, o = {}) {
   requestAnimationFrame(() => d.show());
   return d;
 }
+
+/** The menu of a right click (or a long press): the one of SavOffice (sav-context-menu of SavComponents), the same in every
+ *  app; a menu at the point when it is not there. items as for menuAt. */
+export function ctxAt(x, y, items, o = {}) { if (window.SavOffice?.context?.show?.(x, y, items, o)) return null; return menuAt(x, y, items, o); }
 /** Something to press that shows a picture or a sample: a card. */
 export function tile(label, onclick, o = {}, ...kids) {
   return h('sav-card', { interactive: true, role: 'button', tabindex: 0, 'aria-label': label, title: label, onclick: (e) => onclick(e), onkeydown: (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); onclick(e); } }, ...o, class: 'tile ' + (o.class || '') }, ...kids);

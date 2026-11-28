@@ -14,7 +14,7 @@ require_once dirname(__DIR__, 2) . '/identity/suite.php'; // one account for all
 
 const APP_NAME = 'SavNewsletters';
 const AUTH_COOKIE = SUITE_COOKIE; // the session of the whole suite (../identity/suite.php)
-const SCHEMA_VERSION = 4; // 2: groups.rate_per_hour, 3: users.fav_templates, subscribers.source 'import' · 4: the accounts of the suite (../identity/suite.php)
+const SCHEMA_VERSION = 5; // 2: groups.rate_per_hour, 3: users.fav_templates, subscribers.source 'import' · 4: the accounts of the suite (../identity/suite.php) · 5: profiles (settings of each account)
 const LANGS = ['en', 'it']; // languages of the app itself
 // Languages a group can collect subscribers in (and write newsletters for)
 const SUB_LANGS = ['it', 'en', 'fr', 'de', 'es', 'pt', 'nl', 'pl', 'ro', 'sv', 'el', 'cs', 'hu', 'da', 'fi', 'hr', 'sl', 'sk', 'bg', 'ca'];
@@ -309,6 +309,21 @@ function public_user(array $u): array
 }
 
 /** Applies the database changes of newer versions (one cheap read of the meta table per request). */
+/** The settings of this app for an account (a JSON object, {} when there are none): its own table, never the shared users. */
+function load_prefs(int $userId): array
+{
+    $st = db()->prepare('SELECT prefs FROM ' . t('profiles') . ' WHERE user_id = ?');
+    $st->execute([$userId]);
+    $p = json_decode((string)$st->fetchColumn(), true);
+    return is_array($p) ? $p : [];
+}
+
+/** Saves the settings of this app for an account ($json: a JSON object). */
+function save_prefs(int $userId, string $json): void
+{
+    db()->prepare('INSERT INTO ' . t('profiles') . ' (user_id, prefs) VALUES (?, ?) ON DUPLICATE KEY UPDATE prefs = VALUES(prefs)')->execute([$userId, $json]);
+}
+
 function ensure_schema(): void
 {
     static $done = false;

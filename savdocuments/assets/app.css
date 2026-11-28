@@ -221,3 +221,7 @@ sav-tab > * { padding-top: 1rem; }
 
 /* the menu of the person: the apps of SavOffice, then the avatar */
 .umenu { display: inline-flex; align-items: center; gap: .35rem; flex: none; }
+/* a separator chosen in the title bar or in the status bar (⋮ → Customise the bars) */
+.etop > i.sep, .ebottom > i.sep { width: 1px; align-self: stretch; margin: .45rem .25rem; background: var(--sav-color-border); flex: none; }
+/* a fixed space chosen in a bar; an adaptive one is a .spacer */
+.etop > i.bgap, .ebottom > i.bgap, .fmt > i.bgap, .ins > i.bgap { width: .9rem; flex: none; } .fmt > .spacer, .ins > .spacer { flex: 1; } .ins > i.sep { width: 1px; align-self: stretch; margin: .45rem .25rem; background: var(--sav-color-border); flex: none; }

@@ -22,7 +22,7 @@
  * when the person presses Lock, signs out or closes the page. What the server can see: how many files and folders, their encrypted sizes, the folders they
  * are in, when they changed.
  */
-import { btn, bytes, confirm, copyText, dialog, drop, dropBtn, empty, errText, fail, h, icon, iconBtn, menuAt, mobile, primary, put, segmented, toast } from './ui.js';
+import { btn, bytes, confirm, copyText, ctxAt, dialog, drop, dropBtn, empty, errText, fail, h, icon, iconBtn, menuAt, mobile, primary, put, segmented, toast } from './ui.js';
 import { getLang, t, when } from './i18n.js';
 import { S, api, request } from './store.js';
 import { commands, go, prefs, setPrefs } from './account.js';
@@ -730,8 +730,8 @@ export async function vaultHome({ page, hbody, head, body, main, newSlot, folder
     if (!K || e.target.closest('sav-dialog, sav-popover, sav-dropdown, .ctxm, sav-input, sav-password') || !main.contains(e.target)) return;
     e.preventDefault();
     const it = e.target.closest('[data-id]'), x = it && nodes.get(it.dataset.id);
-    if (x) return menuAt(e.clientX, e.clientY, menuOf(x), { label: x.name });
-    menuAt(e.clientX, e.clientY, [['folder-plus', t('new_folder'), () => newFolder()], ['upload', t('upload_files'), upFiles], ['folder-up', t('upload_folder'), upDir], '-',
+    if (x) return ctxAt(e.clientX, e.clientY, menuOf(x), { label: x.name });
+    ctxAt(e.clientX, e.clientY, [['folder-plus', t('new_folder'), () => newFolder()], ['upload', t('upload_files'), upFiles], ['folder-up', t('upload_folder'), upDir], '-',
       items().length ? ['check', t('select_all'), () => { items().forEach((y) => sel.add(y.id)); draw(); }] : null, ['refresh', t('refresh'), () => loadAll().then(draw, fail)], ['lock', t('vault_lock'), () => lock()]], { label: t('vault') });
   };
   page.addEventListener('contextmenu', onMenu);

@@ -2,7 +2,7 @@
  * What the commands of the grid do to cells, without the screen: filling a series, sorting, the clipboard (to and from
  * other programs: tab-separated text and HTML tables), and the number formats offered in the menus.
  */
-import { colName, key, moveFormula, pos } from './model.js';
+import { colName, DEF_H, DEF_W, extent, key, moveFormula, pos } from './model.js';
 import { currencyFormat, dateFormat, formatValue, fromSerial, loc, parseInput, plainNumber } from './format.js';
 
 // ------------------------------------------------------------------ number formats of the menus
@@ -192,6 +192,50 @@ export function region(sh, r, c, max = { r: 100000, c: 702 }) {
     if (colHas(g.c2 + 1)) { g.c2++; grew = true; }
   }
   return g;
+}
+/** The table a single cell is in, for filters, sorting and charts: its region without the title lines on top
+ *  (rows above the cell that fill less than half its width: a title, a "Total: 12"), so the header is its first row. */
+export function tableAt(sh, r, c, max) {
+  const g = region(sh, r, c, max);
+  if (g.c1 === g.c2) return g;
+  const filled = (rr) => { let n = 0; for (let cc = g.c1; cc <= g.c2; cc++) if (sh.cells[key(rr, cc)]?.v !== undefined || sh.cells[key(rr, cc)]?.f) n++; return n; };
+  let most = 0;
+  for (let rr = g.r1; rr <= Math.min(g.r2, g.r1 + 500); rr++) most = Math.max(most, filled(rr));
+  const need = Math.max(2, Math.ceil(most / 2));
+  while (g.r1 < r && filled(g.r1) < need) g.r1++;
+  return g;
+}
+
+// ------------------------------------------------------------------ pages (printing and PDF)
+
+/** Paper sizes in mm (portrait). The keys are also the names CSS knows for @page. */
+export const PAPERS = { A4: [210, 297], A5: [148, 210], A3: [297, 420], letter: [215.9, 279.4], legal: [215.9, 355.6] };
+export const PAGE_MARGIN = 12; // mm, on every side
+const PAGE_KEY = 'savspreadsheets-page';
+/** The page chosen in this browser for printing, and whether its guides are shown on the sheet. */
+export function pagePrefs() {
+  let p = {};
+  try { p = JSON.parse(localStorage.getItem(PAGE_KEY) || '{}') || {}; } catch { /* nothing kept */ }
+  return { paper: PAPERS[p.paper] ? p.paper : 'A4', orient: p.orient === 'landscape' ? 'landscape' : 'portrait', fit: p.fit === 'none' ? 'none' : 'width', guides: !!p.guides };
+}
+export const setPagePrefs = (o) => localStorage.setItem(PAGE_KEY, JSON.stringify({ ...pagePrefs(), ...o }));
+/** The printable part of a page, in CSS pixels. */
+export function pageArea(p) {
+  const [w, h] = PAPERS[p.paper], k = 96 / 25.4, m = PAGE_MARGIN * 2;
+  return p.orient === 'landscape' ? { w: (h - m) * k, h: (w - m) * k } : { w: (w - m) * k, h: (h - m) * k };
+}
+/** Where the pages of a printed sheet end, as the print makes them: {rows, cols} that start a new page.
+ *  "As wide as the page" shrinks a wide table, so its pages hold more rows and never break between columns. */
+export function pageBreaks(sh, p) {
+  const ext = extent(sh), a = pageArea(p), rows = [], cols = [];
+  if (!ext.r || !ext.c) return { rows, cols };
+  let total = 0;
+  const cw = [];
+  for (let c = 1; c <= ext.c; c++) { const x = sh.cols[colName(c)]; cw[c] = x?.x ? 0 : x?.w || DEF_W; total += cw[c]; }
+  const scale = p.fit === 'width' && total > a.w ? a.w / total : 1;
+  if (p.fit !== 'width') for (let c = 1, acc = 0; c <= ext.c; c++) { if (acc > 0 && acc + cw[c] > a.w) { cols.push(c); acc = 0; } acc += cw[c]; }
+  for (let r = 1, acc = 0; r <= ext.r; r++) { const h = sh.rows[r]?.x ? 0 : (sh.rows[r]?.h || DEF_H) * scale; if (acc > 0 && acc + h > a.h) { rows.push(r); acc = 0; } acc += h; }
+  return { rows, cols };
 }
 
 // ------------------------------------------------------------------ the clipboard

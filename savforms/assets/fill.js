@@ -89,6 +89,21 @@ export async function fillScreen(root, id, editToken = '') {
   // the questions of each page, shuffled once when the form asks for it
   const pages = pagesOf(f.items).map((p) => ({ ...p, items: set.shuffleQuestions ? [...p.items].sort(() => Math.random() - .5) : p.items }));
   let at = 0;
+  const trail = []; // the pages gone through, for Back: with jumps the one before is not always at - 1
+  /** Where the page leads (as the server reckons, lib/forms.php form_path): the first answered choice of the page that sends
+   *  somewhere, otherwise where its section says; -1 = the form ends here. */
+  const order = new Map(f.items.map((q, i) => [q.id, i]));
+  const pageOfSection = (sid) => { const i = order.get(sid); if (i == null) return null; const n = pages.findIndex((pg) => pg.section && order.get(pg.section.id) >= i); return n < 0 ? -1 : n; };
+  function nextOf(n) {
+    const p = pages[n];
+    let go = null;
+    for (const q of p.items) if (go === null && q.branch && typeof A[q.id] === 'string') go = (q.opts || []).find((o) => o.id === A[q.id])?.go ?? null;
+    if (go === null && p.section?.go) go = p.section.go;
+    if (go === 'submit') return -1;
+    const to = go ? pageOfSection(go) : null;
+    if (to != null && to > n) return to;
+    return n + 1 < pages.length ? n + 1 : -1;
+  }
   const cards = new Map();
   const showErr = (qid, key) => { const c = cards.get(qid); if (!c) return; const e = c.querySelector('.qerr'); e.textContent = key ? t(key) : ''; e.hidden = !key; c.classList.toggle('bad', !!key); };
 
@@ -96,7 +111,7 @@ export async function fillScreen(root, id, editToken = '') {
     if (q.t === 'text') return h('section.fcard.ftext', q.title ? h('h2', q.title) : null, q.descr ? richText(q.descr) : null);
     if (q.t === 'image') return h('section.fcard.fimage', q.src ? h('img', { src: q.src, alt: q.alt || '', loading: 'lazy' }) : null, q.title ? h('p.cap', q.title) : null);
     const card = h('section.fcard.fq', { 'data-id': q.id }, h('h3.qtitle', h('span', q.title || t('untitled_q')), q.req ? reqMark() : null), q.descr ? richText(q.descr, 'div.qdescr') : null,
-      control(q, A, { shuffle: true, onChange: () => { showErr(q.id, ''); saveDraft(); progress(); } }), h('p.qerr', { hidden: true, role: 'alert' }));
+      control(q, A, { shuffle: true, onChange: () => { showErr(q.id, ''); saveDraft(); progress(); if (q.branch) paintNav?.(); } }), h('p.qerr', { hidden: true, role: 'alert' }));
     cards.set(q.id, card);
     return card;
   };
@@ -128,7 +143,7 @@ export async function fillScreen(root, id, editToken = '') {
     const p = pages[at];
     if (!check(p)) return;
     // every page before must be right too (a page may have been skipped by the address)
-    for (let i = 0; i < pages.length; i++) if (pages[i].items.some((q) => !STATIC.includes(q.t) && problem(q, A))) { at = i; draw(); check(pages[i]); return; }
+    for (let i = 0; i >= 0 && i < pages.length; i = nextOf(i)) if (pages[i].items.some((q) => !STATIC.includes(q.t) && problem(q, A))) { at = i; draw(); check(pages[i]); return; }
     // only the answers of questions that are still there
     const ids = new Set(f.items.map((q) => q.id)), out = {};
     for (const [k, v] of Object.entries(A)) if (ids.has(k.replace(OTHER, ''))) out[k] = v;
@@ -163,18 +178,25 @@ export async function fillScreen(root, id, editToken = '') {
     scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  let paintNav = null;
   function draw() {
-    const p = pages[at], last = at === pages.length - 1;
+    const p = pages[at];
+    // Next or Send: it can change while answering a choice that leads somewhere
+    const nav = h('div.fnav');
+    paintNav = () => {
+      const to = nextOf(at);
+      put(nav, at > 0 ? btn(t('back'), { icon: 'arrow-left', onclick: () => { at = trail.length ? trail.pop() : Math.max(0, at - 1); draw(); scrollTo({ top: 0 }); } }) : null, h('div.spacer'),
+        pages.length > 1 && set.progress ? h('div.fpwrap', h('small.muted', t('page_of', { a: at + 1, b: pages.length })), bar) : null,
+        to < 0 ? primary(t(editing ? 'save_answers' : 'send'), { icon: 'send', onclick: send }) : primary(t('next'), { icon: 'arrow-right', onclick: () => { if (check(p)) { trail.push(at); at = to; draw(); scrollTo({ top: 0 }); } } }));
+    };
     const intro = at === 0 ? headCard(f, h('p.reqnote', reqMark(), ' ', t('required_note'))) : null;
     put(main,
       editing ? h('sav-alert', { variant: 'neutral', appearance: 'soft', class: 'fbanner' }, icon('pencil', { slot: 'icon' }), t('changing_answers', { w: moment(mine.when) })) : null,
       f.isOwner ? h('sav-alert', { variant: 'warning', appearance: 'soft', class: 'fbanner' }, icon('eye', { slot: 'icon' }), t('owner_preview')) : null,
       intro, at > 0 && p.section ? h('section.fcard.fsec', h('i.fband'), h('div.fcin', h('h2', p.section.title || t('k_section')), p.section.descr ? richText(p.section.descr) : null)) : null,
       at === 0 ? whoCard() : null, p.items.map(qCard),
-      h('div.fnav', at > 0 ? btn(t('back'), { icon: 'arrow-left', onclick: () => { at--; draw(); scrollTo({ top: 0 }); } }) : null, h('div.spacer'),
-        pages.length > 1 && set.progress ? h('div.fpwrap', h('small.muted', t('page_of', { a: at + 1, b: pages.length })), bar) : null,
-        last ? primary(t(editing ? 'save_answers' : 'send'), { icon: 'send', onclick: send }) : primary(t('next'), { icon: 'arrow-right', onclick: () => { if (check(p)) { at++; draw(); scrollTo({ top: 0 }); } } })),
-      hp);
+      nav, hp);
+    paintNav();
     progress();
   }
   draw();

@@ -1,6 +1,7 @@
 /** Texts of the app, in English and Italian: the ones shared with SavSchedules and SavCalendar (accounts, settings), then the notebooks. */
 const T = {
   cancel: ["Cancel","Annulla"],
+  account: ["Account","Account"],
   close: ["Close","Chiudi"],
   save: ["Save","Salva"],
   delete: ["Delete","Elimina"],
@@ -142,6 +143,7 @@ const T = {
   title_l: ['Title', 'Titolo'], untitled: ['Untitled notebook', 'Quaderno senza titolo'], sheets_n: ['{n} sheets', '{n} fogli'], sheets_1: ['1 sheet', '1 foglio'], changed_w: ['changed {w}', 'modificato {w}'],
   as_list: ['Show as a list', 'Mostra come elenco'], as_grid: ['Show as covers', 'Mostra come copertine'], sort_updated: ['Last changed', 'Ultima modifica'], sort_title: ['By title', 'Per titolo'], sort_opened: ['Last opened', 'Ultima apertura'],
   t_lines: ['Lines', 'Righe'], t_grid: ['Squares', 'Quadretti'], t_ruled: ['Ruled, margin', 'Righe con margine'], t_dots: ['Dots', 'Puntini'], t_blank: ['Blank', 'Bianco'], t_cornell: ['Cornell notes', 'Appunti Cornell'], t_iso: ['Isometric', 'Isometrico'], t_cream: ['Cream lines', 'Righe crema'], t_staff: ['Music staff', 'Pentagramma'], t_mm: ['Graph paper', 'Carta millimetrata'], t_hex: ['Hexagons', 'Esagoni'], t_tab: ['Guitar tab', 'Tablatura'], t_dark: ['Dark', 'Scuro'],
+  t_wide: ['Wide lines', 'Righe larghe'], t_small: ['Small squares', 'Quadretti piccoli'], t_kraft: ['Kraft paper', 'Carta kraft'], t_chalk: ['Blackboard lines', 'Righe su lavagna'], t_blueprint: ['Blueprint', 'Cianografia'], t_mint: ['Mint Cornell', 'Cornell menta'],
   cover: ['Cover', 'Copertina'], page_size: ['Size of the sheets', 'Formato dei fogli'], page_size_t: ['Every sheet of the notebook has the same size. What is written stays where it is if the size changes.', 'Tutti i fogli del quaderno hanno lo stesso formato. Se lo cambi, ciò che è scritto resta dov’è.'],
   orient: ['Orientation', 'Orientamento'], portrait: ['Portrait', 'Verticale'], landscape: ['Landscape', 'Orizzontale'],
   size_a4: ['A4', 'A4'], size_a5: ['A5', 'A5'], size_letter: ['Letter', 'Lettera (US)'], size_square: ['Square', 'Quadrato'], size_wide: ['Wide (16:9)', 'Panoramico (16:9)'],
@@ -150,7 +152,7 @@ const T = {
   // the notebook
   back_home: ['All notebooks', 'Tutti i quaderni'], saved: ['Saved', 'Salvato'], saving: ['Saving…', 'Salvataggio…'], not_saved: ['Not saved: trying again', 'Non salvato: riprovo'], offline_wait: ['Offline: it will be saved when the connection is back', 'Senza connessione: verrà salvato quando torna'],
   mode: ['How to write', 'Come scrivere'], mode_ink: ['Write by hand', 'Scrittura libera'], mode_doc: ['Type as a document', 'Documento digitale'], mode_ink_s: ['By hand', 'A mano'], mode_doc_s: ['Typed', 'Tastiera'], switch_mode: ['By hand / typed', 'A mano / tastiera'],
-  tools: ['Tools', 'Strumenti'], tool_select: ['Select', 'Seleziona'], tool_pen: ['Pen', 'Penna'], tool_pencil: ['Pencil', 'Matita'], tool_marker: ['Highlighter', 'Evidenziatore'], tool_eraser: ['Eraser', 'Gomma'], tool_shape: ['Shapes', 'Forme'], tool_image: ['Picture', 'Immagine'],
+  tools: ['Tools', 'Strumenti'], tool_select: ['Select', 'Seleziona'], tool_hand: ['Move the sheets', 'Sposta i fogli'], tool_pen: ['Pen', 'Penna'], tool_pencil: ['Pencil', 'Matita'], tool_marker: ['Highlighter', 'Evidenziatore'], tool_eraser: ['Eraser', 'Gomma'], tool_shape: ['Shapes', 'Forme'], tool_image: ['Picture', 'Immagine'],
   s_rect: ['Rectangle', 'Rettangolo'], s_ellipse: ['Ellipse', 'Ellisse'], s_diamond: ['Diamond', 'Rombo'], s_triangle: ['Triangle', 'Triangolo'], s_line: ['Line', 'Linea'], s_arrow: ['Arrow', 'Freccia'],
   color: ['Colour', 'Colore'], size: ['Size', 'Spessore'], fill: ['Fill', 'Riempimento'], no_fill: ['No fill', 'Nessun riempimento'], dashed: ['Dashed', 'Tratteggiata'],
   er_partial: ['Erase only where it passes', 'Cancella solo dove passa'], er_whole: ['Erase whole lines', 'Cancella tratti interi'], eraser_mode: ['Eraser', 'Gomma'],
@@ -160,7 +162,9 @@ const T = {
   f_sans: ['Sans', 'Senza grazie'], f_serif: ['Serif', 'Con grazie'], f_mono: ['Monospace', 'Monospaziato'], f_hand: ['Handwriting', 'Calligrafico'],
   undo: ['Undo', 'Annulla'], redo: ['Redo', 'Ripeti'], zoom_in: ['Zoom in', 'Ingrandisci'], zoom_out: ['Zoom out', 'Riduci'], zoom_fit: ['Fit the width', 'Adatta alla larghezza'], zoom_100: ['Actual size (100%)', 'Dimensione reale (100%)'],
   full_screen: ['Full screen', 'Schermo intero'], exit_full: ['Leave full screen', 'Esci da schermo intero'], view: ['View', 'Vista'],
-  sheets: ['Sheets', 'Fogli'], sheet_n: ['Sheet {n}', 'Foglio {n}'], sheet_of: ['{n} of {m}', '{n} di {m}'], add_sheet: ['Add a sheet', 'Aggiungi un foglio'], add_sheet_after: ['New sheet after this', 'Nuovo foglio dopo questo'],
+  sheets: ['Sheets', 'Fogli'], sheet_n: ['Sheet {n}', 'Foglio {n}'], sheet_of: ['{n} of {m}', '{n} di {m}'], add_sheet: ['Add a sheet', 'Aggiungi un foglio'], add_sheet_before: ['New sheet before the first', 'Nuovo foglio prima del primo'], add_release: ['Let go to add a sheet', 'Rilascia per aggiungere un foglio'],
+  flow: ['Turning the sheets', 'Scorrimento dei fogli'], flow_v: ['One under the other', 'Uno sotto l’altro'], flow_h: ['Side by side, like a book', 'Affiancati, come un libro'],
+  scrolling: ['Scrolling', 'Scorrimento'], scroll_free: ['Natural', 'Naturale'], scroll_snap: ['Whole sheets', 'A fogli interi'], scroll_t: ['Natural: it stops where you stop. Whole sheets: it always comes to rest on a sheet, as when turning a page.', 'Naturale: si ferma dove ti fermi. A fogli interi: si ferma sempre su un foglio, come quando giri pagina.'], add_sheet_after: ['New sheet after this', 'Nuovo foglio dopo questo'],
   sheet_dup: ['Duplicate the sheet', 'Duplica il foglio'], sheet_up: ['Move up', 'Sposta su'], sheet_down: ['Move down', 'Sposta giù'], sheet_delete: ['Delete the sheet', 'Elimina il foglio'], sheet_delete_t: ['The sheet and what is written on it will be gone.', 'Il foglio e ciò che c’è scritto spariranno.'],
   toggle_sheets: ['Show or hide the sheets', 'Mostra o nascondi i fogli'], next_sheet: ['Next sheet', 'Foglio successivo'], prev_sheet: ['Previous sheet', 'Foglio precedente'],
   sheet_paper: ['Paper', 'Carta'], paper: ['Paper', 'Carta'], paper_of: ['Paper of sheet {n}.', 'Carta del foglio {n}.'], apply_all: ['The same on every sheet', 'Uguale su tutti i fogli'], paper_default: ['Use it for new sheets', 'Usala per i nuovi fogli'], paper_default_ok: ['New sheets will have this paper', 'I nuovi fogli avranno questa carta'],

@@ -50,7 +50,7 @@ function thumb(kind) {
 // ------------------------------------------------------------------ templates
 
 /** The ready-made starts of each kind: [id, icon, name, {color, icon, columns, tasks}] (days counted from today). */
-function templates(kind) {
+function baseTemplates(kind) {
   const k = todayKey(tz()), d = (n) => addDays(k, n), mon = addDays(k, (7 - weekday(k)) % 7 || 7);
   const tk = (en, it, o = {}) => ({ title: L(en, it), ...o });
   const cl = (...items) => items.map(([en, it]) => ({ t: L(en, it), d: false }));
@@ -92,6 +92,30 @@ function templates(kind) {
     ['priorities', 'flag', L('Priorities of the week', 'Priorità della settimana'), { color: '#c93a2f', icon: 'flag', tasks: [tk('Deadline of tomorrow', 'Scadenza di domani', { col: 'q1', due: d(1), priority: 3 }), tk('Plan the next month', 'Pianificare il mese prossimo', { col: 'q2' }),
       tk('Answer the emails', 'Rispondere alle email', { col: 'q3', due: k }), tk('Tidy up the desktop', 'Riordinare la scrivania', { col: 'q4' })] }]];
   return [];
+}
+
+/** The starts of each kind, with the ones added later (same shape as baseTemplates). */
+function templates(kind) {
+  const base = baseTemplates(kind);
+  if (!base.length) return base;
+  const k = todayKey(tz()), d = (n) => addDays(k, n);
+  const tk = (en, it, o = {}) => ({ title: L(en, it), ...o });
+  const cl = (...items) => items.map(([en, it]) => ({ t: L(en, it), d: false }));
+  const cols = (...n) => n.map(([id, en, it, done]) => ({ id, name: L(en, it), done: !!done }));
+  const more = {
+    list: [['party', 'party-popper', L('Party', 'Festa'), { color: '#c2307a', icon: 'star', tasks: [tk('Guest list', 'Lista degli invitati', { due: d(2), priority: 2 }), tk('Send the invitations', 'Mandare gli inviti', { due: d(4) }),
+      tk('Food and drinks', 'Cibo e bevande', { due: d(10), checklist: cl(['Cake', 'Torta'], ['Drinks', 'Bevande'], ['Snacks', 'Stuzzichini']) }), tk('Music', 'Musica', { due: d(11) }), tk('Decorations', 'Decorazioni', { due: d(12) })] }]],
+    table: [['jobs', 'briefcase', L('Job search', 'Ricerca di lavoro'), { color: '#4a5875', icon: 'briefcase', tasks: [tk('Update the CV', 'Aggiornare il CV', { due: d(2), priority: 3, tags: ['cv'] }),
+      tk('Company A: apply', 'Azienda A: candidarsi', { due: d(4), tags: ['apply'] }), tk('Company B: apply', 'Azienda B: candidarsi', { due: d(6), tags: ['apply'] }), tk('Prepare the interview', 'Preparare il colloquio', { due: d(10), tags: ['interview'], checklist: cl(['About the company', 'Sull’azienda'], ['Questions to ask', 'Domande da fare']) }),
+      tk('Write a thank-you note', 'Scrivere un ringraziamento', { due: d(12), tags: ['interview'] })] }]],
+    board: [['bugs', 'bug', L('Bug tracker', 'Segnalazioni di errori'), { color: '#c93a2f', icon: 'flag', columns: cols(['new', 'New', 'Nuove'], ['confirmed', 'Confirmed', 'Confermate'], ['fixing', 'Fixing', 'In correzione'], ['fixed', 'Fixed', 'Risolte', 1]),
+      tasks: [tk('The button does nothing on phones', 'Il pulsante non fa nulla sui telefoni', { col: 'new', priority: 3 }), tk('Typo on the home page', 'Errore di battitura nella pagina iniziale', { col: 'confirmed' }), tk('Slow search', 'Ricerca lenta', { col: 'fixing', priority: 2 })] }]],
+    gantt: [['thesis', 'graduation-cap', L('Thesis', 'Tesi'), { color: '#6a2cf0', icon: 'graduation-cap', tasks: [tk('Choose the topic', 'Scegliere l’argomento', { start: k, due: d(7) }), tk('Read and take notes', 'Leggere e prendere appunti', { start: d(8), due: d(35) }),
+      tk('Write the chapters', 'Scrivere i capitoli', { start: d(30), due: d(75) }), tk('Revision with the supervisor', 'Revisione con il relatore', { start: d(70), due: d(85) }), tk('Hand it in', 'Consegna', { due: d(90), priority: 3 })] }]],
+    habits: [['focus', 'target', L('Focus at work', 'Concentrazione al lavoro'), { color: '#0b7a87', icon: 'lightbulb', tasks: [tk('Plan the day', 'Pianificare la giornata'), tk('Two hours without notifications', 'Due ore senza notifiche'),
+      tk('Inbox zero', 'Casella vuota', { rrule: 'FREQ=WEEKLY;BYDAY=MO,WE,FR' }), tk('A short walk at lunch', 'Una breve passeggiata a pranzo')] }]],
+  }[kind] || [];
+  return [...base, ...more];
 }
 
 // ------------------------------------------------------------------ the dialog

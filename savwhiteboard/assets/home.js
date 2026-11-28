@@ -83,8 +83,20 @@ export function homeScreen(root, view = '') {
     // as in SavDocuments and SavPresentations: the title, the box to start a new one, then "Recent"
     put(list, head, trash || q ? null : starts, !trash && !q && boards.length ? h('h2', t('recent')) : null, trash ? h('p.muted.tnote', t('trash_t', { n: S.trashDays })) : null,
       boards.length ? h('div.' + (asList ? 'rows' : 'grid'), boards.map(card))
-        : trash ? empty('trash', t('trash_empty'), '') : q ? empty('search', t('nothing_found'), '') : empty('whiteboard', t('none_yet'), t('none_yet_t')));
+        : trash ? empty('trash', t('trash_empty'), '') : q ? empty('search', t('nothing_found'), '') : empty('whiteboard', t('none_yet'), t('none_yet_t')),
+      // the boards of others shared with this person: open, or a copy of one's own
+      !trash && sharedList().length ? [h('h2', t('shared_with_me')), h('div.' + (asList ? 'rows' : 'grid'), sharedList().map(sharedCard))] : null);
   }
+  const sharedList = () => (S.shared || []).filter((b) => !q || b.title.toLowerCase().includes(q));
+  const sharedCard = (b) => {
+    const menu = drop(h('sav-button', { icon: 'ellipsis-vertical', label: t('more'), appearance: 'ghost', variant: 'neutral', size: 'sm', square: true }), [
+      ['square-arrow-out-up-right', t('open'), () => go('#/b/' + b.id)],
+      ['copy-plus', t('duplicate'), async () => { const r = await api('wb.duplicate', { id: b.id, lang: getLang() }); S.boards.unshift(r.board); draw(); }],
+    ], { placement: 'bottom-end', label: b.title });
+    const pic = b.thumb ? h('div.thumbw', { style: `background:${b.bg}` }, h('img', { src: b.thumb, alt: '', loading: 'lazy' })) : paper({ bg: b.bg, pat: b.pat, gap: 24 }, isDark(b.bg) ? '.dk' : '');
+    return h('sav-card.card', { interactive: true, onclick: (e) => { if (!e.composedPath().some((x) => x.localName === 'sav-dropdown')) go('#/b/' + b.id); } },
+      h('div.cthumb', pic), h('div.cinfo', h('div', h('b', b.title), h('small', t(b.role === 'viewer' ? 'shared_by_view' : 'shared_by_edit', { n: b.owner || '' }) + ' · ' + t('changed_w', { w: when(b.updated) }))), menu));
+  };
 
   const it = (v, ic, label) => { const x = item(v, ic, label); x.toggleAttribute('current', (v === 'trash') === trash); return x; };
   const menu = h('sav-menu', { label: t('my_boards'), selectable: true }, it('all', 'layout-grid', t('my_boards')), it('trash', 'trash', t('trash')));

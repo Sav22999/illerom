@@ -257,3 +257,5 @@ body.onboard { overflow: hidden; overscroll-behavior: none; position: fixed; ins
   .home:has(> .hbottom) { padding-bottom: calc(4.4rem + env(safe-area-inset-bottom)); }
   .home:has(> .hbottom) .hside sav-menu { display: none; } /* the bar takes its place */
 }
+/* a fixed space chosen in a bar (⋮ → Customise the bars); an adaptive one is a .spacer */
+.wtop > i.bgap, .tools > i.bgap { width: .8rem; flex: none; } .tools > .spacer { flex: 1; min-width: .8rem; }

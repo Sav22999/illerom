@@ -176,6 +176,24 @@ body.onboard { overflow: hidden; overscroll-behavior: none; position: fixed; ins
 .nb.sideopen .scroller { padding-left: calc(var(--sidew) + 1rem); }
 .col { display: flex; flex-direction: column; align-items: center; gap: var(--gap); min-width: max-content; padding: 1rem 1.2rem 9rem; }
 .swrap { display: grid; justify-items: center; gap: .35rem; }
+/* side by side, like a book: the sheets in a row, scrolled across */
+.nb.fh .col { flex-direction: row; align-items: flex-start; min-width: max-content; padding: 1rem 2rem 1rem 1.2rem; }
+/* at the ends of the notebook: a new sheet after the last one (below it, or beside it in a book) and, smaller, before the first */
+.addend { all: unset; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: .45rem; cursor: pointer; font: inherit; font-size: .88rem; color: var(--sav-color-text-muted);
+  border: 1.5px dashed color-mix(in srgb, var(--sav-color-text-muted) 45%, transparent); border-radius: 10px; width: calc(var(--W) * var(--z) * 1px); height: 4.2rem; flex: none; transition: color .15s, border-color .15s, background .15s; }
+.addend:hover, .addend:focus-visible { color: var(--sav-color-primary); border-color: var(--sav-color-primary); background: color-mix(in srgb, var(--sav-color-primary) 7%, transparent); }
+.addend:focus-visible { outline: 2px solid var(--sav-color-primary); outline-offset: 2px; }
+.addend.first { height: 2.2rem; opacity: .55; } .addend.first:hover, .addend.first:focus-visible { opacity: 1; }
+.nb.fh .addend { width: 4.6rem; height: calc(var(--H) * var(--z) * 1px); flex-direction: column; text-align: center; padding: 0 .4rem; }
+.nb.fh .addend.first { width: 2.4rem; }
+/* going on past an end fills the tile of a new sheet (--pull 0…1); full, it says to let go */
+.addend { --pull: 0; background-image: linear-gradient(to bottom, color-mix(in srgb, var(--sav-color-primary) 16%, transparent) calc(var(--pull) * 100%), transparent 0); }
+.addend.first { background-image: linear-gradient(to top, color-mix(in srgb, var(--sav-color-primary) 16%, transparent) calc(var(--pull) * 100%), transparent 0); }
+.nb.fh .addend { background-image: linear-gradient(to right, color-mix(in srgb, var(--sav-color-primary) 16%, transparent) calc(var(--pull) * 100%), transparent 0); }
+.nb.fh .addend.first { background-image: linear-gradient(to left, color-mix(in srgb, var(--sav-color-primary) 16%, transparent) calc(var(--pull) * 100%), transparent 0); }
+.addend.pulling { color: var(--sav-color-primary); border-color: var(--sav-color-primary); opacity: 1; }
+.addend.ready { background: var(--sav-color-primary); color: var(--sav-color-on-primary, #fff); border-style: solid; transform: scale(1.02); transition: transform .12s, background .12s; }
+.nb.fh .addend span { font-size: .78rem; line-height: 1.25; }
 .snum { font-size: .74rem; color: var(--sav-color-text-muted); font-variant-numeric: tabular-nums; }
 .sheet { position: relative; width: calc(var(--W) * var(--z) * 1px); height: calc(var(--H) * var(--z) * 1px); border-radius: 3px; box-shadow: 0 1px 2px rgb(40 25 10 / .16), 0 8px 26px rgb(40 25 10 / .12); overflow: hidden; contain: layout paint; flex: none; }
 .sav-theme-dark .sheet, .sav-theme-auto .sheet { box-shadow: 0 1px 2px rgb(0 0 0 / .5), 0 10px 30px rgb(0 0 0 / .35); }
@@ -186,13 +204,19 @@ body.onboard { overflow: hidden; overscroll-behavior: none; position: fixed; ins
 .nb[data-mode="doc"] .ink { pointer-events: none; }
 .nb[data-mode="doc"] .doc { cursor: text; }
 .ink { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; cursor: crosshair; }
-.nb.penonly .ink { touch-action: pan-x pan-y; }
-.nb[data-tool="select"] .ink { cursor: default; } .nb[data-tool="eraser"] .ink { cursor: none; } .nb[data-tool="image"] .ink { cursor: copy; }
+/* with a stylus the fingers scroll too, but done by the app: the surface keeps touch-action none (notebook.js) */
+.nb[data-tool="select"] .ink { cursor: default; } .nb[data-tool="hand"] .ink { cursor: grab; } .nb.panning .ink { cursor: grabbing; } .nb[data-tool="eraser"] .ink { cursor: none; } .nb[data-tool="image"] .ink { cursor: copy; }
 .over .selbox { fill: none; stroke: var(--sav-color-primary); stroke-width: 1.5; stroke-dasharray: 5 4; vector-effect: non-scaling-stroke; pointer-events: none; }
 .over .hd { fill: #fff; stroke: var(--sav-color-primary); stroke-width: 1.8; vector-effect: non-scaling-stroke; cursor: nwse-resize; pointer-events: all; }
 .over .hd[data-h="ne"], .over .hd[data-h="sw"] { cursor: nesw-resize; } .over .hd[data-h="a"], .over .hd[data-h="b"] { cursor: move; }
 .over .marq { fill: color-mix(in oklab, var(--sav-color-primary) 10%, transparent); stroke: var(--sav-color-primary); stroke-width: 1; vector-effect: non-scaling-stroke; pointer-events: none; }
 .over .ercur { fill: rgb(255 255 255 / .35); stroke: #555; stroke-width: 1.2; vector-effect: non-scaling-stroke; pointer-events: none; } .sheet.dark .over .ercur { fill: rgb(0 0 0 / .25); stroke: #ddd; }
+/* the circle of the eraser above a finger (which covers the real one), and when its size is chosen */
+.over .ercur.ghost, .over .ercur.flash { fill: rgb(255 255 255 / .6); stroke: var(--sav-color-primary); stroke-width: 1.6; filter: drop-shadow(0 1px 3px rgb(0 0 0 / .25)); }
+.sheet.dark .over .ercur.ghost, .sheet.dark .over .ercur.flash { fill: rgb(0 0 0 / .35); }
+.over .erlink { stroke: var(--sav-color-primary); stroke-width: 1.2; stroke-dasharray: 2 3; vector-effect: non-scaling-stroke; pointer-events: none; opacity: .7; }
+.over .ercur.flash { animation: erflash 1.1s ease-out forwards; } @keyframes erflash { 70% { opacity: 1; } to { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .over .ercur.flash { animation: none; } }
 
 /* the small sheets on the side */
 .side { position: absolute; z-index: 4; top: var(--top); left: var(--pad); bottom: max(.8rem, env(safe-area-inset-bottom)); width: var(--sidew); display: flex; flex-direction: column; gap: .5rem; padding: .6rem .5rem .5rem; background: var(--bar); border: 1px solid var(--bar-line); box-shadow: var(--shadow); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 14px; transform: translateX(calc(-100% - 2rem)); transition: transform .2s; visibility: hidden; }
@@ -269,3 +293,12 @@ body.onboard { overflow: hidden; overscroll-behavior: none; position: fixed; ins
 .how { padding: 1rem 0 3.5rem; } .how h2 { font-size: 1.4rem; letter-spacing: -.02em; margin-bottom: 1.2rem; }
 .langs { width: max-content; max-width: 100%; }
 .nb[data-mode="ink"] .col { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; } /* a long press of the pen next to a sheet selects nothing */
+/* a fixed space chosen in a bar (⋮ → Customise the bars); an adaptive one is a .spacer */
+.wtop > i.bgap, .tools > i.bgap { width: .8rem; flex: none; } .tools > .spacer { flex: 1; min-width: .8rem; }
+/* a long press on a tablet selects nothing and opens no menu of the system (only the fields to write in keep them) */
+.nb, .wtop, .dock, .zoom, .props, .tools { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.nb :is(input, textarea, [contenteditable="true"], sav-input, sav-textarea), .nb .doc { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
+/* tablets (a narrow window or a touch screen): the zoom goes up, under the title bar, so it never covers the tools */
+@media (max-width: 1180px), (pointer: coarse) {
+  .zoom { top: calc(max(.6rem, env(safe-area-inset-top)) + 3.4rem); bottom: auto; right: max(.5rem, env(safe-area-inset-right)); }
+}

@@ -602,6 +602,39 @@ export const TEMPLATES = [
         }], ['closing', {title: ['Leave only footprints', 'Lascia solo impronte'], subtitle: [' ', ' ']}]]
     },
     {
+        id: 'retro', theme: 'kraft', cat: 'business', name: ['Team retrospective', 'Retrospettiva del team'], slides: [
+            ['cover', {title: ['How did it go?', 'Com’è andata?'], subtitle: ['Retrospective of the last sprint', 'Retrospettiva dell’ultimo sprint']}],
+            ['numbers', {title: ['The sprint in numbers', 'Lo sprint in numeri'], n1: ['12', '12'], n1t: ['tasks done', 'attività concluse'], n2: ['3', '3'], n2t: ['moved to the next', 'rimandate al prossimo'], n3: ['1', '1'], n3t: ['release', 'rilascio']}],
+            ['compare', {title: ['Keep and change', 'Da tenere e da cambiare'], at: ['What went well', 'Cosa è andato bene'], a: ['- Short daily meetings\n- Clear priorities', '- Riunioni quotidiane brevi\n- Priorità chiare'], bt: ['What to improve', 'Cosa migliorare'], b: ['- Too many interruptions\n- Late reviews', '- Troppe interruzioni\n- Revisioni in ritardo']}],
+            ['checklist', {title: ['What we try next', 'Cosa proviamo adesso'], item1: ['Name: action', 'Nome: azione'], item2: ['Name: action', 'Nome: azione'], item3: ['Name: action', 'Nome: azione']}],
+            ['closing', {title: ['Thank you, team', 'Grazie, team'], subtitle: ['Next retrospective in two weeks', 'Prossima retrospettiva tra due settimane']}]]
+    },
+    {
+        id: 'annual', theme: 'classic', cat: 'business', name: ['Annual report', 'Relazione annuale'], slides: [
+            ['cover', {title: ['The year in review', 'Un anno in sintesi'], subtitle: ['Annual report', 'Relazione annuale']}],
+            ['numbers', {title: ['The year at a glance', 'L’anno in breve'], n1: ['+18%', '+18%'], n1t: ['revenue', 'ricavi'], n2: ['2,400', '2.400'], n2t: ['new customers', 'nuovi clienti'], n3: ['4', '4'], n3t: ['new markets', 'nuovi mercati']}],
+            ['chart', {title: ['How we grew', 'Come siamo cresciuti'], body: ['- Strongest quarter: the third\n- Most of the growth from abroad', '- Trimestre migliore: il terzo\n- Gran parte della crescita dall’estero']}],
+            ['timeline', {title: ['Milestones', 'Tappe'], t1t: ['Q1', 'T1'], t1: ['New office', 'Nuova sede'], t2t: ['Q2', 'T2'], t2: ['Product 2.0', 'Prodotto 2.0'], t3t: ['Q3', 'T3'], t3: ['First award', 'Primo premio'], t4t: ['Q4', 'T4'], t4: ['Spain and Portugal', 'Spagna e Portogallo']}],
+            ['three-cards', {title: ['Next year', 'Il prossimo anno'], c1t: ['Grow', 'Crescere'], c1: ['Two new markets.', 'Due nuovi mercati.'], c2t: ['Build', 'Costruire'], c2: ['The mobile app.', 'L’app per telefoni.'], c3t: ['Care', 'Curare'], c3: ['Our people.', 'Le nostre persone.']}],
+            ['closing', {title: ['Thank you', 'Grazie'], subtitle: ['Questions are welcome', 'Le domande sono benvenute']}]]
+    },
+    {
+        id: 'workshop', theme: 'bloom', cat: 'school', name: ['Workshop', 'Laboratorio'], slides: [
+            ['cover', {title: ['Learn by doing', 'Imparare facendo'], subtitle: ['A two-hour workshop', 'Un laboratorio di due ore']}],
+            ['agenda', {title: ['Today', 'Oggi'], item1: ['Warm-up (10 min)', 'Riscaldamento (10 min)'], item2: ['The idea (20 min)', 'L’idea (20 min)'], item3: ['Hands on (60 min)', 'Mettiamo le mani (60 min)'], item4: ['Show and tell (30 min)', 'Mostriamo il lavoro (30 min)']}],
+            ['steps', {title: ['The exercise', 'L’esercizio'], s1t: ['Pairs', 'In coppia'], s1: ['Find a partner.', 'Trova un compagno.'], s2t: ['Sketch', 'Schizzo'], s2: ['Five minutes, on paper.', 'Cinque minuti, su carta.'], s3t: ['Build', 'Costruisci'], s3: ['Make it real.', 'Rendilo concreto.'], s4t: ['Share', 'Condividi'], s4: ['Two minutes each.', 'Due minuti a testa.']}],
+            ['quiz', {title: ['What did we learn?', 'Che cosa abbiamo imparato?'], a1: ['Answer', 'Risposta'], a2: ['Answer', 'Risposta'], a3: ['Answer', 'Risposta'], a4: ['Answer', 'Risposta']}],
+            ['closing', {title: ['Well done!', 'Bel lavoro!'], subtitle: ['Your feedback helps the next workshop', 'Il tuo parere aiuta il prossimo laboratorio']}]]
+    },
+    {
+        id: 'recipe', theme: 'terra', cat: 'creative', name: ['Recipe', 'Ricetta'], slides: [
+            ['cover', {title: ['Grandma’s lasagne', 'Le lasagne della nonna'], subtitle: ['Serves 6 · 2 hours', 'Per 6 persone · 2 ore']}],
+            ['image-right', {title: ['The dish', 'Il piatto'], body: ['A Sunday classic: layers of pasta, ragù and béchamel.', 'Un classico della domenica: strati di pasta, ragù e besciamella.']}],
+            ['list', {title: ['Ingredients', 'Ingredienti'], body: ['- 500 g lasagne sheets\n- 600 g ragù\n- 1 l béchamel\n- 150 g parmesan', '- 500 g di sfoglie\n- 600 g di ragù\n- 1 l di besciamella\n- 150 g di parmigiano']}],
+            ['steps', {title: ['Method', 'Preparazione'], s1t: ['1', '1'], s1: ['Make the ragù.', 'Prepara il ragù.'], s2t: ['2', '2'], s2: ['Make the béchamel.', 'Prepara la besciamella.'], s3t: ['3', '3'], s3: ['Build the layers.', 'Componi gli strati.'], s4t: ['4', '4'], s4: ['Bake 40 minutes at 180 °C.', 'Cuoci 40 minuti a 180 °C.']}],
+            ['closing', {title: ['Buon appetito!', 'Buon appetito!'], subtitle: [' ', ' ']}]]
+    },
+    {
         id: 'cv',
         theme: 'linen',
         format: 'a4-p',

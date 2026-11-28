@@ -3,7 +3,7 @@
  * SavNewsletters — JSON API.  api/index.php?r=<action>
  *
  * Accounts:     auth.config, auth.me, auth.register, auth.login, auth.resend, auth.verify, auth.logout,
- *               auth.password, auth.profile, auth.delete
+ *               auth.password, auth.profile, auth.prefs, auth.delete
  * Groups:       group.list, group.create, group.get, group.update, group.page, group.terms, group.smtp, group.smtpTest,
  *               group.smtpClear, group.delete, group.leave, group.slug
  * Members:      member.list, member.add, member.role, member.remove, invite.cancel
@@ -258,7 +258,7 @@ switch ($r) {
         $u = current_user();
         if (!$u || $u['status'] !== 'active') send_json(['ok' => true, 'user' => null]);
         accept_invites($u);
-        send_json(['ok' => true, 'user' => public_user(user_row($u['id'])), 'csrf' => $u['csrf_token']]);
+        send_json(['ok' => true, 'user' => public_user(user_row($u['id'])), 'csrf' => $u['csrf_token'], 'prefs' => (object)load_prefs((int)$u['id'])]);
 
     case 'auth.register':
         only('POST');
@@ -344,6 +344,14 @@ switch ($r) {
         validate_password($pw);
         db()->prepare('UPDATE ' . t('users') . ' SET password_hash = ? WHERE id = ?')->execute([password_hash($pw, PASSWORD_DEFAULT), $u['id']]);
         send_json(['ok' => true, 'user' => public_user(user_row($u['id']))]);
+
+    case 'auth.prefs':
+        // Settings of the editor (the buttons of its bar…): a small JSON object read only by the app, kept with the account
+        $u = writer(true);
+        $p = json_out((object)(is_array(body()['prefs'] ?? null) ? body()['prefs'] : []));
+        if (strlen($p) > 4000) fail('bad_request', 413);
+        save_prefs((int)$u['id'], $p);
+        send_json(['ok' => true]);
 
     case 'auth.profile':
         // Name and language of the app (also the language of the platform's emails). The email never changes.

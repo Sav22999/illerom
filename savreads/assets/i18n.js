@@ -1,6 +1,7 @@
 /** Texts of the app, in English and Italian: the ones shared with the other apps of the account (accounts, settings), then reading and feeds. */
 const T = {
   cancel: ["Cancel","Annulla"],
+  account: ["Account","Account"],
   close: ["Close","Chiudi"],
   save: ["Save","Salva"],
   delete: ["Delete","Elimina"],

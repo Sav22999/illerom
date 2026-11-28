@@ -5,7 +5,8 @@
  * every half minute while something changes, and when the window closes without sending.
  * The text is sent as HTML and as plain text; the server cleans the HTML again before it leaves.
  */
-import { btn, confirm, h, icon, iconBtn, put, select, toast, errText, K } from './ui.js';
+import { btn, confirm, dialog, drop, h, icon, iconBtn, mobile, put, select, toast, errText, K } from './ui.js';
+import { prefs, setPrefs } from './account.js';
 import { getLang, t } from './i18n.js';
 import { S, api } from './store.js';
 
@@ -33,6 +34,18 @@ async function contactsLike(q) {
 
 function readFile(f) {
   return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1] || ''); r.onerror = () => rej(r.error); r.readAsDataURL(f); });
+}
+
+const TOOLS_DEF = ['bold', 'italic', 'underline', '|', 'bullets', 'numbers', 'quote', 'link', 'clear', '~'];
+/** The buttons chosen, in order ('|' a separator, '_' a fixed space, '~' an adaptive one: SavOffice.bars), kept with the account. */
+const toolsOn = (TOOLS) => { const B = window.SavOffice?.bars, items = Object.keys(TOOLS).map((k) => [k]), v = prefs().bars?.tools ?? prefs().tools; return B ? B.layout(B.pick(v, TOOLS_DEF, items)) : TOOLS_DEF; };
+/** Customising the bar (⋮ → Customise the bars): the window shared by the apps of SavOffice, with its preview. */
+function toolsDialog(TOOLS, done) {
+  const B = window.SavOffice?.bars;
+  if (!B) return;
+  const items = Object.entries(TOOLS).map(([k, x]) => [k, x[0], x[1]]);
+  B.dialog({ bars: [{ id: 'tools', items, def: TOOLS_DEF, after: [['paperclip', t('attach')], ['ellipsis-vertical', t('more')]] }], value: { tools: B.pick(prefs().bars?.tools ?? prefs().tools, TOOLS_DEF, items) },
+    save: async (v) => { await setPrefs({ bars: { ...(prefs().bars || {}), ...v } }); done(); } });
 }
 
 export function composeDialog(o) {
@@ -96,11 +109,22 @@ export function composeDialog(o) {
 
   const cmd = (c, v) => { ed.focus(); document.execCommand(c, false, v); dirty = true; };
   const link = () => { const u = prompt(t('link_address'), 'https://'); if (u && /^(https?:|mailto:)/i.test(u)) cmd('createLink', u); };
-  const bar = h('div.cbar',
-    iconBtn('bold', t('bold'), () => cmd('bold'), { kbd: 'Mod+B' }), iconBtn('italic', t('italic'), () => cmd('italic'), { kbd: 'Mod+I' }), iconBtn('underline', t('underline'), () => cmd('underline'), { kbd: 'Mod+U' }),
-    h('span.tsep'), iconBtn('list', t('list_bullet'), () => cmd('insertUnorderedList')), iconBtn('list-ordered', t('list_number'), () => cmd('insertOrderedList')), iconBtn('quote', t('quote'), () => cmd('formatBlock', 'blockquote')),
-    iconBtn('link', t('link'), link), iconBtn('remove-formatting', t('clear_format'), () => cmd('removeFormat')),
-    h('span.spacer'), iconBtn('paperclip', t('attach'), () => pickFiles()));
+  // the buttons of the bar: which ones and in what order is a choice of each person (⋮ → Customise the bar), kept in the account
+  const TOOLS = {
+    bold: ['bold', t('bold'), () => cmd('bold'), 'Mod+B'], italic: ['italic', t('italic'), () => cmd('italic'), 'Mod+I'], underline: ['underline', t('underline'), () => cmd('underline'), 'Mod+U'],
+    strike: ['strikethrough', t('strike'), () => cmd('strikeThrough')], bullets: ['list', t('list_bullet'), () => cmd('insertUnorderedList')], numbers: ['list-ordered', t('list_number'), () => cmd('insertOrderedList')],
+    quote: ['quote', t('quote'), () => cmd('formatBlock', 'blockquote')], link: ['link', t('link'), link], clear: ['remove-formatting', t('clear_format'), () => cmd('removeFormat')],
+    left: ['text-align-start', t('align_left'), () => cmd('justifyLeft')], center: ['text-align-center', t('align_center'), () => cmd('justifyCenter')], right: ['text-align-end', t('align_right'), () => cmd('justifyRight')],
+    indent: ['list-indent-increase', t('indent_more'), () => cmd('indent')], outdent: ['list-indent-decrease', t('indent_less'), () => cmd('outdent')], hr: ['separator-horizontal', t('hr'), () => cmd('insertHorizontalRule')],
+    undo: ['undo-2', t('undo'), () => cmd('undo'), 'Mod+Z'], redo: ['redo-2', t('redo'), () => cmd('redo'), 'Mod+Shift+Z'],
+  };
+  const bar = h('div.cbar');
+  const more = mobile() || !window.SavOffice?.bars ? null : drop(h('sav-button', { icon: 'ellipsis-vertical', label: t('more'), title: t('more'), appearance: 'ghost', variant: 'neutral', size: 'sm', square: true }), () => [['settings-2', window.SavOffice.bars.menuLabel(), () => toolsDialog(TOOLS, drawBar)]], { placement: 'bottom-end' });
+  function drawBar() {
+    const el = (k) => (k === '|' ? h('span.tsep.so-sep') : k === '_' ? h('i.bgap') : k === '~' ? h('span.spacer') : iconBtn(TOOLS[k][0], TOOLS[k][1], TOOLS[k][2], { kbd: TOOLS[k][3] }));
+    put(bar, toolsOn(TOOLS).map(el), iconBtn('paperclip', t('attach'), () => pickFiles()), more);
+  }
+  drawBar();
   const attList = h('div.catts');
   const drawAtts = () => {
     const total = files.reduce((s, f) => s + f.size, 0);

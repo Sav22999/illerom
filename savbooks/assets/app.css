@@ -272,3 +272,7 @@ sav-tab > * { padding-top: 1rem; }
 .l-card:has(.covmini) { aspect-ratio: 1600 / 2560; width: 34%; background: transparent; border-radius: 3px 8px 8px 3px; }
 .l-in .covmini { width: 100%; height: 100%; } .l-in .covmini canvas { width: 100%; height: 100%; border-radius: 3px 8px 8px 3px; box-shadow: inset 4px 0 0 rgb(0 0 0 / .12); }
 .sditem { text-align: start; } .sdrow { display: flex; align-items: center; gap: .7rem; text-align: start; width: 100%; justify-content: flex-start; } .sdrow .grow { flex: 1; min-width: 0; } .sdrow strong { display: block; font-size: .92rem; } .sdrow small { display: block; }
+/* a separator chosen in the title bar or in the status bar (⋮ → Customise the bars) */
+.etop > i.sep, .ebottom > i.sep { width: 1px; align-self: stretch; margin: .45rem .25rem; background: var(--sav-color-border); flex: none; }
+/* a fixed space chosen in a bar; an adaptive one is a .spacer */
+.etop > i.bgap, .ebottom > i.bgap, .fmt > i.bgap, .ins > i.bgap { width: .9rem; flex: none; } .fmt > .spacer, .ins > .spacer { flex: 1; } .ins > i.sep { width: 1px; align-self: stretch; margin: .45rem .25rem; background: var(--sav-color-border); flex: none; }

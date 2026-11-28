@@ -1,5 +1,8 @@
 /** Icons of the app (Lucide, ISC licence: see assets/LICENSE-lucide.txt), from SavComponents icons 1.0.0. */
 const ICONS = {
+"calendar-arrow-down": "<path d=\"m14 17 4 4 4-4\"/><path d=\"M16 2v3\"/><path d=\"M18 13v8\"/><path d=\"M21 10.354V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h7.343\"/><path d=\"M3 9h18\"/><path d=\"M8 2v3\"/>",
+"calendar-search": "<path d=\"M16 2v3\"/><path d=\"M21 10.69V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h7.25\"/><path d=\"m22 21-1.875-1.875\"/><path d=\"M3 9h18\"/><path d=\"M8 2v3\"/><circle cx=\"18\" cy=\"17\" r=\"3\"/>",
+"settings-2": "<path d=\"M14 17H5\"/><path d=\"M19 7h-9\"/><circle cx=\"17\" cy=\"17\" r=\"3\"/><circle cx=\"7\" cy=\"7\" r=\"3\"/>",
 "calendar": "<path d=\"M8 2v4\"/><path d=\"M16 2v4\"/><rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\"/><path d=\"M3 10h18\"/>",
 "repeat": "<path d=\"m17 2 4 4-4 4\"/><path d=\"M3 11v-1a4 4 0 0 1 4-4h14\"/><path d=\"m7 22-4-4 4-4\"/><path d=\"M21 13v1a4 4 0 0 1-4 4H3\"/>",
 "rss": "<path d=\"M4 11a9 9 0 0 1 9 9\"/><path d=\"M4 4a16 16 0 0 1 16 16\"/><circle cx=\"5\" cy=\"19\" r=\"1\"/>",

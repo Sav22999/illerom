@@ -99,7 +99,7 @@ function cleanCf(v) {
     return o;
   });
 }
-const cleanDv = (v) => (Array.isArray(v) ? v : []).slice(0, 100).filter((x) => x && validRange(x.r) && DV_KINDS.includes(x.k)).map((x) => ({ r: x.r, k: x.k, list: (Array.isArray(x.list) ? x.list : []).slice(0, 200).map((i) => scalar(i, 200)).filter(Boolean), a: scalar(x.a, 60), b: scalar(x.b, 60), strict: !!x.strict }));
+const cleanDv = (v) => (Array.isArray(v) ? v : []).slice(0, 100).filter((x) => x && validRange(x.r) && DV_KINDS.includes(x.k)).map((x) => ({ r: x.r, k: x.k, list: (Array.isArray(x.list) ? x.list : []).slice(0, 200).map((i) => scalar(i, 200)).filter(Boolean), a: scalar(x.a, 60), b: scalar(x.b, 60), strict: !!x.strict, arrow: x.arrow !== false, hover: x.hover !== false, sel: !!x.sel, suggest: x.suggest !== false, tri: !!x.tri }));
 function cleanCharts(v) {
   const seen = new Set();
   return (Array.isArray(v) ? v : []).slice(0, 50).filter((x) => x && /^[a-z0-9]{4,12}$/.test(x.id) && !seen.has(x.id) && seen.add(x.id) && validRange(x.r) && CHART_KINDS.includes(x.k)).map((x) => {

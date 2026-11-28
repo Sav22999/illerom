@@ -273,6 +273,17 @@ function row(m) {
         h('time.rdate', { datetime: m.date || '' }, fmtDate(m.date))),
       h('div.rl2', h('span.rsubj', m.subject || t('no_subject')), m.answered ? icon('reply', { class: 'rans', label: t('answered') }) : null)),
     star);
+  // what can be done with this message (with the ones chosen, when it is one of them): its right click and ⌘J (SavOffice.context)
+  el.soMenu = () => {
+    const list = M.sel.has(k) && M.sel.size > 1 ? picked() : [m], one = list.length === 1;
+    return [
+      one ? ['mail-open', t('open'), () => (m.draft || S.folders[m.a]?.list?.find((f) => f.raw === m.f)?.role === 'drafts' ? openDraft(m) : openMessage(m))] : { head: t('n_selected', { n: list.length }) },
+      one && !m.draft ? ['reply', t('reply'), () => openCompose({ mode: 'reply', msg: m })] : null, one && !m.draft ? ['reply-all', t('reply_all'), () => openCompose({ mode: 'all', msg: m })] : null, one && !m.draft ? ['forward', t('forward'), () => openCompose({ mode: 'forward', msg: m })] : null, '-',
+      list.every((x) => x.seen) ? ['mail', t('mark_unread'), () => act('seen', list, { on: false }).catch(fail)] : ['mail-open', t('mark_read'), () => act('seen', list, { on: true }).catch(fail)],
+      list.every((x) => x.flagged) ? ['star-off', t('unstar'), () => act('flagged', list, { on: false }).catch(fail)] : ['star', t('star'), () => act('flagged', list, { on: true }).catch(fail)], '-',
+      ['archive', t('archive'), () => act('move', list, { to: 'archive' }).catch(fail)], ['octagon-alert', t('spam'), () => act('move', list, { to: 'junk' }).catch(fail)], ['trash', t('delete'), () => act('delete', list).catch(fail), { danger: true }],
+    ].filter(Boolean);
+  };
   el.addEventListener('click', (e) => {
     if (e.shiftKey || e.metaKey || e.ctrlKey) { M.sel.has(k) ? M.sel.delete(k) : M.sel.add(k); markSel(); return; }
     if (m.draft || (S.folders[m.a]?.list?.find((f) => f.raw === m.f)?.role === 'drafts')) { openDraft(m); return; }

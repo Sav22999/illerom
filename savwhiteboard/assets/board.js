@@ -7,7 +7,7 @@
  * With a stylus, fingers only move the board (palm rejection), switched on the first time a stylus touches it.
  * Every change goes into the history (undo/redo) and into the next save, which sends only what changed.
  */
-import { btn, colorPop, confirm, dialog, drop, fail, h, icon, iconBtn, K, mobile, put, toast } from './ui.js';
+import { btn, colorPop, confirm, dialog, drop, face, fail, h, icon, iconBtn, K, mobile, put, toast } from './ui.js';
 import { getLang, t } from './i18n.js';
 import { S, api } from './store.js';
 import { commands, go, prefs, setPrefs, userMenu } from './account.js';
@@ -51,6 +51,9 @@ export async function boardScreen(root, id) {
   for (const i of B.list) { items.set(i.id, i); order.push(i.id); }
   const settings = { ...B.settings };
   let title = B.title, version = B.version, dark = isDark(settings.bg);
+  // a board shared with others: who may change it (owner, editor) or only look at it (viewer); the people on it now
+  let role = B.role || 'owner', people = B.people || [], here = [];
+  const canEdit = () => role !== 'viewer';
   const saved = settings.view ? { ...settings.view } : null; // kept around the centre of the window: it fits any size of screen
   let V = { x: 0, y: 0, z: 1 };
   let tool = TOOLS.some((x) => x[0] === P.tool) && P.tool !== 'laser' ? P.tool : 'pen';
@@ -142,6 +145,7 @@ export async function boardScreen(root, id) {
   let orderDirty = false, titleDirty = false, lookDirty = false;
   /** list: [[id, before | null, after | null]]; newOrder: the ids in a new order (front, back, pieces of the eraser). */
   function change(list, newOrder = null, record = true) {
+    if (!canEdit()) return; // only to look at
     list = list.filter(([, b, a]) => b || a);
     if (!list.length && !newOrder) return;
     const ob = order.slice();
@@ -223,28 +227,71 @@ export async function boardScreen(root, id) {
   }
   /** The board as it is here, kept in this browser until it can be saved. */
   const keepHere = () => keepOff('savwhiteboard', B.id, { title, settings: { ...settings }, list: order.map((x) => items.get(x)).filter(Boolean) });
-  /** Another window saved this board: its items come here (nothing is waiting to leave from this window). */
-  async function refresh() {
+  /** Someone else (or another window) saved this board: their items come here, and the ones changed here and not saved yet
+   *  stay as they are (they leave with the next save; the server merges by item). quiet: from the news of the board. */
+  async function refresh(quiet = false) {
     const r2_ = await api('wb.get', undefined, { id: B.id, quiet: 1 });
     const b = r2_.board, now = JSON.stringify(order.map((x) => items.get(x)));
     version = b.version;
+    if (b.role) role = b.role;
+    if (b.people) people = b.people;
     if (JSON.stringify(b.list) === now) return;
+    const mine = new Map([...dirty].map((x) => [x, items.get(x)])), wasOrder = orderDirty ? order.slice() : null;
     items.clear(); order = [];
     for (const i of b.list) { items.set(i.id, i); order.push(i.id); }
+    for (const [x, it] of mine) { if (it) { if (!items.has(x)) order.push(x); items.set(x, it); } else { items.delete(x); order = order.filter((y) => y !== x); } }
+    if (wasOrder) order = [...wasOrder.filter((x) => items.has(x)), ...order.filter((x) => !wasOrder.includes(x))];
     for (const x of [...sel]) if (!items.has(x)) sel.delete(x);
     redrawAll(); afterChange();
-    toast(t('stale'), 'neutral');
+    if (!quiet) toast(t('stale'), 'neutral');
   }
+  /** The news of the board, every few seconds while it is on screen: when its version changed, the others' changes come in;
+   *  and who is on it now (their faces in the title bar). Not while writing a text (it would move under the caret). */
+  let pollT = 0, polling = false, windows = 1;
+  // this window among the others open on the board (the same person on two devices counts twice)
+  const client = uid().slice(0, 12);
+  async function poll() {
+    clearTimeout(pollT);
+    if (gone) return;
+    if (!document.hidden && !polling && S.user && navigator.onLine) {
+      polling = true;
+      try {
+        const r = await api('wb.poll', { id: B.id, client }).catch(() => null);
+        if (r) {
+          here = r.here || []; windows = r.windows || 1; drawHere();
+          if (r.role && r.role !== role) { role = r.role; applyRole(); }
+          if (r.version !== version && !editing && !saving && !dirty.size && !orderDirty) await refresh(true);
+        }
+      } catch { /* the next time */ } finally { polling = false; }
+    }
+    // quicker while someone else, or this person on another device, has it open too
+    pollT = setTimeout(poll, here.length > 1 || windows > 1 ? 2000 : people.length > 1 ? 3500 : 6000);
+  }
+
 
   // ---------------------------------------------------------------- selection overlay
   const selItems = () => [...sel].map((x) => items.get(x)).filter(Boolean);
+  /** The size of the eraser just chosen: its circle for a moment in the middle of the window. */
+  let flashT = 0;
+  function showEraser() {
+    if (action) return;
+    const s = size(), at = (eraserAt = Object.assign([s.w / 2, s.h / 2], { flash: true }));
+    drawOverlay();
+    clearTimeout(flashT);
+    flashT = setTimeout(() => { if (eraserAt === at) { eraserAt = null; drawOverlay(); } }, 1100);
+  }
   function drawOverlay() {
     over.replaceChildren();
     if (marquee) {
       const [x0, y0] = toScreen(marquee.x0, marquee.y0), [x1, y1] = toScreen(marquee.x1, marquee.y1);
       over.append(svgEl('rect', { class: 'marq', x: Math.min(x0, x1), y: Math.min(y0, y1), width: Math.abs(x1 - x0), height: Math.abs(y1 - y0) }));
     }
-    if (eraserAt && tool === 'eraser') over.append(svgEl('circle', { class: 'ercur', cx: eraserAt[0], cy: eraserAt[1], r: opt('eraser').s / 2 }));
+    if (eraserAt && tool === 'eraser') {
+      const [x, y] = eraserAt, r = opt('eraser').s / 2;
+      over.append(svgEl('circle', { class: 'ercur' + (eraserAt.flash ? ' flash' : ''), cx: x, cy: y, r }));
+      // a finger covers the circle under it: the same circle again above the finger, joined to it, shows its size
+      if (eraserAt.touch) { const gy = y - r * 2 - 56; over.append(svgEl('line', { class: 'erlink', x1: x, y1: y - r, x2: x, y2: gy + r }), svgEl('circle', { class: 'ercur ghost', cx: x, cy: gy, r })); }
+    }
     if (laser.length > 1) over.append(laserPath());
     const list = selItems();
     if (!list.length || (editing && list.length === 1 && list[0].id === editing.id)) return;
@@ -312,7 +359,17 @@ export async function boardScreen(root, id) {
       last = [x, y];
       lastT = ev.timeStamp;
     };
-    const paint = () => { raf = 0; live.innerHTML = itemSVG(item, dark); };
+    // the stroke on screen while it is drawn, in pieces: only the last one is drawn again at every frame (a long stroke was
+    // drawn whole sixty times a second, slower and slower); a full piece stays as it is and the next one starts on its end
+    let tail = svgEl('g'), from = 0;
+    live.append(tail);
+    const piece = (a, b) => itemSVG({ ...item, p: item.p.slice(a * 3, b * 3), _ts: a > 0, _te: b < item.p.length / 3 }, dark);
+    const paint = () => {
+      raf = 0;
+      const n = item.p.length / 3;
+      if (kind !== 'marker' && n - from > 120) { tail.innerHTML = piece(from, n); from = n - 2; tail = svgEl('g'); live.append(tail); }
+      tail.innerHTML = itemSVG({ ...item, p: item.p.slice(from * 3), _ts: from > 0 }, dark);
+    };
     add(e);
     paint();
     return {
@@ -331,6 +388,11 @@ export async function boardScreen(root, id) {
   function eraserAction(e) {
     const o = opt('eraser'), r = o.s / 2 / V.z, before = new Map(), created = new Set();
     let last = null;
+    // what the eraser changed is drawn once per frame (it may cut the same stroke many times between two frames)
+    const redraw = new Set();
+    let drawRaf = 0, reorder = false;
+    const later = (x2) => { redraw.add(x2); if (!drawRaf) drawRaf = requestAnimationFrame(flush); };
+    function flush() { cancelAnimationFrame(drawRaf); drawRaf = 0; for (const x2 of redraw) draw(x2); redraw.clear(); if (reorder) { reorder = false; restack(); } }
     const at = (x, y) => {
       for (let k = order.length - 1; k >= 0; k--) {
         const idk = order[k], i = items.get(idk);
@@ -347,12 +409,12 @@ export async function boardScreen(root, id) {
           order.splice(k + 1, 0, ...extra.map((x2) => x2.id));
           for (const x2 of extra) { items.set(x2.id, x2); created.add(x2.id); }
           if (!pieces.length) order.splice(k, 1);
-          draw(idk);
-          for (const x2 of extra) draw(x2.id);
-          restack();
+          later(idk);
+          for (const x2 of extra) later(x2.id);
+          if (extra.length) reorder = true;
         } else if (hits(i, x, y, r)) {
           if (!before.has(idk) && !created.has(idk)) before.set(idk, i);
-          items.delete(idk); order.splice(k, 1); draw(idk);
+          items.delete(idk); order.splice(k, 1); later(idk);
         }
       }
     };
@@ -362,10 +424,12 @@ export async function boardScreen(root, id) {
       last = [x, y];
     };
     step(e);
+    { const sz = size(); eraserAt = Object.assign([e.clientX - sz.l, e.clientY - sz.t], { touch: e.pointerType === 'touch' }); drawOverlay(); }
     return {
       id: e.pointerId,
-      move(ev) { step(ev); },
+      move(ev) { for (const c of coalesced(ev)) step(c); },
       up() {
+        flush();
         const list = [...before].map(([k, b]) => [k, b, items.get(k) || null]).concat([...created].map((k) => [k, null, items.get(k) || null]));
         // what the eraser did is already on screen: it goes into the history and the save as one change
         const ord = order.slice();
@@ -374,6 +438,8 @@ export async function boardScreen(root, id) {
         order = order.filter((x) => items.has(x));
         for (const [k] of before) if (!order.includes(k)) order.push(k);
         change(list, ord);
+        // lifted: the circle stays a moment where the finger was, then goes (a mouse or a stylus keep it while hovering)
+        if (eraserAt?.touch) { const was = eraserAt; setTimeout(() => { if (eraserAt === was && !action) { eraserAt = null; drawOverlay(); } }, 550); }
       },
       cancel() { this.up(); },
     };
@@ -548,6 +614,8 @@ export async function boardScreen(root, id) {
 
   // ---------------------------------------------------------------- pointers
   function cancelAction() { action?.cancel(); action = null; }
+  let penUp = -1e9;
+  const penDown = () => [...pointers.values()].some((q) => q.type === 'pen');
   const touchList = () => [...pointers.values()].filter((p) => p.type === 'touch');
   function startPinch() {
     const [a, b] = touchList();
@@ -561,10 +629,16 @@ export async function boardScreen(root, id) {
     lastType = e.pointerType || 'mouse';
     if (e.button === 2) return;
     if (e.pointerType !== 'mouse' && drawing()) e.preventDefault();
+    // drawing: no text field keeps the focus, or the iPad would take the Pencil for handwriting into it (Scribble)
+    if (e.pointerType === 'pen' && drawing() && document.activeElement?.closest?.('input, textarea, [contenteditable="true"], sav-input, sav-textarea') && document.activeElement !== editor) document.activeElement.blur();
     if (editing && e.target !== editor) { finishEdit(); if (tool === 'text' || tool === 'note') return; } // that press only closed the writing
+    // palm rejection: while a pen writes (and just after), fingers and the palm are ignored, so they neither scroll nor stop
+    // the stroke; a pen that lands while the palm is already down (the hand rested first) takes over instead of being dropped
+    if (e.pointerType === 'touch' && (penDown() || performance.now() - penUp < 400)) { e.preventDefault(); return; }
+    if (e.pointerType === 'pen' && gesture) { gesture = null; for (const [id, q] of pointers) if (q.type === 'touch') pointers.delete(id); wrap.classList.remove('panning'); }
     try { svg.setPointerCapture(e.pointerId); } catch { /* gone */ }
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, type: e.pointerType });
-    if (e.pointerType === 'pen' && !P.penOnly) { setPrefs({ penOnly: true }).catch(() => {}); P = prefs(); toast(t('stylus_seen'), 'neutral'); }
+    if (e.pointerType === 'pen' && !P.penOnly) { setPrefs({ penOnly: true }).catch(() => {}); P = prefs(); markDraw(); toast(t('stylus_seen'), 'neutral'); }
     if (e.pointerType === 'touch' && touchList().length >= 2) { cancelAction(); startPinch(); return; }
     if (e.pointerType === 'touch' && P.penOnly && tool !== 'select' && tool !== 'hand') { gesture = { kind: 'pan', id: e.pointerId, x: e.clientX, y: e.clientY }; return; }
     if (e.button === 1 || spaceDown || tool === 'hand') { e.preventDefault(); gesture = { kind: 'pan', id: e.pointerId, x: e.clientX, y: e.clientY }; wrap.classList.add('panning'); return; }
@@ -579,7 +653,8 @@ export async function boardScreen(root, id) {
   }
   function onMove(e) {
     const p = pointers.get(e.pointerId);
-    if (tool === 'eraser' && e.pointerType !== 'touch') { const s = size(); eraserAt = [e.clientX - s.l, e.clientY - s.t]; if (!action) drawOverlay(); }
+    // the circle of the eraser follows the mouse and the stylus (hovering or erasing) and a finger while it erases
+    if (tool === 'eraser' && (e.pointerType !== 'touch' || (action && action.id === e.pointerId))) { const s = size(); eraserAt = Object.assign([e.clientX - s.l, e.clientY - s.t], { touch: e.pointerType === 'touch' }); drawOverlay(); }
     if (!p) return;
     p.x = e.clientX; p.y = e.clientY;
     if (gesture?.kind === 'pinch') {
@@ -595,6 +670,7 @@ export async function boardScreen(root, id) {
     if (action && action.id === e.pointerId) action.move(e);
   }
   function onUp(e) {
+    if (pointers.get(e.pointerId)?.type === 'pen') penUp = performance.now();
     pointers.delete(e.pointerId);
     if (gesture?.kind === 'pinch') { if (touchList().length < 2) gesture = null; return; }
     if (gesture?.kind === 'pan' && gesture.id === e.pointerId) { gesture = null; wrap.classList.remove('panning'); return; }
@@ -622,16 +698,20 @@ export async function boardScreen(root, id) {
     if (hit && (hit.t === 'text' || hit.t === 'note')) startEdit(hit);
     else if (!hit) { const o = opt('text'), fs = r2(o.fs / V.z); startEdit({ id: uid(), t: 'text', x: r2(x), y: r2(y - fs * .62), w: 0, text: '', c: inkOn(o.c, settings.bg), fs, ff: o.ff, al: o.al, b: !!o.b }, true); }
   });
-  svg.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-    if (action || gesture || ((e.pointerType || lastType) !== 'mouse' && drawing())) return;
+  // the right click (or a long press) on the board: what the thing under it can do, in the menu of SavOffice (SavOffice.context);
+  // with a finger on a tool that draws, the board says data-so-draw: a finger held still is a stroke, not a menu
+  svg.soMenu = (e) => {
+    if (gesture || !e) return null;
+    // a long press with the select tool: the press held still is the menu, not a selection or a move
+    if (action) { if (tool !== 'select') return null; cancelAction(); marquee = null; }
     const [x, y] = toWorld(e.clientX, e.clientY), hit = topAt(x, y, tol());
     if (hit && !sel.has(hit.id)) select([hit.id]);
     const has = sel.size > 0;
-    import('./ui.js').then(({ menuAt }) => menuAt(e.clientX, e.clientY, has ? [
+    return has ? [
       ['copy', t('copy_sel'), () => copySel()], ['copy-plus', t('duplicate_sel'), () => duplicate()], '-', ['bring-to-front', t('front'), () => arrange(true)], ['send-to-back', t('back'), () => arrange(false)], '-', ['trash', t('delete_sel'), () => removeSel(), { danger: true }],
-    ] : [['clipboard-paste', t('paste'), () => pasteFromMenu(x, y)], ['scan', t('zoom_fit'), () => fit()], ['palette', t('board_look'), () => lookB.button.click()]]));
-  });
+    ] : [['clipboard-paste', t('paste'), () => pasteFromMenu(x, y)], ['scan', t('zoom_fit'), () => fit()], ['palette', t('board_look'), () => lookB.button.click()]];
+  };
+  function markDraw() { svg.toggleAttribute('data-so-draw', drawing() && !P.penOnly); }
 
   // ---------------------------------------------------------------- what the selection can do
   function removeSel() { const list = selItems(); if (!list.length) return; change(list.map((i) => [i.id, i, null])); sel.clear(); drawOverlay(); buildProps(); }
@@ -715,7 +795,7 @@ export async function boardScreen(root, id) {
 
   // ---------------------------------------------------------------- the bars
   const tb = {};
-  function setToolQuiet(k) { tool = k; for (const [n, b] of Object.entries(tb)) b.on(n === k); svg.dataset.tool = k; }
+  function setToolQuiet(k) { tool = k; for (const [n, b] of Object.entries(tb)) b.on(n === k); svg.dataset.tool = k; markDraw(); }
   function setTool(k) {
     finishEdit();
     if (k === 'image') { pickImage(); return; }
@@ -727,12 +807,18 @@ export async function boardScreen(root, id) {
     if (k !== 'laser') setPrefs({ tool: k }).catch(() => {});
   }
   const tools = h('nav.tools', { 'aria-label': t('tool_select') });
-  for (const [k, ic, key] of TOOLS) {
-    const b = iconBtn(k === 'shape' ? SHAPE_ICONS[opt('shape').k] : ic, t('tool_' + k), () => setTool(k), { place: 'top', kbd: key, size: matchMedia('(max-width: 640px)').matches ? 'sm' : 'md' });
-    tb[k] = b;
-    tools.append(b);
-    if (k === 'hand' || k === 'laser') tools.append(h('span.tsep'));
-  }
+  // every tool has its button; which ones the dock shows and in what order is a choice of each person (⋮ → Customise the bars)
+  for (const [k, ic, key] of TOOLS) tb[k] = iconBtn(k === 'shape' ? SHAPE_ICONS[opt('shape').k] : ic, t('tool_' + k), () => setTool(k), { place: 'top', kbd: key, size: matchMedia('(max-width: 640px)').matches ? 'sm' : 'md' });
+  const TL_ITEMS = TOOLS.map(([k, ic]) => [k, ic, t('tool_' + k)]);
+  const TL_DEF = TOOLS.flatMap(([k]) => (k === 'hand' || k === 'laser' ? [k, '|'] : [k]));
+  /** A bar as each person chose it (kept with the account): its list, in order, with '|' a separator, '_' a fixed space and
+   *  '~' an adaptive one (SavOffice.bars); what it has at first when nothing was chosen. */
+  const BARS = window.SavOffice?.bars;
+  const barPick = (id, def, items) => (BARS ? BARS.pick(prefs().bars?.[id], def, items) : def);
+  const barList = (id, def, items) => { const l = barPick(id, def, items); return BARS ? BARS.layout(l) : l; };
+  const barEl = (k, map) => (k === '|' ? h('span.tsep.so-sep') : k === '_' ? h('i.bgap') : k === '~' ? h('span.spacer') : map[k]);
+  const layoutTools = () => put(tools, barList('tools', TL_DEF, TL_ITEMS).map((k) => barEl(k, tb)));
+  layoutTools();
 
   const props = h('div.props');
   /** Colours to tap: a few, and any other one. */
@@ -760,7 +846,7 @@ export async function boardScreen(root, id) {
       kids.push(swatches(tool === 'marker' ? HIGHLIGHT : inks, tool === 'marker' ? o.c : inkOn(o.c, settings.bg), (c) => { setOpt(tool, { c }); buildProps(); }), sep(), sizes(SIZES[tool], o.s, (s) => setOpt(tool, { s }), SIZES[tool].at(-1)));
     } else if (tool === 'eraser') {
       const o = opt('eraser');
-      kids.push(seg(t('eraser_mode'), o.mode, [['partial', 'eraser', t('er_partial')], ['whole', 'trash', t('er_whole')]], (mode) => setOpt('eraser', { mode })), sep(), sizes(SIZES.eraser, o.s, (s) => setOpt('eraser', { s }), 100));
+      kids.push(seg(t('eraser_mode'), o.mode, [['partial', 'eraser', t('er_partial')], ['whole', 'trash', t('er_whole')]], (mode) => setOpt('eraser', { mode })), sep(), sizes(SIZES.eraser, o.s, (s) => { setOpt('eraser', { s }); showEraser(); }, 100));
     } else if (tool === 'shape') {
       const o = opt('shape');
       kids.push(seg(t('tool_shape'), o.k, Object.entries(SHAPE_ICONS).map(([k, ic]) => [k, ic, t('s_' + k)]), (k) => { setOpt('shape', { k }); tb.shape.button.icon = SHAPE_ICONS[k]; buildProps(); }), sep(),
@@ -844,7 +930,8 @@ export async function boardScreen(root, id) {
     // from the sketch to the diagram: SavDiagrams (same account) reads this board and makes a diagram of its shapes, texts and arrows
     ['workflow', t('to_diagram'), async () => { await flush(); window.open('../savdiagrams/#/from-board/' + B.id, '_blank', 'noopener'); }],
     '-', ['scan', t('zoom_fit'), () => fit(), { kbd: 'Shift+1' }], document.documentElement.requestFullscreen ? ['maximize', t(document.fullscreenElement ? 'exit_full' : 'full_screen'), fullscreen] : null,
-    '-', ['info', t('shortcuts'), () => shortcuts()],
+    role === 'owner' ? ['user-plus', t('share_board'), () => shareDialog()] : null,
+    '-', !mobile() && BARS ? ['settings-2', BARS.menuLabel(), () => barsDialog()] : null, ['info', t('shortcuts'), () => shortcuts()],
   ];
   const moreB = drop(h('sav-button', { icon: 'ellipsis-vertical', label: t('more_tools'), title: t('more_tools'), appearance: 'ghost', variant: 'neutral', size: 'sm', square: true }), moreList, { placement: 'bottom-end', label: t('more_tools') });
 
@@ -858,11 +945,52 @@ export async function boardScreen(root, id) {
   document.fonts?.ready.then(() => { if (!gone) fitTitle(); });
   titleIn.addEventListener('change', () => { const v = titleIn.value.trim(); if (!v) { titleIn.value = title; fitTitle(); return; } if (v === title) return; title = v; titleDirty = true; document.title = title + ' – SavWhiteboard'; svg.setAttribute('aria-label', title); queueSave(300); });
 
-  const top = h('header.wtop',
-    iconBtn('arrow-left', t('back_home'), () => go('#/'), { kbd: '' }), h('a.wbrand', { href: '#/', title: 'SavWhiteboard' }, h('img', { src: 'icons/favicon.svg', width: 26, height: 26, alt: '' })),
-    titleBox, status, h('span.spacer'), undoB, redoB, h('span.tsep'), h('span.lookw', lookPop), downloadB, moreB, h('span.tsep.mhide'), h('span.mhide', userMenu()));
+  // the title bar: back, the logo and the title on the left, ⋮ and the account on the right (always); between them the list
+  const backB = iconBtn('arrow-left', t('back_home'), () => go('#/'), { kbd: '' }), brandA = h('a.wbrand', { href: '#/', title: 'SavWhiteboard' }, h('img', { src: 'icons/favicon.svg', width: 26, height: 26, alt: '' })), accountEl = h('span.mhide', userMenu());
+  // the people on the board now (their faces), and sharing it (its owner)
+  const hereEl = h('span.here', { 'aria-label': t('here_now') });
+  function drawHere() {
+    const others = here.filter((p) => p.id !== B.me);
+    put(hereEl, others.slice(0, 5).map((p) => face(p.name, null, 26)), others.length > 5 ? h('small.more', '+' + (others.length - 5)) : null);
+    hereEl.title = others.length ? t('here_now') + ': ' + others.map((p) => p.name).join(', ') : '';
+  }
+  const shareB = iconBtn('user-plus', t('share'), () => shareDialog());
+  function shareDialog() {
+    if (role !== 'owner') return;
+    const email = h('sav-input', { type: 'email', label: t('share_email'), placeholder: 'nome@esempio.it', size: 'sm' }), roleSel = h('sav-select', { label: t('share_role'), value: 'editor', size: 'sm' }, h('option', { value: 'editor' }, t('role_editor')), h('option', { value: 'viewer' }, t('role_viewer')));
+    email.addEventListener('keydown', (e) => e.stopPropagation());
+    const list = h('div.people');
+    const draw = () => put(list, people.map((p) => h('div.prow', face(p.name, null, 30), h('div.grow', h('b', p.name), h('small.muted', p.email)), p.role === 'owner' ? h('small.muted', t('role_owner'))
+      : [h('small.muted', t(p.role === 'viewer' ? 'role_viewer' : 'role_editor')), iconBtn('x', t('share_remove'), async () => { people = (await api('wb.share', { id: B.id, user: p.id, remove: true })).people; draw(); })])));
+    draw();
+    dialog({ title: t('share_board'), width: '32rem', body: h('div.form', h('p.muted', t('share_t')), list, h('div.grid2', email, roleSel)), actions: [{ label: t('close') }, { label: t('share_add'), primary: true, run: async () => {
+      try { people = (await api('wb.share', { id: B.id, email: email.value.trim(), role: roleSel.value })).people; email.value = ''; draw(); toast(t('share_done'), 'success'); } catch (e) { toast(t(e.code === 'no_account' ? 'share_no_account' : e.code === 'share_self' ? 'share_self' : 'error'), 'warning'); }
+      return false; } }] });
+  }
+  const T2 = { undo: undoB, redo: redoB, look: h('span.lookw', lookPop), download: downloadB, share: shareB };
+  const TITLE_ITEMS = [['undo', 'undo-2', t('undo')], ['redo', 'redo-2', t('redo')], ['look', 'palette', t('board_look')], ['download', 'download', t('download_as')], ['share', 'user-plus', t('share')]].filter(([k]) => k !== 'share' || role === 'owner');
+  const TITLE_DEF = ['~', 'undo', 'redo', '|', 'look', 'download', 'share'];
+  const top = h('header.wtop');
+  const layoutTitle = () => put(top, backB, brandA, titleBox, status, hereEl, barList('title', TITLE_DEF, TITLE_ITEMS).map((k) => barEl(k, T2)), moreB, h('span.tsep.mhide'), accountEl);
+  layoutTitle();
+  /** Customising the bars (⋮ → Customise the bars): the window shared by the apps of SavOffice, a tab for each bar. */
+  function barsDialog() {
+    if (!BARS) return;
+    BARS.dialog({ bars: [{ id: 'title', items: TITLE_ITEMS, def: TITLE_DEF, before: [['arrow-left', t('back_home')], [null, title]], after: [['ellipsis-vertical', t('more_tools')], ['layout-grid', 'SavOffice'], ['user', t('account')]] }, { id: 'tools', items: TL_ITEMS, def: TL_DEF }],
+      value: { title: barPick('title', TITLE_DEF, TITLE_ITEMS), tools: barPick('tools', TL_DEF, TL_ITEMS) },
+      save: async (v) => { await setPrefs({ bars: { ...(prefs().bars || {}), ...v } }); layoutTitle(); layoutTools(); } });
+  }
   const zoom = h('div.zoom', iconBtn('zoom-out', t('zoom_out'), () => zoomTo(V.z / 1.25), { place: 'top', kbd: '-' }), zoomLabel, iconBtn('zoom-in', t('zoom_in'), () => zoomTo(V.z * 1.25), { place: 'top', kbd: '+' }), iconBtn('scan', t('zoom_fit'), () => fit(), { place: 'top', kbd: 'Shift+1' }));
-  wrap.append(top, h('div.dock', props, tools), zoom);
+  const dock = h('div.dock', props, tools);
+  wrap.append(top, dock, zoom);
+  /** Only to look at (a board shared to look at): no tools, no changes, the title stays as it is. */
+  function applyRole() {
+    const ro = !canEdit();
+    dock.hidden = ro; titleIn.readonly = ro || null; undoB.hidden = ro; redoB.hidden = ro;
+    wrap.classList.toggle('viewonly', ro);
+    if (ro && tool !== 'hand') setTool('hand');
+  }
+  applyRole();
   put(root, wrap);
   // the search of actions (⌘J / Ctrl+J): the tools, the menu and the downloads, as in the bar
   const asCmd = (list) => list.filter(Array.isArray).map(([ic, l, fn, o]) => [ic, l, fn, o?.kbd || null]);
@@ -954,6 +1082,9 @@ export async function boardScreen(root, id) {
   document.addEventListener('paste', onPaste);
   addEventListener('resize', onResize);
   document.addEventListener('visibilitychange', onHide);
+  const onShow = () => { if (!document.hidden) poll(); };
+  document.addEventListener('visibilitychange', onShow);
+  poll();
   addEventListener('beforeunload', onUnload);
 
   // ---------------------------------------------------------------- start
@@ -983,6 +1114,7 @@ export async function boardScreen(root, id) {
     document.removeEventListener('paste', onPaste);
     removeEventListener('resize', onResize);
     document.removeEventListener('visibilitychange', onHide);
+    document.removeEventListener('visibilitychange', onShow); clearTimeout(pollT);
     removeEventListener('beforeunload', onUnload);
     cancelAnimationFrame(laserRaf);
     document.querySelector('.ctxm')?.remove();

@@ -1,6 +1,7 @@
 /** Texts of the app, in English and Italian: the ones shared with the other apps of SavOffice (accounts, settings), then the address book. */
 const T = {
   // general
+  write_email: ['Write an email', 'Scrivi un’email'],
   cancel: ['Cancel', 'Annulla'], close: ['Close', 'Chiudi'], save: ['Save', 'Salva'], delete: ['Delete', 'Elimina'], create: ['Create', 'Crea'], add: ['Add', 'Aggiungi'], ok: ['OK', 'OK'],
   copy: ['Copy', 'Copia'], copied: ['Copied', 'Copiato'], more: ['More', 'Altro'], retry: ['Try again', 'Riprova'], remove: ['Remove', 'Rimuovi'], name: ['Name', 'Nome'], search: ['Search', 'Cerca'],
   open: ['Open', 'Apri'], edit: ['Edit', 'Modifica'], home: ['Home', 'Home'], undo: ['Undo', 'Annulla'], change: ['Change', 'Cambia'], all: ['All', 'Tutti'], none: ['None', 'Nessuno'],

@@ -1,6 +1,7 @@
 /** Texts of the app, in English and Italian: the ones shared with the other apps of SavOffice (accounts, settings), then the tasks. */
 const T = {
   // general
+  due_today_l: ['Due today', 'Scade oggi'], due_tomorrow_l: ['Due tomorrow', 'Scade domani'], due_week_l: ['Due in a week', 'Scade tra una settimana'],
   cancel: ['Cancel', 'Annulla'], close: ['Close', 'Chiudi'], save: ['Save', 'Salva'], delete: ['Delete', 'Elimina'], create: ['Create', 'Crea'], add: ['Add', 'Aggiungi'], done: ['Done', 'Fatto'],
   copy: ['Copy', 'Copia'], copied: ['Copied', 'Copiato'], more: ['More', 'Altro'], retry: ['Try again', 'Riprova'], remove: ['Remove', 'Rimuovi'], name: ['Name', 'Nome'], search: ['Search', 'Cerca'],
   open: ['Open', 'Apri'], edit: ['Edit', 'Modifica'], home: ['Home', 'Home'], undo: ['Undo', 'Annulla'], rename: ['Rename', 'Rinomina'], duplicate: ['Duplicate', 'Duplica'], deleted: ['Deleted', 'Eliminata'],

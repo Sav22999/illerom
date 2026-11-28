@@ -5,7 +5,8 @@
  * Accounts:     the ones of SavSchedules (same users, same session): auth.config, auth.me, auth.register, auth.login
  *               (and the routes of ../identity/identity.php), auth.resend, auth.verify, auth.logout, auth.password, auth.forgot,
  *               auth.reset, auth.profile, auth.export, auth.delete
- * Boards:       wb.init, wb.prefs, wb.get, wb.create, wb.save, wb.duplicate, wb.trash, wb.restore, wb.delete, wb.empty_trash
+ * Boards:       wb.init, wb.prefs, wb.get, wb.create, wb.save, wb.duplicate, wb.trash, wb.restore, wb.delete, wb.empty_trash,
+ *               wb.share.list, wb.share (owner: who else may edit or look at a board), wb.poll (news of a board open: its version, who is on it)
  * Pictures:     media (public by its random id), media.upload, media.list, media.delete, search, search.thumb, media.import
  *
  * Every POST of a signed-in user needs the X-CSRF-Token header (given at sign-in).
@@ -335,7 +336,47 @@ switch ($r) {
         // Everything the home needs: the settings and the boards (without their items)
         $u = reader();
         $p = profile($u);
-        send_json(['ok' => true, 'prefs' => (object)profile_prefs($p), 'boards' => array_map('out_board_card', boards_of($u['id'])), 'trashDays' => TRASH_DAYS]);
+        send_json(['ok' => true, 'prefs' => (object)profile_prefs($p), 'boards' => array_map('out_board_card', boards_of($u['id'])), 'shared' => boards_shared_with((int)$u['id']), 'trashDays' => TRASH_DAYS]);
+
+    case 'wb.share.list':
+        // ?id=: the people of a board (its owner)
+        $u = reader();
+        $b = own_board($u, $_GET['id'] ?? '');
+        send_json(['ok' => true, 'people' => board_people($b)]);
+
+    case 'wb.share':
+        // {id, email, role}: the board shared with an account of SavOffice (role: editor | viewer), or its role changed;
+        // {id, user, remove: true}: no longer shared with them. Only its owner.
+        $u = writer();
+        $b = body();
+        $row = own_board($u, $b['id'] ?? '');
+        if (!empty($b['remove'])) {
+            q('DELETE FROM ' . t('wb_shares') . ' WHERE board_id = ? AND user_id = ?', [$row['id'], (int)($b['user'] ?? 0)]);
+            q('DELETE FROM ' . t('wb_here') . ' WHERE board_id = ? AND user_id = ?', [$row['id'], (int)($b['user'] ?? 0)]);
+        } else {
+            $email = mb_strtolower(trim((string)($b['email'] ?? '')));
+            $role = ($b['role'] ?? '') === 'viewer' ? 'viewer' : 'editor';
+            $p = $email !== '' ? q('SELECT id FROM ' . t('users') . " WHERE email = ? AND status = 'active'", [$email])->fetch() : null;
+            if (!$p) fail('no_account', 404);
+            if ((int)$p['id'] === (int)$u['id']) fail('share_self', 422);
+            if ((int)q('SELECT COUNT(*) FROM ' . t('wb_shares') . ' WHERE board_id = ?', [$row['id']])->fetchColumn() >= 50) fail('too_many', 422);
+            q('INSERT INTO ' . t('wb_shares') . ' (board_id, user_id, role, created_at) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE role = VALUES(role)', [$row['id'], $p['id'], $role, now_utc()]);
+        }
+        send_json(['ok' => true, 'people' => board_people($row)]);
+
+    case 'wb.poll':
+        // {id, client}: the news of a board open — its version (the browser reads it again when it changed), who is on it now
+        // (the ones who asked in the last 20 seconds) and how many windows are open on it, the person's own other devices
+        // included (writing on a tablet and looking at a computer: the computer follows). Asked every few seconds.
+        $u = writer();
+        $row = board_for($u, body()['id'] ?? '');
+        $client = preg_match('/^[A-Za-z0-9]{8,16}$/', (string)(body()['client'] ?? '')) ? (string)body()['client'] : 'x';
+        q('INSERT INTO ' . t('wb_here') . ' (board_id, user_id, client, seen_at) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE seen_at = VALUES(seen_at)', [$row['id'], $u['id'], $client, now_utc()]);
+        $since = gmdate('Y-m-d H:i:s', time() - 20);
+        if (random_int(1, 50) === 1) q('DELETE FROM ' . t('wb_here') . ' WHERE seen_at < ?', [gmdate('Y-m-d H:i:s', time() - 3600)]);
+        $rows = q('SELECT u.id, u.name, MAX(p.seen_at) AS seen, COUNT(*) AS n FROM ' . t('wb_here') . ' p JOIN ' . t('users') . ' u ON u.id = p.user_id WHERE p.board_id = ? AND p.seen_at > ? GROUP BY u.id, u.name ORDER BY seen DESC', [$row['id'], $since])->fetchAll();
+        send_json(['ok' => true, 'version' => (int)$row['version'], 'role' => $row['role'], 'windows' => array_sum(array_map(fn($p) => (int)$p['n'], $rows)),
+            'here' => array_map(fn($p) => ['id' => (int)$p['id'], 'name' => $p['name']], $rows)]);
 
     case 'wb.prefs':
         // Settings of the boards (tools, colours, sizes, theme, home view…): read only by the app
@@ -348,9 +389,11 @@ switch ($r) {
 
     case 'wb.get':
         $u = reader();
-        $b = own_board($u, $_GET['id'] ?? '', true);
-        if (empty($_GET['quiet'])) q('UPDATE ' . t('wb_boards') . ' SET opened_at = ? WHERE id = ?', [now_utc(), $b['id']]);
-        send_json(['ok' => true, 'board' => out_board($b)]);
+        // the owner opens it even in the bin; the people it is shared with, while it is not there
+        $mine = q('SELECT id FROM ' . t('wb_boards') . ' WHERE bid = ? AND user_id = ?', [valid_code($_GET['id'] ?? ''), $u['id']])->fetchColumn();
+        $b = $mine ? own_board($u, $_GET['id'] ?? '', true) + ['role' => 'owner'] : board_for($u, $_GET['id'] ?? '');
+        if (empty($_GET['quiet']) && $b['role'] === 'owner') q('UPDATE ' . t('wb_boards') . ' SET opened_at = ? WHERE id = ?', [now_utc(), $b['id']]);
+        send_json(['ok' => true, 'board' => out_board($b) + ['role' => $b['role'], 'people' => board_people($b), 'me' => (int)$u['id']]]);
 
     case 'wb.create':
         // A new board: empty, from a ready-made start, or opened from a .savwhi file (the items come cleaned)
@@ -366,7 +409,7 @@ switch ($r) {
         $u = writer();
         $b = body();
         db()->beginTransaction();
-        $row = own_board($u, $b['id'] ?? '', false, true);
+        $row = board_for($u, $b['id'] ?? '', 'editor', true); // the owner, or someone it is shared with to edit
         $stale = (int)($b['base'] ?? 0) !== (int)$row['version'];
         $sets = [];
         $args = [];
@@ -398,7 +441,7 @@ switch ($r) {
     case 'wb.duplicate':
         $u = writer();
         $b = body();
-        $src = own_board($u, $b['id'] ?? '');
+        $src = board_for($u, $b['id'] ?? ''); // a copy, of one's own or of a board shared with them
         $title = s($b, 'title', 160) ?: mb_substr((ui_lang($b) === 'it' ? 'Copia di ' : 'Copy of ') . $src['title'], 0, 160);
         $board = create_board($u, $title, json_decode((string)$src['settings'], true) ?: [], json_decode((string)$src['items'], true) ?: [], (string)$src['thumb']);
         send_json(['ok' => true, 'board' => out_board_card($board)]);

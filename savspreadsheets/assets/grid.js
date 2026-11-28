@@ -115,7 +115,7 @@ export class Grid {
   // ---------------------------------------------------------------- drawing
 
   later() { if (!this.raf) this.raf = requestAnimationFrame(() => { this.raf = 0; this.draw(); }); }
-  refresh() { this.layout(); this.draw(); }
+  refresh() { this.pages = this.o.pages?.() || null; this.layout(); this.draw(); }
   draw() {
     const v = this.visible(), fr = this.fr, fc = this.fc;
     this.view = v;
@@ -151,9 +151,10 @@ export class Grid {
       bg.push(`<div class="c${d?.merge ? ' m' : ''}${d?.cls ? ' ' + d.cls : ''}" style="${pos};${d?.bgcss || ''}"></div>`);
       if (d?.bd) bg.push(`<div class="cb" style="left:${left - 1}px;top:${top - 1}px;width:${w + 1}px;height:${hh + 1}px;${d.bd}"></div>`);
       if (!d || d.text === '' || d.text === undefined) { if (d?.html) tx.push(`<div class="t" style="${pos}">${d.html}</div>`); return; }
-      // a long text runs over the empty cells on its right (only when it does not wrap and is aligned to the left)
+      // a long text runs over the empty cells on its right (only when it does not wrap and is aligned to the left,
+      // and has no button of its own, as the arrow of a dropdown, which must stay at the edge of its cell)
       let wide = w;
-      if (!d.wrap && d.align === 'l' && !d.merge) { for (let k = c + 1, n = 0; k <= Math.min(this.nc, c + 30) && n < 30; k++, n++) { if (o.colHidden(k)) continue; const nx = o.cell(r, k); if (nx && (nx.text !== '' && nx.text !== undefined || nx.merge)) break; wide += this.w(k); if (wide > 1600) break; } }
+      if (!d.wrap && d.align === 'l' && !d.merge && !d.html?.includes('class="dvb')) { for (let k = c + 1, n = 0; k <= Math.min(this.nc, c + 30) && n < 30; k++, n++) { if (o.colHidden(k)) continue; const nx = o.cell(r, k); if (nx && (nx.text !== '' && nx.text !== undefined || nx.merge)) break; wide += this.w(k); if (wide > 1600) break; } }
       tx.push(`<div class="t${d.wrap ? ' wr' : ''} a${d.align || 'l'} v${d.va || 'b'}${d.tcls ? ' ' + d.tcls : ''}" style="left:${left}px;top:${top}px;width:${wide}px;height:${hh}px;${d.css || ''}">${d.html ?? ''}<span>${esc(d.text)}</span></div>`);
     };
     for (const [r, c] of extra) one(r, c);
@@ -191,6 +192,8 @@ export class Grid {
         const cut = `${g.r1 < r1 ? ' nt' : ''}${g.r2 > r2 ? ' nb' : ''}${g.c1 < c1 ? ' nl' : ''}${g.c2 > c2 ? ' nr' : ''}`;
         out.push(`<div class="${cls}${cut}" style="left:${left}px;top:${top}px;width:${w}px;height:${hh}px;${extra}">${label}</div>`);
       };
+      // where the printed pages end (the option of the print window)
+      if (this.pages) { for (const r of this.pages.rows) box({ r1: r, r2: r, c1: 1, c2: this.nc }, 'pbr'); for (const c of this.pages.cols) box({ r1: 1, r2: this.nr, c1: c, c2: c }, 'pbc'); }
       if (many) for (const g of s.ranges) box(g, 'rg');
       for (const m of this.marks) box(m, 'mk', `--k:${m.color}`);
       if (this.copyBox) box(this.copyBox, 'cp');

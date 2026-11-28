@@ -50,12 +50,23 @@ export function formatDialog(x, tab = 'number') {
 // ------------------------------------------------------------------ conditional formats
 
 const CF = ['gt', 'lt', 'ge', 'le', 'eq', 'ne', 'between', 'text', 'empty', 'filled', 'dup', 'top', 'formula', 'scale', 'bars'];
-export function cfDialog(x) {
+/** The look a new rule starts with: green for "more", red for "less", yellow for the rest. */
+const CF_LOOK = { gt: { bg: '#d3f3d8', c: '#14532d' }, ge: { bg: '#d3f3d8', c: '#14532d' }, lt: { bg: '#ffc9c9', c: '#9f1239' }, le: { bg: '#ffc9c9', c: '#9f1239' } };
+const cfLook = (k) => ({ ...(CF_LOOK[k] || { bg: '#fff3a3', c: '#854d0e' }) });
+/** quick: a kind of rule to add to the selection straight away, without the list of the rules. */
+export function cfDialog(x, quick) {
   let rules = structuredClone(x.sh.cf);
-  const g = x.rangeOf(), box = h('div.stack.cfl');
+  const g = x.selOf(), box = h('div.stack.cfl');
+  const commit = () => x.change([{ t: 'sheet', id: x.sh.id, p: { cf: rules } }]);
+  if (quick && ['dup', 'scale', 'bars'].includes(quick)) {
+    rules.push({ r: rangeStr(g), k: quick, a: '', b: '', s: quick === 'dup' ? cfLook('dup') : {}, ...(quick === 'scale' ? { c1: '#f8696b', c2: '#63be7b' } : quick === 'bars' ? { c1: '#7fb55c' } : {}) });
+    commit();
+    toast(t('cf_added', { r: rangeStr(g) }), 'success');
+    return;
+  }
   const draw = () => put(box, rules.length ? rules.map((r, i) => h('div.cfrow', h('span.cfs', { style: r.k === 'scale' ? `background:linear-gradient(90deg,${r.c1 || '#f8696b'},${r.c3 || r.c2 || '#63be7b'},${r.c2 || '#63be7b'})` : r.k === 'bars' ? `background:linear-gradient(90deg,${r.c1 || '#7fb55c'} 60%,transparent 60%)` : `background:${r.s?.bg || 'transparent'};color:${r.s?.c || 'inherit'};font-weight:${r.s?.b ? 700 : 400}` }, 'Aa'), h('div.grow', h('b', t('cf_' + (r.k === 'text' ? 'text_k' : r.k)) + (r.a ? ' ' + r.a : '') + (r.k === 'between' ? ' – ' + r.b : '')), h('small.muted', r.r)), iconBtn('pencil', t('edit'), () => edit(i)), iconBtn('trash', t('delete'), () => { rules.splice(i, 1); draw(); }))) : h('p.muted', t('cf_none')));
-  function edit(i) {
-    const r = i === undefined ? { r: rangeStr(g), k: 'gt', a: '', b: '', s: { bg: '#d3f3d8', c: '#14532d' } } : structuredClone(rules[i]);
+  function edit(i, k0, direct) {
+    const r = i === undefined ? { r: rangeStr(g), k: k0 || 'gt', a: '', b: '', s: cfLook(k0 || 'gt') } : structuredClone(rules[i]);
     const rg = field(t('range'), r.r), kind = select(t('cf_rule'), CF.map((k) => [k, t('cf_' + (k === 'text' ? 'text_k' : k))]), r.k, () => paint(), { size: 'sm' });
     const a = field(t('value'), r.a), b = field(t('value_2'), r.b);
     let bg = r.s?.bg || '', c = r.s?.c || '', bold = !!r.s?.b, c1 = r.c1 || '', c2 = r.c2 || '', c3 = r.c3 || '';
@@ -79,33 +90,54 @@ export function cfDialog(x) {
       const n = { r: rr, k: kind.value, a: a.value.trim().replace(/^=/, ''), b: b.value.trim(), s: { ...(bg ? { bg } : {}), ...(c ? { c } : {}), ...(bold ? { b: 1 } : {}) } };
       if (n.k === 'scale' || n.k === 'bars') Object.assign(n, { c1: c1 || (n.k === 'bars' ? '#7fb55c' : '#f8696b'), ...(n.k === 'scale' ? { c2: c2 || '#63be7b', ...(c3 ? { c3 } : {}) } : {}) });
       if (i === undefined) rules.push(n); else rules[i] = n;
-      draw();
+      if (direct) commit(); else draw();
       return undefined;
     } }] });
   }
+  if (quick) { edit(undefined, quick, true); return; }
   draw();
-  dialog({ title: t('cond_format'), width: '32rem', body: h('div.form', h('p.muted', t('cf_text')), box, btn(t('cf_add'), { icon: 'plus', size: 'sm', onclick: () => edit() })), actions: [{ label: t('cancel') }, { label: t('save'), primary: true, run: () => x.change([{ t: 'sheet', id: x.sh.id, p: { cf: rules } }]) }] });
+  dialog({ title: t('cond_format'), width: '32rem', body: h('div.form', h('p.muted', t('cf_text')), box, btn(t('cf_add'), { icon: 'plus', size: 'sm', onclick: () => edit() })), actions: [{ label: t('cancel') }, { label: t('save'), primary: true, run: commit }] });
 }
 
 // ------------------------------------------------------------------ data validation
 
-export function dvDialog(x) {
-  const g = x.rangeOf(), ex = x.sh.dv.find((d) => { const q = parseRange(d.r); return q && q.r1 <= g.r1 && q.r2 >= g.r2 && q.c1 <= g.c1 && q.c2 >= g.c2; });
-  const rg = field(t('range'), ex?.r || rangeStr(g)), kind = select(t('dv_kind'), ['list', 'check', 'number', 'int', 'date', 'text'].map((k) => [k, t('dv_' + (k === 'text' ? 'text_k' : k))]), ex?.k || 'list', () => paint(), { size: 'sm' });
-  const items = h('sav-textarea', { label: t('dv_items'), value: (ex?.list || []).join('\n'), rows: 5, size: 'sm', help: t('dv_items_t') }), a = field(t('dv_min'), ex?.a), b = field(t('dv_max'), ex?.b), strict = h('sav-switch', { size: 'sm', checked: ex?.strict ? true : null }, t('dv_strict'));
-  items.addEventListener('keydown', (e) => e.stopPropagation());
-  const fromCells = btn(t('dv_from_sel'), { size: 'sm', appearance: 'ghost', icon: 'list', onclick: () => { const vals = new Set(); for (let r = g.r1; r <= Math.min(g.r2, x.ext.r); r++) for (let c = g.c1; c <= Math.min(g.c2, x.ext.c); c++) { const v = x.shown(r, c); if (v) vals.add(v); } items.value = [...vals].join('\n'); } });
-  const paint = () => { const k = kind.value; items.hidden = fromCells.hidden = k !== 'list'; a.hidden = b.hidden = ['list', 'check'].includes(k); strict.hidden = k === 'check'; a.label = k === 'text' ? t('dv_min_len') : t('dv_min'); b.label = k === 'text' ? t('dv_max_len') : t('dv_max'); };
-  paint();
+/** k0: 'list' opens on a dropdown for just the selected cells; 'check' turns them into checkboxes at once. */
+export function dvDialog(x, k0) {
+  // the cells chosen, not the whole table around a single cell
+  const g = x.selOf(), one = g.r1 === g.r2 && g.c1 === g.c2, ex = x.sh.dv.find((d) => { const q = parseRange(d.r); return q && q.r1 <= g.r1 && q.r2 >= g.r2 && q.c1 <= g.c1 && q.c2 >= g.c2; });
   const others = (r) => x.sh.dv.filter((d) => d !== ex && d.r !== r);
-  dialog({ title: t('validation'), width: '30rem', body: h('div.form', h('p.muted', t('dv_text')), rg, kind, items, fromCells, h('div.grid2', a, b), strict), actions: [ex ? { label: t('dv_remove'), danger: true, run: () => x.change([{ t: 'sheet', id: x.sh.id, p: { dv: others(ex.r) } }]) } : null, { label: t('cancel') }, { label: t('save'), primary: true, run: () => {
+  const apply = (n) => {
+    const ops = [{ t: 'sheet', id: x.sh.id, p: { dv: [...others(n.r), n] } }];
+    // checkboxes start as FALSE
+    if (n.k === 'check') { const q = parseRange(n.r), m = {}; for (let rr = q.r1; rr <= Math.min(q.r2, q.r1 + 2000); rr++) for (let c = q.c1; c <= q.c2; c++) { const k = key(rr, c), cell = x.sh.cells[k]; if (typeof cell?.v !== 'boolean') m[k] = { ...(cell || {}), v: false, f: undefined }; } for (const k in m) if (m[k].f === undefined) delete m[k].f; if (Object.keys(m).length) ops.push({ t: 'cells', s: x.sh.id, m }); }
+    x.change(ops);
+  };
+  if (k0 === 'check' || k0 === 'check3') { apply({ r: rangeStr(g), k: 'check', list: [], a: '', b: '', strict: false, arrow: true, hover: true, sel: false, suggest: true, tri: k0 === 'check3' }); return; }
+  const cellValues = () => { const vals = new Set(); for (let r = g.r1; r <= Math.min(g.r2, x.ext.r); r++) for (let c = g.c1; c <= Math.min(g.c2, x.ext.c); c++) { const v = x.shown(r, c); if (v) vals.add(v); } return [...vals]; };
+  // the cells are already in a rule: that rule is the one changed
+  const rg = field(t('range'), ex?.r || rangeStr(g), ex && ex.r !== rangeStr(g) ? { help: t('dv_in_rule', { r: ex.r }) } : {}), kind = select(t('dv_kind'), ['list', 'check', 'number', 'int', 'date', 'text'].map((k) => [k, t('dv_' + (k === 'text' ? 'text_k' : k))]), ex?.k || k0 || 'list', () => paint(), { size: 'sm' });
+  // a new dropdown on cells that already hold values starts with those values
+  const start = ex?.list?.length ? ex.list : k0 === 'list' && !one ? cellValues() : [];
+  const items = h('sav-textarea', { label: t('dv_items'), value: start.join('\n'), rows: 5, size: 'sm', help: t('dv_items_t'), placeholder: t('dv_items_ph') }), a = field(t('dv_min'), ex?.a), b = field(t('dv_max'), ex?.b), strict = h('sav-switch', { size: 'sm', checked: ex?.strict ? true : null, help: t('dv_strict_t') }, t('dv_strict'));
+  const tri = h('sav-switch', { size: 'sm', checked: ex?.tri || null, help: t('dv_tri_t') }, t('dv_tri'));
+  const arrow = h('sav-switch', { size: 'sm', checked: ex?.arrow === false ? null : true }, t('dv_arrow')), hover = h('sav-switch', { size: 'sm', checked: ex?.hover === false ? null : true, class: 'subopt' }, t('dv_hover')), onSel = h('sav-switch', { size: 'sm', checked: ex?.sel ? true : null, class: 'subopt' }, t('dv_sel')), suggest = h('sav-switch', { size: 'sm', checked: ex?.suggest === false ? null : true }, t('dv_suggest'));
+  items.addEventListener('keydown', (e) => e.stopPropagation());
+  // "only on hover" makes sense only while the arrow is shown
+  // "only when selected" is stricter than "on hover": with it, hovering does not count
+  const hoverOk = () => { onSel.disabled = !arrow.checked; hover.disabled = !arrow.checked || !!onSel.checked; };
+  arrow.addEventListener('change', hoverOk);
+  onSel.addEventListener('change', hoverOk);
+  hoverOk();
+  const fromCells = btn(t('dv_from_sel'), { size: 'sm', appearance: 'ghost', icon: 'list', onclick: () => { items.value = cellValues().join('\n'); } });
+  const paint = () => { const k = kind.value; items.hidden = fromCells.hidden = arrow.hidden = hover.hidden = onSel.hidden = suggest.hidden = k !== 'list'; a.hidden = b.hidden = ['list', 'check'].includes(k); strict.hidden = k === 'check'; tri.hidden = k !== 'check'; a.label = k === 'text' ? t('dv_min_len') : t('dv_min'); b.label = k === 'text' ? t('dv_max_len') : t('dv_max'); };
+  paint();
+  if (k0 === 'list') setTimeout(() => items.focus?.(), 120);
+  dialog({ title: t(k0 === 'list' && !ex ? 'dv_dropdown' : 'validation'), width: '30rem', body: h('div.form', h('p.muted', t(k0 === 'list' && !ex ? 'dv_dropdown_t' : 'dv_text')), rg, kind, items, fromCells, h('div.grid2', a, b), arrow, hover, onSel, suggest, tri, strict), actions: [ex ? { label: t('dv_remove'), danger: true, run: () => x.change([{ t: 'sheet', id: x.sh.id, p: { dv: others(ex.r) } }]) } : null, { label: t('cancel') }, { label: t('save'), primary: true, run: () => {
     const r = rg.value.trim().toUpperCase().replace(/\$/g, '');
     if (!validRange(r)) { toast(t('bad_ref'), 'warning'); return false; }
-    const n = { r, k: kind.value, list: kind.value === 'list' ? items.value.split(/\n|;/).map((s) => s.trim()).filter(Boolean).slice(0, 200) : [], a: a.value.trim(), b: b.value.trim(), strict: !!strict.checked };
-    const ops = [{ t: 'sheet', id: x.sh.id, p: { dv: [...others(r), n] } }];
-    // checkboxes start as FALSE
-    if (n.k === 'check') { const q = parseRange(r), m = {}; for (let rr = q.r1; rr <= Math.min(q.r2, q.r1 + 2000); rr++) for (let c = q.c1; c <= q.c2; c++) { const k = key(rr, c), cell = x.sh.cells[k]; if (typeof cell?.v !== 'boolean') m[k] = { ...(cell || {}), v: false, f: undefined }; } for (const k in m) if (m[k].f === undefined) delete m[k].f; if (Object.keys(m).length) ops.push({ t: 'cells', s: x.sh.id, m }); }
-    x.change(ops);
+    const n = { r, k: kind.value, list: kind.value === 'list' ? items.value.split(/\n|;/).map((s) => s.trim()).filter(Boolean).slice(0, 200) : [], a: a.value.trim(), b: b.value.trim(), strict: !!strict.checked, arrow: !!arrow.checked, hover: !!hover.checked, sel: !!onSel.checked, suggest: !!suggest.checked, tri: kind.value === 'check' && !!tri.checked };
+    if (n.k === 'list' && !n.list.length) { toast(t('dv_no_items'), 'warning'); return false; }
+    apply(n);
     return undefined;
   } }].filter(Boolean) });
 }

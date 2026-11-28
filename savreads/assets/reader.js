@@ -13,7 +13,7 @@
 import { btn, dialog, dropBtn, empty, errText, fail, favBtn, h, icon, iconBtn, put, segmented, toast } from './ui.js';
 import { day, getLang, t } from './i18n.js';
 import { S, api, minutes, setCounts } from './store.js';
-import { commands, go, prefs, setPrefs } from './account.js';
+import { commands, go, prefs, setPrefs, userMenu } from './account.js';
 import { articleMenu, readTime, tagsDialog } from './list.js';
 import { saveUrl } from './actions.js';
 
@@ -159,18 +159,38 @@ export async function readerScreen(root, kind, id) {
   }
   const top = h('header.rtop');
   const panelBtn = !isItem ? h('span.hlb', iconBtn('highlighter', t('hl_panel'), () => openPanel()), hlBadge) : null;
-  function paintTop() {
-    put(top, iconBtn('arrow-left', t('back'), back, { kbd: 'Esc' }), h('a.rbrand', { href: isItem ? '#/feeds' : '#/', title: 'SavReads' }, h('img', { src: 'icons/favicon.svg', alt: 'SavReads', width: 28, height: 28 })), h('span.spacer'),
-      isItem
-        ? [a.link ? (a.saved ? iconBtn('bookmark', t('open_saved'), () => go('#/a/' + a.saved), { variant: 'primary', appearance: 'soft' }) : iconBtn('bookmark-plus', t('save_later'), async () => { const s = await saveUrl(a.link, { item: a.id, source: 'feed', title: a.title }); a.saved = s.id; paintTop(); })) : null,
-          iconBtn('circle-dot', t('mark_unread'), async () => { const u = await api('rd.items.read', { ids: [a.id], read: false }); setCounts(u); toast(t('mark_unread'), 'success'); }),
-          a.link ? iconBtn('external-link', t('open_original'), () => window.open(a.link, '_blank', 'noopener,noreferrer')) : null]
-        : [favBtn(a.starred, async (on) => { const u = await api('rd.update', { id: a.id, starred: on }); setCounts(u); Object.assign(a, u.articles[0]); }),
-          iconBtn(a.archived ? 'inbox' : 'archive', t(a.archived ? 'unarchive' : 'archive'), async () => { const was = a.archived; await setA({ archived: !was }); toast(t(was ? 'unarchived' : 'archived'), 'success'); if (!was) back(); }),
-          panelBtn],
-      lookPop(el),
-      !isItem ? dropBtn('ellipsis-vertical', t('more'), articleMenu(a, { onChange: paintTop, onDelete: () => go('#/'), highlights: () => hls }), { caret: false, placement: 'bottom-end' }) : null);
+  // the title bar: back and the logo on the left, ⋮, the apps and the account on the right (always); between them the buttons each
+  // person chooses, in their order (⋮ → Customise the bars, kept with the account: a feed item and an article each have their own)
+  const BARS = window.SavOffice?.bars, barKey = isItem ? 'titleItem' : 'title';
+  const TITLE_ITEMS = isItem ? [['save', 'bookmark-plus', t('save_later')], ['unread', 'circle-dot', t('mark_unread')], ['original', 'external-link', t('open_original')], ['look', 'type', t('appearance')]]
+    : [['star', 'star', t('star')], ['archive', 'archive', t('archive')], ['highlights', 'highlighter', t('hl_panel')], ['original', 'external-link', t('open_original')], ['look', 'type', t('appearance')]];
+  const TITLE_DEF = isItem ? ['~', 'save', 'unread', 'original', 'look'] : ['~', 'star', 'archive', 'highlights', 'look'];
+  const barPick = () => (BARS ? BARS.pick(prefs().bars?.[barKey], TITLE_DEF, TITLE_ITEMS) : TITLE_DEF);
+  const accountEl = S.user ? userMenu() : null;
+  function barsDialog() {
+    BARS.dialog({ bars: [{ id: 'title', items: TITLE_ITEMS, def: TITLE_DEF, before: [['arrow-left', t('back')], [null, a.title]], after: [['ellipsis-vertical', t('more')], ['layout-grid', 'SavOffice'], ['user', t('account')]] }], value: { title: barPick() },
+      save: async (v) => { await setPrefs({ bars: { ...(prefs().bars || {}), [barKey]: v.title } }); paintTop(); } });
   }
+  function paintTop() {
+    const T2 = isItem ? {
+      save: a.link ? (a.saved ? iconBtn('bookmark', t('open_saved'), () => go('#/a/' + a.saved), { variant: 'primary', appearance: 'soft' }) : iconBtn('bookmark-plus', t('save_later'), async () => { const s = await saveUrl(a.link, { item: a.id, source: 'feed', title: a.title }); a.saved = s.id; paintTop(); })) : null,
+      unread: iconBtn('circle-dot', t('mark_unread'), async () => { const u = await api('rd.items.read', { ids: [a.id], read: false }); setCounts(u); toast(t('mark_unread'), 'success'); }),
+      original: a.link ? iconBtn('external-link', t('open_original'), () => window.open(a.link, '_blank', 'noopener,noreferrer')) : null,
+      look: lookPop(el),
+    } : {
+      star: favBtn(a.starred, async (on) => { const u = await api('rd.update', { id: a.id, starred: on }); setCounts(u); Object.assign(a, u.articles[0]); }),
+      archive: iconBtn(a.archived ? 'inbox' : 'archive', t(a.archived ? 'unarchive' : 'archive'), async () => { const was = a.archived; await setA({ archived: !was }); toast(t(was ? 'unarchived' : 'archived'), 'success'); if (!was) back(); }),
+      highlights: panelBtn,
+      original: a.url ? iconBtn('external-link', t('open_original'), () => window.open(a.url, '_blank', 'noopener,noreferrer')) : null,
+      look: lookPop(el),
+    };
+    const custom = !matchMedia('(max-width: 900px)').matches && BARS ? ['settings-2', BARS.menuLabel(), () => barsDialog()] : null;
+    const more = isItem ? (custom ? dropBtn('ellipsis-vertical', t('more'), () => [custom], { caret: false, placement: 'bottom-end' }) : null)
+      : dropBtn('ellipsis-vertical', t('more'), () => [...articleMenu(a, { onChange: paintTop, onDelete: () => go('#/'), highlights: () => hls })(), ...(custom ? ['-', custom] : [])], { caret: false, placement: 'bottom-end' });
+    put(top, iconBtn('arrow-left', t('back'), back, { kbd: 'Esc' }), h('a.rbrand', { href: isItem ? '#/feeds' : '#/', title: 'SavReads' }, h('img', { src: 'icons/favicon.svg', alt: 'SavReads', width: 28, height: 28 })),
+      (BARS ? BARS.layout(barPick()) : TITLE_DEF).map((k) => (k === '|' ? h('span.rsep.so-sep') : k === '_' ? h('i.bgap') : k === '~' ? h('span.spacer') : T2[k])), more, accountEl);
+  }
+
   paintTop();
 
   const page = h('article.rpage', meta, h('h1.rtitle', a.title), byline, a.cover ? h('figure.rcover', h('img', { src: a.cover, alt: '', referrerpolicy: 'no-referrer', onerror: (e) => e.target.parentNode.remove() })) : null, noText, fullBtn, text, endBox);

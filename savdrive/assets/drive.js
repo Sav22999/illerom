@@ -3,7 +3,7 @@
  * and folders as cards or rows, selection, menus, moving, uploads with their progress, previews.
  *   #/  My drive · #/f/<id> a folder · #/recent · #/starred · #/shared · #/temp (temporary links: assets/temp.js) · #/trash · #/search/<words> · #/vault[/<id>] (vault.js)
  */
-import { ask, btn, bytes, confirm, copyText, dialog, drop, empty, errText, face, fail, h, icon, iconBtn, item, menuAt, mobile, primary, put, segmented, select, toast } from './ui.js';
+import { ask, btn, bytes, confirm, copyText, ctxAt, dialog, drop, empty, errText, face, fail, h, icon, iconBtn, item, menuAt, mobile, primary, put, segmented, select, toast } from './ui.js';
 import { getLang, t, when } from './i18n.js';
 import { S, api, fileUrl, lazyImg, thumbFor, thumbUrl, upload } from './store.js';
 import { brand, commands, credit, go, prefs, setPrefs, userMenu } from './account.js';
@@ -399,7 +399,7 @@ export async function home(root, a, b, c) {
   const onMenu = (e) => {
     if (editable(e) || e.target.closest('sav-dialog, sav-popover, sav-dropdown, .ctxm')) return;
     e.preventDefault();
-    const at = (items, label) => menuAt(e.clientX, e.clientY, items, { label });
+    const at = (items, label) => ctxAt(e.clientX, e.clientY, items, { label });
     const it = e.target.closest('[data-id]');
     if (it) {
       const x = data.items.find((y) => y.id === it.dataset.id) || data.extra?.find((y) => y.id === it.dataset.id);
@@ -1003,7 +1003,7 @@ export async function home(root, a, b, c) {
       if (!stage.contains(e.target) && !info.contains(e.target)) return;
       e.preventDefault();
       const f = files[i] || x, app = f.app || appOf(f.name);
-      menuAt(e.clientX, e.clientY, [app && where !== 'trash' ? ['external', t('open_in', { app: NAMES[app] }), () => openInApp(f)] : null, ['download', t('download'), () => download(f)],
+      ctxAt(e.clientX, e.clientY, [app && where !== 'trash' ? ['external', t('open_in', { app: NAMES[app] }), () => openInApp(f)] : null, ['download', t('download'), () => download(f)],
         files.length > 1 ? '-' : null, files.length > 1 ? ['chevron-left', t('previous'), () => nav(-1)] : null, files.length > 1 ? ['chevron-right', t('next'), () => nav(1)] : null, '-', ['x', t('close'), () => d.hide()]], { label: f.name });
     });
     show();

@@ -185,6 +185,39 @@ function own_board(array $u, $bid, bool $trashed = false, bool $lock = false): a
     return $b;
 }
 
+/**
+ * A board this person may open: their own, or one shared with them. role: owner, editor (shared to edit) or viewer (only to
+ * look at it); $need 'editor' refuses who may only look. $lock: for a change (FOR UPDATE).
+ */
+function board_for(array $u, $bid, string $need = 'viewer', bool $lock = false): array
+{
+    $bid = valid_code($bid);
+    if ($bid === '') fail('not_found', 404);
+    $b = q('SELECT b.*, s.role AS share_role FROM ' . t('wb_boards') . ' b LEFT JOIN ' . t('wb_shares') . ' s ON s.board_id = b.id AND s.user_id = ? WHERE b.bid = ? AND (b.user_id = ? OR s.user_id IS NOT NULL)' . ($lock ? ' FOR UPDATE' : ''), [$u['id'], $bid, $u['id']])->fetch();
+    if (!$b || $b['trashed_at']) fail('not_found', 404);
+    $b['role'] = (int)$b['user_id'] === (int)$u['id'] ? 'owner' : ($b['share_role'] === 'viewer' ? 'viewer' : 'editor');
+    if ($need === 'editor' && $b['role'] === 'viewer') fail('forbidden', 403);
+    return $b;
+}
+
+/** The people of a board: its owner first, then the ones it is shared with, with their role. */
+function board_people(array $b): array
+{
+    $out = [];
+    $o = q('SELECT id, name, email FROM ' . t('users') . ' WHERE id = ?', [$b['user_id']])->fetch();
+    if ($o) $out[] = ['id' => (int)$o['id'], 'name' => $o['name'], 'email' => $o['email'], 'role' => 'owner'];
+    foreach (q('SELECT u.id, u.name, u.email, s.role FROM ' . t('wb_shares') . ' s JOIN ' . t('users') . ' u ON u.id = s.user_id WHERE s.board_id = ? ORDER BY s.created_at', [$b['id']])->fetchAll() as $p)
+        $out[] = ['id' => (int)$p['id'], 'name' => $p['name'], 'email' => $p['email'], 'role' => $p['role'] === 'viewer' ? 'viewer' : 'editor'];
+    return $out;
+}
+
+/** The boards shared with this person (not in the bin of their owner), for the home: whose they are and what they may do. */
+function boards_shared_with(int $uid): array
+{
+    $rows = q('SELECT b.id, b.bid, b.title, b.settings, b.thumb, b.n_items, b.bytes, b.version, b.trashed_at, b.opened_at, b.created_at, b.updated_at, s.role, u.name AS owner_name FROM ' . t('wb_shares') . ' s JOIN ' . t('wb_boards') . ' b ON b.id = s.board_id JOIN ' . t('users') . ' u ON u.id = b.user_id WHERE s.user_id = ? AND b.trashed_at IS NULL ORDER BY b.updated_at DESC', [$uid])->fetchAll();
+    return array_map(fn($b) => out_board_card($b) + ['shared' => true, 'role' => $b['role'] === 'viewer' ? 'viewer' : 'editor', 'owner' => $b['owner_name']], $rows);
+}
+
 /** A board for the list of the home: no items. */
 function out_board_card(array $b): array
 {

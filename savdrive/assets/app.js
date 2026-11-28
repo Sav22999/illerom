@@ -1,5 +1,5 @@
 /** SavDrive — the app: start and addresses. No other module imports this one. */
-import { btn, empty, errText, h, icon, menuAt, primary, put } from './ui.js';
+import { btn, ctxAt, empty, errText, h, icon, menuAt, primary, put } from './ui.js';
 import { registerIcons } from './icons.js';
 import { getLang, setLang, t } from './i18n.js';
 import { S, api, pubUrl } from './store.js';
@@ -34,7 +34,7 @@ async function boot() {
     if (e.defaultPrevented || e.composedPath().some((n) => n.localName && (/^(input|textarea|sav-input|sav-textarea|sav-search|a)$/.test(n.localName) || n.isContentEditable))) return;
     e.preventDefault();
     const u = S.user, ok = u?.verified && u.activated;
-    menuAt(e.clientX, e.clientY, ok ? [['hard-drive', t('my_drive'), () => go('#/')], ['clock', t('recent'), () => go('#/recent')], ['star', t('starred'), () => go('#/starred')], ['timer', t('temp'), () => go('#/temp')], ['trash-2', t('trash'), () => go('#/trash')], '-',
+    ctxAt(e.clientX, e.clientY, ok ? [['hard-drive', t('my_drive'), () => go('#/')], ['clock', t('recent'), () => go('#/recent')], ['star', t('starred'), () => go('#/starred')], ['timer', t('temp'), () => go('#/temp')], ['trash-2', t('trash'), () => go('#/trash')], '-',
       ['settings', t('settings'), () => go('#/settings')], u.master ? ['shield', t('admin'), () => go('#/admin')] : null, ['sparkles', t('changelog'), () => go('#/changelog')], '-', ['refresh', t('refresh'), () => route()], ['log-out', t('sign_out'), () => signOut()]]
       : u ? [['refresh', t('refresh'), () => location.reload()], ['log-out', t('sign_out'), () => signOut()]]
         : [['log-in', t('sign_in'), () => go('#/signin')], ['user-plus', t('sign_up'), () => go('#/signup')], ['sparkles', t('changelog'), () => go('#/changelog')]], { label: 'SavDrive' });

@@ -133,4 +133,39 @@ export const TEMPLATES = [
     const e = (a, b, o = {}) => edge(at(a), at(b), { c: '#3a3f47', ...o });
     return { items: [cloud, fw, web, app, db, user, e(user, cloud, { r: 'straight', sa: 'arrow' }), e(cloud, fw), e(fw, web), e(fw, app), e(web, db, { d: 'dash' }), e(app, db)] };
   }],
+  ['swot', 'grid-2x2', (it) => {
+    const box = (x, y, f, c, head, lines) => node('round', x, y, 300, 210, head + '\n\n' + lines.map((l) => '• ' + l).join('\n'), { f, c, al: 'left', va: 'top', fs: 15 });
+    const L = it ? [['Punti di forza', ['Squadra esperta', 'Prodotto apprezzato', 'Costi bassi']], ['Debolezze', ['Poca visibilità', 'Pochi canali di vendita']], ['Opportunità', ['Mercato in crescita', 'Nuovi partner', 'Bandi pubblici']], ['Minacce', ['Concorrenti grandi', 'Prezzi in aumento']]]
+      : [['Strengths', ['Skilled team', 'Well-liked product', 'Low costs']], ['Weaknesses', ['Little visibility', 'Few sales channels']], ['Opportunities', ['Growing market', 'New partners', 'Public grants']], ['Threats', ['Big competitors', 'Rising prices']]];
+    const tone = [['#dcefe6', '#0f6e56'], ['#ffe1cc', '#c45a0c'], ['#e8eefc', '#4352d6'], ['#fbdada', '#b3261e']];
+    const title = node('text', 0, -70, 620, 50, it ? 'Analisi SWOT' : 'SWOT analysis', { fs: 26, b: true });
+    return { items: [title, ...L.map(([h, l], k) => box((k % 2) * 320, Math.floor(k / 2) * 230, tone[k][0], tone[k][1], h, l))] };
+  }],
+  ['timeline', 'milestone', (it) => {
+    const steps = it ? [['Gen', 'Idea'], ['Mar', 'Prototipo'], ['Giu', 'Prove con gli utenti'], ['Set', 'Lancio'], ['Dic', 'Bilancio']] : [['Jan', 'Idea'], ['Mar', 'Prototype'], ['Jun', 'User tests'], ['Sep', 'Launch'], ['Dec', 'Review']];
+    const tones = ['#4352d6', '#0f6e56', '#b7791f', '#c45a0c', '#a1328c'], items = [], dots = [];
+    steps.forEach(([when, what], k) => {
+      const d = node('ellipse', k * 190, 0, 44, 44, String(k + 1), { f: tones[k], c: tones[k], tc: '#ffffff', b: true });
+      dots.push(d);
+      items.push(d, node('text', k * 190 - 58, k % 2 ? 52 : -38, 160, 30, when, { fs: 14, tc: '#5f6660', b: true }), node('round', k * 190 - 58, k % 2 ? 86 : -88, 160, 44, what, { f: '#ffffff', c: tones[k], fs: 15 }));
+    });
+    return { items: [...items, ...dots.slice(1).map((n, k) => edge(at(dots[k]), at(n), { r: 'straight', ea: 'none', c: '#9aa0a6', s: 3 }))] };
+  }],
+  ['database', 'database', (it) => {
+    const table = (x, y, name, cols) => node('rect', x, y, 210, 40 + cols.length * 24, name + '\n' + cols.join('\n'), { f: '#ffffff', c: '#1d4e89', al: 'left', va: 'top', fs: 14, ff: 'mono' });
+    const users = table(0, 0, it ? 'utenti' : 'users', ['🔑 id', 'name', 'email']);
+    const orders = table(320, 0, it ? 'ordini' : 'orders', ['🔑 id', (it ? 'utente_id' : 'user_id'), (it ? 'data' : 'date'), (it ? 'totale' : 'total')]);
+    const lines = table(640, 0, it ? 'righe' : 'lines', ['🔑 id', (it ? 'ordine_id' : 'order_id'), (it ? 'prodotto_id' : 'product_id'), (it ? 'quantità' : 'quantity')]);
+    const prod = table(640, 200, it ? 'prodotti' : 'products', ['🔑 id', (it ? 'nome' : 'name'), (it ? 'prezzo' : 'price')]);
+    const e = (a, b) => edge(at(a), at(b), { text: '1 : n', c: '#1d4e89', ea: 'none' });
+    return { items: [users, orders, lines, prod, e(users, orders), e(orders, lines), e(prod, lines)] };
+  }],
+  ['decision', 'git-fork', (it) => {
+    const q = (x, y, txt) => node('diamond', x, y, 190, 110, txt, { f: '#fff3c4', c: '#b7791f' });
+    const a = (x, y, txt, ok) => node('round', x, y, 170, 60, txt, { f: ok ? '#dcefe6' : '#fbdada', c: ok ? '#0f6e56' : '#b3261e', b: true });
+    const q1 = q(190, 0, it ? 'Serve davvero?' : 'Is it really needed?'), q2 = q(0, 180, it ? 'Rientra nel budget?' : 'Is it in the budget?'), q3 = q(380, 180, it ? 'Si può rimandare?' : 'Can it wait?');
+    const r1 = a(100, 360, it ? 'Compra' : 'Buy it', true), r2 = a(-100, 360, it ? 'Cerca un’alternativa' : 'Look for another way', false), r3 = a(300, 360, it ? 'Rimanda' : 'Wait', false), r4 = a(500, 360, it ? 'Rinuncia' : 'Let it go', false);
+    const yes = it ? 'sì' : 'yes', e = (x, y, text) => edge(at(x), at(y), { text, c: '#3a3f47' });
+    return { items: [q1, q2, q3, r1, r2, r3, r4, e(q1, q2, yes), e(q1, q3, 'no'), e(q2, r1, yes), e(q2, r2, 'no'), e(q3, r3, yes), e(q3, r4, 'no')] };
+  }],
 ];

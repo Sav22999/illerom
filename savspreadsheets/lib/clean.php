@@ -204,7 +204,7 @@ function clean_dv($v): array
         if (!is_array($x) || ($r = valid_range($x['r'] ?? '')) === '' || !in_array($x['k'] ?? '', DV_KINDS, true)) continue;
         $list = [];
         foreach (array_slice(is_array($x['list'] ?? null) ? $x['list'] : [], 0, 200) as $i) if (is_scalar($i) && ($t = clean_text((string)$i, 200)) !== '') $list[] = $t;
-        $out[] = ['r' => $r, 'k' => $x['k'], 'list' => $list, 'a' => clean_text(is_scalar($x['a'] ?? null) ? (string)$x['a'] : '', 60), 'b' => clean_text(is_scalar($x['b'] ?? null) ? (string)$x['b'] : '', 60), 'strict' => !empty($x['strict'])];
+        $out[] = ['r' => $r, 'k' => $x['k'], 'list' => $list, 'a' => clean_text(is_scalar($x['a'] ?? null) ? (string)$x['a'] : '', 60), 'b' => clean_text(is_scalar($x['b'] ?? null) ? (string)$x['b'] : '', 60), 'strict' => !empty($x['strict']), 'arrow' => ($x['arrow'] ?? true) !== false, 'hover' => ($x['hover'] ?? true) !== false, 'sel' => !empty($x['sel']), 'suggest' => ($x['suggest'] ?? true) !== false, 'tri' => !empty($x['tri'])];
     }
     return $out;
 }

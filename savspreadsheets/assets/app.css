@@ -240,6 +240,9 @@ sav-tab > * { padding-top: 1rem; }
 .fxin { display: block; width: 100%; min-height: 1.9rem; resize: none; background: transparent; color: inherit; outline: none; border-radius: 7px; position: relative; z-index: 1; }
 .fxin:focus { box-shadow: inset 0 0 0 2px var(--sav-color-primary); }
 .fxhl { position: absolute; inset: 0; pointer-events: none; color: var(--sav-color-text); overflow: hidden; display: none; }
+/* the formula box made taller: double or triple of its normal height, the text scrolls inside */
+.fxwrap[data-size="2"] .fxin { height: 3.8rem; overflow-y: auto; } .fxwrap[data-size="3"] .fxin { height: 5.7rem; overflow-y: auto; }
+.fbar .fxgrow { flex: none; }
 .fxwrap.hl .fxhl, .celledit.hl .cehl { display: block; } .fxwrap.hl .fxin, .celledit.hl .cein { color: transparent; caret-color: var(--sav-color-text); }
 .fxhl b, .cehl b { font-weight: 600; color: #6d3bef; } .fxhl .s, .cehl .s { color: #b45309; } .fxhl .n, .cehl .n { color: #0e7490; }
 
@@ -257,6 +260,8 @@ sav-tab > * { padding-top: 1rem; }
 .pr1 { grid-area: 2 / 1; position: sticky; left: 0; top: var(--hh); z-index: 7; } .pr2 { grid-area: 3 / 1; position: sticky; left: 0; z-index: 6; }
 .b11 { grid-area: 2 / 2; position: sticky; top: var(--hh); left: var(--hw); z-index: 5; } .b12 { grid-area: 2 / 3; position: sticky; top: var(--hh); z-index: 4; }
 .b21 { grid-area: 3 / 2; position: sticky; left: var(--hw); z-index: 4; } .b22 { grid-area: 3 / 3; z-index: 1; }
+/* the frozen panes cover what scrolls under them (page guides, selections of the cells below) */
+.b11, .b12, .b21 { background: var(--cellbg); }
 .frozen-r .b11, .frozen-r .b12 { box-shadow: 0 2px 0 var(--sav-color-border-strong, #b9c2ad); } .frozen-c .b11, .frozen-c .b21 { box-shadow: 2px 0 0 var(--sav-color-border-strong, #b9c2ad); } .frozen-r.frozen-c .b11 { box-shadow: 2px 2px 0 var(--sav-color-border-strong, #b9c2ad); }
 .hd { background: var(--head); }
 .hd .h { position: absolute; display: flex; align-items: center; justify-content: center; box-sizing: border-box; font-size: 11px; color: var(--sav-color-text-muted); border-right: 1px solid var(--hgl, var(--gl)); border-bottom: 1px solid var(--hgl, var(--gl)); font-variant-numeric: tabular-nums; cursor: default; }
@@ -281,7 +286,9 @@ sav-tab > * { padding-top: 1rem; }
 .t i { position: absolute; font-style: normal; }
 .t .dbar { left: 2px; top: 3px; bottom: 3px; opacity: .55; border-radius: 2px; z-index: -1; }
 .t .chk { left: 50%; top: 50%; width: 15px; height: 15px; margin: -7.5px 0 0 -7.5px; border: 1.6px solid #7a8570; border-radius: 3.5px; pointer-events: auto; cursor: pointer; background: var(--cellbg); }
-.t .chk.on { background: var(--sav-color-primary); border-color: var(--sav-color-primary); } .t .chk.on::after { content: ""; position: absolute; left: 4px; top: 1px; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.t .chk.on, .t .chk.mid { background: var(--sav-color-primary); border-color: var(--sav-color-primary); }
+/* indeterminate: a dash */
+.t .chk.mid::after { content: ""; position: absolute; left: 2.5px; right: 2.5px; top: 50%; height: 2px; margin-top: -1px; border-radius: 1px; background: #fff; } .t .chk.on::after { content: ""; position: absolute; left: 4px; top: 1px; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
 .t .cmk { top: 0; right: 0; border: 4px solid transparent; border-top-color: #ea580c; border-right-color: #ea580c; } .t .cmk.own { border-top-color: #7c3aed; border-right-color: #7c3aed; }
 .t .fbtn, .t .dvb { right: 2px; top: 50%; width: 17px; height: 17px; margin-top: -8.5px; border-radius: 4px; pointer-events: auto; cursor: pointer; background: color-mix(in oklab, var(--sav-color-primary) 10%, var(--cellbg)); border: 1px solid color-mix(in oklab, var(--sav-color-primary) 30%, transparent); }
 .t .fbtn::after, .t .dvb::after { content: ""; position: absolute; inset: 3px; background: var(--sav-color-primary); -webkit-mask: var(--m) center / contain no-repeat; mask: var(--m) center / contain no-repeat; }
@@ -297,6 +304,9 @@ sav-tab > * { padding-top: 1rem; }
 .sl .nt { border-top-width: 0 !important; } .sl .nb { border-bottom-width: 0 !important; } .sl .nl { border-left-width: 0 !important; } .sl .nr { border-right-width: 0 !important; }
 .sl .fh { width: 8px; height: 8px; background: var(--sav-color-primary); border: 1.5px solid var(--cellbg); pointer-events: auto; cursor: crosshair; z-index: 3; touch-action: none; }
 .sl .fl { border: 2px dashed var(--sav-color-primary); }
+/* the end of a printed page */
+.sl .pbr { border-top: 1.5px dashed color-mix(in oklab, var(--sav-color-primary) 75%, transparent); margin-top: -1px; height: 0 !important; }
+.sl .pbc { border-left: 1.5px dashed color-mix(in oklab, var(--sav-color-primary) 75%, transparent); margin-left: -1px; width: 0 !important; }
 .sl .mk { border: 2px solid var(--k); background: color-mix(in srgb, var(--k) 10%, transparent); }
 .sl .cp { border: 2px dashed var(--sav-color-primary); animation: ants 1s linear infinite; }
 @keyframes ants { 50% { border-color: color-mix(in oklab, var(--sav-color-primary) 40%, transparent); } }
@@ -334,6 +344,17 @@ sav-tab > * { padding-top: 1rem; }
 .chprev { display: grid; place-items: center; min-height: 15rem; padding: .5rem; border-radius: 10px; background: var(--sav-color-surface-2); } .chprev svg { max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 10px rgb(0 0 0 / .1); }
 .flist { display: grid; gap: .15rem; max-height: 17rem; overflow: auto; padding: .2rem; border: 1px solid var(--sav-color-border); border-radius: 9px; } .flist small { color: var(--sav-color-text-muted); }
 .fnlist { display: grid; gap: .15rem; max-height: 22rem; overflow: auto; }
+/* the panel "Formula": a function filled in one argument at a time */
+.guide .gl { max-height: none; overflow: visible; } .guide .gl .fni { grid-template-columns: 1fr; } .guide .gl .fni small { white-space: normal; }
+.guide .gcats { display: flex; flex-wrap: wrap; gap: .25rem; }
+.ghead { display: grid; gap: .15rem; } .ghead b { font: 700 1.05rem ui-monospace, Menlo, Consolas, monospace; color: var(--sav-color-primary); } .ghead span { color: var(--sav-color-text-muted); font-size: .85rem; }
+.gsyn { display: block; padding: .45rem .6rem; border-radius: 8px; background: var(--sav-color-surface-2); font: .8rem/1.5 ui-monospace, Menlo, Consolas, monospace; overflow-wrap: anywhere; }
+.gsyn .opt { color: var(--sav-color-text-muted); } .gsyn .on { color: var(--sav-color-primary); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.garg { display: grid; grid-template-columns: 1fr auto; gap: .25rem; align-items: start; } .garg > sav-tooltip { margin-top: 1.45rem; }
+.gres, .gex { display: grid; gap: .3rem; padding: .6rem .7rem; border-radius: 10px; border: 1px solid var(--sav-color-border); }
+.gex { background: color-mix(in oklab, var(--sav-color-primary) 5%, transparent); } .gex > sav-button { justify-self: start; }
+.gline { display: flex; flex-wrap: wrap; gap: .4rem; align-items: baseline; font-size: .85rem; } .gline code { font: .8rem ui-monospace, Menlo, Consolas, monospace; overflow-wrap: anywhere; } .gline .err { color: var(--sav-color-danger); }
+.gact { display: flex; justify-content: flex-end; } .gtop { margin: -.3rem 0 -.2rem -.5rem; }
 .fni { display: grid; grid-template-columns: auto 1fr; column-gap: .5rem; align-items: baseline; text-align: left; border: 0; background: none; color: inherit; padding: .45rem .55rem; border-radius: 8px; cursor: pointer; font: inherit; }
 .fni:hover { background: color-mix(in oklab, var(--sav-color-primary) 11%, transparent); } .fni b { font: 600 .85rem ui-monospace, Menlo, Consolas, monospace; } .fni code { font-size: .75rem; color: var(--sav-color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .fni small { grid-column: 1 / -1; color: var(--sav-color-text-muted); }
 .vprev { overflow: auto; max-height: 62vh; border-radius: 10px; border: 1px solid var(--sav-color-border); }
@@ -365,7 +386,14 @@ table.mini.big { font-size: 12px; } table.mini.big td { height: 22px; padding: 0
 @media (max-width: 640px) { .sbottom .stats { display: none; } .sbottom sav-zoom { display: none; } .tab { padding: .38rem .65rem; } }
 .keysink { position: absolute; left: 0; top: 0; width: 1px; height: 1px; padding: 0; border: 0; opacity: 0; resize: none; pointer-events: none; overflow: hidden; z-index: -1; }
 .cemeter { position: absolute; left: -9999px; top: 0; visibility: hidden; white-space: pre; line-height: 1.25; padding: 0; }
-.t .dvb.e { opacity: 0; } .t .dvb.e:hover { opacity: .8; }
+/* "only on hover": hidden until the mouse is on the cell, or the cell is in use (rules set by sheet.js); always on touch screens */
+.t .dvb.hov { opacity: 0; transition: opacity calc(.12s * var(--sav-motion, 1)); } .t .dvb.hov:hover { opacity: .8 !important; }
+@media (hover: none) { .t .dvb.hov { opacity: .55; } }
+/* "only when selected": just the cell in use (rule set by sheet.js), on touch screens too */
+.t .dvb.sel { opacity: 0; }
+/* a switch in a form takes the whole width: its help text wraps there instead of running past the edge */
+.form > sav-switch { display: block; }
+.form > sav-switch.subopt { margin-left: 2.4rem; }
 /* the tabs of the sheets: a sav-tabs of SavComponents, compact, in the bottom bar */
 .stabs { flex: 0 1 auto; min-width: 0; --sav-tab-padding: 0; }
 .stabs::part(nav) { gap: .15rem; padding: .1rem 0; }
@@ -374,6 +402,10 @@ table.mini.big { font-size: 12px; } table.mini.big td { height: 22px; padding: 0
 .robadge { flex: none; margin-right: .4rem; }
 /* a sheet that is only to read: the formatting bar sleeps */
 .sheet-ro .fmt { opacity: .4; pointer-events: none; }
+/* a fixed space chosen in a bar (⋮ → Customise the bars); an adaptive one is a .spacer */
+.etop > i.bgap, .sbottom > i.bgap, .fmt > i.bgap { width: .9rem; flex: none; } .fmt > .spacer { flex: 1; }
+/* a separator chosen in the title bar or in the status bar */
+.etop > i.sep, .sbottom > i.sep { width: 1px; align-self: stretch; margin: .45rem .25rem; background: var(--sav-color-border); flex: none; }
 .form > .person { display: flex; align-items: center; gap: .7rem; padding: .3rem 0; } .form > .person .pinfo { flex: 1; min-width: 0; display: grid; line-height: 1.25; } .form > .person .pinfo small { color: var(--sav-color-text-muted); overflow: hidden; text-overflow: ellipsis; }
 .form > .person .lic { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--sav-color-surface-2); color: var(--sav-color-text-muted); flex: none; }
 .permsel { width: 12rem; flex: none; }

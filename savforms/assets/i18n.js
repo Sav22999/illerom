@@ -1,6 +1,9 @@
 /** Texts of the app, in English and Italian: the ones shared with the other apps of SavOffice (accounts, settings), then the forms. */
 const T = {
   cancel: ['Cancel', 'Annulla'],
+  account: ['Account', 'Account'],
+  go_next: ['Go on to the next section', 'Continua alla sezione successiva'], go_section: ['Go to «{s}»', 'Vai a «{s}»'], go_submit: ['Submit the form', 'Invia il modulo'],
+  go_after_section: ['After this section', 'Dopo questa sezione'], go_by_answer: ['Go to a section by the answer', 'Vai a una sezione in base alla risposta'], go_by_answer_on: ['Goes to a section by the answer', 'Va a una sezione in base alla risposta'],
   close: ['Close', 'Chiudi'],
   save: ['Save', 'Salva'],
   delete: ['Delete', 'Elimina'],
@@ -229,6 +232,10 @@ const T = {
   m_order_t: ['What, how many, where', 'Cosa, quanti, dove'],
   m_job: ['Application', 'Candidatura'],
   m_job_t: ['Two pages, with a date', 'Due pagine, con una data'],
+  m_survey: ['Survey with branches', 'Sondaggio con percorsi'], m_survey_t: ['Different questions by answer', 'Domande diverse secondo la risposta'],
+  m_booking: ['Appointment', 'Appuntamento'], m_booking_t: ['Day, time, service', 'Giorno, orario, servizio'],
+  m_volunteer: ['Volunteers', 'Volontari'], m_volunteer_t: ['Roles and availability', 'Ruoli e disponibilità'],
+  m_course: ['Course evaluation', 'Valutazione del corso'], m_course_t: ['Anonymous, with a grid', 'Anonimo, con una griglia'],
   k_short: ['Short answer', 'Risposta breve'],
   k_long: ['Paragraph', 'Paragrafo'],
   k_email: ['Email', 'Email'],

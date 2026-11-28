@@ -1,7 +1,14 @@
 /** The version of SavTasks (in the footer) and what changed in each one (the page #/changelog). Newest first. */
-export const VERSION = '1.3.0';
+export const VERSION = '1.4.0';
 
 export const CHANGES = [
+  {
+    v: '1.4.0', date: '2026-11-28', items: [
+      ['New ready-made starts: party, job search, bug tracker, thesis and focus at work', 'Nuovi punti di partenza: festa, ricerca di lavoro, segnalazioni di errori, tesi e concentrazione al lavoro'],
+      ['A smarter search of actions (⌘J): besides the commands it finds every option of the page (the items of its menus, its switches, the choices of its lists, its tabs) and what the thing chosen can do, as its right click', 'Una ricerca delle azioni più intelligente (⌘J): oltre ai comandi trova ogni opzione della pagina (le voci dei suoi menu, gli interruttori, le scelte degli elenchi, le schede) e cosa si può fare con ciò che è selezionato, come col clic destro'],
+      ['Right click: the app’s own menu everywhere instead of the browser’s, with the actions of what is under the pointer (the ⋮ of a card or a row), of links, of the text and of the fields; Shift + right click still opens the browser’s menu — on a task: open, done, star, due today, tomorrow or in a week, duplicate, delete; on phones and tablets a long press opens it, and it never takes the focus from the text you are writing', 'Clic destro: il menu dell’app ovunque al posto di quello del browser, con le azioni di ciò che è sotto il puntatore (il ⋮ di una scheda o di una riga), dei collegamenti, del testo e dei campi; Maiusc + clic destro apre ancora il menu del browser — su un’attività: apri, completa, stella, scadenza oggi, domani o tra una settimana, duplica, elimina; su telefoni e tablet si apre con una pressione prolungata, e non toglie mai il cursore dal testo che stai scrivendo'],
+    ],
+  },
   {
     v: '1.3.0', date: '2026-11-27', items: [
       ['Time tracking: a timer on every task, one at a time, always in the bar while it runs and kept on every device', 'Tracciamento del tempo: un timer su ogni attività, uno alla volta, sempre nella barra mentre corre e lo stesso su ogni dispositivo'],
