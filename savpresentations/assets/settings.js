@@ -23,7 +23,7 @@ export function settingsScreen(app, q) {
     /** A line of a section: what it is on the left, the control on the right. */
     const row = (label, help, control) => h('div.srow', h('div.srow-t', h('b', label), help && h('small', help)), h('div.srow-c', control));
     const sw = (k, label, def, help) => row(label, help, h('sav-switch', {checked: userSetting(k, def), 'aria-label': label, onchange: (e) => save({[k]: e.target.checked})}));
-    const pick = (k, def, options, onpick) => h('sav-select', {size: 'sm', value: userSetting(k, def), onchange: (e) => (onpick ? onpick(e.target.value) : save({[k]: e.target.value}))}, ...options.map(([v, l]) => h('option', {value: v}, l)));
+    const pick = (k, def, options, onpick) => h('sav-select', { 'sheet-on-mobile': true, size: 'sm', value: userSetting(k, def), onchange: (e) => (onpick ? onpick(e.target.value) : save({[k]: e.target.value}))}, ...options.map(([v, l]) => h('option', {value: v}, l)));
     const section = (title, text, ...rows) => h('div.ssec', h('h2', title), text && h('p.muted', text), h('sav-card.scard', {appearance: 'outlined'}, h('div.srows', ...rows.filter(Boolean))));
 
     // account
@@ -52,7 +52,7 @@ export function settingsScreen(app, q) {
         applyMode(v);
         save({mode: v}, true);
     });
-    const langSel = h('sav-select', {size: 'sm', value: lang(), 'aria-label': t('language')}, h('option', {value: 'it'}, 'Italiano'), h('option', {value: 'en'}, 'English'));
+    const langSel = h('sav-select', { 'sheet-on-mobile': true, size: 'sm', value: lang(), 'aria-label': t('language')}, h('option', {value: 'it'}, 'Italiano'), h('option', {value: 'en'}, 'English'));
     langSel.addEventListener('change', async () => {
         try {
             const r = await api('auth.profile', {lang: langSel.value});

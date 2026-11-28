@@ -1159,7 +1159,7 @@ export async function notebookScreen(root, id) {
 
   // the bar of the document
   const fmt = {};
-  const blockSel = h('sav-select', { size: 'sm', value: 'p', 'aria-label': t('b_style'), class: 'bsel' }, BLOCKS.map(([v, k]) => h('option', { value: v }, t(k))));
+  const blockSel = h('sav-select', { 'sheet-on-mobile': true, size: 'sm', value: 'p', 'aria-label': t('b_style'), class: 'bsel' }, BLOCKS.map(([v, k]) => h('option', { value: v }, t(k))));
   blockSel.addEventListener('change', () => block(blockSel.value));
   const fbtn = (k, ic, label, run, kbd) => { const b = iconBtn(ic, label, run, { place: 'top', kbd, size: 'md' }); fmt[k] = b; return b; };
   const textColor = colorPop(t('text_color'), '', (c) => cmd('foreColor', c || '#1f1f22'), { list: TEXT_INKS, none: t('auto'), placement: 'top', trigger: h('sav-button', { size: 'sm', appearance: 'ghost', variant: 'neutral', square: true, icon: 'baseline', label: t('text_color') }) });
@@ -1299,11 +1299,11 @@ export async function notebookScreen(root, id) {
     const s = { ...settings };
     const covers = h('sav-radio-group.sws', { appearance: 'buttons', size: 'sm', value: s.cover, 'aria-label': t('cover') }, COVERS.map((c) => h('sav-radio', { value: c, title: c, 'aria-label': c }, h('span.sw', { style: `--c:${c}` }))));
     covers.addEventListener('change', () => { s.cover = covers.value; });
-    const size = h('sav-select', { label: t('page_size'), value: s.size, size: 'sm' }, Object.keys(SIZES).map((k) => h('option', { value: k }, t('size_' + k))));
+    const size = h('sav-select', { 'sheet-on-mobile': true, label: t('page_size'), value: s.size, size: 'sm' }, Object.keys(SIZES).map((k) => h('option', { value: k }, t('size_' + k))));
     size.addEventListener('change', () => { s.size = size.value; });
     const orient = h('sav-radio-group', { appearance: 'buttons', size: 'sm', value: s.orient, label: t('orient') }, h('sav-radio', { value: 'p' }, t('portrait')), h('sav-radio', { value: 'l' }, t('landscape')));
     orient.addEventListener('change', () => { s.orient = orient.value; });
-    const font = h('sav-select', { label: t('text_font'), value: s.font, size: 'sm' }, Object.keys(FONTS).map((k) => h('option', { value: k, style: `font-family:${FONTS[k]}` }, t('f_' + k))));
+    const font = h('sav-select', { 'sheet-on-mobile': true, label: t('text_font'), value: s.font, size: 'sm' }, Object.keys(FONTS).map((k) => h('option', { value: k, style: `font-family:${FONTS[k]}` }, t('f_' + k))));
     font.addEventListener('change', () => { s.font = font.value; });
     const ts = h('sav-radio-group', { appearance: 'buttons', size: 'sm', value: s.tsize, label: t('text_size') }, ['s', 'm', 'l'].map((k) => h('sav-radio', { value: k }, t('ts_' + k))));
     ts.addEventListener('change', () => { s.tsize = ts.value; });

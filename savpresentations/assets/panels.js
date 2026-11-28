@@ -20,7 +20,7 @@ const row = (...kids) => h('div.prow', ...kids);
 const num = (label, value, onchange, attrs = {}) => { const n = h('sav-number-input', { label, size: 'sm', buttons: 'none', limits: 'never', step: attrs.step || 1, ...attrs, value: Math.round(value * 100) / 100, onchange: () => { const v = parseFloat(n.value); if (Number.isFinite(v)) onchange(v); } }); n.addEventListener('keydown', (e) => e.stopPropagation()); return n; };
 const toggle = (on, ic, label, onpick) => { const b = h('sav-button', { icon: ic, label, title: label, size: 'sm', square: true, variant: on ? 'primary' : 'neutral', appearance: on ? 'soft' : 'outline', 'aria-pressed': String(!!on), onclick: () => { const v = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', v); b.variant = v ? 'primary' : 'neutral'; b.appearance = v ? 'soft' : 'outline'; onpick(v); } }); return b; };
 const range = (label, value, min, max, step, oninput, unit = '') => h('sav-range', { label, value, min, max, step, unit, 'show-value': true, oninput: (e) => oninput(+e.target.value) });
-const pick = (label, value, options, onpick) => h('sav-select', { label, size: 'sm', value, placeholder: options.find((o) => o[0] === '')?.[1] || null, onchange: (e) => onpick(e.target.value) }, ...options.map(([v, l]) => h('option', { value: v }, l)));
+const pick = (label, value, options, onpick) => h('sav-select', { 'sheet-on-mobile': true, label, size: 'sm', value, placeholder: options.find((o) => o[0] === '')?.[1] || null, onchange: (e) => onpick(e.target.value) }, ...options.map(([v, l]) => h('option', { value: v }, l)));
 const onOff = (label, on, onpick) => h('sav-switch', { size: 'sm', checked: !!on, onchange: (e) => onpick(e.target.checked) }, label);
 const small = { size: 'sm', appearance: 'outline', variant: 'neutral' };
 
@@ -32,7 +32,7 @@ export function colorField(label, value, sc, onpick, { none = false, grad = fals
   let cur = value;
   const set = (v, close) => { cur = v; show(v); onpick(v); if (close) pop.hide(); };
   const grid = (list) => h('div.sws', ...list.map((c) => h('sav-button.sw', { circle: true, size: 'sm', label: c[0] === '@' ? t('tok_' + c.slice(1)) : c, title: c[0] === '@' ? t('tok_' + c.slice(1)) : c, style: `--c:${sc.color(c)}`, onclick: () => set(c, true) })));
-  const mini = (lab, v, f) => { const c = h('sav-color-picker', { compact: true, size: 'sm', picker: 'custom', 'aria-label': lab, value: (sc.color(v) || '#000000').slice(0, 7) }); c.addEventListener('change', (e) => { const x = e.detail?.value ?? c.value; if (/^#[0-9a-f]{6}$/i.test(x)) f(x.toLowerCase()); }); return c; };
+  const mini = (lab, v, f) => { const c = h('sav-color-picker', { 'sheet-on-mobile': true, compact: true, size: 'sm', picker: 'custom', 'aria-label': lab, value: (sc.color(v) || '#000000').slice(0, 7) }); c.addEventListener('change', (e) => { const x = e.detail?.value ?? c.value; if (/^#[0-9a-f]{6}$/i.test(x)) f(x.toLowerCase()); }); return c; };
   const pop = h('sav-popover', { placement: 'bottom-end', 'sheet-on-mobile': true, heading: label, style: '--width:18rem' }, sw);
   const part = (title, ...kids) => h('div.cpart', h('span.flabel', title), ...kids);
   pop.addEventListener('sav-show', () => {
@@ -40,7 +40,7 @@ export function colorField(label, value, sc, onpick, { none = false, grad = fals
     pop.dataset.built = 1;
     const hex = cur && cur[0] === '#' ? cur : cur && cur[0] === '@' ? sc.color(cur) : '#6d3bef';
     // the same look for every part: a small label, then the choices; "none" is the first of the colours of the theme
-    const cp = h('sav-color-picker', { value: hex, alpha: true, picker: 'custom', size: 'sm', 'aria-label': t('other_color') });
+    const cp = h('sav-color-picker', { 'sheet-on-mobile': true, value: hex, alpha: true, picker: 'custom', size: 'sm', 'aria-label': t('other_color') });
     cp.addEventListener('change', (e) => { const v = e.detail?.value ?? cp.value; if (/^#[0-9a-f]{6}([0-9a-f]{2})?$/i.test(v)) set(v.toLowerCase()); });
     const g = gradient(cur);
     let a = g?.a || '@accent', b = g?.b || '@accent2', ang = g?.ang ?? 135;
@@ -61,7 +61,7 @@ export function colorField(label, value, sc, onpick, { none = false, grad = fals
 /** A typeface: the included ones by kind; with the editor (ed) also those of the presentation and "More typefaces…" (Bunny Fonts, from file). */
 export function fontField(label, value, onpick, themeOpt = true, ed = null) {
   let cur = value || '';
-  const s = h('sav-select', { label, value: cur, placeholder: t('theme_font'), size: 'sm', searchable: true, 'search-placeholder': t('search'), clearable: !themeOpt, onchange: (e) => {
+  const s = h('sav-select', { 'sheet-on-mobile': true, label, value: cur, placeholder: t('theme_font'), size: 'sm', searchable: true, 'search-placeholder': t('search'), clearable: !themeOpt, onchange: (e) => {
     const v = e.target.value;
     if (v !== '__more') { cur = v; return onpick(v); }
     s.value = cur;
@@ -248,7 +248,7 @@ export function themePanel(ed) {
   const first = deck.order()[0]?.d;
   const card = (id) => { const ctx = context({ ...m, theme: { id, colors: {}, fonts: {} } }); return tile(THEMES[id].name, () => { set({ id, colors: {}, fonts: {} }); ed.refreshPanel(); }, { class: 'lay' + (m.theme.id === id ? ' on' : ''), 'data-theme': id }, first && Object.keys(first.els).length < 14 ? fluidThumb({ ...first, bg: undefined }, ctx, { index: -1 }) : fluidThumb(makeSlide('cover', ctx, { title: THEMES[id].name, subtitle: 'Aa Bb Cc' }).d, ctx), h('span', THEMES[id].name)); };
   const base = THEMES[m.theme.id] || THEMES.paper;
-  const colors = h('div.grid2', ...['bg', 'fg', 'muted', 'accent', 'accent2', 'surface'].map((k) => { const c = h('sav-color-picker', { compact: true, size: 'sm', picker: 'custom', label: t('tok_' + k), value: m.theme.colors[k] || base.colors[k] }); c.addEventListener('change', (e) => { const v = e.detail?.value ?? c.value; if (/^#[0-9a-f]{6}$/i.test(v)) set({ colors: { ...m.theme.colors, [k]: v.toLowerCase() } }); }); return c; }));
+  const colors = h('div.grid2', ...['bg', 'fg', 'muted', 'accent', 'accent2', 'surface'].map((k) => { const c = h('sav-color-picker', { 'sheet-on-mobile': true, compact: true, size: 'sm', picker: 'custom', label: t('tok_' + k), value: m.theme.colors[k] || base.colors[k] }); c.addEventListener('change', (e) => { const v = e.detail?.value ?? c.value; if (/^#[0-9a-f]{6}$/i.test(v)) set({ colors: { ...m.theme.colors, [k]: v.toLowerCase() } }); }); return c; }));
   return h('div', fold(t('customize'), false, fontField(t('font_head'), m.theme.fonts.head || '', (v) => set({ fonts: tidy({ ...m.theme.fonts, head: v }) }), false, ed), fontField(t('font_body'), m.theme.fonts.body || '', (v) => set({ fonts: tidy({ ...m.theme.fonts, body: v }) }), false, ed), colors, btn(t('reset'), () => { set({ colors: {}, fonts: {} }); ed.refreshPanel(); }, { size: 'sm', appearance: 'ghost', icon: 'rotate-ccw' })),
     ...['clean', 'classic', 'creative'].map((g) => sec(t('th_' + g), h('div.lays', ...Object.keys(THEMES).filter((k) => THEMES[k].group === g).map(card)))));
 }

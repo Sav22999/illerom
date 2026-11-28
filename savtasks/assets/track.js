@@ -155,11 +155,11 @@ export function entryDialog(e, init = {}, after) {
   });
   paintTasks();
   const now = Date.now(), round = (ms) => Math.floor(ms / 300000) * 300000;
-  const day = stop(h('sav-date-picker', { label: t('day'), value: e?.day || init.day || today(), size: 'sm' }));
+  const day = stop(h('sav-date-picker', { 'sheet-on-mobile': true, label: t('day'), value: e?.day || init.day || today(), size: 'sm' }));
   const hasSpan = e ? running || !!(e.start && e.end) : true;
   let mode = hasSpan ? 'span' : 'len';
-  const from = stop(h('sav-time-picker', { label: t(running ? 'tt_started_at' : 'from'), value: e?.start ? clock(Date.parse(e.start), tz()) : clock(round(now) - 3600000, tz()), size: 'sm', step: 5 }));
-  const to = stop(h('sav-time-picker', { label: t('tt_to'), value: e?.end ? clock(Date.parse(e.end), tz()) : clock(round(now), tz()), size: 'sm', step: 5 }));
+  const from = stop(h('sav-time-picker', { 'sheet-on-mobile': true, label: t(running ? 'tt_started_at' : 'from'), value: e?.start ? clock(Date.parse(e.start), tz()) : clock(round(now) - 3600000, tz()), size: 'sm', step: 5 }));
+  const to = stop(h('sav-time-picker', { 'sheet-on-mobile': true, label: t('tt_to'), value: e?.end ? clock(Date.parse(e.end), tz()) : clock(round(now), tz()), size: 'sm', step: 5 }));
   const hh = num(t('tt_hours'), e && !hasSpan ? Math.floor(e.seconds / 3600) : 1, () => {}, { min: 0, max: 24 });
   const mm = num(t('tt_minutes'), e && !hasSpan ? Math.round(e.seconds / 60) % 60 : 0, () => {}, { min: 0, max: 59, step: 5 });
   const spanBox = h('div.grid2', from, running ? null : to), lenBox = h('div.grid2', hh, mm);
@@ -287,7 +287,7 @@ export function timeView(main, ctx) {
   const modeSel = segmented(t('tt_period'), tv.mode, [['week', '=' + t('tt_week'), t('tt_week')], ['month', '=' + t('tt_month'), t('tt_month')], ['range', '=' + t('tt_range'), t('tt_range')]], (v) => { tv.mode = v; tv.anchor = null; redraw(); }, { class: 'tvmode' });
   let nav;
   if (tv.mode === 'range') {
-    const a = stop(h('sav-date-picker', { label: t('from'), value: per[0], size: 'sm' })), b = stop(h('sav-date-picker', { label: t('tt_to'), value: per[1], size: 'sm' }));
+    const a = stop(h('sav-date-picker', { 'sheet-on-mobile': true, label: t('from'), value: per[0], size: 'sm' })), b = stop(h('sav-date-picker', { 'sheet-on-mobile': true, label: t('tt_to'), value: per[1], size: 'sm' }));
     const set = () => { if (a.value && b.value) { tv.from = a.value; tv.to = b.value; redraw(); } };
     a.addEventListener('change', set); b.addEventListener('change', set);
     nav = h('div.tvrange', a, b);

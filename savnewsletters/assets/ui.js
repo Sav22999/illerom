@@ -374,7 +374,7 @@ export function textarea(attrs = {}, value = '') {
 const NONE = '~';
 
 export function select(options, value, attrs = {}) {
-    const s = h('sav-select', attrs, options.map(([v, label]) => h('option', {value: v === '' ? NONE : String(v)}, label)));
+    const s = h('sav-select', {'sheet-on-mobile': true, ...attrs}, options.map(([v, label]) => h('option', {value: v === '' ? NONE : String(v)}, label)));
     s.setAttribute('value', value === null || value === undefined || value === '' ? NONE : String(value));
     let d = null;
     for (let p = customElements.get('sav-select') && customElements.get('sav-select').prototype; p && !d; p = Object.getPrototypeOf(p)) d = Object.getOwnPropertyDescriptor(p, 'value');

@@ -245,7 +245,7 @@ export async function homeScreen(app, q) {
             });
             draw();
         });
-        const sortMenu = h('sav-dropdown', {placement: 'bottom-end'}, h('sav-button', {
+        const sortMenu = h('sav-dropdown', { 'sheet-on-mobile': true, placement: 'bottom-end'}, h('sav-button', {
             slot: 'trigger',
             appearance: 'ghost',
             variant: 'neutral',
@@ -317,7 +317,7 @@ export async function homeScreen(app, q) {
 
     function folderMenu(f) {
         if (!f) return null;
-        const d = h('sav-dropdown', h('sav-button', {
+        const d = h('sav-dropdown', {'sheet-on-mobile': true, label: t('more')}, h('sav-button', {
             slot: 'trigger',
             icon: 'ellipsis',
             appearance: 'ghost',
@@ -465,7 +465,7 @@ export async function homeScreen(app, q) {
     }
 
     function pickFolder(cur) {
-        const sel = h('sav-select', {
+        const sel = h('sav-select', { 'sheet-on-mobile': true,
             label: t('folder'),
             value: String(cur || 0)
         }, h('option', {value: '0'}, t('no_folder')), ...data.folders.map((f) => h('option', {value: f.id}, path(data.folders, f))));
@@ -526,7 +526,7 @@ export async function newDialog(folder, data, tpl = TEMPLATES[0]) {
         format = f;
         touched = true;
     });
-    const sel = data.folders.length ? h('sav-select', {
+    const sel = data.folders.length ? h('sav-select', { 'sheet-on-mobile': true,
         label: t('folder'),
         value: String(folder || 0)
     }, h('option', {value: '0'}, t('no_folder')), ...data.folders.map((f) => h('option', {value: f.id}, path(data.folders, f)))) : null;
@@ -628,7 +628,7 @@ export async function localHome(app) {
         const list = await L.local.list();
         for (const d of list) await L.loadUrls(L.mediaOf(d));
         const card = (d) => {
-            const m = h('sav-dropdown', {placement: 'bottom-end', label: d.title}, h('sav-button', {slot: 'trigger', icon: 'ellipsis-vertical', appearance: 'ghost', variant: 'neutral', size: 'sm', square: true, label: t('more')}),
+            const m = h('sav-dropdown', { 'sheet-on-mobile': true, placement: 'bottom-end', label: d.title}, h('sav-button', {slot: 'trigger', icon: 'ellipsis-vertical', appearance: 'ghost', variant: 'neutral', size: 'sm', square: true, label: t('more')}),
                 item('open', 'presentation', t('open')), item('rename', 'pencil', t('rename')), state.user && item('move', 'cloud-upload', t('move_to_account')), h('sav-divider'), item('del', 'trash', t('delete_forever'), {variant: 'danger'}));
             m.addEventListener('sav-select', async (e) => {
                 try {

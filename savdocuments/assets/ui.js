@@ -76,7 +76,7 @@ export const dropBtn = (ic, label, items, o = {}) => drop(h('sav-button', { icon
 /** A menu at a point (right click). */
 export function menuAt(x, y, items, o = {}) {
   document.querySelector('.ctxm')?.remove();
-  const d = fillMenu(h('sav-dropdown.ctxm', { placement: 'bottom-start', style: `left:${x}px;top:${y}px`, label: o.label }, h('span', { slot: 'trigger' })), items);
+  const d = fillMenu(h('sav-dropdown.ctxm', { 'sheet-on-mobile': true, placement: 'bottom-start', style: `left:${x}px;top:${y}px`, label: o.label }, h('span', { slot: 'trigger' })), items);
   d.addEventListener('sav-hide', () => setTimeout(() => d.remove(), 250));
   document.body.append(d);
   requestAnimationFrame(() => d.show());
@@ -98,7 +98,7 @@ export const segmented = (label, value, options, onpick, o = {}) => h('sav-radio
 /** sav-select shows nothing for an option whose value is empty: "" travels as "~" and comes back as "" (also through .value). */
 const NONE = '~';
 export const select = (label, options, value, onchange, o = {}) => {
-  const s = h('sav-select', { label: label || null, value: (value ?? '') === '' ? NONE : value, size: 'sm', ...o }, options.map(([v, l, st]) => h('option', { value: v === '' ? NONE : v, style: st }, l)));
+  const s = h('sav-select', { 'sheet-on-mobile': true, label: label || null, value: (value ?? '') === '' ? NONE : value, size: 'sm', ...o }, options.map(([v, l, st]) => h('option', { value: v === '' ? NONE : v, style: st }, l)));
   let d = null;
   for (let p = customElements.get('sav-select')?.prototype; p && !d; p = Object.getPrototypeOf(p)) d = Object.getOwnPropertyDescriptor(p, 'value');
   if (d?.get) Object.defineProperty(s, 'value', { configurable: true, get() { const v = d.get.call(this); return v === NONE ? '' : v; }, set(v) { d.set.call(this, (v === '' || v == null) && this.querySelector(`option[value="${NONE}"]`) ? NONE : v ?? ''); } });
@@ -133,7 +133,7 @@ export function colorPop(label, value, onpick, opt = {}) {
     if (pop.dataset.built) return;
     pop.dataset.built = 1;
     const list = (opt.list || INKS).map((c) => c.toLowerCase());
-    const cp = h('sav-color-picker', { value: value || list[0], swatches: list.join(' '), picker: 'custom', size: 'sm', 'aria-label': label });
+    const cp = h('sav-color-picker', { 'sheet-on-mobile': true, value: value || list[0], swatches: list.join(' '), picker: 'custom', size: 'sm', 'aria-label': label });
     cp.addEventListener('change', (e) => { const v = String(e.detail?.value ?? cp.value).toLowerCase(); if (!/^#[0-9a-f]{6}$/.test(v)) return; if (list.includes(v)) set(v); else { show(v); onpick(v); } });
     pop.append(h('div.cpop', cp, opt.none ? btn(opt.none, { size: 'sm', block: true, appearance: 'outline', onclick: () => set('') }) : null));
   });

@@ -43,7 +43,7 @@ export function fontDialog({ current = '', used = [] } = {}) {
 
   // Bunny Fonts
   const q = h('sav-input', { type: 'search', placeholder: t('fonts_search'), clearable: true, size: 'sm', 'aria-label': t('fonts_search'), class: 'grow' });
-  const kind = h('sav-select', { value: 'all', size: 'sm', class: 'rolesel', 'aria-label': t('f_kind') }, h('option', { value: 'all' }, t('all')), ...KINDS.map((c) => h('option', { value: c }, kindName(c))));
+  const kind = h('sav-select', { 'sheet-on-mobile': true, value: 'all', size: 'sm', class: 'rolesel', 'aria-label': t('f_kind') }, h('option', { value: 'all' }, t('all')), ...KINDS.map((c) => h('option', { value: c }, kindName(c))));
   const list = h('div.flist'), preview = new Set();
   const seen = new IntersectionObserver((es) => es.forEach((e) => {
     if (!e.isIntersecting) return;
@@ -69,7 +69,7 @@ export function fontDialog({ current = '', used = [] } = {}) {
 
   // from file
   const files = h('div.stack'), name = h('sav-input', { label: t('font_name'), maxlength: 60, placeholder: t('font_name_ph'), size: 'sm' });
-  const fkind = h('sav-select', { label: t('f_kind'), value: 'sans-serif', size: 'sm' }, ...KINDS.map((c) => h('option', { value: c }, kindName(c))));
+  const fkind = h('sav-select', { 'sheet-on-mobile': true, label: t('f_kind'), value: 'sans-serif', size: 'sm' }, ...KINDS.map((c) => h('option', { value: c }, kindName(c))));
   const chosen = h('small.muted');
   let file = null;
   const choose = async () => {

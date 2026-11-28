@@ -46,12 +46,12 @@ export function control(q, A, o = {}) {
       return h('div.qctl', i);
     }
     case 'date': {
-      const i = h('sav-date-picker', { value: A[id] ?? '', placeholder: t('date_ph'), disabled: off || null, 'aria-label': q.title || t('k_date') });
+      const i = h('sav-date-picker', { 'sheet-on-mobile': true, value: A[id] ?? '', placeholder: t('date_ph'), disabled: off || null, 'aria-label': q.title || t('k_date') });
       i.addEventListener('change', () => set(i.value || undefined));
       return h('div.qctl.narrow', i);
     }
     case 'time': {
-      const i = h('sav-time-picker', { value: A[id] ?? '', placeholder: t('time_ph'), step: 5, 'hour-cycle': 24, disabled: off || null, 'aria-label': q.title || t('k_time') });
+      const i = h('sav-time-picker', { 'sheet-on-mobile': true, value: A[id] ?? '', placeholder: t('time_ph'), step: 5, 'hour-cycle': 24, disabled: off || null, 'aria-label': q.title || t('k_time') });
       i.addEventListener('change', () => set(i.value || undefined));
       return h('div.qctl.narrow', i);
     }
@@ -70,7 +70,7 @@ export function control(q, A, o = {}) {
       return h('div.qctl.choices', lim ? h('small.muted.qhelp', lim) : null, h('div.checks', list, boxOther), q.other ? otherBox() : null);
     }
     case 'dropdown': {
-      const s = h('sav-select', { value: A[id] ?? '', placeholder: t('choose'), disabled: off || null, clearable: !q.req || null, 'aria-label': q.title || t('k_dropdown') }, shown(q, o.shuffle).map((x) => h('option', { value: x.id }, x.label || t('option_empty'))));
+      const s = h('sav-select', { 'sheet-on-mobile': true, value: A[id] ?? '', placeholder: t('choose'), disabled: off || null, clearable: !q.req || null, 'aria-label': q.title || t('k_dropdown') }, shown(q, o.shuffle).map((x) => h('option', { value: x.id }, x.label || t('option_empty'))));
       s.addEventListener('change', () => set(s.value || undefined));
       return h('div.qctl.narrow', s);
     }

@@ -220,7 +220,7 @@ export async function adminScreen(app, q) {
     })) : null) || '';
 
     function userMenuOf(u, load) {
-        const m = h('sav-dropdown', {placement: 'bottom-end'}, h('sav-button', {
+        const m = h('sav-dropdown', { 'sheet-on-mobile': true, placement: 'bottom-end'}, h('sav-button', {
             slot: 'trigger',
             icon: 'ellipsis-vertical',
             appearance: 'ghost',
@@ -262,7 +262,7 @@ export async function adminScreen(app, q) {
 
     /** Blocking a person: they are signed out everywhere and nobody can open their presentations any more. */
     function blockDialog(u, done, why = 'spam') {
-        const reason = h('sav-select', {
+        const reason = h('sav-select', { 'sheet-on-mobile': true,
                 label: t('block_reason'),
                 value: why
             }, ...REASONS.map((r) => h('option', {value: r}, t('reason_' + r)))),
@@ -303,7 +303,7 @@ export async function adminScreen(app, q) {
     }
 
     function deckMenu(d, load) {
-        const m = h('sav-dropdown', {placement: 'bottom-end'}, h('sav-button', {
+        const m = h('sav-dropdown', { 'sheet-on-mobile': true, placement: 'bottom-end'}, h('sav-button', {
             slot: 'trigger',
             icon: 'ellipsis-vertical',
             appearance: 'ghost',

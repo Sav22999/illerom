@@ -117,7 +117,7 @@ export async function deckScreen(app, deckId, q) {
     if (state.user && !state.offline) api('auth.settings', { settings: { simple } }).then((r) => { state.user = r.user; }).catch(() => {});
   };
   // ------------------------------------------------------------------ toolbar: every button adds something to the page
-  const dropTool = (ic, label, items) => { const d = h('sav-dropdown', { label }, h('sav-button', { slot: 'trigger', icon: ic, caret: true, appearance: 'ghost', variant: 'neutral', size: 'sm', label }, h('span.insl', label)), ...items); d.addEventListener('sav-select', (e) => ed.insert(e.detail.value)); return d; };
+  const dropTool = (ic, label, items) => { const d = h('sav-dropdown', { 'sheet-on-mobile': true, label }, h('sav-button', { slot: 'trigger', icon: ic, caret: true, appearance: 'ghost', variant: 'neutral', size: 'sm', label }, h('span.insl', label)), ...items); d.addEventListener('sav-select', (e) => ed.insert(e.detail.value)); return d; };
   const addTool = (ic, label, what) => h('sav-tooltip', { content: label, placement: 'bottom', delay: 350 }, h('sav-button', { icon: ic, appearance: 'ghost', variant: 'neutral', size: 'sm', onclick: () => (typeof what === 'function' ? what() : ed.insert(what)), label }, h('span.insl', label)));
   const drawn = { rect: 'square', round: 'rectangle-horizontal', ellipse: 'circle', triangle: 'triangle', diamond: 'diamond', star: 'star', hexagon: 'hexagon', arrow: 'arrow-right', speech: 'message-square', heart: 'heart', cloud: 'cloud', plus: 'plus' };
   /** The bars chosen (⋮ → Customise the bars): with the account, in this browser for who has none. */
@@ -152,7 +152,7 @@ export async function deckScreen(app, deckId, q) {
   }
 
   const present = h('sav-button', { icon: 'play', onclick: () => show() , class: 'presentb' }, h('span.insl', t('present')));
-  const presentM = h('sav-dropdown', { placement: 'bottom-end' }, h('sav-button.presentm', { slot: 'trigger', icon: 'chevron-down', label: t('more'), square: true }), item('here', 'play', t('present_here'), { kbd: '⇧F5' }), item('start', 'play', t('present_start'), { kbd: 'F5' }), !isApp && h('sav-divider'), !isApp && item('view', 'presentation', t('present_speaker')));
+  const presentM = h('sav-dropdown', { 'sheet-on-mobile': true, placement: 'bottom-end' }, h('sav-button.presentm', { slot: 'trigger', icon: 'chevron-down', label: t('more'), square: true }), item('here', 'play', t('present_here'), { kbd: '⇧F5' }), item('start', 'play', t('present_start'), { kbd: 'F5' }), !isApp && h('sav-divider'), !isApp && item('view', 'presentation', t('present_speaker')));
   presentM.addEventListener('sav-select', (e) => ({ here: () => show(ed.sid), start: () => show(deck.order()[0]?.sid), view: () => show(ed.sid, { presenter: true }) })[e.detail.value]());
   const paletteB = iconBtn('command', t('palette_l') + ' · ' + (isMac ? '⌘J' : 'Ctrl+J'), () => ed.palette());
   const shareB = h('sav-button.shareb', { icon: 'user-plus', appearance: 'soft', square: mobile() || null, label: t('share'), onclick: () => shareDialog(deck.uid, deck.title, ed) }, mobile() ? null : h('span.insl', t('share')));
@@ -353,7 +353,7 @@ export async function deckScreen(app, deckId, q) {
     let kind = cur.startsWith('#s:') ? 'slide' : 'web';
     const url = h('sav-input', { label: t('link_url'), placeholder: 'https://…', value: cur.startsWith('#') ? '' : cur, autofocus: kind === 'web', help: t('link_web_t') });
     url.addEventListener('keydown', (e) => e.stopPropagation());
-    const list = deck.order(), slide = h('sav-select', { label: t('link_slide'), value: cur.startsWith('#s:') && deck.slide(cur.slice(3)) ? cur : '#s:' + (list[deck.index(ed.sid) + 1] || list[0])?.sid, help: t('link_slide_t') }, ...list.map((s, i) => h('option', { value: '#s:' + s.sid }, `${i + 1} · ${pageName(deck, s)}`)));
+    const list = deck.order(), slide = h('sav-select', { 'sheet-on-mobile': true, label: t('link_slide'), value: cur.startsWith('#s:') && deck.slide(cur.slice(3)) ? cur : '#s:' + (list[deck.index(ed.sid) + 1] || list[0])?.sid, help: t('link_slide_t') }, ...list.map((s, i) => h('option', { value: '#s:' + s.sid }, `${i + 1} · ${pageName(deck, s)}`)));
     const tabs = h('sav-tabs.linktabs', { appearance: 'segmented', active: kind }, h('sav-tab', { name: 'web', label: t('link_web'), icon: 'globe' }, h('div.stack.pad', url)), h('sav-tab', { name: 'slide', label: t('link_to_slide'), icon: 'presentation' }, h('div.stack.pad', slide)));
     tabs.addEventListener('sav-tab-show', (e) => { kind = e.detail.name; });
     const set = (v) => deck.do({ k: 'el.set', s: ed.sid, e: id, p: { link: v || null } });
@@ -448,7 +448,7 @@ export async function deckScreen(app, deckId, q) {
     const std = items.filter(Boolean).map((i) => (Array.isArray(i) ? [i[0], i[1], i[2], { danger: i[3] === 'danger', kbd: i[4] }] : i));
     if (window.SavOffice?.context?.show?.(x, y, std)) return;
     $('.ctxm')?.remove();
-    const list = items.filter(Boolean), d = h('sav-dropdown.ctxm', { placement: 'bottom-start', style: `left:${x}px;top:${y}px` }, h('span', { slot: 'trigger' }), ...list.map((i, n) => (i === '-' ? h('sav-divider') : item(String(n), i[0], i[1], { variant: i[3] || null, kbd: i[4] }))));
+    const list = items.filter(Boolean), d = h('sav-dropdown.ctxm', { 'sheet-on-mobile': true, placement: 'bottom-start', style: `left:${x}px;top:${y}px` }, h('span', { slot: 'trigger' }), ...list.map((i, n) => (i === '-' ? h('sav-divider') : item(String(n), i[0], i[1], { variant: i[3] || null, kbd: i[4] }))));
     d.addEventListener('sav-select', (e) => { const i = list[+e.detail.value]; setTimeout(() => i[2](), 30); });
     d.addEventListener('sav-hide', () => setTimeout(() => d.remove(), 200));
     document.body.append(d);

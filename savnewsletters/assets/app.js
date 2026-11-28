@@ -169,7 +169,7 @@ async function useLang(l) {
 
 /** The language of the account page and of the footer: the two languages of the app, with their own names. */
 function langSwitch() {
-    const c = h('sav-language-choice', {
+    const c = h('sav-language-choice', { 'sheet-on-mobile': true,
         include: 'it-IT en-GB', value: getLang() === 'it' ? 'it-IT' : 'en-GB', 'native-names': '', 'no-code': '', size: 'sm',
         'aria-label': t('language'), class: 'langs'
     });
@@ -1446,7 +1446,7 @@ function tabSettings(g, body) {
             reloadPv();
         }, '.danger-ico') : null);
     drawLogo();
-    const accent = bind('accent', h('sav-color-picker', {value: p.accent, swatches: '#C2307A,#0E8A6A,#E2553B,#D97706,#2563EB,#5B3DF5,#111827'}));
+    const accent = bind('accent', h('sav-color-picker', { 'sheet-on-mobile': true, value: p.accent, swatches: '#C2307A,#0E8A6A,#E2553B,#D97706,#2563EB,#5B3DF5,#111827'}));
     const pageSec = h('sav-card.scard.wide', h('div.shead', icon('palette'), h('h3', t('page_custom'))), h('p.muted.small', t('page_custom_text')),
         h('div.split',
             h('div.form',

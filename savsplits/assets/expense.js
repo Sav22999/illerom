@@ -48,7 +48,7 @@ export function expenseDialog(e, preset = {}) {
   const rate = h('sav-input', { value: String(st.rate), inputmode: 'decimal', size: 'sm', class: 'erate', 'aria-label': t('rate') });
   const rateNote = h('small.muted');
   const rateRow = h('div.raterow', h('span.rl'), rate, h('span.rr'), btn(t('rate_ecb'), { size: 'sm', appearance: 'ghost', icon: 'refresh', onclick: () => askRate(true) }), rateNote);
-  const day = h('sav-date-picker', { label: t('day'), value: e?.day || preset.day || todayKey(), size: 'md' });
+  const day = h('sav-date-picker', { 'sheet-on-mobile': true, label: t('day'), value: e?.day || preset.day || todayKey(), size: 'md' });
   const cat = select(t('category'), [['', t('cat_none')], ...CATS.map(([c]) => [c, catName(c)])], e?.category ?? '', null, { searchable: true });
   const notes = h('sav-textarea', { label: t('notes'), value: e?.notes || '', maxlength: 2000, rows: 2, resize: 'auto' });
   const repeat = select(t('repeat'), [['', t('rep_none')], ['week', t('rep_week')], ['month', t('rep_month')], ['quarter', t('rep_quarter')], ['year', t('rep_year')]], e?.repeat || '', null, { help: e?.repeatNext ? t('rep_next', { d: longDay(e.repeatNext) }) : t('rep_t') });

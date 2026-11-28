@@ -1395,7 +1395,7 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
 
     /** sav-color-picker (suggested colours: the presets), with a button back to the colour of the theme. */
     function colorPick(value, on, allowReset = false, onReset = null, key = '', swatches = null) {
-        const c = h('sav-color-picker', {value: value || '#000000', size: 'sm', swatches: swatches ? swatches.join(',') : null, 'data-k': key || null});
+        const c = h('sav-color-picker', { 'sheet-on-mobile': true, value: value || '#000000', size: 'sm', swatches: swatches ? swatches.join(',') : null, 'data-k': key || null});
         const pick = () => {
             const v = String(c.value || '');
             if (/^#[0-9a-f]{6}$/i.test(v)) on(v.toUpperCase());

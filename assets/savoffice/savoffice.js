@@ -1288,6 +1288,9 @@ savoffice-apps { display: inline-flex; }
   function railMore(rail, max = 5) {
     if (!rail) return;
     css();
+    // the bar of SavComponents (1.3.2) folds into its own More beyond max-items, at every width: the rail stands on the side of
+    // wide screens with every panel, and at the bottom it has this More (phones and tablets only), so the bar never folds it
+    rail.setAttribute('max-items', '99');
     rail.querySelector(':scope > .so-rmore')?.remove();
     const all = [...rail.querySelectorAll(':scope > sav-bottom-nav-item')];
     all.forEach((x) => x.classList.remove('so-rover'));

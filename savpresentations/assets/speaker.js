@@ -17,7 +17,7 @@ export function speakerScreen(app, room) {
   const AK = (c) => (isMac ? '⌥⇧' : 'Alt+Shift+') + c;
   const tog = (ic, label, key, fn) => { const tip = iconBtn(ic, `${label} · ${AK(key)}`, fn), b = tip.firstElementChild; return { tip, set(on) { b.setAttribute('aria-pressed', String(on)); b.variant = on ? 'primary' : 'neutral'; b.appearance = on ? 'solid' : 'ghost'; } }; };
   const laser = tog('pointer', t('laser'), 'L', () => send('tool', { v: st?.tool === 'laser' ? '' : 'laser' })), black = tog('eye-off', t('black'), 'B', () => send('black'));
-  const page = h('sav-select.spk-page', { size: 'sm', 'aria-label': t('go_to_page'), onchange: (e) => { if (e.target.value !== st?.sid) send('to', { sid: e.target.value }); } });
+  const page = h('sav-select.spk-page', { 'sheet-on-mobile': true, size: 'sm', 'aria-label': t('go_to_page'), onchange: (e) => { if (e.target.value !== st?.sid) send('to', { sid: e.target.value }); } });
   const pause = iconBtn('pause', t('pause'), () => { if (stopped) { from += Date.now() - stopped; stopped = 0; } else stopped = Date.now(); pause.firstElementChild.icon = stopped ? 'play' : 'pause'; pause.setAttribute('content', stopped ? t('resume') : t('pause')); tick(); }, { size: 'sm' });
   const setSize = (d) => { size = Math.max(14, Math.min(60, size + d)); localStorage.setItem('sp-notes-size', size); notes.style.fontSize = size + 'px'; };
   setSize(0);

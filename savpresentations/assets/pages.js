@@ -10,7 +10,7 @@ export function pageRulesDialog(ed, start) {
     const deck = ed.deck, order = deck.order();
     let pages = start?.length ? [...start] : [ed.sid], rules = [], share = null;
     const body = h('div.stack', h('sav-spinner'));
-    const who = h('sav-select', {
+    const who = h('sav-select', { 'sheet-on-mobile': true,
         label: t('pages'),
         multiple: true,
         searchable: order.length > 8,
@@ -46,7 +46,7 @@ export function pageRulesDialog(ed, start) {
         }
     };
     const line = (w, name, sub, role, color) => {
-        const v = ruleOf(w), sel = h('sav-select', {
+        const v = ruleOf(w), sel = h('sav-select', { 'sheet-on-mobile': true,
                 size: 'sm',
                 class: 'rolesel wide',
                 value: v || 'same',

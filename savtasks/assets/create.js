@@ -134,8 +134,8 @@ export function newDialog(ctx, init = {}) {
   const lists = S.lists.filter((l) => !l.archived);
   const title = h('sav-input', { label: t('title_l'), placeholder: t('title_ph'), maxlength: 255 });
   const listSel = select(t('list'), lists.map((l) => [l.id, l.name]), init.list && listById(init.list) ? init.list : prefs().defaultList && listById(prefs().defaultList) ? prefs().defaultList : inbox().id, null, { size: 'md' });
-  const due = stop(h('sav-date-picker', { label: t('due'), value: init.due || '', clearable: true }));
-  const time = stop(h('sav-time-picker', { label: t('time'), step: 5, clearable: true }));
+  const due = stop(h('sav-date-picker', { 'sheet-on-mobile': true, label: t('due'), value: init.due || '', clearable: true }));
+  const time = stop(h('sav-time-picker', { 'sheet-on-mobile': true, label: t('time'), step: 5, clearable: true }));
   let priority = 0;
   const prio = segmented(t('priority'), '0', [['0', '=' + t('p_none'), t('p_none')], ['1', '=' + t('p_low'), t('p_low')], ['2', '=' + t('p_medium'), t('p_medium')], ['3', '=' + t('p_high'), t('p_high')]], (v) => { priority = +v; }, { show: true, class: 'prio' });
   const more = h('sav-checkbox', {}, t('open_details'));

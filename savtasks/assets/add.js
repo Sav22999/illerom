@@ -31,7 +31,7 @@ export function addDialog(l, ctx, o = {}) {
   const fields = [title];
   let priority = 0, col = o.col || l.columns[0]?.id;
   const prio = () => segmented(t('priority'), '0', [['0', '=' + t('p_none'), t('p_none')], ['1', '=' + t('p_low'), t('p_low')], ['2', '=' + t('p_medium'), t('p_medium')], ['3', '=' + t('p_high'), t('p_high')]], (v) => { priority = +v; }, { show: true, class: 'prio' });
-  const date = (label, value = '') => h('sav-date-picker', { label, value, clearable: true });
+  const date = (label, value = '') => h('sav-date-picker', { 'sheet-on-mobile': true, label, value, clearable: true });
   let due, time, start, milestone, days = 'daily', chosen = [DAYS[weekday(k)]];
 
   if (kind === 'habits') {
@@ -56,7 +56,7 @@ export function addDialog(l, ctx, o = {}) {
   } else {
     if (kind === 'board') fields.push(select(t('column'), l.columns.filter((c) => !c.done).map((c) => [c.id, c.name]), col, (v) => { col = v; }, { size: 'md' }));
     due = date(t('due'));
-    time = h('sav-time-picker', { label: t('time'), step: 5, clearable: true });
+    time = h('sav-time-picker', { 'sheet-on-mobile': true, label: t('time'), step: 5, clearable: true });
     fields.push(h('div.grid2', due, time), prio());
   }
 

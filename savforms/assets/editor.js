@@ -321,7 +321,7 @@ export async function editorScreen(root, id, tab = 'questions') {
   // ---------------------------------------------------------------- look
   function lookPanel() {
     const th = F.theme, set = (p) => { Object.assign(th, p); save({ theme: th }); if (canvas) { canvas.className = 'canvas'; themed(canvas, th); } };
-    const cp = h('sav-color-picker', { value: th.color, swatches: COLORS.join(' '), picker: 'custom', size: 'sm', 'aria-label': t('color') });
+    const cp = h('sav-color-picker', { 'sheet-on-mobile': true, value: th.color, swatches: COLORS.join(' '), picker: 'custom', size: 'sm', 'aria-label': t('color') });
     cp.addEventListener('change', (e) => { const v = String(e.detail?.value ?? cp.value).toLowerCase(); if (/^#[0-9a-f]{6}$/.test(v)) set({ color: v }); });
     const header = h('div.hdrbox', th.header ? h('img', { src: th.header, alt: '' }) : h('small.muted', t('no_header')));
     return h('div.look', h('h3', icon('palette'), ' ', t('look')),
@@ -340,7 +340,7 @@ export async function editorScreen(root, id, tab = 'questions') {
     const section = (title, text, ...rows) => h('div.osec', h('h2', title), text ? h('p.muted', text) : null, h('sav-card.ocard', { appearance: 'outlined' }, h('div.orows', rows.filter(Boolean))));
     const sw = (k, label, help, o = {}) => { const s = h('sav-switch', { checked: !!st[k] || null, disabled: o.disabled || null, 'aria-label': label }); s.addEventListener('change', () => { st[k] = s.checked; o.then?.(s.checked); save({ settings: st }); if (o.redraw) settingsTab(); }); return row(label, help, s); };
     const when = (key, label, help) => {
-      const i = h('sav-date-picker', { mode: 'datetime', value: toLocalInput(F[key], F.tz), placeholder: t('not_set'), size: 'sm', 'aria-label': label });
+      const i = h('sav-date-picker', { 'sheet-on-mobile': true, mode: 'datetime', value: toLocalInput(F[key], F.tz), placeholder: t('not_set'), size: 'sm', 'aria-label': label });
       i.addEventListener('change', () => { F[key] = fromLocalInput(i.value, F.tz); save({ [key]: F[key] }, true); settingsTab(); });
       return row(label, help, h('div.prow', i, F[key] ? iconBtn('x', t('remove'), () => { F[key] = null; save({ [key]: null }, true); settingsTab(); }) : null));
     };

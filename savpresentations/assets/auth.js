@@ -34,7 +34,7 @@ async function useLang(l) {
     dispatchEvent(new PopStateEvent('popstate'));
 }
 export const langSwitch = () => {
-    const c = h('sav-language-choice', {include: 'it-IT en-GB', value: lang() === 'it' ? 'it-IT' : 'en-GB', 'native-names': '', 'no-code': '', size: 'sm', 'aria-label': t('language'), class: 'langs'});
+    const c = h('sav-language-choice', { 'sheet-on-mobile': true, include: 'it-IT en-GB', value: lang() === 'it' ? 'it-IT' : 'en-GB', 'native-names': '', 'no-code': '', size: 'sm', 'aria-label': t('language'), class: 'langs'});
     c.addEventListener('change', () => { const l = String(c.value || '').slice(0, 2); if (l && l !== lang()) useLang(l); });
     return c;
 };

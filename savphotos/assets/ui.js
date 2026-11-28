@@ -78,7 +78,7 @@ export function ctxAt(x, y, items, o = {}) { if (window.SavOffice?.context?.show
 /** A choice among a few. options: [[value, icon or '=text', label]] */
 export const segmented = (label, value, options, onpick, o = {}) => h('sav-radio-group', { appearance: 'buttons', size: o.size || 'sm', value: String(value), 'aria-label': label, label: o.show ? label : null, class: 'segm ' + (o.class || ''), onchange: (e) => onpick(e.currentTarget.value) }, options.map(([v, ic, l]) => h('sav-radio', { value: String(v), title: l, 'aria-label': l }, ic[0] === '=' ? ic.slice(1) : icon(ic))));
 export const select = (label, options, value, onchange, o = {}) => {
-  const s = h('sav-select', { label: label || null, value, size: 'sm', ...o }, options.map(([v, l]) => h('option', { value: v }, l)));
+  const s = h('sav-select', { 'sheet-on-mobile': true, label: label || null, value, size: 'sm', ...o }, options.map(([v, l]) => h('option', { value: v }, l)));
   if (onchange) s.addEventListener('change', () => onchange(s.value));
   return s;
 };

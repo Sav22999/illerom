@@ -107,10 +107,10 @@ export function openTask(id, ctx, init = {}) {
   drawCols();
 
   // due day, time, repetition, reminder
-  const datePick = stop(h('sav-date-picker', { label: t('due'), value: x.due || '', size: 'sm', clearable: true }));
-  const timePick = stop(h('sav-time-picker', { label: t('time'), value: x.time || '', size: 'sm', step: 5, clearable: true }));
+  const datePick = stop(h('sav-date-picker', { 'sheet-on-mobile': true, label: t('due'), value: x.due || '', size: 'sm', clearable: true }));
+  const timePick = stop(h('sav-time-picker', { 'sheet-on-mobile': true, label: t('time'), value: x.time || '', size: 'sm', step: 5, clearable: true }));
   // the start day (optional): the bar of the Gantt goes from it to the due day
-  const startPick = stop(h('sav-date-picker', { label: t('start_day'), value: x.start || '', size: 'sm', clearable: true, help: t('start_day_t') }));
+  const startPick = stop(h('sav-date-picker', { 'sheet-on-mobile': true, label: t('start_day'), value: x.start || '', size: 'sm', clearable: true, help: t('start_day_t') }));
   const quick = h('div.dquick');
   const ruleBox = h('div'), remindBox = h('div.dremind');
   const setDue = (due, time = x.time) => {
@@ -160,7 +160,7 @@ export function openTask(id, ctx, init = {}) {
     let custom = null;
     if (remindKind === 'custom' && x.remind) {
       const d = new Date(x.remind), k = new Intl.DateTimeFormat('en-CA', { timeZone: tz() }).format(d), hm = new Intl.DateTimeFormat('en-GB', { timeZone: tz(), hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(d);
-      const dp = stop(h('sav-date-picker', { label: t('rm_day'), value: k, size: 'sm' })), tp = stop(h('sav-time-picker', { label: t('time'), value: hm, size: 'sm', step: 5 }));
+      const dp = stop(h('sav-date-picker', { 'sheet-on-mobile': true, label: t('rm_day'), value: k, size: 'sm' })), tp = stop(h('sav-time-picker', { 'sheet-on-mobile': true, label: t('time'), value: hm, size: 'sm', step: 5 }));
       const upd = () => { if (!dp.value || !tp.value) return; const ms = zonedMs(dp.value, tp.value); if (ms <= Date.now()) toast(t('rm_past'), 'warning'); save({ remind: new Date(ms).toISOString() }); };
       dp.addEventListener('change', upd); tp.addEventListener('change', upd);
       custom = h('div.grid2', dp, tp);
@@ -291,9 +291,9 @@ async function calendarDialog(x, ctx, after) {
   const r = await api('tasks.calendars', undefined, { tz: tz() }).catch((e) => { fail(e); return null; });
   if (!r) return;
   const cal = select(t('calendar'), r.calendars.map((c) => [c.id, c.name]), r.default && r.calendars.some((c) => c.id === r.default) ? r.default : r.calendars[0]?.id);
-  const day = stop(h('sav-date-picker', { label: t('day'), value: x.due || today(), size: 'sm' }));
+  const day = stop(h('sav-date-picker', { 'sheet-on-mobile': true, label: t('day'), value: x.due || today(), size: 'sm' }));
   const allDay = h('sav-switch', { checked: !x.time || null, size: 'sm' }, t('all_day'));
-  const time = stop(h('sav-time-picker', { label: t('from'), value: x.time || '09:00', size: 'sm', step: 5 }));
+  const time = stop(h('sav-time-picker', { 'sheet-on-mobile': true, label: t('from'), value: x.time || '09:00', size: 'sm', step: 5 }));
   const len = select(t('length'), [15, 30, 45, 60, 90, 120, 180, 240].map((m) => [String(m), m < 60 ? t('minutes_n', { n: m }) : t('hours_n', { n: m / 60 })]), '60');
   const timed = h('div.grid2', time, len);
   const upd = () => { timed.hidden = allDay.checked; };
@@ -319,8 +319,8 @@ function scheduleDialog(x, ctx, after) {
   const name = stop(h('sav-input', { label: t('title_l'), value: x.title, maxlength: 160 }));
   const place = stop(h('sav-input', { label: t('place'), maxlength: 200, placeholder: t('place_ph') }));
   const picks = [];
-  const day = stop(h('sav-date-picker', { label: t('day'), value: x.due || addDays(today(), 1), size: 'sm' }));
-  const time = stop(h('sav-time-picker', { label: t('time_opt'), value: x.time || '', size: 'sm', step: 15, clearable: true }));
+  const day = stop(h('sav-date-picker', { 'sheet-on-mobile': true, label: t('day'), value: x.due || addDays(today(), 1), size: 'sm' }));
+  const time = stop(h('sav-time-picker', { 'sheet-on-mobile': true, label: t('time_opt'), value: x.time || '', size: 'sm', step: 15, clearable: true }));
   const len = select(t('length'), [30, 60, 90, 120, 180].map((m) => [String(m), m < 60 ? t('minutes_n', { n: m }) : t('hours_n', { n: m / 60 })]), '60');
   const list = h('div.picks');
   const paint = () => put(list, picks.length ? picks.map((p, i) => h('sav-tag', { size: 'sm', removable: true, 'onsav-remove': () => { picks.splice(i, 1); paint(); } }, p.time ? `${dayLabel(p.day)} · ${p.time}` : dayLabel(p.day))) : h('small.muted', t('pick_some')));

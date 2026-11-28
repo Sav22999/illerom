@@ -886,10 +886,10 @@ export async function boardScreen(root, id) {
     props.hidden = !kids.length;
   }
   function textControls(o, apply) {
-    const font = h('sav-select', { size: 'sm', value: o.ff, 'aria-label': t('font'), class: 'fsel' }, Object.keys(FONTS).map((k) => h('option', { value: k, style: `font-family:${FONTS[k]}` }, t('f_' + k))));
+    const font = h('sav-select', { 'sheet-on-mobile': true, size: 'sm', value: o.ff, 'aria-label': t('font'), class: 'fsel' }, Object.keys(FONTS).map((k) => h('option', { value: k, style: `font-family:${FONTS[k]}` }, t('f_' + k))));
     font.addEventListener('change', () => apply({ ff: font.value }));
     const near = FS.reduce((a, b) => (Math.abs(b - o.fs) < Math.abs(a - o.fs) ? b : a), FS[0]);
-    const fsz = h('sav-select', { size: 'sm', value: String(near), 'aria-label': t('font_size'), class: 'fssel' }, FS.map((s) => h('option', { value: String(s) }, String(s))));
+    const fsz = h('sav-select', { 'sheet-on-mobile': true, size: 'sm', value: String(near), 'aria-label': t('font_size'), class: 'fssel' }, FS.map((s) => h('option', { value: String(s) }, String(s))));
     fsz.addEventListener('change', () => apply({ fs: +fsz.value }));
     const bold = act('bold', t('bold'), (b) => { o.b = !o.b; b.on(o.b); apply({ b: o.b }); }, { kbd: 'Mod+B' });
     requestAnimationFrame(() => bold.on(!!o.b));
@@ -971,7 +971,7 @@ export async function boardScreen(root, id) {
   const shareB = iconBtn('user-plus', t('share'), () => shareDialog());
   function shareDialog() {
     if (role !== 'owner') return;
-    const email = h('sav-input', { type: 'email', label: t('share_email'), placeholder: 'nome@esempio.it', size: 'sm' }), roleSel = h('sav-select', { label: t('share_role'), value: 'editor', size: 'sm' }, h('option', { value: 'editor' }, t('role_editor')), h('option', { value: 'viewer' }, t('role_viewer')));
+    const email = h('sav-input', { type: 'email', label: t('share_email'), placeholder: 'nome@esempio.it', size: 'sm' }), roleSel = h('sav-select', { 'sheet-on-mobile': true, label: t('share_role'), value: 'editor', size: 'sm' }, h('option', { value: 'editor' }, t('role_editor')), h('option', { value: 'viewer' }, t('role_viewer')));
     email.addEventListener('keydown', (e) => e.stopPropagation());
     const list = h('div.people');
     const draw = () => put(list, people.map((p) => h('div.prow', face(p.name, null, 30), h('div.grow', h('b', p.name), h('small.muted', p.email)), p.role === 'owner' ? h('small.muted', t('role_owner'))

@@ -40,7 +40,7 @@ export function newNotebook(paperPick) {
   s.cover = COVERS[Math.floor(Math.random() * COVERS.length)];
   const name = h('sav-input', { label: t('title_l'), placeholder: t('untitled'), maxlength: 160, autofocus: true });
   const covers = h('sav-radio-group.sws', { appearance: 'buttons', size: 'sm', value: s.cover, 'aria-label': t('cover') }, COVERS.map((c) => h('sav-radio', { value: c, title: c, 'aria-label': c }, h('span.sw', { style: `--c:${c}` }))));
-  const size = h('sav-select', { label: t('page_size'), value: s.size, size: 'sm' }, Object.keys(SIZES).map((k) => h('option', { value: k }, t('size_' + k))));
+  const size = h('sav-select', { 'sheet-on-mobile': true, label: t('page_size'), value: s.size, size: 'sm' }, Object.keys(SIZES).map((k) => h('option', { value: k }, t('size_' + k))));
   const orient = h('sav-radio-group', { appearance: 'buttons', size: 'sm', value: s.orient, label: t('orient') }, h('sav-radio', { value: 'p' }, t('portrait')), h('sav-radio', { value: 'l' }, t('landscape')));
   let pick = TEMPLATES.find(([, , x]) => x.pat === s.paper.pat && x.bg === s.paper.bg)?.[0] || TEMPLATES[0][0];
   const papers = h('div.ppick', TEMPLATES.map(([k, , x]) => { const b = tile(t('t_' + k), () => { pick = k; papers.querySelectorAll('.tile').forEach((y) => y.classList.toggle('on', y === b)); }, { class: 'tpl' + (k === pick ? ' on' : '') }, paper(x), h('span.tname', t('t_' + k))); return b; }));

@@ -3,7 +3,7 @@ import {ago, api, btn, copyText, dialog, get, go, h, icon, iconBtn, ok, oops, st
 import {t} from './i18n.js';
 
 const ROLES = ['viewer', 'commenter', 'editor'];
-const roleSelect = (value, onchange, attrs) => h('sav-select', {
+const roleSelect = (value, onchange, attrs) => h('sav-select', { 'sheet-on-mobile': true,
     value,
     size: 'sm',
     class: 'rolesel',
@@ -36,12 +36,12 @@ export async function shareDialog(uid, title, ed = null) {
             owner && !m.owner && iconBtn('x', t('remove'), () => run('share.remove', pend ? {email: m.email} : {user: m.id}), {size: 'sm'}));
         // who else: one choice (nobody, or anyone with the link with a permission)
         const general = s.access === 'link' ? 'link-' + s.linkRole : 'private';
-        const access = h('sav-select', {value: general, class: 'grow', disabled: !owner, 'aria-label': t('general_access'), onchange: (e) => { const [a, r] = e.target.value.split('-'); run('share.access', {access: a, role: r || s.linkRole}, t('saved')); }},
+        const access = h('sav-select', { 'sheet-on-mobile': true, value: general, class: 'grow', disabled: !owner, 'aria-label': t('general_access'), onchange: (e) => { const [a, r] = e.target.value.split('-'); run('share.access', {access: a, role: r || s.linkRole}, t('saved')); }},
             h('option', {value: 'private'}, t('access_only_people')), ...ROLES.map((r) => h('option', {value: 'link-' + r}, t('access_link_' + r))));
         // what who only looks can do: settings of the presentation, changed from the editor
         const viewers = ed?.deck.canEdit && h('div.vsw', ...[['comments', 'opt_comments'], ['download', 'opt_download'], ['copy', 'opt_copy']].map(([k, l]) => h('sav-switch', {checked: ed.deck.meta.opts[k] !== false, onchange: (e) => ed.deck.do({k: 'deck.set', p: {opts: {[k]: e.target.checked}}})}, t(l))));
         // links that work once: as many as needed, each with a name, a permission and a duration
-        const lrole = roleSelect('viewer', null, {size: 'md'}), hours = h('sav-select', {size: 'md', value: '168', class: 'rolesel', 'aria-label': t('link_valid')}, ...[[1, 'h1'], [24, 'h24'], [168, 'd7'], [720, 'd30']].map(([v, k]) => h('option', {value: v}, t('exp_' + k))));
+        const lrole = roleSelect('viewer', null, {size: 'md'}), hours = h('sav-select', { 'sheet-on-mobile': true, size: 'md', value: '168', class: 'rolesel', 'aria-label': t('link_valid')}, ...[[1, 'h1'], [24, 'h24'], [168, 'd7'], [720, 'd30']].map(([v, k]) => h('option', {value: v}, t('exp_' + k))));
         const label = h('sav-input', {placeholder: t('link_label'), maxlength: 60, class: 'grow', 'aria-label': t('link_label')});
         const make = async () => { try { const r = await api('share.link', {d: uid, role: lrole.value, hours: +hours.value, label: label.value}); fresh = r.url; await load(); copyText(r.url); } catch (e) { oops(e); } };
         const linkRow = (l) => {
@@ -92,7 +92,7 @@ export function joinScreen(app, token) {
 }
 
 export function reportDialog(uid) {
-    const reason = h('sav-select', {
+    const reason = h('sav-select', { 'sheet-on-mobile': true,
         label: t('report_reason'),
         value: 'spam'
     }, ...['spam', 'phishing', 'abuse', 'illegal', 'copyright', 'other'].map((r) => h('option', {value: r}, t('reason_' + r))));

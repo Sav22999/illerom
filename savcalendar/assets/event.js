@@ -202,10 +202,10 @@ export function editEvent(o, init, ctx) {
 
   const title = h('sav-input.etitle', { label: t('title_l'), value: o ? e.title : init?.title || '', maxlength: 255, autofocus: !o, placeholder: t('title_ph') });
   const allSw = h('sav-switch', { checked: allDay || null, size: 'sm' }, t('all_day'));
-  const d1 = h('sav-date-picker', { label: t('start'), value: allDay ? sKey : `${ps.y}-${pad(ps.m)}-${pad(ps.d)}`, size: 'sm' });
-  const t1 = h('sav-time-picker', { label: t('time'), value: `${pad(ps.h)}:${pad(ps.mi)}`, step: 5, size: 'sm' });
-  const d2 = h('sav-date-picker', { label: t('end'), value: allDay ? eKey : `${pe.y}-${pad(pe.m)}-${pad(pe.d)}`, size: 'sm' });
-  const t2 = h('sav-time-picker', { label: t('time'), value: `${pad(pe.h)}:${pad(pe.mi)}`, step: 5, size: 'sm' });
+  const d1 = h('sav-date-picker', { 'sheet-on-mobile': true, label: t('start'), value: allDay ? sKey : `${ps.y}-${pad(ps.m)}-${pad(ps.d)}`, size: 'sm' });
+  const t1 = h('sav-time-picker', { 'sheet-on-mobile': true, label: t('time'), value: `${pad(ps.h)}:${pad(ps.mi)}`, step: 5, size: 'sm' });
+  const d2 = h('sav-date-picker', { 'sheet-on-mobile': true, label: t('end'), value: allDay ? eKey : `${pe.y}-${pad(pe.m)}-${pad(pe.d)}`, size: 'sm' });
+  const t2 = h('sav-time-picker', { 'sheet-on-mobile': true, label: t('time'), value: `${pad(pe.h)}:${pad(pe.mi)}`, step: 5, size: 'sm' });
   const zone = select(t('timezone'), ZONES.map((z) => [z, z.replace(/_/g, ' ')]), tz, (v) => { tz = v; }, { searchable: true });
   const times = () => { t1.hidden = t2.hidden = zoneBox.hidden = allSw.checked; };
   allSw.addEventListener('change', times);
@@ -250,7 +250,7 @@ export function editEvent(o, init, ctx) {
     const wds = custom.freq === 'WEEKLY' ? h('div.wdpick', Array.from({ length: 7 }, (_, i) => { const on = custom.byday.some((b) => b.wd === i); return h('button.wd' + (on ? '.on' : ''), { type: 'button', 'aria-pressed': String(on), title: new Intl.DateTimeFormat(getLang(), { weekday: 'long', timeZone: 'UTC' }).format(new Date(Date.UTC(2024, 0, 1 + i))), onclick: () => { custom.byday = on ? custom.byday.filter((b) => b.wd !== i) : [...custom.byday, { n: 0, wd: i }]; if (!custom.byday.length) custom.byday = [{ n: 0, wd: wdOf() }]; drawCustom(); } }, new Intl.DateTimeFormat(getLang(), { weekday: 'narrow', timeZone: 'UTC' }).format(new Date(Date.UTC(2024, 0, 1 + i)))); })) : null;
     const endKind = custom.count ? 'count' : custom.until ? 'until' : 'never';
     const ends = select(t('ends'), [['never', t('ends_never')], ['until', t('ends_until')], ['count', t('ends_count')]], endKind, (v) => { if (v === 'never') { delete custom.count; delete custom.until; } if (v === 'count') { delete custom.until; custom.count = custom.count || 10; } if (v === 'until') { delete custom.count; custom.until = (addDays(d1.value || sKey, 90)).replace(/-/g, ''); } drawCustom(); });
-    const untilPick = endKind === 'until' ? h('sav-date-picker', { label: t('ends_until'), value: `${custom.until.slice(0, 4)}-${custom.until.slice(4, 6)}-${custom.until.slice(6, 8)}`, size: 'sm' }) : null;
+    const untilPick = endKind === 'until' ? h('sav-date-picker', { 'sheet-on-mobile': true, label: t('ends_until'), value: `${custom.until.slice(0, 4)}-${custom.until.slice(4, 6)}-${custom.until.slice(6, 8)}`, size: 'sm' }) : null;
     untilPick?.addEventListener('change', () => { if (untilPick.value) custom.until = untilPick.value.replace(/-/g, ''); });
     const countIn = endKind === 'count' ? h('sav-number-input', { label: t('times'), value: custom.count, min: 1, max: 999, size: 'sm' }) : null;
     countIn?.addEventListener('change', () => { custom.count = Math.max(1, parseInt(countIn.value, 10) || 1); });

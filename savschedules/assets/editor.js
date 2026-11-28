@@ -201,9 +201,9 @@ export async function editor(root, pid, start) {
   }
   function optionDialog(o) {
     const p = place(o, tz());
-    const date = h('sav-date-picker', { label: t('date'), value: p.key, size: 'sm' });
+    const date = h('sav-date-picker', { 'sheet-on-mobile': true, label: t('date'), value: p.key, size: 'sm' });
     const allDay = h('sav-switch', { checked: p.allDay || null, size: 'sm' }, t('all_day'));
-    const from = h('sav-time-picker', { label: t('from'), value: p.allDay ? '09:00' : hm(p.start), step: 5, size: 'sm' }), to = h('sav-time-picker', { label: t('to'), value: p.allDay ? '10:00' : hm(p.end % 1440), step: 5, size: 'sm' });
+    const from = h('sav-time-picker', { 'sheet-on-mobile': true, label: t('from'), value: p.allDay ? '09:00' : hm(p.start), step: 5, size: 'sm' }), to = h('sav-time-picker', { 'sheet-on-mobile': true, label: t('to'), value: p.allDay ? '10:00' : hm(p.end % 1440), step: 5, size: 'sm' });
     const times = h('div.grid2', from, to);
     times.hidden = p.allDay;
     allDay.addEventListener('change', () => { times.hidden = allDay.checked; });
@@ -228,9 +228,9 @@ export async function editor(root, pid, start) {
   /** A series: every few minutes between two times, on some days of the week, for a range of dates. */
   function seriesDialog() {
     const k0 = view === 'month' ? anchor : firstDay();
-    const from = h('sav-date-picker', { label: t('from_day'), value: k0, size: 'sm' }), to = h('sav-date-picker', { label: t('to_day'), value: addDays(k0, slots ? 4 : 6), size: 'sm' });
+    const from = h('sav-date-picker', { 'sheet-on-mobile': true, label: t('from_day'), value: k0, size: 'sm' }), to = h('sav-date-picker', { 'sheet-on-mobile': true, label: t('to_day'), value: addDays(k0, slots ? 4 : 6), size: 'sm' });
     const wds = h('sav-chip-group', { label: t('weekdays'), multiple: true }, Array.from({ length: 7 }, (_, i) => h('sav-chip', { value: String(i), selected: i < 5 || null }, dayLabel(addDays('2024-01-01', i), { weekday: 'short' }))));
-    const a = h('sav-time-picker', { label: t('from'), value: '09:00', step: 5, size: 'sm' }), b = h('sav-time-picker', { label: t('to'), value: slots ? '12:00' : '10:00', step: 5, size: 'sm' });
+    const a = h('sav-time-picker', { 'sheet-on-mobile': true, label: t('from'), value: '09:00', step: 5, size: 'sm' }), b = h('sav-time-picker', { 'sheet-on-mobile': true, label: t('to'), value: slots ? '12:00' : '10:00', step: 5, size: 'sm' });
     const len = select(t('length'), LENGTHS.map((m) => [String(m), m < 60 ? `${m} min` : m % 60 ? `${Math.floor(m / 60)} h ${m % 60}` : `${m / 60} h`]), String(set.duration), null, { size: 'sm' });
     const gap = select(t('gap'), [0, 5, 10, 15, 30, 60].map((m) => [String(m), m ? `${m} min` : t('no_gap')]), '0', null, { size: 'sm' });
     const cap = slots ? h('sav-number-input', { label: t('places'), value: set.cap, min: 1, max: 500, size: 'sm' }) : null;
@@ -312,8 +312,8 @@ export async function editor(root, pid, start) {
     // deadline: a day and a time in the zone of the schedule
     const dl = set.deadline ? parts(Date.parse(set.deadline), tz()) : null;
     const dlOn = h('sav-switch', { checked: !!dl || null }, t('deadline'));
-    const dlDay = h('sav-date-picker', { label: t('date'), value: dl ? `${dl.y}-${String(dl.m).padStart(2, '0')}-${String(dl.d).padStart(2, '0')}` : addDays(todayKey(tz()), 7), size: 'sm' });
-    const dlTime = h('sav-time-picker', { label: t('time'), value: dl ? hm(dl.h * 60 + dl.mi) : '23:59', step: 5, size: 'sm' });
+    const dlDay = h('sav-date-picker', { 'sheet-on-mobile': true, label: t('date'), value: dl ? `${dl.y}-${String(dl.m).padStart(2, '0')}-${String(dl.d).padStart(2, '0')}` : addDays(todayKey(tz()), 7), size: 'sm' });
+    const dlTime = h('sav-time-picker', { 'sheet-on-mobile': true, label: t('time'), value: dl ? hm(dl.h * 60 + dl.mi) : '23:59', step: 5, size: 'sm' });
     const dlRow = h('div.grid2', dlDay, dlTime);
     dlRow.hidden = !dl;
     const setDl = () => { dlRow.hidden = !dlOn.checked; if (!dlOn.checked) set.deadline = null; else { const [y, m, d] = keyParts(dlDay.value || todayKey(tz())), [hh, mm] = (dlTime.value || '23:59').split(':').map(Number); set.deadline = isoZ(zoned(y, m, d, hh, mm, tz())); } changed(); };
