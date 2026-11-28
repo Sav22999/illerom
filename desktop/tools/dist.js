@@ -27,7 +27,7 @@ const signing = devId
   ? ['--config.mac.hardenedRuntime=true', `--config.mac.notarize=${notarize}`]
   : ['--config.mac.identity=null', '--config.mac.hardenedRuntime=false', '--config.mac.notarize=false'];
 console.log(devId ? `\n  Signing with ${devId}${notarize ? ', notarized by Apple' : ' (NOT notarized: set the APPLE_… variables, README)'}\n` : '\n  No Developer ID in the keychain: signed ad hoc (macOS will warn on other Macs, README)\n');
-run(bin('electron-builder'), ['--mac', 'dmg', 'zip', '--arm64', '--x64', `--config.directories.output=${out}`, ...signing]); // Apple silicon and Intel; the ZIPs are for the updates (updater.js)
+run(bin('electron-builder'), ['--config', 'electron-builder.config.js', '--mac', 'dmg', 'zip', '--arm64', '--x64', `--config.directories.output=${out}`, ...signing]); // Apple silicon and Intel; the ZIPs are for the updates (updater.js)
 fs.mkdirSync(path.join(here, 'dist'), { recursive: true });
 for (const f of fs.readdirSync(out).filter((f) => /^SavOffice-(arm64|x64)\.(dmg|zip)$/.test(f))) {
   fs.copyFileSync(path.join(out, f), path.join(here, 'dist', f));

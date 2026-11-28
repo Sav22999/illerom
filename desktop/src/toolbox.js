@@ -18,11 +18,14 @@ const { app, BrowserWindow, Menu, ipcMain, protocol, session, shell, net, native
 const { Store, ORIGIN, SLUGS, catalog, keyOf } = require('./store');
 const { serve, cut } = require('./serve');
 const settings = require('./settings');
-const shortcuts = require('./shortcuts');
+const MAC = process.platform === 'darwin';
+// the little apps that open an app as a window of SavOffice: only on macOS (on Windows and Linux the apps of their own are
+// shortcuts already, bundles-other.js)
+const shortcuts = MAC ? require('./shortcuts') : { create() {}, remove() {}, sync() {}, dir: () => bundles.dir() };
 const bundles = require('./bundles');
 const sync = require('./session-sync');
 const updater = require('./updater');
-const { lang, t, makeWindows, prepareSession } = require('./common');
+const { lang, t, iconFor, makeWindows, prepareSession } = require('./common');
 
 app.setName('SavOffice');
 const store = new Store();
@@ -58,7 +61,7 @@ updater.beforeInstall = async () => {
 updater.on('change', () => store.changed());
 
 /** The files an installed app opens: the file_handlers of its manifest (bundles.js writes them into its Info.plist). */
-bundles.setTypesProvider(async (slug) => {
+async function typesOf(slug) {
   const b = store.installed(slug);
   const f = b && (await b.read(keyOf(`${ORIGIN}/${slug}/manifest.webmanifest`)));
   if (!f) return [];
@@ -72,7 +75,8 @@ bundles.setTypesProvider(async (slug) => {
     }
   } catch { return []; }
   return [...seen.values()].sort((a, b) => a.ext.localeCompare(b.ext));
-});
+}
+bundles.setTypesProvider(typesOf);
 // a new version may open other files: its app of its own is made again (only when it is not running)
 store.on('updated', (slug) => { if (separate() && !bundles.running(slug)) bundles.ensure(slug).catch(() => {}); });
 
@@ -219,7 +223,8 @@ function showLauncher(view) {
   }
   launcher = new BrowserWindow({
     width: 1120, height: 760, minWidth: 420, minHeight: 520, show: false, title: 'SavOffice',
-    titleBarStyle: 'hiddenInset', trafficLightPosition: { x: 18, y: 20 },
+    // macOS: the traffic lights over the header of the page; Windows and Linux: their own frame, the menu hidden (Alt)
+    ...(MAC ? { titleBarStyle: 'hiddenInset', trafficLightPosition: { x: 18, y: 20 } } : { autoHideMenuBar: true, icon: iconFor('savoffice') }),
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#14171c' : '#f6f4f9',
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, sandbox: true },
   });
@@ -318,7 +323,7 @@ ipcMain.handle('settings', async (e, patch) => {
   store.changed();
   return true;
 });
-ipcMain.handle('reveal', () => shell.openPath(shortcuts.dir()));
+ipcMain.handle('reveal', () => shell.openPath(separate() ? bundles.dir() : shortcuts.dir()));
 ipcMain.handle('signin', (e, mode) => openSignin(mode));
 ipcMain.handle('signin-browser', () => signinBrowser());
 ipcMain.handle('signin-browser-cancel', () => { handoff = null; store.changed(); });
@@ -346,6 +351,30 @@ function buildMenu() {
 
 /* ------------------------------------------------------------------ savoffice:// (the icons of the apps as windows) */
 
+/*
+ * Windows and Linux: what macOS gives through events comes as arguments of SavOffice — the files registered by the
+ * installer (a double click, "Open with") and the savoffice:// addresses (the browser after SavAccount). A file goes to
+ * the installed app that opens it (its own format first): to its app of its own.
+ */
+async function openArguments(argv) {
+  const url = argv.find((a) => a.startsWith('savoffice://'));
+  if (url) { openAddress(url); return true; }
+  if (MAC) return false;
+  const files = argv.slice(app.isPackaged ? 1 : 2).filter((a) => !a.startsWith('-') && path.isAbsolute(a) && fs.existsSync(a) && fs.statSync(a).isFile());
+  if (!files.length) return false;
+  for (const file of files) {
+    const ext = path.extname(file).slice(1).toLowerCase();
+    let to = null;
+    for (const slug of installedSlugs()) {
+      const types = await typesOf(slug);
+      if (types.some((x) => x.ext === ext)) { to = slug; if (bundles.ownExt(slug) === ext) break; }
+    }
+    if (!to) { showLauncher(); continue; }
+    if (separate()) await bundles.openFiles(to, [file]); else open(to);
+  }
+  return true;
+}
+
 function openAddress(url) {
   if (!ready) { pending.push(url); return; }
   let u;
@@ -363,7 +392,7 @@ function openAddress(url) {
 
 if (!app.requestSingleInstanceLock()) app.quit();
 else {
-  app.on('second-instance', (e, argv) => { const url = argv.find((a) => a.startsWith('savoffice://')); if (url) openAddress(url); else showLauncher(); });
+  app.on('second-instance', async (e, argv) => { if (!(await openArguments(argv))) showLauncher(); });
   app.on('open-url', (e, url) => { e.preventDefault(); openAddress(url); });
   if (!app.isDefaultProtocolClient('savoffice')) app.setAsDefaultProtocolClient('savoffice');
 
@@ -378,7 +407,8 @@ else {
     for (const slug of SLUGS) { const st = store.apps.get(slug); if (st.staged && !store.isOpen(slug) && (settings.get('autoUpdate') || st.applyOnClose)) await store.activate(slug).catch(() => {}); }
     buildMenu();
     ready = true;
-    if (pending.length) pending.splice(0).forEach(openAddress); else showLauncher();
+    if (pending.length) pending.splice(0).forEach(openAddress);
+    else if (!(await openArguments(process.argv))) showLauncher();
 
     sync.start();
     // who is signed in, again only when the session really changes: the answers of the apps set the same cookie again on

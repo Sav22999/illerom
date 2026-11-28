@@ -18,7 +18,8 @@ sav-menu-item:focus-visible { outline: none; }
 
 /* header: the window has no title bar, the traffic lights sit over its left side; it drags the window */
 .home { min-height: 100dvh; display: flex; flex-direction: column; }
-.htop { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 1rem; min-height: 60px; padding: .7rem 1.4rem .7rem 92px; background: color-mix(in oklab, var(--sav-color-bg) 86%, transparent); -webkit-backdrop-filter: blur(18px) saturate(160%); backdrop-filter: blur(18px) saturate(160%); -webkit-app-region: drag; }
+.htop { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 1rem; min-height: 60px; padding: .7rem 1.4rem; background: color-mix(in oklab, var(--sav-color-bg) 86%, transparent); -webkit-backdrop-filter: blur(18px) saturate(160%); backdrop-filter: blur(18px) saturate(160%); -webkit-app-region: drag; }
+.os-darwin .htop { padding-left: 92px; } /* the traffic lights of macOS sit over the left of the header */
 .htop > * { -webkit-app-region: no-drag; } .htop > .spacer, .htop > .brand { -webkit-app-region: drag; }
 .brand { display: inline-flex; align-items: center; gap: .6rem; font-size: 1.12rem; letter-spacing: -.015em; flex: none; } .brand b { font-weight: 700; } .brand img { width: 26px; height: 26px; }
 .hsearch { flex: 0 1 30rem; min-width: 0; }

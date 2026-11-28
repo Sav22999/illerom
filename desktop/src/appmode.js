@@ -1,6 +1,6 @@
 /*
- * SavOffice for Mac — one app of the suite as an app of its own (SavDocuments.app…, made by bundles.js): its windows, its
- * menu, its icon in the Dock. The Toolbox installs and updates it; here it only reads what the Toolbox installed:
+ * SavOffice — one app of the suite as an app of its own (SavDocuments.app on macOS, a shortcut or a .desktop file on Windows
+ * and Linux, made by bundles.js): its windows, its menu, its icon in the Dock or the taskbar. The Toolbox installs and updates it; here it only reads what the Toolbox installed:
  *   - its files from HOME/apps/<slug> (serve.js), read again when the Toolbox switches version (it does so only when the
  *     app is closed, or when asked to "update and reload": then the windows reload);
  *   - the session of the suite from session-sync.js (signed in anywhere, signed in here);
@@ -20,7 +20,11 @@ const { t, nameOf, makeWindows, prepareSession } = require('./common');
 
 const slug = env.APP;
 const NAME = nameOf(slug);
-app.setName(NAME);
+app.setName(NAME); // also the class of its windows on Linux (StartupWMClass of its .desktop file)
+// its own place in the taskbar (Windows: the AppUserModelID of its shortcut) or in the dock (Linux: its .desktop file)
+if (process.platform === 'win32') app.setAppUserModelId(bundles.BID + slug);
+if (process.platform === 'linux') app.setDesktopName(`${bundles.PREFIX}${slug}.desktop`);
+const QUIT = process.argv.includes('--savoffice-quit'); // a message for a running app: nothing to open here
 
 const store = new Store();
 store.isOpen = () => true; // the Toolbox decides; here nothing switches by itself
@@ -89,11 +93,20 @@ async function openFiles() {
   };
   if (win.webContents.isLoading()) win.webContents.once('did-finish-load', send); else send();
 }
-app.on('open-file', (e, file) => { e.preventDefault(); toOpen.push(file); openFiles(); });
+app.on('open-file', (e, file) => { e.preventDefault(); toOpen.push(file); openFiles(); }); // macOS
+/** Windows and Linux give the files as arguments: after "--" (bundles-other.js), or any argument that is a file. */
+function filesOf(argv) {
+  const i = argv.indexOf('--');
+  const list = i >= 0 ? argv.slice(i + 1) : argv.slice(app.isPackaged ? 1 : 2).filter((a) => !a.startsWith('-'));
+  return list.filter((f) => { try { return path.isAbsolute(f) && fs.statSync(f).isFile(); } catch { return false; } });
+}
 
-if (!app.requestSingleInstanceLock()) app.quit(); // one process per app (its profile)
+if (!app.requestSingleInstanceLock() || QUIT) app.quit(); // one process per app (its profile); asked to quit and not running: done
 else {
   app.on('second-instance', (e, argv) => {
+    if (argv.includes('--savoffice-quit')) { app.quit(); return; } // the Toolbox asks (to remove or update it)
+    const files = process.platform === 'darwin' ? [] : filesOf(argv);
+    if (files.length) { toOpen.push(...files); openFiles(); return; }
     const url = urlOf(argv);
     if (url) show(url);
     else { const w = BrowserWindow.getAllWindows()[0]; if (w) { if (w.isMinimized()) w.restore(); w.focus(); } else show(); }
@@ -117,6 +130,7 @@ else {
     await Promise.race([sync.start({ onSignedOut: () => { for (const w of BrowserWindow.getAllWindows()) w.webContents.reload(); } }), new Promise((r) => setTimeout(r, 1500))]);
     // a file opened at the start: the window opens anyway, then gets it
     show(urlOf(process.argv));
+    if (process.platform !== 'darwin') toOpen.push(...filesOf(process.argv));
     appReady = true;
     openFiles();
     // the Toolbox switched version (asked to "update and reload"), or installed / removed an app: read it again

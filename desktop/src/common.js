@@ -8,6 +8,9 @@ const { app, BrowserWindow, Menu, shell, nativeTheme, screen, clipboard } = requ
 const { ORIGIN, SLUGS, catalog, slugOf } = require('./store');
 const settings = require('./settings');
 
+/** Windows and Linux show the icon of the window (the taskbar, the dock): the one of the app; macOS takes the app's own. */
+const iconFor = (slug) => (process.platform === 'darwin' ? undefined
+  : path.join(app.isPackaged ? path.join(process.resourcesPath, 'apps') : path.join(__dirname, '..', 'build', 'apps'), `${slug}.png`));
 const lang = () => { const l = settings.get('lang'); return l === 'it' || l === 'en' ? l : ((app.getPreferredSystemLanguages?.()[0] || app.getLocale() || '').toLowerCase().startsWith('it') ? 'it' : 'en'); };
 const W = {
   it: { settings: 'Impostazioni…', show: 'Mostra SavOffice', apps: 'App', none: 'Nessuna app installata', view: 'Vista', file: 'File', edit: 'Modifica', window: 'Finestra', help: 'Aiuto',
@@ -90,7 +93,7 @@ function makeWindows({ store, openOther }) {
     const same = windowsOf(slug)[0];
     if (same && !address) { if (same.isMinimized()) same.restore(); same.show(); same.focus(); return same; }
     const win = new BrowserWindow({
-      ...boundsFor(slug), minWidth: 380, minHeight: 480, show: false, title: nameOf(slug),
+      ...boundsFor(slug), minWidth: 380, minHeight: 480, show: false, title: nameOf(slug), icon: iconFor(slug), autoHideMenuBar: process.platform !== 'darwin',
       backgroundColor: nativeTheme.shouldUseDarkColors ? '#14171c' : '#ffffff',
       webPreferences: { preload: path.join(__dirname, 'app-preload.js'), contextIsolation: true, sandbox: true, spellcheck: true },
     });
@@ -177,4 +180,4 @@ function prepareSession(session) {
   session.defaultSession.setPermissionRequestHandler((wc, permission, done) => done(['notifications', 'clipboard-read', 'clipboard-sanitized-write', 'fullscreen', 'media', 'fileSystem', 'persistent-storage', 'window-management'].includes(permission)));
 }
 
-module.exports = { lang, t, nameOf, isGoogle, isSavAccount, makeWindows, prepareSession };
+module.exports = { lang, t, nameOf, iconFor, isGoogle, isSavAccount, makeWindows, prepareSession };

@@ -115,7 +115,7 @@ async function ensure(slug, force = false) {
       await set('CFBundleIdentifier', BID + slug);
       await set('SavOfficeApp', slug);
       await set('SavOfficeToolbox', stamp());
-      if (env.testing) { await set('SavOfficeHome', env.HOME); await set('SavOfficeOrigin', env.ORIGIN); }
+      if (env.testing) { await set('SavOfficeHome', env.HOME); await set('SavOfficeOrigin', env.ORIGIN); if (env.ci) await set('SavOfficeCI', '1'); }
       if (fs.existsSync(icnsOf(slug))) { await fsp.copyFile(icnsOf(slug), path.join(tmp, 'Contents', 'Resources', 'app-icon.icns')); await set('CFBundleIconFile', 'app-icon.icns'); }
       for (const k of ['CFBundleURLTypes', 'CFBundleIconName']) await run('/usr/bin/plutil', ['-remove', k, plist]).catch(() => {}); // savoffice:// stays with the Toolbox
       // the files it opens ("Open With"), from the manifest of the app

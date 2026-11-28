@@ -1,5 +1,6 @@
 /*
- * SavOffice for Mac — the updates of SavOffice itself (the apps update through store.js).
+ * SavOffice — the updates of SavOffice itself (the apps update through store.js). macOS: the ZIP, the app swapped when it
+ * quits. Windows: the installer, run silently when it quits. Linux: the .deb or .rpm, offered (its manager installs it).
  *
  * The usual updater of Electron (Squirrel.Mac) accepts only apps signed with an Apple Developer ID; SavOffice is signed ad
  * hoc, so it updates itself here:
@@ -21,12 +22,16 @@ const path = require('path');
 const crypto = require('crypto');
 const { spawn, execFile } = require('child_process');
 const { EventEmitter } = require('events');
-const { app, session } = require('electron');
+const { app, session, shell } = require('electron');
 const env = require('./env');
 
 const MANIFEST = process.env.SAVOFFICE_UPDATE_URL || 'https://github.com/Sav22999/illerom/releases/latest/download/latest-mac.json';
 const ID = 'eu.illerom.savoffice';
 const ARCH = process.arch === 'arm64' ? 'arm64' : 'x64';
+const IS_WIN = process.platform === 'win32', IS_LINUX = process.platform === 'linux';
+// the file of this computer in latest-mac.json: macOS "arm64"/"x64" (the ZIP, the first names, read by every SavOffice
+// already installed), Windows "win-x64" (the installer), Linux "deb-x64"/"rpm-x64" (the package of its family)
+const KEY = IS_WIN ? `win-${ARCH}` : IS_LINUX ? `${fs.existsSync('/etc/debian_version') ? 'deb' : 'rpm'}-${ARCH}` : ARCH;
 const DIR = path.join(env.HOME, 'updates');
 let PUBLIC = null;
 try { PUBLIC = crypto.createPublicKey(fs.readFileSync(path.join(__dirname, 'update-key.pem'), 'utf8')); } catch { /* a build without the key: no updates */ }
@@ -50,7 +55,7 @@ class Updater extends EventEmitter {
   }
 
   /** Whether this SavOffice can update itself: packaged, with the key (and a test build pointed at a test list). */
-  get enabled() { return !!PUBLIC && (app.isPackaged || env.testing) && !!bundle(); }
+  get enabled() { return !!PUBLIC && (app.isPackaged || env.testing) && (process.platform !== 'darwin' || !!bundle()); }
 
   set(patch) { Object.assign(this.state, patch); this.emit('change'); }
 
@@ -65,11 +70,13 @@ class Updater extends EventEmitter {
       const m = await r.json();
       const { signature, ...signed } = m;
       if (!signature || !crypto.verify(null, Buffer.from(canonical(signed)), PUBLIC, Buffer.from(String(signature), 'base64'))) throw new Error('signature');
-      if (signed.app !== 'SavOffice' || !/^\d+\.\d+\.\d+$/.test(String(signed.version)) || !signed.files?.[ARCH]) throw new Error('list');
+      if (signed.app !== 'SavOffice' || !/^\d+\.\d+\.\d+$/.test(String(signed.version))) throw new Error('list');
+      if (!signed.files?.[KEY]) { this.set({ status: 'current' }); return this.state; } // nothing for this computer in this version
       if (!newer(signed.version, app.getVersion())) { this.set({ status: 'current', version: null, notes: null }); return this.state; }
       this.manifest = signed;
-      this.set({ status: 'available', version: signed.version, notes: signed.notes || null });
-      if (this.autoUpdate()) this.download().catch(() => {});
+      this.set({ status: 'available', version: signed.version, notes: signed.notes || null, manual: IS_LINUX });
+      // Linux: the package is installed by its manager (with the password): offered, never downloaded by itself
+      if (this.autoUpdate() && !IS_LINUX) this.download().catch(() => {});
     } catch (e) {
       this.set({ status: 'error', error: e.message });
     }
@@ -79,12 +86,13 @@ class Updater extends EventEmitter {
   async download() {
     const m = this.manifest;
     if (!m || this.state.status === 'downloading' || this.state.status === 'ready') return;
-    const f = m.files[ARCH];
+    const f = m.files[KEY];
+    if (IS_LINUX) { shell.openExternal(f.url); return; } // the .deb or .rpm, opened by the browser: installed as usual
     this.set({ status: 'downloading', progress: 0, error: null });
     try {
       await fsp.rm(DIR, { recursive: true, force: true });
       await fsp.mkdir(DIR, { recursive: true });
-      const zip = path.join(DIR, `SavOffice-${m.version}-${ARCH}.zip`);
+      const zip = path.join(DIR, IS_WIN ? `SavOffice-Setup-${m.version}-${ARCH}.exe` : `SavOffice-${m.version}-${ARCH}.zip`);
       const r = await session.defaultSession.fetch(f.url, { bypassCustomProtocolHandlers: true, cache: 'no-store' });
       if (!r.ok || !r.body) throw new Error(`download: ${r.status}`);
       const hash = crypto.createHash('sha256');
@@ -102,6 +110,7 @@ class Updater extends EventEmitter {
       }
       await new Promise((res, rej) => out.end((e) => (e ? rej(e) : res())));
       if (got !== f.size || hash.digest('hex') !== f.sha256) throw new Error('checksum');
+      if (IS_WIN) { this.appPath = zip; this.set({ status: 'ready', progress: 1 }); return; } // the installer itself, checked
       // unpacked as macOS does (ditto keeps the links and the signature), then checked
       const dest = path.join(DIR, 'app');
       await run('/usr/bin/ditto', ['-x', '-k', zip, dest]);
@@ -122,6 +131,15 @@ class Updater extends EventEmitter {
   /** Replaces this SavOffice.app with the new one once this process has quit; relaunch: open it again. */
   async install(relaunch = true) {
     if (this.state.status !== 'ready' || !this.appPath || this.installing) return false;
+    if (IS_WIN) {
+      // the installer (per user, no administrator) runs silently once SavOffice has quit; --force-run opens it again
+      this.installing = true;
+      await this.beforeInstall();
+      const ps = `Wait-Process -Id ${process.pid} -ErrorAction SilentlyContinue; Start-Process -FilePath '${this.appPath.replace(/'/g, "''")}' -ArgumentList ${relaunch ? "'/S','--force-run'" : "'/S'"}`;
+      spawn('powershell.exe', ['-NoProfile', '-WindowStyle', 'Hidden', '-Command', ps], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
+      app.exit(0);
+      return true;
+    }
     const target = bundle();
     try {
       fs.accessSync(path.dirname(target), fs.constants.W_OK);

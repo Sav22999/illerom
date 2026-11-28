@@ -112,7 +112,25 @@ const WORDS = {
 };
 let S = null; // the last state from main.js
 const L = () => (S?.lang === 'it' ? 'it' : 'en');
-const t = (k, vars = {}) => (WORDS[L()][k] ?? k).replace(/\{(\w+)\}/g, (m, v) => vars[v] ?? m);
+// the system: macOS, Windows or Linux (preload.js). The words about the Mac become the ones of the computer, and a few say
+// where the apps are on that system
+const OS = api.platform || 'darwin';
+const OS_WORDS = {
+  win32: {
+    it: { separate_t: 'Ognuna con la sua icona nella barra delle applicazioni e nel menu Start › SavOffice.', show_finder: 'Apri la cartella', su_get_manual: 'Scarica il pacchetto' },
+    en: { separate_t: 'Each with its own icon in the taskbar and in Start › SavOffice.', show_finder: 'Open the folder', su_get_manual: 'Download the package' },
+  },
+  linux: {
+    it: { separate_t: 'Ognuna con la sua icona nel dock e tra le applicazioni, e apre i suoi file («Apri con»).', show_finder: 'Apri la cartella', su_get_manual: 'Scarica il pacchetto',
+      su_avail_t: 'Scarica il pacchetto e installalo come al solito: SavOffice e le app restano come sono.' },
+    en: { separate_t: 'Each with its own icon in the dock and among the applications, and it opens its files (“Open With”).', show_finder: 'Open the folder', su_get_manual: 'Download the package',
+      su_avail_t: 'Download the package and install it as usual: SavOffice and the apps stay as they are.' },
+  },
+};
+const forOS = (text) => (OS === 'darwin' ? text : String(text).replace(/questo Mac/g, 'questo computer').replace(/sul Mac/g, 'sul computer').replace(/Sul Mac/g, 'Sul computer')
+  .replace(/this Mac/g, 'this computer').replace(/on the Mac/g, 'on the computer').replace(/On the Mac/g, 'On the computer'));
+const t = (k, vars = {}) => forOS(OS_WORDS[OS]?.[L()]?.[k] ?? WORDS[L()][k] ?? k).replace(/\{(\w+)\}/g, (m, v) => vars[v] ?? m);
+document.documentElement.classList.add('os-' + OS);
 
 /* ------------------------------------------------------------------ helpers (as ../../../savdrive/assets/ui.js) */
 
@@ -256,9 +274,9 @@ function selfNote() {
   const u = S.selfUpdate;
   if (!u?.enabled) return null;
   const notes = u.notes ? (L() === 'it' ? u.notes.it : u.notes.en) || u.notes.it || '' : '';
-  if (u.status === 'available' && !S.settings.autoUpdate) {
-    return h('sav-alert.offnote', { variant: 'primary', icon: 'download' }, h('b', t('su_avail', { v: u.version })), h('p', notes || t('su_avail_t')),
-      h('div.accbtns', btn(t('su_get'), { variant: 'primary', appearance: 'solid', icon: 'download', onclick: () => api.selfDownload() })));
+  if (u.status === 'available' && (u.manual || !S.settings.autoUpdate)) {
+    return h('sav-alert.offnote', { variant: 'primary', icon: 'download' }, h('b', t('su_avail', { v: u.version })), notes ? h('p', notes) : null, h('p', t('su_avail_t')),
+      h('div.accbtns', btn(t(u.manual ? 'su_get_manual' : 'su_get'), { variant: 'primary', appearance: 'solid', icon: 'download', onclick: () => api.selfDownload() })));
   }
   if (u.status === 'downloading') {
     return h('sav-alert.offnote', { variant: 'primary', icon: 'download' }, h('b', t('su_down', { v: u.version })),

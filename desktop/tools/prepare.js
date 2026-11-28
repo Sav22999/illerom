@@ -34,4 +34,19 @@ for (const a of catalog) {
   copy(path.join(root, a.slug, 'icons/icon-192.png'), path.join(src, 'launcher/icons', a.slug + '.png'));
   copy(path.join(root, a.slug, 'icons/favicon.svg'), path.join(src, 'launcher/icons', a.slug + '.svg'));
 }
-console.log(`prepared: SavComponents, ${catalog.length} icons`);
+// the files each app opens (the file_handlers of its manifest): Windows and Linux register them for SavOffice when it is
+// installed (electron-builder.config.js), which then hands each file to its app; on macOS each app declares its own
+const filetypes = {};
+for (const a of catalog) {
+  try {
+    const m = JSON.parse(fs.readFileSync(path.join(root, a.slug, 'manifest.webmanifest'), 'utf8'));
+    const list = new Map();
+    for (const h of m.file_handlers || []) for (const [mime, exts] of Object.entries(h.accept || {})) for (const e of exts) {
+      const ext = String(e).replace(/^\./, '').toLowerCase();
+      if (/^[a-z0-9]{1,10}$/.test(ext) && !list.has(ext)) list.set(ext, mime);
+    }
+    if (list.size) filetypes[a.slug] = [...list].map(([ext, mime]) => ({ ext, mime }));
+  } catch { /* no manifest */ }
+}
+fs.writeFileSync(path.join(src, 'filetypes.json'), JSON.stringify(filetypes, null, 1) + '\n');
+console.log(`prepared: SavComponents, ${catalog.length} icons, the files of ${Object.keys(filetypes).length} apps`);

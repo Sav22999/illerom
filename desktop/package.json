@@ -6,6 +6,7 @@
   "main": "src/main.js",
   "private": true,
   "author": "Saverio Morelli",
+  "homepage": "https://www.illerom.eu/savoffice",
   "license": "SEE LICENSE IN ../LICENSE",
   "scripts": {
     "start": "node tools/prepare.js && electron .",

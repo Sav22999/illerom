@@ -1,5 +1,5 @@
 /*
- * SavOffice for Mac — draws the pictures of the app with Electron itself (no other program needed), into build/:
+ * SavOffice — draws the pictures of the app with Electron itself (no other program needed), into build/:
  *   build/icon.icns            the icon of SavOffice: the three bars of the mark on a tile shaped as macOS wants it
  *   build/apps/<slug>.icns     the icon of each app on the same tile (for the icons in ~/Applications/SavOffice)
  *   build/background.tiff      the window of the DMG: "drag SavOffice to Applications", for normal and Retina screens
@@ -38,6 +38,32 @@ const tile = (mark, tint, size) => `
     box-shadow:0 22px 34px -6px rgb(30 20 50 / .32),0 2px 6px rgb(30 20 50 / .16),inset 0 -6px 0 color-mix(in oklab,${tint} 10%,#e9e5ef),inset 0 0 0 1.5px rgb(255 255 255 / .9)"></div>
   <img src="${dataUrl(mark)}" style="position:absolute;left:${512 - size / 2}px;top:${512 - size / 2}px;width:${size}px;height:${size}px">`;
 
+const MAC = process.platform === 'darwin';
+
+/** A Windows .ico made of PNGs (16 to 256 px), as Windows Vista and later read them. */
+function ico(big, file) {
+  const sizes = [16, 24, 32, 48, 64, 128, 256];
+  const pngs = sizes.map((n) => big.resize({ width: n, height: n, quality: 'best' }).toPNG());
+  const head = Buffer.alloc(6 + 16 * sizes.length);
+  head.writeUInt16LE(0, 0); head.writeUInt16LE(1, 2); head.writeUInt16LE(sizes.length, 4);
+  let offset = head.length;
+  sizes.forEach((n, i) => {
+    const e = 6 + i * 16;
+    head.writeUInt8(n >= 256 ? 0 : n, e); head.writeUInt8(n >= 256 ? 0 : n, e + 1); head.writeUInt8(0, e + 2); head.writeUInt8(0, e + 3);
+    head.writeUInt16LE(1, e + 4); head.writeUInt16LE(32, e + 6); head.writeUInt32LE(pngs[i].length, e + 8); head.writeUInt32LE(offset, e + 12);
+    offset += pngs[i].length;
+  });
+  fs.writeFileSync(file, Buffer.concat([head, ...pngs]));
+}
+
+/** The icon of an app (or of SavOffice) for every system: .icns (macOS, only there: iconutil), .ico (Windows), .png. */
+async function icon(html, base) {
+  const big = MAC ? await icns(html, base + '.icns') : await render(html, 1024, 1024);
+  fs.writeFileSync(base + '.png', big.resize({ width: 512, height: 512, quality: 'best' }).toPNG());
+  ico(big, base + '.ico');
+  return big;
+}
+
 async function icns(html, file) {
   const big = await render(html, 1024, 1024);
   const set = file.replace(/\.icns$/, '.iconset');
@@ -75,15 +101,23 @@ const dmg = (k, mark) => `
 app.on('window-all-closed', () => {}); // a window at a time: the app stays until the end
 app.whenReady().then(async () => {
   fs.mkdirSync(path.join(out, 'apps'), { recursive: true });
+  fs.mkdirSync(path.join(out, 'icons'), { recursive: true });
   const mark = svgOf(path.join(repo, 'savoffice/icons/favicon.svg'));
-  const big = await icns(tile(mark, '#7845f4', 600), path.join(out, 'icon.icns'));
+  // SavOffice: icon.icns (macOS), icon.ico (Windows), icon.png and icons/<n>x<n>.png (Linux); apps/savoffice.png (its windows)
+  const big = await icon(tile(mark, '#7845f4', 600), path.join(out, 'apps', 'savoffice'));
+  if (MAC) fs.copyFileSync(path.join(out, 'apps', 'savoffice.icns'), path.join(out, 'icon.icns'));
+  fs.copyFileSync(path.join(out, 'apps', 'savoffice.ico'), path.join(out, 'icon.ico'));
   fs.writeFileSync(path.join(out, 'icon.png'), big.toPNG());
-  for (const a of catalog) await icns(tile(svgOf(path.join(repo, a.slug, 'icons/favicon.svg')), a.color, 600), path.join(out, 'apps', a.slug + '.icns'));
-  const one = await render(dmg(1, mark), 660, 420);
-  const two = await render(dmg(2, mark), 1320, 840);
-  fs.writeFileSync(path.join(out, 'background.png'), one.toPNG());
-  fs.writeFileSync(path.join(out, 'background@2x.png'), two.toPNG());
-  execFileSync('tiffutil', ['-cathidpicheck', path.join(out, 'background.png'), path.join(out, 'background@2x.png'), '-out', path.join(out, 'background.tiff')]);
-  console.log(`drawn: icon.icns, ${catalog.length} app icons, background.tiff`);
+  for (const n of [16, 32, 48, 64, 128, 256, 512]) fs.writeFileSync(path.join(out, 'icons', `${n}x${n}.png`), big.resize({ width: n, height: n, quality: 'best' }).toPNG());
+  // each app: its .icns (macOS), .ico (Windows), .png (Linux and the windows)
+  for (const a of catalog) await icon(tile(svgOf(path.join(repo, a.slug, 'icons/favicon.svg')), a.color, 600), path.join(out, 'apps', a.slug));
+  if (MAC) {
+    const one = await render(dmg(1, mark), 660, 420);
+    const two = await render(dmg(2, mark), 1320, 840);
+    fs.writeFileSync(path.join(out, 'background.png'), one.toPNG());
+    fs.writeFileSync(path.join(out, 'background@2x.png'), two.toPNG());
+    execFileSync('tiffutil', ['-cathidpicheck', path.join(out, 'background.png'), path.join(out, 'background@2x.png'), '-out', path.join(out, 'background.tiff')]);
+  }
+  console.log(`drawn: SavOffice and ${catalog.length} app icons${MAC ? ' (.icns too), the background of the DMG' : ''}`);
   app.quit();
 });

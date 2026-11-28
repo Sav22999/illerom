@@ -4,3 +4,5 @@ dist/
 build/
 src/launcher/sav/
 src/launcher/icons/
+src/filetypes.json
+smoke-out/

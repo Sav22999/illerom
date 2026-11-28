@@ -1,0 +1,216 @@
+# SavOffice (desktop/): builds it for macOS, Windows and Linux, installs it on each system and tests it (tools/smoke.js),
+# then — only on main, only for a version not yet published — makes the release that the site and the installed apps use.
+#
+#   every push that touches desktop/   build + test on macOS, Windows, Debian, Fedora (results and pictures: the run's page)
+#   push to main with a new version    the same, then the GitHub release "<version>" with every file and latest-mac.json,
+#                                      signed with the secret SAVOFFICE_RELEASE_KEY (no secret, or the tag already there:
+#                                      no release, the tests only)
+#   by hand (Actions › Run workflow)   the same, with the notes of the release
+name: SavOffice desktop
+
+on:
+  push:
+    paths: ['desktop/**', '.github/workflows/savoffice-desktop.yml']
+  workflow_dispatch:
+    inputs:
+      notes:
+        description: Notes of the release (Italian)
+        required: false
+      notes_en:
+        description: Notes of the release (English)
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: savoffice-desktop-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: desktop
+
+jobs:
+  # ------------------------------------------------------------------ build
+  build-mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 22, cache: npm, cache-dependency-path: desktop/package-lock.json }
+      - run: npm ci
+      - run: node tools/dist.js
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mac
+          path: |
+            desktop/dist/SavOffice-*.dmg
+            desktop/dist/SavOffice-*.zip
+          if-no-files-found: error
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 22, cache: npm, cache-dependency-path: desktop/package-lock.json }
+      - run: npm ci
+      - run: node tools/prepare.js
+      - run: npx electron tools/brand.js
+      - run: npx electron-builder --config electron-builder.config.js --win nsis --x64 --publish never
+      - uses: actions/upload-artifact@v4
+        with: { name: windows, path: desktop/dist/SavOffice-Setup-x64.exe, if-no-files-found: error }
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 22, cache: npm, cache-dependency-path: desktop/package-lock.json }
+      - run: sudo apt-get update && sudo apt-get install -y rpm xvfb
+      - run: npm ci
+      - run: node tools/prepare.js
+      - run: xvfb-run -a npx electron --no-sandbox --disable-gpu tools/brand.js
+      - run: npx electron-builder --config electron-builder.config.js --linux deb rpm --x64 --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: |
+            desktop/dist/SavOffice-x64.deb
+            desktop/dist/SavOffice-x64.rpm
+          if-no-files-found: error
+
+  # ------------------------------------------------------------------ install and test
+  test-mac:
+    needs: build-mac
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 22 }
+      - uses: actions/download-artifact@v4
+        with: { name: mac, path: pkg }
+      - name: Install from the DMG (as a person would)
+        run: |
+          arch=$(uname -m); [ "$arch" = arm64 ] || arch=x64
+          hdiutil attach "$GITHUB_WORKSPACE/pkg/SavOffice-$arch.dmg" -nobrowse -mountpoint /Volumes/SavOffice
+          cp -R /Volumes/SavOffice/SavOffice.app /Applications/
+          hdiutil detach /Volumes/SavOffice
+          codesign --verify --deep /Applications/SavOffice.app && echo signed
+      - run: node tools/smoke.js --exe /Applications/SavOffice.app/Contents/MacOS/SavOffice --out "$GITHUB_WORKSPACE/smoke"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: smoke-mac, path: smoke }
+
+  test-windows:
+    needs: build-windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 22 }
+      - uses: actions/download-artifact@v4
+        with: { name: windows, path: pkg }
+      - name: Install (silently, as the updater does)
+        shell: pwsh
+        run: |
+          Start-Process -Wait -FilePath "$env:GITHUB_WORKSPACE\pkg\SavOffice-Setup-x64.exe" -ArgumentList '/S'
+          $exe = $null
+          for ($i = 0; $i -lt 30 -and !$exe; $i++) {
+            $exe = Get-ChildItem "$env:LOCALAPPDATA\Programs", "$env:ProgramFiles" -Filter SavOffice.exe -Recurse -Depth 2 -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
+            if (!$exe) { Start-Sleep 2 }
+          }
+          if (!$exe) { Get-ChildItem "$env:LOCALAPPDATA\Programs" -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_.FullName }; throw 'SavOffice.exe not installed' }
+          Write-Host "installed: $exe"
+          "SAVOFFICE_EXE=$exe" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+          Get-ChildItem "$env:APPDATA\Microsoft\Windows\Start Menu\Programs", "$env:USERPROFILE\Desktop" -Filter 'SavOffice*' -Recurse -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "shortcut: $($_.FullName)" }
+      - run: node tools/smoke.js --exe "$env:SAVOFFICE_EXE" --out "$env:GITHUB_WORKSPACE\smoke"
+        shell: pwsh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: smoke-windows, path: smoke }
+
+  test-linux:
+    needs: build-linux
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { distro: debian, image: 'debian:bookworm' }
+          - { distro: ubuntu, image: 'ubuntu:24.04' }
+          - { distro: fedora, image: 'fedora:latest' }
+    container: ${{ matrix.image }}
+    steps:
+      - name: Tools of the container
+        working-directory: /
+        run: |
+          if command -v apt-get >/dev/null; then apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y xvfb xauth fonts-dejavu-core ca-certificates dbus-x11 tar gzip
+          else dnf install -y xorg-x11-server-Xvfb dejavu-sans-fonts ca-certificates dbus-x11 tar gzip findutils; fi
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 22 }
+      - uses: actions/download-artifact@v4
+        with: { name: linux, path: pkg }
+      - name: Install the package (as a person would, with its manager)
+        run: |
+          if command -v apt-get >/dev/null; then DEBIAN_FRONTEND=noninteractive apt-get install -y "$GITHUB_WORKSPACE/pkg/SavOffice-x64.deb"
+          else dnf install -y "$GITHUB_WORKSPACE/pkg/SavOffice-x64.rpm"; fi
+          ls -la /opt/SavOffice | head; ls /usr/share/applications | grep -i savoffice
+      - name: Libraries
+        run: ldd /opt/SavOffice/savoffice | grep -i 'not found' || echo 'all libraries found'
+      - name: Smoke test
+        run: |
+          Xvfb :99 -screen 0 1440x900x24 & sleep 2
+          export DISPLAY=:99
+          node tools/smoke.js --exe /opt/SavOffice/savoffice --out "$GITHUB_WORKSPACE/smoke"
+      - name: Why it did not start (only when the test failed)
+        if: failure()
+        run: |
+          if command -v apt-get >/dev/null; then apt-get install -y strace >/dev/null; else dnf install -y strace >/dev/null; fi
+          export DISPLAY=:99
+          SAVOFFICE_USERDATA=/tmp/so-debug SAVOFFICE_CI=1 ELECTRON_ENABLE_LOGGING=1 timeout 20 strace -f -o /tmp/strace.txt /opt/SavOffice/savoffice --no-sandbox --enable-logging=stderr --v=1; echo "exit: $?"
+          grep -E 'execve|exit_group|ENOENT|EACCES|EPERM|SIGSEGV|killed' /tmp/strace.txt | grep -v 'ENOENT (No such file or directory)$' | tail -40 || true
+          echo ---; grep -E 'execve' /tmp/strace.txt | head -20; echo ---; tail -40 /tmp/strace.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: 'smoke-${{ matrix.distro }}', path: smoke }
+
+  # ------------------------------------------------------------------ release (main, a new version, all green)
+  release:
+    needs: [test-mac, test-windows, test-linux]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      SAVOFFICE_RELEASE_KEY: ${{ secrets.SAVOFFICE_RELEASE_KEY }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 22 }
+      - name: A new version?
+        id: version
+        run: |
+          v=$(node -p "require('./package.json').version")
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          if [ -z "$SAVOFFICE_RELEASE_KEY" ]; then echo "::notice::No secret SAVOFFICE_RELEASE_KEY: no release (tests only)"; echo "go=no" >> "$GITHUB_OUTPUT"
+          elif gh release view "$v" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || git ls-remote --exit-code --tags origin "refs/tags/$v" >/dev/null 2>&1; then echo "::notice::$v is already published: no release (raise the version in desktop/package.json)"; echo "go=no" >> "$GITHUB_OUTPUT"
+          else echo "go=yes" >> "$GITHUB_OUTPUT"; fi
+      - uses: actions/download-artifact@v4
+        if: steps.version.outputs.go == 'yes'
+        with: { path: desktop/dist, pattern: '{mac,windows,linux}', merge-multiple: true }
+      - name: Signed list and release
+        if: steps.version.outputs.go == 'yes'
+        env:
+          V: ${{ steps.version.outputs.version }}
+          NOTES: ${{ github.event.inputs.notes || github.event.head_commit.message }}
+          NOTES_EN: ${{ github.event.inputs.notes_en }}
+        run: |
+          ls -la dist
+          node tools/release.js --no-build --all --notes "$NOTES" --notes-en "${NOTES_EN:-$NOTES}"
+          gh release create "$V" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "SavOffice $V" --notes "$NOTES" \
+            dist/SavOffice-arm64.dmg dist/SavOffice-x64.dmg dist/SavOffice-arm64.zip dist/SavOffice-x64.zip \
+            dist/SavOffice-Setup-x64.exe dist/SavOffice-x64.deb dist/SavOffice-x64.rpm dist/latest-mac.json

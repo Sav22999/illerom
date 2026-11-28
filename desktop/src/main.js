@@ -13,6 +13,12 @@ app.setPath('userData', env.PROFILE);
   const want = l === 'it' || l === 'en' ? l : (app.getPreferredSystemLanguages?.() || [])[0] || '';
   if (want) app.commandLine.appendSwitch('lang', want);
 }
+// automatic tests (tools/smoke.js, GitHub Actions): containers run as root and have little shared memory; every app of its
+// own opens a port of its own for the test to drive it (9400 + its place in the catalog). Never outside a test.
+if (env.ci) {
+  for (const sw of ['no-sandbox', 'disable-dev-shm-usage', 'disable-gpu']) app.commandLine.appendSwitch(sw);
+  if (env.APP) app.commandLine.appendSwitch('remote-debugging-port', String(9400 + require('./store').catalog.findIndex((a) => a.slug === env.APP)));
+}
 // the windows look like the browser they replace: some sites (Google sign-in) refuse "Electron"
 app.userAgentFallback = app.userAgentFallback.replace(/\sElectron\/\S+/, '').replace(/\sSavOffice\/\S+/, '');
 

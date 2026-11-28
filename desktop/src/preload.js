@@ -3,6 +3,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 const call = (name) => (...args) => ipcRenderer.invoke(name, ...args);
 contextBridge.exposeInMainWorld('savoffice', {
+  platform: process.platform, // darwin | win32 | linux: the words and the header of the Toolbox
   state: call('state'),
   install: call('install'),
   open: call('open'),
