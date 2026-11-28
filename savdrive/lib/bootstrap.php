@@ -20,7 +20,10 @@ require_once dirname(__DIR__, 2) . '/identity/suite.php'; // one account for all
 
 const APP_NAME = 'SavDrive';
 const AUTH_COOKIE = SUITE_COOKIE; // the session of the whole suite (../identity/suite.php)
-const SCHEMA_VERSION = 8; // 2: uploads.replace_id (an app of SavOffice saves its file back into the drive) · 3: usage (the space used by the other apps) · 4: shares, comments, nodes.created_by · 5: temporary links (temp_links, temp_items, uploads.temp_id) · 6: the Vault (vault_keys, vault_nodes, uploads.vault_id) · 7: the two together · 8: the accounts of the suite (../identity/suite.php), settings in profiles
+const SCHEMA_VERSION = 10; // 2: uploads.replace_id (an app of SavOffice saves its file back into the drive) · 3: usage (the space used by the other apps) · 4: shares, comments, nodes.created_by · 5: temporary links (temp_links, temp_items, uploads.temp_id) · 6: the Vault (vault_keys, vault_nodes, uploads.vault_id) · 7: the two together · 8: the accounts of the suite (../identity/suite.php), settings in profiles · 9: reports of public links for the masters · 10: reports + audit of the shared moderation module (../../identity/moderation.php)
+
+// Where a report or a complaint about a decision is handled (the single point of contact, DSA arts. 11, 12, 16, 17)
+const REPORT_CONTACT_URL = 'https://www.saveriomorelli.com/contact-me/';
 const LANGS = ['en', 'it'];
 const GB = 1073741824;
 const DEFAULT_QUOTA = 500 * 1048576;   // 500 MB, until the admins choose another one
@@ -547,6 +550,7 @@ function iso(?string $utc): ?string
     return $utc ? gmdate('Y-m-d\TH:i:s\Z', strtotime($utc . ' UTC')) : null;
 }
 
+require_once __DIR__ . '/../../identity/moderation.php'; // shared reports + audit + account block (DSA)
 require_once __DIR__ . '/mail.php';
 require_once __DIR__ . '/files.php';
 require_once __DIR__ . '/access.php';

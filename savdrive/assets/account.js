@@ -32,6 +32,26 @@ export function useLang(l) { setLang(l); if (S.user) { S.user.lang = l; api('aut
 export const langSwitch = () => { const c = h('sav-language-choice', { 'sheet-on-mobile': true, include: 'it-IT en-GB', value: getLang() === 'it' ? 'it-IT' : 'en-GB', 'native-names': '', 'no-code': '', size: 'sm', 'aria-label': t('language'), class: 'langs' }); c.addEventListener('change', () => { const l = String(c.value || '').slice(0, 2); if (l && l !== getLang()) useLang(l); }); return c; };
 export const langButton = () => btn(h('span.lbl', getLang() === 'it' ? 'English' : 'Italiano'), { icon: 'languages', label: getLang() === 'it' ? 'English' : 'Italiano', class: 'langb', appearance: 'ghost', size: 'sm', onclick: () => useLang(getLang() === 'it' ? 'en' : 'it') });
 export const credit = () => h('footer.credit', h('a', { href: 'privacy.html' }, 'Privacy'), h('a', { href: 'terms.html' }, t('terms_c')), h('a', { href: 'https://www.illerom.eu/', rel: 'noopener' }, 'Illerom'), h('span', getLang() === 'it' ? 'di ' : 'by ', h('a.sig', { href: 'https://www.saveriomorelli.com', rel: 'noopener' }, 'Saverio Morelli')), h('a.vlink', { href: '#/changelog', title: t('changelog') }, 'v' + VERSION), h('span.grow'), langSwitch());
+/**
+ * Report a public link (a share link or a temporary link) as illegal or against the terms (DSA art. 16). Anyone who can
+ * open the link can use it, with or without an account; a master reviews it in the admin panel.
+ */
+export function reportDialog(tok) {
+  const cats = ['illegal', 'copyright', 'malware', 'csam', 'privacy', 'other'];
+  const cat = h('sav-select', { label: t('rep_cat'), value: 'illegal', 'sheet-on-mobile': true }, cats.map((c) => h('sav-option', { value: c }, t('rep_cat_' + c))));
+  const detail = h('sav-textarea', { label: t('rep_detail'), rows: 3, maxlength: 2000, placeholder: t('rep_detail_ph') });
+  const email = h('sav-input', { label: t('rep_email'), type: 'email', maxlength: 190, autocomplete: 'email' });
+  const gf = h('sav-checkbox', {}, t('rep_goodfaith'));
+  dialog({
+    title: t('rep_title'), width: '30rem',
+    body: h('div.form', h('p.muted.small', t('rep_intro')), cat, detail, email, h('p.muted.small', t('rep_email_t')), gf),
+    actions: [{ label: t('cancel') }, { label: t('rep_send'), icon: 'flag', primary: true, run: async () => {
+      if (!gf.checked) { toast(t('rep_need_goodfaith'), 'warning'); return false; }
+      await api('report.send', { t: tok, category: cat.value, detail: detail.value.trim(), email: email.value.trim() });
+      toast(t('rep_done'), 'success');
+    } }],
+  });
+}
 export function userMenu() {
   const u = S.user, av = face(u.name, null, 36);
   // the picture of SavAccount, once it has really loaded (a service disconnected there keeps the initials)

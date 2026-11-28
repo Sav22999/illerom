@@ -3,7 +3,7 @@ import { btn, ctxAt, empty, errText, h, icon, menuAt, primary, put } from './ui.
 import { registerIcons } from './icons.js';
 import { getLang, setLang, t } from './i18n.js';
 import { S, api, pubUrl } from './store.js';
-import { applyTheme, brand, commands, credit, go, land, langButton, reset, setUser, signOut, unverified, userMenu, verify, waiting } from './account.js';
+import { applyTheme, brand, commands, credit, go, land, langButton, reportDialog, reset, setUser, signOut, unverified, userMenu, verify, waiting } from './account.js';
 import { CHANGES, VERSION } from './version.js';
 
 const root = document.getElementById('app');
@@ -88,7 +88,7 @@ async function shared(tok) {
   const view = k.k === 'image' ? h('img.pvimg', { src, alt: f.name }) : k.k === 'pdf' ? h('iframe.pvpdf', { src, title: f.name }) : k.k === 'video' ? h('sav-video.pvvid', { src, label: f.name }) : k.k === 'audio' ? h('div.pvaud', icon('music'), h('sav-audio', { src, label: f.name }))
     : h('div.pvnone', f.app ? h('img', { src: `../${f.app}/icons/favicon.svg`, width: 72, height: 72, alt: '' }) : h('span.tic.big', { style: `--fc:${k.c}` }, icon(k.ic)), h('b', f.name), f.app ? h('p.muted', t('pub_app', { app: NAMES[f.app] })) : null);
   put(root, h('div.home.pubp', h('header.htop', brand(S.user ? '#/' : '#/welcome'), h('div.spacer'), S.user ? userMenu() : [langButton(), btn(t('sign_in'), { appearance: 'outline', href: '#/signin' })]),
-    h('main.pubm', h('div.pubhead', h('div', h('h1', f.name), h('p.muted', t('pub_by', { name: f.owner, size: bytes(f.size) }))), h('span.grow'), primary(t('download'), { icon: 'download', href: pubUrl(tok), download: f.name })), h('div.pubview', view)), credit()));
+    h('main.pubm', h('div.pubhead', h('div', h('h1', f.name), h('p.muted', t('pub_by', { name: f.owner, size: bytes(f.size) }))), h('span.grow'), btn(t('rep_link'), { icon: 'flag', appearance: 'ghost', size: 'sm', title: t('rep_link'), onclick: () => reportDialog(tok) }), primary(t('download'), { icon: 'download', href: pubUrl(tok), download: f.name })), h('div.pubview', view)), credit()));
   document.title = f.name + ' – SavDrive';
 }
 

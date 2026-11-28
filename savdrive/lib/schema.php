@@ -27,6 +27,10 @@
  *              limit of downloads, notice to the owner at each download and message; ready = 0 while its files upload
  * temp_items   what a temporary link gives: a file or folder of the drive (node_id, it stays when the link ends) or a
  *              file uploaded only for the link (bkey, under <storage>/<user_id>/, deleted with the link, counted in the space)
+ * reports      a public link (a share link or a temporary link) that a visitor reported as illegal or against the terms
+ *              (DSA art. 16); content_kind is 'share' | 'temp' and content_id the node or the temporary link
+ * audit        what the master admins did (blocks, report decisions)
+ *              reports and audit are the two shared tables of ../../identity/moderation.php, used by every app
  */
 
 declare(strict_types=1);
@@ -198,6 +202,8 @@ function schema_statements(string $p): array
             " . $fk('ti_node', 'node_id', 'nodes') . "
         ) $e",
     ];
+    // reports of public links and the admin audit log (../../identity/moderation.php) are added separately, best-effort, by
+    // install_schema(): a host that cannot create them must not block the rest of the app.
 }
 
 function install_schema(PDO $pdo, string $prefix): void
@@ -206,6 +212,14 @@ function install_schema(PDO $pdo, string $prefix): void
     suite_reset_app($pdo, $prefix);
     suite_install($pdo, (string)(credentials()['name'] ?? ''));
     foreach (schema_statements($prefix) as $sql) $pdo->exec($sql);
+    // the moderation tables (reports + audit) are optional: if a host cannot create them, the app keeps working without them
+    try {
+        // the first draft of reports (its own columns) is replaced by the shared moderation table (content_kind/content_id)
+        if ($pdo->query("SHOW TABLES LIKE '{$prefix}reports'")->fetch() && $pdo->query("SHOW COLUMNS FROM `{$prefix}reports` LIKE 'category'")->fetch()) $pdo->exec("DROP TABLE `{$prefix}reports`");
+        foreach (moderation_schema($prefix) as $sql) $pdo->exec($sql);
+    } catch (Throwable $e) {
+        error_log('SavDrive moderation schema not installed: ' . $e->getMessage());
+    }
     if (!$pdo->query("SHOW COLUMNS FROM `{$prefix}uploads` LIKE 'replace_id'")->fetch()) $pdo->exec("ALTER TABLE `{$prefix}uploads` ADD COLUMN `replace_id` INT UNSIGNED NULL AFTER `received`");
     if (!$pdo->query("SHOW COLUMNS FROM `{$prefix}uploads` LIKE 'vault_id'")->fetch()) $pdo->exec("ALTER TABLE `{$prefix}uploads` ADD COLUMN `vault_id` INT UNSIGNED NULL AFTER `replace_id`");
     if (!$pdo->query("SHOW COLUMNS FROM `{$prefix}uploads` LIKE 'temp_id'")->fetch()) $pdo->exec("ALTER TABLE `{$prefix}uploads` ADD COLUMN `temp_id` INT UNSIGNED NULL AFTER `replace_id`");

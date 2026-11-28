@@ -221,6 +221,11 @@ function purge_old(int $limit = 20): void
         @unlink(storage_dir((int)$r['user_id']) . '/' . $r['id'] . '.part');
         db()->prepare('DELETE FROM ' . t('uploads') . ' WHERE id = ?')->execute([$r['id']]);
     }
+    // reports on a public link are kept two years after they are resolved (privacy notice, DSA); the table is optional
+    try {
+        db()->prepare('DELETE FROM ' . t('reports') . " WHERE status <> 'open' AND resolved_at < ? LIMIT " . (int)$limit)
+            ->execute([gmdate('Y-m-d H:i:s', time() - 730 * 86400)]);
+    } catch (Throwable $e) { /* moderation tables not installed on this host */ }
 }
 
 /** Removes the whole folder of an account on disk (when the account is deleted). */

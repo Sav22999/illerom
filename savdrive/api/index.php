@@ -1275,6 +1275,70 @@ switch ($r) {
         if ($st->rowCount()) @unlink(storage_dir((int)$u['id']) . "/$id.part");
         send_json(['ok' => true]);
 
+    // ================================================================ reports (DSA art. 16): a visitor reports a public link
+
+    case 'report.send':
+        // {t, category, detail, email}: anyone who can open a public link (a share link or a temporary link) can report it.
+        // No account, no CSRF (it is a public form): rate-limited by IP. Stored by the shared moderation module (mod_report).
+        only('POST');
+        if (too_many_attempts('report', 10, 60)) fail('rate_limited', 429);
+        $b = body();
+        $tok = (string)($b['t'] ?? '');
+        if (!preg_match('/^[a-f0-9]{32}$/', $tok)) fail('not_found', 404);
+        $reason = (string)($b['category'] ?? $b['reason'] ?? ''); // the UI sends the reason as "category"; mod_report validates it
+        $note = trim(mb_substr(str_replace("\r", '', (string)($b['detail'] ?? $b['note'] ?? '')), 0, 1000));
+        $email = mb_strtolower(trim((string)($b['email'] ?? '')));
+        if ($email !== '' && (!filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 190)) fail('email_invalid', 422);
+        // the token is a share link (a file) or a temporary link: find which, and the content and owner it points to
+        $content = null;
+        $st = db()->prepare('SELECT id, user_id FROM ' . t('nodes') . " WHERE share_token = ? AND trashed_at IS NULL AND kind = 'file'");
+        $st->execute([$tok]);
+        if ($row = $st->fetch()) $content = ['kind' => 'share', 'id' => (int)$row['id'], 'token' => $tok, 'owner_id' => (int)$row['user_id']];
+        else {
+            $st = db()->prepare('SELECT id, user_id FROM ' . t('temp_links') . ' WHERE token = ? AND ready = 1');
+            $st->execute([$tok]);
+            if ($row = $st->fetch()) $content = ['kind' => 'temp', 'id' => (int)$row['id'], 'token' => $tok, 'owner_id' => (int)$row['user_id']];
+        }
+        if (!$content) fail('not_found', 404);
+        record_attempt('report');
+        try { mod_report($content, $reason, $note, $email !== '' ? $email : null, client_ip()); }
+        catch (Throwable $e) { error_log('SavDrive report not stored: ' . $e->getMessage()); fail('unavailable', 503); }
+        send_json(['ok' => true]);
+
+    case 'report.file':
+        // ?id=&i=&inline=: a master opens the content of a REPORTED link, to assess it. Only files that a report points to can
+        // be reached here (so the masters see reported content and nothing else). Each view is noted (mod_report_seen).
+        only('GET');
+        require_master();
+        $rep = mod_report_get((int)($_GET['id'] ?? 0));
+        if (!$rep) fail('not_found', 404);
+        mod_report_seen((int)$rep['id']);
+        $cid = $rep['content_id'] !== null ? (int)$rep['content_id'] : 0;
+        if ($rep['content_kind'] === 'share') {
+            if (!$cid) fail('gone', 410);
+            $st = db()->prepare('SELECT * FROM ' . t('nodes') . ' WHERE id = ?');
+            $st->execute([$cid]);
+            $n = $st->fetch();
+            if (!$n || !$n['bkey']) fail('gone', 410);
+            header('Cache-Control: private, no-store');
+            stream_file(blob_path((int)$n['user_id'], (string)$n['bkey']), (string)$n['name'], (string)$n['mime'], !empty($_GET['inline']));
+        }
+        if (!$cid) fail('gone', 410);
+        $st = db()->prepare('SELECT * FROM ' . t('temp_items') . ' WHERE id = ? AND link_id = ?');
+        $st->execute([(int)($_GET['i'] ?? 0), $cid]);
+        $it = $st->fetch();
+        if (!$it) fail('not_found', 404);
+        if ($it['bkey']) { $owner = (int)$it['user_id']; $bkey = (string)$it['bkey']; $name = (string)$it['name']; $mime = (string)$it['mime']; }
+        else {
+            $st = db()->prepare('SELECT * FROM ' . t('nodes') . ' WHERE id = ?');
+            $st->execute([$it['node_id']]);
+            $n = $st->fetch();
+            if (!$n || !$n['bkey']) fail('gone', 410); // a folder item has no single file: assess its files one by one
+            $owner = (int)$n['user_id']; $bkey = (string)$n['bkey']; $name = (string)$n['name']; $mime = (string)$n['mime'];
+        }
+        header('Cache-Control: private, no-store');
+        stream_file(blob_path($owner, $bkey), $name, $mime, !empty($_GET['inline']));
+
     // ================================================================ master admin
 
     case 'master.overview':
@@ -1287,6 +1351,7 @@ switch ($r) {
             'driveBytes' => $n('SELECT COALESCE(SUM(size),0) FROM ' . t('nodes') . " WHERE kind = 'file'"), 'people' => $n('SELECT COUNT(*) FROM (SELECT email FROM ' . t('users') . ' UNION SELECT email FROM ' . t('usage') . ') x'),
             'given' => $n('SELECT COALESCE(SUM(COALESCE(q.quota, ' . default_quota() . ')),0) FROM ' . t('users') . ' u LEFT JOIN ' . t('quotas') . ' q ON q.email = u.email WHERE u.activated = 1 AND (q.quota IS NULL OR q.quota < ' . UNLIMITED . ')'),
             'unlimited' => $n('SELECT COUNT(*) FROM ' . t('quotas') . ' WHERE quota >= ' . UNLIMITED),
+            'reports' => mod_open_count(),
             'defaultQuota' => default_quota(), 'defaultActive' => default_active(), 'disk' => @disk_free_space(storage_dir()) ?: null]);
 
     case 'master.settings':
@@ -1393,6 +1458,100 @@ switch ($r) {
         if (!$x || is_master($x)) fail('forbidden', 403);
         db()->prepare('DELETE FROM ' . t('users') . ' WHERE id = ?')->execute([$x['id']]);
         delete_user_storage((int)$x['id']);
+        send_json(['ok' => true]);
+
+    case 'master.reports':
+        // ?show=open|resolved|all: the reports to review, with the content they point to and its owner. Never the file itself
+        // (that is report.file, and only for a reported link). Stored by the shared moderation module (content_kind/content_id).
+        only('GET');
+        require_master();
+        $reps = mod_reports((string)($_GET['show'] ?? 'open'));
+        $idsOf = fn(string $kind) => array_values(array_filter(array_map(fn($r) => $r['content_kind'] === $kind && $r['content_id'] !== null ? (int)$r['content_id'] : 0, $reps)));
+        $pick = function (string $table, string $cols, array $ids) {
+            if (!$ids) return [];
+            $in = implode(',', array_fill(0, count($ids), '?'));
+            $st = db()->prepare("SELECT id, $cols FROM " . t($table) . " WHERE id IN ($in)");
+            $st->execute($ids);
+            return array_column($st->fetchAll(), null, 'id');
+        };
+        $owners = $pick('users', 'name, email, status', array_values(array_filter(array_map(fn($r) => (int)$r['owner_id'], $reps))));
+        $nodes = $pick('nodes', 'name, size, mime, trashed_at', $idsOf('share'));
+        $links = $pick('temp_links', 'mode, expires_at', $idsOf('temp'));
+        // the items of the temporary links that are still there: the masters view each from its own id (report.file?i=)
+        $linkIds = $idsOf('temp');
+        $items = [];
+        if ($linkIds) {
+            $in = implode(',', array_fill(0, count($linkIds), '?'));
+            $is = db()->prepare('SELECT i.id, i.link_id, i.name, i.mime, i.size, i.node_id, i.bkey, n.kind node_kind FROM ' . t('temp_items') . ' i LEFT JOIN ' . t('nodes') . " n ON n.id = i.node_id WHERE i.link_id IN ($in) ORDER BY i.id");
+            $is->execute($linkIds);
+            foreach ($is->fetchAll() as $it) $items[(int)$it['link_id']][] = ['id' => (int)$it['id'], 'name' => $it['name'], 'mime' => $it['mime'], 'size' => (int)$it['size'], 'folder' => $it['bkey'] === null && $it['node_kind'] === 'folder'];
+        }
+        $out = array_map(function ($r) use ($owners, $nodes, $links, $items) {
+            $kind = $r['content_kind']; $cid = $r['content_id'] !== null ? (int)$r['content_id'] : null;
+            $gone = $kind === 'share' ? ($cid === null || !isset($nodes[$cid]) || $nodes[$cid]['trashed_at'] !== null) : ($cid === null || !isset($links[$cid]));
+            $o = $r['owner_id'] !== null && isset($owners[(int)$r['owner_id']]) ? $owners[(int)$r['owner_id']] : null;
+            return [
+                'id' => (int)$r['id'], 'kind' => $kind, 'reason' => $r['reason'], 'note' => $r['note'],
+                'reporter' => $r['reporter_email'], 'ip' => $r['reporter_ip'], 'status' => $r['status'], 'action' => $r['action'],
+                'resolution' => $r['resolution'] !== '' ? $r['resolution'] : null, 'created' => iso($r['created_at']), 'resolved' => iso($r['resolved_at']), 'seen' => iso($r['seen_at']),
+                'owner' => $o ? ['id' => (int)$r['owner_id'], 'name' => $o['name'], 'email' => $o['email'], 'blocked' => $o['status'] === 'blocked'] : null,
+                'gone' => $gone,
+                'file' => $kind === 'share' && !$gone ? ['name' => $nodes[$cid]['name'], 'size' => (int)$nodes[$cid]['size'], 'mime' => $nodes[$cid]['mime']] : null,
+                'temp' => $kind === 'temp' && !$gone ? ['mode' => $links[$cid]['mode'], 'expires' => iso($links[$cid]['expires_at']), 'items' => $items[$cid] ?? []] : null,
+            ];
+        }, $reps);
+        send_json(['ok' => true, 'reports' => $out]);
+
+    case 'master.report.resolve':
+        // {id, decision: removed | dismissed, actions: [disable_link, trash, block], note}: the decision on a report.
+        // "removed" carries out the chosen actions (block is suite-wide, via the shared module) and, if email is set up,
+        // tells the owner why (DSA art. 17). Closing a report writes to the audit log.
+        $u = require_master();
+        only('POST');
+        require_csrf($u);
+        $b = body();
+        $rep = mod_report_get((int)($b['id'] ?? 0));
+        if (!$rep) fail('not_found', 404);
+        $decision = ($b['decision'] ?? '') === 'removed' ? 'removed' : 'dismissed';
+        $note = trim(mb_substr(str_replace("\r", '', (string)($b['note'] ?? '')), 0, 1000));
+        $acts = is_array($b['actions'] ?? null) ? array_map('strval', $b['actions']) : [];
+        $cid = $rep['content_id'] !== null ? (int)$rep['content_id'] : 0;
+        $done = []; $blocked = false;
+        if ($decision === 'removed') {
+            if (in_array('disable_link', $acts, true)) {
+                if ($rep['content_kind'] === 'share' && $cid) { db()->prepare('UPDATE ' . t('nodes') . ' SET share_token = NULL WHERE id = ?')->execute([$cid]); $done[] = 'disable_link'; }
+                if ($rep['content_kind'] === 'temp' && $cid) {
+                    $ts = db()->prepare('SELECT * FROM ' . t('temp_links') . ' WHERE id = ?'); $ts->execute([$cid]);
+                    if ($tl = $ts->fetch()) { temp_delete($tl); $done[] = 'disable_link'; }
+                }
+            }
+            if (in_array('trash', $acts, true) && $rep['content_kind'] === 'share' && $cid) {
+                db()->prepare('UPDATE ' . t('nodes') . ' SET trashed_at = ?, trash_root = 1, share_token = NULL WHERE id = ? AND trashed_at IS NULL')->execute([now_utc(), $cid]);
+                $done[] = 'trash';
+            }
+            if (in_array('block', $acts, true) && $rep['owner_id']) {
+                $x = user_row((int)$rep['owner_id']);
+                $breason = in_array($rep['reason'], MOD_BLOCK_REASONS, true) ? $rep['reason'] : 'other';
+                if (mod_block_account($u, $x, $breason, $note)) {
+                    $done[] = 'block'; $blocked = true;
+                    if (mail_settings() && !empty($x['email']) && !empty($x['email_verified_at'])) {
+                        $L = in_array($x['ui_lang'], LANGS, true) ? $x['ui_lang'] : 'en'; $T = mail_t($L);
+                        send_notice((string)$x['email'], (string)$x['name'], $L, $T['block_subject'], $T['block_title'], [fill($T['hello'], ['name' => $x['name']]), fill($T['block_body'], ['reason' => $T['reason_' . $breason]]), $T['block_contact']]);
+                    }
+                }
+            }
+            // the statement of reasons to the owner about the content (DSA art. 17); a blocked owner already got the block email
+            if ($rep['owner_id'] && !$blocked && mail_settings()) {
+                $x = user_row((int)$rep['owner_id']);
+                if ($x && !empty($x['email']) && !empty($x['email_verified_at'])) {
+                    $L = in_array($x['ui_lang'], LANGS, true) ? $x['ui_lang'] : 'en'; $T = mail_t($L);
+                    $what = $T['report_acts'][implode(',', $done)] ?? ($done ? implode(', ', array_map(fn($a) => $T['report_acts'][$a] ?? $a, $done)) : $T['report_acts']['reviewed']);
+                    send_notice((string)$x['email'], (string)$x['name'], $L, $T['report_subject'], $T['report_title'],
+                        [fill($T['hello'], ['name' => $x['name']]), $T['report_body'], fill($T['report_what'], ['what' => $what]), $note !== '' ? fill($T['report_reason'], ['reason' => $note]) : '', $T['report_appeal']], REPORT_CONTACT_URL, $T['report_button']);
+                }
+            }
+        }
+        mod_report_resolve($u, (int)$rep['id'], $decision === 'dismissed' ? 'dismissed' : implode(',', $done), $note);
         send_json(['ok' => true]);
 
     default:

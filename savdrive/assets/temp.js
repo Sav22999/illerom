@@ -9,7 +9,7 @@
 import { btn, bytes, confirm, copyText, dialog, empty, errText, fail, h, icon, iconBtn, primary, put, segmented, toast } from './ui.js';
 import { getLang, t } from './i18n.js';
 import { S, api, upload } from './store.js';
-import { brand, credit, langButton, userMenu } from './account.js';
+import { brand, credit, langButton, reportDialog, userMenu } from './account.js';
 import { duration, kindOf } from './drive.js';
 
 export const tempLink = (tok) => new URL(`#/t/${tok}`, location.href.split('#')[0]).href;
@@ -272,6 +272,6 @@ export async function tempPage(root, tok) {
       h('ul.tfacts', h('li', icon('clock'), h('span', { title: fullDate(f.expires) }, t('temp_expires_in', { t: timeLeft(f.expires), date: fullDate(f.expires) }))),
         f.left !== null ? h('li', icon('download'), h('span', t('temp_left_dl', { n: f.left }))) : null),
       main, !one && !f.zip ? h('p.muted.small', t('zip_too_big')) : null, rows,
-      h('p.muted.small.tfoot', t('temp_page_note')))), credit()));
+      h('div.tfoot', h('p.muted.small', t('temp_page_note')), btn(t('rep_link'), { icon: 'flag', appearance: 'ghost', size: 'sm', title: t('rep_link'), onclick: () => reportDialog(tok) })))), credit()));
   document.title = name + ' – SavDrive';
 }
