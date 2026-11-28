@@ -86,8 +86,10 @@ export async function admin(root, tab) {
     rfilter.setAttribute('size', 'md');
     const fileUrl = (rep, itemId) => `api/?r=report.file&id=${rep.id}${itemId ? '&i=' + itemId : ''}&inline=1`;
     const catBadge = (c) => h('sav-badge', { variant: c === 'csam' ? 'danger' : 'neutral', appearance: 'soft', pill: true }, t('rep_cat_' + c));
-    const statusBadge = (s) => h('sav-badge', { variant: s === 'open' ? 'warning' : s === 'removed' ? 'danger' : 'neutral', appearance: 'soft', pill: true }, t('a_r_status_' + s));
-    const actLabel = (a) => t('a_r_did_' + ({ disable_link: 'link', trash: 'trash', deactivate: 'deact' }[a] || a));
+    // the decision is derived: open, or closed as "dismissed" (no action) or "removed" (something was done)
+    const decisionOf = (r) => r.status === 'open' ? 'open' : (r.action === 'dismissed' || r.action === '' ? 'dismissed' : 'removed');
+    const statusBadge = (r) => { const s = decisionOf(r); return h('sav-badge', { variant: s === 'open' ? 'warning' : s === 'removed' ? 'danger' : 'neutral', appearance: 'soft', pill: true }, t('a_r_status_' + s)); };
+    const actLabel = (a) => t('a_r_did_' + ({ disable_link: 'link', trash: 'trash', block: 'block' }[a] || a));
 
     const resolveDialog = (rep) => {
       const decision = h('sav-radio-group', { label: t('a_r_decision'), value: 'removed' },
@@ -95,15 +97,15 @@ export async function admin(root, tab) {
         h('sav-radio', { value: 'dismissed' }, h('b', t('a_r_dismiss')), h('br'), h('small.muted', t('a_r_dismiss_t'))));
       const aLink = h('sav-checkbox', { checked: true }, t('a_r_act_link'));
       const aTrash = rep.kind === 'share' ? h('sav-checkbox', {}, t('a_r_act_trash')) : null;
-      const aDeact = rep.owner && rep.owner.active ? h('sav-checkbox', {}, t('a_r_act_deact')) : null;
-      const note = h('sav-textarea', { label: t('a_r_note'), rows: 2, maxlength: 2000, placeholder: t('a_r_note_ph') });
-      const acts = h('div.stack.racts', aLink, aTrash, aDeact);
+      const aBlock = rep.owner && !rep.owner.blocked ? h('sav-checkbox', {}, t('a_r_act_block')) : null;
+      const note = h('sav-textarea', { label: t('a_r_note'), rows: 2, maxlength: 1000, placeholder: t('a_r_note_ph') });
+      const acts = h('div.stack.racts', aLink, aTrash, aBlock, aBlock ? h('small.muted', t('a_r_block_note')) : null);
       const sync = () => { acts.hidden = decision.value !== 'removed'; };
       decision.addEventListener('change', sync);
       dialog({ title: t('a_r_resolve'), width: '30rem',
         body: h('div.form', decision, acts, note, h('p.muted.small', t('a_r_mail_note'))),
         actions: [{ label: t('cancel') }, { label: t('a_r_apply'), primary: true, icon: 'shield-check', run: async () => {
-          const actions = [aLink.checked && 'disable_link', aTrash && aTrash.checked && 'trash', aDeact && aDeact.checked && 'deactivate'].filter(Boolean);
+          const actions = [aLink.checked && 'disable_link', aTrash && aTrash.checked && 'trash', aBlock && aBlock.checked && 'block'].filter(Boolean);
           await api('master.report.resolve', { id: rep.id, decision: decision.value, actions, note: note.value.trim() });
           toast(t('a_r_applied'), 'success'); rload().catch(fail);
         } }] });
@@ -111,18 +113,18 @@ export async function admin(root, tab) {
 
     const viewBtn = (rep, itemId) => btn(t('a_r_view'), { size: 'sm', icon: 'eye', appearance: 'outline', onclick: () => window.open(fileUrl(rep, itemId), '_blank', 'noopener') });
     const repCard = (rep) => {
-      const who = rep.owner ? h('span', h('b', rep.owner.name), ' ', h('small.muted', rep.owner.email), ' ', rep.owner.active ? null : badge('neutral', t('a_is_waiting'))) : h('small.muted', t('a_r_owner_gone'));
+      const who = rep.owner ? h('span', h('b', rep.owner.name), ' ', h('small.muted', rep.owner.email), ' ', rep.owner.blocked ? badge('danger', t('a_r_blocked')) : null) : h('small.muted', t('a_r_owner_gone'));
       const content = rep.gone ? h('p.muted.small', icon('link-2-off'), ' ', t('a_r_content_gone'))
         : rep.kind === 'share'
           ? h('div.rfile', h('span', `${rep.file.name} · ${bytes(rep.file.size)}`), viewBtn(rep))
           : h('div.stack', (rep.temp.items || []).map((it) => h('div.rfile', h('span', `${it.name} · ${bytes(it.size)}`), it.folder ? badge('neutral', t('a_r_folder')) : viewBtn(rep, it.id))));
       return h('sav-card.rcard', { appearance: 'outlined' }, h('div.stack',
-        h('div.rhead', catBadge(rep.category), badge('neutral', t('a_r_kind_' + rep.kind)), statusBadge(rep.status), h('span.grow'), h('small.muted', when(rep.created))),
+        h('div.rhead', catBadge(rep.reason), badge('neutral', t('a_r_kind_' + rep.kind)), statusBadge(rep), h('span.grow'), h('small.muted', when(rep.created))),
         h('div.rwho', who),
-        rep.detail ? h('p.rdetail', rep.detail) : null,
+        rep.note ? h('p.rdetail', rep.note) : null,
         h('small.muted', t('a_r_reporter', { who: rep.reporter || t('a_r_anon') }) + (rep.ip ? ' · ' + rep.ip : '') + (rep.seen ? ' · ' + t('a_r_seen', { when: when(rep.seen) }) : '')),
         content,
-        rep.status !== 'open' ? h('small.muted.rdone', t('a_r_decided', { when: when(rep.resolved) }) + (rep.action ? ' · ' + rep.action.split(',').filter(Boolean).map(actLabel).join(', ') : '') + (rep.resolution ? ' — ' + rep.resolution : '')) : null,
+        rep.status !== 'open' ? h('small.muted.rdone', t('a_r_decided', { when: when(rep.resolved) }) + (rep.action && rep.action !== 'dismissed' ? ' · ' + rep.action.split(',').filter(Boolean).map(actLabel).join(', ') : '') + (rep.resolution ? ' — ' + rep.resolution : '')) : null,
         rep.status === 'open' ? h('div.prow', btn(t('a_r_resolve'), { size: 'sm', variant: 'primary', appearance: 'solid', icon: 'shield-check', onclick: () => resolveDialog(rep) })) : null));
     };
 

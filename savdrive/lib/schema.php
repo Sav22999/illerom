@@ -27,10 +27,10 @@
  *              limit of downloads, notice to the owner at each download and message; ready = 0 while its files upload
  * temp_items   what a temporary link gives: a file or folder of the drive (node_id, it stays when the link ends) or a
  *              file uploaded only for the link (bkey, under <storage>/<user_id>/, deleted with the link, counted in the space)
- * reports      a public link (a share link or a temporary link, by token) that a visitor reported as illegal or against the
- *              terms (DSA art. 16): the kind, the content it points to (node_id | link_id) and its owner (owner_id, so the
- *              masters can review, act and, art. 17, tell the owner), the category and detail, the reporter (email, ip),
- *              the decision (status, action, resolution) and when a master last looked at the reported content (seen_at)
+ * reports      a public link (a share link or a temporary link) that a visitor reported as illegal or against the terms
+ *              (DSA art. 16); content_kind is 'share' | 'temp' and content_id the node or the temporary link
+ * audit        what the master admins did (blocks, report decisions)
+ *              reports and audit are the two shared tables of ../../identity/moderation.php, used by every app
  */
 
 declare(strict_types=1);
@@ -201,30 +201,8 @@ function schema_statements(string $p): array
             " . $fk('ti_user', 'user_id', 'users') . ",
             " . $fk('ti_node', 'node_id', 'nodes') . "
         ) $e",
-        "CREATE TABLE IF NOT EXISTS `{$p}reports` (
-            `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            `kind` ENUM('share','temp') NOT NULL,
-            `token` CHAR(32) NOT NULL,
-            `node_id` INT UNSIGNED NULL,
-            `link_id` INT UNSIGNED NULL,
-            `owner_id` INT UNSIGNED NULL,
-            `category` VARCHAR(20) NOT NULL DEFAULT 'other',
-            `detail` TEXT NULL,
-            `reporter_email` VARCHAR(190) NULL,
-            `reporter_ip` VARCHAR(45) NULL,
-            `status` ENUM('open','removed','dismissed') NOT NULL DEFAULT 'open',
-            `action` VARCHAR(60) NOT NULL DEFAULT '',
-            `resolution` TEXT NULL,
-            `resolved_by` INT UNSIGNED NULL,
-            `resolved_at` DATETIME NULL,
-            `seen_at` DATETIME NULL,
-            `created_at` DATETIME NOT NULL,
-            KEY `ix_status` (`status`, `created_at`),
-            KEY `ix_token` (`token`),
-            " . $fk('rep_node', 'node_id', 'nodes', 'SET NULL') . ",
-            " . $fk('rep_link', 'link_id', 'temp_links', 'SET NULL') . ",
-            " . $fk('rep_owner', 'owner_id', 'users', 'SET NULL') . "
-        ) $e",
+        // reports of public links and the admin audit log: the shared moderation module (../../identity/moderation.php)
+        ...moderation_schema($p),
     ];
 }
 
@@ -233,6 +211,8 @@ function install_schema(PDO $pdo, string $prefix): void
     // once only: the tables of the time when this app had accounts of its own go, then the accounts of the suite are there
     suite_reset_app($pdo, $prefix);
     suite_install($pdo, (string)(credentials()['name'] ?? ''));
+    // the first draft of reports (its own columns) is replaced by the shared moderation table (content_kind/content_id)
+    if ($pdo->query("SHOW TABLES LIKE '{$prefix}reports'")->fetch() && $pdo->query("SHOW COLUMNS FROM `{$prefix}reports` LIKE 'category'")->fetch()) $pdo->exec("DROP TABLE `{$prefix}reports`");
     foreach (schema_statements($prefix) as $sql) $pdo->exec($sql);
     if (!$pdo->query("SHOW COLUMNS FROM `{$prefix}uploads` LIKE 'replace_id'")->fetch()) $pdo->exec("ALTER TABLE `{$prefix}uploads` ADD COLUMN `replace_id` INT UNSIGNED NULL AFTER `received`");
     if (!$pdo->query("SHOW COLUMNS FROM `{$prefix}uploads` LIKE 'vault_id'")->fetch()) $pdo->exec("ALTER TABLE `{$prefix}uploads` ADD COLUMN `vault_id` INT UNSIGNED NULL AFTER `replace_id`");

@@ -92,7 +92,11 @@ const MAIL_TEXT = [
         'report_body' => 'Someone reported a public link of yours in SavDrive as illegal or against the terms. After a review by a person, this is the decision.',
         'report_what' => 'What was done: {what}.', 'report_reason' => 'Reason: {reason}', 'report_appeal' => 'If you think this is wrong, you can challenge the decision free of charge, within six months, from the contact form.',
         'report_button' => 'Challenge the decision',
-        'report_acts' => ['disable_link' => 'your public link was turned off', 'trash' => 'the file was moved to your trash', 'deactivate' => 'your account was deactivated', 'disable_link,trash' => 'your public link was turned off and the file moved to your trash', 'reviewed' => 'the content was reviewed'],
+        'report_acts' => ['disable_link' => 'your public link was turned off', 'trash' => 'the file was moved to your trash', 'block' => 'your account was blocked', 'disable_link,trash' => 'your public link was turned off and the file moved to your trash', 'reviewed' => 'the content was reviewed'],
+        'block_subject' => 'Your SavOffice account has been blocked', 'block_title' => 'Account blocked',
+        'block_body' => 'Your account has been blocked by the administrators. Reason: {reason}.',
+        'block_contact' => 'A blocked account can no longer use any SavOffice app. If you think this is a mistake, you can challenge it, within six months, from the contact page of saveriomorelli.com.',
+        'reason_spam' => 'spam', 'reason_phishing' => 'phishing or a scam', 'reason_abuse' => 'abusive content', 'reason_illegal' => 'illegal content', 'reason_copyright' => 'copyright infringement', 'reason_csam' => 'material that exploits minors', 'reason_other' => 'breach of the terms of use',
     ],
     'it' => [
         'footer' => 'Email automatica inviata da SavDrive. Non rispondere a questo messaggio.',
@@ -123,7 +127,11 @@ const MAIL_TEXT = [
         'report_body' => 'Qualcuno ha segnalato un tuo link pubblico in SavDrive come illecito o contrario ai termini. Dopo una verifica fatta da una persona, questa è la decisione.',
         'report_what' => 'Cosa è stato fatto: {what}.', 'report_reason' => 'Motivo: {reason}', 'report_appeal' => 'Se ritieni che sia un errore, puoi contestare la decisione gratuitamente, entro sei mesi, dal modulo di contatto.',
         'report_button' => 'Contesta la decisione',
-        'report_acts' => ['disable_link' => 'il tuo link pubblico è stato disattivato', 'trash' => 'il file è stato spostato nel tuo cestino', 'deactivate' => 'il tuo account è stato disattivato', 'disable_link,trash' => 'il tuo link pubblico è stato disattivato e il file spostato nel tuo cestino', 'reviewed' => 'il contenuto è stato esaminato'],
+        'report_acts' => ['disable_link' => 'il tuo link pubblico è stato disattivato', 'trash' => 'il file è stato spostato nel tuo cestino', 'block' => 'il tuo account è stato bloccato', 'disable_link,trash' => 'il tuo link pubblico è stato disattivato e il file spostato nel tuo cestino', 'reviewed' => 'il contenuto è stato esaminato'],
+        'block_subject' => 'Il tuo account SavOffice è stato bloccato', 'block_title' => 'Account bloccato',
+        'block_body' => 'Il tuo account è stato bloccato dagli amministratori. Motivo: {reason}.',
+        'block_contact' => 'Un account bloccato non può più usare nessuna app SavOffice. Se pensi sia un errore, puoi contestarlo, entro sei mesi, dalla pagina dei contatti di saveriomorelli.com.',
+        'reason_spam' => 'spam', 'reason_phishing' => 'phishing o truffa', 'reason_abuse' => 'contenuti offensivi', 'reason_illegal' => 'contenuti illegali', 'reason_copyright' => 'violazione del diritto d’autore', 'reason_csam' => 'materiale che sfrutta minori', 'reason_other' => 'violazione dei termini d’uso',
     ],
 ];
 
