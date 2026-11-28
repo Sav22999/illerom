@@ -122,7 +122,7 @@ const T = {
   land_kicker: ['Free and open, part of SavOffice', 'Libera e aperta, parte di SavOffice'],
   land_title: ['Ideas in order, at a glance.', 'Le idee in ordine, a colpo d’occhio.'],
   land_text: ['Flowcharts, org charts, mind maps and simple schemes: shapes that snap into place, connectors that follow them, trees that lay themselves out.', 'Diagrammi di flusso, organigrammi, mappe mentali e schemi semplici: forme che si allineano da sole, connettori che le seguono, alberi che si dispongono da soli.'],
-  ft_shapes: ['A library of shapes', 'Una libreria di forme'], ft_shapes_t: ['Rectangles, diamonds, cylinders, documents, notes, people and clouds, with text inside and styles of your own.', 'Rettangoli, rombi, cilindri, documenti, note, persone e nuvole, con il testo dentro e gli stili che vuoi.'],
+  ft_shapes: ['Libraries of shapes', 'Librerie di forme'], ft_shapes_t: ['Basic shapes, network devices, UML (classes, use cases, sequence, activity, states, components), org charts, timelines, database tables, BPMN and swimlanes, with a search.', 'Forme di base, dispositivi di rete, UML (classi, casi d’uso, sequenza, attività, stati, componenti), organigrammi, linee del tempo, tabelle di database, BPMN e corsie, con la ricerca.'],
   ft_links: ['Connectors that stay', 'Connettori che restano'], ft_links_t: ['Straight, elbow or curved, with heads and labels: move a shape and its connectors follow it.', 'Diritti, a gomito o curvi, con frecce ed etichette: sposti una forma e i suoi connettori la seguono.'],
   ft_layout: ['Trees in order', 'Alberi in ordine'], ft_layout_t: ['Org charts and mind maps lay themselves out; grid, guides, align and distribute do the rest.', 'Organigrammi e mappe mentali si dispongono da soli; griglia, guide, allinea e distribuisci fanno il resto.'],
   ft_sketch: ['From the sketch', 'Dallo schizzo'], ft_sketch_t: ['A board of SavWhiteboard becomes a clean diagram: its boxes, texts and arrows come along.', 'Una lavagna di SavWhiteboard diventa un diagramma pulito: riquadri, testi e frecce vengono con lei.'],
@@ -143,7 +143,9 @@ const T = {
   rename: ['Rename', 'Rinomina'], duplicate: ['Duplicate', 'Duplica'], to_trash: ['Move to the trash', 'Sposta nel cestino'], trashed: ['Moved to the trash', 'Spostato nel cestino'], restored: ['Diagram restored', 'Diagramma ripristinato'],
   title_l: ['Title', 'Titolo'], untitled: ['Untitled diagram', 'Diagramma senza titolo'], items_n: ['{n} items', '{n} elementi'], items_1: ['1 item', '1 elemento'], items_0: ['Empty', 'Vuoto'], changed_w: ['changed {w}', 'modificato {w}'],
   as_list: ['Show as a list', 'Mostra come elenco'], as_grid: ['Show as a grid', 'Mostra come griglia'], sort_updated: ['Last changed', 'Ultima modifica'], sort_title: ['By title', 'Per titolo'], sort_opened: ['Last opened', 'Ultima apertura'],
-  t_blank: ['Blank', 'Vuoto'], t_flowchart: ['Flowchart', 'Diagramma di flusso'], t_orgchart: ['Org chart', 'Organigramma'], t_mindmap: ['Mind map', 'Mappa mentale'], t_process: ['Process', 'Processo'], t_network: ['Network', 'Rete'], t_swot: ['SWOT analysis', 'Analisi SWOT'], t_timeline: ['Timeline', 'Linea del tempo'], t_database: ['Database tables', 'Tabelle di un database'], t_decision: ['Decision tree', 'Albero delle decisioni'],
+  t_blank: ['Blank', 'Vuoto'], t_flowchart: ['Flowchart', 'Diagramma di flusso'], t_orgchart: ['Org chart', 'Organigramma'], t_mindmap: ['Mind map', 'Mappa mentale'], t_process: ['Process', 'Processo'], t_network: ['Network diagram', 'Diagramma di rete'], t_swot: ['SWOT analysis', 'Analisi SWOT'], t_timeline: ['Timeline', 'Linea del tempo'], t_database: ['Database (ER)', 'Database (ER)'], t_decision: ['Decision tree', 'Albero delle decisioni'],
+  t_uml_class: ['UML class diagram', 'Diagramma delle classi UML'], t_sequence: ['UML sequence', 'Sequenza UML'], t_usecase: ['UML use cases', 'Casi d’uso UML'], t_activity: ['UML activity', 'Attività UML'],
+  t_state: ['UML states', 'Stati UML'], t_component: ['UML components', 'Componenti UML'], t_bpmn: ['BPMN process', 'Processo BPMN'], t_swimlane: ['Swimlanes', 'Corsie (swimlane)'], t_ptimeline: ['Parallel timeline', 'Linea del tempo parallela'],
   from_board: ['From a SavWhiteboard sketch', 'Da uno schizzo di SavWhiteboard'], from_board_t: ['Pick a board: its shapes, texts and arrows become a diagram (the board stays as it is).', 'Scegli una lavagna: forme, testi e frecce diventano un diagramma (la lavagna resta com’è).'],
   no_boards: ['No boards in SavWhiteboard yet', 'Ancora nessuna lavagna in SavWhiteboard'], boards_off: ['SavWhiteboard does not answer: sign in there and try again.', 'SavWhiteboard non risponde: accedi lì e riprova.'], sketch_done: ['The sketch is now a diagram', 'Lo schizzo ora è un diagramma'],
 
@@ -154,6 +156,32 @@ const T = {
   tool_select: ['Select', 'Seleziona'], tool_hand: ['Move the diagram', 'Sposta il diagramma'], tool_connect: ['Connector', 'Connettore'], tool_text: ['Text', 'Testo'], shapes: ['Shapes', 'Forme'], shape: ['Shape', 'Forma'],
   s_rect: ['Rectangle', 'Rettangolo'], s_round: ['Rounded rectangle', 'Rettangolo arrotondato'], s_diamond: ['Diamond', 'Rombo'], s_ellipse: ['Ellipse', 'Ellisse'], s_para: ['Parallelogram', 'Parallelogramma'], s_cyl: ['Cylinder', 'Cilindro'],
   s_doc: ['Document', 'Documento'], s_note: ['Note', 'Nota'], s_person: ['Person', 'Persona'], s_cloud: ['Cloud', 'Nuvola'], s_text: ['Text', 'Testo'],
+  // the libraries of shapes and their entries
+  search_shapes: ['Search shapes', 'Cerca forme'], hint_relation: ['{r}: drag from a shape to another one.', '{r}: trascina da una forma a un’altra.'],
+  lib_basic: ['Basic shapes', 'Forme di base'], lib_network: ['Network', 'Rete'], lib_uml_class: ['UML classes', 'Classi UML'], lib_uml_usecase: ['UML use cases', 'Casi d’uso UML'], lib_uml_sequence: ['UML sequence', 'Sequenza UML'],
+  lib_uml_activity: ['UML activity', 'Attività UML'], lib_uml_state: ['UML states', 'Stati UML'], lib_uml_component: ['UML components and deployment', 'Componenti e deployment UML'], lib_org: ['Org chart', 'Organigramma'],
+  lib_timeline: ['Timeline', 'Linea del tempo'], lib_er: ['Database (ER)', 'Database (ER)'], lib_bpmn: ['BPMN', 'BPMN'], lib_swimlane: ['Swimlanes', 'Corsie (swimlane)'],
+  s_internet: ['Internet', 'Internet'], s_router: ['Router', 'Router'], s_switch: ['Switch', 'Switch'], s_server: ['Server', 'Server'], s_firewall: ['Firewall', 'Firewall'], s_pc: ['Computer', 'Computer'], s_laptop: ['Laptop', 'Portatile'],
+  s_phone: ['Phone', 'Telefono'], s_printer: ['Printer', 'Stampante'], s_ap: ['Wi-Fi access point', 'Access point Wi-Fi'], s_netdb: ['Database', 'Database'], s_zone: ['Network zone', 'Zona di rete'], s_link: ['Cable', 'Cavo'], s_wireless: ['Wireless link', 'Collegamento senza fili'],
+  s_class: ['Class', 'Classe'], s_iface: ['Interface', 'Interfaccia'], s_enum: ['Enumeration', 'Enumerazione'], s_package: ['Package', 'Pacchetto'], s_unote: ['Comment', 'Commento'],
+  s_assoc: ['Association', 'Associazione'], s_dir_assoc: ['Directed association', 'Associazione orientata'], s_inherit: ['Inheritance', 'Ereditarietà'], s_realize: ['Realisation', 'Realizzazione'], s_depend: ['Dependency', 'Dipendenza'],
+  s_aggr: ['Aggregation', 'Aggregazione'], s_compo: ['Composition', 'Composizione'],
+  s_actor: ['Actor', 'Attore'], s_usecase: ['Use case', 'Caso d’uso'], s_system: ['System boundary', 'Confine del sistema'], s_include: ['Include', 'Include'], s_extend: ['Extend', 'Estende'],
+  s_lifeline: ['Lifeline', 'Linea di vita'], s_activation: ['Activation', 'Attivazione'], s_frame: ['Fragment (loop, alt, opt)', 'Frammento (loop, alt, opt)'], s_msg: ['Message', 'Messaggio'], s_amsg: ['Asynchronous message', 'Messaggio asincrono'], s_reply: ['Reply', 'Risposta'],
+  s_start: ['Start', 'Inizio'], s_end: ['End', 'Fine'], s_action: ['Action', 'Azione'], s_decision: ['Decision', 'Decisione'], s_fork: ['Fork / join', 'Biforcazione / unione'], s_vlane: ['Vertical lane', 'Corsia verticale'], s_flow: ['Flow', 'Flusso'],
+  s_state: ['State', 'Stato'], s_choice: ['Choice', 'Scelta'], s_trans: ['Transition', 'Transizione'],
+  s_comp: ['Component', 'Componente'], s_cube: ['Node (device)', 'Nodo (dispositivo)'], s_artifact: ['Artifact', 'Artefatto'], s_iface_ball: ['Provided interface', 'Interfaccia fornita'],
+  s_card: ['Person card', 'Scheda persona'], s_dept: ['Department', 'Reparto'], s_team: ['Team area', 'Area di squadra'], s_orgline: ['Reporting line', 'Linea gerarchica'],
+  s_track: ['Lane of a timeline', 'Corsia della linea del tempo'], s_axis: ['Time axis', 'Asse del tempo'], s_mile: ['Milestone', 'Traguardo'], s_span: ['Interval', 'Intervallo'], s_tlink: ['Dependency', 'Dipendenza'],
+  s_entity: ['Table', 'Tabella'], s_er_entity: ['Entity', 'Entità'], s_er_rel: ['Relationship', 'Relazione'], s_er_attr: ['Attribute', 'Attributo'],
+  s_er_11: ['One to one', 'Uno a uno'], s_er_1n: ['One to many', 'Uno a molti'], s_er_0n: ['One to zero or many', 'Uno a zero o molti'], s_er_01: ['One to zero or one', 'Uno a zero o uno'],
+  s_task: ['Task', 'Attività'], s_subproc: ['Sub-process', 'Sottoprocesso'], s_bstart: ['Start event', 'Evento di inizio'], s_binter: ['Intermediate event', 'Evento intermedio'], s_bend: ['End event', 'Evento di fine'],
+  s_gwx: ['Exclusive gateway', 'Gateway esclusivo'], s_gwp: ['Parallel gateway', 'Gateway parallelo'], s_gwo: ['Inclusive gateway', 'Gateway inclusivo'], s_dataobj: ['Data object', 'Oggetto dati'], s_datastore: ['Data store', 'Archivio dati'],
+  s_pool: ['Pool', 'Pool (partecipante)'], s_lane: ['Lane', 'Corsia'], s_seqflow: ['Sequence flow', 'Flusso di sequenza'], s_msgflow: ['Message flow', 'Flusso di messaggi'], s_bassoc: ['Association', 'Associazione'],
+  s_step: ['Step', 'Passo'], s_box: ['Container', 'Contenitore'],
+  ph_class: ['Name\n--\nattributes\n--\nmethods()', 'Nome\n--\nattributi\n--\nmetodi()'], ph_entity: ['table\nPK id\ncolumn\nFK other_id', 'tabella\nPK id\ncolonna\nFK altro_id'],
+  photo_add: ['Add a photo', 'Aggiungi una foto'], photo_remove: ['Remove the photo', 'Togli la foto'], err_photo: ['This picture cannot be read.', 'Questa immagine non si può leggere.'], fit_text: ['Fit to the text', 'Adatta al testo'],
+  relation: ['Kind of connector', 'Tipo di connettore'], rel_custom: ['Custom', 'Personalizzato'],
   hint_shape: ['Click on the page to place it, or drag to give it a size.', 'Fai clic sulla pagina per posarla, o trascina per darle una misura.'], hint_connect: ['Drag from a shape to another one.', 'Trascina da una forma a un’altra.'],
   fill: ['Fill', 'Riempimento'], no_fill: ['No fill', 'Nessun riempimento'], border: ['Border', 'Bordo'], no_border: ['No border', 'Nessun bordo'], width: ['Width', 'Spessore'], dash: ['Line', 'Linea'], d_solid: ['Solid', 'Continua'], d_dash: ['Dashed', 'Tratteggiata'], d_dot: ['Dotted', 'Punteggiata'],
   text_style: ['Text', 'Testo'], line_style: ['Line', 'Linea'], text_color: ['Colour of the text', 'Colore del testo'], line_color: ['Colour', 'Colore'], label_size: ['Size of the label', 'Dimensione dell’etichetta'],
@@ -163,6 +191,8 @@ const T = {
   route: ['Route', 'Percorso'], r_straight: ['Straight', 'Diritto'], r_elbow: ['Elbow', 'A gomito'], r_curve: ['Curved', 'Curvo'],
   heads: ['Arrow heads', 'Punte'], head_start: ['At the start', 'All’inizio'], head_end: ['At the end', 'Alla fine'], swap: ['Swap the direction', 'Inverti la direzione'],
   h_none: ['None', 'Nessuna'], h_arrow: ['Arrow', 'Freccia'], h_open: ['Open arrow', 'Freccia aperta'], h_diamond: ['Diamond', 'Rombo'], h_circle: ['Dot', 'Punto'], h_bar: ['Bar', 'Barra'],
+  h_tri: ['Hollow triangle (inheritance)', 'Triangolo vuoto (ereditarietà)'], h_odiamond: ['Hollow diamond (aggregation)', 'Rombo vuoto (aggregazione)'], h_ocircle: ['Hollow circle', 'Cerchio vuoto'],
+  h_er1: ['Exactly one', 'Esattamente uno'], h_er01: ['Zero or one', 'Zero o uno'], h_ern: ['One or many', 'Uno o molti'], h_er0n: ['Zero or many', 'Zero o molti'],
   arrange: ['Arrange', 'Disponi'], align_l: ['Align', 'Allinea'], a_left: ['Align left', 'Allinea a sinistra'], a_center: ['Align centres', 'Allinea i centri'], a_right: ['Align right', 'Allinea a destra'], a_top: ['Align top', 'Allinea in alto'], a_middle: ['Align middles', 'Allinea al centro'], a_bottom: ['Align bottom', 'Allinea in basso'],
   dist_h: ['Distribute across', 'Distribuisci in orizzontale'], dist_v: ['Distribute down', 'Distribuisci in verticale'], order: ['Order', 'Ordine'], front: ['Bring to front', 'Porta in primo piano'], back: ['Send to back', 'Porta in fondo'], forward: ['Bring forward', 'Porta avanti'], backward: ['Send backward', 'Porta indietro'],
   group: ['Group', 'Raggruppa'], ungroup: ['Ungroup', 'Separa'], lock: ['Lock', 'Blocca'], unlock: ['Unlock', 'Sblocca'],
@@ -191,6 +221,8 @@ export function setLang(l) {
 const DEV = /^(localhost|127\.)/.test(location.hostname);
 export const t = (k, v = {}) => { if (!T[k] && DEV) console.warn('i18n missing:', k); return (T[k] ? T[k][lang === 'it' ? 1 : 0] : k).replace(/\{(\w+)\}/g, (m, x) => v[x] ?? m); };
 export const has = (k) => !!T[k];
+/** A text in both languages (to search by either). */
+export const both = (k) => (T[k] ? T[k].join(' ') : k);
 export function when(iso) {
   if (!iso) return '';
   const d = new Date(iso), s = (Date.now() - d) / 1000, rtf = new Intl.RelativeTimeFormat(lang, { numeric: 'auto' });

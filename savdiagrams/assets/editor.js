@@ -9,14 +9,15 @@
  * into the history (undo/redo) and into the next save, which sends only what changed.
  */
 import { btn, colorPop, confirm, ctxAt, dialog, drop, fail, h, icon, iconBtn, K, menuAt, mobile, put, toast } from './ui.js';
-import { getLang, t } from './i18n.js';
+import { both, getLang, t } from './i18n.js';
 import { S, api } from './store.js';
 import { commands, go, prefs, setPrefs, userMenu } from './account.js';
-import { BACKS, FILLS, FONTS, INKS, SHAPES, SIZE, cleanItems, edge as newEdge, freshIds, isDark, node as newNode, r2, uid } from './model.js';
+import { BACKS, COMPART, CONTAINERS, FILLS, FONTS, INKS, LIBRARIES, MAX_IMG, PRESETS, RELATIONS, SHAPES, SLOTS, cleanItems, compH, edge as newEdge, freshIds, isDark, libOf, node as newNode, r2, uid } from './model.js';
 import { NS, bounds, facing, gridPattern, hits, itemSVG, measure, overlaps, route, sample, shapeSVG, sidePoint, textLines, union } from './shapes.js';
 import { layoutTree, rootOf } from './layout.js';
 import { keep as keepOff, take as takeOff, drop as dropOff } from '../../assets/savoffice/offline-keep.js';
 
+const R2 = (v) => Math.round(v * 100) / 100;
 const svgEl = (tag, attrs = {}) => { const n = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); return n; };
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const CLIP = 'savdiagrams';
@@ -24,6 +25,8 @@ const NODE_DEF = { f: '#ffffff', c: '#1c1c1c', s: 2, d: '', tc: '#1c1c1c', fs: 1
 const EDGE_DEF = { r: 'elbow', c: '#1c1c1c', s: 2, d: '', sa: 'none', ea: 'arrow', fs: 14, tc: '#1c1c1c' };
 const SHAPE_ICON = { rect: 'square', round: 'rounded', diamond: 'diamond', ellipse: 'circle', para: 'para', cyl: 'database', doc: 'doc-shape', note: 'sticky-note', person: 'person', cloud: 'cloud', text: 'type' };
 const QUICK = ['rect', 'round', 'diamond', 'ellipse'];
+const BASIC = LIBRARIES[0][1].map((e) => e[0]);
+const presetOf = (id) => PRESETS.get(id) || PRESETS.get('rect');
 const WIDTHS = [1, 2, 3, 5, 8];
 const FS = [12, 14, 16, 20, 24, 32, 48];
 
@@ -37,6 +40,27 @@ export async function editorScreen(root, id) {
   if (kept) Object.assign(D, { list: kept.list, title: kept.title, settings: kept.settings });
   let P = prefs();
   const nodeStyle = () => ({ ...NODE_DEF, ...(P.node || {}) }), edgeStyle = () => ({ ...EDGE_DEF, ...(P.edge || {}) });
+  /** A new node of an entry of the library: the basic shapes take the last style used, the others their own look. */
+  function makeNode(id, x, y, w, hh) {
+    const p = presetOf(id), st = nodeStyle(), k = p.k;
+    let n;
+    if (p.tx || Object.keys(p.st).length) n = newNode(k, x, y, w, hh, p.tx ? p.tx[getLang() === 'it' ? 1 : 0] : '', { ...NODE_DEF, ff: st.ff, ...p.st });
+    else n = newNode(k, x, y, w, hh, '', k === 'text' ? { ...st, f: '', c: '', s: 0 } : k === 'note' ? { ...st, f: '#fff3c4', al: 'left', va: 'top' } : st);
+    if (COMPART.has(k)) n.h = Math.max(n.h, compH(n));
+    return n;
+  }
+  /** Where a new node goes in the order: on top, or (a container) just behind the first thing it covers. */
+  function orderFor(n) {
+    if (!CONTAINERS.has(n.k)) return null;
+    const k = order.findIndex((x) => { const i = items.get(x); return i?.t === 'node' && i.x >= n.x && i.y >= n.y && i.x + i.w <= n.x + n.w && i.y + i.h <= n.y + n.h; });
+    if (k < 0) return null;
+    return [...order.slice(0, k), n.id, ...order.slice(k)];
+  }
+  /** One end of a connector dropped on a node at (x, y): a side (its middle) or the nearest; on a lifeline, the height. */
+  function endAt(n, x, y) {
+    if (SLOTS.has(n.k) && y > n.y + Math.min(n.h, Math.max(30, n.fs * 2.6))) return { n: n.id, p: x < n.x + n.w / 2 ? 'l' : 'r', o: r2(clamp((y - n.y) / n.h, 0, 1)) };
+    return { n: n.id, p: sideNear(n, x, y) };
+  }
 
   // ---------------------------------------------------------------- state
   const items = new Map(), els = new Map();
@@ -46,7 +70,9 @@ export async function editorScreen(root, id) {
   let title = D.title, version = D.version, dark = isDark(settings.bg);
   const saved = settings.view ? { ...settings.view } : null;
   let V = { x: 0, y: 0, z: 1 };
-  let tool = 'select', shapeKind = SHAPES.includes(P.shape) ? P.shape : 'rect';
+  // shapeKind: the entry of the library the shape tool places (a kind of shape with its size, style and text); edgeKind:
+  // the style of a connector picked in the library (a UML relation, an ER cardinality…), for the connector tool
+  let tool = 'select', shapeKind = PRESETS.get(P.shape)?.k ? P.shape : 'rect', edgeKind = null;
   const sel = new Set();
   let hist = [], fut = [], editing = null, spaceDown = false, gone = false, hover = null, guides = [], marquee = null, target = null, showMap = P.map !== false;
   const get = (k) => { const i = items.get(k); return i && i.t === 'node' ? i : undefined; };
@@ -285,6 +311,13 @@ export async function editorScreen(root, id) {
     const wasSel = sel.has(hit.id);
     if (e.shiftKey) { if (!wasSel) select([hit.id], true); } else if (!wasSel) select([hit.id]);
     const list = selItems().filter((i) => !i.lk);
+    // a container (lane, pool, frame, package…) takes along what lies inside it and is drawn over it
+    for (let q = 0; q < list.length; q++) {
+      const c = list[q];
+      if (c.t !== 'node' || !CONTAINERS.has(c.k)) continue;
+      const at = order.indexOf(c.id);
+      for (const k of order.slice(at + 1)) { const i = items.get(k); if (i?.t === 'node' && !i.lk && !list.includes(i) && i.x >= c.x - .5 && i.y >= c.y - .5 && i.x + i.w <= c.x + c.w + .5 && i.y + i.h <= c.y + c.h + .5) list.push(i); }
+    }
     const start = new Map(list.map((i) => [i.id, i]));
     const box = union(list.filter((i) => i.t === 'node'), get) || union(list, get);
     const others = order.map((k) => items.get(k)).filter((i) => i && i.t === 'node' && !start.has(i.id)).map((i) => bounds(i, get));
@@ -372,7 +405,7 @@ export async function editorScreen(root, id) {
       id: e.pointerId,
       move(ev) {
         const [x, y] = toWorld(ev.clientX, ev.clientY), other = ed[which === 'a' ? 'b' : 'a'], n = nodeAt(x, y);
-        target = n ? { n: n.id, p: sideNear(n, x, y) } : null;
+        target = n ? endAt(n, x, y) : null;
         items.set(ed.id, { ...ed, [which]: target ? { ...target } : { x: snapV(x, ev.altKey), y: snapV(y, ev.altKey) } });
         void other;
         drawMany([ed.id]);
@@ -387,11 +420,11 @@ export async function editorScreen(root, id) {
    * space from a dot of a shape it makes a copy of that shape there, already connected.
    */
   function connectAction(e, from, x0, y0, makeNode) {
-    const st = edgeStyle(), a = from ? { n: from.id, p: from.p || '' } : { x: snapV(x0), y: snapV(y0) };
+    const st = edgeKind ? { ...EDGE_DEF, ...edgeKind.st } : edgeStyle(), a = from ? { n: from.id, p: from.p || '', ...(from.o !== undefined ? { o: from.o } : {}) } : { x: snapV(x0), y: snapV(y0) };
     let cur = null, did = false;
     const preview = (x, y, alt) => {
       const n = nodeAt(x, y, from?.id);
-      target = n ? { n: n.id, p: sideNear(n, x, y) } : null;
+      target = n ? endAt(n, x, y) : null;
       cur = { ...newEdge(a, target ? { ...target } : { x: snapV(x, alt), y: snapV(y, alt) }, st), id: '_live' };
       liveG.innerHTML = itemSVG(cur, get, settings.bg);
     };
@@ -409,7 +442,7 @@ export async function editorScreen(root, id) {
           const src = get(from.id), side = from.p || facing(src, x, y), opp = { t: 'b', b: 't', l: 'r', r: 'l' }[side];
           const w = src.w, hh = src.h, nx = side === 'r' ? x : side === 'l' ? x - w : x - w / 2, ny = side === 'b' ? y : side === 't' ? y - hh : y - hh / 2;
           const n = { ...src, id: uid(), x: snapV(nx), y: snapV(ny), text: '', g: undefined, lk: undefined };
-          delete n.g; delete n.lk;
+          delete n.g; delete n.lk; delete n.img;
           const ed = { ...cur, id: uid(), a: { n: src.id, p: from.p || '' }, b: { n: n.id, p: from.p ? opp : '' } };
           change([[n.id, null, n], [ed.id, null, ed]]);
           select([n.id]);
@@ -427,13 +460,13 @@ export async function editorScreen(root, id) {
   }
   /** A new shape: a click places it at its usual size, a drag gives it the size of the drag. */
   function shapeAction(e, kind) {
-    const [x0, y0] = toWorld(e.clientX, e.clientY), st = nodeStyle();
+    const [x0, y0] = toWorld(e.clientX, e.clientY);
     let n = null;
     const make = (x1, y1, alt) => {
-      const [w0, h0] = SIZE[kind], drag = Math.hypot(x1 - x0, y1 - y0) * V.z > 8;
+      const pr = presetOf(kind), w0 = pr.w, h0 = pr.h, drag = Math.hypot(x1 - x0, y1 - y0) * V.z > 8;
       const L = drag ? snapV(Math.min(x0, x1), alt) : snapV(x0 - w0 / 2, alt), T = drag ? snapV(Math.min(y0, y1), alt) : snapV(y0 - h0 / 2, alt);
       const w = drag ? Math.max(10, snapV(Math.max(x0, x1), alt) - L) : w0, hh = drag ? Math.max(10, snapV(Math.max(y0, y1), alt) - T) : h0;
-      n = newNode(kind, L, T, w, hh, '', kind === 'text' ? { ...st, f: '', c: '', s: 0 } : kind === 'note' ? { ...st, f: '#fff3c4', al: 'left', va: 'top' } : kind === 'person' ? { ...st, f: st.f === '#ffffff' ? '#ffffff' : st.f } : st);
+      n = makeNode(kind, L, T, w, hh);
       liveG.innerHTML = itemSVG(n, get, settings.bg);
     };
     make(x0, y0, false);
@@ -441,7 +474,7 @@ export async function editorScreen(root, id) {
     return {
       id: e.pointerId,
       move(ev) { const [x, y] = toWorld(ev.clientX, ev.clientY); make(x, y, ev.altKey); },
-      up() { liveG.innerHTML = ''; change([[n.id, null, n]]); if (!P.keepTool) setTool('select'); select([n.id]); if (kind === 'text') startEdit(n); },
+      up() { liveG.innerHTML = ''; change([[n.id, null, n]], orderFor(n)); if (!P.keepTool) setTool('select'); select([n.id]); if (kind === 'text') startEdit(n); },
       cancel() { liveG.innerHTML = ''; },
     };
   }
@@ -454,7 +487,7 @@ export async function editorScreen(root, id) {
     editing = { id: item.id, item };
     els.get(item.id)?.classList.add('editing');
     sel.clear(); sel.add(item.id); drawOverlay();
-    const ta = h('textarea.ted', { spellcheck: 'true', placeholder: t('type_here'), 'aria-label': t('edit_text') });
+    const ta = h('textarea.ted', { spellcheck: 'true', placeholder: COMPART.has(item.k) ? t('ph_' + item.k) : t('type_here'), 'aria-label': t('edit_text') });
     ta.value = typed ?? item.text;
     editor = ta;
     wrap.append(ta);
@@ -475,8 +508,11 @@ export async function editorScreen(root, id) {
     if (i.t === 'node') {
       const tl = textLines({ ...i, text: editor.value || ' ' }), b = tl.box, [x, y] = toScreen(b.x, b.y), w = b.w * V.z;
       const lines = Math.max(1, tl.lines.length), th = lines * tl.lh * V.z + 4;
-      const top = b.under ? y : i.va === 'top' ? y + tl.pad * V.z : i.va === 'bottom' ? y + b.h * V.z - tl.pad * V.z - th : y + (b.h * V.z - th) / 2;
-      Object.assign(s, { left: x + tl.pad * V.z + 'px', top: top + 'px', width: Math.max(30, w - tl.pad * 2 * V.z) + 'px', height: th + 'px', font: `${i.i ? 'italic ' : ''}${i.b ? 700 : 400} ${i.fs * V.z}px/1.25 ${FONTS[i.ff]}`, color: i.tc, textAlign: i.k === 'person' ? 'center' : i.al, background: 'transparent' });
+      const top = b.under ? y : tl.va === 'top' ? y + tl.pad * V.z : tl.va === 'bottom' ? y + b.h * V.z - tl.pad * V.z - th : y + (b.h * V.z - th) / 2;
+      // shapes whose text is drawn in parts (class, table, card, axis) are edited as plain lines on the background
+      const plain = COMPART.has(i.k) || i.k === 'card' || i.k === 'axis';
+      Object.assign(s, { left: x + tl.pad * V.z + 'px', top: top + 'px', width: Math.max(30, w - tl.pad * 2 * V.z) + 'px', height: th + 'px', font: `${i.i ? 'italic ' : ''}${i.b ? 700 : 400} ${i.fs * V.z}px/1.25 ${FONTS[i.ff]}`, color: plain ? (dark ? '#f2f2f2' : '#1c1c1c') : i.tc, textAlign: tl.al, background: plain ? settings.bg : 'transparent',
+        transform: b.rot ? 'rotate(-90deg)' : '', transformOrigin: b.rot ? `${r2(b.rot[0] * V.z + V.x - x - tl.pad * V.z)}px ${r2(b.rot[1] * V.z + V.y - top)}px` : '' });
     } else {
       const g = route(i, get);
       if (!g) return;
@@ -493,7 +529,12 @@ export async function editorScreen(root, id) {
     const now = items.get(eid);
     if (!now) return;
     if (!value && now.t === 'node' && now.k === 'text') change([[eid, now, null]]);
-    else if (value !== now.text) change([[eid, now, { ...now, text: value }]]);
+    else if (value !== now.text) {
+      const o = { ...now, text: value };
+      // a class or a table grows with its text: as tall as its parts, as wide as its longest line
+      if (COMPART.has(o.k)) { o.h = compH(o); o.w = Math.max(o.w, Math.ceil(Math.max(...value.split('\n').map((l) => measure(l, `700 ${o.fs}px ${FONTS[o.ff]}`))) + 30)); }
+      change([[eid, now, o]]);
+    }
     else { draw(eid); drawOverlay(); }
     void item;
     buildProps();
@@ -519,7 +560,7 @@ export async function editorScreen(root, id) {
     if (d.port) { action = connectAction(e, { id: d.node, p: d.port }, x, y, true); return; }
     if (tool === 'shape') { action = shapeAction(e, shapeKind); return; }
     if (tool === 'text') { action = shapeAction(e, 'text'); return; }
-    if (tool === 'connect') { const n = nodeAt(x, y); action = connectAction(e, n ? { id: n.id, p: sideNear(n, x, y) } : null, x, y, false); return; }
+    if (tool === 'connect') { const n = nodeAt(x, y), end = n ? endAt(n, x, y) : null; action = connectAction(e, n ? { id: n.id, p: end.p, o: end.o } : null, x, y, false); return; }
     const hit = topAt(x, y);
     // a double tap edits the text (touch has no double click)
     if (e.pointerType === 'touch' && hit && lastTap.id === hit.id && performance.now() - lastTap.t < 350) { lastTap = { t: 0, id: '' }; startEdit(hit); return; }
@@ -582,8 +623,8 @@ export async function editorScreen(root, id) {
     const [x, y] = toWorld(e.clientX, e.clientY), hit = topAt(x, y);
     if (hit) return startEdit(hit);
     // on empty space: a new shape of the last kind, ready for its text
-    const [w, hh] = SIZE[shapeKind], n = newNode(shapeKind, snapV(x - w / 2), snapV(y - hh / 2), w, hh, '', shapeKind === 'text' ? { ...nodeStyle(), f: '', c: '', s: 0 } : nodeStyle());
-    change([[n.id, null, n]]);
+    const pr = presetOf(shapeKind), n = makeNode(shapeKind, snapV(x - pr.w / 2), snapV(y - pr.h / 2), pr.w, pr.h);
+    change([[n.id, null, n]], orderFor(n));
     startEdit(n);
   });
   svg.addEventListener('contextmenu', (e) => { e.preventDefault(); if (action || gesture) return; const [x, y] = toWorld(e.clientX, e.clientY); context(e.clientX, e.clientY, topAt(x, y)); });
@@ -640,7 +681,7 @@ export async function editorScreen(root, id) {
   function restyle(patch, filter = () => true) {
     const list = selItems().filter((i) => filter(i) && !i.lk);
     if (!list.length) return;
-    change(list.map((i) => [i.id, i, { ...i, ...Object.fromEntries(Object.entries(patch).filter(([k]) => k in i || ['g'].includes(k) || (i.t === 'node' ? k in NODE_DEF || k === 'k' : k in EDGE_DEF))) }]));
+    change(list.map((i) => [i.id, i, { ...i, ...Object.fromEntries(Object.entries(patch).filter(([k]) => k in i || ['g'].includes(k) || (i.t === 'node' ? k in NODE_DEF || k === 'k' || k === 'img' || k === 'h' : k in EDGE_DEF))) }]));
     // the style chosen is the one of the next shapes and connectors
     const nk = Object.fromEntries(Object.entries(patch).filter(([k]) => k in NODE_DEF)), ek = Object.fromEntries(Object.entries(patch).filter(([k]) => k in EDGE_DEF));
     if (list.some((i) => i.t === 'node') && Object.keys(nk).length) savePref({ node: { ...(P.node || {}), ...nk } });
@@ -699,7 +740,7 @@ export async function editorScreen(root, id) {
     const x = last ? (down ? last.x + last.w + gap / 2 : last.x) : down ? parent.x + parent.w / 2 - w / 2 : parent.x + parent.w + gap * 2;
     const y = last ? (down ? last.y : last.y + last.h + gap / 2) : down ? parent.y + parent.h + gap * 2 : parent.y + parent.h / 2 - hh / 2;
     const n = { ...proto, id: uid(), x: snapV(x), y: snapV(y), text: '' };
-    delete n.g; delete n.lk;
+    delete n.g; delete n.lk; delete n.img;
     const st = kids[0]?.[0] || { ...edgeStyle(), a: { p: '' }, b: { p: '' } };
     const ed = { ...newEdge({ n: parent.id, p: st.a.p || (down ? 'b' : 'r') }, { n: n.id, p: st.b.p || (down ? 't' : 'l') }, edgeStyle()), r: st.r || 'elbow', c: st.c, s: st.s, d: st.d, sa: st.sa, ea: st.ea };
     change([[n.id, null, n], [ed.id, null, ed]]);
@@ -709,7 +750,7 @@ export async function editorScreen(root, id) {
   function addSibling(n) {
     const pe = all().find((e) => e.t === 'edge' && e.b.n === n.id && get(e.a.n));
     if (pe) addChild(get(pe.a.n));
-    else { const m = { ...n, id: uid(), y: snapV(n.y + n.h + settings.gs * 2), text: '' }; delete m.g; delete m.lk; change([[m.id, null, m]]); select([m.id]); startEdit(m); }
+    else { const m = { ...n, id: uid(), y: snapV(n.y + n.h + settings.gs * 2), text: '' }; delete m.g; delete m.lk; delete m.img; change([[m.id, null, m]]); select([m.id]); startEdit(m); }
   }
   function copySel(cutToo = false) {
     const list = selItems();
@@ -738,7 +779,7 @@ export async function editorScreen(root, id) {
     try { const j = JSON.parse(s); if (j?.[CLIP]) return pasteItems(cleanItems(j[CLIP]).map((i, k) => ({ ...i, ...(['_ax', '_ay', '_bx', '_by'].reduce((o, p) => (j[CLIP][k]?.[p] !== undefined ? { ...o, [p]: j[CLIP][k][p] } : o), {})) })), at); } catch { /* a text */ }
     if (!s.trim()) return;
     // plain text: one shape per line (a quick way to start a list of steps)
-    const lines = s.split('\n').map((l) => l.trim()).filter(Boolean).slice(0, 60), st = nodeStyle(), [w, hh] = SIZE.round;
+    const lines = s.split('\n').map((l) => l.trim()).filter(Boolean).slice(0, 60), st = nodeStyle(), w = 140, hh = 70;
     const nodes = lines.map((l, k) => newNode('round', 0, k * (hh + settings.gs * 2), w, hh, l, st));
     const edges = nodes.slice(1).map((n, k) => newEdge({ n: nodes[k].id, p: '' }, { n: n.id, p: '' }, edgeStyle()));
     pasteItems([...nodes, ...edges], at);
@@ -746,10 +787,11 @@ export async function editorScreen(root, id) {
   function setTool(k, kind) {
     finishEdit();
     if (kind) { shapeKind = kind; savePref({ shape: kind }); }
+    if (k !== 'connect') edgeKind = null;
     tool = k;
     for (const [n, b] of Object.entries(tb)) b.on(n === (k === 'shape' ? 'shape:' + shapeKind : k));
     moreShapes.button.icon = SHAPE_ICON[!QUICK.includes(shapeKind) && k === 'shape' ? shapeKind : 'more'] || 'shapes';
-    moreShapes.on(k === 'shape' && !QUICK.includes(shapeKind));
+    moreShapes.on((k === 'shape' && !QUICK.includes(shapeKind)) || (k === 'connect' && !!edgeKind));
     svg.dataset.tool = k;
     hover = null;
     drawOverlay();
@@ -765,16 +807,39 @@ export async function editorScreen(root, id) {
   addTool('select', 'mouse-pointer-2', t('tool_select'), 'Alt+Shift+V', () => setTool('select'));
   addTool('hand', 'hand', t('tool_hand'), 'Alt+Shift+H', () => setTool('hand'));
   for (const k of QUICK) addTool('shape:' + k, SHAPE_ICON[k], t('s_' + k), 'Alt+Shift+' + { rect: 'R', round: 'U', diamond: 'D', ellipse: 'O' }[k], () => setTool('shape', k));
-  // the whole library: a grid of shapes, to press (then click on the page) or to drag onto the page
+  // the whole library: the shapes of every kind of diagram, in sections, with a search; a shape is pressed (then placed with
+  // a click on the page) or dragged onto the page; a connector style (UML relation, cardinality, flow…) is pressed, then drawn
   const lib = h('div.lib');
-  const libPop = h('sav-popover', { placement: 'top', 'sheet-on-mobile': true, heading: t('shapes'), style: '--width:19rem' });
+  const libPop = h('sav-popover', { placement: 'top', 'sheet-on-mobile': true, heading: t('shapes'), style: '--width:21rem' });
   const moreShapes = iconBtn('shapes', t('shapes'), null, { place: 'top' });
   moreShapes.slot = 'trigger';
-  libPop.append(moreShapes, lib);
-  for (const k of SHAPES) {
-    const pic = h('span.libpic', { html: `<svg viewBox="-4 -4 72 52" width="56" height="40">${shapeSVG(k === 'text' ? 'rect' : k, k === 'person' ? 22 : 2, k === 'person' ? 2 : 6, k === 'person' ? 20 : 60, k === 'person' ? 40 : 32, k === 'text' ? 'fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 3"' : 'fill="var(--libfill)" stroke="currentColor" stroke-width="2" stroke-linejoin="round"')}${k === 'text' ? '<text x="32" y="27" text-anchor="middle" font-size="14" fill="currentColor" font-family="Inter, sans-serif">Aa</text>' : ''}</svg>` });
-    const b = h('button.libb', { type: 'button', title: t('s_' + k), 'aria-label': t('s_' + k), draggable: 'false' }, pic, h('small', t('s_' + k)));
-    b.addEventListener('click', () => { setTool('shape', k); libPop.hide(); });
+  const libQ = h('sav-input', { size: 'sm', type: 'search', placeholder: t('search_shapes'), clearable: true, 'aria-label': t('search_shapes'), class: 'libq' }, icon('search', { slot: 'prefix' }));
+  libQ.addEventListener('keydown', (e) => e.stopPropagation());
+  // on a touch screen the search is not focused when the sheet opens (the keyboard would cover the shapes)
+  moreShapes.addEventListener('click', () => { if (matchMedia('(pointer: coarse)').matches) for (const ms of [30, 200, 450]) setTimeout(() => { if (libQ.matches(':focus-within') && !libQ.value) libQ.blur(); }, ms); });
+  const libBody = h('div.libs');
+  libPop.append(moreShapes, h('div.libw', libQ, libBody));
+  // the sections start folded, but the basic shapes and the ones of the kinds this diagram already has
+  const used = new Set([...items.values()].filter((i) => i.t === 'node' && !BASIC.includes(i.k)).map((i) => libOf(i.k)));
+  const fold = new Set(P.libFold || LIBRARIES.slice(1).map((x) => x[0]).filter((k) => !used.has(k)));
+  /** The small picture of an entry: its shape at its proportions (or a connector with its heads). */
+  const libPic = (p) => {
+    if (!p.k) {
+      const e = { ...EDGE_DEF, ...p.st, id: 'x', t: 'edge', a: { x: 4, y: 20 }, b: { x: 60, y: 20 }, r: 'straight', c: 'currentColor', s: 2, text: '' };
+      return h('span.libpic', { html: `<svg viewBox="-4 -4 72 52" width="56" height="40">${itemSVG(e, () => null, 'none')}</svg>` });
+    }
+    const k = p.k, ar = p.w / p.h, W = 60, H = 36, w = ar > W / H ? W : Math.max(10, H * ar), hh = ar > W / H ? Math.max(6, W / ar) : H;
+    const under = ['person', 'router', 'switch', 'server', 'firewall', 'pc', 'laptop', 'phone', 'printer', 'ap'].includes(k) ? .85 : 1;
+    const ww = w * under, h2 = hh * under, x = 2 + (W - ww) / 2, y = 6 + (H - h2) / 2;
+    const paint = k === 'text' ? 'fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 3"' : `fill="var(--libfill)" stroke="currentColor" stroke-width="2" stroke-linejoin="round"${p.st.d ? ' stroke-dasharray="4 3"' : ''}`;
+    const body = p.id === 'fork' ? `<rect x="2" y="${R2(6 + H / 2 - 3)}" width="60" height="6" fill="currentColor"/>` : shapeSVG(k === 'text' ? 'rect' : k, x, y, ww, h2, paint);
+    return h('span.libpic', { html: `<svg viewBox="-4 -4 72 52" width="56" height="40">${body}${k === 'text' ? '<text x="32" y="27" text-anchor="middle" font-size="14" fill="currentColor" font-family="Inter, sans-serif">Aa</text>' : ''}</svg>` });
+  };
+  const libEntry = (p) => {
+    const pic = libPic(p), label = t('s_' + p.id);
+    const b = h('button.libb' + (p.k ? '' : '.libe'), { type: 'button', title: label, 'aria-label': label, draggable: 'false' }, pic, h('small', label));
+    if (!p.k) { b.addEventListener('click', () => { edgeKind = p; setTool('connect'); edgeKind = p; moreShapes.on(true); libPop.hide(); toast(t('hint_relation', { r: label }), 'neutral', { duration: 3000 }); }); return b; }
+    b.addEventListener('click', () => { setTool('shape', p.id); libPop.hide(); });
     // dragging a shape out of the library onto the page
     b.addEventListener('pointerdown', (e) => {
       if (e.button !== 0) return;
@@ -790,21 +855,38 @@ export async function editorScreen(root, id) {
         if (!out) return;
         const s = size();
         if (ev.clientX < s.l || ev.clientY < s.t || ev.clientX > s.l + s.w || ev.clientY > s.t + s.h) return;
-        const [x, y] = toWorld(ev.clientX, ev.clientY), [w, hh] = SIZE[k], st = nodeStyle();
-        const n = newNode(k, snapV(x - w / 2), snapV(y - hh / 2), w, hh, '', k === 'text' ? { ...st, f: '', c: '', s: 0 } : k === 'note' ? { ...st, f: '#fff3c4', al: 'left', va: 'top' } : st);
-        change([[n.id, null, n]]);
+        const [x, y] = toWorld(ev.clientX, ev.clientY), n = makeNode(p.id, snapV(x - p.w / 2), snapV(y - p.h / 2), p.w, p.h);
+        change([[n.id, null, n]], orderFor(n));
         setTool('select');
         select([n.id]);
       };
       addEventListener('pointermove', mv); addEventListener('pointerup', up);
     });
-    lib.append(b);
+    return b;
+  };
+  // the words an entry is found by: its name in both languages, its library, its kind
+  const words = (id, key) => [both('s_' + id), both('lib_' + key), id].join(' ').toLowerCase();
+  function drawLib() {
+    const q = libQ.value.trim().toLowerCase();
+    if (q) {
+      const seen = new Set(), found = [];
+      for (const [key, list] of LIBRARIES) for (const [id] of list) if (!seen.has(id) && q.split(/\s+/).every((w) => words(id, key).includes(w))) { seen.add(id); found.push(PRESETS.get(id)); }
+      return put(libBody, found.length ? h('div.lib', found.map(libEntry)) : h('p.muted.libnone', t('nothing_found')));
+    }
+    put(libBody, LIBRARIES.map(([key, list]) => {
+      const d = h('details.libsec', { open: !fold.has(key) || null }, h('summary', t('lib_' + key)), h('div.lib', list.map(([id]) => libEntry(PRESETS.get(id)))));
+      d.addEventListener('toggle', () => { if (d.open) fold.delete(key); else fold.add(key); savePref({ libFold: [...fold] }); });
+      return d;
+    }));
   }
+  libQ.addEventListener('input', drawLib);
+  libQ.addEventListener('sav-clear', () => { libQ.value = ''; drawLib(); });
+  drawLib();
   TL.lib = libPop; TL_ITEMS.push(['lib', 'shapes', t('shapes')]);
   addTool('connect', 'connector', t('tool_connect'), 'Alt+Shift+C', () => setTool('connect'));
   addTool('text', 'type', t('tool_text'), 'Alt+Shift+T', () => setTool('text'));
   // the other shapes of the library, each can have its own button in the dock too
-  for (const k of SHAPES) if (!QUICK.includes(k) && k !== 'text') addTool('shape:' + k, SHAPE_ICON[k], t('s_' + k), '', () => setTool('shape', k));
+  for (const k of BASIC) if (!QUICK.includes(k) && k !== 'text') addTool('shape:' + k, SHAPE_ICON[k], t('s_' + k), '', () => setTool('shape', k));
   const TL_DEF = ['select', 'hand', '|', ...QUICK.map((k) => 'shape:' + k), 'lib', '|', 'connect', 'text'];
   /** A bar as each person chose it (kept with the account): its list, in order, with '|' a separator, '_' a fixed space and
    *  '~' an adaptive one (SavOffice.bars); what it has at first when nothing was chosen. */
@@ -824,7 +906,30 @@ export async function editorScreen(root, id) {
   const pop = (ic, label, body) => { const b = h('sav-button', { slot: 'trigger', size: 'sm', appearance: 'ghost', variant: 'neutral', square: true, icon: ic, label, title: label }); return h('sav-popover', { placement: 'top', 'sheet-on-mobile': true, heading: label, style: '--width:18rem' }, b, h('div.look', body)); };
   const sel1 = (label, value, opts, onpick, cls = '') => { const s = h('sav-select', { 'sheet-on-mobile': true, size: 'sm', value: String(value), 'aria-label': label, class: cls }, opts.map(([v, l]) => h('option', { value: String(v) }, l))); s.addEventListener('change', () => onpick(s.value)); return s; };
   const widths = (value, onpick) => { const g = h('sav-radio-group.szs', { appearance: 'buttons', size: 'sm', value: String(value), 'aria-label': t('width') }, WIDTHS.map((s) => h('sav-radio', { value: String(s), title: String(s), 'aria-label': String(s) }, h('span.lw', { style: `--w:${Math.max(1, Math.min(7, s))}px` })))); g.addEventListener('change', () => onpick(+g.value)); return g; };
-  const HEAD_ICON = { none: 'minus', arrow: 'head-arrow', open: 'head-open', diamond: 'head-diamond', circle: 'head-circle', bar: 'head-bar' };
+  const HEAD_ICON = { none: 'minus', arrow: 'head-arrow', open: 'head-open', diamond: 'head-diamond', circle: 'head-circle', bar: 'head-bar', tri: 'head-tri', odiamond: 'head-odiamond', ocircle: 'head-ocircle', er1: 'head-er1', er01: 'head-er01', ern: 'head-ern', er0n: 'head-er0n' };
+  /** The relation of the library a connector looks like (its heads, dash and route), or ''. */
+  const relationOf = (e) => RELATIONS.find((id) => { const st = PRESETS.get(id).st; return (st.sa || 'none') === e.sa && (st.ea || 'arrow') === e.ea && (st.d || '') === e.d; }) || '';
+  /** A photo for an org chart card: cut square, small enough to live in the diagram. */
+  function pickPhoto(n) {
+    const f = h('input', { type: 'file', accept: 'image/*' });
+    f.addEventListener('change', async () => {
+      const file = f.files[0];
+      if (!file) return;
+      try {
+        const img = await createImageBitmap(file), q = Math.min(img.width, img.height), c = document.createElement('canvas');
+        let url = '';
+        for (const [px, k] of [[128, .82], [96, .7], [72, .6]]) {
+          c.width = c.height = px;
+          c.getContext('2d').drawImage(img, (img.width - q) / 2, (img.height - q) / 2, q, q, 0, 0, px, px);
+          url = c.toDataURL('image/jpeg', k);
+          if (url.length <= MAX_IMG) break;
+        }
+        const now = items.get(n.id);
+        if (now && url.length <= MAX_IMG) change([[n.id, now, { ...now, img: url }]]);
+      } catch { toast(t('err_photo'), 'danger'); }
+    });
+    f.click();
+  }
 
   function textPanel(o, apply) {
     const bold = act('bold', t('bold'), (b) => { o.b = !o.b; b.on(o.b); apply({ b: o.b }); }, { kbd: 'Mod+B' }), ital = act('italic', t('italic'), (b) => { o.i = !o.i; b.on(o.i); apply({ i: o.i }); }, { kbd: 'Mod+I' });
@@ -853,17 +958,23 @@ export async function editorScreen(root, id) {
     } else if (list.length) {
       if (nodes.length) {
         const n = nodes[0];
-        kids.push(sel1(t('shape'), n.k, SHAPES.map((k) => [k, t('s_' + k)]), (k) => restyle({ k }, (i) => i.t === 'node'), 'shsel'),
+        // the shape can become another basic one, or one of the same library
+        const kinds = [...new Set([...BASIC, ...(LIBRARIES.find((l) => l[0] === libOf(n.k))?.[1] || []).map((e) => e[1]).filter(Boolean), n.k])].filter((k) => SHAPES.includes(k));
+        kids.push(sel1(t('shape'), n.k, kinds.map((k) => [k, t('s_' + k)]), (k) => restyle({ k }, (i) => i.t === 'node'), 'shsel'),
           colorBtn('fill', t('fill'), n.f, (f) => restyle({ f }, (i) => i.t === 'node'), FILLS, t('no_fill')),
           colorBtn('square-dashed', t('border'), n.c, (c) => restyle({ c, s: c && !n.s ? 2 : n.s }, (i) => i.t === 'node'), INKS, t('no_border')),
           pop('text-style', t('text_style'), textPanel({ ...n }, (p) => restyle(p, (i) => i.t === 'node'))),
           pop('line-style', t('line_style'), [h('span.flabel', t('width')), widths(n.s || 2, (s) => restyle({ s }, (i) => i.t === 'node')), h('span.flabel', t('dash')), seg(t('dash'), n.d || 'solid', [['solid', 'minus', t('d_solid')], ['dash', 'dash', t('d_dash')], ['dot', 'dot-line', t('d_dot')]], (d) => restyle({ d: d === 'solid' ? '' : d }, (i) => i.t === 'node'))]));
+        // an org chart card: its photo (the initials when there is none)
+        if (nodes.length === 1 && n.k === 'card') kids.push(n.img ? act('image-off', t('photo_remove'), () => restyle({ img: undefined }, (i) => i.t === 'node')) : act('image', t('photo_add'), () => pickPhoto(n)));
+        if (nodes.length === 1 && COMPART.has(n.k)) kids.push(act('fit', t('fit_text'), () => restyle({ h: compH(n) }, (i) => i.id === n.id)));
       }
       if (edges.length) {
         const e = edges[0];
         if (nodes.length) kids.push(sep());
         kids.push(seg(t('route'), e.r, [['straight', 'route-straight', t('r_straight')], ['elbow', 'route-elbow', t('r_elbow')], ['curve', 'route-curve', t('r_curve')]], (r) => restyle({ r }, (i) => i.t === 'edge')),
-          pop(HEAD_ICON[e.ea] || 'head-arrow', t('heads'), [h('span.flabel', t('head_start')), seg(t('head_start'), e.sa, Object.entries(HEAD_ICON).map(([k, ic]) => [k, ic, t('h_' + k)]), (sa) => restyle({ sa }, (i) => i.t === 'edge')),
+          pop(HEAD_ICON[e.ea] || 'head-arrow', t('heads'), [h('span.flabel', t('relation')), sel1(t('relation'), relationOf(e), [['', t('rel_custom')], ...RELATIONS.map((id) => [id, t('s_' + id)])], (id) => { const pr = PRESETS.get(id); if (pr) restyle({ ...EDGE_DEF, c: e.c, s: e.s, ...pr.st, text: pr.st.text ?? e.text }, (i) => i.t === 'edge'); }),
+            h('span.flabel', t('head_start')), seg(t('head_start'), e.sa, Object.entries(HEAD_ICON).map(([k, ic]) => [k, ic, t('h_' + k)]), (sa) => restyle({ sa }, (i) => i.t === 'edge')),
             h('span.flabel', t('head_end')), seg(t('head_end'), e.ea, Object.entries(HEAD_ICON).map(([k, ic]) => [k, ic, t('h_' + k)]), (ea) => restyle({ ea }, (i) => i.t === 'edge')),
             btn(t('swap'), { size: 'sm', icon: 'arrow-left-right', onclick: () => change(selItems().filter((i) => i.t === 'edge').map((i) => [i.id, i, { ...i, a: i.b, b: i.a, sa: i.ea, ea: i.sa }])) })]),
           colorBtn('palette', t('line_color'), e.c, (c) => c && restyle({ c }, (i) => i.t === 'edge'), INKS),
@@ -982,7 +1093,7 @@ export async function editorScreen(root, id) {
   wrap.append(top, h('div.dock', props, tools), zoom, map);
   put(root, wrap);
   const asCmd = (list) => list.filter(Array.isArray).map(([ic, l, fn, o]) => [ic, l, fn, o?.kbd || null]);
-  commands([t('tools'), [['mouse-pointer-2', t('tool_select'), () => setTool('select'), 'Alt+Shift+V'], ['hand', t('tool_hand'), () => setTool('hand'), 'Alt+Shift+H'], ['connector', t('tool_connect'), () => setTool('connect'), 'Alt+Shift+C'], ['type', t('tool_text'), () => setTool('text'), 'Alt+Shift+T'], ...SHAPES.filter((k) => k !== 'text').map((k) => [SHAPE_ICON[k], t('s_' + k), () => setTool('shape', k)])]],
+  commands([t('tools'), [['mouse-pointer-2', t('tool_select'), () => setTool('select'), 'Alt+Shift+V'], ['hand', t('tool_hand'), () => setTool('hand'), 'Alt+Shift+H'], ['connector', t('tool_connect'), () => setTool('connect'), 'Alt+Shift+C'], ['type', t('tool_text'), () => setTool('text'), 'Alt+Shift+T'], ...[...PRESETS.values()].filter((p) => p.k && p.k !== 'text').map((p) => [SHAPE_ICON[p.id] || SHAPE_ICON[p.k] || 'shapes', t('s_' + p.id), () => setTool('shape', p.id)]), ...RELATIONS.map((id) => ['connector', t('s_' + id), () => { edgeKind = PRESETS.get(id); setTool('connect'); edgeKind = PRESETS.get(id); }])]],
     [t('more_tools'), [['undo-2', t('undo'), () => undo(), 'Mod+Z'], ['redo-2', t('redo'), () => redo(), 'Mod+Shift+Z'], ['palette', t('diagram_look'), () => lookB.button.click()], ...asCmd(layoutList), ...asCmd(moreList())]],
     [t('download_as'), asCmd(dlList)]);
   document.title = title + ' – SavDiagrams';

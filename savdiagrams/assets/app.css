@@ -237,6 +237,17 @@ body.onboard { overflow: hidden; overscroll-behavior: none; position: fixed; ins
 .libb { display: grid; justify-items: center; gap: .15rem; padding: .45rem .2rem .35rem; border: 1px solid transparent; border-radius: 10px; background: none; color: var(--sav-color-text); font: inherit; cursor: grab; touch-action: none; }
 .libb:hover, .libb:focus-visible { background: var(--sav-color-surface-2); border-color: var(--sav-color-border); outline: none; } .libb small { font-size: .7rem; color: var(--sav-color-text-muted); text-align: center; line-height: 1.15; }
 .libpic svg { display: block; color: var(--sav-color-primary); }
+/* the library: a search, then a section for every kind of diagram */
+.libw { display: grid; gap: .5rem; width: min(20rem, 100%); } .libq { width: 100%; }
+.libs { display: grid; gap: .15rem; max-height: min(62vh, 34rem); overflow-y: auto; overscroll-behavior: contain; margin: 0 -.25rem; padding: 0 .25rem; }
+.libsec > summary { display: flex; align-items: center; gap: .4rem; padding: .4rem .3rem; border-radius: 8px; font-size: .78rem; font-weight: 650; letter-spacing: .01em; color: var(--sav-color-text-muted); cursor: pointer; list-style: none; user-select: none; }
+.libsec > summary::-webkit-details-marker { display: none; }
+.libsec > summary::before { content: ''; width: .45rem; height: .45rem; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(-45deg); transition: transform .15s; margin-right: .15rem; }
+.libsec[open] > summary::before { transform: rotate(45deg); }
+.libsec > summary:hover { background: var(--sav-color-surface-2); color: var(--sav-color-text); }
+.libsec > .lib { padding: .1rem 0 .5rem; }
+.libb.libe { cursor: pointer; } .libnone { margin: .6rem .3rem; font-size: .85rem; }
+@media (max-width: 640px) { .libw { width: 100%; } .libq { position: sticky; top: 0; z-index: 1; padding-bottom: .4rem; background: var(--sav-color-surface); } .libs { max-height: none; overflow: visible; } .lib { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .ghost { position: fixed; z-index: 1000; pointer-events: none; color: var(--sav-color-primary); opacity: .85; --libfill: #fff; filter: drop-shadow(0 4px 10px rgb(0 0 0 / .2)); }
 .minimap { position: absolute; z-index: 5; right: max(.6rem, env(safe-area-inset-right)); bottom: calc(max(.8rem, env(safe-area-inset-bottom)) + 3.3rem); width: 190px; height: 130px; background: var(--bar); border: 1px solid var(--bar-line); box-shadow: var(--shadow); border-radius: 12px; overflow: hidden; cursor: pointer; touch-action: none; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
 .minimap svg { display: block; } .minimap .mview { fill: color-mix(in oklab, var(--sav-color-primary) 14%, transparent); stroke: var(--sav-color-primary); }

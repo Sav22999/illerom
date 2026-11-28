@@ -4,12 +4,14 @@
  *
  * A diagram is {title, settings, items}. settings: {bg, grid, gs, snap, view}. items is the list of what is drawn, in order
  * (the last one on top). Every item has an id (made by the browser) and a type t:
- *   node   a shape: k (rect | round | diamond | ellipse | para | cyl | doc | note | person | cloud | text), x y w h, text,
+ *   node   a shape: k (rect | round | diamond | ellipse | para | cyl | doc | note | person | cloud | text, and the kinds of the
+ *          libraries: network, UML, org chart, timeline, database, BPMN, swimlanes; see DG_SHAPES), x y w h, text, img (a
+ *          small photo, data: URL, on org chart cards),
  *          f fill ('' = none), c border ('' = none), s border width, d dash ('' | dash | dot), tc colour of the text, fs size,
  *          ff (sans | serif | mono | hand), b bold, i italic, al (left | center | right), va (top | middle | bottom)
  *   edge   a connector: a and b are its two ends, each {n: id of a node, p: side (t | r | b | l, '' = the nearest)} or a
- *          free point {x, y}; r route (straight | elbow | curve), c colour, s width, d dash, sa / ea the heads at the start
- *          and at the end (none | arrow | open | diamond | circle | bar), text (its label), fs, tc
+ *          free point {x, y} (o: where along the side, 0…1, a message on a lifeline); r route (straight | elbow | curve), c colour, s width, d dash, sa / ea the heads at the start
+ *          and at the end (none | arrow | open | diamond | circle | bar | tri | odiamond | ocircle | er1 | er01 | ern | er0n), text (its label), fs, tc
  * Both may have g (the id of their group) and lk (locked). The same list lives in assets/model.js (clean): keep them in
  * step. Coordinates are in units of the diagram, unlimited.
  *
@@ -19,9 +21,13 @@
 
 declare(strict_types=1);
 
-const DG_SHAPES = ['rect', 'round', 'diamond', 'ellipse', 'para', 'cyl', 'doc', 'note', 'person', 'cloud', 'text'];
+const DG_SHAPES = ['rect', 'round', 'diamond', 'ellipse', 'para', 'cyl', 'doc', 'note', 'person', 'cloud', 'text',
+    'router', 'switch', 'server', 'firewall', 'pc', 'laptop', 'phone', 'printer', 'ap',
+    'class', 'package', 'comp', 'cube', 'lifeline', 'frame', 'box', 'start', 'end',
+    'card', 'track', 'axis', 'mile', 'entity', 'subproc', 'bstart', 'binter', 'bend', 'gwx', 'gwp', 'gwo', 'lane', 'vlane'];
 const DG_ROUTES = ['straight', 'elbow', 'curve'];
-const DG_HEADS = ['none', 'arrow', 'open', 'diamond', 'circle', 'bar'];
+const DG_HEADS = ['none', 'arrow', 'open', 'diamond', 'circle', 'bar', 'tri', 'odiamond', 'ocircle', 'er1', 'er01', 'ern', 'er0n'];
+const DG_MAX_IMG = 60000; // the photo of a node (an org chart card), as a data: URL
 const DG_SIDES = ['', 't', 'r', 'b', 'l'];
 const DG_DASH = ['', 'dash', 'dot'];
 const DG_FONTS = ['sans', 'serif', 'mono', 'hand'];
@@ -102,7 +108,12 @@ function clean_settings($s): array
 /** One end of a connector: a node and its side, or a free point. */
 function clean_end($e): array
 {
-    if (is_array($e) && dg_id($e['n'] ?? null) !== '') return ['n' => dg_id($e['n']), 'p' => dg_pick($e['p'] ?? '', DG_SIDES, '')];
+    if (is_array($e) && dg_id($e['n'] ?? null) !== '') {
+        $out = ['n' => dg_id($e['n']), 'p' => dg_pick($e['p'] ?? '', DG_SIDES, '')];
+        // where along its side (0…1), for messages on a lifeline; without it, the middle
+        if ($out['p'] !== '' && isset($e['o']) && (is_int($e['o']) || is_float($e['o']) || (is_string($e['o']) && is_numeric($e['o'])))) $out['o'] = round(dg_num($e['o'], 0, 1, .5), 3);
+        return $out;
+    }
     $e = is_array($e) ? $e : [];
     return ['x' => dg_num($e['x'] ?? 0), 'y' => dg_num($e['y'] ?? 0)];
 }
@@ -117,6 +128,7 @@ function clean_item($i): ?array
     $common = [];
     if (dg_id($i['g'] ?? null) !== '') $common['g'] = dg_id($i['g']);
     if (!empty($i['lk'])) $common['lk'] = true;
+    if ($t === 'node' && is_string($i['img'] ?? null) && strlen($i['img']) <= DG_MAX_IMG && preg_match('#^data:image/(png|jpeg|webp);base64,[A-Za-z0-9+/]+=*$#', $i['img'])) $common['img'] = $i['img'];
     if ($t === 'node') {
         return ['id' => $id, 't' => 'node', 'k' => dg_pick($i['k'] ?? '', DG_SHAPES, 'rect'),
             'x' => dg_num($i['x'] ?? 0), 'y' => dg_num($i['y'] ?? 0), 'w' => dg_num($i['w'] ?? 120, 4, 1e5, 120), 'h' => dg_num($i['h'] ?? 60, 4, 1e5, 60),
