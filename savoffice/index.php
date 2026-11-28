@@ -155,12 +155,21 @@ $graph = $app
         h1 em::selection { color: #fff; -webkit-text-fill-color: #fff; background: var(--violet); }
         .lead { font-size: clamp(1.08rem, 1.6vw, 1.25rem); color: var(--muted); margin: 0 0 1.8rem; max-width: 34rem; }
         .ctas { display: flex; flex-wrap: wrap; gap: .7rem; margin-bottom: 1.6rem; }
-        .collage { position: relative; aspect-ratio: 1.25; }
-        .collage figure { position: absolute; margin: 0; border-radius: 14px; overflow: hidden; background: var(--card); box-shadow: 0 30px 60px -20px rgb(20 10 30 / .35), 0 0 0 1px rgb(0 0 0 / .06); }
-        .collage figure img { display: block; width: 100%; height: auto; }
-        .collage .c1 { width: 78%; left: 0; top: 4%; transform: rotate(-3deg); }
-        .collage .c2 { width: 70%; right: 0; top: 30%; transform: rotate(2.5deg); }
-        .collage .c3 { width: 24%; left: 46%; bottom: -2%; transform: rotate(-4deg); border-radius: 18px; border: 5px solid #1d1d22; }
+        /* three devices, each with a plain dark frame: the computers are 16:10, the phone 18:9 (its 16:9 screenshot between a status
+           bar and the home bar, as on a real phone); sizes in cqi, so the frames keep their proportions at every width */
+        .collage { position: relative; aspect-ratio: 1.25; container-type: inline-size; }
+        .collage figure { position: absolute; margin: 0; background: #1d1d22; box-shadow: 0 30px 60px -22px rgb(20 10 30 / .42), 0 0 0 1px light-dark(rgb(0 0 0 / .08), rgb(255 255 255 / .14)); }
+        .collage .pc { aspect-ratio: 16 / 10; padding: .6cqi; border-radius: 1.3cqi; }
+        .collage .pc img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; border-radius: .7cqi; background: var(--card); }
+        .collage .ph { aspect-ratio: 9 / 18; padding: .6cqi; border-radius: 3.4cqi; }
+        .collage .scr { display: flex; flex-direction: column; height: 100%; overflow: hidden; border-radius: 2.8cqi; background: #fff; color: #1d1d22; }
+        .collage .scr img { display: block; flex: none; width: 100%; height: auto; }
+        .collage .sb { flex: 1.25; display: flex; align-items: center; justify-content: space-between; padding: 0 2.1cqi 0 2.5cqi; font: 650 1.25cqi/1 Inter, system-ui, sans-serif; }
+        .collage .sb svg { height: 1.2cqi; width: auto; }
+        .collage .hb { flex: 1; display: grid; place-items: center; } .collage .hb::after { content: ""; width: 36%; height: .45cqi; border-radius: 1cqi; background: #1d1d22; }
+        .collage .c1 { width: 74%; left: 0; top: 1%; transform: rotate(-2.5deg); }
+        .collage .c2 { width: 66%; right: 0; top: 31%; transform: rotate(2deg); }
+        .collage .c3 { width: 22%; left: 38%; bottom: 0; transform: rotate(-3deg); }
         .collage .dot { position: absolute; border-radius: 50%; z-index: -1; filter: blur(2px); }
         .collage .d1 { width: 38%; aspect-ratio: 1; background: color-mix(in oklab, var(--violet) 22%, transparent); right: 6%; top: -6%; }
         .collage .d2 { width: 30%; aspect-ratio: 1; background: color-mix(in oklab, var(--sun) 55%, transparent); left: 4%; bottom: 0; }
@@ -430,9 +439,9 @@ $graph = $app
             </div>
             <div class="collage" aria-hidden="true">
                 <span class="dot d1"></span><span class="dot d2"></span>
-                <figure class="c1"><img src="<?= $shot('savspreadsheets', 'd1.jpg') ?>" alt="" width="1440" height="900"></figure>
-                <figure class="c2"><img src="<?= $shot('savdocuments', 'd2.jpg') ?>" alt="" width="1440" height="900"></figure>
-                <figure class="c3"><img src="<?= $shot('savpresentations', '1.jpg') ?>" alt="" width="562" height="1000"></figure>
+                <figure class="pc c1"><img src="<?= $shot('savpresentations', 'd1.jpg') ?>" alt="" width="1440" height="900"></figure>
+                <figure class="pc c2"><img src="<?= $shot('savspreadsheets', 'd2.jpg') ?>" alt="" width="1440" height="900"></figure>
+                <figure class="ph c3"><div class="scr"><span class="sb"><span>9:41</span><svg viewBox="0 0 46 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="4.5" y="5.5" width="3" height="6.5" rx="1"/><rect x="9" y="3" width="3" height="9" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/><path d="M27 3.2a9 9 0 0 1 6 2.3l-1.3 1.4a7 7 0 0 0-9.4 0L21 5.5a9 9 0 0 1 6-2.3zm0 3.6a5 5 0 0 1 3.4 1.3L27 11.6l-3.4-3.5A5 5 0 0 1 27 6.8z"/><rect x="36" y="2" width="8.5" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.2"/><rect x="37.6" y="3.6" width="5.3" height="4.8" rx=".8"/><rect x="45" y="4.5" width="1" height="3" rx=".5"/></svg></span><img src="<?= $shot('savdocuments', '2.jpg') ?>" alt="" width="563" height="1001"><span class="hb"></span></div></figure>
             </div>
         </section>
 
