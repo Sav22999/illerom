@@ -216,7 +216,9 @@ sav-dialog h3 { font-size: .98rem; } .dlg-err { margin-top: .8rem; } .segm.wide 
 .mfab { display: none; }
 /* tablets and phones: the menu in a drawer from the bar */
 @media (max-width: 900px) {
-  .mmenu { display: inline-flex; } .hbody > .hside { display: none; } .hbody { grid-template-columns: minmax(0, 1fr); }
+  .hbody > .hside { display: none; } .hbody { grid-template-columns: minmax(0, 1fr); } .home.app.noside .mmenu { display: none; }
+  /* the folders are in the bar at the bottom (SavOffice.bottomNav): the page that fills the window ends above it */
+  body:has(.so-bnav) .home.app.fixed { bottom: calc(4.6rem + env(safe-area-inset-bottom)); }
   .htop .brand span { display: none; } .hsearch { flex: 1 1 auto; order: 0; }
   .mdrawer .newbtn { margin-bottom: .8rem; }
   .mfab { display: inline-flex; position: fixed; right: max(1rem, env(safe-area-inset-right)); bottom: max(1rem, env(safe-area-inset-bottom)); z-index: 30; --sav-button-height: 3.4rem; box-shadow: 0 8px 24px rgb(0 0 0 / .2); border-radius: 18px; }

@@ -64,6 +64,7 @@ export async function homeScreen(app, q) {
     let data, view = q.get('v') || 'recent', folder = +(q.get('f') || 0), mode = userSetting('view', 'grid'),
         search = '', sort = 'updated';
     const main = h('main.hmain'), side = h('nav.hside', {'aria-label': t('home')});
+    let bnavEl = null; // the bar at the bottom (phones and tablets), drawn again with the side
     const searchBox = h('sav-input', {
         type: 'search',
         placeholder: t('search_decks'),
@@ -150,6 +151,14 @@ export async function homeScreen(app, q) {
         }, it('recent', 'layout-grid', t('my_decks')), it('starred', 'star', t('starred'), stars().size), it('shared', 'users', t('shared'), data.shared.length), it('templates', 'layout-template', t('templates')), it('local', 'hard-drive', t('local_title')), it('trash', 'trash', t('trash'), data.decks.filter((d) => d.status === 'trashed').length));
         menu.addEventListener('sav-select', (e) => (e.detail.value === 'local' ? go('?p=local') : set(e.detail.value)));
         const tree = h('sav-tree', {label: t('folders'), selectable: true}, ...branch(null));
+        // phones and tablets: the views, then the presentations of this device and the folders, in the bar at the bottom of
+        // SavOffice; the ones that do not fit under "More" (an action sheet). The menu on the side is left out.
+        const nb = window.SavOffice?.bottomNav?.({
+            label: t('home'), current: view === 'folder' ? 'f' + folder : view,
+            items: [...[['recent', 'layout-grid', 'my_decks'], ['starred', 'star', 'starred'], ['shared', 'users', 'shared'], ['templates', 'layout-template', 'templates'], ['trash', 'trash', 'trash']].map(([v, ic, l]) => ({value: v, icon: ic, label: t(l), run: () => set(v)})),
+                {value: 'local', icon: 'hard-drive', label: t('local_title'), run: () => go('?p=local')}, ...data.folders.filter((f) => !f.parent).map((f) => ({value: 'f' + f.id, icon: 'folder', label: f.name, run: () => set('folder', f.id)}))],
+        });
+        if (nb) { if (bnavEl?.isConnected) bnavEl.replaceWith(nb); else app.append(nb); bnavEl = nb; }
         tree.addEventListener('sav-select', (e) => set('folder', +e.detail.value));
         side.replaceChildren(h('sav-button', {
                 icon: 'plus',

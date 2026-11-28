@@ -270,7 +270,13 @@ function commands(...groups) {
 function shell(content, side = {}) {
     const main = h('main.hmain', content);
     const nav = h('nav.hside', {'aria-label': t('my_groups')});
-    put(app, h('div.home', h('header.htop', brand(), side.search ? h('div.hsearch', side.search) : null, h('div.spacer'), officeApps(), userMenu()), h('div.hbody', nav, main), credit()));
+    // phones and tablets: the places in the bar at the bottom of SavOffice (inside a group: its tabs); the side menu is left out
+    const cur = side.current || 'home';
+    const bnav = side.bnav || window.SavOffice?.bottomNav?.({
+        label: t('my_groups'), current: cur.startsWith('g:') ? 'home' : cur,
+        items: [{value: 'home', icon: ico('layout-grid'), label: t('my_groups'), href: '#/'}, {value: 'account', icon: ico('user'), label: t('account'), href: '#/account'}, S.user?.master ? {value: 'master', icon: ico('shield'), label: t('master'), href: '#/master'} : null],
+    });
+    put(app, h('div.home', h('header.htop', brand(), side.search ? h('div.hsearch', side.search) : null, h('div.spacer'), officeApps(), userMenu()), h('div.hbody', nav, main), credit(), bnav || null));
     drawSide(nav, side);
     if (!cache.groups) api('group.list').then((r) => {
         cache.groups = r.groups;
@@ -718,7 +724,7 @@ async function groupPage(id, tab) {
         !g.sendingReady && g.status === 'active' ? alert(atLeast(g.role, 'admin')
             ? h('span', t('setup_sending_long'), ' ', h('a', {href: '#/g/' + g.id + '/settings'}, t('open_settings'))) : t('sending_not_ready'), 'warning', {icon: 'mail'}) : null,
         bar,
-    ], {current: 'g:' + g.id, action: groupAction(g)});
+    ], {current: 'g:' + g.id, action: groupAction(g), bnav: window.SavOffice?.bottomNav?.({label: g.name, current: tab, items: tabs.map(([k, ic]) => ({value: k, icon: ico(ic), label: t('tab_' + k), href: '#/g/' + g.id + '/' + k}))})});
     commands([g.name, [atLeast(g.role, 'moderator') && g.status === 'active' ? ['plus', t('new_newsletter'), () => newNewsletter(g)] : null, ...tabs.map(([k, ic]) => [ic, t('tab_' + k), '#/g/' + g.id + '/' + k])]],
         [t('my_groups'), (cache.groups || []).filter((x) => x.id !== g.id).map((x) => ['users', x.name, '#/g/' + x.id])]);
     const views = {newsletters: tabNewsletters, subscribers: tabSubscribers, templates: tabTemplates, members: tabMembers, share: tabShare, settings: tabSettings};

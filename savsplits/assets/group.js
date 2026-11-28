@@ -101,8 +101,10 @@ function draw(root) {
   const tabs = h('sav-tabs.gtabs', { active: sc.tab }, tabsOf().map(([k, ic]) => h('sav-tab', { name: k, label: t('tab_' + k), icon: ic }, h('div.tabbody', { 'data-tab': k }))));
   tabs.addEventListener('sav-tab-show', (e) => { if (e.target !== tabs) return; sc.tab = e.detail.name; history.replaceState(null, '', base() + '/' + sc.tab); fillTab(tabs); });
   const fab = canWrite() ? h('sav-button.fab', { variant: 'primary', appearance: 'solid', icon: 'plus', label: t('add_expense'), size: 'lg', onclick: () => openExpense() }) : null;
+  // phones and tablets: the tabs of the group in the bar at the bottom of SavOffice (the row of tabs is left out)
+  const bnav = window.SavOffice?.bottomNav?.({ label: g.name, current: sc.tab, items: tabsOf().map(([k, ic]) => ({ value: k, icon: ic, label: t('tab_' + k), run: () => setTab(k) })) });
   const el = h('div.home.resp', { style: `--c:${g.color}` }, top,
-    h('main.rmain', head, title, banner(me), stats, personal() ? h('div.rbody.solo', h('sav-card.tcard', tabs)) : h('div.rbody', h('div.rside', balancesCard(), settleCard()), h('sav-card.tcard', tabs))), credit(), fab);
+    h('main.rmain', head, title, banner(me), stats, personal() ? h('div.rbody.solo', h('sav-card.tcard', tabs)) : h('div.rbody', h('div.rside', balancesCard(), settleCard()), h('sav-card.tcard', tabs))), credit(), fab, bnav);
   put(root, el);
   sc.el = el;
   fillTab(tabs);

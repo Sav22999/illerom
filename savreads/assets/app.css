@@ -222,8 +222,8 @@ sav-empty-state .prow { margin-top: .6rem; }
   .hside .newd { margin: 0; flex: none; width: auto; } .hside .newb { width: auto; }
   .hside > sav-menu { flex: 1 1 100%; min-width: 0; order: 3; overflow-x: auto; scrollbar-width: none; } .hside > sav-menu::-webkit-scrollbar { display: none; } .hside > sav-menu::part(base) { display: flex; flex-direction: row; width: max-content; } .hside sav-menu-item { white-space: nowrap; }
   .side-more { display: none; }
-  /* the places of the bar at the bottom leave the row; what is left (highlights) sits next to "New" */
-  .hside { flex-wrap: nowrap; } .hside > sav-menu { flex: 1 1 auto; order: 0; } .hside sav-menu-item.inbar { display: none; }
+  /* the places are all in the bar at the bottom (the others under "More", an action sheet): the row keeps only "New" */
+  .hside { flex-wrap: nowrap; } .hside > sav-menu { display: none; }
   .rbottom { display: block; } .home { padding-bottom: calc(4.6rem + env(safe-area-inset-bottom)); }
   body:has(.rbottom) sav-toast-stack[placement="bottom-start"] { inset: auto auto calc(5.4rem + env(safe-area-inset-bottom)) .75rem; } /* the messages above the bar */
   .fchoose { display: block; }

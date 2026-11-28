@@ -108,8 +108,10 @@ export function homeScreen(root, view = '') {
   const menu = h('sav-menu', { label: t('my_notebooks'), selectable: true }, it('all', 'notebook', t('my_notebooks')), it('trash', 'trash', t('trash')));
   menu.addEventListener('sav-select', (e) => go(e.detail.value === 'trash' ? '#/trash' : '#/'));
   const nav = h('nav.hside', { 'aria-label': t('my_notebooks') }, primary(t('new_l'), { icon: 'plus', size: 'lg', block: true, class: 'newbtn', onclick: () => newNotebook() }), menu);
+  // phones and tablets: the places in the bar at the bottom of SavOffice (the menu on the side is left out)
+  const bnav = window.SavOffice?.bottomNav?.({ label: t('my_notebooks'), current: trash ? 'trash' : 'all', items: [{ value: 'all', icon: 'notebook', label: t('my_notebooks'), href: '#/' }, { value: 'trash', icon: 'trash', label: t('trash'), href: '#/trash' }] });
   put(root, h('div.home', h('header.htop', brand(), h('div.hsearch', search), h('div.spacer'), userMenu()),
-    h('div.hbody', nav, h('main.hmain', list)), credit()));
+    h('div.hbody', nav, h('main.hmain', list)), credit(), bnav));
   document.title = (trash ? t('trash') + ' – ' : '') + 'SavNotes';
   draw();
 }

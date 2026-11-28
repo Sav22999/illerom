@@ -143,7 +143,10 @@ export async function calendarScreen(root, view = '', k = '') {
       save: async (v) => { await setPrefs({ bars: { ...(prefs().bars || {}), ...v } }); layoutTitle(); } });
   }
   layoutTitle();
-  put(root, h('div.capp', top, h('div.cbody', side, h('div.cwrap', main, tray)), drawer));
+  // phones and tablets: the views in the bar at the bottom of SavOffice (the choice of the view at the top is left out)
+  const VI = { day: 'calendar', week: 'calendar-range', month: 'calendar-days', agenda: 'list' };
+  const bnav = window.SavOffice?.bottomNav?.({ label: t('view'), current: view, items: VIEWS.map((v) => ({ value: v, icon: VI[v], label: t('v_' + v), run: () => go(`#/${v}/${k}`) })) });
+  put(root, h('div.capp', top, h('div.cbody', side, h('div.cwrap', main, tray)), drawer, bnav));
 
   const range = () => rangeOf(view, k).map((x) => startOfDay(x));
   function step(dir) {

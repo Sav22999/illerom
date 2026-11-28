@@ -349,9 +349,7 @@ summary.ar { list-style: none; cursor: pointer; border-radius: 0; } summary.ar::
 .tpn { flex: 1; min-width: 0; display: grid; } .tpn b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 .tfoot { text-align: center; margin-bottom: 0; }
 .tlock { justify-items: center; text-align: center; } .tlock h1 { font-size: 1.35rem; margin: 0; } .tlock p { margin: 0; } .tlock sav-password, .tlock sav-button { width: 100%; }
-/* phones: the main places at the bottom (sav-bottom-nav, as in SavTasks); the row of places at the top is left out */
-.dbottom { display: none; }
+/* phones and tablets: the places in the bar at the bottom (SavOffice.bottomNav); the row of places at the top is left out */
 @media (max-width: 900px) {
-  .dbottom { display: block; } .home.drive { padding-bottom: calc(4.4rem + env(safe-area-inset-bottom)); }
   .hside > sav-menu.dnav { display: none; } .upanel { bottom: calc(4.8rem + env(safe-area-inset-bottom)); }
 }

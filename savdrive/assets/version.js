@@ -1,7 +1,12 @@
 /** The version of SavDrive (in the footer) and what changed in each one (the page #/changelog). Newest first. */
-export const VERSION = '1.1.1';
+export const VERSION = '1.1.2';
 
 export const CHANGES = [
+  {
+    v: '1.1.2', date: '2026-11-28', items: [
+      ['On phones and tablets the places are in the bar at the bottom, as in every app of SavOffice; when they do not all fit, “More” opens an action sheet with the others', 'Su telefoni e tablet le sezioni sono nella barra in basso, come in ogni app di SavOffice; quando non ci stanno tutte, «Altro» apre un foglio di azioni con le altre'],
+    ],
+  },
   {
     v: '1.1.1', date: '2026-11-28', items: [
       ['Fixed: on phones and tablets every place (Trash, Temporary, Recent, Starred…) starts at the top of the page again, not halfway down', 'Corretto: su telefoni e tablet ogni sezione (Cestino, Temporanei, Recenti, Speciali…) torna a cominciare in cima alla pagina, non a metà'],

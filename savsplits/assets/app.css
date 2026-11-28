@@ -285,6 +285,9 @@ sav-dialog h3 { font-size: .98rem; } .dlg-err { margin-top: .8rem; } .segm.wide 
 .dupb { color: var(--sun-ink); background: var(--sun); border-radius: 99px; padding: 0 .4rem; font-weight: 600; }
 
 /* phones and small tablets */
+/* phones and tablets: the views and the tabs of a group are in the bar at the bottom (SavOffice.bottomNav); the button to add
+   an expense floats above it */
+@media (max-width: 900px) { .hside > sav-menu { display: none; } .gtabs::part(nav) { display: none; } .fab { bottom: calc(5.2rem + env(safe-area-inset-bottom)); } }
 @media (max-width: 900px) { .rbody { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 760px) {
   .rhead .addb { display: none; } .fab { display: block; } .gtabs::part(nav) { overflow-x: auto; scrollbar-width: none; } .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; } .stat strong { font-size: 1.05rem; }

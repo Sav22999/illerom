@@ -228,6 +228,7 @@ sav-infinite-scroll:has(.gskel)::part(footer) { display: none; } /* the skeleton
   .quota { flex: 1 1 10rem; order: 2; border: 0; margin: 0; padding: 0 .2rem; gap: .25rem; } .quota .qhead { display: none; } .quota small { font-size: .76rem; }
   .picking .dhead, .dhead:has(.selbar) { top: 0; }
   .photos .hbody { grid-template-rows: auto minmax(0, 1fr); }
+  .hside > sav-menu.dnav { display: none; } /* the places are in the bar at the bottom (SavOffice.bottomNav) */
   .grid .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .3rem; }
   .grid[data-size="s"] .tiles { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .2rem; } .grid[data-size="l"] .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
   .tile { border-radius: 8px; } .grid[data-size="s"] .tile { border-radius: 5px; } .sizes { display: none; }

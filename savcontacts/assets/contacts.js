@@ -79,11 +79,20 @@ function build(root, view, key) {
   const drawBottom = () => {
     const soon = S.contacts.filter((c) => { const n = nextBirthday(c); return n && n.days <= 7; }).length;
     const it = (k, ic, label, badge) => h('sav-bottom-nav-item', { icon: ic, label, href: k ? placeHash({ kind: k }) : null, value: k || 'more', current: (k ? view.kind === k : !['all', 'fav', 'birthdays'].includes(view.kind)) || null, badge: badge || null });
-    put(bottom, it('all', 'contact', t('all_contacts')), it('fav', 'star', t('favorites')), it('birthdays', 'cake', t('birthdays'), soon), it('', 'tag', t('groups')));
+    put(bottom, it('all', 'contact', t('all_contacts')), it('fav', 'star', t('favorites')), it('birthdays', 'cake', t('birthdays'), soon), it('', 'so-ellipsis', t('more')));
   };
   bottom.addEventListener('click', (e) => { const i = e.target.closest('sav-bottom-nav-item'); if (i && !i.getAttribute('href')) openDrawer(); });
-  /** Every group, and the places that are not in the bar (duplicates, trash), in a drawer from the bottom. */
+  /** Every group, and the places that are not in the bar (duplicates, trash): "More", the action sheet of SavOffice (as in every
+   *  app); the drawer from the bottom when it is not there. */
   function openDrawer() {
+    if (window.SavOffice?.actionSheet) {
+      const on = (k, id) => view.kind === k && (!id || String(view.id) === String(id));
+      window.SavOffice.actionSheet({ title: t('more'), items: [
+        ...S.groups.map((g) => ['tag', g.name, () => nav('group:' + g.id), { current: on('group', g.id) }]),
+        S.groups.length ? '-' : null, ['merge', t('duplicates'), () => nav('duplicates:'), { current: on('duplicates') }], ['trash', t('trash'), () => nav('trash:'), { current: on('trash') }],
+        '-', ['tag-plus', t('new_group'), () => groupDialog()]] });
+      return;
+    }
     const mi = (value, ic, label, count) => { const x = h('sav-menu-item', { value }, typeof ic === 'string' ? icon(ic, { slot: 'prefix' }) : ic, h('span.mlab', label), count ? h('sav-badge', { slot: 'suffix', variant: 'neutral', appearance: 'soft', pill: true }, String(count)) : null); if (value === key) x.setAttribute('current', ''); return x; };
     const m = h('sav-menu', { label: t('groups'), selectable: true },
       S.groups.map((g) => mi('group:' + g.id, h('span.gdot', { slot: 'prefix', style: `--g:${g.color}` }), g.name, S.contacts.filter((c) => c.groups.includes(g.id)).length)),

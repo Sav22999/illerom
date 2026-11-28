@@ -76,6 +76,11 @@ export async function home(root, view = '') {
     trash: ['trash', 'trash', () => list.filter((s) => s.deleted)],
   };
   if (!V[view]) view = '';
+  // phones and tablets: the views (then the folders) in the bar at the bottom of SavOffice, the ones that do not fit under "More"
+  // (an action sheet); the menu on the side is left out
+  const bnav = window.SavOffice?.bottomNav?.({ label: t('home'), current: view,
+    items: [...Object.keys(V).map((v) => ({ value: v, icon: V[v][1], label: t(V[v][0]), href: '#/' + v }))] });
+  if (bnav) root.firstElementChild?.append(bnav);
 
   function drawSide() {
     const count = { starred: V.starred[2]().length, answered: answered.length, trash: V.trash[2]().length };

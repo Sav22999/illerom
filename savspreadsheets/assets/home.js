@@ -94,6 +94,11 @@ export async function home(root, view = '', arg = '') {
   const V = { '': ['my_docs', 'sheet', () => docs.filter((d) => d.mine && !d.deleted)], starred: ['starred', 'star', () => docs.filter((d) => d.starred && !d.deleted)], shared: ['shared', 'users', () => docs.filter((d) => !d.mine)], templates: ['templates', 'layout-template', () => []], trash: ['trash', 'trash', () => docs.filter((d) => d.mine && d.deleted)] };
   const folder = view === 'f' ? folders.find((f) => f.id === +arg) : null;
   if (view !== 'f' && !V[view]) view = '';
+  // phones and tablets: the views (then the folders) in the bar at the bottom of SavOffice, the ones that do not fit under "More"
+  // (an action sheet); the menu on the side is left out
+  const bnav = window.SavOffice?.bottomNav?.({ label: t('home'), current: view === 'f' ? 'f' + arg : view,
+    items: [...Object.keys(V).map((v) => ({ value: v, icon: V[v][1], label: t(V[v][0]), href: '#/' + v })), ...folders.map((f) => ({ value: 'f' + f.id, icon: 'folder', label: f.name, href: '#/f/' + f.id }))] });
+  if (bnav) root.firstElementChild?.append(bnav);
 
   // previews are asked only for what is seen, a few at a time
   const wanted = new Set();

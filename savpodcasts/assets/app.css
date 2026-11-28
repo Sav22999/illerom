@@ -80,7 +80,8 @@ sav-dialog h3 { font-size: .98rem; } .dlg-err { margin-top: .8rem; } .segm.wide 
 .hstatus { display: inline-flex; align-items: center; gap: .3rem; font-size: .82rem; color: var(--sav-color-text-muted); } .hstatus sav-spinner { font-size: .9rem; }
 .shead2 { display: flex; align-items: center; gap: .6rem; margin: 1.4rem 0 .7rem; flex-wrap: wrap; } .shead2 h2 { font-size: 1rem; } .shead2 .spacer { flex: 1; }
 .home > .credit { width: 100%; max-width: 1680px; margin: auto auto 0; padding: 1rem clamp(.8rem, 2vw, 1.6rem); }
-.bnav { --x: 0; }
+.bnav { --x: 0; display: none; } /* the bar at the bottom: phones and tablets (up to 900px), as every app of SavOffice */
+@media (max-width: 900px) { .bnav { display: block; } }
 .more { margin-top: 1rem; }
 .catalog { margin-top: 2rem; font-size: .82rem; color: var(--sav-color-text-muted); } .catalog a { color: inherit; }
 
@@ -218,7 +219,7 @@ body.has-dock .home { padding-bottom: var(--dock-h); }
 .dk-mring { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(var(--sav-color-primary) var(--done, 0%), transparent 0); -webkit-mask: radial-gradient(circle, transparent 61%, #000 63%); mask: radial-gradient(circle, transparent 61%, #000 63%); }
 .dk-mplay { --sav-button-radius: 50%; }
 body.has-dock.dock-mini .home { padding-bottom: 4.6rem; }
-@media (max-width: 760px) { body.has-dock.dock-mini .home { padding-bottom: calc(4.8rem + 4rem); } .dock.mini { right: .6rem; } }
+@media (max-width: 900px) { body.has-dock.dock-mini .home { padding-bottom: calc(4.8rem + 4rem); } .dock.mini { right: .6rem; } }
 
 /* the big player: a sheet from the bottom */
 .plsheet { --size: min(92dvh, 46rem); }
@@ -239,8 +240,8 @@ body.has-dock.dock-mini .home { padding-bottom: 4.6rem; }
   .hbody { grid-template-columns: 13rem minmax(0, 1fr); gap: 1.2rem; } .newbtn sav-button { font-size: .95em; }
   .htop { gap: .6rem; }
 }
-@media (max-width: 760px) {
-  /* the places move to the bar at the bottom; the search under the brand */
+@media (max-width: 900px) {
+  /* phones and tablets, as every app of SavOffice: the places move to the bar at the bottom; the search under the brand */
   .hbody { grid-template-columns: minmax(0, 1fr); padding-top: .2rem; } .hside { display: none; }
   .htop { flex-wrap: wrap; row-gap: .5rem; } .hsearch { order: 3; flex: 1 0 100%; }
   .home { padding-bottom: 4.8rem; } body.has-dock .home { padding-bottom: calc(4.8rem + 6.4rem); }

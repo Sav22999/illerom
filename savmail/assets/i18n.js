@@ -141,6 +141,7 @@ const T = {
   // the mail
   mail: ['Mail', 'Posta'], folders: ['Folders', 'Cartelle'], compose: ['Write', 'Scrivi'], refresh: ['Check for new mail', 'Controlla nuova posta'],
   search_mail: ['Search the mail', 'Cerca nella posta'], all_mailboxes: ['All addresses', 'Tutti gli indirizzi'], all_x: ['{x} of every address', '{x} di tutti gli indirizzi'],
+  all_folders: ['All folders', 'Tutte le cartelle'],
   role_inbox: ['Inbox', 'Posta in arrivo'], role_drafts: ['Drafts', 'Bozze'], role_sent: ['Sent', 'Inviata'], role_archive: ['Archive', 'Archivio'], role_junk: ['Spam', 'Spam'], role_trash: ['Trash', 'Cestino'],
   fix_it: ['Fix it', 'Correggi'], select_all: ['Select all', 'Seleziona tutto'], select: ['Select', 'Seleziona'],
   archive: ['Archive', 'Archivia'], spam: ['Spam', 'Spam'], mark_read: ['Mark as read', 'Segna come letto'], mark_unread: ['Mark as unread', 'Segna come non letto'],

@@ -52,6 +52,9 @@ export async function homeScreen(root, view = '') {
     archived: ['archived', 'archive', () => S.groups.filter((g) => g.archived)],
   };
   if (!V[view]) view = '';
+  // phones and tablets: the views in the bar at the bottom of SavOffice, the ones that do not fit under "More" (the menu on the side is left out)
+  const bnav = window.SavOffice?.bottomNav?.({ label: t('my_groups'), current: view, items: Object.keys(V).map((v) => ({ value: v, icon: V[v][1], label: t(V[v][0]), href: '#/' + v })) });
+  if (bnav) root.firstElementChild?.append(bnav);
 
   function drawSide() {
     const count = { get: V.get[2]().length, owe: V.owe[2]().length, archived: V.archived[2]().length, spending: S.capsOver };

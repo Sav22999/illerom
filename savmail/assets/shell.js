@@ -35,7 +35,10 @@ export function shell(root, o = {}) {
   const handle = h('button.sfold', { type: 'button' }, h('sav-icon', { name: 'panel-left-close' }));
   // a page of its own (the settings): no side menu at all, the page says how to go back
   const body = o.noSide ? h('div.hbody', main) : h('div.hbody', nav, handle, main);
-  const page = h('div.home.app' + (o.fixed ? '.fixed' : '') + (o.noSide ? '.noside' : fold('side-mini') ? '.side-mini' : ''), top, body, o.fixed ? null : credit(), drawer);
+  // phones and tablets: the main folders in the bar at the bottom of SavOffice; the others, the addresses and every folder of
+  // every address under "More" (an action sheet; "All folders" opens the whole menu in the drawer)
+  const bnav = o.noSide ? null : mailNav(o, () => { put(drawer, side(o, () => drawer.hide(), false)); drawer.show(); });
+  const page = h('div.home.app' + (o.fixed ? '.fixed' : '') + (o.noSide ? '.noside' : fold('side-mini') ? '.side-mini' : ''), top, body, o.fixed ? null : credit(), drawer, bnav);
   const mini = () => page.classList.contains('side-mini');
   const setMini = (v) => {
     page.classList.toggle('side-mini', v);
@@ -67,7 +70,29 @@ export function shell(root, o = {}) {
   }
   if (o.content) put(main, o.content);
   document.body.classList.toggle('inapp', !!o.fixed);
-  return { main, nav, top, redraw, setCurrent: (c) => { o.current = c; redraw(); } };
+  return { main, nav, top, redraw, setCurrent: (c) => { o.current = c; redraw(); bnav?.setCurrent(roleOf(c)); } };
+}
+
+/** The role of the place shown ('all:inbox' -> inbox, 'f:<address>:<folder>' -> the role of that folder), or the place itself. */
+function roleOf(cur = '') {
+  if (cur.startsWith('all:')) return cur.slice(4);
+  if (cur.startsWith('f:')) { const [, a, ...f] = cur.split(':'), acc = S.accounts.find((x) => x.id === a), box = f.join(':'); if (acc) for (const [r] of ROLES) if (roleBox(acc, r) === box || (r === 'inbox' && box.toUpperCase() === 'INBOX')) return r; return 'folder'; }
+  return cur;
+}
+/** The bar at the bottom: inbox, drafts, sent, archive; spam, trash, the addresses and all the folders under "More". */
+function mailNav(o, allFolders) {
+  if (!window.SavOffice?.bottomNav || !S.accounts.length) return null;
+  const multi = S.accounts.length > 1, a0 = S.accounts[0];
+  const href = (r) => (multi ? '#/m/all/' + r : roleBox(a0, r) ? `#/m/${enc(a0.id)}/${enc(roleBox(a0, r))}` : null);
+  const icon = Object.fromEntries(ROLES);
+  const place = (r) => (href(r) ? { value: r, icon: icon[r], label: t('role_' + r), href: href(r), badge: r === 'inbox' && sumUnread('inbox') ? String(Math.min(99, sumUnread('inbox'))) : null } : null);
+  const cur = roleOf(o.current);
+  return window.SavOffice.bottomNav({
+    label: t('folders'), current: cur, max: 5,
+    items: ['inbox', 'drafts', 'sent', 'archive'].map(place),
+    more: [...['junk', 'trash'].map((r) => (href(r) ? [icon[r], t('role_' + r), () => go(href(r)), { current: cur === r }] : null)), '-',
+      ['folder-tree', t('all_folders'), allFolders, { current: cur === 'folder' }], ['at-sign', t('g_mailboxes'), () => go('#/addresses'), { current: cur === 'addresses' }], ['settings', t('settings'), () => go('#/settings')]],
+  });
 }
 
 /** The menu on the side; mini: only icons (each name in a tip), a dot where something is unread. */

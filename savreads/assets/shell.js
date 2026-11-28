@@ -83,7 +83,15 @@ export function frame(root, active, ...content) {
   const feeds = place === 'feeds';
   const q = location.hash.startsWith('#/search/') ? decodeURIComponent(location.hash.slice(9)) : location.hash.startsWith('#/feeds/q/') ? decodeURIComponent(location.hash.slice(10)) : '';
   const bar = h('sav-bottom-nav.rbottom', { fixed: true, label: 'SavReads' });
-  const paintBar = () => put(bar, BAR.map((k) => { const [, ic, label, to] = PLACES.find((p) => p[0] === k); const n = k === 'unread' || k === 'feeds' ? countOf(k) : 0; return h('sav-bottom-nav-item', { icon: ic, label: t(label === 'nav_feeds' ? 'feeds' : label), href: to, value: k, current: k === place || null, badge: n ? n99(n) : null }); }));
+  const paintBar = () => put(bar, [...BAR.map((k) => { const [, ic, label, to] = PLACES.find((p) => p[0] === k); const n = k === 'unread' || k === 'feeds' ? countOf(k) : 0; return h('sav-bottom-nav-item', { icon: ic, label: t(label === 'nav_feeds' ? 'feeds' : label), href: to, value: k, current: k === place || null, badge: n ? n99(n) : null }); }), h('sav-bottom-nav-item', { icon: 'so-ellipsis', label: t('more'), value: 'more', current: !BAR.includes(place) || null })]);
+  // the places not in the bar, and the tags: "More", the action sheet of SavOffice (as in every app)
+  bar.addEventListener('sav-select', (e) => {
+    if (e.detail.value !== 'more' || !window.SavOffice?.actionSheet) return;
+    window.SavOffice.actionSheet({ title: t('more'), items: [
+      ...PLACES.filter(([k]) => !BAR.includes(k)).map(([k, ic, label, to]) => [ic, t(label), () => go(to), { current: k === place }]),
+      S.counts.tags?.length ? '-' : null, ...(S.counts.tags || []).map((x) => ['tag', '#' + x.name, () => go('#/tag/' + encodeURIComponent(x.name)), { current: active === 'tag:' + x.name }])] });
+    setTimeout(paintBar, 0);
+  });
   paintBar();
   put(root, h('div.home', h('header.htop', brand(), searchBox(q, feeds), h('div.spacer'), userMenu()), h('div.hbody', side, main), credit(), bar));
   // the side follows the counts while the page stays

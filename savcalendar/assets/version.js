@@ -1,7 +1,12 @@
 /** The version of SavCalendar (in the footer) and what changed in each one (the page #/changelog). Newest first. */
-export const VERSION = '1.3.1';
+export const VERSION = '1.3.2';
 
 export const CHANGES = [
+  {
+    v: '1.3.2', date: '2026-11-28', items: [
+      ['On phones and tablets the views (day, week, month, agenda) are in the bar at the bottom, as in every app of SavOffice', 'Su telefoni e tablet le viste (giorno, settimana, mese, agenda) sono nella barra in basso, come in ogni app di SavOffice'],
+    ],
+  },
   {
     v: '1.3.1', date: '2026-11-28', items: [
       ['Keyboard shortcuts: a letter is never a shortcut by itself any more, only with ⌥⇧ (Alt+Shift), so typing or a key pressed by mistake does nothing; the arrows, / and ? work as before', 'Scorciatoie da tastiera: una lettera da sola non è più mai una scorciatoia, solo con ⌥⇧ (Alt+Shift), così scrivere o premere un tasto per sbaglio non fa nulla; frecce, / e ? funzionano come prima'],

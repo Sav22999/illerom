@@ -279,19 +279,16 @@ export async function home(root, a, b, c) {
   const nav = h('sav-menu.dnav', { label: t('my_drive'), selectable: true },
     [['root', 'hard-drive', t('my_drive')], ['withme', 'users', t('withme')], ['recent', 'clock', t('recent')], ['starred', 'star', t('starred')], ['shared', 'link', t('shared')], ['temp', 'timer', t('temp')], ['trash', 'trash-2', t('trash')], ['vault', 'lock', t('vault')]].map(([k, ic, l]) => { const x = item(k, ic, l); x.toggleAttribute('current', where === k || (k === 'root' && (where === 'root' || (!VIEWS[where] && where !== 'search' && where !== 'vault')))); return x; }));
   nav.addEventListener('sav-select', (e) => go(e.detail.value === 'root' ? '#/' : '#/' + e.detail.value));
-  // phones: the main places in a bar at the bottom (as in SavTasks); the others under "More"
+  // phones and tablets: the places in the bar at the bottom of SavOffice; the ones that do not fit under "More" (an action sheet)
   const MORE = ['withme', 'shared', 'trash', 'vault'];
-  const bnav = h('sav-bottom-nav.dbottom', { label: t('places'), fixed: true },
-    [['root', 'hard-drive', t('my_drive')], ['recent', 'clock', t('recent')], ['starred', 'star', t('starred')], ['temp', 'timer', t('temp')], ['more', 'more-horizontal', t('more')]].map(([v, ic, l]) =>
-      h('sav-bottom-nav-item', { icon: ic, label: l, value: v, href: v === 'more' ? null : v === 'root' ? '#/' : '#/' + v })));
-  const bcurrent = (v) => bnav.querySelectorAll('sav-bottom-nav-item').forEach((x) => x.toggleAttribute('current', x.getAttribute('value') === v));
-  bcurrent(MORE.includes(where) ? 'more' : VIEWS[where] ? where : where === 'search' ? null : 'root');
-  bnav.addEventListener('sav-select', (e) => {
-    if (e.detail.value !== 'more') return;
-    const r = e.detail.item.getBoundingClientRect();
-    menuAt(r.left, r.top - 8, [['users', t('withme'), () => go('#/withme')], ['link', t('shared'), () => go('#/shared')], ['trash-2', t('trash'), () => go('#/trash')], ['lock', t('vault'), () => go('#/vault')], '-', ['settings', t('settings'), () => go('#/settings')]], { label: t('more') });
-    setTimeout(() => bcurrent(MORE.includes(where) ? 'more' : VIEWS[where] ? where : 'root'), 0); // the menu is not a place
-  });
+  const placeOf = () => (VIEWS[where] || MORE.includes(where) ? where : where === 'search' ? null : 'root');
+  const bnav = window.SavOffice?.bottomNav ? window.SavOffice.bottomNav({
+    label: t('places'), current: placeOf(),
+    items: [['root', 'hard-drive', t('my_drive')], ['recent', 'clock', t('recent')], ['starred', 'star', t('starred')], ['temp', 'timer', t('temp')], ['withme', 'users', t('withme')], ['shared', 'link', t('shared')], ['trash', 'trash-2', t('trash')], ['vault', 'lock', t('vault')]]
+      .map(([v, icon, label]) => ({ value: v, icon, label, href: v === 'root' ? '#/' : '#/' + v })),
+    more: [['settings', t('settings'), () => go('#/settings')]],
+  }) : null;
+  const bcurrent = (v) => bnav?.setCurrent(v);
   spaceBox = h('div.quota');
   setSpace(S.user.used || 0, S.user.quota || 0, S.user.parts);
   // things dragged onto "My drive" move there

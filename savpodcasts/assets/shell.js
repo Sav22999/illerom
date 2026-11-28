@@ -35,7 +35,7 @@ export function frame(root, active, ...content) {
   // as the New button of the other apps: the main thing to do, adding a podcast
   const side = h('nav.hside', { 'aria-label': 'SavPodcasts' }, primary(t('add_podcast'), { icon: 'plus', size: 'lg', block: true, class: 'newbtn', onclick: () => go('#/discover') }), menu, following(active));
   const main = h('main.hmain', content);
-  const bottom = h('sav-bottom-nav.bnav', { fixed: true, 'mobile-only': true, label: 'SavPodcasts' }, PLACES.map(([k, ic, label, to]) => h('sav-bottom-nav-item', { icon: ic, label: t(label), href: to, current: k === active, badge: k === 'queue' && S.queue.length ? String(S.queue.length) : null })));
+  const bottom = h('sav-bottom-nav.bnav', { fixed: true, label: 'SavPodcasts' }, PLACES.map(([k, ic, label, to]) => h('sav-bottom-nav-item', { icon: ic, label: t(label), href: to, current: k === active, badge: k === 'queue' && S.queue.length ? String(S.queue.length) : null })));
   const q = location.hash.startsWith('#/discover/') ? decodeURIComponent(location.hash.split('/')[2] || '') : '';
   put(root, h('div.home', h('header.htop', brand(), h('div.hsearch', searchBox(q)), h('div.spacer'), userMenu()), h('div.hbody', side, main), credit(), bottom));
   // the side follows the podcasts followed and the queue while the page stays

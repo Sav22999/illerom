@@ -74,6 +74,8 @@ export function homeScreen(root, wantNew = false) {
   const sorts = { updated: (a, b) => (b.updated > a.updated ? 1 : -1), created: (a, b) => (b.created > a.created ? 1 : -1), title: (a, b) => a.title.localeCompare(b.title), answers: (a, b) => b.responses - a.responses };
   // the filters are the menu on the side, as the views of SavDocuments and SavSchedules
   const V = { all: ['your_forms', 'layout-grid'], open: ['f_open', 'door-open'], closed: ['f_closed', 'door-closed'], starred: ['f_starred', 'star'], archived: ['f_archived', 'archive'] };
+  // phones and tablets: the same filters in the bar at the bottom of SavOffice (the menu on the side is left out)
+  const bnav = window.SavOffice?.bottomNav?.({ label: t('your_forms'), current: filter, items: Object.keys(V).map((v) => ({ value: v, icon: V[v][1], label: t(V[v][0]), run: () => { filter = v; draw(); } })) });
 
   const card = (f) => {
     // the favourite button of SavComponents, as in the other apps of SavOffice: the star fills at once when it is pressed
@@ -96,6 +98,7 @@ export function homeScreen(root, wantNew = false) {
     const it = (v) => { const x = item(v, V[v][1], t(V[v][0])); x.toggleAttribute('current', filter === v); if (count[v]) x.append(h('sav-badge', { slot: 'suffix', appearance: 'soft', variant: 'neutral', pill: true }, String(count[v]))); return x; };
     const menu = h('sav-menu', { label: t('your_forms'), selectable: true }, Object.keys(V).map(it));
     menu.addEventListener('sav-select', (e) => { filter = e.detail.value; draw(); });
+    bnav?.setCurrent(filter);
     const total = S.forms.reduce((a, f) => a + f.responses, 0), fresh = S.forms.reduce((a, f) => a + (f.new || 0), 0);
     put(side, primary(t('new_l'), { icon: 'plus', size: 'lg', block: true, class: 'newbtn', onclick: () => newForm() }), menu,
       h('div.sidebox', h('div', h('strong', String(total)), h('small.muted', t('answers_n'))), h('div', h('strong', String(fresh)), h('small.muted', t('new_answers')))));
@@ -127,7 +130,7 @@ export function homeScreen(root, wantNew = false) {
   search.addEventListener('input', () => { query = search.value.trim(); draw(); });
   search.addEventListener('sav-clear', () => { query = ''; draw(); });
 
-  put(root, h('div.home', h('header.htop', brand(), h('div.hsearch', search), h('div.spacer'), userMenu()), h('div.hbody', side, main), credit()));
+  put(root, h('div.home', h('header.htop', brand(), h('div.hsearch', search), h('div.spacer'), userMenu()), h('div.hbody', side, main), credit(), bnav));
   draw();
   if (wantNew) setTimeout(() => newForm(), 50);
   if (S.pendingFile) import('./files.js').then((m) => m.openPending());

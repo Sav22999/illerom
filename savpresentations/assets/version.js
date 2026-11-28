@@ -1,7 +1,12 @@
 /** The version of SavPresentations (in the footer) and what changed in each one (the page ?p=changelog). Newest first. */
-export const VERSION = '1.2.2';
+export const VERSION = '1.2.3';
 
 export const CHANGES = [
+  {
+    v: '1.2.3', date: '2026-11-28', items: [
+      ['On phones and tablets the places are in the bar at the bottom, as in every app of SavOffice; when they do not all fit, “More” opens an action sheet with the others', 'Su telefoni e tablet le sezioni sono nella barra in basso, come in ogni app di SavOffice; quando non ci stanno tutte, «Altro» apre un foglio di azioni con le altre'],
+    ],
+  },
   {
     v: '1.2.2', date: '2026-11-28', items: [
       ['Fixed: the fixed and adaptive spaces chosen for the bars are kept with your account (they were lost when saving)', 'Corretto: gli spazi fissi e adattivi scelti per le barre restano salvati nel tuo account (andavano persi al salvataggio)'],

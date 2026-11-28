@@ -2525,6 +2525,11 @@ sav-avatar {
         min-width: 12rem;
     }
 
+    /* the places and the folders are in the bar at the bottom (SavOffice.bottomNav): the row keeps "New" */
+    .hside > sav-menu, .hside > sav-tree, .hside > .navh {
+        display: none;
+    }
+
     .htop {
         flex-wrap: wrap;
     }

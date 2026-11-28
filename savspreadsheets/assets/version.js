@@ -1,7 +1,12 @@
 /** The version of SavSpreadsheets (in the footer) and what changed in each one (the page #/changelog). Newest first. */
-export const VERSION = '1.1.1';
+export const VERSION = '1.1.2';
 
 export const CHANGES = [
+  {
+    v: '1.1.2', date: '2026-11-28', items: [
+      ['On phones and tablets the places are in the bar at the bottom, as in every app of SavOffice; when they do not all fit, “More” opens an action sheet with the others', 'Su telefoni e tablet le sezioni sono nella barra in basso, come in ogni app di SavOffice; quando non ci stanno tutte, «Altro» apre un foglio di azioni con le altre'],
+    ],
+  },
   {
     v: '1.1.1', date: '2026-11-28', items: [
       ['Customise the bars: the preview scrolls when the bar is long and shows “Title” instead of the name of the file; on phones and tablets the list scrolls with a finger (the handle moves the rows)', 'Personalizza le barre: l’anteprima scorre quando la barra è lunga e mostra «Titolo» invece del nome del file; su telefoni e tablet l’elenco scorre con il dito (la maniglia sposta le righe)'],

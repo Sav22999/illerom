@@ -1,7 +1,12 @@
 /** The version of SavNotes (in the footer) and what changed in each one (the page #/changelog). Newest first. */
-export const VERSION = '1.1.1';
+export const VERSION = '1.1.2';
 
 export const CHANGES = [
+  {
+    v: '1.1.2', date: '2026-11-28', items: [
+      ['On phones and tablets the places are in the bar at the bottom, as in every app of SavOffice; when they do not all fit, “More” opens an action sheet with the others', 'Su telefoni e tablet le sezioni sono nella barra in basso, come in ogni app di SavOffice; quando non ci stanno tutte, «Altro» apre un foglio di azioni con le altre'],
+    ],
+  },
   {
     v: '1.1.1', date: '2026-11-28', items: [
       ['Faster on tablets: the stroke being drawn and the circle of the eraser are on a layer of their own, so the sheet is not painted again at every movement; the small preview waits until the pen is lifted, and the eraser does less work on touch screens', 'Più veloce sui tablet: il tratto che stai disegnando e il cerchio della gomma stanno su un livello a parte, così il foglio non viene ridisegnata a ogni movimento; la piccola anteprima aspetta che il pennino si sollevi, e la gomma lavora meno sugli schermi touch'],

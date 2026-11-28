@@ -108,6 +108,7 @@ sav-menu-item.over, sav-tree-item.over { outline: 2px dashed var(--sav-color-pri
 .sgrid { columns: 2 26rem; column-gap: 1.2rem; margin-top: 1rem; } .scard { display: block; break-inside: avoid; margin-bottom: 1.2rem; } .shead { display: flex; gap: .6rem; align-items: center; } .shead sav-icon { color: var(--coral); } .scard h4 { font-size: .9rem; margin-top: .4rem; }
 @media (max-width: 900px) {
   .hbody { grid-template-columns: minmax(0, 1fr); gap: .8rem; } .htop { flex-wrap: wrap; } .hsearch { order: 3; flex: 1 0 100%; margin: 0; }
+  .hside > sav-menu, .hside > sav-tree, .hside .navh { display: none; } /* the places are in the bar at the bottom (SavOffice.bottomNav) */
   .hside { position: static; flex-direction: row; overflow-x: auto; align-items: center; gap: .3rem; scrollbar-width: none; } .hside .newbtn { margin: 0; flex: none; } .hside sav-menu { flex: none; } .hside sav-menu::part(base) { display: flex; flex-direction: row; } .hside sav-menu-item { white-space: nowrap; } .hside sav-tree { min-width: 12rem; }
   .navh sav-label, .nofold, .quota { display: none; } .navh { padding: 0; }
   .qrow { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .7rem; overflow: visible; }

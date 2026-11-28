@@ -118,8 +118,10 @@ export function frame(root, current, main, o = {}) {
     }, 300);
   });
   search.addEventListener('keydown', (e) => { if (e.key === 'Escape') { search.value = ''; go('#/'); } });
+  // phones and tablets: the places in the bar at the bottom of SavOffice (the row of places at the top is left out)
+  const bnav = window.SavOffice?.bottomNav?.({ label: t('places'), current, items: PLACES.map(([k, ic, href]) => ({ value: k, icon: ic, label: t(k), href })) });
   put(root, h('div.home' + (o.cls ? '.' + o.cls : ''), h('header.htop', brand(), search, h('div.spacer'), userMenu()),
-    h('div.hbody', h('nav.hside', newMenu(), nav, spaceBox()), main), credit()));
+    h('div.hbody', h('nav.hside', newMenu(), nav, spaceBox()), main), credit(), bnav));
   return main;
 }
 

@@ -1498,6 +1498,7 @@ tr.click { cursor: pointer; }
     .hside { position: static; flex-direction: row; overflow-x: auto; align-items: center; gap: .3rem; scrollbar-width: none; }
     .hside .newbtn { margin: 0; flex: none; } .hside sav-menu { flex: none; } .hside sav-menu::part(base) { display: flex; flex-direction: row; } .hside sav-menu-item { white-space: nowrap; }
     .hside sav-menu-label, .hside sav-divider { display: none; }
+    .hside > sav-menu, .gtabs::part(nav) { display: none; } /* the places and the tabs of a group are in the bar at the bottom (SavOffice.bottomNav) */
     .grid2, .grid3, .add-row { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 640px) { .grid { grid-template-columns: minmax(0, 1fr); } .grid.tpls { grid-template-columns: 1fr 1fr; } }

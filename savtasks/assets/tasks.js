@@ -193,9 +193,22 @@ function tagCloud(sc) {
 /** On phones, the bar at the bottom: today, upcoming, inbox, lists. */
 function drawNav(nav, sc) {
   const k = today(), late = openOnes().filter((x) => x.due && x.due <= k).length;
-  const it = (v, ic, label, badge) => h('sav-bottom-nav-item', { icon: ic, label, href: v ? '#/' + v : null, value: v || 'lists', current: sc.view === v || null, badge: badge || null });
-  put(nav, it('today', 'sun', t('v_today'), late), it('upcoming', 'calendar-days', t('v_upcoming')), it('inbox', 'inbox', t('inbox')), it('', 'list-checks', t('lists')));
-  nav.onclick = (e) => { const i = e.target.closest('sav-bottom-nav-item'); if (i && !i.getAttribute('href')) { put(sc.drawer, sidebar(sc)); sc.drawer.show(); } };
+  // the three main views; the others and the lists under "More": the action sheet of SavOffice (as in every app)
+  const inBar = ['today', 'upcoming', 'inbox'].includes(sc.view);
+  const it = (v, ic, label, badge) => h('sav-bottom-nav-item', { icon: ic, label, href: v ? '#/' + v : null, value: v || 'more', current: (v ? sc.view === v : !inBar) || null, badge: badge || null });
+  put(nav, it('today', 'sun', t('v_today'), late), it('upcoming', 'calendar-days', t('v_upcoming')), it('inbox', 'inbox', t('inbox')), it('', 'so-ellipsis', t('more')));
+  nav.onclick = (e) => {
+    const i = e.target.closest('sav-bottom-nav-item');
+    if (!i || i.getAttribute('href')) return;
+    const lists = S.lists.filter((l) => !l.inbox && !l.archived), on = (v, a = '') => sc.view === v && (!a || sc.arg === a);
+    const open = () => { if (window.SavOffice?.actionSheet) window.SavOffice.actionSheet({ title: t('more'), items: [
+      ['star', t('v_starred'), () => go('#/starred'), { current: on('starred') }], ['circle-check', t('v_done'), () => go('#/done'), { current: on('done') }],
+      prefs().schedules !== false ? ['vote', t('v_schedules'), () => go('#/schedules'), { current: on('schedules') }] : null, ['timer', t('v_time'), () => go('#/time'), { current: on('time') }],
+      lists.length ? '-' : null, ...lists.map((l) => [l.icon || 'list', l.name, () => go('#/l/' + l.id), { current: on('l', l.id) }]),
+      '-', ['list-plus', t('new_list_dots'), () => newDialog(sc.ctx, { kind: 'list' })]] });
+    else { put(sc.drawer, sidebar(sc)); sc.drawer.show(); } };
+    open();
+  };
 }
 
 // ------------------------------------------------------------------ main
