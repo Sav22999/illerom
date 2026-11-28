@@ -96,6 +96,8 @@ export async function openWriter(root, pid, opt = {}) {
   function layoutStatus() { put(bottom, barList('status', STATUS_DEF, STATUS_ITEMS()).map((k) => barEl(k, SB))); }
   layoutTitle();
   layoutStatus();
+  // a right click (a long press) on a bar or on one of its buttons: «Customise…», the window of the bars on that bar
+  BARS?.attach?.({ title: top, insert: ins, tools: fmt, status: bottom }, toolsDialog);
   desk.append(paper);
   const center = h('section.ecenter', note, desk, bottom), frame = h('div.writer' + (editable ? '' : '.reading'), top, editable ? fmt : null, h('div.emain', left, center, panel, rail), bubble, objbar);
   put(root, frame);

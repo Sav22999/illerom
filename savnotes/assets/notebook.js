@@ -1366,6 +1366,8 @@ export async function notebookScreen(root, id) {
       value: { title: barPick('title', TITLE_DEF, TITLE_ITEMS), tools: barPick('tools', TL_DEF, TL_ITEMS), format: barPick('format', DB_DEF, DB_ITEMS) },
       save: async (v) => { await setPrefs({ bars: { ...(prefs().bars || {}), ...v } }); layoutTitle(); layoutTools(); layoutDoc(); } });
   }
+  // a right click (a long press) on a bar or on one of its buttons: «Customise…», the window of the bars on that bar
+  BARS?.attach?.({ title: top, tools, format: docbar }, barsDialog);
   const zoom = h('div.zoom', pageLabel, h('span.tsep.mhide'), h('span.zbtns', iconBtn('zoom-out', t('zoom_out'), () => setZ(z / 1.2), { place: 'top', kbd: '-' }), zoomLabel, iconBtn('zoom-in', t('zoom_in'), () => setZ(z * 1.2), { place: 'top', kbd: '+' })), iconBtn('scan', t('zoom_fit'), () => fit(), { place: 'top', kbd: 'Shift+1' }));
   const dock = h('div.dock', props, h('div.dockrow', modeSel, tools, docbar));
   wrap.append(top, side, dock, zoom, h('div.sidescrim', { onclick: () => toggleSide(false) }));

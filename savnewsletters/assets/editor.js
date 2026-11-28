@@ -1421,7 +1421,10 @@ export function editorView(root, {group, nl, tpl, role, onBack, onChange}) {
         const tools = richTools(cmd);
         // the buttons shown and their order: a choice of each person (⋮ → Customise the bar), kept with the account
         const el = (k) => (k === '|' ? h('span.rich-sep.so-sep') : k === '_' ? h('i.rich-gap') : k === '~' ? h('span.rich-flex') : tb(tools[k][0], tools[k][1], tools[k][2]));
-        return h('sav-button-group.rich-tools', {label: t('format')}, richOn().map(el));
+        const bar = h('sav-button-group.rich-tools', {label: t('format')}, richOn().map(el));
+        // a right click (a long press) on the bar or on one of its buttons: «Customise…», the window of the bars
+        window.SavOffice?.bars?.attach?.({tools: bar}, toolsDialog);
+        return bar;
     }
 
     /** The buttons the bar of a text can have: [icon, name, what it does]. */
