@@ -27,6 +27,10 @@
  *              limit of downloads, notice to the owner at each download and message; ready = 0 while its files upload
  * temp_items   what a temporary link gives: a file or folder of the drive (node_id, it stays when the link ends) or a
  *              file uploaded only for the link (bkey, under <storage>/<user_id>/, deleted with the link, counted in the space)
+ * reports      a public link (a share link or a temporary link, by token) that a visitor reported as illegal or against the
+ *              terms (DSA art. 16): the kind, the content it points to (node_id | link_id) and its owner (owner_id, so the
+ *              masters can review, act and, art. 17, tell the owner), the category and detail, the reporter (email, ip),
+ *              the decision (status, action, resolution) and when a master last looked at the reported content (seen_at)
  */
 
 declare(strict_types=1);
@@ -196,6 +200,30 @@ function schema_statements(string $p): array
             " . $fk('ti_link', 'link_id', 'temp_links') . ",
             " . $fk('ti_user', 'user_id', 'users') . ",
             " . $fk('ti_node', 'node_id', 'nodes') . "
+        ) $e",
+        "CREATE TABLE IF NOT EXISTS `{$p}reports` (
+            `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `kind` ENUM('share','temp') NOT NULL,
+            `token` CHAR(32) NOT NULL,
+            `node_id` INT UNSIGNED NULL,
+            `link_id` INT UNSIGNED NULL,
+            `owner_id` INT UNSIGNED NULL,
+            `category` VARCHAR(20) NOT NULL DEFAULT 'other',
+            `detail` TEXT NULL,
+            `reporter_email` VARCHAR(190) NULL,
+            `reporter_ip` VARCHAR(45) NULL,
+            `status` ENUM('open','removed','dismissed') NOT NULL DEFAULT 'open',
+            `action` VARCHAR(60) NOT NULL DEFAULT '',
+            `resolution` TEXT NULL,
+            `resolved_by` INT UNSIGNED NULL,
+            `resolved_at` DATETIME NULL,
+            `seen_at` DATETIME NULL,
+            `created_at` DATETIME NOT NULL,
+            KEY `ix_status` (`status`, `created_at`),
+            KEY `ix_token` (`token`),
+            " . $fk('rep_node', 'node_id', 'nodes', 'SET NULL') . ",
+            " . $fk('rep_link', 'link_id', 'temp_links', 'SET NULL') . ",
+            " . $fk('rep_owner', 'owner_id', 'users', 'SET NULL') . "
         ) $e",
     ];
 }

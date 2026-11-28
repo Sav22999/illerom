@@ -20,7 +20,12 @@ require_once dirname(__DIR__, 2) . '/identity/suite.php'; // one account for all
 
 const APP_NAME = 'SavDrive';
 const AUTH_COOKIE = SUITE_COOKIE; // the session of the whole suite (../identity/suite.php)
-const SCHEMA_VERSION = 8; // 2: uploads.replace_id (an app of SavOffice saves its file back into the drive) · 3: usage (the space used by the other apps) · 4: shares, comments, nodes.created_by · 5: temporary links (temp_links, temp_items, uploads.temp_id) · 6: the Vault (vault_keys, vault_nodes, uploads.vault_id) · 7: the two together · 8: the accounts of the suite (../identity/suite.php), settings in profiles
+const SCHEMA_VERSION = 9; // 2: uploads.replace_id (an app of SavOffice saves its file back into the drive) · 3: usage (the space used by the other apps) · 4: shares, comments, nodes.created_by · 5: temporary links (temp_links, temp_items, uploads.temp_id) · 6: the Vault (vault_keys, vault_nodes, uploads.vault_id) · 7: the two together · 8: the accounts of the suite (../identity/suite.php), settings in profiles · 9: reports (a public link reported as illegal, for the review of the masters)
+
+// The kinds a visitor can pick when reporting a public link (report.send); the exact one is kept, the rest shown by the UI
+const REPORT_CATEGORIES = ['illegal', 'copyright', 'malware', 'csam', 'privacy', 'other'];
+// Where a report or a complaint about a decision is handled (the single point of contact, DSA arts. 11, 12, 16, 17)
+const REPORT_CONTACT_URL = 'https://www.saveriomorelli.com/contact-me/';
 const LANGS = ['en', 'it'];
 const GB = 1073741824;
 const DEFAULT_QUOTA = 500 * 1048576;   // 500 MB, until the admins choose another one

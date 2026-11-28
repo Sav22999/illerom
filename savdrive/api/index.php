@@ -1275,6 +1275,71 @@ switch ($r) {
         if ($st->rowCount()) @unlink(storage_dir((int)$u['id']) . "/$id.part");
         send_json(['ok' => true]);
 
+    // ================================================================ reports (DSA art. 16): a visitor reports a public link
+
+    case 'report.send':
+        // {t, category, detail, email}: anyone who can open a public link (a share link or a temporary link) can report it.
+        // No account, no CSRF (it is a public form): rate-limited by IP. The masters review it (master.reports).
+        only('POST');
+        if (too_many_attempts('report', 10, 60)) fail('rate_limited', 429);
+        $b = body();
+        $tok = (string)($b['t'] ?? '');
+        if (!preg_match('/^[a-f0-9]{32}$/', $tok)) fail('not_found', 404);
+        $cat = in_array($b['category'] ?? '', REPORT_CATEGORIES, true) ? (string)$b['category'] : 'other';
+        $detail = trim(mb_substr(str_replace("\r", '', (string)($b['detail'] ?? '')), 0, 2000));
+        $email = mb_strtolower(trim((string)($b['email'] ?? '')));
+        if ($email !== '' && (!filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 190)) fail('email_invalid', 422);
+        // the token is a share link (a file) or a temporary link: find which, and the content and owner it points to
+        $kind = null; $nodeId = null; $linkId = null; $ownerId = null;
+        $st = db()->prepare('SELECT id, user_id FROM ' . t('nodes') . " WHERE share_token = ? AND trashed_at IS NULL AND kind = 'file'");
+        $st->execute([$tok]);
+        if ($row = $st->fetch()) { $kind = 'share'; $nodeId = (int)$row['id']; $ownerId = (int)$row['user_id']; }
+        else {
+            $st = db()->prepare('SELECT id, user_id FROM ' . t('temp_links') . ' WHERE token = ? AND ready = 1');
+            $st->execute([$tok]);
+            if ($row = $st->fetch()) { $kind = 'temp'; $linkId = (int)$row['id']; $ownerId = (int)$row['user_id']; }
+        }
+        if (!$kind) fail('not_found', 404);
+        record_attempt('report');
+        db()->prepare('INSERT INTO ' . t('reports') . ' (kind, token, node_id, link_id, owner_id, category, detail, reporter_email, reporter_ip, status, created_at) VALUES (?,?,?,?,?,?,?,?,?,\'open\',?)')
+            ->execute([$kind, $tok, $nodeId, $linkId, $ownerId, $cat, $detail !== '' ? $detail : null, $email !== '' ? $email : null, client_ip(), now_utc()]);
+        send_json(['ok' => true]);
+
+    case 'report.file':
+        // ?id=&i=&inline=: a master opens the content of a REPORTED link, to assess it. Only files that a report points to can
+        // be reached here (so the masters see reported content and nothing else). Each view is noted (seen_at).
+        only('GET');
+        require_master();
+        $st = db()->prepare('SELECT * FROM ' . t('reports') . ' WHERE id = ?');
+        $st->execute([(int)($_GET['id'] ?? 0)]);
+        $rep = $st->fetch();
+        if (!$rep) fail('not_found', 404);
+        db()->prepare('UPDATE ' . t('reports') . ' SET seen_at = ? WHERE id = ?')->execute([now_utc(), $rep['id']]);
+        if ($rep['kind'] === 'share') {
+            if (!$rep['node_id']) fail('gone', 410);
+            $st = db()->prepare('SELECT * FROM ' . t('nodes') . ' WHERE id = ?');
+            $st->execute([$rep['node_id']]);
+            $n = $st->fetch();
+            if (!$n || !$n['bkey']) fail('gone', 410);
+            header('Cache-Control: private, no-store');
+            stream_file(blob_path((int)$n['user_id'], (string)$n['bkey']), (string)$n['name'], (string)$n['mime'], !empty($_GET['inline']));
+        }
+        if (!$rep['link_id']) fail('gone', 410);
+        $st = db()->prepare('SELECT * FROM ' . t('temp_items') . ' WHERE id = ? AND link_id = ?');
+        $st->execute([(int)($_GET['i'] ?? 0), $rep['link_id']]);
+        $it = $st->fetch();
+        if (!$it) fail('not_found', 404);
+        if ($it['bkey']) { $owner = (int)$it['user_id']; $bkey = (string)$it['bkey']; $name = (string)$it['name']; $mime = (string)$it['mime']; }
+        else {
+            $st = db()->prepare('SELECT * FROM ' . t('nodes') . ' WHERE id = ?');
+            $st->execute([$it['node_id']]);
+            $n = $st->fetch();
+            if (!$n || !$n['bkey']) fail('gone', 410); // a folder item has no single file: assess its files one by one
+            $owner = (int)$n['user_id']; $bkey = (string)$n['bkey']; $name = (string)$n['name']; $mime = (string)$n['mime'];
+        }
+        header('Cache-Control: private, no-store');
+        stream_file(blob_path($owner, $bkey), $name, $mime, !empty($_GET['inline']));
+
     // ================================================================ master admin
 
     case 'master.overview':
@@ -1287,6 +1352,7 @@ switch ($r) {
             'driveBytes' => $n('SELECT COALESCE(SUM(size),0) FROM ' . t('nodes') . " WHERE kind = 'file'"), 'people' => $n('SELECT COUNT(*) FROM (SELECT email FROM ' . t('users') . ' UNION SELECT email FROM ' . t('usage') . ') x'),
             'given' => $n('SELECT COALESCE(SUM(COALESCE(q.quota, ' . default_quota() . ')),0) FROM ' . t('users') . ' u LEFT JOIN ' . t('quotas') . ' q ON q.email = u.email WHERE u.activated = 1 AND (q.quota IS NULL OR q.quota < ' . UNLIMITED . ')'),
             'unlimited' => $n('SELECT COUNT(*) FROM ' . t('quotas') . ' WHERE quota >= ' . UNLIMITED),
+            'reports' => $n('SELECT COUNT(*) FROM ' . t('reports') . " WHERE status = 'open'"),
             'defaultQuota' => default_quota(), 'defaultActive' => default_active(), 'disk' => @disk_free_space(storage_dir()) ?: null]);
 
     case 'master.settings':
@@ -1393,6 +1459,96 @@ switch ($r) {
         if (!$x || is_master($x)) fail('forbidden', 403);
         db()->prepare('DELETE FROM ' . t('users') . ' WHERE id = ?')->execute([$x['id']]);
         delete_user_storage((int)$x['id']);
+        send_json(['ok' => true]);
+
+    case 'master.reports':
+        // ?show=open|resolved|all: the reports to review, with the content they point to and its owner. Never the file itself
+        // (that is report.file, and only for a reported link).
+        only('GET');
+        require_master();
+        $show = (string)($_GET['show'] ?? 'open');
+        $where = $show === 'open' ? "WHERE r.status = 'open'" : ($show === 'resolved' ? "WHERE r.status <> 'open'" : '');
+        $st = db()->query('SELECT r.*, u.name owner_name, u.email owner_email, u.activated owner_active,
+                n.name node_name, n.size node_size, n.mime node_mime, n.trashed_at node_trashed,
+                tl.mode temp_mode, tl.expires_at temp_expires
+            FROM ' . t('reports') . ' r
+            LEFT JOIN ' . t('users') . ' u ON u.id = r.owner_id
+            LEFT JOIN ' . t('nodes') . ' n ON n.id = r.node_id
+            LEFT JOIN ' . t('temp_links') . ' tl ON tl.id = r.link_id
+            ' . $where . " ORDER BY r.status = 'open' DESC, r.created_at DESC LIMIT 500");
+        $rows = $st->fetchAll();
+        // the items of the temporary links that are still there: the masters view each from its own id (report.file?i=)
+        $linkIds = array_values(array_filter(array_map(fn($r) => $r['link_id'] ? (int)$r['link_id'] : 0, $rows)));
+        $items = [];
+        if ($linkIds) {
+            $in = implode(',', array_fill(0, count($linkIds), '?'));
+            $is = db()->prepare('SELECT i.id, i.link_id, i.name, i.mime, i.size, i.node_id, i.bkey, n.kind node_kind FROM ' . t('temp_items') . ' i LEFT JOIN ' . t('nodes') . " n ON n.id = i.node_id WHERE i.link_id IN ($in) ORDER BY i.id");
+            $is->execute($linkIds);
+            foreach ($is->fetchAll() as $it) $items[(int)$it['link_id']][] = ['id' => (int)$it['id'], 'name' => $it['name'], 'mime' => $it['mime'], 'size' => (int)$it['size'], 'folder' => $it['bkey'] === null && $it['node_kind'] === 'folder'];
+        }
+        $out = array_map(function ($r) use ($items) {
+            $gone = $r['kind'] === 'share' ? ($r['node_id'] === null || $r['node_trashed'] !== null) : ($r['link_id'] === null);
+            return [
+                'id' => (int)$r['id'], 'kind' => $r['kind'], 'category' => $r['category'], 'detail' => $r['detail'],
+                'reporter' => $r['reporter_email'], 'ip' => $r['reporter_ip'], 'status' => $r['status'], 'action' => $r['action'],
+                'resolution' => $r['resolution'], 'created' => iso($r['created_at']), 'resolved' => iso($r['resolved_at']), 'seen' => iso($r['seen_at']),
+                'owner' => $r['owner_id'] ? ['id' => (int)$r['owner_id'], 'name' => $r['owner_name'], 'email' => $r['owner_email'], 'active' => (bool)$r['owner_active']] : null,
+                'gone' => $gone,
+                'file' => $r['kind'] === 'share' && !$gone ? ['name' => $r['node_name'], 'size' => (int)$r['node_size'], 'mime' => $r['node_mime']] : null,
+                'temp' => $r['kind'] === 'temp' && !$gone ? ['mode' => $r['temp_mode'], 'expires' => iso($r['temp_expires']), 'items' => $items[(int)$r['link_id']] ?? []] : null,
+            ];
+        }, $rows);
+        send_json(['ok' => true, 'reports' => $out]);
+
+    case 'master.report.resolve':
+        // {id, decision: removed | dismissed, actions: [disable_link, trash, deactivate], note}: the decision on a report.
+        // "removed" carries out the chosen actions and, if email is set up, tells the owner why (DSA art. 17).
+        $u = require_master();
+        only('POST');
+        require_csrf($u);
+        $b = body();
+        $st = db()->prepare('SELECT * FROM ' . t('reports') . ' WHERE id = ?');
+        $st->execute([(int)($b['id'] ?? 0)]);
+        $rep = $st->fetch();
+        if (!$rep) fail('not_found', 404);
+        $decision = ($b['decision'] ?? '') === 'removed' ? 'removed' : 'dismissed';
+        $note = trim(mb_substr(str_replace("\r", '', (string)($b['note'] ?? '')), 0, 2000));
+        $acts = is_array($b['actions'] ?? null) ? array_map('strval', $b['actions']) : [];
+        $done = [];
+        if ($decision === 'removed') {
+            if (in_array('disable_link', $acts, true)) {
+                if ($rep['kind'] === 'share' && $rep['node_id']) { db()->prepare('UPDATE ' . t('nodes') . ' SET share_token = NULL WHERE id = ?')->execute([$rep['node_id']]); $done[] = 'disable_link'; }
+                if ($rep['kind'] === 'temp' && $rep['link_id']) {
+                    $ts = db()->prepare('SELECT * FROM ' . t('temp_links') . ' WHERE id = ?'); $ts->execute([$rep['link_id']]);
+                    if ($tl = $ts->fetch()) { temp_delete($tl); $done[] = 'disable_link'; }
+                }
+            }
+            if (in_array('trash', $acts, true) && $rep['kind'] === 'share' && $rep['node_id']) {
+                db()->prepare('UPDATE ' . t('nodes') . ' SET trashed_at = ?, trash_root = 1, share_token = NULL WHERE id = ? AND trashed_at IS NULL')->execute([now_utc(), $rep['node_id']]);
+                $done[] = 'trash';
+            }
+            if (in_array('deactivate', $acts, true) && $rep['owner_id']) {
+                $x = user_row((int)$rep['owner_id']);
+                if ($x && !is_master($x) && (bool)$x['activated']) {
+                    db()->prepare('UPDATE ' . t('users') . ' SET activated = 0, activated_at = NULL WHERE id = ?')->execute([$rep['owner_id']]);
+                    db()->prepare('DELETE FROM ' . t('auth_tokens') . ' WHERE user_id = ?')->execute([$rep['owner_id']]);
+                    $done[] = 'deactivate';
+                }
+            }
+            // the statement of reasons to the owner (DSA art. 17), if the account has a confirmed email and mail is set up
+            if ($rep['owner_id'] && mail_settings()) {
+                $x = user_row((int)$rep['owner_id']);
+                if ($x && !empty($x['email']) && !empty($x['email_verified_at'])) {
+                    $L = in_array($x['ui_lang'], LANGS, true) ? $x['ui_lang'] : 'en';
+                    $T = mail_t($L);
+                    $what = $T['report_acts'][implode(',', $done)] ?? ($done ? implode(', ', array_map(fn($a) => $T['report_acts'][$a] ?? $a, $done)) : $T['report_acts']['reviewed']);
+                    send_notice((string)$x['email'], (string)$x['name'], $L, $T['report_subject'], $T['report_title'],
+                        [fill($T['hello'], ['name' => $x['name']]), $T['report_body'], fill($T['report_what'], ['what' => $what]), $note !== '' ? fill($T['report_reason'], ['reason' => $note]) : '', $T['report_appeal']], REPORT_CONTACT_URL, $T['report_button']);
+                }
+            }
+        }
+        db()->prepare('UPDATE ' . t('reports') . ' SET status = ?, action = ?, resolution = ?, resolved_by = ?, resolved_at = ? WHERE id = ?')
+            ->execute([$decision, implode(',', $done), $note !== '' ? $note : null, $u['id'], now_utc(), $rep['id']]);
         send_json(['ok' => true]);
 
     default:

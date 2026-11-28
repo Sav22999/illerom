@@ -88,6 +88,11 @@ const MAIL_TEXT = [
         'temp_body' => 'Somebody downloaded “{name}” from your temporary link of SavDrive ({count}).', 'temp_button' => 'See your temporary links',
         'temp_count' => 'downloads so far: {n}', 'temp_count_of' => '{n} of {max} downloads',
         'levels' => ['view' => 'see that it exists', 'read' => 'open and download it', 'comment' => 'open it and comment', 'write' => 'open, comment and change it', 'move' => 'open, comment, change and move', 'delete' => 'open, comment, change, move and delete'],
+        'report_subject' => 'A content of yours was reported', 'report_title' => 'Action on a content of yours',
+        'report_body' => 'Someone reported a public link of yours in SavDrive as illegal or against the terms. After a review by a person, this is the decision.',
+        'report_what' => 'What was done: {what}.', 'report_reason' => 'Reason: {reason}', 'report_appeal' => 'If you think this is wrong, you can challenge the decision free of charge, within six months, from the contact form.',
+        'report_button' => 'Challenge the decision',
+        'report_acts' => ['disable_link' => 'your public link was turned off', 'trash' => 'the file was moved to your trash', 'deactivate' => 'your account was deactivated', 'disable_link,trash' => 'your public link was turned off and the file moved to your trash', 'reviewed' => 'the content was reviewed'],
     ],
     'it' => [
         'footer' => 'Email automatica inviata da SavDrive. Non rispondere a questo messaggio.',
@@ -114,6 +119,11 @@ const MAIL_TEXT = [
         'temp_body' => 'Qualcuno ha scaricato «{name}» dal tuo link temporaneo di SavDrive ({count}).', 'temp_button' => 'Vedi i tuoi link temporanei',
         'temp_count' => 'download finora: {n}', 'temp_count_of' => '{n} download su {max}',
         'levels' => ['view' => 'vedere che esiste', 'read' => 'aprirlo e scaricarlo', 'comment' => 'aprirlo e commentarlo', 'write' => 'aprirlo, commentarlo e modificarlo', 'move' => 'aprirlo, commentarlo, modificarlo e spostarlo', 'delete' => 'aprirlo, commentarlo, modificarlo, spostarlo ed eliminarlo'],
+        'report_subject' => 'Un tuo contenuto è stato segnalato', 'report_title' => 'Decisione su un tuo contenuto',
+        'report_body' => 'Qualcuno ha segnalato un tuo link pubblico in SavDrive come illecito o contrario ai termini. Dopo una verifica fatta da una persona, questa è la decisione.',
+        'report_what' => 'Cosa è stato fatto: {what}.', 'report_reason' => 'Motivo: {reason}', 'report_appeal' => 'Se ritieni che sia un errore, puoi contestare la decisione gratuitamente, entro sei mesi, dal modulo di contatto.',
+        'report_button' => 'Contesta la decisione',
+        'report_acts' => ['disable_link' => 'il tuo link pubblico è stato disattivato', 'trash' => 'il file è stato spostato nel tuo cestino', 'deactivate' => 'il tuo account è stato disattivato', 'disable_link,trash' => 'il tuo link pubblico è stato disattivato e il file spostato nel tuo cestino', 'reviewed' => 'il contenuto è stato esaminato'],
     ],
 ];
 
