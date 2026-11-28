@@ -430,10 +430,11 @@ switch ($r) {
         foreach ($enum as $k => $vals) if (isset($in[$k]) && in_array($in[$k], $vals, true)) $cur[$k] = $in[$k];
         foreach (['simple', 'snap', 'grid', 'guides', 'numbers', 'mailShare', 'mailComments', 'spell', 'notesBar'] as $k) if (isset($in[$k])) $cur[$k] = (bool)$in[$k];
         if (isset($in['tools']) && is_array($in['tools'])) $cur['tools'] = array_values(array_unique(array_filter(array_slice($in['tools'], 0, 20), fn($x) => is_string($x) && preg_match('/^[a-z]{2,12}$/', $x))));
-        // the bars chosen (⋮ → Customise the bars): for each bar the ids of its buttons in order, '|' a separator
+        // the bars chosen (⋮ → Customise the bars): for each bar the ids of its buttons in order, '|' a separator,
+        // '_' a fixed space and '~' an adaptive one (they were dropped here, so the spaces chosen never stayed)
         if (isset($in['bars']) && is_array($in['bars'])) {
             $bars = [];
-            foreach (['title', 'insert', 'tools', 'status'] as $b) if (isset($in['bars'][$b]) && is_array($in['bars'][$b])) $bars[$b] = array_values(array_filter(array_slice($in['bars'][$b], 0, 40), fn($x) => is_string($x) && preg_match('/^([A-Za-z0-9]{1,16}|\|)$/', $x)));
+            foreach (['title', 'insert', 'tools', 'status'] as $b) if (isset($in['bars'][$b]) && is_array($in['bars'][$b])) $bars[$b] = array_values(array_filter(array_slice($in['bars'][$b], 0, 40), fn($x) => is_string($x) && preg_match('/^([A-Za-z0-9]{1,16}|[|_~])$/', $x)));
             $cur['bars'] = $bars ?: new stdClass();
         }
         if (isset($in['stars']) && is_array($in['stars'])) $cur['stars'] = array_values(array_filter(array_slice($in['stars'], 0, 200), fn($x) => is_string($x) && preg_match('/^[A-Za-z0-9]{22}$/', $x)));
