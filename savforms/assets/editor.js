@@ -115,7 +115,9 @@ export async function editorScreen(root, id, tab = 'questions') {
   layoutTitle();
   const syncTitle = () => { document.title = (F.title || t('untitled')) + ' – SavForms'; const h1 = body.querySelector('.fhead .ftitle'); if (h1 && h1 !== document.activeElement) h1.value = F.title; };
   const body = h('div.ebody');
-  put(root, h('div.editor', bar, h('div.etabbar', tabs), body));
+  // phones and tablets: the three tabs in the bar at the bottom of SavOffice (the tabs on top are left out); computers keep them on top
+  const bnav = window.SavOffice?.bottomNav?.({ label: t('tabs'), current: tab, items: [['questions', 'clipboard-list'], ['answers', 'chart-column'], ['settings', 'settings']].map(([v, ic]) => ({ value: v, icon: ic, label: t('tab_' + v), run: () => { tabs.value = v; history.replaceState(null, '', '#/e/' + F.id + '/' + v); show(v); } })) });
+  put(root, h('div.editor', bar, h('div.etabbar', tabs), body, bnav));
   refreshHead();
   // the search of actions (⌘J / Ctrl+J): the tabs, then what the bar and its menu do
   commands([t('tabs'), [['clipboard-list', t('tab_questions'), () => { tabs.value = 'questions'; history.replaceState(null, '', '#/e/' + F.id + '/questions'); show('questions'); }], ['chart-column', t('tab_answers'), () => { tabs.value = 'answers'; history.replaceState(null, '', '#/e/' + F.id + '/answers'); show('answers'); }], ['settings', t('tab_settings'), () => { tabs.value = 'settings'; history.replaceState(null, '', '#/e/' + F.id + '/settings'); show('settings'); }]]],
@@ -124,6 +126,7 @@ export async function editorScreen(root, id, tab = 'questions') {
 
   function show(v) {
     tab = v;
+    bnav?.setCurrent(v);
     if (v === 'answers') { flush(); import('./results.js').then((m) => { if (tab === 'answers' && !gone) m.ownerResults(body, F, { flush }); }); return; }
     if (v === 'settings') return settingsTab();
     questionsTab();

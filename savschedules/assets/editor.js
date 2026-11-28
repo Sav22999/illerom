@@ -259,7 +259,8 @@ export async function editor(root, pid, start) {
   let tab = mobile() ? '' : 'list';
   const listName = () => t(slots ? 'tab_slots' : assign ? 'slots_l' : 'tab_dates');
   const TABS = [['list', slots ? 'ticket' : assign ? 'shuffle' : 'calendar-check', listName], ['details', 'sliders-horizontal', () => t('tab_details')], ['rules', 'list-checks', () => t('tab_rules')]];
-  function drawRail() { put(rail, TABS.map(([k, ic, label]) => h('sav-bottom-nav-item', { label: label(), icon: ic, value: k, badge: k === 'list' && s.options.length ? s.options.length : null, current: tab === k }))); }
+  function drawRail() { queueMicrotask(() => window.SavOffice?.railMore?.(rail)); // at the bottom (phones, tablets): from the fifth panel on, "More"
+    put(rail, TABS.map(([k, ic, label]) => h('sav-bottom-nav-item', { label: label(), icon: ic, value: k, badge: k === 'list' && s.options.length ? s.options.length : null, current: tab === k }))); }
   rail.addEventListener('sav-select', (e) => { e.stopPropagation(); setTab(e.detail.value); });
   function setTab(name) { tab = tab === name ? '' : name; drawSide(); }
   function drawSide() {

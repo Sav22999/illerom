@@ -1,7 +1,12 @@
 /** The version of SavSpreadsheets (in the footer) and what changed in each one (the page #/changelog). Newest first. */
-export const VERSION = '1.1.2';
+export const VERSION = '1.1.3';
 
 export const CHANGES = [
+  {
+    v: '1.1.3', date: '2026-11-28', items: [
+      ['On phones and tablets the bar of the panels at the bottom no longer scrolls: it shows four, and “More” opens an action sheet with the others', 'Su telefoni e tablet la barra dei pannelli in basso non scorre più: ne mostra quattro, e «Altro» apre un foglio di azioni con gli altri'],
+    ],
+  },
   {
     v: '1.1.2', date: '2026-11-28', items: [
       ['On phones and tablets the places are in the bar at the bottom, as in every app of SavOffice; when they do not all fit, “More” opens an action sheet with the others', 'Su telefoni e tablet le sezioni sono nella barra in basso, come in ogni app di SavOffice; quando non ci stanno tutte, «Altro» apre un foglio di azioni con le altre'],

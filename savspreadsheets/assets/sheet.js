@@ -1548,7 +1548,8 @@ export async function openSheet(root, pid, opt = {}) {
   // ------------------------------------------------------------------ side panels: comments, notes, history, find
 
   const TABS = [...(editable ? [['formula', 'square-function']] : []), ...(isLocal ? [] : [['comments', 'message-square'], ['notes', 'sticky-note']]), ['find', 'search'], ...(editable && !isLocal && data.doc.versions !== false ? [['history', 'history']] : [])];
-  function drawRail() { put(rail, TABS.map(([k, ic]) => h('sav-bottom-nav-item', { label: t('tab_' + k), icon: ic, value: k, badge: k === 'comments' ? W.comments.filter((c) => !c.parent && !c.resolved && !c.private).length || null : null, current: W.tab === k }))); }
+  function drawRail() { queueMicrotask(() => window.SavOffice?.railMore?.(rail)); // at the bottom (phones, tablets): from the fifth panel on, "More"
+    put(rail, TABS.map(([k, ic]) => h('sav-bottom-nav-item', { label: t('tab_' + k), icon: ic, value: k, badge: k === 'comments' ? W.comments.filter((c) => !c.parent && !c.resolved && !c.private).length || null : null, current: W.tab === k }))); }
   rail.addEventListener('sav-select', (e) => { e.stopPropagation(); setTab(e.detail.value); });
   function setTab(name, force) {
     W.tab = W.tab === name && !force ? '' : name;

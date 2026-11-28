@@ -1222,6 +1222,7 @@ savoffice-apps { display: inline-flex; }
   const make = (tag, props = {}, ...kids) => { const e = document.createElement(tag); for (const [k, v] of Object.entries(props)) if (v != null && v !== false) e.setAttribute(k, v === true ? '' : v); e.append(...kids.filter((x) => x != null && x !== false)); return e; };
   const CSS = `.so-bnav{display:none}
 @media (max-width:900px){.so-bnav{display:block}body:has(.so-bnav){padding-bottom:calc(4.6rem + env(safe-area-inset-bottom))}}
+.so-rmore{display:none!important}@media (max-width:900px){.so-rmore{display:flex!important}.so-rover{display:none!important}}
 .so-as{--width:22rem}.so-as::part(body){padding:.2rem .5rem .6rem}
 .so-as-list{display:grid;gap:2px}
 .so-as-row{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:.85rem;min-height:3rem;padding:.55rem .8rem;border-radius:12px;cursor:pointer;font:inherit;font-size:1rem;color:var(--sav-color-text);-webkit-tap-highlight-color:transparent}
@@ -1286,5 +1287,26 @@ savoffice-apps { display: inline-flex; }
     return nav;
   }
 
-  window.SavOffice = Object.assign(window.SavOffice || {}, { bottomNav, actionSheet });
+  /** The rail of the panels of an editor (a sav-bottom-nav: a column on the right on computers, the bar at the bottom on phones and
+   *  tablets): at the bottom it never scrolls. From the fifth panel on, they are left out of the bar and "More" opens an action
+   *  sheet with them; choosing one presses its own item, so the app opens it as from the bar. Called after the app draws it. */
+  function railMore(rail, max = 5) {
+    if (!rail) return;
+    css();
+    rail.querySelector(':scope > .so-rmore')?.remove();
+    const all = [...rail.querySelectorAll(':scope > sav-bottom-nav-item')];
+    all.forEach((x) => x.classList.remove('so-rover'));
+    if (all.length <= max) return;
+    const hidden = all.slice(max - 1);
+    hidden.forEach((x) => x.classList.add('so-rover'));
+    const more = make('sav-bottom-nav-item', { class: 'so-rmore', icon: 'so-ellipsis', label: w('more'), value: 'so-more', current: hidden.some((x) => x.hasAttribute('current')) || null });
+    // not a panel: the rail must not hear it (it would open a panel called "so-more")
+    more.addEventListener('click', (e) => {
+      e.stopPropagation();
+      actionSheet({ title: w('more'), items: hidden.map((x) => [x.getAttribute('icon'), x.getAttribute('label'), () => x.click(), { current: x.hasAttribute('current') }]) });
+    });
+    rail.append(more);
+  }
+
+  window.SavOffice = Object.assign(window.SavOffice || {}, { bottomNav, actionSheet, railMore });
 })();

@@ -545,7 +545,8 @@ export async function openWriter(root, pid, opt = {}) {
   // ------------------------------------------------------------------ side panel
 
   const TABS = [...(editable ? [['elements', 'shapes'], ['format', 'sliders-horizontal'], ['page', 'panel-top'], ['style', 'palette'], ['images', 'images']] : []), ...(isLocal ? [] : [['comments', 'message-square'], ['notes', 'sticky-note']]), ...(editable && !isLocal ? [['history', 'history']] : [])];
-  function drawRail() { put(rail, TABS.map(([k, ic]) => h('sav-bottom-nav-item', { label: t('tab_' + k), icon: ic, value: k, badge: k === 'comments' ? W.comments.filter((c) => !c.parent && !c.resolved && !c.private).length || null : null, current: W.tab === k }))); rail.hidden = !TABS.length; }
+  function drawRail() { queueMicrotask(() => window.SavOffice?.railMore?.(rail)); // at the bottom (phones, tablets): from the fifth panel on, "More"
+    put(rail, TABS.map(([k, ic]) => h('sav-bottom-nav-item', { label: t('tab_' + k), icon: ic, value: k, badge: k === 'comments' ? W.comments.filter((c) => !c.parent && !c.resolved && !c.private).length || null : null, current: W.tab === k }))); rail.hidden = !TABS.length; }
   rail.addEventListener('sav-select', (e) => { e.stopPropagation(); W.backTab = undefined; setTab(e.detail.value); });
   keepCaret(rail);
   function setTab(name, force) {

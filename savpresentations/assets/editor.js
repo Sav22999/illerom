@@ -458,7 +458,8 @@ export async function deckScreen(app, deckId, q) {
   // ------------------------------------------------------------------ side panel
   const ALLTABS = [...(ed.editor ? [['elements', 'shapes', 'elements'], ['props', 'sliders-horizontal', 'format_tab'], ['page', 'panel-top', 'page'], ['grid', 'grid-3x3', 'grids'], ['layouts', 'layout-template', 'layouts'], ...(deck.canEdit ? [['theme', 'palette', 'theme']] : []), ...(deck.local ? [] : [['media', 'images', 'media']])] : []), ...(deck.local ? [] : [['comments', 'message-square', 'comments'], ['notes', 'sticky-note', 'notes']]), ...(deck.canEdit && !deck.limited && !deck.local ? [['history', 'history', 'versions']] : [])];
   const tabs = () => ALLTABS.filter(([k]) => k !== (ed.simple ? 'layouts' : 'grid'));
-  function drawRail() { rail.replaceChildren(...tabs().map(([k, ic, l]) => { const n = k === 'comments' || k === 'notes' ? marks.count(k) : 0; return h('sav-bottom-nav-item', { label: t(l), icon: ic, value: k, badge: n || null, current: ed.tab === k }); })); }
+  function drawRail() { queueMicrotask(() => window.SavOffice?.railMore?.(rail)); // at the bottom (phones, tablets): from the fifth panel on, "More"
+    rail.replaceChildren(...tabs().map(([k, ic, l]) => { const n = k === 'comments' || k === 'notes' ? marks.count(k) : 0; return h('sav-bottom-nav-item', { label: t(l), icon: ic, value: k, badge: n || null, current: ed.tab === k }); })); }
   rail.addEventListener('sav-select', (e) => { e.stopPropagation(); setTab(ed.tab === e.detail.value ? '' : e.detail.value); });
   function setTab(k) {
     if (k !== 'props') ed.backTab = '';
