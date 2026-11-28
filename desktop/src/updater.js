@@ -34,7 +34,9 @@ const IS_WIN = process.platform === 'win32', IS_LINUX = process.platform === 'li
 const KEY = IS_WIN ? `win-${ARCH}` : IS_LINUX ? `${fs.existsSync('/etc/debian_version') ? 'deb' : 'rpm'}-${ARCH}` : ARCH;
 const DIR = path.join(env.HOME, 'updates');
 let PUBLIC = null;
-try { PUBLIC = crypto.createPublicKey(fs.readFileSync(path.join(__dirname, 'update-key.pem'), 'utf8')); } catch { /* a build without the key: no updates */ }
+// the key is inside app.asar: read with the fs of Electron (original-fs cannot see into app.asar: with it, as in 1.2.1 and
+// 1.3.0, the key was never found and SavOffice never updated itself)
+try { PUBLIC = crypto.createPublicKey(require('fs').readFileSync(path.join(__dirname, 'update-key.pem'), 'utf8')); } catch { /* a build without the key: no updates */ }
 
 const run = (cmd, args) => new Promise((resolve, reject) => execFile(cmd, args, { maxBuffer: 1 << 20 }, (err, out, errOut) => (err ? reject(new Error(String(errOut || err.message).trim())) : resolve(out))));
 const canonical = (v) => (Array.isArray(v) ? `[${v.map(canonical).join(',')}]` : v && typeof v === 'object' ? `{${Object.keys(v).sort().map((k) => JSON.stringify(k) + ':' + canonical(v[k])).join(',')}}` : JSON.stringify(v));

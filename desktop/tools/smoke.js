@@ -98,9 +98,11 @@ function entryOf(slug) {
     await sleep(1500);
     await tb.shot('1-toolbox.png');
     if (s.apps.length !== catalog.length) throw new Error(`${s.apps.length} apps instead of ${catalog.length}`);
+    // an installed SavOffice can update itself (updater.js found its key): never again a version that cannot
+    if (!APP_DIR && !s.selfUpdate?.enabled) throw new Error('the self-updater is off: ' + JSON.stringify(s.selfUpdate));
     separate = s.separateSupported; // while developing on macOS the apps open as windows of SavOffice
     if (!separate) port = 9333;
-    return { version: s.version, platform: await tb.eval('window.savoffice.platform'), separate: s.separateSupported };
+    return { version: s.version, platform: await tb.eval('window.savoffice.platform'), separate: s.separateSupported, selfUpdate: s.selfUpdate?.enabled };
   });
   if (go) {
     await step(`2 · ${APP} installs`, async () => {

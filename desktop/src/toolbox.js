@@ -338,7 +338,7 @@ function buildMenu() {
   const appItems = installed.length ? installed.map((a) => ({ label: a.name, click: () => open(a.slug) })) : [{ label: t('none'), enabled: false }];
   Menu.setApplicationMenu(Menu.buildFromTemplate([
     { label: 'SavOffice', submenu: [{ role: 'about' }, { type: 'separator' }, { label: t('settings'), accelerator: 'Cmd+,', click: () => showLauncher('settings') },
-      { label: t('check'), click: () => store.check() }, { type: 'separator' }, { role: 'services' }, { type: 'separator' }, { role: 'hide' }, { role: 'hideOthers' }, { role: 'unhide' }, { type: 'separator' }, { role: 'quit' }] },
+      { label: t('check'), click: () => { store.check().catch(() => {}); updater.check(); } }, { type: 'separator' }, { role: 'services' }, { type: 'separator' }, { role: 'hide' }, { role: 'hideOthers' }, { role: 'unhide' }, { type: 'separator' }, { role: 'quit' }] },
     { label: t('file'), submenu: [{ label: t('show'), accelerator: 'Cmd+Shift+L', click: () => showLauncher() }, { type: 'separator' }, { role: 'close' }] },
     { label: t('edit'), role: 'editMenu' },
     { label: t('view'), submenu: [{ role: 'reload' }, { role: 'forceReload' }, { role: 'toggleDevTools' }, { type: 'separator' }, { role: 'resetZoom' }, { role: 'zoomIn' }, { role: 'zoomOut' }, { type: 'separator' }, { role: 'togglefullscreen' }] },
