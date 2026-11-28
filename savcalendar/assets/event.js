@@ -139,7 +139,10 @@ async function saveChange(o, x, ctx, title = t('edit_repeating')) {
 
 export async function moveEvent(o, s, en, ctx) {
   if (o.readOnly) { toast(readOnlyWhy(o)?.text || t('read_only'), 'neutral'); return; }
-  const r = await saveChange(o, { start: iso(s), end: iso(en) }, ctx, t('move_repeating'));
+  // whole days are dates (s and en: midnights in the zone of the view), moved by whole days
+  const nd = Math.round((s - o.s) / 864e5);
+  const x = o.allDay ? { start: addDays(o.startKey, nd), end: addDays(o.endKey, nd) } : { start: iso(s), end: iso(en) };
+  const r = await saveChange(o, x, ctx, t('move_repeating'));
   if (r) toast(t('moved'), 'success');
 }
 

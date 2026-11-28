@@ -188,6 +188,7 @@ Object.assign(T, {
   // the screen
   search_events: ['Search events', 'Cerca eventi'], v_day: ['Day', 'Giorno'], v_week: ['Week', 'Settimana'], v_month: ['Month', 'Mese'], v_agenda: ['Agenda', 'Agenda'],
   all_day: ['All day', 'Tutto il giorno'], all_day_s: ['all day', 'giornata'], n_more: ['{n} more', 'altri {n}'], open_day: ['Open the day', 'Apri il giorno'], until_t: ['until {t}', 'fino alle {t}'],
+  more_w: ['more', 'altri'], all_day_more: ['Show every whole-day event', 'Mostra tutti gli eventi di tutto il giorno'], all_day_less: ['Show fewer', 'Mostra meno'], new_all_day: ['New whole-day event', 'Nuovo evento di tutto il giorno'],
   nothing_today: ['Nothing today.', 'Niente oggi.'], agenda_empty: ['Nothing in the coming days', 'Niente nei prossimi giorni'], agenda_empty_t: ['Your events will be listed here.', 'Qui troverai i tuoi eventi.'],
   new_event: ['New event', 'Nuovo evento'], edit_event: ['Edit event', 'Modifica evento'], more_options: ['More options', 'Altre opzioni'],
   find_date: ['Find a date', 'Trova una data'], find_date_t: ['Choose some times in the calendar and ask the others with a poll of SavSchedules', 'Scegli alcuni orari nel calendario e chiedi agli altri con un sondaggio di SavSchedules'],
