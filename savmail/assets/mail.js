@@ -166,7 +166,7 @@ function build(root) {
   const list = h('div.mrows', { role: 'listbox', 'aria-multiselectable': 'true', tabindex: '-1' });
   const head = h('div.mlhead');
   const read = h('section.mread', { 'aria-live': 'polite' });
-  const search = h('sav-input.msearch', { type: 'search', placeholder: t('search_mail'), size: 'sm', clearable: true, 'aria-label': t('search_mail') }, h('sav-icon', { name: 'search', slot: 'prefix' }));
+  const search = h('sav-input.msearch', { type: 'search', placeholder: t('search_mail'), clearable: true, pill: true, 'aria-label': t('search_mail') }, icon('search', { slot: 'prefix' }));
   let st = 0;
   search.addEventListener('input', () => { clearTimeout(st); st = setTimeout(() => { if (search.value.trim() === M.q) return; M.q = search.value.trim(); reload(); }, 450); });
   search.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') { clearTimeout(st); M.q = search.value.trim(); reload(); } if (e.key === 'Escape') search.blur(); });
