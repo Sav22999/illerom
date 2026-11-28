@@ -11,6 +11,7 @@ import {
     h,
     icon,
     iconBtn,
+    isMac,
     item,
     mobile,
     ok,
@@ -47,15 +48,33 @@ export function userMenu() {
             'sheet-on-mobile': true,
             label: u.name
         }, av,
-        h('sav-menu-label', u.email), item('settings', 'settings', t('settings')), u.master && item('admin', 'shield', t('admin')), h('sav-divider'), item('out', 'log-out', t('sign_out')));
+        h('sav-menu-label', u.email), item('settings', 'settings', t('settings')), item('keys', 'keyboard', t('shortcuts')), u.master && item('admin', 'shield', t('admin')), h('sav-divider'), item('out', 'log-out', t('sign_out')));
     d.addEventListener('sav-select', (e) => ({
         settings: () => go('?p=settings'),
+        keys: () => showShortcuts(),
         admin: () => go('?p=admin'),
         out: logout
     })[e.detail.value]?.());
     // the apps of SavOffice next to the avatar
     return h('span.umenu', h('savoffice-apps', {current: 'savpresentations'}), d);
 }
+
+let own = null;
+/** The editor, while it is open, gives its own list of keys (null when it closes): the menu of the account and ⌘? show that one. */
+export const ownShortcuts = (show) => { own = show; };
+export const showShortcuts = () => (own ? own() : shortcutsDialog());
+/** The keys of the home, as the list of the editor (in the menu of the account and with ⌘? / Ctrl+?, as in the other apps of SavOffice). */
+export function shortcutsDialog() {
+    const r = (k, v) => h('div.kr', h('span', t(v)), h('kbd', k));
+    dialog(t('shortcuts'), h('div', h('div.keys', r(isMac ? '⌘?' : 'Ctrl+?', 'shortcuts'), r(isMac ? '⌘J' : 'Ctrl+J', 'actions_search')), h('p.muted', {style: 'margin:.9rem 0 0;font-size:.85rem'}, t('k_editor'))), [], {width: '30rem'});
+}
+// ⌘? / Ctrl+? opens them on every page of the app, also while writing (as ⌘J), never over a dialog
+addEventListener('keydown', (e) => {
+    if (e.defaultPrevented || !(e.metaKey || e.ctrlKey) || e.altKey || !(e.key === '?' || (e.shiftKey && e.code === 'Slash'))) return;
+    if (document.body.classList.contains('showing') || document.querySelector('sav-dialog[open], sav-drawer[open], sav-command[open]')) return;
+    e.preventDefault();
+    showShortcuts();
+});
 
 const metaCtx = (c) => context({format: c.format, theme: {colors: {}, fonts: {}, ...c.theme}, opts: {}});
 

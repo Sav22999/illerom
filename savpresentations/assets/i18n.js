@@ -552,6 +552,8 @@ share_title|Share “{title}”|Condividi “{title}”
 shared|Shared with me|Condivise con me
 sharing|Sharing and emails|Condivisione ed email
 shortcuts|Keyboard shortcuts|Scorciatoie da tastiera
+actions_search|Search the actions|Cerca tra le azioni
+k_editor|With a presentation open, here are the keys of the editor.|Con una presentazione aperta, qui trovi i tasti dell’editor.
 show|Show|Presentazione
 show_closed|Closed ones|Quelle chiuse
 show_slide|Show the page|Mostra la pagina

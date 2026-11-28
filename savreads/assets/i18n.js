@@ -3,6 +3,7 @@ const T = {
   cancel: ["Cancel","Annulla"],
   account: ["Account","Account"],
   close: ["Close","Chiudi"],
+  shortcuts: ["Keyboard shortcuts", "Scorciatoie da tastiera"], actions_search: ["Search the actions", "Cerca tra le azioni"], k_back: ["Back to the list, while you read", "Torna all’elenco, mentre leggi"],
   save: ["Save","Salva"],
   delete: ["Delete","Elimina"],
   create: ["Create","Crea"],

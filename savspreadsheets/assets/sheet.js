@@ -14,7 +14,7 @@ import { chartData, chartSVG } from './chart.js';
 import { Sync } from './sync.js';
 import { can } from './actions.js';
 import { reportDialog, shareDialog } from './share.js';
-import { commands, prefs, setPrefs, userMenu } from './account.js';
+import { commands, prefs, ownShortcuts, setPrefs, userMenu } from './account.js';
 import { SIG, desc } from './sigs.js';
 
 const SIZES = [6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72];
@@ -930,6 +930,7 @@ export async function openSheet(root, pid, opt = {}) {
   // after a menu or a button the focus is on the page: the keys of the grid still work
   const docKey = (e) => { if ((e.target === document.body || e.target === document.documentElement) && !editing && !document.querySelector('sav-dialog[open], sav-dropdown[open], sav-popover[open]')) { focusGrid(); onKey(e, true); } };
   addEventListener('keydown', docKey);
+  ownShortcuts(shortcuts); // the menu of the account and ? show the keys of the editor
   const writeHere = (cell) => { const { r, c } = act(), old = sh.cells[key(r, c)]; change([{ t: 'cells', s: sh.id, m: { [key(r, c)]: { ...old, ...cell, s: { ...(old?.s || {}), ...cell.s } } } }]); };
 
   // ------------------------------------------------------------------ the clipboard
@@ -1767,6 +1768,7 @@ export async function openSheet(root, pid, opt = {}) {
     document.removeEventListener('paste', onPaste);
     removeEventListener('beforeunload', unload);
     removeEventListener('keydown', docKey);
+    ownShortcuts(null);
   };
   window.__sheet = W;
   void words; void isDateFormat; void machine; void item;

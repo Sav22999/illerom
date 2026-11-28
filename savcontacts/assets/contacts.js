@@ -453,5 +453,5 @@ function build(root, view, key) {
 /** The keys of the address book. */
 export function shortcutsDialog() {
   const row = (keys, label) => h('div.orow', h('div.orow-t', h('b', label)), h('div.orow-c', keys.map((k) => h('sav-kbd', K(k)))));
-  dialog({ title: t('shortcuts'), width: '28rem', body: h('sav-card.ocard', { appearance: 'outlined' }, h('div.orows', row(['Alt+Shift+N'], t('k_new')), row(['/'], t('k_search')), row(['↑', '↓'], t('k_move')), row(['Alt+Shift+E'], t('k_edit')), row(['Alt+Shift+S'], t('k_star')), row(['Delete'], t('k_del')), row(['Mod+A'], t('select_all')), row(['Mod+J'], t('actions_search')))), actions: [{ label: t('close') }] });
+  dialog({ title: t('shortcuts'), width: '28rem', body: h('sav-card.ocard', { appearance: 'outlined' }, h('div.orows', row(['Alt+Shift+N'], t('k_new')), row(['/'], t('k_search')), row(['↑', '↓'], t('k_move')), row(['Alt+Shift+E'], t('k_edit')), row(['Alt+Shift+S'], t('k_star')), row(['Delete'], t('k_del')), row(['Mod+A'], t('select_all')), row(['Mod+?'], t('shortcuts')), row(['Mod+J'], t('actions_search')))), actions: [{ label: t('close') }] });
 }

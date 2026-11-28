@@ -211,6 +211,7 @@ function userMenu() {
     if (u.picture) { const im = new Image(); im.onload = () => av.setAttribute('image', u.picture); im.src = u.picture; }
     const items = [
         ['user', t('account'), () => go('#/account')],
+        ['keyboard', t('shortcuts'), () => shortcutsDialog()],
         u.master ? ['shield', t('master'), () => go('#/master')] : null,
         '-',
         ['log-out', t('logout'), logout],
@@ -224,6 +225,21 @@ function userMenu() {
     });
     return d;
 }
+
+/** The keys of the app, as in the other apps of SavOffice: in the menu of the account and with ⌘? / Ctrl+?. */
+function shortcutsDialog() {
+    const row = ([keys, label]) => h('div.orow', h('div.orow-t', h('b', label)), h('div.orow-c', {style: 'gap:.3rem'}, keys.map((k) => h('sav-kbd', {keys: k}))));
+    modal(t('shortcuts'), [h('sav-card.ocard', {appearance: 'outlined'}, h('div.orows', [[['mod+S'], t('save')], [['mod+Z'], t('undo')], [['mod+shift+Z'], t('redo')], [['mod+?'], t('shortcuts')], [['mod+J'], t('actions_search')]].map(row))),
+        h('p.muted.small', {style: 'margin:.9rem 0 0'}, t('k_editor'))], [{label: t('close')}]);
+}
+
+// ⌘? / Ctrl+? opens them on every page of the app, also while writing (as ⌘J), never over a dialog
+addEventListener('keydown', (e) => {
+    if (e.defaultPrevented || !(e.metaKey || e.ctrlKey) || e.altKey || !(e.key === '?' || (e.shiftKey && e.code === 'Slash'))) return;
+    if (document.querySelector('sav-dialog[open], sav-drawer[open]')) return;
+    e.preventDefault();
+    shortcutsDialog();
+});
 
 function hue(n) {
     return [...(n || '')].reduce((a, c) => (a * 31 + c.codePointAt(0)) % 360, 7);

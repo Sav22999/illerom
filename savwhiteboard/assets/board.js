@@ -10,7 +10,7 @@
 import { btn, colorPop, confirm, dialog, drop, face, fail, h, icon, iconBtn, K, mobile, put, toast } from './ui.js';
 import { getLang, t } from './i18n.js';
 import { S, api } from './store.js';
-import { commands, go, prefs, setPrefs, userMenu } from './account.js';
+import { commands, go, prefs, ownShortcuts, setPrefs, userMenu } from './account.js';
 import { appsButton } from './office.js';
 import { DEFS, NS, itemSVG, patternSVG } from './render.js';
 import { LINE, bounds, cut, hits, layoutNote, measure, moved, overlaps, scaled, union } from './ink.js';
@@ -1093,6 +1093,7 @@ export async function boardScreen(root, id) {
     queueSave(400);
   }
   addEventListener('keydown', onKey);
+  ownShortcuts(shortcuts); // the menu of the account and ? show the keys of the editor
   addEventListener('keyup', onKeyUp);
   addEventListener('blur', onKeyUp);
   document.addEventListener('copy', onCopy);
@@ -1125,6 +1126,7 @@ export async function boardScreen(root, id) {
     gone = true;
     flush(true);
     removeEventListener('keydown', onKey);
+    ownShortcuts(null);
     removeEventListener('keyup', onKeyUp);
     removeEventListener('blur', onKeyUp);
     document.removeEventListener('copy', onCopy);

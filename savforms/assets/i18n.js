@@ -5,6 +5,7 @@ const T = {
   go_next: ['Go on to the next section', 'Continua alla sezione successiva'], go_section: ['Go to «{s}»', 'Vai a «{s}»'], go_submit: ['Submit the form', 'Invia il modulo'],
   go_after_section: ['After this section', 'Dopo questa sezione'], go_by_answer: ['Go to a section by the answer', 'Vai a una sezione in base alla risposta'], go_by_answer_on: ['Goes to a section by the answer', 'Va a una sezione in base alla risposta'],
   close: ['Close', 'Chiudi'],
+  shortcuts: ['Keyboard shortcuts', 'Scorciatoie da tastiera'], actions_search: ['Search the actions', 'Cerca tra le azioni'], k_option: ['A new option below, writing an option', 'Una nuova opzione sotto, mentre scrivi un’opzione'], k_option_out: ['Remove an empty option', 'Togli un’opzione vuota'],
   save: ['Save', 'Salva'],
   delete: ['Delete', 'Elimina'],
   create: ['Create', 'Crea'],

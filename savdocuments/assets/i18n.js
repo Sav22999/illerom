@@ -4,6 +4,7 @@ const T = {
     tagline: ['Write documents, without the clutter.', 'Scrivi documenti, senza ingombri.'],
     cancel: ['Cancel', 'Annulla'],
     close: ['Close', 'Chiudi'],
+    actions_search: ['Search the actions', 'Cerca tra le azioni'], k_editor: ['With a document open, here are the keys of the editor.', 'Con un documento aperto, qui trovi i tasti dell’editor.'],
     save: ['Save', 'Salva'],
     ok: ['OK', 'OK'],
     delete: ['Delete', 'Elimina'],

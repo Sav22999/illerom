@@ -3,6 +3,7 @@ const T = {
   cancel: ["Cancel","Annulla"],
   account: ["Account","Account"],
   close: ["Close","Chiudi"],
+  actions_search: ["Search the actions", "Cerca tra le azioni"], k_editor: ["With a diagram open, here are the keys of the editor.", "Con un diagramma aperto, qui trovi i tasti dell’editor."],
   save: ["Save","Salva"],
   delete: ["Delete","Elimina"],
   create: ["Create","Crea"],

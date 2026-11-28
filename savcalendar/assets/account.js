@@ -1,5 +1,5 @@
 /** Accounts (the same of SavSchedules: one account, one session for both): preferences, signing in, the first page. */
-import { btn, confirm, dialog, drop, errText, fail, h, icon, primary, put, segmented, select, toast, toggle, face, empty } from './ui.js';
+import { btn, confirm, dialog, drop, errText, fail, h, icon, primary, put, segmented, select, toast, toggle, face, empty, K } from './ui.js';
 import { getLang, setLang, t } from './i18n.js';
 import { S, api } from './store.js';
 import { heroDeck } from './hero.js';
@@ -42,8 +42,21 @@ export function userMenu() {
   // the picture of SavAccount, once it has really loaded (a service disconnected there keeps the initials)
   if (u.picture) { const im = new Image(); im.onload = () => av.setAttribute('image', u.picture); im.src = u.picture; }
   av.setAttribute('button', '');
-  return h('div.umenu', appsButton(), drop(av, [{ head: u.email }, ['settings', t('settings'), () => go('#/settings')], ['vote', t('open_schedules'), () => { location.href = S.schedulesUrl; }], '-', ['log-out', t('sign_out'), signOut]], { placement: 'bottom-end', label: u.name }));
+  return h('div.umenu', appsButton(), drop(av, [{ head: u.email }, ['settings', t('settings'), () => go('#/settings')], ['keyboard', t('shortcuts'), () => showShortcuts()], ['vote', t('open_schedules'), () => { location.href = S.schedulesUrl; }], '-', ['log-out', t('sign_out'), signOut]], { placement: 'bottom-end', label: u.name }));
 }
+/** The keys of the app, as in SavContacts: in the menu of the account and with ⌘? / Ctrl+?. */
+export const showShortcuts = () => shortcutsDialog();
+export function shortcutsDialog() {
+  const row = ([keys, label]) => h('div.orow', h('div.orow-t', h('b', label)), h('div.orow-c', { style: 'gap:.3rem' }, keys.map((k) => h('sav-kbd', K(k)))));
+  dialog({ title: t('shortcuts'), width: '28rem', body: [h('sav-card.ocard', { appearance: 'outlined' }, h('div.orows', [[['Alt+Shift+C'], t('new_event')], [['/'], t('search_events')], [['Alt+Shift+T'], t('today')], [['←'], t('previous')], [['→'], t('next')], [['Alt+Shift+D'], t('v_day')], [['Alt+Shift+W'], t('v_week')], [['Alt+Shift+M'], t('v_month')], [['Alt+Shift+A'], t('v_agenda')], [['Mod+?'], t('shortcuts')], [['Mod+J'], t('actions_search')]].map(row)))], actions: [{ label: t('close') }] });
+}
+// ⌘? / Ctrl+? opens them on every page of the app, also while writing (as ⌘J), never over a dialog
+addEventListener('keydown', (e) => {
+  if (e.defaultPrevented || !(e.metaKey || e.ctrlKey) || e.altKey || !(e.key === '?' || (e.shiftKey && e.code === 'Slash'))) return;
+  if (document.querySelector('sav-dialog[open], sav-drawer[open]')) return;
+  e.preventDefault();
+  showShortcuts();
+});
 export async function signOut() {
   await api('auth.logout', {}).catch(() => {});
   S.user = null; S.csrf = ''; S.calendars = []; S.cal = {};

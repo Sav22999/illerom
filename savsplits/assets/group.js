@@ -47,7 +47,7 @@ export async function groupScreen(root, where, tab) {
     // a letter is a shortcut only with ⌥⇧ (Alt+Shift), never alone: read from the key itself (on a Mac ⌥ changes the character)
     const L = e.altKey && e.shiftKey && /^Key[A-Z]$/.test(e.code) ? e.code[3].toLowerCase() : null;
     if ((e.altKey && !L) || (!L && /^[a-z]$/i.test(e.key))) return;
-    const map = { n: () => canWrite() && openExpense(), a: () => canWrite() && openExpense(), '/': () => document.querySelector('.eq')?.focus(), '?': () => shortcutsDialog() };
+    const map = { n: () => canWrite() && openExpense(), a: () => canWrite() && openExpense(), '/': () => document.querySelector('.eq')?.focus() };
     tabsOf().forEach(([k], i) => { map[String(i + 1)] = () => setTab(k); });
     const kk = L || e.key;
     if (map[kk]) { e.preventDefault(); map[kk](); }
@@ -494,7 +494,7 @@ function claimDialog(free) {
 }
 
 export function shortcutsDialog() {
-  const rows = [[K('Alt+Shift+N'), t('add_expense')], ['1 – 5', t('tabs_keys')], ['/', t('search_expenses')], ['?', t('shortcuts')], [K('Mod+J'), t('actions_search')]];
+  const rows = [[K('Alt+Shift+N'), t('add_expense')], ['1 – 5', t('tabs_keys')], ['/', t('search_expenses')], [K('Mod+?'), t('shortcuts')], [K('Mod+J'), t('actions_search')]];
   dialog({ title: t('shortcuts'), width: '26rem', body: h('div.keys', rows.map(([k, l]) => h('div.krow', h('kbd', k), h('span', l)))), actions: [{ label: t('close') }] });
 }
 

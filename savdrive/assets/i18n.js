@@ -3,6 +3,7 @@ const T = {
   // general
   cancel: ['Cancel', 'Annulla'],
   close: ['Close', 'Chiudi'],
+  shortcuts: ['Keyboard shortcuts', 'Scorciatoie da tastiera'], actions_search: ['Search the actions', 'Cerca tra le azioni'], k_pick: ['Choose the file in focus, or let it go', 'Scegli il file evidenziato, o toglilo'], k_del: ['Delete what is chosen', 'Elimina ciò che hai scelto'], k_none: ['Let the chosen ones go', 'Togli la scelta'], k_browse: ['The file before or after, in the preview', 'Il file prima o dopo, nell’anteprima'],
   save: ['Save', 'Salva'],
   create: ['Create', 'Crea'],
   done: ['Done', 'Fatto'],

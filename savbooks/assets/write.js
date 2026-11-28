@@ -14,7 +14,7 @@ import { elementsPanel, formatPanel, imageDialog, imagesPanel, pageForm, styleFo
 import { charsDialog, drawDialog, linkDialog, mathDialog, noteDialog, tableDialog } from './inserts.js';
 import { reportDialog, shareDialog } from './share.js';
 import { can, importFile, pickFile } from './actions.js';
-import { prefs, setPrefs, userMenu } from './account.js';
+import { prefs, ownShortcuts, setPrefs, userMenu } from './account.js';
 
 const TYPES = ['p', 'title', 'subtitle', 'h1', 'h2', 'h3', 'h4', 'lead', 'small', 'drop', 'blockquote', 'pre'];
 const TYPE_ICONS = { p: 'pilcrow', title: 'type', subtitle: 'case-sensitive', h1: 'heading-1', h2: 'heading-2', h3: 'heading-3', h4: 'heading-4', lead: 'text-cursor-input', small: 'baseline', drop: 'a-large-small', blockquote: 'quote', pre: 'square-code' };
@@ -412,6 +412,7 @@ export async function openWriter(root, pid, opt = {}) {
     if (mod && k === 'f') { e.preventDefault(); setTab('find', true); } else if (mod && k === 'p') { e.preventDefault(); if (!lim.noDownload) printDoc(); } else if (mod && k === 's') { e.preventDefault(); if (isLocal) saveLocal(); else W.sync?.flush(); } else if (mod && k === 'j') { e.preventDefault(); W.palette.show(); } else if (e.key === 'Escape') { if (frame.classList.contains('focusing')) focusMode(); if (W.clip && desk.classList.contains('painting')) B.paint.button.click(); }
   };
   addEventListener('keydown', globalKeys);
+  ownShortcuts(shortcuts); // the menu of the account and ? show the keys of the editor
   desk.addEventListener('mouseup', () => { if (!W.clip || !desk.classList.contains('painting')) return; const r = ed.range(); if (!r || r.collapsed) return; const x = W.clip; W.clip = null; B.paint.on(false); desk.classList.remove('painting'); ed.pasteFormat(x); });
   if (editable) ed.ed.addEventListener('contextmenu', (e) => {
     const cell = e.target.closest('td,th'), fig = e.target.closest('figure'), mark = document.getSelection().toString();
@@ -812,6 +813,7 @@ export async function openWriter(root, pid, opt = {}) {
     window.speechSynthesis?.cancel();
     clearTimeout(W.outT);
     removeEventListener('keydown', globalKeys);
+    ownShortcuts(null);
     removeEventListener('beforeunload', unload);
     for (const k of ['sb-find', 'sb-find-now', 'sb-comment', 'sb-note']) CSS.highlights?.delete(k);
   };

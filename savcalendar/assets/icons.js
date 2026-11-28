@@ -1,5 +1,6 @@
 /** Icons of the app (Lucide, ISC licence: see assets/LICENSE-lucide.txt), from SavComponents icons 1.0.0. */
 const ICONS = {
+"keyboard": "<path d=\"M10 8h.01\"/><path d=\"M12 12h.01\"/><path d=\"M14 8h.01\"/><path d=\"M16 12h.01\"/><path d=\"M18 8h.01\"/><path d=\"M6 8h.01\"/><path d=\"M7 16h10\"/><path d=\"M8 12h.01\"/><rect width=\"20\" height=\"16\" x=\"2\" y=\"4\" rx=\"2\"/>",
 "calendar-arrow-down": "<path d=\"m14 17 4 4 4-4\"/><path d=\"M16 2v3\"/><path d=\"M18 13v8\"/><path d=\"M21 10.354V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h7.343\"/><path d=\"M3 9h18\"/><path d=\"M8 2v3\"/>",
 "calendar-search": "<path d=\"M16 2v3\"/><path d=\"M21 10.69V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h7.25\"/><path d=\"m22 21-1.875-1.875\"/><path d=\"M3 9h18\"/><path d=\"M8 2v3\"/><circle cx=\"18\" cy=\"17\" r=\"3\"/>",
 "settings-2": "<path d=\"M14 17H5\"/><path d=\"M19 7h-9\"/><circle cx=\"17\" cy=\"17\" r=\"3\"/><circle cx=\"7\" cy=\"7\" r=\"3\"/>",

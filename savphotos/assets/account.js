@@ -2,7 +2,7 @@
  * The account (the one of SavDrive), the settings of SavPhotos, the frame of every page (header, side menu, bottom bar of
  * phones) and the pages of whoever cannot use SavPhotos yet: not signed in, not confirmed, waiting.
  */
-import { btn, bytes, drop, empty, face, h, icon, item, primary, put, toast } from './ui.js';
+import { btn, bytes, drop, empty, face, h, icon, item, primary, put, toast, dialog, K } from './ui.js';
 import { getLang, setLang, t } from './i18n.js';
 import { VERSION } from './version.js';
 import { S, api, driveUrl } from './store.js';
@@ -49,9 +49,22 @@ export function userMenu() {
   if (u.picture) { const im = new Image(); im.onload = () => av.setAttribute('image', u.picture); im.src = u.picture; }
   av.setAttribute('button', '');
   const ok = S.photos?.allowed && u.verified && u.activated;
-  return h('span.umenu', h('savoffice-apps', { current: 'savphotos' }), drop(av, [{ head: u.email }, ok ? ['settings', t('settings'), () => go('#/settings')] : null, u.master ? ['shield', t('admin'), () => go('#/admin')] : null,
+  return h('span.umenu', h('savoffice-apps', { current: 'savphotos' }), drop(av, [{ head: u.email }, ok ? ['settings', t('settings'), () => go('#/settings')] : null, ['keyboard', t('shortcuts'), () => showShortcuts()], u.master ? ['shield', t('admin'), () => go('#/admin')] : null,
     ['hard-drive', t('open_drive'), () => { location.href = driveUrl(); }], '-', ['log-out', t('sign_out'), signOut]], { placement: 'bottom-end', label: u.name }));
 }
+/** The keys of the app, as in SavContacts: in the menu of the account and with ⌘? / Ctrl+?. */
+export const showShortcuts = () => shortcutsDialog();
+export function shortcutsDialog() {
+  const row = ([keys, label]) => h('div.orow', h('div.orow-t', h('b', label)), h('div.orow-c', { style: 'gap:.3rem' }, keys.map((k) => h('sav-kbd', K(k)))));
+  dialog({ title: t('shortcuts'), width: '28rem', body: [h('sav-card.ocard', { appearance: 'outlined' }, h('div.orows', [[['Mod+A'], t('select_all')], [['Delete'], t('k_del')], [['Esc'], t('k_none')], [['←', '→'], t('k_browse')], [['Alt+Shift+I'], t('k_info')], [['Alt+Shift+F'], t('k_fav')], [['Mod+?'], t('shortcuts')], [['Mod+J'], t('actions_search')]].map(row)))], actions: [{ label: t('close') }] });
+}
+// ⌘? / Ctrl+? opens them on every page of the app, also while writing (as ⌘J), never over a dialog
+addEventListener('keydown', (e) => {
+  if (e.defaultPrevented || !(e.metaKey || e.ctrlKey) || e.altKey || !(e.key === '?' || (e.shiftKey && e.code === 'Slash'))) return;
+  if (document.querySelector('sav-dialog[open], sav-drawer[open]')) return;
+  e.preventDefault();
+  showShortcuts();
+});
 export async function signOut() {
   await api('auth.logout', {}).catch(() => {});
   const { forgetThumbs } = await import('./store.js');

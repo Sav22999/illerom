@@ -2,6 +2,7 @@
 const T = {
   cancel: ["Cancel","Annulla"],
   close: ["Close","Chiudi"],
+  shortcuts: ["Keyboard shortcuts", "Scorciatoie da tastiera"], actions_search: ["Search the actions", "Cerca tra le azioni"], k_play: ["Play or pause the episode", "Riproduci o metti in pausa la puntata"], k_back: ["Back 10 seconds", "Indietro di 10 secondi"], k_ahead: ["Ahead 10 seconds", "Avanti di 10 secondi"],
   save: ["Save","Salva"],
   delete: ["Delete","Elimina"],
   create: ["Create","Crea"],
