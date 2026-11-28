@@ -26,7 +26,7 @@ $L = fn(string $i, string $e): string => $h($it ? $i : $e);
 $projects = require dirname(__DIR__) . '/data/projects.php';
 $site = require dirname(__DIR__) . '/data/site.php';
 $contact = $site['contact'];
-$mac = (string)($site['savoffice_mac'] ?? ''); // where the DMGs of SavOffice for Mac are (desktop/)
+$desk = (string)($site['savoffice_desktop'] ?? ''); // where the files of SavOffice for the computer are (desktop/)
 /** Whether a screenshot is there: until it is, the place shows the icon of the app on its colour. */
 $has = fn(string $slug, string $file): bool => is_file(dirname(__DIR__) . "/assets/projects/$slug/$file");
 /** An app only for the accounts the administrators turn on: says so, with where to ask. */
@@ -383,17 +383,19 @@ $graph = $app
         .h3ico { width: 28px; height: 28px; vertical-align: -6px; margin-right: .5rem; }
         footer .ai { flex-basis: 100%; order: 9; font-size: .82rem; }
 
-        /* SavOffice for Mac: only on a Mac (page.js removes hidden) */
-        .mac { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: clamp(1.2rem, 3vw, 2.4rem); align-items: center; margin: 0 0 clamp(2rem, 4vw, 3rem); padding: clamp(1.3rem, 3vw, 2.2rem);
+        /* SavOffice for the computer (desktop/): Mac, Windows or Linux, the one of the visitor (page.js removes hidden) */
+        .desk { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: clamp(1.2rem, 3vw, 2.4rem); align-items: center; margin: 0 0 clamp(2rem, 4vw, 3rem); padding: clamp(1.3rem, 3vw, 2.2rem);
             border-radius: var(--r); background: linear-gradient(135deg, color-mix(in oklab, var(--violet) 9%, var(--card)), var(--card) 55%, color-mix(in oklab, var(--pink) 7%, var(--card))); border: 1px solid var(--line); }
-        .mac[hidden] { display: none; }
-        .mac-icon { width: clamp(84px, 11vw, 128px); height: auto; filter: drop-shadow(0 14px 24px rgb(40 20 80 / .22)); }
-        .mac h2 { margin: .1rem 0 .4rem; font-size: clamp(1.4rem, 2.6vw, 1.9rem); letter-spacing: -.03em; }
-        .mac-t > p { margin: 0; color: var(--muted); max-width: 46rem; }
-        .mac .ctas { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1.2rem; margin: 1.1rem 0 .7rem; }
-        .mac-other { color: var(--muted); font-size: .92rem; } .mac-other:hover { color: var(--text); }
-        .mac-t > .mac-note { font-size: .82rem; }
-        @media (max-width: 640px) { .mac { grid-template-columns: minmax(0, 1fr); } .mac-icon { width: 76px; } }
+        .desk[hidden], .desk-os[hidden] { display: none; }
+        .desk-icon { width: clamp(84px, 11vw, 128px); height: auto; filter: drop-shadow(0 14px 24px rgb(40 20 80 / .22)); }
+        .desk h2 { margin: .1rem 0 .4rem; font-size: clamp(1.4rem, 2.6vw, 1.9rem); letter-spacing: -.03em; }
+        .desk-os > p { margin: 0; color: var(--muted); max-width: 46rem; }
+        .desk .ctas { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1.2rem; margin: 1.1rem 0 .7rem; }
+        .desk-other { color: var(--muted); font-size: .92rem; } .desk-other:hover { color: var(--text); }
+        .desk-os > .desk-note { font-size: .82rem; }
+        .desk-os > .desk-more { margin-top: .5rem; font-size: .82rem; }
+        .desk-more a { color: var(--muted); } .desk-more a:hover { color: var(--text); }
+        @media (max-width: 640px) { .desk { grid-template-columns: minmax(0, 1fr); } .desk-icon { width: 76px; } }
     </style>
 </head>
 <body>
@@ -434,19 +436,53 @@ $graph = $app
             </div>
         </section>
 
-        <?php if ($mac !== '') { ?>
-        <!-- SavOffice for Mac (desktop/): hidden, shown by page.js only on a Mac, which also picks Apple silicon or Intel -->
-        <section class="mac" id="mac" aria-labelledby="mac-h" hidden data-arm="<?= $h($mac . 'SavOffice-arm64.dmg') ?>" data-intel="<?= $h($mac . 'SavOffice-x64.dmg') ?>">
-            <img class="mac-icon" src="/savoffice/icons/mac.png" alt="" width="128" height="128">
-            <div class="mac-t">
+        <?php if ($desk !== '') {
+            // SavOffice for the computer (desktop/): hidden; page.js shows the part of the visitor's system (Mac: Apple silicon or
+            // Intel; Linux: .deb or .rpm) and nothing on phones and tablets. Every part also links the other systems.
+            $f = [
+                'mac' => $desk . 'SavOffice-arm64.dmg', 'intel' => $desk . 'SavOffice-x64.dmg', 'win' => $desk . 'SavOffice-Setup-x64.exe',
+                'deb' => $desk . 'SavOffice-x64.deb', 'rpm' => $desk . 'SavOffice-x64.rpm',
+            ];
+            $about = $L('Un’app sola per tutte le app: installi quelle che usi, si aprono nella loro finestra anche senza connessione, si aggiornano da sole e quando torna la rete sincronizzano tutto. Accedi una volta e sei dentro ovunque.', 'One app for all the apps: install the ones you use, each opens in its own window even without a connection, updates by itself and syncs everything when the network is back. Sign in once and you are in everywhere.');
+            $more = fn(array $names): string => '<p class="desk-more">' . $L('Anche per', 'Also for') . ': ' . implode(' · ', array_map(fn($n) => [
+                'mac' => '<a href="' . $h($f['mac']) . '">Mac (Apple silicon)</a> · <a href="' . $h($f['intel']) . '">Mac (Intel)</a>',
+                'win' => '<a href="' . $h($f['win']) . '">Windows</a>',
+                'linux' => '<a href="' . $h($f['deb']) . '">Linux (.deb)</a> · <a href="' . $h($f['rpm']) . '">Linux (.rpm)</a>',
+            ][$n], $names)) . '</p>';
+        ?>
+        <section class="desk" id="desk" aria-labelledby="desk-h" hidden data-arm="<?= $h($f['mac']) ?>" data-intel="<?= $h($f['intel']) ?>" data-deb="<?= $h($f['deb']) ?>" data-rpm="<?= $h($f['rpm']) ?>">
+            <img class="desk-icon" src="/savoffice/icons/mac.png" alt="" width="128" height="128">
+            <div class="desk-os" data-os="mac" hidden>
                 <p class="eyebrow"><?= $L('Nuovo · per Mac', 'New · for Mac') ?></p>
-                <h2 id="mac-h"><?= $L('SavOffice sul tuo Mac', 'SavOffice on your Mac') ?></h2>
-                <p><?= $L('Un’app sola per tutte le app: installi quelle che usi, si aprono nella loro finestra anche senza connessione, si aggiornano da sole e quando torna la rete sincronizzano tutto. Accedi una volta e sei dentro ovunque.', 'One app for all the apps: install the ones you use, each opens in its own window even without a connection, updates by itself and syncs everything when the network is back. Sign in once and you are in everywhere.') ?></p>
+                <h2 id="desk-h"><?= $L('SavOffice sul tuo Mac', 'SavOffice on your Mac') ?></h2>
+                <p><?= $about ?></p>
                 <div class="ctas">
-                    <sav-button size="lg" class="mac-get" href="<?= $h($mac . 'SavOffice-arm64.dmg') ?>" icon="download" data-l-arm="<?= $L('Scarica per Mac', 'Download for Mac') ?>" data-l-intel="<?= $L('Scarica per Mac (Intel)', 'Download for Mac (Intel)') ?>"><?= $L('Scarica per Mac', 'Download for Mac') ?></sav-button>
-                    <a class="mac-other" href="<?= $h($mac . 'SavOffice-x64.dmg') ?>" data-l-arm="<?= $L('Hai un Mac con Intel?', 'A Mac with Intel?') ?>" data-l-intel="<?= $L('Hai un Mac con Apple silicon?', 'A Mac with Apple silicon?') ?>"><?= $L('Hai un Mac con Intel?', 'A Mac with Intel?') ?></a>
+                    <sav-button size="lg" class="desk-get" href="<?= $h($f['mac']) ?>" icon="download" data-l-a="<?= $L('Scarica per Mac', 'Download for Mac') ?>" data-l-b="<?= $L('Scarica per Mac (Intel)', 'Download for Mac (Intel)') ?>"><?= $L('Scarica per Mac', 'Download for Mac') ?></sav-button>
+                    <a class="desk-other" href="<?= $h($f['intel']) ?>" data-l-a="<?= $L('Hai un Mac con Intel?', 'A Mac with Intel?') ?>" data-l-b="<?= $L('Hai un Mac con Apple silicon?', 'A Mac with Apple silicon?') ?>"><?= $L('Hai un Mac con Intel?', 'A Mac with Intel?') ?></a>
                 </div>
-                <p class="mac-note"><?= $L('Gratis · macOS 12 o successivo · la prima volta che lo apri: Impostazioni di Sistema › Privacy e sicurezza › «Apri comunque».', 'Free · macOS 12 or later · the first time you open it: System Settings › Privacy & Security › “Open Anyway”.') ?></p>
+                <p class="desk-note"><?= $L('Gratis · macOS 12 o successivo · la prima volta che lo apri: Impostazioni di Sistema › Privacy e sicurezza › «Apri comunque».', 'Free · macOS 12 or later · the first time you open it: System Settings › Privacy & Security › “Open Anyway”.') ?></p>
+                <?= $more(['win', 'linux']) ?>
+            </div>
+            <div class="desk-os" data-os="win" hidden>
+                <p class="eyebrow"><?= $L('Nuovo · per Windows', 'New · for Windows') ?></p>
+                <h2><?= $L('SavOffice sul tuo PC', 'SavOffice on your PC') ?></h2>
+                <p><?= $about ?></p>
+                <div class="ctas">
+                    <sav-button size="lg" href="<?= $h($f['win']) ?>" icon="download"><?= $L('Scarica per Windows', 'Download for Windows') ?></sav-button>
+                </div>
+                <p class="desk-note"><?= $L('Gratis · Windows 10 o 11, 64 bit · se Windows avvisa che l’app non è riconosciuta: «Ulteriori informazioni» › «Esegui comunque».', 'Free · Windows 10 or 11, 64-bit · if Windows warns that the app is not recognised: “More info” › “Run anyway”.') ?></p>
+                <?= $more(['mac', 'linux']) ?>
+            </div>
+            <div class="desk-os" data-os="linux" hidden>
+                <p class="eyebrow"><?= $L('Nuovo · per Linux', 'New · for Linux') ?></p>
+                <h2><?= $L('SavOffice sul tuo computer', 'SavOffice on your computer') ?></h2>
+                <p><?= $about ?></p>
+                <div class="ctas">
+                    <sav-button size="lg" class="desk-get" href="<?= $h($f['deb']) ?>" icon="download" data-l-a="<?= $L('Scarica per Linux (.deb)', 'Download for Linux (.deb)') ?>" data-l-b="<?= $L('Scarica per Linux (.rpm)', 'Download for Linux (.rpm)') ?>"><?= $L('Scarica per Linux (.deb)', 'Download for Linux (.deb)') ?></sav-button>
+                    <a class="desk-other" href="<?= $h($f['rpm']) ?>" data-l-a="<?= $L('Fedora o openSUSE? Il pacchetto .rpm', 'Fedora or openSUSE? The .rpm package') ?>" data-l-b="<?= $L('Ubuntu, Debian o Mint? Il pacchetto .deb', 'Ubuntu, Debian or Mint? The .deb package') ?>"><?= $L('Fedora o openSUSE? Il pacchetto .rpm', 'Fedora or openSUSE? The .rpm package') ?></a>
+                </div>
+                <p class="desk-note"><?= $L('Gratis · 64 bit · .deb per Ubuntu, Debian e Mint, .rpm per Fedora e openSUSE · si installa aprendolo con il programma dei pacchetti.', 'Free · 64-bit · .deb for Ubuntu, Debian and Mint, .rpm for Fedora and openSUSE · install it by opening it with the package installer.') ?></p>
+                <?= $more(['mac', 'win']) ?>
             </div>
         </section>
         <?php } ?>

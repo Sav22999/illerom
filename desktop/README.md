@@ -1,36 +1,83 @@
-# SavOffice for Mac
+# SavOffice for Mac, Windows and Linux
 
 One app, **SavOffice**, from which the apps of SavOffice are installed one by one (like JetBrains Toolbox). Each installed
-app is an app of its own (SavDocuments.app… in `~/Applications/SavOffice`: its own icon in the Dock, in ⌘Tab and in
-Launchpad), works without a connection and syncs when the network is back; one sign-in for all; the Toolbox keeps them up
-to date.
+app is an app of its own, with its own name and icon:
+- **macOS**: SavDocuments.app… in `~/Applications/SavOffice`, in the Dock, ⌘Tab and Launchpad;
+- **Windows**: a shortcut in Start › SavOffice, apart in the taskbar;
+- **Linux**: an entry among the applications.
 
-## Make the DMG
+It works without a connection and syncs when the network is back; one sign-in for all; the Toolbox keeps them up to date.
+
+| System | File | Installed with |
+|---|---|---|
+| macOS 12+, Apple silicon / Intel | `SavOffice-arm64.dmg` / `SavOffice-x64.dmg` (+ `.zip` for the updates) | drag to Applications |
+| Windows 10/11, 64-bit | `SavOffice-Setup-x64.exe` | one click, for the user (no admin) |
+| Debian, Ubuntu, Mint… | `SavOffice-x64.deb` | the package installer, or `sudo apt install ./SavOffice-x64.deb` |
+| Fedora, openSUSE… | `SavOffice-x64.rpm` | the package installer, or `sudo dnf install ./SavOffice-x64.rpm` |
+
+## Publish a version (GitHub Actions)
+
+`.github/workflows/savoffice-desktop.yml` runs at every push that touches `desktop/` (and by hand: Actions › Run workflow):
+
+1. **Build**: on macOS (`tools/dist.js`: DMGs and ZIPs, both Macs), Windows (NSIS `.exe`) and Linux (`.deb`, `.rpm`), with
+   `electron-builder.config.js` (it adds Windows and Linux to the `build` of `package.json`: icons, the files each app
+   opens from `src/filetypes.json`, the packages Electron needs).
+2. **Install and test** on macOS, Windows, Debian 12, Ubuntu 24.04 and Fedora: each installs its file as a person would
+   and runs `tools/smoke.js` (below). The results are on the page of the run, the pictures in its `smoke-<system>` artifacts.
+3. **Release**: only on `main`, only when all is green, only when the version of `package.json` is **not published yet**
+   (a version already published: tests only). It writes `latest-mac.json` (`tools/release.js --no-build --all`) and makes
+   the GitHub release `<version>` with the 8 files. The notes are the commit message (or what is typed when run by hand).
+
+So, to publish: raise `version` in `package.json` and push to `main`. The list is **signed** with the private key, which
+GitHub keeps in the secret `SAVOFFICE_RELEASE_KEY` (the text of `~/.savoffice/release-key.pem`). Without the secret there
+is no release, only the tests; with a key that is not the one of `src/update-key.pem`, `release.js` stops.
+**Keep a copy of the private key somewhere safe**: without it no installed SavOffice accepts an update any more (they
+would need to be installed again).
+
+The page `/savoffice/` (`savoffice/page.js`, `data/site.php`) offers the file of the visitor's system from
+`releases/latest/download/`:
+- **Mac**: Apple silicon or Intel, from the graphics chip;
+- **Windows**: the `.exe`;
+- **Linux**: `.deb`, or `.rpm` when the browser names Fedora, openSUSE…;
+- **phones and tablets**: nothing.
+
+The installed apps read `releases/latest/download/latest-mac.json`.
+
+### By hand (a Mac only)
 
     cd desktop
     npm install
-    npm run dist        # → dist/SavOffice-arm64.dmg (Apple silicon) and dist/SavOffice-x64.dmg (Intel)
+    npm run dist        # → dist/SavOffice-arm64.dmg (Apple silicon) and dist/SavOffice-x64.dmg (Intel), and the ZIPs
+    npm run release -- --notes "Cosa cambia" --notes-en "What changes"   # builds, then dist/latest-mac.json (Mac only)
 
-**Publish** a version (the installed apps update by themselves, `src/updater.js`): raise `version` in `package.json`, then
-
-    npm run release -- --notes "Cosa cambia" --notes-en "What changes"
-
-It builds the DMGs (to install) and the ZIPs (for the updates) and writes `dist/latest-mac.json`: version, notes, size and
-SHA-256 of each ZIP, **signed** with the private key `~/.savoffice/release-key.pem` (made the first time; its public half
-is `src/update-key.pem`, inside the app). **Keep a copy of the private key somewhere safe**: without it no installed
-SavOffice accepts an update any more (they would need the DMG again). Then a release on GitHub whose **tag is the version**
-(`1.2.0`), with the five files under these exact names: `SavOffice-arm64.dmg`, `SavOffice-x64.dmg`, `SavOffice-arm64.zip`,
-`SavOffice-x64.zip`, `latest-mac.json`. The page `/savoffice/` links `releases/latest/download/SavOffice-<arch>.dmg`
-(`data/site.php`); the installed apps read `releases/latest/download/latest-mac.json`.
-
-
-
-The page shows the download only on a Mac (`savoffice/page.js`), Apple silicon or Intel from the graphics chip.
+The first `npm run release` on a computer without `~/.savoffice/release-key.pem` makes a new pair of keys. Do this only
+for the very first release: every installed SavOffice trusts only the existing key.
 
 `npm start` opens it without packaging (it copies SavComponents and the icons first, `tools/prepare.js`).
 `npm run dist` also writes `src/catalog.json` again from the data of the site (`tools/catalog.php`, needs `php`) and
-redraws the pictures (`tools/brand.js`). The app is put together in the temporary folder of the system and only the DMG
-comes back into `dist/`: in a folder kept by iCloud (Documents) the files get Finder attributes that `codesign` refuses.
+redraws the pictures (`tools/brand.js`: `.icns` on macOS, `.ico` and PNGs everywhere). The app is put together in the
+temporary folder of the system and only the DMG comes back into `dist/`: in a folder kept by iCloud (Documents) the files
+get Finder attributes that `codesign` refuses.
+
+### Windows and Linux
+
+Nothing is copied:
+- **every app is SavOffice itself**, started with `--savoffice-app=<slug>` (`src/bundles-other.js`), in its own process
+  and browser profile;
+- **Windows**: the shortcut in Start › SavOffice has the AppUserModelID `eu.illerom.savoffice.app.<slug>`, which the app
+  sets on itself too (`appmode.js`), so the taskbar shows it apart, with its icon. The installer registers the files of
+  every app (`.savdoc`… with their icons, `.docx`, `.xlsx`, `.csv`…) for SavOffice, which hands each file to the right
+  app (`toolbox.js`);
+- **Linux**: `~/.local/share/applications/savoffice-<slug>.desktop` has the name, the icon, `StartupWMClass` (the name of
+  its windows) and `MimeType` ("Open With"). Its own format gets a MIME type of its own (`~/.local/share/mime`), of which
+  it is the default app.
+
+Updating SavOffice itself:
+- **Windows**: the installer is downloaded, checked and run silently when SavOffice quits;
+- **Linux**: the package is offered, and the package manager installs it (it asks for the password).
+
+The installer of Windows and the packages are not signed: Windows SmartScreen may warn the first time ("More info" ›
+"Run anyway").
 
 ### Signing: why macOS warns, and how it stops
 
@@ -60,7 +107,7 @@ macOS does not question them.
 | `src/toolbox.js`         | The Toolbox: its window, menus, the Dock, `savoffice://`, updates, the account                              |
 | `src/appmode.js`         | One app as an app of its own: its windows and menu; reads what the Toolbox installed; quits with its last window |
 | `src/updater.js`         | SavOffice updates itself: signed list, download, checks, swap when it quits (see below)                    |
-| `src/bundles.js`         | The apps of their own: a clone of SavOffice.app (APFS: no space used) renamed (Info.plist, helpers), its icon, signed ad hoc; opening them; whether one runs (`Profiles/<slug>/running.json`) |
+| `src/bundles.js`         | The apps of their own, by system: `bundles-mac.js` (a clone of SavOffice.app, APFS: no space used, renamed in Info.plist and helpers, its icon, signed ad hoc) or `bundles-other.js` (Windows shortcut, Linux `.desktop`); opening them; whether one runs (`Profiles/<slug>/running.json`) |
 | `src/session-sync.js`    | One sign-in for every process: the cookie `savoffice_auth` copied through `HOME/session.json` (0600)         |
 | `src/store.js`           | The installed apps: install, version, look for updates, download aside, switch when the app is closed       |
 | `src/serve.js`           | Every request of the windows: the files of an installed app from the disk, the rest from the network       |
@@ -70,7 +117,8 @@ macOS does not question them.
 | `src/launcher/`          | The window of the Toolbox (SavComponents, Soft style unless another is chosen), through `src/preload.js`    |
 | `src/app-preload.js`     | `window.SavOfficeDesktop` in the windows of the apps: the SavOffice button lists only the installed apps; the style of SavComponents chosen in the Toolbox (Soft, Tilt, Glass) as `sav-style-*` on `<html>`, changed at once (only on the Mac: the site stays as it is) |
 | `src/catalog.json`       | The 19 apps: names, colours, words, what each does offline (written by `tools/catalog.php`)                 |
-| `tools/`                 | `prepare.js`, `catalog.php`, `brand.js` (icons and DMG background), `adhoc-sign.js`, `dist.js`              |
+| `tools/`                 | `prepare.js` (also `src/filetypes.json`), `catalog.php`, `brand.js` (icons and DMG background), `adhoc-sign.js`, `dist.js`, `release.js`, `smoke.js` |
+| `electron-builder.config.js` | The build for every system: `package.json` (macOS) plus Windows (NSIS) and Linux (deb, rpm), with the file associations |
 
 - **Installing an app** downloads into `HOME/apps/<slug>/v-…/` (`~/Library/Application Support/SavOffice`) the files its `sw.js` lists in `SHELL`, `sw.js`
   itself, the scripts they import, what the page and the stylesheets point to (typefaces, pictures). The windows load the
@@ -119,3 +167,21 @@ macOS does not question them.
   apps made meanwhile keep both in their Info.plist. While developing, `electron . --savoffice-app=<slug>` runs one app.
   A packaged SavOffice must sit where macOS registers apps (`/Applications`, `~/Applications`) for `open -b` to find the
   apps it makes.
+- **Automatic test** (`tools/smoke.js`, run by GitHub Actions on every system):
+
+      node tools/smoke.js --exe <installed SavOffice> [--out smoke-out]
+      node tools/smoke.js --exe node_modules/electron/dist/Electron.app/Contents/MacOS/Electron --app .   # while developing
+
+  It runs SavOffice in a test `HOME`, drives it through the DevTools protocol and goes through 8 steps:
+  1. the Toolbox opens;
+  2. it installs SavDocuments;
+  3. its entry exists;
+  4. it opens as an app of its own, from the installed files, without the footer of the site;
+  5. the Toolbox sees it open;
+  6. it works offline;
+  7. the style changes;
+  8. it closes and the Toolbox sees it.
+
+  It writes `summary.md`, `results.json` and a picture of every step.
+  `SAVOFFICE_CI=1` (with a test `HOME`) also gives each app a DevTools port (9400 + its place in the catalog) and the
+  switches that containers need.

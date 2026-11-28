@@ -8,9 +8,10 @@ return [
     'source' => 'https://github.com/Sav22999/illerom/tree/main/',
     // the "read it backwards" button next to the name: hidden for now
     'flip' => false,
-    // SavOffice for Mac (desktop/): the DMGs of the latest release on GitHub, SavOffice-arm64.dmg and SavOffice-x64.dmg
-    // (desktop/README.md: npm run dist, then a release with both files). Shown by /savoffice/ only on a Mac
-    'savoffice_mac' => 'https://github.com/Sav22999/illerom/releases/latest/download/',
+    // SavOffice for the computer (desktop/): the files of the latest release on GitHub (made by GitHub Actions, see
+    // desktop/README.md): SavOffice-arm64.dmg, SavOffice-x64.dmg, SavOffice-Setup-x64.exe, SavOffice-x64.deb, SavOffice-x64.rpm.
+    // /savoffice/ offers the one of the visitor's system (Mac, Windows, Linux), nothing on phones and tablets
+    'savoffice_desktop' => 'https://github.com/Sav22999/illerom/releases/latest/download/',
     // the bigger projects, which have a home of their own
     'big' => [
         ['Notefox', 'https://www.notefox.eu/', 'websites-notes', ['it' => 'Note su qualsiasi sito web', 'en' => 'Notes on any website']],
