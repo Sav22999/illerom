@@ -1,7 +1,12 @@
 /** The version of SavNewsletters (in the footer) and what changed in each one (the page #/changelog). Newest first. */
-export const VERSION = '1.2.2';
+export const VERSION = '1.2.3';
 
 export const CHANGES = [
+  {
+    v: '1.2.3', date: '2026-11-28', items: [
+      ['Fixed: on phones the bar on top has the logo and the name on the left, the apps and the account on the right, and the search on a row of its own', 'Corretto: sui telefoni la barra in alto ha logo e nome a sinistra, le app e l’account a destra, e la ricerca su una riga a sé'],
+    ],
+  },
   {
     v: '1.2.2', date: '2026-11-28', items: [
       ['On phones and tablets the places are in the bar at the bottom, as in every app of SavOffice, and so are the tabs of a group; when they do not all fit, “More” opens an action sheet with the others', 'Su telefoni e tablet le sezioni sono nella barra in basso, come in ogni app di SavOffice, e così le schede di un gruppo; quando non ci stanno tutte, «Altro» apre un foglio di azioni con le altre'],

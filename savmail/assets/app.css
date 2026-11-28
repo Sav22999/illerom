@@ -219,7 +219,11 @@ sav-dialog h3 { font-size: .98rem; } .dlg-err { margin-top: .8rem; } .segm.wide 
   .hbody > .hside { display: none; } .hbody { grid-template-columns: minmax(0, 1fr); } .home.app.noside .mmenu { display: none; }
   /* the folders are in the bar at the bottom (SavOffice.bottomNav): the page that fills the window ends above it */
   body:has(.so-bnav) .home.app.fixed { bottom: calc(4.6rem + env(safe-area-inset-bottom)); }
-  .htop .brand span { display: none; } .hsearch { flex: 1 1 auto; order: 0; }
+  /* the bar on top, as in every app of SavOffice: logo and name on the left, the apps and the account on the right; the search
+     on a row of its own, as wide as the page */
+  .htop { flex-wrap: wrap; row-gap: .6rem; } .htop > .hsearch { order: 3; flex: 1 0 100%; margin: 0; } .htop > .hsearch .msearch { width: 100%; }
+  /* the button to write floats above the bar at the bottom */
+  body:has(.so-bnav) .mfab { bottom: calc(5.2rem + env(safe-area-inset-bottom)); }
   .mdrawer .newbtn { margin-bottom: .8rem; }
   .mfab { display: inline-flex; position: fixed; right: max(1rem, env(safe-area-inset-right)); bottom: max(1rem, env(safe-area-inset-bottom)); z-index: 30; --sav-button-height: 3.4rem; box-shadow: 0 8px 24px rgb(0 0 0 / .2); border-radius: 18px; }
   .mail[data-pane="read"] .mfab { display: none; }
@@ -236,7 +240,7 @@ sav-dialog h3 { font-size: .98rem; } .dlg-err { margin-top: .8rem; } .segm.wide 
   .rscroll { padding: 1rem .8rem 2rem; } .rtitle { font-size: 1.2rem; } .rside { max-width: 45%; }
   .rpick .rsel { display: none; } .mail.selecting .rpick .rsel { display: grid; }
   .rstar { opacity: 1; } .rstar:not(.on) { display: none; }
-  .htop { gap: .3rem; } .htop .umenu savoffice-apps { display: none; }
+  .htop { gap: .3rem; }
 }
 
 /* ------------------------------------------------------------------ writing */

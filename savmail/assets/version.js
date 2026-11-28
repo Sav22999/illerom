@@ -1,7 +1,12 @@
 /** The version of SavMail (in the footer) and what changed in each one (the page #/changelog). Newest first. */
-export const VERSION = '0.10.2';
+export const VERSION = '0.10.3';
 
 export const CHANGES = [
+  {
+    v: '0.10.3', date: '2026-11-28', items: [
+      ['Fixed: on phones the button with all the apps of SavOffice is back; the bar on top has the logo and the name on the left, the apps and the account on the right, and the search on a row of its own; the button to write floats above the bar at the bottom', 'Corretto: sui telefoni torna il pulsante con tutte le app di SavOffice; la barra in alto ha logo e nome a sinistra, le app e l’account a destra, e la ricerca su una riga a sé; il pulsante per scrivere sta sopra la barra in basso'],
+    ],
+  },
   {
     v: '0.10.2', date: '2026-11-28', items: [
       ['On phones and tablets the main folders are in the bar at the bottom, as in every app of SavOffice; “More” opens an action sheet with spam, trash, all the folders and the addresses', 'Su telefoni e tablet le cartelle principali sono nella barra in basso, come in ogni app di SavOffice; «Altro» apre un foglio di azioni con spam, cestino, tutte le cartelle e gli indirizzi'],
