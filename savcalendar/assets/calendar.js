@@ -252,7 +252,7 @@ function evMenu(o, ctx) {
       ['calendar-search', t('open'), () => openItem(o, ctx)],
       ro ? null : ['pencil', t('edit'), () => editEvent(o, null, ctx)],
       ['copy', t('duplicate'), () => editEvent(null, { copyOf: o.e }, ctx)],
-      ro ? null : ['calendar-arrow-down', t('move_next_day'), () => run(moveEvent(o, o.s + 864e5, o.en + 864e5, ctx))],
+      ro ? null : ['calendar-arrow-down', t('move_next_day'), () => run(moveEvent(o, o.s + 864e5, o.en + 864e5, ctx).finally(() => ctx.changed()))],
       ro ? null : '-', ro ? null : ['trash', t('delete'), () => run(deleteItem(o, ctx)), { danger: true }],
     ].filter(Boolean);
   };
@@ -329,16 +329,7 @@ function layout(items) {
 function timeView(days, list, ctx, pick) {
   const tz = ctx.tz(), today = todayKey(tz), n = days.length;
   const head = h('div.tv-head', { style: `--n:${n}` }, h('div.gut', h('small', tzShort(tz))), days.map((d) => h('button.tv-day' + (d === today ? '.today' : ''), { type: 'button', onclick: () => go(`#/day/${d}`) }, h('small', dayLabel(d, { weekday: 'short' })), h('b', String(keyParts(d)[2])))));
-  // whole days and long events: bars across the days, in lanes
-  const first = days[0], last = addDays(days[n - 1], 1);
-  const bars = list.filter(longOne).map((o) => ({ o, a: Math.max(0, diffDays(first, o.startKey)), b: Math.min(n, diffDays(first, o.endKey)) })).filter((x) => x.b > x.a);
-  const lanes = [];
-  for (const x of bars.sort((p, q) => p.a - q.a || (q.b - q.a) - (p.b - p.a))) { let l = lanes.findIndex((end) => end <= x.a); if (l < 0) { l = lanes.length; lanes.push(0); } lanes[l] = x.b; x.lane = l; }
-  const allRow = h('div.tv-all', { style: `--n:${n}` }, h('div.gut', h('small', t('all_day_s'))),
-    h('div.tv-bars', { style: `--n:${n};--lanes:${Math.max(1, lanes.length)}` },
-      days.map((d, i) => h('div.tv-allc', { style: `grid-column:${i + 1};grid-row:1 / span ${Math.max(1, lanes.length) + 1}`, onclick: () => (pick.on ? (pick.list.push({ day: d }), pick.redraw()) : quickCreate({ allDay: true, startKey: d, endKey: addDays(d, 1) }, ctx)) })),
-      bars.map((x) => { const c = chip(x.o, ctx, { bar: true }); c.style.gridColumn = `${x.a + 1} / ${x.b + 1}`; c.style.gridRow = String(x.lane + 1); if (x.o.startKey < first) c.classList.add('cont-l'); if (x.o.endKey > last) c.classList.add('cont-r'); return c; }),
-      pick.list.filter((p) => p.day && days.includes(p.day)).map((p) => h('div.pickbar', { style: `grid-column:${days.indexOf(p.day) + 1};grid-row:1` }, icon('check'), t('all_day')))));
+  const allRow = allDayRow(days, list, ctx, pick);
 
   // the hours
   const hours = h('div.tv-hours', Array.from({ length: 24 }, (_, i) => (i ? h('span', { style: `top:${i * HH}px` }, hm(i * 60)) : null)));
@@ -364,6 +355,77 @@ function timeView(days, list, ctx, pick) {
   requestAnimationFrame(() => { const p = parts(Date.now(), tz), start = ti >= 0 ? Math.max(0, p.h - 2) : (prefs().dayStart ?? 8); scroll.scrollTop = start * HH; });
   return h('div.tv' + (pick.on ? '.picking' : ''), head, allRow, scroll);
 }
+
+/** The row of whole days (open or closed: the same for every day and week view, until the page is loaded again). */
+let allOpen = false;
+/**
+ * The row above the hours: whole days and events of 24 hours or more, as bars across the days, in lanes. It grows up to
+ * a few lanes, then the last one says "+N more" under each day that has more (a click opens the whole row, which then
+ * scrolls). A click on an empty place makes a whole day there; one's own bars move to another day by dragging.
+ */
+function allDayRow(days, list, ctx, pick) {
+  const n = days.length, first = days[0], last = addDays(days[n - 1], 1), today = todayKey(ctx.tz()), tz = ctx.tz();
+  // a bar covers the columns of the days it touches (with hidden days the columns are not consecutive days)
+  const bars = list.filter(longOne).map((o) => { const cs = days.map((d, i) => (d >= o.startKey && d < o.endKey ? i : -1)).filter((i) => i >= 0); return { o, a: cs[0], b: cs.length ? cs[cs.length - 1] + 1 : 0 }; }).filter((x) => x.b > x.a);
+  const lanes = [];
+  for (const x of bars.sort((p, q) => p.a - q.a || (q.b - q.a) - (p.b - p.a))) { let l = lanes.findIndex((end) => end <= x.a); if (l < 0) { l = lanes.length; lanes.push(0); } lanes[l] = x.b; x.lane = l; }
+  const max = mobile() ? 2 : 3, over = lanes.length > max, open = over && allOpen;
+  const shown = over && !open ? max - 1 : lanes.length, rows = Math.max(1, over && !open ? max : lanes.length);
+  const row = h('div.tv-all' + (open ? '.open' : '') + (n === 1 ? '.one' : ''), { style: `--n:${n}` });
+  const toggle = (v) => { allOpen = v; row.replaceWith(allDayRow(days, list, ctx, pick)); };
+  const more = (i) => bars.filter((x) => x.lane >= shown && x.a <= i && x.b > i).length;
+  return put(row, h('div.gut', h('small', t('all_day_s')),
+    over ? h('button.tv-tog', { type: 'button', title: t(open ? 'all_day_less' : 'all_day_more'), 'aria-label': t(open ? 'all_day_less' : 'all_day_more'), 'aria-expanded': String(open), onclick: () => toggle(!open) }, icon(open ? 'chevron-up' : 'chevron-down')) : null),
+  h('div.tv-bars', { style: `--n:${n};--rows:${rows}` },
+    days.map((d, i) => h('div.tv-allc' + (d === today ? '.today' : ''), { style: `grid-column:${i + 1}`, title: pick.on ? null : t('new_all_day'), onclick: () => (pick.on ? (pick.list.push({ day: d }), pick.redraw()) : quickCreate({ allDay: true, startKey: d, endKey: addDays(d, 1) }, ctx)) })),
+    bars.filter((x) => x.lane < shown).map((x) => {
+      const c = chip(x.o, ctx, { bar: true });
+      c.style.gridColumn = `${x.a + 1} / ${x.b + 1}`; c.style.gridRow = String(x.lane + 1);
+      if (x.o.startKey < first) c.classList.add('cont-l'); if (x.o.endKey > last) c.classList.add('cont-r');
+      dragBar(c, x.o, days, ctx, tz);
+      return c;
+    }),
+    over && !open ? days.map((d, i) => { const m = more(i); return m ? h('button.tv-more', { type: 'button', style: `grid-column:${i + 1};grid-row:${rows}`, title: t('n_more', { n: m }), onclick: (e) => { e.stopPropagation(); toggle(true); } }, h('b', '+' + m), h('span', ' ' + t('more_w'))) : null; }) : null,
+    pick.list.filter((p) => p.day && days.includes(p.day)).map((p) => h('div.pickbar', { style: `grid-column:${days.indexOf(p.day) + 1};grid-row:1` }, icon('check'), t('all_day')))));
+}
+
+/** The same wall clock n days later (across a change of summer time a day is not 24 hours). */
+const laterDays = (ms, n, tz) => { const p = parts(ms, tz), [y, m, d] = keyParts(addDays(dayKey(ms, tz), n)); return zoned(y, m, d, p.h, p.mi, tz); };
+
+/** Dragging a bar of the row of whole days to another day (with a mouse or a pen; on touch screens dragging scrolls). */
+function dragBar(c, o, days, ctx, tz) {
+  if (o.readOnly) return;
+  let endedAt = 0;
+  // the click that ends a drag does not open the event
+  c.addEventListener('click', (e) => { if (Date.now() - endedAt < 400) { e.stopImmediatePropagation(); e.preventDefault(); } }, true);
+  c.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0 || e.pointerType === 'touch') return;
+    const cells = [...c.parentElement.querySelectorAll('.tv-allc')];
+    const colAt = (x) => { const r = cells.map((el) => el.getBoundingClientRect()), i = r.findIndex((b) => x >= b.left && x < b.right); return i >= 0 ? i : x < r[0].left ? 0 : cells.length - 1; };
+    const x0 = e.clientX, y0 = e.clientY, from = colAt(x0);
+    let to = from, dragging = false;
+    // followed on the window (not with a capture of the pointer): the bar moves under the pointer and is not always under it
+    const move = (ev) => {
+      if (ev.pointerId !== e.pointerId || (!dragging && Math.hypot(ev.clientX - x0, ev.clientY - y0) < 5)) return;
+      if (!dragging) { dragging = true; c.classList.add('dragging'); }
+      to = colAt(ev.clientX);
+      c.style.transform = `translateX(${cells[to].getBoundingClientRect().left - cells[from].getBoundingClientRect().left}px)`;
+    };
+    const up = (ev) => {
+      if (ev.pointerId !== e.pointerId) return;
+      removeEventListener('pointermove', move); removeEventListener('pointerup', up); removeEventListener('pointercancel', up);
+      if (!dragging) return;
+      endedAt = Date.now();
+      if (ev.type === 'pointercancel') to = from;
+      const nd = diffDays(days[from], days[to]);
+      if (!nd) { c.classList.remove('dragging'); c.style.transform = ''; return; }
+      const run = o.allDay ? moveEvent(o, o.s + nd * 864e5, o.en + nd * 864e5, ctx) : moveEvent(o, laterDays(o.s, nd, tz), laterDays(o.en, nd, tz), ctx);
+      run.catch(fail).finally(() => ctx.changed());
+    };
+    addEventListener('pointermove', move); addEventListener('pointerup', up); addEventListener('pointercancel', up);
+  });
+}
+
 const diffDays = (a, b) => Math.round((Date.parse(b + 'T00:00:00Z') - Date.parse(a + 'T00:00:00Z')) / 864e5);
 const tzShort = (tz) => { try { return new Intl.DateTimeFormat(getLang(), { timeZone: tz, timeZoneName: 'shortOffset' }).formatToParts(new Date()).find((x) => x.type === 'timeZoneName')?.value || ''; } catch { return ''; } };
 
@@ -438,9 +500,10 @@ function dragBlock(b, o, ctx, tz) {
       b.removeEventListener('pointermove', move); b.removeEventListener('pointerup', up); b.removeEventListener('pointercancel', up);
       if (!dragging) { openItem(o, ctx); return; }
       if (!dy && !dcol) { b.classList.remove('dragging'); b.style.transform = ''; return; }
-      const days = dcol * 864e5;
-      // across a change of summer time a day is not 24 hours: the move keeps the wall clock of the view
-      const shift = (ms) => { if (!days) return ms + dy * 60000; const p = parts(ms, tz), k = addDays(dayKey(ms, tz), dcol), [y, m, d] = keyParts(k); return zoned(y, m, d, p.h, p.mi, tz) + dy * 60000; };
+      // the days between the two columns (with hidden days they are more than the columns); across a change of summer
+      // time a day is not 24 hours: the move keeps the wall clock of the view
+      const nd = dcol ? diffDays(col0.dataset.day, cols[cols.indexOf(col0) + dcol].dataset.day) : 0;
+      const shift = (ms) => (nd ? laterDays(ms, nd, tz) : ms) + dy * 60000;
       const s = resize ? o.s : shift(o.s), en = resize ? Math.max(o.s + 15 * 60000, o.en + dy * 60000) : shift(o.en);
       moveEvent(o, s, en, ctx).catch(fail).finally(() => ctx.changed());
     };
