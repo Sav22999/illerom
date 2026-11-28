@@ -1,7 +1,12 @@
 /** The version of SavSchedules (in the footer) and what changed in each one (the page #/changelog). Newest first. */
-export const VERSION = '1.4.3';
+export const VERSION = '1.4.4';
 
 export const CHANGES = [
+  {
+    v: '1.4.4', date: '2026-11-28', items: [
+      ['“More” and the other action sheets are now the action sheet of SavComponents: drag its handle down to close it, the place shown marked with a tick', '«Altro» e gli altri fogli di azioni sono ora il foglio di azioni di SavComponents: trascina la maniglia in giù per chiuderlo, la sezione mostrata segnata con una spunta'],
+    ],
+  },
   {
     v: '1.4.3', date: '2026-11-28', items: [
       ['Phones: the bar of the panels at the bottom shares its width among its buttons, instead of leaving them on the left', 'Telefoni: la barra dei pannelli in basso divide la sua larghezza tra i pulsanti, invece di lasciarli a sinistra'],

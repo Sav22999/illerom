@@ -1,7 +1,12 @@
 /** The version of SavContacts (in the footer) and what changed in each one (the page #/changelog). Newest first. */
-export const VERSION = '1.2.3';
+export const VERSION = '1.2.4';
 
 export const CHANGES = [
+  {
+    v: '1.2.4', date: '2026-11-28', items: [
+      ['“More” and the other action sheets are now the action sheet of SavComponents: drag its handle down to close it, the place shown marked with a tick', '«Altro» e gli altri fogli di azioni sono ora il foglio di azioni di SavComponents: trascina la maniglia in giù per chiuderlo, la sezione mostrata segnata con una spunta'],
+    ],
+  },
   {
     v: '1.2.3', date: '2026-11-28', items: [
       ['Fixed: the sheets that rise from the bottom on phones (menus, action sheets) reach the edges of the screen, without a strip along the sides', 'Corretto: i fogli che salgono dal basso sui telefoni (menu, fogli di azioni) arrivano ai bordi dello schermo, senza una striscia ai lati'],

@@ -1,7 +1,12 @@
 /** The version of SavDocuments (in the footer) and what changed in each one (the page #/changelog). Newest first. */
-export const VERSION = '1.2.4';
+export const VERSION = '1.2.5';
 
 export const CHANGES = [
+  {
+    v: '1.2.5', date: '2026-11-28', items: [
+      ['“More” and the other action sheets are now the action sheet of SavComponents: drag its handle down to close it, the place shown marked with a tick', '«Altro» e gli altri fogli di azioni sono ora il foglio di azioni di SavComponents: trascina la maniglia in giù per chiuderlo, la sezione mostrata segnata con una spunta'],
+    ],
+  },
   {
     v: '1.2.4', date: '2026-11-28', items: [
       ['Phones: undo, redo and the copy in SavDrive are in ⋮ (the title bar has no room for them); the bar of the panels at the bottom shares its width among its buttons', 'Telefoni: annulla, ripeti e la copia in SavDrive sono in ⋮ (la barra del titolo non ha spazio per loro); la barra dei pannelli in basso divide la sua larghezza tra i pulsanti'],

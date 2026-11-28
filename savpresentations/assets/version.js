@@ -1,7 +1,12 @@
 /** The version of SavPresentations (in the footer) and what changed in each one (the page ?p=changelog). Newest first. */
-export const VERSION = '1.2.5';
+export const VERSION = '1.2.6';
 
 export const CHANGES = [
+  {
+    v: '1.2.6', date: '2026-11-28', items: [
+      ['“More” and the other action sheets are now the action sheet of SavComponents: drag its handle down to close it, the place shown marked with a tick', '«Altro» e gli altri fogli di azioni sono ora il foglio di azioni di SavComponents: trascina la maniglia in giù per chiuderlo, la sezione mostrata segnata con una spunta'],
+    ],
+  },
   {
     v: '1.2.5', date: '2026-11-28', items: [
       ['Phones: the title bar has the logo, the title, Share, ⋮ and the account, as in SavDocuments; undo, redo, Present and the copy in SavDrive are in ⋮', 'Telefoni: la barra del titolo ha logo, titolo, Condividi, ⋮ e l’account, come in SavDocuments; annulla, ripeti, Presenta e la copia in SavDrive sono in ⋮'],
